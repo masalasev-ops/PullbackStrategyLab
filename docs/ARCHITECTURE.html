@@ -151,10 +151,10 @@ tr:hover td{background:#f4f2ec}
 
 <p>The lab tests both directions. They are mirror images with the same skeleton and different management.</p>
 
-<h3>The long side <span class="pill pl">buy</span></h3>
+<h3 id="the-long-side">The long side <span class="pill pl">buy</span></h3>
 <p>A stock jumps sharply on unusually heavy trading. Something changed: an earnings surprise, a product, a shift affecting its industry. Moves like that often continue for weeks but never in a straight line. After the jump some holders take profit and the price drifts down for a few days. Then, if the enthusiasm is real, it turns back up. The strategy waits through the drift and buys as it ends.</p>
 
-<h3>The short side <span class="pill ps">sell</span></h3>
+<h3 id="the-short-side">The short side <span class="pill ps">sell</span></h3>
 <p>The same thing upside down. A stock has been falling steadily, its moving averages sloping down and squeezing together. It bounces for a few days into those falling averages, which act as a ceiling rather than a floor. The strategy sells short into that bounce as it stalls, betting the decline resumes.</p>
 
 <div class="plain"><b class="lab">Selling short, for readers who have not met it</b>
@@ -887,7 +887,7 @@ tr:hover td{background:#f4f2ec}
 <p>Every checkpoint from the harness onward adds its own expectations to the fixture. A checkpoint that adds behaviour and no expectation has widened the unexamined set rather than the tested one, and the report says so.</p></div>
 
 <h2 id="build-order">Build order</h2>
-<p>Every phase produces two things: a screen you can open, and a generated report that says whether what was built matches this document. Neither replaces the other. The screen is how you notice something looks wrong; the report is how you know, and how a build session checks its own work without asking anyone. The harness is described in 18.1 and is built at the seventh checkpoint of phase 1, before most of what it checks exists.</p>
+<p>Every phase produces two things: a screen you can open, and a generated report that says whether what was built matches this document. Neither replaces the other. The screen is how you notice something looks wrong; the report is how you know, and how a build session checks its own work without asking anyone. The harness is described under "The phase report" and is built at the seventh checkpoint of phase 1, before most of what it checks exists.</p>
 
 <table>
 <tr><th style="width:52px">Phase</th><th style="width:180px">Builds</th><th style="width:36%">What you can open</th><th>What the phase report adds</th></tr>
@@ -934,7 +934,7 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:210px">What differs</th><th style="width:300px">Where it bites</th><th>Handling</th></tr>
 <tr><td>Timezone identifiers</td><td>Every session boundary, every nightly job trigger, every "was this bar in regular hours" test</td><td>IANA names only, never Windows names. Do not enable invariant globalization, which is the setting that makes IANA lookup fail silently. One clock abstraction, everything stored in UTC, conversion only where a session boundary is being decided</td></tr>
-<tr><td>Filesystem case sensitivity</td><td>macOS is insensitive by default, Linux is not</td><td>Lowercase file and directory names throughout, enforced by a check. A mismatch that works on both your machines will fail the first time it touches a Linux CI runner</td></tr>
+<tr><td>Filesystem case sensitivity</td><td>macOS is insensitive by default, Linux is not</td><td>Lowercase names for every path the application composes or reads at runtime: the data root and everything under it, the golden fixture, <code>artifacts/</code> and <code>tools/</code>. .NET source and project directories keep the framework’s PascalCase, which the repository layout mandates. Enforced by the <code>path-casing</code> check, which asserts each path literal against the on-disk path byte for byte rather than asserting lowercase, since exact match is the stronger property. A mismatch that works on both your machines will fail the first time it touches a Linux CI runner</td></tr>
 <tr><td>Path separators and roots</td><td>Anywhere a path is composed or persisted</td><td>One configured data root, path composition through the platform API, and <b>no absolute path ever written into a database row</b></td></tr>
 <tr><td>Scheduling</td><td>Task Scheduler against launchd</td><td>Scheduling stays outside the application. One CLI entrypoint per job, invoked by whatever the platform provides. The app holds no timer logic, which also makes a failed 6pm job easy to rerun by hand</td></tr>
 <tr><td>Native dependencies</td><td>Apple Silicon needs arm64 builds</td><td>SQLite and Parquet are fine on both. Avoid anything requiring a native server install, since that is the part of a migration that costs a weekend</td></tr>
