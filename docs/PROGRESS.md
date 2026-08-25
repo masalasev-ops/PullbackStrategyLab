@@ -120,3 +120,17 @@ Findings:   Observation. The first version passed its idempotence test and was n
 
 Carried:    The per-ticker history backfill, RUNBOOK's steps 4 and 5, is not built. Ten sessions of bulk history is enough for nothing that needs a 50-day average, so 1.6's indicator values cannot be computed over a converged window until it exists. Due at 1.6.
             A name that joins the universe after go-live has no history until that backfill runs. Due at 1.6.
+
+## 1.2 — 2026-08-25 — correction and completion of the two-platform obligation
+
+Corrects the 1.2 entry above, which recorded the two-platform check as unconfirmed. It has now run, and it failed.
+
+Measured:   The first CI run on the branch: `windows-latest` success, `macos-latest` failure. `./tools/ci.sh: Permission denied`. Obtained from the run's own log.
+
+Findings:   Observation. `tools/ci.sh`, `tools/migrate` and `tools/snapshot-db` were recorded 100644 rather than 100755. Reading: Windows has no executable bit, so a shell script committed from here is recorded non-executable and works perfectly on the machine that wrote it. This is precisely the class of fault the matrix exists to catch, and it took the first macOS run to find it, on three files that had been run successfully dozens of times locally.
+            Reading. `.gitattributes` already anticipated the sibling problem, line endings, and says so in a comment. The executable bit is the other half of the same thing and nothing covered it.
+
+Built:      `shell-executable`, a check of its own with its own CI step, asserting the recorded mode of every shell entry point rather than the working tree's, because the working tree's mode is exactly what Windows does not have. It reports itself unexamined rather than passing if the mode cannot be read: a skip that reads as a pass is the failure the coverage line exists to catch.
+
+Verified:   The check was demonstrated against a deliberate regression, `git update-index --chmod=-x tools/migrate`, and named the file and both modes. That demonstration is recorded here rather than as a test, because the property is git index state and a unit test asserting it would need a scratch repository to break; the check itself is permanent and runs on every CI run.
+            `tools/ci.ps1` green on Windows, 16 steps, 74 tests.

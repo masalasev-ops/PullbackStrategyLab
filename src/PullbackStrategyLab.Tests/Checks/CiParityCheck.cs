@@ -6,12 +6,13 @@ using Xunit.Abstractions;
 namespace PullbackStrategyLab.Tests.Checks;
 
 /// <summary>
-/// tools/ci.ps1 and tools/ci.sh run the same steps in the same order.
+/// tools/ci.ps1 and tools/ci.sh run the same steps in the same order, and the shell entry
+/// points are recorded executable.
 ///
-/// The two files are not translations of each other and cannot be: `&amp;&amp;` is a parse error
-/// in Windows PowerShell, so the syntax differs by necessity. What has to hold is that the
-/// same work happens in the same order, so the check reads the step names each file declares
-/// and compares those, not the text around them.
+/// The two files are not translations of each other and cannot be: <c>and-and</c> is a parse
+/// error in Windows PowerShell, so the syntax differs by necessity. What has to hold is that
+/// the same work happens in the same order, so the check reads the step names each file
+/// declares and compares those, not the text around them.
 ///
 /// A step added to one file and not the other is the failure this exists to catch, and it is
 /// invisible until somebody runs the other platform.
