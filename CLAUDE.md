@@ -49,6 +49,8 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   derive-indicators.py  one-time verification aid, not run by CI
 /fixtures         captured  the golden fixture's inputs, verbatim vendor responses
                   with a manifest naming the endpoint, query and instant of each
+                  expectations.json  what the pipeline should produce over them,
+                  each expectation carrying its tier, its checkpoint and its producer
 /prompts          gitignored. spent build prompts, kept locally
 /data             gitignored. the store lives here
 .gitattributes    line endings, normalised to LF in the repository
@@ -134,8 +136,19 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `check-completeness` | Every setup row has a result recorded for every check defined at its date |
 | `stated-counts` | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
 | `fixture-inputs` | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
+| `fixture-replay` | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one |
+| `architecture-conformance` | Every claim a table in ARCHITECTURE.html makes has a verdict: pass, fail, out of scope for this phase, or unexamined |
+| `api-isolation` | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
+| `bar-append-only` | Nothing in the shipped source deletes or updates a bar table |
+| `ci-parity` | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order |
+| `clock-usage` | Nothing outside the clock reads the machine clock |
+| `shell-executable` | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
+
+**The table lists every check that runs, not only the properties this file argues for.** A check that runs as a CI step and is not declared here is a property nobody wrote down, and the phase report enumerates checks by name, so the two would disagree with nothing to reconcile them.
 
 **`coverage-reported` is the one that matters most and is easiest to lose.** Under-reporting is survivorship: a check that errors loudly gets fixed because it blocks, while a check that silently narrows its own scope keeps passing. So the only broken checks that survive in verification code are the ones that under-report. Green means "nothing I ran failed", never "nothing is wrong".
+
+**Unexamined and out of scope are counted separately, and only one of them is a defect.** Unexamined means a claim this phase should have been able to assert and could not. Out of scope means the corpus places it in a later phase, or exempts it by name and says why. Reporting them as one number would let forty later-phase rows hide the one row nobody can check, which is the same failure arrived at from the other direction. `tools/verify-phase` is green only with zero unexamined; out of scope is shown beside it and never added to it.
 
 **`decision-resolves` fails on a near-miss rather than ignoring it.** Names invite paraphrase and a paraphrased citation silently stops resolving. Exact match is the rule, which is why decision names carry no terminal punctuation: a name that ends in a period is awkward to cite and invites the paraphrase the check exists to reject.
 

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -23,9 +24,62 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// </summary>
 public sealed class FixtureInputsCheck
 {
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+
     private readonly ITestOutputHelper _output;
 
     public FixtureInputsCheck(ITestOutputHelper output) => _output = output;
+
+    /// <summary>
+    /// The inputs the lab verifies against, counted by tier, so the report can print them beside
+    /// the expectations rather than leaving the reader to assume both halves are captured.
+    ///
+    /// An authored input is not worthless. It holds the case the market did not produce on the
+    /// day the fixture was taken: a stock splitting, a second paying a dividend the same evening
+    /// and a third doing nothing is a night that has to be built rather than waited for. What it
+    /// cannot do is stand alone, because it encodes its author's belief about the vendor and the
+    /// author is the same person who wrote the code.
+    /// see: Fixture inputs record where they came from, and a path a live run exercises needs a captured one
+    /// </summary>
+    private static void WriteInputTiers(int captured, int endpointsCovered, IReadOnlyList<string> uncovered)
+    {
+        // Every synthetic vendor the suite builds. Counted from the source rather than declared,
+        // because a number kept by hand beside a growing suite is a number that stops being true.
+        int authored = RepositoryLayout.SourceFiles
+            .Where(f => f.Contains("PullbackStrategyLab.Tests", StringComparison.Ordinal))
+            .Sum(f => Occurrences(RepositoryLayout.Read(f), "new FakeMarketDataVendor("));
+
+        Directory.CreateDirectory(RepositoryLayout.Artifacts);
+        File.WriteAllText(
+            Path.Combine(RepositoryLayout.Artifacts, "input-tiers.json"),
+            JsonSerializer.Serialize(
+                new InputTiers(
+                [
+                    new InputTier("CAPTURED", captured,
+                        $"verbatim vendor responses over {endpointsCovered} endpoint(s), held with the query and instant of each",
+                        "the vendor's own behaviour, which is the half a fixture written here cannot supply"),
+                    new InputTier("AUTHORED", authored,
+                        "synthetic vendor responses built in the suite",
+                        "cases the captured day does not contain, at the cost of encoding this author's belief about the vendor"),
+                ],
+                uncovered),
+                Json));
+    }
+
+    private static int Occurrences(string text, string needle)
+    {
+        int count = 0;
+        for (int i = text.IndexOf(needle, StringComparison.Ordinal); i >= 0; i = text.IndexOf(needle, i + needle.Length, StringComparison.Ordinal))
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    public sealed record InputTier(string Tier, int Count, string What, string WhatItCanSay);
+
+    public sealed record InputTiers(IReadOnlyList<InputTier> Tiers, IReadOnlyList<string> EndpointsWithNoCapturedInput);
 
     /// <summary>
     /// The endpoints a live run exercises, named here and matched against the manifest. Named
@@ -116,6 +170,8 @@ public sealed class FixtureInputsCheck
             coverage.NotExamined("endpoints resting on authored evidence alone", uncovered.Length,
                 "no captured response covers them: " + string.Join(", ", uncovered));
         }
+
+        WriteInputTiers(responses.Length, endpointsSeen.Count, uncovered);
 
         coverage.Report();
 

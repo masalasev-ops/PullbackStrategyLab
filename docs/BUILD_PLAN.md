@@ -138,11 +138,9 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 
 | Raised | Obligation | Due at |
 |---|---|---|
-| 1.1 | Expectations for 1.1 to 1.6 owed to the golden fixture with their tier. Done condition seven cannot be met before the fixture exists | 1.7 |
-| 1.6 | Both phase 1 defects that passed a unit test and failed live are re-read against the input tiers: each would show as unexamined rather than green, because the path had no captured input. If either would still read as green, the tier definition is wrong rather than the defect being unlucky | 1.7 |
-| 1.6 | One `CONFIRMED` value per hand-picked ticker, checked against a charting platform's own readout. The derivation at 1.6 is a second implementation by the same author, which rules out a transcription error and not a shared misreading of a definition. The three values and the exact formula they were computed under are recorded in PROGRESS so the comparison is unambiguous | 1.7 |
-| 1.6 | Indicator rows already written for past sessions are not recomputed when a rebuild lands, so a row computed on the old basis stands. `indicator_daily` is keyed on ticker and date with no observation, and SCHEMA declares TierClassifier as its only updater, so the fix is a decision about the store's shape rather than a code change | 1.7 |
-| 1.9 | RUNBOOK's step 5, the split history for every survivor, is a second 2,070 calls and has not run. Nothing depends on it: splits arrive nightly from the bulk endpoint, so what is missing is only the history of splits from before the lab started | 1.7 |
+| 1.6 | One `CONFIRMED` value per hand-picked ticker, checked against a charting platform's own readout. The derivation at 1.6 is a second implementation by the same author, which rules out a transcription error and not a shared misreading of a definition. The three values and the exact formula they were computed under are recorded in PROGRESS so the comparison is unambiguous. Carried from 1.7 to the checkpoint that puts the chart on a screen, because that is where the comparison is made rather than described | 1.10 |
+| 1.9 | RUNBOOK's step 5, the split history for every survivor, is a second 2,070 calls and has not run. Nothing depends on it: splits arrive nightly from the bulk endpoint, so what is missing is only the history of splits from before the lab started. It is either run or dropped at sign-off, rather than carried indefinitely | 1.12 |
+| 1.7 | The fixture screens the universe over one market day, because one is what the fixture holds, and the liquidity floor is a median over twenty. The replay measures the screen's verdict under the real floors and then runs against the wider list, so nothing downstream is screened on a number the floor does not mean. A fixture holding twenty market days would remove the difference and costs 1,900 calls and about 130 MB | 1.12 |
 
 ---
 

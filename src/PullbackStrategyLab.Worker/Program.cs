@@ -38,6 +38,7 @@ public static class Program
         builder.Services.AddSingleton<IndicatorEngine>();
         builder.Services.AddSingleton<IndexIngestor>();
         builder.Services.AddSingleton<FixtureCapture>();
+        builder.Services.AddSingleton<PhaseReportStage>();
 
         // Only the Worker holds a vendor client. The Api never calls the vendor and gets no key.
         // One instance behind two faces: the stages see the interface, and the fixture capture
@@ -63,6 +64,7 @@ public static class Program
                 IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
+                PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
             };
@@ -106,6 +108,7 @@ public static class Program
         IndexIngestor.Name,
         IndicatorEngine.Name,
         FixtureCapture.Name,
+        PhaseReportStage.Name,
     ];
 
     private static void WriteUsage()

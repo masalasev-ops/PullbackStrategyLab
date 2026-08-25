@@ -145,9 +145,9 @@ public sealed class WriterOwnershipCheck
             .Examined("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
-            .NotExamined("declared writers of a store no migration has created yet", tableNotCreated,
+            .OutOfScope("declared writers of a store no migration has created yet", tableNotCreated,
                 "the table arrives with the checkpoint that builds its component")
-            .NotExamined("declared writers whose component has not been built yet", componentNotBuilt,
+            .OutOfScope("declared writers whose component has not been built yet", componentNotBuilt,
                 "the store exists and the component that writes it arrives at a later checkpoint");
 
         if (unresolvedNames > 0)

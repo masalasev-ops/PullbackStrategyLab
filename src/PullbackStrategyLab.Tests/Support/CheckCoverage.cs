@@ -17,6 +17,7 @@ public sealed class CheckCoverage
 {
     private readonly List<Scope> _examined = [];
     private readonly List<Unexamined> _unexamined = [];
+    private readonly List<Unexamined> _outOfScope = [];
     private readonly ITestOutputHelper _output;
 
     public CheckCoverage(string checkName, ITestOutputHelper output)
@@ -46,7 +47,25 @@ public sealed class CheckCoverage
         return this;
     }
 
+    /// <summary>
+    /// Records something this check was not asked to look at, with the reason: a component a
+    /// later phase builds, or a case the check deliberately exempts.
+    ///
+    /// Separate from <see cref="NotExamined"/> on purpose, and the separation is the discipline.
+    /// Unexamined means a claim this phase should have been able to assert and could not, and it
+    /// is not a pass. Out of scope means nobody owed it yet. Collapsing them would let forty
+    /// later-phase rows hide the one row nobody can check, which is the failure this whole idea
+    /// exists to catch, arrived at from the other direction.
+    /// </summary>
+    public CheckCoverage OutOfScope(string what, int count, string why)
+    {
+        _outOfScope.Add(new Unexamined(what, count, why));
+        return this;
+    }
+
     public int TotalExamined => _examined.Sum(s => s.Count);
+
+    public int TotalOutOfScope => _outOfScope.Sum(u => u.Count);
 
     public int TotalUnexamined => _unexamined.Sum(u => u.Count);
 
@@ -58,6 +77,11 @@ public sealed class CheckCoverage
     {
         var summary = new StringBuilder();
         summary.Append(CheckName).Append(": examined ").Append(TotalExamined);
+        if (TotalOutOfScope > 0)
+        {
+            summary.Append(", out of scope ").Append(TotalOutOfScope);
+        }
+
         if (TotalUnexamined > 0)
         {
             summary.Append(", unexamined ").Append(TotalUnexamined);
@@ -68,6 +92,11 @@ public sealed class CheckCoverage
         foreach (Scope scope in _examined)
         {
             _output.WriteLine($"  examined   {scope.Count,6}  {scope.What}");
+        }
+
+        foreach (Unexamined outOfScope in _outOfScope)
+        {
+            _output.WriteLine($"  not owed  {outOfScope.Count,7}  {outOfScope.What} — {outOfScope.Why}");
         }
 
         foreach (Unexamined unexamined in _unexamined)
@@ -81,7 +110,7 @@ public sealed class CheckCoverage
         File.WriteAllText(
             Path.Combine(directory, $"{CheckName}.json"),
             JsonSerializer.Serialize(
-                new Record(CheckName, TotalExamined, TotalUnexamined, _examined, _unexamined),
+                new Record(CheckName, TotalExamined, TotalUnexamined, TotalOutOfScope, _examined, _unexamined, _outOfScope),
                 new JsonSerializerOptions { WriteIndented = true }));
     }
 
@@ -93,6 +122,8 @@ public sealed class CheckCoverage
         string Check,
         int Examined,
         int Unexamined,
+        int OutOfScope,
         IReadOnlyList<Scope> ExaminedDetail,
-        IReadOnlyList<Unexamined> UnexaminedDetail);
+        IReadOnlyList<Unexamined> UnexaminedDetail,
+        IReadOnlyList<Unexamined> OutOfScopeDetail);
 }

@@ -230,7 +230,7 @@ Grain: date + ticker + direction. Output of a historical detector run, used to c
 
 Same shape as `setup`, in a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
 
-Insert SetupDetector, calibration mode only · Read by nobody
+Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
 
 ### `setup_signal`
 Grain: setup + signal. The frozen point-in-time evidence.

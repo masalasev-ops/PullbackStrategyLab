@@ -1,0 +1,1731 @@
+{
+  "asOf": "2026-08-24",
+  "inputTier": "CAPTURED",
+  "expectations": [
+    {
+      "id": "universe.listedCommonStock",
+      "tier": "FROZEN",
+      "value": "17996",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "universe.screened",
+      "tier": "FROZEN",
+      "value": "11983",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "universe.sessionsScreened",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "One, and the one place the replay differs from a live night. The fixture holds one market day; the live screen walks twenty."
+    },
+    {
+      "id": "universe.survivors",
+      "tier": "FROZEN",
+      "value": "2002",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "universe.admittedWithoutTheLiquidityFloor",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The list the rest of the replay runs against. The floor is a median over twenty sessions and the fixture holds one, so applying it here screens on a number that is not the number the floor means."
+    },
+    {
+      "id": "universe.rejectedByTheLiquidityFloor",
+      "tier": "FROZEN",
+      "value": "5200",
+      "checkpoint": "1.3",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "What the floor costs on this one market day. On twenty sessions it would cost less: the fixture control clears the floor three times over on its twenty-session median and fails on this day alone."
+    },
+    {
+      "id": "fixture.tickersInUniverse",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.7",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "fixture.tickersOutsideUniverse",
+      "tier": "FROZEN",
+      "value": "none",
+      "checkpoint": "1.7",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "None, and it has to stay none. A fixture ticker that falls out of the universe gets no indicator row, and the diff would stay green over a shrinking subject."
+    },
+    {
+      "id": "backfill.seed.selected",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "backfill.seed.barsPublished",
+      "tier": "FROZEN",
+      "value": "7530",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "backfill.seed.inserted",
+      "tier": "FROZEN",
+      "value": "7530",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.splitsPublished",
+      "tier": "FROZEN",
+      "value": "15",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.dividendsPublished",
+      "tier": "FROZEN",
+      "value": "248",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.inUniverse",
+      "tier": "FROZEN",
+      "value": "57",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.inserted",
+      "tier": "FROZEN",
+      "value": "57",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.demandsRaised",
+      "tier": "FROZEN",
+      "value": "57",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "actions.tickersBlocked",
+      "tier": "FROZEN",
+      "value": "57",
+      "checkpoint": "1.5",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "bars.published",
+      "tier": "FROZEN",
+      "value": "44530",
+      "checkpoint": "1.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "bars.inUniverse",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "1.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "bars.inserted",
+      "tier": "FROZEN",
+      "value": "7172",
+      "checkpoint": "1.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "bars.unchanged",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.4",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Thirty. The fixture tickers already hold this session from their histories, so the bulk ingest finds them stored unchanged. Idempotence stated as a number."
+    },
+    {
+      "id": "bars.corrections",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "backfill.rebuild.selected",
+      "tier": "FROZEN",
+      "value": "57",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "backfill.rebuild.inserted",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendor’s current basis. A refetch that changes nothing still records that the series was looked at."
+    },
+    {
+      "id": "index.symbols",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "1.9",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "index.barsPublished",
+      "tier": "FROZEN",
+      "value": "753",
+      "checkpoint": "1.9",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "index.inserted",
+      "tier": "FROZEN",
+      "value": "753",
+      "checkpoint": "1.9",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.members",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.computed",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.recomputed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.shortOfWarmup",
+      "tier": "FROZEN",
+      "value": "7172",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.blocked",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOK’s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+    },
+    {
+      "id": "indicators.demandsSatisfied",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "One, and it is IESC. See fixture.rebuildsStamped."
+    },
+    {
+      "id": "fixture.actionsObserved",
+      "tier": "FROZEN",
+      "value": "IESC",
+      "checkpoint": "1.7",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The fixture was built around a ticker carrying a real split, and this is that claim as a value rather than as a sentence."
+    },
+    {
+      "id": "fixture.rebuildsStamped",
+      "tier": "FROZEN",
+      "value": "IESC",
+      "checkpoint": "1.7",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The rebuild loop end to end on captured data: an action observed tonight raised a demand, the refetch answered it, and the engine stamped it rather than clearing it."
+    },
+    {
+      "id": "indicators.AAPL.ema9",
+      "tier": "FROZEN",
+      "value": "310.2137",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.ema21",
+      "tier": "FROZEN",
+      "value": "311.8672",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.ema50",
+      "tier": "FROZEN",
+      "value": "309.2529",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.atr14",
+      "tier": "FROZEN",
+      "value": "7.3620",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.adr20",
+      "tier": "FROZEN",
+      "value": "0.0204",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "14441138947.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AAPL.rangeAverage",
+      "tier": "FROZEN",
+      "value": "6.3707",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.ema9",
+      "tier": "FROZEN",
+      "value": "476.0661",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.ema21",
+      "tier": "FROZEN",
+      "value": "485.5684",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.ema50",
+      "tier": "FROZEN",
+      "value": "484.4864",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.atr14",
+      "tier": "FROZEN",
+      "value": "27.9480",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.adr20",
+      "tier": "FROZEN",
+      "value": "0.0491",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "11663252780.4450",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMD.rangeAverage",
+      "tier": "FROZEN",
+      "value": "23.4647",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.ema9",
+      "tier": "FROZEN",
+      "value": "262.5616",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.ema21",
+      "tier": "FROZEN",
+      "value": "260.6417",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.ema50",
+      "tier": "FROZEN",
+      "value": "255.1367",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.atr14",
+      "tier": "FROZEN",
+      "value": "7.2824",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.adr20",
+      "tier": "FROZEN",
+      "value": "0.0246",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "9400676744.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.AMZN.rangeAverage",
+      "tier": "FROZEN",
+      "value": "6.4550",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.ema9",
+      "tier": "FROZEN",
+      "value": "62.8787",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.ema21",
+      "tier": "FROZEN",
+      "value": "62.6257",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.ema50",
+      "tier": "FROZEN",
+      "value": "60.5194",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.atr14",
+      "tier": "FROZEN",
+      "value": "1.1050",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.adr20",
+      "tier": "FROZEN",
+      "value": "0.0166",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1719328155.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.BAC.rangeAverage",
+      "tier": "FROZEN",
+      "value": "1.0455",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.ema9",
+      "tier": "FROZEN",
+      "value": "26.6657",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.ema21",
+      "tier": "FROZEN",
+      "value": "27.1775",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.ema50",
+      "tier": "FROZEN",
+      "value": "27.3329",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.atr14",
+      "tier": "FROZEN",
+      "value": "0.9276",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.adr20",
+      "tier": "FROZEN",
+      "value": "0.0284",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "459153268.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CCL.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.7860",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.ema9",
+      "tier": "FROZEN",
+      "value": "165.6131",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.ema21",
+      "tier": "FROZEN",
+      "value": "160.2358",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.ema50",
+      "tier": "FROZEN",
+      "value": "162.0346",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.atr14",
+      "tier": "FROZEN",
+      "value": "10.2786",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.adr20",
+      "tier": "FROZEN",
+      "value": "0.0544",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1093833593.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.COIN.rangeAverage",
+      "tier": "FROZEN",
+      "value": "8.5839",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.ema9",
+      "tier": "FROZEN",
+      "value": "112.5194",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.ema21",
+      "tier": "FROZEN",
+      "value": "114.4122",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.ema50",
+      "tier": "FROZEN",
+      "value": "113.8821",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.atr14",
+      "tier": "FROZEN",
+      "value": "3.6747",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.adr20",
+      "tier": "FROZEN",
+      "value": "0.0283",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "2241449727.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.CSCO.rangeAverage",
+      "tier": "FROZEN",
+      "value": "3.2875",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.ema9",
+      "tier": "FROZEN",
+      "value": "14.1129",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.ema21",
+      "tier": "FROZEN",
+      "value": "14.1066",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.ema50",
+      "tier": "FROZEN",
+      "value": "14.0166",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.atr14",
+      "tier": "FROZEN",
+      "value": "0.4750",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.adr20",
+      "tier": "FROZEN",
+      "value": "0.0318",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "633123319.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.F.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.4541",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.ema9",
+      "tier": "FROZEN",
+      "value": "346.0354",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.ema21",
+      "tier": "FROZEN",
+      "value": "347.8371",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.ema50",
+      "tier": "FROZEN",
+      "value": "351.0532",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.atr14",
+      "tier": "FROZEN",
+      "value": "9.3269",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.adr20",
+      "tier": "FROZEN",
+      "value": "0.0261",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "8810382852.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.GOOGL.rangeAverage",
+      "tier": "FROZEN",
+      "value": "9.1925",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.ema9",
+      "tier": "FROZEN",
+      "value": "98.7051",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.ema21",
+      "tier": "FROZEN",
+      "value": "97.3686",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.ema50",
+      "tier": "FROZEN",
+      "value": "96.3602",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.atr14",
+      "tier": "FROZEN",
+      "value": "6.1121",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.adr20",
+      "tier": "FROZEN",
+      "value": "0.0523",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1696659849.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.HOOD.rangeAverage",
+      "tier": "FROZEN",
+      "value": "4.9501",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.IESC.ema9",
+      "tier": "DERIVED",
+      "value": "352.9966",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.ema21",
+      "tier": "DERIVED",
+      "value": "353.2321",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.ema50",
+      "tier": "DERIVED",
+      "value": "343.3746",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.atr14",
+      "tier": "DERIVED",
+      "value": "24.1364",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.adr20",
+      "tier": "DERIVED",
+      "value": "0.0670",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.medianDollarVolume",
+      "tier": "DERIVED",
+      "value": "204580994.6400",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.IESC.rangeAverage",
+      "tier": "DERIVED",
+      "value": "23.3959",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.INTC.ema9",
+      "tier": "FROZEN",
+      "value": "94.0875",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.ema21",
+      "tier": "FROZEN",
+      "value": "97.0868",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.ema50",
+      "tier": "FROZEN",
+      "value": "100.6716",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.atr14",
+      "tier": "FROZEN",
+      "value": "6.3889",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.adr20",
+      "tier": "FROZEN",
+      "value": "0.0558",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "9849921234.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.INTC.rangeAverage",
+      "tier": "FROZEN",
+      "value": "5.2915",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.ema9",
+      "tier": "FROZEN",
+      "value": "266.2953",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.ema21",
+      "tier": "FROZEN",
+      "value": "261.9714",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.ema50",
+      "tier": "FROZEN",
+      "value": "254.4999",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.atr14",
+      "tier": "FROZEN",
+      "value": "5.8012",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.adr20",
+      "tier": "FROZEN",
+      "value": "0.0206",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1712421493.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JNJ.rangeAverage",
+      "tier": "FROZEN",
+      "value": "5.3780",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.ema9",
+      "tier": "FROZEN",
+      "value": "356.9330",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.ema21",
+      "tier": "FROZEN",
+      "value": "355.0141",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.ema50",
+      "tier": "FROZEN",
+      "value": "344.2650",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.atr14",
+      "tier": "FROZEN",
+      "value": "6.2670",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.adr20",
+      "tier": "FROZEN",
+      "value": "0.0167",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "2040347102.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.JPM.rangeAverage",
+      "tier": "FROZEN",
+      "value": "5.9378",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.ema9",
+      "tier": "FROZEN",
+      "value": "89.5841",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.ema21",
+      "tier": "FROZEN",
+      "value": "87.7959",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.ema50",
+      "tier": "FROZEN",
+      "value": "85.1284",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.atr14",
+      "tier": "FROZEN",
+      "value": "1.5958",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.adr20",
+      "tier": "FROZEN",
+      "value": "0.0167",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1354764558.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.KO.rangeAverage",
+      "tier": "FROZEN",
+      "value": "1.4740",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.LITE.ema9",
+      "tier": "DERIVED",
+      "value": "862.2732",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.ema21",
+      "tier": "DERIVED",
+      "value": "841.9685",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.ema50",
+      "tier": "DERIVED",
+      "value": "826.9671",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.atr14",
+      "tier": "DERIVED",
+      "value": "81.0755",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.adr20",
+      "tier": "DERIVED",
+      "value": "0.0923",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.medianDollarVolume",
+      "tier": "DERIVED",
+      "value": "3872506949.0000",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.LITE.rangeAverage",
+      "tier": "DERIVED",
+      "value": "75.4418",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.META.ema9",
+      "tier": "FROZEN",
+      "value": "562.1623",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.ema21",
+      "tier": "FROZEN",
+      "value": "576.4755",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.ema50",
+      "tier": "FROZEN",
+      "value": "591.2319",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.atr14",
+      "tier": "FROZEN",
+      "value": "19.8914",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.adr20",
+      "tier": "FROZEN",
+      "value": "0.0302",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "8837685280.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.META.rangeAverage",
+      "tier": "FROZEN",
+      "value": "17.3985",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.ema9",
+      "tier": "FROZEN",
+      "value": "484.4178",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.ema21",
+      "tier": "FROZEN",
+      "value": "469.5544",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.ema50",
+      "tier": "FROZEN",
+      "value": "441.5640",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.atr14",
+      "tier": "FROZEN",
+      "value": "12.0437",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.adr20",
+      "tier": "FROZEN",
+      "value": "0.0242",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "14258382587.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.MSFT.rangeAverage",
+      "tier": "FROZEN",
+      "value": "11.4028",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.ema9",
+      "tier": "FROZEN",
+      "value": "17.7929",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.ema21",
+      "tier": "FROZEN",
+      "value": "18.4953",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.ema50",
+      "tier": "FROZEN",
+      "value": "18.9562",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.atr14",
+      "tier": "FROZEN",
+      "value": "0.7832",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.adr20",
+      "tier": "FROZEN",
+      "value": "0.0376",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "270271548.7500",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NCLH.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.7110",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.ema9",
+      "tier": "FROZEN",
+      "value": "216.3283",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.ema21",
+      "tier": "FROZEN",
+      "value": "214.5813",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.ema50",
+      "tier": "FROZEN",
+      "value": "210.4690",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.atr14",
+      "tier": "FROZEN",
+      "value": "6.4116",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.adr20",
+      "tier": "FROZEN",
+      "value": "0.0265",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "24664584902.0800",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.NVDA.rangeAverage",
+      "tier": "FROZEN",
+      "value": "5.5966",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PAYO.ema9",
+      "tier": "DERIVED",
+      "value": "7.1103",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.ema21",
+      "tier": "DERIVED",
+      "value": "7.0987",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.ema50",
+      "tier": "DERIVED",
+      "value": "6.8553",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.atr14",
+      "tier": "DERIVED",
+      "value": "0.0432",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.adr20",
+      "tier": "DERIVED",
+      "value": "0.0054",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.medianDollarVolume",
+      "tier": "DERIVED",
+      "value": "34889899.6000",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PAYO.rangeAverage",
+      "tier": "DERIVED",
+      "value": "0.0385",
+      "checkpoint": "1.6",
+      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+    },
+    {
+      "id": "indicators.PFE.ema9",
+      "tier": "FROZEN",
+      "value": "27.4358",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.ema21",
+      "tier": "FROZEN",
+      "value": "26.5983",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.ema50",
+      "tier": "FROZEN",
+      "value": "25.7827",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.atr14",
+      "tier": "FROZEN",
+      "value": "0.5831",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.adr20",
+      "tier": "FROZEN",
+      "value": "0.0204",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1029039636.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PFE.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.5416",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.ema9",
+      "tier": "FROZEN",
+      "value": "144.7713",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.ema21",
+      "tier": "FROZEN",
+      "value": "145.3047",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.ema50",
+      "tier": "FROZEN",
+      "value": "145.8937",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.atr14",
+      "tier": "FROZEN",
+      "value": "2.7877",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.adr20",
+      "tier": "FROZEN",
+      "value": "0.0186",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "1305450536.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PG.rangeAverage",
+      "tier": "FROZEN",
+      "value": "2.7073",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.ema9",
+      "tier": "FROZEN",
+      "value": "173.0471",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.ema21",
+      "tier": "FROZEN",
+      "value": "162.1529",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.ema50",
+      "tier": "FROZEN",
+      "value": "149.0669",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.atr14",
+      "tier": "FROZEN",
+      "value": "7.7670",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.adr20",
+      "tier": "FROZEN",
+      "value": "0.0448",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "6243405064.5300",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.PLTR.rangeAverage",
+      "tier": "FROZEN",
+      "value": "7.1621",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.ema9",
+      "tier": "FROZEN",
+      "value": "16.0417",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.ema21",
+      "tier": "FROZEN",
+      "value": "16.0619",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.ema50",
+      "tier": "FROZEN",
+      "value": "16.1648",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.atr14",
+      "tier": "FROZEN",
+      "value": "0.8091",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.adr20",
+      "tier": "FROZEN",
+      "value": "0.0445",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "299768191.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.RIVN.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.7073",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.ema9",
+      "tier": "FROZEN",
+      "value": "18.2292",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.ema21",
+      "tier": "FROZEN",
+      "value": "17.9773",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.ema50",
+      "tier": "FROZEN",
+      "value": "17.7126",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.atr14",
+      "tier": "FROZEN",
+      "value": "0.8502",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.adr20",
+      "tier": "FROZEN",
+      "value": "0.0442",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "936890820.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.SOFI.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.7831",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.ema9",
+      "tier": "FROZEN",
+      "value": "24.9737",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.ema21",
+      "tier": "FROZEN",
+      "value": "24.2919",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.ema50",
+      "tier": "FROZEN",
+      "value": "23.7001",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.atr14",
+      "tier": "FROZEN",
+      "value": "0.5740",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.adr20",
+      "tier": "FROZEN",
+      "value": "0.0214",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "887610765.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.T.rangeAverage",
+      "tier": "FROZEN",
+      "value": "0.5175",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.ema9",
+      "tier": "FROZEN",
+      "value": "344.8996",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.ema21",
+      "tier": "FROZEN",
+      "value": "343.0907",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.ema50",
+      "tier": "FROZEN",
+      "value": "358.4655",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.atr14",
+      "tier": "FROZEN",
+      "value": "13.9392",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.adr20",
+      "tier": "FROZEN",
+      "value": "0.0344",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "11568888408.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.TSLA.rangeAverage",
+      "tier": "FROZEN",
+      "value": "11.4110",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.ema9",
+      "tier": "FROZEN",
+      "value": "109.4964",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.ema21",
+      "tier": "FROZEN",
+      "value": "111.1563",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.ema50",
+      "tier": "FROZEN",
+      "value": "113.5477",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.atr14",
+      "tier": "FROZEN",
+      "value": "2.9883",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.adr20",
+      "tier": "FROZEN",
+      "value": "0.0217",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "2579468582.0000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.WMT.rangeAverage",
+      "tier": "FROZEN",
+      "value": "2.4163",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.ema9",
+      "tier": "FROZEN",
+      "value": "162.5802",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.ema21",
+      "tier": "FROZEN",
+      "value": "158.3670",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.ema50",
+      "tier": "FROZEN",
+      "value": "153.0424",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.atr14",
+      "tier": "FROZEN",
+      "value": "3.5934",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.adr20",
+      "tier": "FROZEN",
+      "value": "0.0210",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.medianDollarVolume",
+      "tier": "FROZEN",
+      "value": "2228965968.5000",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "indicators.XOM.rangeAverage",
+      "tier": "FROZEN",
+      "value": "3.3095",
+      "checkpoint": "1.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    }
+  ]
+}

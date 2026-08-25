@@ -162,7 +162,7 @@ public sealed class PinnedConstantsCheck
         // Named so the number moves when a parameter gains a constant, rather than being a
         // literal somebody has to remember to decrement.
         string[] pinnedParameters = ["Daily API ceiling", "Price floor", "Liquidity floor, long"];
-        coverage.NotExamined(
+        coverage.OutOfScope(
             "rows of the authored parameters table with no code constant yet",
             parameters.Count - pinnedParameters.Length,
             "the parameter arrives with the checkpoint that builds the component it governs");
@@ -170,7 +170,7 @@ public sealed class PinnedConstantsCheck
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
         string[] pinnedBudgetRows =
             ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "Index bars", "History refetch", "Daily total"];
-        coverage.NotExamined(
+        coverage.OutOfScope(
             "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,
             "the request arrives with the checkpoint that makes it. No row of this table is unexaminable "

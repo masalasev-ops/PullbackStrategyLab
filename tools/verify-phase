@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# What a phase signs off against. Runs the whole suite so every check writes its part, then
+# assembles the report from those parts and states one verdict.
+#
+# It does not stop when the suite fails. A red suite is exactly when the report is worth
+# reading, and a run that exited before writing the page would leave the operator with a
+# scrollback instead of a report. The suite's exit code is handed to the assembler so a red
+# suite cannot leave a green report either.
+#
+# One file for both platforms, like migrate and snapshot-db beside it: the logic lives in the
+# Worker where both machines run the same code, and this is the short command.
+
+set -uo pipefail
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+solution="$repository_root/PullbackStrategyLab.sln"
+test_project="$repository_root/src/PullbackStrategyLab.Tests"
+worker_project="$repository_root/src/PullbackStrategyLab.Worker"
+
+# A data root of its own, so a report never depends on, and never destroys, whatever the
+# operator has been running against. The fixture replay builds its own store regardless; this
+# covers the checks that open one.
+: "${PullbackStrategyLab__DataRoot:=$repository_root/data/verify}"
+export PullbackStrategyLab__DataRoot
+
+printf '\n== 1 build\n'
+if ! dotnet build "$solution" --nologo; then
+    printf 'verify-phase: the build failed, so there is nothing to report on.\n' >&2
+    exit 2
+fi
+
+# Every check writes its coverage and its part under artifacts/ as it runs, so the parts are
+# stale until this has run. Cleared first: a part left over from an earlier run reads as this
+# run's evidence and is the one failure mode a report cannot detect in itself.
+rm -f "$repository_root/artifacts/doc-conformance.json" \
+      "$repository_root/artifacts/fixture-diff.json" \
+      "$repository_root/artifacts/phase-report.json" \
+      "$repository_root/artifacts/phase-report.html"
+rm -rf "$repository_root/artifacts/checks"
+
+printf '\n== 2 suite\n'
+dotnet test "$test_project" --no-build --nologo
+suite=$?
+
+printf '\n== 3 report\n'
+dotnet run --project "$worker_project" --no-build -- phase-report --suite "$suite"
+verdict=$?
+
+printf '\nverify-phase: artifacts/phase-report.html\n'
+exit "$verdict"

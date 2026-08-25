@@ -444,3 +444,88 @@ Findings:   Observation. The two bulk responses are 14.3 of the 15.4 MB. Reading
 Carried:    RUNBOOK's step 5, the split history for every survivor, is a second 2,070 calls and
             has not run. Nothing depends on it: splits arrive nightly from the bulk endpoint, so
             what is missing is only the history of splits from before the lab started. Due 1.7.
+
+## 1.7 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `tools/verify-phase`, and the harness behind it. One command builds, runs the suite so
+            every check writes its part under `artifacts/`, then assembles the report and states one
+            verdict. It does not stop when the suite fails: a red suite is exactly when the report
+            is worth reading, and the suite's exit code is handed to the assembler so a red suite
+            cannot leave a green report either.
+            `FixtureVendorHandler`, which serves the captured fixture at the transport rather than
+            at the interface. A fake implementing `IMarketDataVendor` would hand the stages objects
+            a test author built, so the replay would exercise the stages and skip the parsing, the
+            field names, the number formats and the URL the client actually asks for. Handing back
+            the captured bytes runs the real client over the real response and replaces only the
+            network.
+            `PhaseReplay`, the nightly pipeline end to end over the fixture in RUNBOOK's order:
+            universe, history seed, actions, bulk bars, the rebuild refetch, index bars, indicators.
+            The order is itself under test, because an action observed tonight has to block the
+            averages until a refetch made after that observation lands.
+            `fixtures/expectations.json`: 245 expectations, each carrying its tier, the checkpoint
+            that owes it and how it was produced. 21 are `DERIVED`, being the three hand-picked
+            tickers' seven figures each, re-derived by `tools/derive-indicators.py` over the
+            fixture's own bars rather than carried across from the live store.
+            `fixture-replay` and `architecture-conformance` as named CI steps, and
+            `PhaseReportStage`, which asserts nothing and only assembles: a second implementation of
+            a claim inside the reporter would be a second place to keep right.
+            `CheckCoverage.OutOfScope`, separating a claim placed in a later phase from a claim this
+            phase should have asserted and could not.
+
+Measured:   `tools/ci.ps1` green on Windows, 19 steps, 120 tests. `tools/verify-phase` green.
+            81 architecture claims: 17 pass, 0 fail, 64 out of
+            scope, 0 unexamined. 245 expectations, all matched. Inputs `CAPTURED` 37, `AUTHORED` 47.
+            Coverage across all checks: 2,676 examined, 0 unexamined.
+            The replay over the fixture: 17,996 common stock listed, 11,983 screened, 2,002
+            surviving the real floors on that one market day, 7,530 bars seeded over 30 tickers,
+            15 splits and 248 dividends published, 57 demands raised, 753 index bars, 30 tickers
+            computed and 1 demand satisfied. Two seconds.
+            `fixture.actionsObserved` and `fixture.rebuildsStamped` both read `IESC`: the whole
+            rebuild loop, on captured data, end to end.
+
+Verified:   The 21 `DERIVED` values against `tools/derive-indicators.py` run over the replay store:
+            0 disagreements at 4 decimal places. That is a second implementation in a second
+            language from the textbook definitions, so it catches a transcription error, an
+            off-by-one in a window or a seed taken from the wrong place. It cannot catch the two
+            implementations agreeing on a definition that is wrong, which is what the `CONFIRMED`
+            tier is for and which is still owed.
+
+Findings:   Observation. SCHEMA declared `Insert SetupDetector` on `calibration_setup` and no such
+            component exists. Reading: the catalogue names two detectors and the calibration run is
+            both of them. `writer-ownership` had been counting it as one unresolved name for six
+            checkpoints; what changed is that the phase report makes an unexamined item block rather
+            than appear in a log nobody reads. Corrected as a clean edit.
+            Observation. The fixture's control ticker fails the liquidity floor on the captured day.
+            Reading: PAYO's dollar volume was $11.4M on 2026-08-24 and its twenty-session median is
+            $34.9M, against a $20M floor. The floor is a median over twenty sessions and the fixture
+            holds one market day, so applying it to one session screens on a number that is not the
+            number the floor means. The replay measures the screen's verdict under the real floors,
+            then runs against the list the floor did not cut, and both numbers are expectations. The
+            alternative was a fixture that quietly loses a name it was built to check.
+            Observation. Sixty-four of eighty-one architecture claims are about components a later
+            phase builds. Reading: that is the expected shape at 1.7 and it is why the fourth verdict
+            exists. Counting them as unexamined would make every report red for reasons nobody can
+            act on; counting them as examined would let them hide the one claim nobody can check.
+
+            The obligation raised at 1.6, discharged. Both phase 1 defects that passed a unit test
+            and failed live, re-read against the input tiers:
+            The idempotence defect at 1.4 exercised `eod-bulk-last-day`, which had no `CAPTURED`
+            input at the time, so `fixture-inputs` would have listed that endpoint as resting on
+            authored evidence alone and the report would have read unexamined rather than green.
+            The satisfaction-rule defect at 1.6 exercised `eod/{ticker}`, likewise uncaptured,
+            likewise unexamined. Neither would have read green, so the tier definition holds.
+            Worth separating, because it is the stronger claim: the fixture now detects the first of
+            them outright. `bars.unchanged` is 30 because the seeded histories already hold the
+            captured session, and a bound that regressed to the bar date would make it 0 and write
+            7,202 rows instead of 7,172. The second is detected in one direction only: the earliest
+            observation rule leaves IESC blocked and the replay would say so, while the latest
+            observation rule needs two nights to fail and the fixture holds one. That case stays
+            with the permanent unit tests, which is where it belongs.
+
+Carried:    One `CONFIRMED` value per ticker against a charting platform's readout, moved to 1.10.
+            The comparison is made against a chart on a screen, which is what 1.10 builds, and
+            describing it a checkpoint earlier does not make it happen.
+            Whether the fixture should hold twenty market days so the universe screen runs under the
+            floor it means. 1,900 calls and about 130 MB. Due 1.12.
+            RUNBOOK's step 5, the split history for every survivor, still not run. Due 1.12, where it
+            is either run or dropped rather than carried further.

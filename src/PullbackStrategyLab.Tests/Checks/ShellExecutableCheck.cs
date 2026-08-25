@@ -23,7 +23,8 @@ public sealed class ShellExecutableCheck
 
     public ShellExecutableCheck(ITestOutputHelper output) => _output = output;
 
-    private static readonly string[] EntryPoints = ["tools/ci.sh", "tools/migrate", "tools/snapshot-db"];
+    private static readonly string[] EntryPoints =
+        ["tools/ci.sh", "tools/migrate", "tools/snapshot-db", "tools/verify-phase"];
 
     private const string ExecutableMode = "100755";
 

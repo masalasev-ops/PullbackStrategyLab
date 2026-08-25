@@ -879,7 +879,7 @@ tr:hover td{background:#f4f2ec}
 <tr><th style="width:190px">Section</th><th>What it asserts</th></tr>
 <tr><td>Document conformance</td><td>The component catalogue, the limits table, the check lists and the call budget in this document are structured tables. The report parses them and asserts each claim against the code: every component named exists and is registered, every limit matches its config value, every named check exists in the detector, every declared writer is the only writer.</td></tr>
 <tr><td>Fixture diff</td><td>A committed golden fixture holds real bars for a small set of tickers over a fixed window, with expected outputs frozen beside them. The pipeline runs against it and the report diffs actual against expected, stage by stage.</td></tr>
-<tr><td>Coverage</td><td>What each check actually examined, not only whether it passed. A claim the report could not examine is listed as <b>unexamined</b>, which is not a pass.</td></tr>
+<tr><td>Coverage</td><td>What each check actually examined, not only whether it passed. A claim the report could not examine is listed as <b>unexamined</b>, which is not a pass. A claim this document places in a later phase is listed as <b>out of scope</b> and counted separately, because collapsing the two would let a later phase&#39;s rows hide the one row nobody can check.</td></tr>
 </table>
 
 <div class="rule"><b class="lab">Why the fixture is frozen rather than live</b>

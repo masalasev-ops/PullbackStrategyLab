@@ -39,7 +39,7 @@ public sealed class NoSupersededCitationCheck
         coverage
             .Examined("citations checked against the superseded list", inSpecs.Count)
             .Examined("names under Previously decided", superseded.Count)
-            .NotExamined("citations inside a record", inRecords.Count,
+            .OutOfScope("citations inside a record", inRecords.Count,
                 "a dated entry names what authorised it at the time, and correcting that would rewrite history "
                 + "rather than the corpus")
             .Examined("citations inside a record that name a superseded decision",

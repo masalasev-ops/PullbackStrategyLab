@@ -69,7 +69,9 @@ step 'check-api-isolation'          run_check 'api-isolation'
 step 'check-ci-parity'              run_check 'ci-parity'
 step 'check-clock-usage'            run_check 'clock-usage'
 step 'check-bar-append-only'        run_check 'bar-append-only'
-step 'check-fixture-inputs'        run_check 'fixture-inputs'
+step 'check-fixture-inputs'         run_check 'fixture-inputs'
+step 'check-fixture-replay'         run_check 'fixture-replay'
+step 'check-architecture-conformance' run_check 'architecture-conformance'
 
 step 'check-shell-executable'       run_check 'shell-executable'
 
