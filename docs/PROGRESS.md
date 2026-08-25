@@ -228,3 +228,108 @@ Carried:    The 2026-08-24 gap above. Due at 1.6.
             series that has already moved. Making it nightly costs 80 more calls a night against
             a 5,000 ceiling. Raised here rather than decided here, because the cadence is stated
             in two specs and changing it is a decision. Due at 1.6.
+
+## 1.6 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `IndicatorEngine`. EMA 9, 21 and 50 on the adjusted close, ATR 14 on Wilder's
+            smoothing, ADR 20 as a fraction, the 20-session range average and the median dollar
+            volume. Migration 006 creates `indicator_daily`.
+            It refuses in two cases and writes no row in either: a window shorter than the
+            150-session warm-up, and a ticker with a corporate action outstanding. A missing row
+            is meaningful, which a number would not be.
+            The per-ticker history refetch, as a mode of `DailyBarIngestor` rather than a
+            component of its own, because SCHEMA declares one inserter of `daily_bar`. It serves
+            both RUNBOOK's step 4 and the rebuild: the vendor returns a name's whole series
+            adjusted as it adjusts it today, so the series arrives on one basis.
+            Migration 007 creates `history_refetch` (see: A rebuild is satisfied by a recorded refetch, not by inferring one from what changed).
+            `tools/derive-indicators.py`, a second implementation of every formula in another
+            language, reading the store directly. Not run by CI and nothing imports it.
+
+Measured:   Live, as of 2026-08-25. The full cycle, in order: `indicators` refused 1 ticker and
+            computed 2; `backfill --rebuild` fetched 25 names for 25 calls, 18,425 bars
+            published and 17,434 written; `indicators` then computed 25, satisfied 25 demands
+            and blocked 0.
+            2,043 of 2,070 members are short of the warm-up, because the full-universe backfill
+            has not run. That is a carried obligation, not a defect.
+            The three tickers, derived independently and diffed at 4 decimal places: 21 values,
+            0 disagreements. Window 2026-01-20 to 2026-08-24, 150 sessions each.
+
+              IESC  ema_9 352.9966  ema_21 353.2321  ema_50 343.3746  atr_14 24.1364
+                    adr_20 0.0670  range_avg_20 23.3959  dollar_volume_median_20 204,580,994.64
+              LITE  ema_9 862.2732  ema_21 841.9685  ema_50 826.9671  atr_14 81.0755
+                    adr_20 0.0923  range_avg_20 75.4418  dollar_volume_median_20 3,872,506,949.00
+              PAYO  ema_9   7.1103  ema_21   7.0987  ema_50   6.8553  atr_14  0.0432
+                    adr_20 0.0054  range_avg_20  0.0385  dollar_volume_median_20  34,889,899.60
+
+            `tools/ci.ps1` green on Windows, 16 steps, 111 tests.
+
+            **Why these three, which matters more than which.** IESC is the only name in the
+            store with a real corporate action inside the window: a two-for-one on 2026-08-24,
+            and 748 of its 751 stored bars carry an adjusted close that differs from the raw
+            one, so a disagreement on IESC alone would localise to the adjustment. The rebuild
+            demand for it had already fired and been satisfied before these values were taken.
+            LITE is the order-of-magnitude test. It closes near $830 with a 9.2 percent daily
+            range, so `atr_14` lands at 81.08 and `adr_20` at 0.0923: a factor of roughly 880
+            between two columns that a percentage-for-fraction slip would put within ten of each
+            other. Every one of its 751 bars has an adjusted close equal to its raw close, so
+            nothing about the adjustment is being tested by it.
+            PAYO is the clean control near the price floor, at $7.11 with a 0.5 percent daily
+            range and, like LITE, no bar in three years where the adjusted close differs from the
+            raw one. It shares the recursion with the other two and shares no adjustment, so a
+            disagreement on IESC that PAYO does not show is an adjustment fault rather than a
+            formula fault. Its `atr_14` of 0.0432 against an `adr_20` of 0.0054 is also the
+            smallest separation of the three, which is where a units error would hide best.
+
+            **The formulas, stated because a value means nothing without one.** EMA(n) is seeded
+            on the simple mean of the first n adjusted closes and then recursive with a
+            multiplier of 2/(n+1). ATR(14) uses Wilder's smoothing, seeded on the simple mean of
+            the first 14 true ranges, where true range is the greatest of the day's own range and
+            the two gaps from the previous close, taken on the adjusted basis and undefined for
+            the first bar. ADR(20) is the mean of (high-low)/close over the last 20 sessions, a
+            fraction rather than a percentage. The range average is the mean of (high-low) over
+            the same window on the adjusted basis. The median dollar volume is the median of
+            raw close times raw volume, deliberately raw, because it is what changed hands and it
+            is the figure the universe screen uses. High and low are put on the adjusted basis
+            through each bar's own factor, adj_close/close.
+
+Verified:   The derivation shares no code with the engine. It is a different language reading the
+            store directly, with the window selection written out rather than borrowed, which
+            rules out a transcription error, an off-by-one in a window and a seed taken from the
+            wrong place. It does not rule out both implementations agreeing on a definition that
+            is wrong, because the same session wrote both. That is what the charting-platform
+            check is for and it is carried to 1.7.
+            The restatement cycle end to end, as a test: a satisfied demand, a restated ratio, a
+            second demand, the ticker blocked again, and satisfied again only after a second
+            refetch.
+
+Findings:   Observation. The first satisfaction rule inferred the rebuild from bar observations,
+            taking the earliest observation in the window, and it blocked IESC for ever on the
+            live store. Reading: a refetch rewrites the bars the action moved and leaves the
+            recent ones alone, because those were already ingested on the post-action basis, so
+            the window keeps an old earliest observation. The obvious repair, taking the latest
+            observation instead, is worse: the nightly ingest writes a bar for every name every
+            night, so every demand would clear itself by the following evening with nothing
+            refetched, and that failure produces numbers. Both are now permanent tests.
+            Reading, worth separating: the unit test passed against the first rule. It passed
+            because the fixture restated every bar in the series, which a real vendor does not do
+            for bars already on the new basis. The live run is what found it, on the first real
+            split in the store, which is the second time in this phase that a live run has found
+            what a fixture could not.
+            Observation. A refetch done after midnight UTC is invisible to a read as of the
+            previous session date. Reading: that is the point-in-time rule working, not an
+            inconvenience. It means a rebuild honoured tonight takes effect from tonight's
+            session forward, and the tests now say so explicitly by naming the session each step
+            happens on.
+            Observation. `indicator_daily` is keyed on ticker and date, and SCHEMA declares
+            TierClassifier as its only updater. Reading: the engine can therefore insert and
+            nothing else, so a night already written stands and rows computed on a pre-rebuild
+            basis are never revisited. The run reports how many it left alone rather than
+            overwriting them quietly. The fix is a decision about the store's shape rather than a
+            code change, and it is carried.
+
+Carried:    One `CONFIRMED` value per ticker against a charting platform's own readout. Due 1.7.
+            Past indicator rows are not recomputed after a rebuild. Due 1.7.
+            The full-universe backfill, 2N at 4,140 calls, is the two-day operation RUNBOOK
+            describes and has not run. Due 1.7.
+            The dividend pull is weekly, so a dividend effective on a Tuesday is unobserved until
+            the weekly run and the stock is not blocked in between. Raised at 1.5, still open.

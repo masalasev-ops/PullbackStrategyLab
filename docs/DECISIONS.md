@@ -179,6 +179,15 @@ Magnitude does not enter it. A dividend distorts an average less than a split do
 
 Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
 
+**A rebuild is satisfied by a recorded refetch, not by inferring one from what changed**
+The obvious implementation is to infer it. The refetch writes bars, bars carry an `observed_at`, so a window observed after the action must be a window that has been rebuilt. It does not work, and it fails quietly in both directions.
+
+Taking the earliest observation in the window is too strict. A refetch rewrites only the bars whose figures moved, and the recent ones did not move: they were already ingested on the post-action basis. So the window keeps an old earliest observation and the ticker stays blocked for ever, which is what the live store did on the first real split.
+
+Taking the latest observation is too lenient. The nightly ingest writes one new bar for every name every night, so every demand would satisfy itself by the following evening with nothing having been refetched at all. That failure is worse, because it produces numbers.
+
+What the engine needs to know is not what changed. It is whether anybody looked, which is an event with a time, so it is stored as one. `history_refetch` carries a row per ticker per refetch, written even when the series came back identical.
+
 **A rebuild demand is keyed on the action as observed, and a restated action raises a new one**
 Vendors restate corporate actions. Keyed on ticker and effective date, a restated ratio has nowhere to go: the action cannot be stored twice, and the demand it should raise collides with one that may already have been satisfied. The stock stays rebuilt, against a factor the vendor no longer publishes, with the record showing a demand met and the wrong number computed from it. Nothing downstream can see any of that.
 

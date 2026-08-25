@@ -139,8 +139,9 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 | Raised | Obligation | Due at |
 |---|---|---|
 | 1.1 | Expectations for 1.1 to 1.6 owed to the golden fixture with their tier. Done condition seven cannot be met before the fixture exists | 1.7 |
-| 1.5 | `indicator_rebuild` has a reader and no caller. Nothing refuses to run yet, because the thing that would refuse does not exist | 1.6 |
-| 1.5 | The 20 actions of 2026-08-24 in the live store were observed before the rule widened to cover dividends, so the 19 dividends among them raised no demand and their tickers are not blocked. The per-ticker history refetch below re-observes every member's history, which is what a rebuild is, so the gap closes when it runs rather than needing a repair of its own | 1.6 |
+| 1.6 | One `CONFIRMED` value per hand-picked ticker, checked against a charting platform's own readout. The derivation at 1.6 is a second implementation by the same author, which rules out a transcription error and not a shared misreading of a definition. The three values and the exact formula they were computed under are recorded in PROGRESS so the comparison is unambiguous | 1.7 |
+| 1.6 | Indicator rows already written for past sessions are not recomputed when a rebuild lands, so a row computed on the old basis stands. `indicator_daily` is keyed on ticker and date with no observation, and SCHEMA declares TierClassifier as its only updater, so the fix is a decision about the store's shape rather than a code change | 1.7 |
+| 1.6 | The full-universe backfill, RUNBOOK's step 4, has not run. 2N is 4,140 calls against a 5,000 daily ceiling, so it is the two-day operation RUNBOOK describes. Until it runs, indicators exist for the names that carried an action and nothing else | 1.7 |
 
 ---
 

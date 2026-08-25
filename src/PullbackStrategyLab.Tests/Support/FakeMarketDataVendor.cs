@@ -23,6 +23,9 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
     /// </summary>
     public List<(DateOnly Date, CorporateActionType Type)> ActionsRequested { get; } = [];
 
+    /// <summary>Which tickers the per-ticker endpoint was asked for. One call each, so this is the bill.</summary>
+    public List<string> HistoriesRequested { get; } = [];
+
     public int SymbolListRequests { get; private set; }
 
     public FakeMarketDataVendor Listing(string ticker, string type = "Common Stock", string name = "")
@@ -32,7 +35,24 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
     }
 
     /// <summary>States one bar. Volume is given in shares, and dollar volume follows from the close.</summary>
-    public FakeMarketDataVendor Bar(DateOnly date, string ticker, decimal close, long volume)
+    public FakeMarketDataVendor Bar(DateOnly date, string ticker, decimal close, long volume) =>
+        Bar(date, ticker, close, close, close, close, close, volume);
+
+    /// <summary>
+    /// States one bar in full, which a test needs when the raw close and the adjusted close have
+    /// to differ: that gap is the whole of what a corporate action does to a stored series.
+    /// A second call for a date and ticker already stated replaces it, so a test can restate a
+    /// series on a new basis the way the vendor does.
+    /// </summary>
+    public FakeMarketDataVendor Bar(
+        DateOnly date,
+        string ticker,
+        decimal open,
+        decimal high,
+        decimal low,
+        decimal close,
+        decimal adjustedClose,
+        long volume)
     {
         if (!_bars.TryGetValue(date, out List<VendorDailyBar>? day))
         {
@@ -40,7 +60,8 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
             _bars[date] = day;
         }
 
-        day.Add(new VendorDailyBar(ticker, date, close, close, close, close, close, volume));
+        day.RemoveAll(b => string.Equals(b.Ticker, ticker, StringComparison.Ordinal));
+        day.Add(new VendorDailyBar(ticker, date, open, high, low, close, adjustedClose, volume));
         return this;
     }
 
@@ -62,6 +83,28 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
             }
 
             date = date.AddDays(-1);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Restates one ticker's whole adjusted series by a factor, which is what the vendor does the
+    /// evening a corporate action lands: every adjusted close before it moves and the raw prices
+    /// do not. Without this a test's refetch returns figures identical to the stored ones, which
+    /// is a market where a four-for-one changed nothing.
+    /// </summary>
+    public FakeMarketDataVendor Adjust(string ticker, decimal factor)
+    {
+        foreach (List<VendorDailyBar> day in _bars.Values)
+        {
+            for (int i = 0; i < day.Count; i++)
+            {
+                if (string.Equals(day[i].Ticker, ticker, StringComparison.Ordinal))
+                {
+                    day[i] = day[i] with { AdjustedClose = day[i].AdjustedClose * factor };
+                }
+            }
         }
 
         return this;
@@ -123,6 +166,36 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
             : [];
 
         return Task.FromResult(VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(day));
+    }
+
+    /// <summary>
+    /// Everything the fake holds for one ticker in the window, whatever date it was stated
+    /// under. The real endpoint returns a name's whole series adjusted as the vendor adjusts it
+    /// today, so a test that wants a rebuilt series states the new figures and asks again.
+    /// </summary>
+    public Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
+        string ticker,
+        DateOnly from,
+        DateOnly to,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(EodhdClient.DailyHistoryCost))
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorDailyBar>>.OutOfBudget());
+        }
+
+        HistoriesRequested.Add(ticker);
+
+        IReadOnlyList<VendorDailyBar> history = _bars.Values
+            .SelectMany(day => day)
+            .Where(b => string.Equals(b.Ticker, ticker, StringComparison.Ordinal) && b.BarDate >= from && b.BarDate <= to)
+            .OrderBy(b => b.BarDate)
+            .ToArray();
+
+        return Task.FromResult(VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(history));
     }
 
     public Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkSplitsAsync(

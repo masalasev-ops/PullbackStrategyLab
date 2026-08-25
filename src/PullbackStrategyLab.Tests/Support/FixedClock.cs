@@ -17,6 +17,9 @@ public sealed class FixedClock : IClock
 
     public void Advance(TimeSpan by) => UtcNow += by;
 
+    /// <summary>Sets the clock outright, for a test whose subject is which session an instant falls in.</summary>
+    public void MoveTo(DateTimeOffset instant) => UtcNow = instant;
+
     public DateTimeOffset NowIn(string ianaZoneId) => _zones.ToZone(UtcNow, ianaZoneId);
 
     public DateTimeOffset ToZone(DateTimeOffset instant, string ianaZoneId) => _zones.ToZone(instant, ianaZoneId);

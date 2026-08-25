@@ -50,7 +50,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 17:20 | `actions`, splits bulk | 100 |
 | 17:20 | `actions --with-dividends`, weekly rather than nightly. 100 a week over five sessions is the 20, which is an amortised figure and was never the price of a call | 20 |
 | 17:30 | bulk daily bars | 100 |
-| 18:00 | indicators | 0 |
+| 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
+| 18:00 | `indicators` | 0 |
 | 18:10 | scans, ladder grade | 0 |
 | 18:15 | cluster, regime | 0 |
 | 18:20 | detectors, both directions | 0 |
@@ -66,7 +67,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | scoreboard | 0 |
-| **total** | | **~690 against a 5,000 ceiling** |
+| **total** | | **~715 against a 5,000 ceiling** |
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
 

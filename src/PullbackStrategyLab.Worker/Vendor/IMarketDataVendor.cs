@@ -46,12 +46,27 @@ public interface IMarketDataVendor
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Every dividend effective on one date, whole market, one request. Cheaper than splits and
-    /// run weekly rather than nightly, because nothing downstream turns on it yet.
+    /// Every dividend effective on one date, whole market, one request. Run weekly rather than
+    /// nightly, because nothing downstream turns on it yet.
     /// </summary>
     Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkDividendsAsync(
         string exchange,
         DateOnly date,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// One ticker's daily history over a window, in one request. Priced per ticker regardless of
+    /// depth, which is the other half of the endpoint split: ten years costs what one year costs
+    /// here, and one extra session costs a hundred on the bulk endpoint.
+    ///
+    /// Every bar comes back adjusted as the vendor adjusts it today, which is exactly what makes
+    /// this the way a corporate action is honoured: the whole series arrives on one basis.
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
+        string ticker,
+        DateOnly from,
+        DateOnly to,
         ICallBudget budget,
         CancellationToken cancellationToken = default);
 }

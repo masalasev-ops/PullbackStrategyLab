@@ -87,6 +87,21 @@ Insert ActionIngestor · PK (`ticker`, `effective_date`, `type`, `observed_at`)
 
 **A restatement raises a rebuild demand of its own.** Whatever was computed against the old ratio was computed against a number the vendor no longer publishes, and the demand is keyed on the observation rather than on the action, so the new one stands beside the old rather than trying to reopen it.
 
+### `history_refetch`
+Grain: ticker + the instant its whole series was re-observed. Append-only, one row per refetch.
+
+| Column | Type | Note |
+|---|---|---|
+| `ticker`, `refetched_at` | TEXT | PK |
+| `from_date`, `to_date` | TEXT | the window asked for |
+| `bars_written` | INTEGER | how many bars actually changed, which is often zero and is not what the row is for |
+
+Insert DailyBarIngestor
+
+**The row is written even when nothing changed.** The fact anybody downstream needs is that the series was looked at, not that it moved, and those are different facts (see: A rebuild is satisfied by a recorded refetch, not by inferring one from what changed).
+
+**This is what satisfies a rebuild demand.** IndicatorEngine reads the latest refetch of a ticker at or before the as-of date and treats every demand observed at or before it as accounted for.
+
 ### `index_bar`
 Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
 

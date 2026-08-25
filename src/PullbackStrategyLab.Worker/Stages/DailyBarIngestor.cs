@@ -20,8 +20,12 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// Idempotent for its date, which is the done condition and is not the same as append-only.
 /// Re-running writes a row only where the vendor's figures differ from the latest stored
 /// observation, so a rerun after a failed stage costs nothing and changes nothing.
+///
+/// The per-ticker history refetch is the other half of this class, in HistoryBackfill.cs. It is
+/// a mode rather than a component of its own because SCHEMA declares one inserter of daily_bar,
+/// and a second type issuing that statement would be a second writer however sensibly named.
 /// </summary>
-public sealed class DailyBarIngestor
+public sealed partial class DailyBarIngestor
 {
     public const string Name = "daily-bars";
 

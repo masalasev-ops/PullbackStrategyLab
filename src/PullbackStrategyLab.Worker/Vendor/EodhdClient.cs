@@ -44,6 +44,13 @@ public sealed class EodhdClient : IMarketDataVendor
     /// </summary>
     public const int BulkDividendCost = 100;
 
+    /// <summary>
+    /// One ticker's daily history, any depth, one request. The other half of the endpoint split:
+    /// going deep is free here and ruinous on the bulk endpoint, which is why the backfill
+    /// screens on bulk data first and only then fetches history for the survivors.
+    /// </summary>
+    public const int DailyHistoryCost = 1;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
@@ -135,6 +142,44 @@ public sealed class EodhdClient : IMarketDataVendor
         ICallBudget budget,
         CancellationToken cancellationToken = default) =>
         GetBulkActionsAsync(exchange, date, CorporateActionType.Dividend, BulkDividendCost, budget, cancellationToken);
+
+    public async Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
+        string ticker,
+        DateOnly from,
+        DateOnly to,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(DailyHistoryCost))
+        {
+            return VendorResult<IReadOnlyList<VendorDailyBar>>.OutOfBudget();
+        }
+
+        HistoryBarRow[] rows = await GetAsync<HistoryBarRow[]>(
+            $"eod/{Uri.EscapeDataString(ticker)}.{Uri.EscapeDataString(_options.Vendor.Exchange)}",
+            query: $"period=d&from={Iso(from)}&to={Iso(to)}",
+            cancellationToken).ConfigureAwait(false) ?? [];
+
+        IReadOnlyList<VendorDailyBar> bars = rows
+            .Where(r => r.Date is not null)
+            .Select(r => new VendorDailyBar(
+                ticker,
+                DateOnly.ParseExact(r.Date!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                r.Open,
+                r.High,
+                r.Low,
+                r.Close,
+                r.AdjustedClose ?? r.Close,
+                (long)r.Volume))
+            .ToArray();
+
+        return VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(bars);
+    }
+
+    private static string Iso(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// The bulk endpoint asked for actions rather than prices. One shape for both types, because
@@ -286,6 +331,29 @@ public sealed class EodhdClient : IMarketDataVendor
         /// with a fractional part on some rows, and a long would refuse the whole response
         /// rather than the one field.
         /// </summary>
+        public decimal Volume { get; init; }
+    }
+
+    /// <summary>
+    /// The per-ticker endpoint's row. Same fields as the bulk one minus the code, because the
+    /// ticker is in the path rather than in the body.
+    /// </summary>
+    private sealed record HistoryBarRow
+    {
+        public string? Date { get; init; }
+
+        public decimal Open { get; init; }
+
+        public decimal High { get; init; }
+
+        public decimal Low { get; init; }
+
+        public decimal Close { get; init; }
+
+        [JsonPropertyName("adjusted_close")]
+        public decimal? AdjustedClose { get; init; }
+
+        /// <summary>Decimal for the same reason the bulk row's is: the vendor publishes some as fractional.</summary>
         public decimal Volume { get; init; }
     }
 

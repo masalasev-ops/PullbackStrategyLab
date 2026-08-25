@@ -46,6 +46,7 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   DECISIONS.md  PROGRESS.md  CHANGELOG.md  RUNBOOK.md
                   SCREENS.html
 /tools            ci.ps1  ci.sh  verify-phase  snapshot-db  migrate
+                  derive-indicators.py  one-time verification aid, not run by CI
 /prompts          gitignored. spent build prompts, kept locally
 /data             gitignored. the store lives here
 .gitattributes    line endings, normalised to LF in the repository

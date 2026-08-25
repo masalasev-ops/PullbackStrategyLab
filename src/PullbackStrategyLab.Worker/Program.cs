@@ -35,6 +35,7 @@ public static class Program
         builder.Services.AddSingleton<UniverseBuilder>();
         builder.Services.AddSingleton<DailyBarIngestor>();
         builder.Services.AddSingleton<ActionIngestor>();
+        builder.Services.AddSingleton<IndicatorEngine>();
 
         // Only the Worker holds a vendor client. The Api never calls the vendor and gets no key.
         builder.Services.AddHttpClient<IMarketDataVendor, EodhdClient>();
@@ -53,6 +54,8 @@ public static class Program
                 UniverseBuilder.Name => host.Services.GetRequiredService<UniverseBuilder>().RunAsync(rest).GetAwaiter().GetResult(),
                 DailyBarIngestor.Name => host.Services.GetRequiredService<DailyBarIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 ActionIngestor.Name => host.Services.GetRequiredService<ActionIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+                DailyBarIngestor.BackfillName => host.Services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
+                IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
             };
@@ -92,6 +95,8 @@ public static class Program
         UniverseBuilder.Name,
         DailyBarIngestor.Name,
         ActionIngestor.Name,
+        DailyBarIngestor.BackfillName,
+        IndicatorEngine.Name,
     ];
 
     private static void WriteUsage()

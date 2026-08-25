@@ -193,6 +193,42 @@ public sealed class IndicatorRebuildReader
         Open(connection, asOf).Select(d => d.Ticker).ToHashSet(StringComparer.Ordinal);
 }
 
+/// <summary>
+/// When each ticker's whole series was last re-observed on one basis.
+///
+/// Read rather than inferred, and the inference is worth naming because it is the obvious thing
+/// to reach for and it fails in both directions (see: A rebuild is satisfied by a recorded refetch, not by inferring one from what changed).
+/// </summary>
+public static class HistoryRefetchReader
+{
+    /// <summary>
+    /// The latest refetch of each ticker made at or before <paramref name="observedBefore"/>.
+    /// One query for the whole universe, because the engine asks it of every member a night.
+    /// </summary>
+    public static IReadOnlyDictionary<string, DateTimeOffset> LatestByTicker(SqliteConnection connection, DateTimeOffset observedBefore)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT ticker, MAX(refetched_at)
+              FROM history_refetch
+             WHERE refetched_at <= @observed_before
+             GROUP BY ticker;
+            """;
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
+
+        var latest = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            latest[reader.GetString(0)] = StoreText.StorageTextToTimestamp(reader.GetString(1));
+        }
+
+        return latest;
+    }
+}
+
 /// <summary>One stored corporate action, as observed. Ratios are decimal in code and TEXT in storage.</summary>
 public sealed record StoredCorporateAction(
     string Ticker,

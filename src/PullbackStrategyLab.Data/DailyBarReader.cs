@@ -137,6 +137,46 @@ public sealed class DailyBarReader
         return latest;
     }
 
+    /// <summary>
+    /// One ticker's bar on one date, as last observed at or before <paramref name="observedBefore"/>,
+    /// or null if there is none. What the per-ticker backfill compares each returned bar against:
+    /// it walks one name's whole series rather than one date's whole market, so the market-wide
+    /// read would fetch a few thousand rows to answer a question about one.
+    /// </summary>
+    public static StoredDailyBar? Latest(SqliteConnection connection, string ticker, DateOnly barDate, DateTimeOffset observedBefore)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT bar_date, open, high, low, close, adj_close, volume, observed_at
+              FROM daily_bar
+             WHERE ticker = @ticker
+               AND bar_date = @bar_date
+               AND observed_at <= @observed_before
+             ORDER BY observed_at DESC
+             LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@bar_date", StoreText.DateToStorageText(barDate));
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        return reader.Read()
+            ? new StoredDailyBar(
+                ticker,
+                StoreText.StorageTextToDate(reader.GetString(0)),
+                StoreText.StorageTextToPrice(reader.GetString(1)),
+                StoreText.StorageTextToPrice(reader.GetString(2)),
+                StoreText.StorageTextToPrice(reader.GetString(3)),
+                StoreText.StorageTextToPrice(reader.GetString(4)),
+                StoreText.StorageTextToPrice(reader.GetString(5)),
+                reader.GetInt64(6),
+                StoreText.StorageTextToTimestamp(reader.GetString(7)))
+            : null;
+    }
+
     /// <summary>The last instant of a date, in the form observed_at is stored in.</summary>
     private static string EndOf(DateOnly date) =>
         StoreText.DateToStorageText(date) + "T23:59:59.999Z";

@@ -86,6 +86,8 @@ public sealed class PinnedConstantsCheck
             BudgetCost(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, dividends, cost",
             BudgetCost(architecture, "Dividends, bulk"), EodhdClient.BulkDividendCost, "EodhdClient.BulkDividendCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, history refetch, cost",
+            BudgetCost(architecture, "History refetch"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
 
         // And the cadence beside the cost, because on the dividend row the two are what the
         // budget's twenty was hiding. A weekly cadence is only weekly if the nightly invocation
@@ -97,6 +99,22 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("ARCHITECTURE.html, data budget, splits, cadence",
             string.Equals(BudgetCadence(architecture, "Splits, bulk"), "nightly", StringComparison.Ordinal),
             true, "the splits request the stage always makes"));
+
+        // The warm-up depth, stated in RUNBOOK's backfill notes and held by the engine that
+        // refuses to write a row without it.
+        pins.Add(Pin.Text("RUNBOOK.md, the backfill warm-up depth",
+            runbook.Contains("The first 150 sessions are warm-up", StringComparison.Ordinal),
+            IndicatorEngine.WarmupSessions == 150, "IndicatorEngine.WarmupSessions"));
+
+        // The exponential average periods, named in the build plan's 1.6 deliverable.
+        pins.Add(Pin.Text("BUILD_PLAN.md 1.6, the three exponential averages",
+            buildPlan.Contains("EMA 9/21/50", StringComparison.Ordinal),
+            IndicatorEngine.EmaShortPeriod == 9 && IndicatorEngine.EmaMediumPeriod == 21 && IndicatorEngine.EmaLongPeriod == 50,
+            "IndicatorEngine.EmaShortPeriod, EmaMediumPeriod and EmaLongPeriod"));
+        pins.Add(Pin.Text("BUILD_PLAN.md 1.6, the range and true range windows",
+            buildPlan.Contains("ADR20, ATR14", StringComparison.Ordinal),
+            IndicatorEngine.RangeWindow == 20 && IndicatorEngine.AtrPeriod == 14,
+            "IndicatorEngine.RangeWindow and AtrPeriod"));
 
         // The session zone, named in the build plan and defaulted in configuration.
         pins.Add(Pin.Text("BUILD_PLAN.md 1.2, the session zone",
@@ -141,7 +159,7 @@ public sealed class PinnedConstantsCheck
             "the parameter arrives with the checkpoint that builds the component it governs");
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
-        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "Daily total"];
+        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "History refetch", "Daily total"];
         coverage.NotExamined(
             "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,
