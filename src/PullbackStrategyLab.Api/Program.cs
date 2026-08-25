@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
@@ -55,6 +56,28 @@ public static class Program
         // answered from the store read-only.
         app.MapGet("/status", (StoreConnectionFactory connections, IClock clock, IOptions<PullbackStrategyLabOptions> configured) =>
             Results.Ok(LabStatus.Read(connections, clock, configured.Value.DailyCallCeiling)));
+
+        // One stock's window. The only endpoint that takes a name from the caller, so the name
+        // reaches the store as a parameter and never as text in a statement.
+        app.MapGet("/chart/{ticker}", (
+            string ticker,
+            StoreConnectionFactory connections,
+            IClock clock,
+            IOptions<PullbackStrategyLabOptions> configured,
+            int? sessions,
+            string? asOf) =>
+        {
+            DateOnly session = asOf is null
+                ? clock.SessionDate(clock.UtcNow, configured.Value.SessionZone)
+                : DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            return Results.Ok(LabChart.Read(
+                connections,
+                ticker,
+                session,
+                sessions ?? LabChart.DefaultSessions,
+                clock.UtcNow));
+        });
 
         app.Run();
     }

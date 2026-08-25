@@ -589,3 +589,67 @@ Findings:   Observation. `/lab.css` returned 404 from the real host while every 
             a path built from a string, and the fixture is read that way, so it stays.
 
 Carried:    Nothing new.
+
+## 1.10 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      The chart page. Any ticker the store holds bars for, its candles on the adjusted
+            basis, the three exponential averages drawn across them, and the figures the lab
+            stored for that session beside them. A GET form, so a chart is a URL you can keep,
+            and no script anywhere.
+            `/chart/{ticker}` on the read surface, which reads the window plus its 150-session
+            warm-up and draws only the window. A fifty-day average over sixty sessions is a line
+            still climbing out of its own seed for most of the picture.
+            `PullbackStrategyLab.Core.Indicators.Averages`. The arithmetic moved out of
+            IndicatorEngine into Core, so the component that writes the numbers and the surface
+            that draws them are one implementation. IndicatorEngine is still the only writer of
+            `indicator_daily`; the read surface writes nothing.
+            The decision authorising it, **The averages are one implementation, computed nightly
+            and drawn on demand**, which also states why drawing a past session's average is not
+            the reconstruction the evidence rule forbids.
+            **Chart page** added to the component catalogue, and `architecture-conformance`
+            taught to assert a screen against the route that answers for it rather than against
+            a class name a screen does not have.
+
+Measured:   `tools/ci.ps1` green on Windows, 19 steps, 168 tests. `tools/verify-phase` green:
+            82 architecture claims, 18 pass, 0 fail, 64 out of scope, 0 unexamined. 263
+            expectations, 36 of them `DERIVED`.
+            Six new expectations at 1.10, three `DERIVED`: the last point of each drawn line,
+            which is the same value `tools/derive-indicators.py` checks the engine against, plus
+            the agreement itself as a word rather than only as a comparison.
+            Live against the store: `/chart/IESC` draws 60 sessions from 210 read, and the
+            readout reads EMA 9 353.00, EMA 21 353.23, EMA 50 343.37, ADR 20 6.70%, ATR 14 24.14,
+            median dollar volume $204.6M.
+
+Verified:   The property the page exists for is asserted three ways: on the arithmetic, where the
+            last value of the series equals the single value over the same window; through the
+            store, where every drawn line ends on the number the engine wrote; and in the
+            fixture, where all three appear as expectations.
+
+Findings:   Observation. On the first live run the nine and twenty-one day lines matched the
+            stored figures to four decimals and the fifty-day line did not: 343.2979 drawn
+            against 343.3746 stored. Reading: the page read 210 sessions and the engine reads
+            150, and an exponential average seeded 210 sessions back is not the one seeded 150
+            sessions back. The shorter periods had converged and the longest had not, which is
+            the shape this always takes. Both lines looked like a moving average. The series is
+            now recomputed per session over the engine's own window, which makes the last point
+            and the stored number the same number by construction rather than by luck.
+            Reading, worth separating: the decision written before the code said this would
+            happen, in those words, and it still happened. Writing the reason down is what made
+            it a five-minute diagnosis instead of a puzzle.
+            Observation. Running the engine over past sessions to fill the chart's averages
+            returns nothing: `universe-build` has only ever run on 2026-08-25, so no earlier
+            session has a snapshot and the engine has no members to compute for. Reading: that
+            is the point-in-time design refusing exactly what it should. The lab has no record of
+            who was listed on a night it was not running, and writing those rows would be the
+            reconstruction 2.11 sends to `calibration_setup`. The chart computes its lines and
+            stores nothing instead.
+            Observation. The catalogue named no chart page. Reading: found because the
+            conformance check has to place every catalogue row in a phase, and a screen this
+            build produced had no row to place. Added, and the check now asserts screens against
+            routes, which makes the other six screens assertable when their phases arrive rather
+            than permanently unexamined.
+
+Carried:    The `CONFIRMED` values, moved to 1.12. The page that makes the comparison possible
+            now exists and shows the three averages in the two decimals a platform shows; what
+            is left is a person reading a platform and writing three figures down, which is the
+            one step in this corpus a build session cannot do for itself.

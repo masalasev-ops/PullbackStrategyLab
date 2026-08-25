@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Web.Shell;
@@ -124,7 +125,93 @@ public sealed class LabApiClient
         }
     }
 
+    /// <summary>
+    /// One stock's window. Answers with a reason rather than throwing, for the same reason the
+    /// status read does: a ticker the store has never held is an ordinary thing to ask for.
+    /// </summary>
+    public async Task<ChartView> ReadChartAsync(string ticker, int sessions, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/chart/{Uri.EscapeDataString(ticker)}?sessions={sessions}", cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ChartView.Empty(ticker, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            ChartPayload? payload = await JsonSerializer
+                .DeserializeAsync<ChartPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return ChartView.Empty(ticker, "the read surface answered with nothing");
+            }
+
+            if (payload.Nothing is not null)
+            {
+                return ChartView.Empty(payload.Ticker, payload.Nothing);
+            }
+
+            return new ChartView(
+                payload.Ticker,
+                payload.AsOf,
+                payload.Drawn,
+                payload.Read,
+                [.. payload.Bars.Select(b => new Candle(
+                    DateOnly.ParseExact(b.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    b.Open, b.High, b.Low, b.Close))],
+                [.. payload.Averages.Select(a => new AverageLine(a.Name, a.Values))],
+                payload.Readout is null
+                    ? null
+                    : new ChartReadoutView(
+                        payload.Readout.AsOf,
+                        payload.Readout.Ema9,
+                        payload.Readout.Ema21,
+                        payload.Readout.Ema50,
+                        payload.Readout.Atr14,
+                        payload.Readout.Adr20,
+                        payload.Readout.DollarVolumeMedian,
+                        payload.Readout.RangeAverage),
+                null);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException or FormatException)
+        {
+            return ChartView.Empty(ticker, $"the read surface at {BaseAddress} did not answer");
+        }
+    }
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    private sealed record ChartPayload(
+        string Ticker,
+        string AsOf,
+        int Requested,
+        int Drawn,
+        int Read,
+        IReadOnlyList<ChartBarPayload> Bars,
+        IReadOnlyList<ChartAveragePayload> Averages,
+        ChartReadoutPayload? Readout,
+        string? Nothing);
+
+    private sealed record ChartBarPayload(string Date, decimal Open, decimal High, decimal Low, decimal Close, long Volume);
+
+    private sealed record ChartAveragePayload(string Name, int Period, IReadOnlyList<decimal?> Values);
+
+    private sealed record ChartReadoutPayload(
+        string AsOf,
+        decimal Ema9,
+        decimal Ema21,
+        decimal Ema50,
+        decimal Atr14,
+        decimal Adr20,
+        decimal DollarVolumeMedian,
+        decimal RangeAverage);
 
     /// <summary>The wire shape, which is all the two hosts share.</summary>
     private sealed record StatusPayload(

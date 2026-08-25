@@ -828,6 +828,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>ReplayHarness</b></td><td>On proposal</td><td>Re-filters stored setups with a new rule, in seconds</td></tr>
 <tr><td><b>HoldoutRegistry</b></td><td>On replay</td><td>Tracks the eight holdout windows and refuses to re-spend one</td></tr>
 <tr><td><b>AcceptanceGate</b></td><td>Nightly 21:45</td><td>Settles a matured version against its pre-registered target</td></tr>
+<tr><td><b>Chart page</b></td><td>On request</td><td>One stock&#39;s window: candles on the adjusted basis, the three averages, and the figures the lab stored for that session</td></tr>
 <tr><td><b>Watchlist page</b></td><td>On request</td><td>The morning screen, long and short divided</td></tr>
 <tr><td><b>Setup inspector</b></td><td>On request</td><td>One setup: chart, checks, signals, what happened next</td></tr>
 <tr><td><b>Trade journal page</b></td><td>On request</td><td>Closed trades with their loss causes</td></tr>
@@ -838,7 +839,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 51 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 52 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>

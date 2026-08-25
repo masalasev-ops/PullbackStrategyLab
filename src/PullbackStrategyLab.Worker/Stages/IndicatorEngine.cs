@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
@@ -243,116 +244,22 @@ public sealed class IndicatorEngine
             .Select(i => window[i].Close * window[i].Volume)
             .ToArray();
 
+        // The arithmetic itself lives in Core, because the read surface draws these same
+        // averages as lines and a second implementation of them would be a chart drawn from
+        // numbers the lab never acted on.
+        // see: The averages are one implementation, computed nightly and drawn on demand
         return new IndicatorValues(
-            ExponentialAverage(adjustedClose, EmaShortPeriod),
-            ExponentialAverage(adjustedClose, EmaMediumPeriod),
-            ExponentialAverage(adjustedClose, EmaLongPeriod),
-            AverageTrueRange(adjustedHigh, adjustedLow, adjustedClose, AtrPeriod),
+            Averages.Exponential(adjustedClose, EmaShortPeriod),
+            Averages.Exponential(adjustedClose, EmaMediumPeriod),
+            Averages.Exponential(adjustedClose, EmaLongPeriod),
+            Averages.Wilder(adjustedHigh, adjustedLow, adjustedClose, AtrPeriod),
             adr,
-            Median(dollarVolume),
+            Averages.Median(dollarVolume),
             tail.Sum() / RangeWindow);
     }
 
-    /// <summary>
-    /// The exponential moving average, seeded on the simple average of the first
-    /// <paramref name="period"/> values and then recursive.
-    ///
-    /// The seed is a choice rather than a law and it is stated here because it is the single
-    /// most common reason two correct implementations disagree. Seeding on the first value
-    /// instead converges to the same place and differs for a long time on the way, which is
-    /// exactly the sort of difference that is invisible in a chart and fatal in a comparison.
-    /// </summary>
-    public static decimal ExponentialAverage(IReadOnlyList<decimal> values, int period)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        ArgumentOutOfRangeException.ThrowIfLessThan(values.Count, period);
 
-        decimal average = 0m;
-        for (int i = 0; i < period; i++)
-        {
-            average += values[i];
-        }
 
-        average /= period;
-
-        decimal multiplier = 2m / (period + 1);
-        for (int i = period; i < values.Count; i++)
-        {
-            average += (values[i] - average) * multiplier;
-        }
-
-        return average;
-    }
-
-    /// <summary>
-    /// Wilder's average true range. True range is the greatest of the day's own range, the gap
-    /// up from yesterday's close and the gap down to it, so a stock that opens ten percent away
-    /// and does not move all day has a large true range and a small daily range.
-    ///
-    /// Wilder's smoothing, not an exponential average with the same period: they are different
-    /// numbers and only one of them is what ATR has meant since 1978. The seed is the simple
-    /// average of the first <paramref name="period"/> true ranges.
-    /// </summary>
-    public static decimal AverageTrueRange(
-        IReadOnlyList<decimal> high,
-        IReadOnlyList<decimal> low,
-        IReadOnlyList<decimal> close,
-        int period)
-    {
-        ArgumentNullException.ThrowIfNull(high);
-        ArgumentNullException.ThrowIfNull(low);
-        ArgumentNullException.ThrowIfNull(close);
-        ArgumentOutOfRangeException.ThrowIfLessThan(close.Count, period + 1);
-
-        // The first bar has no previous close, so it has no true range. The series starts at the
-        // second bar, which is why this needs one more session than its period.
-        var trueRange = new decimal[close.Count - 1];
-        for (int i = 1; i < close.Count; i++)
-        {
-            decimal previous = close[i - 1];
-            decimal range = high[i] - low[i];
-            decimal upGap = Math.Abs(high[i] - previous);
-            decimal downGap = Math.Abs(low[i] - previous);
-            trueRange[i - 1] = Math.Max(range, Math.Max(upGap, downGap));
-        }
-
-        decimal atr = 0m;
-        for (int i = 0; i < period; i++)
-        {
-            atr += trueRange[i];
-        }
-
-        atr /= period;
-
-        for (int i = period; i < trueRange.Length; i++)
-        {
-            atr = ((atr * (period - 1)) + trueRange[i]) / period;
-        }
-
-        return atr;
-    }
-
-    /// <summary>
-    /// The median rather than the mean, for the reason UniverseBuilder takes the median: one
-    /// earnings day at twenty times normal volume carries a name over a floor it does not
-    /// otherwise clear.
-    /// </summary>
-    public static decimal Median(decimal[] values)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Length == 0)
-        {
-            return 0m;
-        }
-
-        decimal[] sorted = [.. values];
-        Array.Sort(sorted);
-
-        int middle = sorted.Length / 2;
-        return sorted.Length % 2 == 1
-            ? sorted[middle]
-            : (sorted[middle - 1] + sorted[middle]) / 2m;
-    }
 
     /// <summary>
     /// Recomputes every session already written for one ticker, except the one just computed.

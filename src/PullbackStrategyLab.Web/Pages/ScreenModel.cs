@@ -20,7 +20,7 @@ public abstract class ScreenModel : PageModel
         .FirstOrDefault(i => string.Equals(i.Path, Request.Path.Value, StringComparison.OrdinalIgnoreCase))
         ?? Navigation.Items[0];
 
-    public async Task OnGetAsync(CancellationToken cancellationToken)
+    public virtual async Task OnGetAsync(CancellationToken cancellationToken)
     {
         LabStatusView status = await _api.ReadStatusAsync(cancellationToken).ConfigureAwait(false);
         ViewData["Status"] = status;

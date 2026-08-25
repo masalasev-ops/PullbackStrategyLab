@@ -54,6 +54,9 @@ public sealed partial class ArchitectureConformanceCheck
     [GeneratedRegex(@"(?:AddSingleton|AddScoped|AddTransient|AddHttpClient)<(?<name>[^,>]+)", RegexOptions.CultureInvariant)]
     private static partial Regex Registration();
 
+    [GeneratedRegex("""^@page\s+"(?<route>[^"]+)""", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex PageRoute();
+
     /// <summary>
     /// The failure-behaviour table states conditions in prose, so it names no component a parser
     /// could follow. Each row is placed here by hand against the phase that builds the behaviour,
@@ -78,6 +81,38 @@ public sealed partial class ArchitectureConformanceCheck
         ["Follow-up date is a holiday"] = 3,
         ["Someone edits the baseline"] = 5,
     };
+
+    /// <summary>
+    /// Which route answers for each screen in the catalogue.
+    ///
+    /// Recorded here because a screen has no class a catalogue name resolves to. Every one of
+    /// these is a page a later phase fills, and the nav's own list is the five that are already
+    /// reachable; a screen this list does not name is unexamined rather than skipped, so adding
+    /// a screen to the catalogue is visible.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> Screens { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Chart page"] = "/chart/{ticker?}",
+        ["Watchlist page"] = "/watchlist",
+        ["Setup inspector"] = "/setups",
+        ["Trade journal page"] = "/journal",
+        ["Research ledger page"] = "/research",
+        ["Pack comparison page"] = "/scoreboard",
+        ["Lab scoreboard page"] = "/scoreboard",
+    };
+
+    /// <summary>
+    /// The routes the Web project's pages declare, read from the sources rather than from the
+    /// compiled routes: the check reads the repository, and a page whose route was deleted
+    /// should fail here rather than in a browser.
+    /// </summary>
+    private static IReadOnlyList<string> RoutedPages { get; } = RepositoryLayout.Root is var root
+        ? [.. Directory.EnumerateFiles(Path.Combine(root, "src", "PullbackStrategyLab.Web", "Pages"), "*.cshtml", SearchOption.AllDirectories)
+            .Select(File.ReadAllText)
+            .Select(text => PageRoute().Match(text))
+            .Where(m => m.Success)
+            .Select(m => m.Groups["route"].Value)]
+        : [];
 
     /// <summary>
     /// The limits are the risk caps, and RiskGate is the only thing that may apply them. They
@@ -129,10 +164,16 @@ public sealed partial class ArchitectureConformanceCheck
 
             if (component.Contains(' ', StringComparison.Ordinal))
             {
-                // A page rather than a type. Phase 1 has no page in the catalogue, and a phase
-                // that does will assert it against a route rather than against a class name.
-                claims.Add(new Claim("Component catalogue", component, Unexamined,
-                    "a screen rather than a type, and no assertion for a screen exists yet"));
+                // A screen rather than a type, asserted against a Razor page that answers a
+                // route rather than against a class name. A page has no class a catalogue name
+                // resolves to, and asserting one would be asserting a naming convention.
+                claims.Add(Screens.TryGetValue(component, out string? route)
+                    ? RoutedPages.Contains(route, StringComparer.Ordinal)
+                        ? new Claim("Component catalogue", component, Pass, $"a page answers {route}")
+                        : new Claim("Component catalogue", component, Fail,
+                            $"phase {placed} has run and no page declares the route {route}")
+                    : new Claim("Component catalogue", component, Unexamined,
+                        "a screen with no route recorded against it, so nothing says what would answer for it"));
                 continue;
             }
 
@@ -252,7 +293,7 @@ public sealed partial class ArchitectureConformanceCheck
             + string.Join("\n  ", failed.Select(c => $"[{c.Table}] {c.Subject}: {c.Detail}")));
 
         // Stated so the parser stopping cannot pass as a document that got smaller.
-        Assert.True(catalogue.Count == 51, $"The component catalogue parsed {catalogue.Count} rows and states 51.");
+        Assert.True(catalogue.Count == 52, $"The component catalogue parsed {catalogue.Count} rows and states 52.");
         Assert.True(failures.Count == FailureBehaviourPhases.Count,
             $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourPhases.Count} are placed in a phase.");
     }

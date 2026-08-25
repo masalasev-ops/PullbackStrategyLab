@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -53,11 +54,11 @@ public sealed class IndicatorEngineTests : IDisposable
         // multiplier is 2/4, so 2 + (4-2)/2 = 3, then 3 + (5-3)/2 = 4.
         decimal[] values = [1m, 2m, 3m, 4m, 5m];
 
-        Assert.Equal(4m, IndicatorEngine.ExponentialAverage(values, 3));
+        Assert.Equal(4m, Averages.Exponential(values, 3));
 
         // And with no values beyond the seed it is exactly the simple average, which is the
         // property that makes the seed checkable by hand at all.
-        Assert.Equal(2m, IndicatorEngine.ExponentialAverage([1m, 2m, 3m], 3));
+        Assert.Equal(2m, Averages.Exponential([1m, 2m, 3m], 3));
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public sealed class IndicatorEngineTests : IDisposable
 
         // Seeded on the mean of the two true ranges, 1.0 and 0.6, which is 0.8. Nothing follows
         // the seed here, so the answer is the seed.
-        Assert.Equal(0.8m, IndicatorEngine.AverageTrueRange(high, low, close, 2));
+        Assert.Equal(0.8m, Averages.Wilder(high, low, close, 2));
     }
 
     [Fact]
@@ -86,7 +87,7 @@ public sealed class IndicatorEngineTests : IDisposable
         decimal[] low = [10m, 10m, 11m, 12m];
         decimal[] close = [10m, 11m, 12m, 15m];
 
-        Assert.Equal(2m, IndicatorEngine.AverageTrueRange(high, low, close, 2));
+        Assert.Equal(2m, Averages.Wilder(high, low, close, 2));
     }
 
     [Fact]

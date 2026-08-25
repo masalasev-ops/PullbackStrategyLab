@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
+using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
@@ -217,6 +218,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(ChartFigures());
+        measurements.AddRange(ReadSurfaceFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -312,6 +314,41 @@ public sealed class PhaseReplay : IDisposable
             new Measurement($"chart.{Ticker}.lastCentre", Coordinate(chart.Candles[^1].Centre)),
             new Measurement($"chart.{Ticker}.lastHighY", Coordinate(chart.Candles[^1].HighY)),
             new Measurement($"chart.{Ticker}.lastLowY", Coordinate(chart.Candles[^1].LowY)),
+        ];
+    }
+
+    /// <summary>
+    /// What the read surface answers for one stock's window, and the property the chart page
+    /// exists to make visible: the last point of every line it draws is the number the engine
+    /// stored for that session.
+    ///
+    /// Frozen as three values and one word rather than as a comparison alone, so a run where
+    /// both sides moved together still shows up. Two numbers that agree with each other and
+    /// with nothing else is the failure a single "they matched" would hide.
+    /// see: The averages are one implementation, computed nightly and drawn on demand
+    /// </summary>
+    private IReadOnlyList<Measurement> ReadSurfaceFigures()
+    {
+        const string Ticker = "IESC";
+
+        ChartResponse chart = LabChart.Read(_connections, Ticker, AsOf, ChartSessions, _clock.UtcNow);
+
+        decimal Drawn(string name) => chart.Averages.Single(a => a.Name == name).Values[^1]
+            ?? throw new InvalidOperationException($"{name} has no value at the last drawn session.");
+
+        bool agrees = chart.Readout is not null
+            && Drawn("ema9") == chart.Readout.Ema9
+            && Drawn("ema21") == chart.Readout.Ema21
+            && Drawn("ema50") == chart.Readout.Ema50;
+
+        return
+        [
+            new Measurement($"read.{Ticker}.drawn", chart.Drawn.ToString(CultureInfo.InvariantCulture)),
+            new Measurement($"read.{Ticker}.read", chart.Read.ToString(CultureInfo.InvariantCulture)),
+            new Measurement($"read.{Ticker}.drawnEma9", Figure(Drawn("ema9"))),
+            new Measurement($"read.{Ticker}.drawnEma21", Figure(Drawn("ema21"))),
+            new Measurement($"read.{Ticker}.drawnEma50", Figure(Drawn("ema50"))),
+            new Measurement($"read.{Ticker}.drawnAgreesWithStored", agrees ? "yes" : "no"),
         ];
     }
 

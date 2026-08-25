@@ -179,6 +179,14 @@ Development happens on Windows today and moves to macOS. Both are case-insensiti
 **Averages are computed locally, never through the vendor's technical endpoint**
 About 45,000 calls a day for arithmetic that is one recursive loop over data already stored.
 
+**The averages are one implementation, computed nightly and drawn on demand**
+
+The arithmetic lives in Core and is called by two components. IndicatorEngine computes the value at the as-of date and is the sole writer of `indicator_daily`. The read surface computes the same average at every session in a window, which is the shape a chart needs, and writes nothing.
+
+The alternative is a second implementation in the read surface, and it is a bad one for a reason that is specific to averages: two exponential averages that disagree only in their seed converge to the same place and differ for a long time on the way, and both of them look like a moving average. A chart drawn from the second one would be a picture of numbers the lab never acted on, and there is no way to see that by looking at it. The one line the two share is asserted rather than assumed: the last value of the drawn series equals the value the engine stores for the same window.
+
+Drawing a past session's average is not the reconstruction the evidence rule forbids. Nothing is stored, and a chart is a picture of one stock rather than a claim about what the lab would have flagged. Writing those rows into `indicator_daily` would be that reconstruction, and it is refused for the same reason 2.11 sends a historical detector run to `calibration_setup`: the lab has no record of who was listed on a night it was not running. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
+
 **An unprocessed corporate action of any kind blocks calculation, not only a split**
 The rule was written naming splits because a split is the loud case. The reason it gives, that an unprocessed action corrupts every moving average a stock has at once, covers any action that moves the adjusted close, and a dividend does. A rule narrower than its own stated reason is a rule that will be applied inconsistently by whoever reads it next.
 

@@ -27,6 +27,11 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-08-25 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  A component catalogue of 51 rows with no chart page, and an ordering note reading "The 51 components are listed by layer".
+Now:  A **Chart page** row above the watchlist page, and "The 52 components are listed by layer", with a sentence saying the chart page sits with the screens rather than with the ingest components it draws from.
+Why:  1.10 built a screen the catalogue did not name. A component added without a catalogue row is a component with no description, and the conformance check now asserts every screen against the route that answers for it, so the omission would have read as a page nobody had to account for.
+
 ### 2026-08-25 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
 Was:  A checks table listing twelve properties, and a `/fixtures` layout entry naming only the captured inputs.
 Now:  The table lists every check that runs, gaining `fixture-replay`, `architecture-conformance`, `api-isolation`, `bar-append-only`, `ci-parity`, `clock-usage` and `shell-executable`, with a paragraph saying that is the rule. `/fixtures` also names `expectations.json`.

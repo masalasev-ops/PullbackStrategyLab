@@ -1811,6 +1811,50 @@
       "value": "124.52",
       "checkpoint": "1.8",
       "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "read.IESC.drawn",
+      "tier": "FROZEN",
+      "value": "60",
+      "checkpoint": "1.10",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "read.IESC.read",
+      "tier": "FROZEN",
+      "value": "210",
+      "checkpoint": "1.10",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "210, being the 60 sessions drawn and the 150-session warm-up behind them. A line drawn from the window alone would still be climbing out of its own seed for most of the picture."
+    },
+    {
+      "id": "read.IESC.drawnEma9",
+      "tier": "DERIVED",
+      "value": "352.9966",
+      "checkpoint": "1.10",
+      "producedBy": "tools/derive-indicators.py, the same value the engine is checked against"
+    },
+    {
+      "id": "read.IESC.drawnEma21",
+      "tier": "DERIVED",
+      "value": "353.2321",
+      "checkpoint": "1.10",
+      "producedBy": "tools/derive-indicators.py, the same value the engine is checked against"
+    },
+    {
+      "id": "read.IESC.drawnEma50",
+      "tier": "DERIVED",
+      "value": "343.3746",
+      "checkpoint": "1.10",
+      "producedBy": "tools/derive-indicators.py, the same value the engine is checked against"
+    },
+    {
+      "id": "read.IESC.drawnAgreesWithStored",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.10",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The property the chart page exists to make visible. It failed on the first live run for the fifty-day line, 343.2979 drawn against 343.3746 stored, because the page read a longer window than the engine and a longer window seeds the average somewhere else. Both looked like a moving average."
     }
   ]
 }
