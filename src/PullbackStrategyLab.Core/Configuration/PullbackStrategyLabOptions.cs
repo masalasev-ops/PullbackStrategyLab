@@ -38,6 +38,36 @@ public sealed record PullbackStrategyLabOptions
     public VendorOptions Vendor { get; init; } = new();
 
     public ApiOptions Api { get; init; } = new();
+
+    public UniverseOptions Universe { get; init; } = new();
+}
+
+/// <summary>
+/// The floors that decide the tradable list. Every value here is an authored parameter, and
+/// pinned-constants asserts each against the row in the architecture document that states it.
+/// </summary>
+public sealed record UniverseOptions
+{
+    /// <summary>
+    /// Below this, spreads widen enough to swallow the stop, and it is outside the range the
+    /// strategy is actually traded in. Both sides.
+    /// </summary>
+    public decimal PriceFloor { get; init; } = 5m;
+
+    /// <summary>
+    /// Median daily dollar volume on the long side. The filter doing the real work: price is a
+    /// weak proxy for liquidity.
+    /// </summary>
+    public decimal LiquidityFloorLong { get; init; } = 20_000_000m;
+
+    /// <summary>
+    /// How many trading sessions the median is taken over. Twenty is what the backfill order in
+    /// RUNBOOK screens on, and the screen is what keeps the per-ticker history inside the ceiling.
+    /// </summary>
+    public int LiquidityWindowSessions { get; init; } = 20;
+
+    /// <summary>The vendor's own word for the only instrument type that survives the filter.</summary>
+    public string SecurityType { get; init; } = "Common Stock";
 }
 
 /// <summary>
@@ -59,9 +89,17 @@ public sealed record VendorOptions
     /// Lives only in appsettings.Secrets.json, which is gitignored and travels between
     /// machines by deliberate copy rather than by clone. Empty on a machine that has no
     /// secrets file, which is a working state for everything that does not call the vendor.
+    ///
+    /// It is read from <see cref="VendorTokenKey"/> rather than from this section, because the
+    /// secrets file on a machine holds keys for more than this lab and grouping them under one
+    /// heading is what makes it copyable as a unit. Registered before environment variables all
+    /// the same, so <c>Secrets__EodhdApiToken</c> in the environment still wins.
     /// see: Secrets live in a gitignored appsettings.Secrets.json, registered before environment variables
     /// </summary>
-    public string ApiKey { get; init; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>The one configuration key the vendor token is read from. Named once, here.</summary>
+    public const string VendorTokenKey = "Secrets:EodhdApiToken";
 
     public bool HasApiKey => !string.IsNullOrWhiteSpace(ApiKey);
 }

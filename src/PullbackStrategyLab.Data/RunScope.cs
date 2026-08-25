@@ -11,7 +11,7 @@ namespace PullbackStrategyLab.Data;
 /// that threw is worth more in the record as a failure than as a row that starts and never
 /// ends, which reads as a job still running.
 /// </summary>
-public sealed class RunScope : IDisposable
+public sealed class RunScope : ICallBudget, IDisposable
 {
     private readonly RunLogger _runLogger;
     private readonly SqliteConnection _connection;
@@ -55,14 +55,23 @@ public sealed class RunScope : IDisposable
     /// stage stops and completes as partial rather than overrunning. The caller decides
     /// what a partial run means for its own output; nothing here guesses.
     /// </summary>
-    public bool TryCountCall()
+    public bool TryCountCall() => TryCountCalls(1);
+
+    /// <summary>
+    /// Counts a request costing more than one. A whole-market bulk request is priced far above
+    /// a single-ticker one, and a budget that counted requests rather than their cost would
+    /// report a fifth of what the day actually spent.
+    /// </summary>
+    public bool TryCountCalls(int cost)
     {
-        if (CallsRemaining == 0)
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cost);
+
+        if (CallsRemaining < cost)
         {
             return false;
         }
 
-        CallsUsed++;
+        CallsUsed += cost;
         return true;
     }
 

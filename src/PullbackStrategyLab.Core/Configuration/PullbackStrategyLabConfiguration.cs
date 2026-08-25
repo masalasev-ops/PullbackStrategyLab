@@ -76,6 +76,18 @@ public static class PullbackStrategyLabConfiguration
 
         services.AddOptions<PullbackStrategyLabOptions>()
             .Bind(configuration.GetSection(PullbackStrategyLabOptions.SectionName))
+            // The vendor token sits outside the lab's section, under the heading the secrets
+            // file groups every key on the machine by. Bound explicitly here so there is one
+            // place that knows where it lives, and so it still arrives through the same
+            // provider chain, where an environment variable wins.
+            .PostConfigure(options =>
+            {
+                string? token = configuration[VendorOptions.VendorTokenKey];
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    options.Vendor.ApiKey = token;
+                }
+            })
             .ValidateDataAnnotations();
 
         services.AddSingleton<IClock, SystemClock>();

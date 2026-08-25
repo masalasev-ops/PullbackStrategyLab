@@ -9,22 +9,46 @@ namespace PullbackStrategyLab.Tests.Support;
 /// Attribution is by enclosing type rather than by file, because that is the unit SCHEMA
 /// declares. A helper in another type issuing the same statement would be a second writer
 /// of the same table, and the whole point of the rule is that there is exactly one.
+///
+/// An upsert counts as both operations on the table it names. <c>ON CONFLICT DO UPDATE</c>
+/// updates rows, and reading it as an insert alone is how a component acquires an undeclared
+/// update on a table somebody else owns.
 /// </summary>
 public static partial class SourceWrites
 {
     [GeneratedRegex(@"INSERT\s+INTO\s+(?<table>[a-z_]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Insert();
 
-    [GeneratedRegex(@"UPDATE\s+(?<table>[a-z_]+)\s", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// A standalone update. The DO UPDATE of an upsert is excluded here and picked up from the
+    /// insert instead, because the table it writes is the one the insert names, not the word
+    /// that follows it.
+    /// </summary>
+    [GeneratedRegex(@"(?<!\bDO\s{1,20})UPDATE\s+(?<table>[a-z_]+)\s", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Update();
 
     [GeneratedRegex(@"DELETE\s+FROM\s+(?<table>[a-z_]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Delete();
 
+    [GeneratedRegex(@"ON\s+CONFLICT[\s\S]{0,400}?DO\s+UPDATE", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex UpsertTail();
+
     [GeneratedRegex(@"^\s*(?:public|internal|private|protected|sealed|static|abstract|partial|file|\s)*\b(?:class|record|struct|interface)\s+(?<name>\w+)", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex TypeDeclaration();
 
     public static IReadOnlyList<SourceWrite> InProductionSource { get; } = Read(RepositoryLayout.ProductionSourceFiles);
+
+    /// <summary>
+    /// Every type the shipped source declares. What tells a declared writer that has not been
+    /// built yet apart from one that exists and has stopped writing: the first is unexamined,
+    /// the second is a failure, and a check that could not separate them would have to treat
+    /// both as passes.
+    /// </summary>
+    public static IReadOnlySet<string> ProductionTypeNames { get; } = RepositoryLayout.ProductionSourceFiles
+        .SelectMany(f => TypeDeclaration()
+            .Matches(CSharpSource.WithoutComments(RepositoryLayout.Read(f)))
+            .Select(m => m.Groups["name"].Value))
+        .ToHashSet(StringComparer.Ordinal);
 
     /// <summary>How many files were read, so the check can report what it covered rather than only what it found.</summary>
     public static int ProductionFilesRead => RepositoryLayout.ProductionSourceFiles.Count;
@@ -46,29 +70,47 @@ public static partial class SourceWrites
         Match[] types = TypeDeclaration().Matches(text).ToArray();
         var writes = new List<SourceWrite>();
 
-        void Collect(Regex pattern, StoreOperation operation, bool isDelete)
+        void Add(int index, string table, StoreOperation operation, bool isDelete) =>
+            writes.Add(new SourceWrite(
+                label,
+                text.AsSpan(0, index).Count('\n') + 1,
+                EnclosingType(types, index),
+                table,
+                operation,
+                isDelete));
+
+        foreach (Match match in Insert().Matches(text))
         {
-            foreach (Match match in pattern.Matches(text))
+            string table = match.Groups["table"].Value;
+            Add(match.Index, table, StoreOperation.Insert, isDelete: false);
+
+            if (UpsertTail().IsMatch(StatementFrom(text, match.Index)))
             {
-                writes.Add(new SourceWrite(
-                    label,
-                    text.AsSpan(0, match.Index).Count('\n') + 1,
-                    EnclosingType(types, match.Index),
-                    match.Groups["table"].Value,
-                    operation,
-                    isDelete));
+                Add(match.Index, table, StoreOperation.Update, isDelete: false);
             }
         }
 
-        Collect(Insert(), StoreOperation.Insert, isDelete: false);
-        Collect(Update(), StoreOperation.Update, isDelete: false);
+        foreach (Match match in Update().Matches(text))
+        {
+            Add(match.Index, match.Groups["table"].Value, StoreOperation.Update, isDelete: false);
+        }
 
         // A delete has no declared operation anywhere in SCHEMA, and bars are append-only
         // besides, so any delete found is reported by whichever check reads this rather than
         // being silently dropped for having nowhere to belong.
-        Collect(Delete(), StoreOperation.Update, isDelete: true);
+        foreach (Match match in Delete().Matches(text))
+        {
+            Add(match.Index, match.Groups["table"].Value, StoreOperation.Update, isDelete: true);
+        }
 
-        return writes.OrderBy(w => w.Line).ToArray();
+        return writes.OrderBy(w => w.Line).ThenBy(w => w.Operation).ToArray();
+    }
+
+    /// <summary>The rest of the statement an insert starts, so an upsert tail is read against its own insert.</summary>
+    private static string StatementFrom(string text, int index)
+    {
+        int end = text.IndexOf(';', index);
+        return end < 0 ? text[index..] : text[index..end];
     }
 
     private static string EnclosingType(IReadOnlyList<Match> types, int index)

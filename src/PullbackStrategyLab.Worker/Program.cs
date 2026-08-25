@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
+using PullbackStrategyLab.Worker.Vendor;
 
 namespace PullbackStrategyLab.Worker;
 
@@ -22,10 +23,19 @@ public static class Program
             return args.Length == 0 ? 2 : 0;
         }
 
-        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        // The content root is where the binary sits, not where the shell happened to be.
+        // Scheduling lives outside the application, and Task Scheduler and launchd each set a
+        // working directory of their own choosing, so a configuration file found by the current
+        // directory is a configuration file found on one machine and missed on the other.
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder(
+            new HostApplicationBuilderSettings { ContentRootPath = AppContext.BaseDirectory });
         builder.AddPullbackStrategyLabStore();
         builder.Services.AddSingleton<MigrateStage>();
         builder.Services.AddSingleton<SnapshotStage>();
+        builder.Services.AddSingleton<UniverseBuilder>();
+
+        // Only the Worker holds a vendor client. The Api never calls the vendor and gets no key.
+        builder.Services.AddHttpClient<IMarketDataVendor, EodhdClient>();
 
         using IHost host = builder.Build();
 
@@ -38,6 +48,7 @@ public static class Program
             {
                 MigrateStage.Name => host.Services.GetRequiredService<MigrateStage>().Run(rest),
                 SnapshotStage.Name => host.Services.GetRequiredService<SnapshotStage>().Run(rest),
+                UniverseBuilder.Name => host.Services.GetRequiredService<UniverseBuilder>().RunAsync(rest).GetAwaiter().GetResult(),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
             };
@@ -74,6 +85,7 @@ public static class Program
     [
         MigrateStage.Name,
         SnapshotStage.Name,
+        UniverseBuilder.Name,
     ];
 
     private static void WriteUsage()

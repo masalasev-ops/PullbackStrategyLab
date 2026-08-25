@@ -58,13 +58,15 @@ public sealed class WriterOwnershipCheck
             }
         }
 
-        // Direction two: every declared writer of a store that exists today is present in the code.
-        var typeNames = new HashSet<string>(
-            SourceWrites.InProductionSource.Select(w => w.Type),
+        // Direction two: every declared writer of a store that exists today, whose component has
+        // been built, issues the statement it is declared for.
+        var issued = new HashSet<string>(
+            SourceWrites.InProductionSource.Select(w => $"{w.Type}/{w.Table}/{w.Operation}"),
             StringComparer.Ordinal);
 
         int declaredWritersExamined = 0;
-        int declaredWritersUnexamined = 0;
+        int tableNotCreated = 0;
+        int componentNotBuilt = 0;
         int unresolvedNames = 0;
 
         foreach (StoreDeclaration store in declared)
@@ -81,16 +83,26 @@ public sealed class WriterOwnershipCheck
 
                 if (!live.Contains(store.Store))
                 {
-                    declaredWritersUnexamined++;
+                    tableNotCreated++;
+                    continue;
+                }
+
+                if (!SourceWrites.ProductionTypeNames.Contains(writer.Component))
+                {
+                    // The table exists and its writer does not, which is the ordinary shape when
+                    // one checkpoint creates a store and a later one builds a component that
+                    // updates it. Separated from the case below rather than folded into it,
+                    // because that one is a defect and this one is a schedule.
+                    componentNotBuilt++;
                     continue;
                 }
 
                 declaredWritersExamined++;
-                if (!typeNames.Contains(writer.Component))
+                if (!issued.Contains($"{writer.Component}/{store.Store}/{writer.Operation}"))
                 {
                     failures.Add(
-                        $"SCHEMA declares {writer.Operation} {writer.Component} on {store.Store}, which exists in the store, "
-                        + "but no type of that name issues that statement.");
+                        $"SCHEMA declares {writer.Operation} {writer.Component} on {store.Store}, and both the table and "
+                        + $"the type exist, but {writer.Component} issues no such statement.");
                 }
             }
         }
@@ -116,9 +128,12 @@ public sealed class WriterOwnershipCheck
             .Examined("stores a migration has created", live.Count)
             .Examined("source files read for store writes", SourceWrites.ProductionFilesRead)
             .Examined("writes found in the shipped source", SourceWrites.InProductionSource.Count)
-            .Examined("declared writers of a store that exists", declaredWritersExamined)
-            .NotExamined("declared writers of a store no migration has created yet", declaredWritersUnexamined,
-                "the table arrives with the checkpoint that builds its component");
+            .Examined("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
+            .Examined("declared writers whose store and component both exist", declaredWritersExamined)
+            .NotExamined("declared writers of a store no migration has created yet", tableNotCreated,
+                "the table arrives with the checkpoint that builds its component")
+            .NotExamined("declared writers whose component has not been built yet", componentNotBuilt,
+                "the store exists and the component that writes it arrives at a later checkpoint");
 
         if (unresolvedNames > 0)
         {

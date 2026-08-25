@@ -18,7 +18,14 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+        // The content root is where the binary sits, for the same reason the Worker's is: a
+        // configuration file found by the current directory is found on one machine and missed
+        // on the other.
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            Args = args,
+            ContentRootPath = AppContext.BaseDirectory,
+        });
         builder.AddPullbackStrategyLabStore();
 
         PullbackStrategyLabOptions options = builder.Configuration

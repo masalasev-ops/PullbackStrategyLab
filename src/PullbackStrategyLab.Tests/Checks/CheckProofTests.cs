@@ -79,6 +79,29 @@ public sealed class CheckProofTests
     }
 
     [Fact]
+    public void An_upsert_counts_as_both_operations_on_the_table_the_insert_names()
+    {
+        const string source = """
+            public sealed class Builder
+            {
+                public void One() => Run("INSERT INTO universe_member (ticker) VALUES (@t) ON CONFLICT (ticker) DO UPDATE SET removed_on = NULL;");
+                public void Two() => Run("INSERT INTO universe_snapshot (as_of) VALUES (@d) ON CONFLICT (as_of) DO NOTHING;");
+            }
+            """;
+
+        IReadOnlyList<SourceWrite> writes = SourceWrites.InSource("proof.cs", source);
+
+        // Reading DO UPDATE as an insert alone is how a component acquires an undeclared update
+        // on a table somebody else owns, and the word after DO UPDATE is SET rather than a table.
+        Assert.Equal(3, writes.Count);
+        Assert.Contains(writes, w => w.Table == "universe_member" && w.Operation == StoreOperation.Insert);
+        Assert.Contains(writes, w => w.Table == "universe_member" && w.Operation == StoreOperation.Update);
+        Assert.Contains(writes, w => w.Table == "universe_snapshot" && w.Operation == StoreOperation.Insert);
+        Assert.DoesNotContain(writes, w => w.Table == "set");
+        Assert.DoesNotContain(writes, w => w.Table == "universe_snapshot" && w.Operation == StoreOperation.Update);
+    }
+
+    [Fact]
     public void The_write_scanner_catches_a_delete_against_a_bar_table()
     {
         const string source = """

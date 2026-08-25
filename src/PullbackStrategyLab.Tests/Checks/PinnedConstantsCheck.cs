@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
@@ -67,6 +68,12 @@ public sealed class PinnedConstantsCheck
             PragmaText(schema, "foreign_keys") == "ON",
             factory.Contains("PRAGMA foreign_keys = ON;", StringComparison.Ordinal), "the pragma set at open"));
 
+        // The universe floors, stated in the authored parameters table and held in configuration.
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Price floor",
+            ParameterMoney(architecture, "Price floor"), defaults.Universe.PriceFloor, "UniverseOptions.PriceFloor"));
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, long",
+            ParameterMoney(architecture, "Liquidity floor, long"), defaults.Universe.LiquidityFloorLong, "UniverseOptions.LiquidityFloorLong"));
+
         // The session zone, named in the build plan and defaulted in configuration.
         pins.Add(Pin.Text("BUILD_PLAN.md 1.2, the session zone",
             buildPlan.Contains("America/New_York", StringComparison.Ordinal),
@@ -101,8 +108,13 @@ public sealed class PinnedConstantsCheck
             coverage.Examined(pin.What, 1);
         }
 
-        coverage.NotExamined("rows of the authored parameters table with no code constant yet", parameters.Count - 1,
-            "the parameter arrives with the checkpoint that builds the component it governs; only the daily API ceiling has code at this checkpoint");
+        // Named so the number moves when a parameter gains a constant, rather than being a
+        // literal somebody has to remember to decrement.
+        string[] pinnedParameters = ["Daily API ceiling", "Price floor", "Liquidity floor, long"];
+        coverage.NotExamined(
+            "rows of the authored parameters table with no code constant yet",
+            parameters.Count - pinnedParameters.Length,
+            "the parameter arrives with the checkpoint that builds the component it governs");
         coverage.Report();
 
         string[] wrong = pins.Where(p => !p.Holds).Select(p => p.Describe()).ToArray();
@@ -114,6 +126,33 @@ public sealed class PinnedConstantsCheck
             $"Only {parameters.Count} authored parameters were parsed. The table held more than that before any code "
             + "existed, so a number this low means the parser stopped matching.");
     }
+
+    /// <summary>
+    /// A money value as the table writes it: a dollar sign, digits, and an optional M or B.
+    /// Parsed rather than matched as a string, so a table that says $20M and a constant that
+    /// says 20,000,000 can be compared at all.
+    /// </summary>
+    private static decimal ParameterMoney(string architecture, string parameter)
+    {
+        string value = ParameterCell(architecture, parameter);
+        Match match = Regex.Match(value, @"\$(?<n>[\d,.]+)\s*(?<scale>[MB])?", RegexOptions.CultureInvariant);
+        Assert.True(match.Success, $"No money value in {value}.");
+
+        decimal number = decimal.Parse(
+            match.Groups["n"].Value.Replace(",", string.Empty, StringComparison.Ordinal),
+            CultureInfo.InvariantCulture);
+
+        return match.Groups["scale"].Value switch
+        {
+            "M" => number * 1_000_000m,
+            "B" => number * 1_000_000_000m,
+            _ => number,
+        };
+    }
+
+    private static string ParameterCell(string architecture, string parameter) =>
+        HtmlTable.BodyRowsUnder(architecture, "Authored parameters")
+            .Single(r => r[0].StartsWith(parameter, StringComparison.Ordinal))[1];
 
     private static int ParameterNumber(string architecture, string parameter)
     {
@@ -139,6 +178,9 @@ public sealed class PinnedConstantsCheck
     private sealed record Pin(string What, bool Holds, string Detail)
     {
         public static Pin Number(string what, int stated, int inCode, string codeName) =>
+            new(what, stated == inCode, $"document states {stated}, {codeName} is {inCode}");
+
+        public static Pin Money(string what, decimal stated, decimal inCode, string codeName) =>
             new(what, stated == inCode, $"document states {stated}, {codeName} is {inCode}");
 
         public static Pin Text(string what, bool statedInDocument, bool holdsInCode, string codeName) =>

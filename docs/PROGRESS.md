@@ -74,3 +74,28 @@ Findings:   Observation. `TimeZoneInfo.TryConvertWindowsIdToIanaId("UTC")` succe
             Observation. `api-isolation`, `ci-parity` and `clock-usage` run as named CI steps but are not rows in CLAUDE.md's Checks table. Each is mandated by name elsewhere in CLAUDE.md: the isolation check under "Repository layout", the two-way script check under "Commands", the clock ban under "Hard rules". Reading: whether the table should list every executable check is a question the phase report answers better than a guess does, so it is carried rather than settled here.
 
 Carried:    Whether CLAUDE.md's Checks table should list every check that runs as a CI step, or only the properties it currently names. Due at 1.7, where the phase report enumerates checks and their coverage and makes the answer obvious.
+
+## 1.3 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `UniverseBuilder`, following RUNBOOK's backfill order exactly: the exchange symbol list, then bulk end-of-day over the twenty-session window, then the floors. Screening on cheap bulk data before anything costs one call per name is what keeps the whole thing inside the ceiling.
+            Migration 002 creates `security`, `universe_member` and `universe_snapshot`. Membership is state rather than a filter: a name that leaves keeps its row and gains a `removed_on`, so a setup recorded while it was a member still resolves to a security.
+            `EodhdClient`, the vendor over HTTP, and `IMarketDataVendor` as the stages see it. Every method takes the day's budget, so a component cannot make a request the ceiling does not know about. The token never appears in an exception message, because it is in the URL.
+            `ICallBudget` with per-request cost. A whole-market bulk request is priced at a hundred and a symbol list at five, and a budget counting requests rather than their cost would report a twentieth of what a night spends.
+
+Measured:   **N = 2,070.** The survivor count, measured by running `universe-build` against live EODHD on 2026-08-25, not estimated. 17,996 common stock listed on the US exchanges, 17,988 of them with a price on the most recent session, 2,070 clearing the $5 price floor and the $20M median dollar volume floor over 20 sessions.
+            2,105 calls for the screen: 5 for the symbol list and 2,000 for twenty market days, which is what RUNBOOK's backfill table budgets. 6,210 rows written, being 2,070 in each of the three stores.
+            The whole day's usage was 2,415 against the 5,000 ceiling, the difference being two earlier runs that failed and are recorded as failed with the calls they spent.
+            `tools/ci.ps1` green on Windows, 14 steps, 61 tests.
+            writer-ownership now examines 7 declared writers of a live store against 4 tables, with 40 declared writers unexamined because their store does not exist yet and 1 because its component has not been built.
+
+Verified:   `tools/ci.ps1` against a dropped store, then `universe-build` against live EODHD into a separate data root. The floors are asserted individually against a market the test states outright: an ETF that trades enormously, a $4.99 stock with a hundred million shares a day, a $950 stock with nineteen million dollars a day, and a name whose median clears nothing while its mean clears easily.
+
+Findings:   Observation. 2N is 4,140. Reading: RUNBOOK's backfill says steps 4 and 5 fit in one day while 2N stays under about 4,000, so at this N the backfill splits across two days. That was the only thing in the design that depended on the count, and it is now answered.
+            Observation. The vendor publishes `volume` as a JSON number with a fractional part on some rows. Reading: read as decimal and narrowed at the boundary, because a long would refuse the whole response over one field.
+            Observation. `Host.CreateApplicationBuilder()` takes its content root from the current working directory. Reading: a configuration file found by the current directory is found on one machine and missed on the other, and scheduling lives outside the application where Task Scheduler and launchd each choose a working directory. All three hosts now set the content root to where the binary sits.
+            Observation. The `writer-ownership` check rejected the first version of `UniverseBuilder`, which upserted `security` with an `ON CONFLICT DO UPDATE`. Reading: SCHEMA declares SectorResolver as the only updater of that table, on four named columns, so the upsert was an undeclared second writer. The insert is now insert-only. This is the check doing the job it exists for, on the first checkpoint that gave it something to catch.
+            Observation. The vendor token is read from `Secrets:EodhdApiToken` rather than from the lab's own section, because the secrets file on this machine holds keys for more than this lab. It is still registered before environment variables, so `Secrets__EodhdApiToken` in the environment still wins.
+            Observation. The same secrets file holds an `AnthropicApiKey`. Reading: checkpoint 6.5 requires that `ANTHROPIC_API_KEY` is absent from the **environment**, which a JSON file is not, so this is not that trap. It is close enough to it to be worth writing down before phase 6 rather than after.
+
+Carried:    A partial universe run leaves membership as the last complete screen set it and writes tonight's snapshot from that membership. Whether a night screened over five sessions should instead write nothing is a judgement the count distribution at 2.11 will inform. Due at 2.11.
+            The daily call budget counts against the UTC date, and the vendor's own reset boundary is still assumed rather than confirmed. Raised at 1.1, still open.
