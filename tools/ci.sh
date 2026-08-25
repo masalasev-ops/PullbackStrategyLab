@@ -72,6 +72,7 @@ step 'check-bar-append-only'        run_check 'bar-append-only'
 step 'check-fixture-inputs'         run_check 'fixture-inputs'
 step 'check-fixture-replay'         run_check 'fixture-replay'
 step 'check-architecture-conformance' run_check 'architecture-conformance'
+step 'check-store-portability'      run_check 'store-portability'
 
 step 'check-shell-executable'       run_check 'shell-executable'
 

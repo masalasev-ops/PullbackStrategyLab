@@ -138,6 +138,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `fixture-inputs` | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
 | `fixture-replay` | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one |
 | `architecture-conformance` | Every claim a table in ARCHITECTURE.html makes has a verdict: pass, fail, out of scope for this phase, or unexamined |
+| `store-portability` | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |
 | `api-isolation` | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
 | `bar-append-only` | Nothing in the shipped source deletes or updates a bar table |
 | `ci-parity` | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order |

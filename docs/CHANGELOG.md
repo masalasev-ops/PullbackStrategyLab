@@ -27,6 +27,16 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-08-25 — CLAUDE.md — cites The store contains no absolute paths
+Was:  A checks table with no `store-portability` row.
+Now:  `| store-portability | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |`
+Why:  The hard rule had been stated since the first day and nothing asserted it, which the migration rehearsal is the checkpoint for. A path in a row is invisible until the store arrives on the other machine, and it is a rule the table now lists because the table lists every check that runs.
+
+### 2026-08-25 — RUNBOOK.md — cites The store contains no absolute paths
+Was:  | 2 | Record source counts | `setup`, `setup_signal`, `forward_return`, `trade`, `variant`, plus max setup id. **Written down before anything is copied**, or there is nothing to compare against |
+Now:  A row count for every table the store holds, derived from the schema rather than from a list, taken before anything is copied, and `tools/snapshot-db` doing it rather than a person.
+Why:  Five of the named tables do not exist yet and the list would go stale at every migration that adds one. A count that silently omits a table is exactly the failure the step exists to catch: the copy opens cleanly, every counted table matches, and the one nobody counted is empty.
+
 ### 2026-08-25 — ARCHITECTURE.html — cites Components are named, not coded
 Was:  A component catalogue of 51 rows with no chart page, and an ordering note reading "The 51 components are listed by layer".
 Now:  A **Chart page** row above the watchlist page, and "The 52 components are listed by layer", with a sentence saying the chart page sits with the screens rather than with the ingest components it draws from.

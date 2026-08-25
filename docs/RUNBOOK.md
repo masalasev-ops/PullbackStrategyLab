@@ -108,10 +108,10 @@ The SQLite file format is architecture and OS independent, so the database is po
 | # | Step | Detail |
 |---|---|---|
 | 1 | Stop the worker | Confirm no stage is mid-run. A partial nightly leaves setups without their signal rows |
-| 2 | Record source counts | `setup`, `setup_signal`, `forward_return`, `trade`, `variant`, plus max setup id. **Written down before anything is copied**, or there is nothing to compare against |
+| 2 | Record source counts | A row count for every table the store holds, derived from the schema rather than from a list here, **taken before anything is copied** or there is nothing to compare against. `tools/snapshot-db` does it: a list in this document goes stale at the migration that adds a table, and a count that silently omits one is the failure this step exists to catch |
 | 3 | Write one clean file | `VACUUM INTO '/path/pullbackstrategylab-migrate.db';` Folds in the log, drops free pages, leaves no siblings to forget |
 | 4 | Copy bar files too | If bars are outside the database, copy that directory alongside |
-| 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. Integrity check proves the file is not corrupt, **not** that it is complete. Both are needed |
+| 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. `tools/snapshot-db` does both against the copy and exits non-zero on either. Integrity check proves the file is not corrupt, **not** that it is complete. Both are needed |
 | 6 | Copy the secrets file | `appsettings.Secrets.json` is gitignored, so it does not arrive with the repository. Copy it deliberately and separately from the store, or re-create it. Verify by running one stage that makes a vendor call rather than assuming |
 | 7 | Recreate the schedule | Task Scheduler entries become launchd definitions |
 | 8 | Repoint config paths | There should be none inside the database itself |

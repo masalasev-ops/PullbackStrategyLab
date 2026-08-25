@@ -80,6 +80,7 @@ Invoke-Step 'check-bar-append-only'        { Invoke-Check 'bar-append-only' }
 Invoke-Step 'check-fixture-inputs'         { Invoke-Check 'fixture-inputs' }
 Invoke-Step 'check-fixture-replay'         { Invoke-Check 'fixture-replay' }
 Invoke-Step 'check-architecture-conformance' { Invoke-Check 'architecture-conformance' }
+Invoke-Step 'check-store-portability'      { Invoke-Check 'store-portability' }
 
 Invoke-Step 'check-shell-executable'       { Invoke-Check 'shell-executable' }
 

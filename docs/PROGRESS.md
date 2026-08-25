@@ -653,3 +653,52 @@ Carried:    The `CONFIRMED` values, moved to 1.12. The page that makes the compa
             now exists and shows the three averages in the two decimals a platform shows; what
             is left is a person reading a platform and writing three figures down, which is the
             one step in this corpus a build session cannot do for itself.
+
+## 1.11 — 2026-08-25 — phase-1-ingest-and-charts — **partial, one machine**
+
+Built:      `tools/snapshot-db` now does RUNBOOK's steps 2 and 5 as well as step 3. It counts
+            every table in the source before the copy, runs `PRAGMA integrity_check` against the
+            copy, counts every table there, compares, and exits non-zero on any difference or on
+            an integrity result that is not `ok`. The counts come from the schema rather than
+            from a list, because a list goes stale at the migration that adds a table and a count
+            that silently omits one is exactly the failure the step exists to catch.
+            `store-portability`, a named CI step asserting the hard rule that had been stated
+            since the first day and asserted by nothing: no row carries an absolute path. It runs
+            over the store the fixture replay builds rather than over the empty one a migration
+            leaves, because a scan of an empty database examines nothing and passes forever.
+
+Measured:   The rehearsal, executed on this machine against the live store.
+            Source: 10 tables, 1,494,822 rows. `daily_bar` 1,482,108, `history_refetch` 2,107,
+            `index_bar` 2,253, `indicator_daily` 2,016, `security` 2,070, `universe_member`
+            2,070, `universe_snapshot` 2,070, `corporate_action` 56, `indicator_rebuild` 37,
+            `run_log` 35. Snapshot 227,328,000 bytes.
+            On arrival, after copying the snapshot into a data root of its own: `migrate` reported
+            already at version 10 with nothing outstanding, `integrity_check` ok, and all ten
+            table counts matched to the row.
+            `indicators 2026-08-25` over the copy: 2,070 universe members, 0 computed, **2,016
+            unchanged**, 54 short of the warm-up, 0 blocked. Every stored figure recomputed from
+            the migrated bars to the same value, which is a stronger statement than a row count:
+            the bars arrived, and they arrived on the same basis.
+            The chart page against the copy reads EMA 50 343.37 and ADR 20 6.70% for IESC, the
+            same figures the source shows.
+            `store-portability`: 10 tables, 60 text columns, 189,656 stored values read, 0
+            absolute paths.
+
+Verified:   Steps 2, 3, 5, 8 and 9 of the ten, by running them. Step 6 in the negative only: the
+            secrets file is present on this machine and gitignored, so it is confirmed not to
+            travel with a clone rather than confirmed to have been copied.
+
+Findings:   Observation. Step 2 named five tables, `setup`, `setup_signal`, `forward_return`,
+            `trade` and `variant`, and none of them exists yet. Reading: a rehearsal at 1.11
+            following that step literally would have counted nothing at all and reported success.
+            The step now derives its list from the schema, which is the same rule `stated-counts`
+            applies to prose counts, applied to a runbook.
+            Observation. The hard rule about absolute paths had no check. Reading: found by
+            asking what the rehearsal was actually verifying, which is the value of doing the
+            rehearsal rather than reading it.
+
+Carried:    **This is partial and is recorded as partial.** One machine, not two. Everything that
+            can fail on one machine ran and passed. What one machine cannot exercise is what the
+            checkpoint was written for: a Windows path in a row, an identifier the other platform
+            rejects, a secrets file nobody copied. The first of those is now covered permanently
+            by `store-portability`; the other two wait for a second machine. Due 1.12.
