@@ -75,6 +75,7 @@ Invoke-Step 'check-path-casing'            { Invoke-Check 'path-casing' }
 Invoke-Step 'check-writer-ownership'       { Invoke-Check 'writer-ownership' }
 Invoke-Step 'check-api-isolation'          { Invoke-Check 'api-isolation' }
 Invoke-Step 'check-ci-parity'              { Invoke-Check 'ci-parity' }
+Invoke-Step 'check-clock-usage'            { Invoke-Check 'clock-usage' }
 
 Invoke-Step 'suite' { dotnet test $TestProject --no-build --nologo }
 

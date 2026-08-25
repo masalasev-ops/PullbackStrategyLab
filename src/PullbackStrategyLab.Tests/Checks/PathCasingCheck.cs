@@ -41,7 +41,9 @@ public sealed partial class PathCasingCheck
 
         foreach (string file in RepositoryLayout.SourceFiles)
         {
-            string text = RepositoryLayout.Read(file);
+            // Comments blanked out first: a path named in a comment is prose, and a check that
+            // fails on prose gets loosened the first time it does.
+            string text = CSharpSource.WithoutComments(RepositoryLayout.Read(file));
 
             foreach (Match match in QuotedLiteral().Matches(text))
             {

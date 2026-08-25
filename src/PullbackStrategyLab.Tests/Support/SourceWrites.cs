@@ -29,38 +29,46 @@ public static partial class SourceWrites
     /// <summary>How many files were read, so the check can report what it covered rather than only what it found.</summary>
     public static int ProductionFilesRead => RepositoryLayout.ProductionSourceFiles.Count;
 
-    private static IReadOnlyList<SourceWrite> Read(IReadOnlyList<string> files)
+    private static IReadOnlyList<SourceWrite> Read(IReadOnlyList<string> files) =>
+        files.SelectMany(f => InSource(RepositoryLayout.Relative(f), RepositoryLayout.Read(f))).ToArray();
+
+    /// <summary>
+    /// Every store write in one piece of source, with comments blanked out first so a comment
+    /// describing a statement is not read as one. Public so a proof test can feed it source it
+    /// wrote itself, rather than the check being proved by breaking the repository by hand once.
+    /// </summary>
+    public static IReadOnlyList<SourceWrite> InSource(string label, string source)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+        ArgumentNullException.ThrowIfNull(source);
+
+        string text = CSharpSource.WithoutComments(source);
+        Match[] types = TypeDeclaration().Matches(text).ToArray();
         var writes = new List<SourceWrite>();
 
-        foreach (string file in files)
+        void Collect(Regex pattern, StoreOperation operation, bool isDelete)
         {
-            string text = RepositoryLayout.Read(file);
-            Match[] types = TypeDeclaration().Matches(text).ToArray();
-
-            void Collect(Regex pattern, StoreOperation operation, bool banned)
+            foreach (Match match in pattern.Matches(text))
             {
-                foreach (Match match in pattern.Matches(text))
-                {
-                    writes.Add(new SourceWrite(
-                        RepositoryLayout.Relative(file),
-                        LineOf(text, match.Index),
-                        EnclosingType(types, match.Index),
-                        match.Groups["table"].Value,
-                        operation,
-                        banned));
-                }
+                writes.Add(new SourceWrite(
+                    label,
+                    text.AsSpan(0, match.Index).Count('\n') + 1,
+                    EnclosingType(types, match.Index),
+                    match.Groups["table"].Value,
+                    operation,
+                    isDelete));
             }
-
-            Collect(Insert(), StoreOperation.Insert, banned: false);
-            Collect(Update(), StoreOperation.Update, banned: false);
-
-            // A delete has no declared operation anywhere in SCHEMA, so any delete found is
-            // reported by whichever check reads this rather than silently dropped.
-            Collect(Delete(), StoreOperation.Update, banned: true);
         }
 
-        return writes;
+        Collect(Insert(), StoreOperation.Insert, isDelete: false);
+        Collect(Update(), StoreOperation.Update, isDelete: false);
+
+        // A delete has no declared operation anywhere in SCHEMA, and bars are append-only
+        // besides, so any delete found is reported by whichever check reads this rather than
+        // being silently dropped for having nowhere to belong.
+        Collect(Delete(), StoreOperation.Update, isDelete: true);
+
+        return writes.OrderBy(w => w.Line).ToArray();
     }
 
     private static string EnclosingType(IReadOnlyList<Match> types, int index)
@@ -78,8 +86,6 @@ public static partial class SourceWrites
 
         return enclosing;
     }
-
-    private static int LineOf(string text, int index) => text.AsSpan(0, index).Count('\n') + 1;
 }
 
 public sealed record SourceWrite(
