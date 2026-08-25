@@ -1,0 +1,213 @@
+# DECISIONS.md
+
+Decisions a later session could reasonably make differently, where the wrong choice would be invisible. Mechanisms with one obvious implementation, and anything a test already enforces, are not here.
+
+**Each decision is identified by its name, in bold, and cited by that exact name.** In code, `// see: Long and short are never pooled into one figure`. In a document, `(see: Long and short are never pooled into one figure)`. Headings carry no terminal punctuation, because a name is not a sentence and a name ending in a period is awkward to cite. `decision-resolves` fails on a near-miss rather than ignoring it, since a paraphrased citation silently stops resolving.
+
+**Grouped by topic, not by date.** Related decisions sit together, which is what keeps this readable at forty entries rather than at ten.
+
+A decision is changed only by another decision. Work that changes one writes a new entry, names what it supersedes, and moves the old entry to "Previously decided" in the same commit with its reasoning intact. Nothing here is struck through.
+
+---
+
+## What is being measured
+
+**The subject is the flagged setup population, not the trade log**
+At a 25% win rate with expectancy carried by the right tail, roughly 420 trades are needed to establish that expectancy is above zero and over 1,100 to detect a small improvement. The setup population gives dozens of observations a day at far lower dispersion.
+
+**Forward returns are recorded for every flagged setup, traded or not**
+Separates "was the pattern worth spotting" from "was the execution any good". Recording only trades makes those two indistinguishable, and they have different fixes.
+
+**The evidence store holds only setups flagged forward, never setups reconstructed from history**
+The detector is a pure function of stored daily bars, so it can be run over years of backfilled history in seconds. That run is useful for one thing, counting how many setups a night the thresholds produce, and useless for measurement, because the record of who was actually listed on those dates does not exist. Delisted names are simply absent from a reconstructed universe, so every historical setup would carry survivorship bias.
+
+Historical runs therefore write to a separate calibration table that nothing downstream reads. The evidence store begins empty on the first forward night and fills one session at a time. This is what the nightly universe snapshot exists to protect, and it is the difference between the replay this project relies on and the backtest it deliberately is not.
+
+**Failed checks are recorded rather than discarded**
+The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
+
+**Matched control populations are drawn nightly, loose and tight**
+Flagged setups returning 2% is not a result if everything returned 2%. The loose set matches on liquidity and daily range and measures the whole funnel. The tight set also matches on the trend ladder and market mood, isolating the pullback checks from simply owning stocks in uptrends. The tight comparison is the one that can embarrass the project, which is why it is on the scoreboard.
+
+**The win-rate ceiling is computed from the outcome distribution, never assumed**
+A give-up point at half a daily range sits 0.8 standard deviations away, so a coin flip with that stop wins about 20% of the time and the observed 25% is mostly geometry. What matters is the gap between achieved and the computed bound: a wide gap means selection has room, a narrow one means the stop is the binding constraint and the loop should point at execution instead.
+
+**Long and short are never pooled into one figure**
+In code, in a report, or on a screen. Short results carry a borrow assumption that long results do not, so a pooled number silently inherits it.
+
+## What is traded
+
+**Two directions are tested, with separate detectors, separate management and separate scoring**
+The strategy has a short side. Testing only half of it answers a different question.
+
+**Trades are resolved by replaying minute bars after the close, not by watching live**
+The vendor publishes minute data two to three hours after the close, so live monitoring buys nothing and costs an entire category of infrastructure. The plan is locked before the open either way.
+
+**The plan is written before the session and is immutable after publication**
+A strategy test whose rules can move after the outcome is visible is not a test of anything. Most of the architecture exists to protect this one property.
+
+**RiskGate is the sole writer of orders, for both directions and every version**
+Two writers puts the caps in two code paths, which voids every comparison between versions and does so silently.
+
+**The short borrow problem is mitigated by a filter, not solved**
+Market cap above $2 billion, dollar volume above $50 million, ninety sessions since listing. The borrow cost of 1.0% annualised is immaterial, about 0.4% of one R on a four-day hold, so availability rather than cost decides the short side and the filter stands in for information the feed does not carry. Recorded as an unmodelled assumption on every short trade.
+
+**Equity is a fixed $100,000 notional that never compounds**
+Every cap in the design is a percentage of equity and nothing stated what equity was, so no share count could be computed.
+
+The number is set by share rounding rather than by ambition. At 0.75% risk, a three percent stop on a $400 stock is $12 a share, so $100,000 buys 62 shares and the rounding error is under one percent of intended risk. At $10,000 the same trade is six shares and the error is four percent, which pollutes the R figures the whole project is measured in. Below roughly $50,000 the arithmetic stops being trustworthy.
+
+It does not compound, and that matters more than the level. If equity tracked results, a version that ran well would size larger than one that ran badly, so the two would stop taking the same position on the same setup and the paired comparison would quietly stop being paired. The equity curve is reported as an output; it is never an input to sizing.
+
+Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away.
+
+**One account per version, holding both directions**
+Not one account per direction. The caps are four concurrent positions, three percent total risk at stake, and at most two shorts, and those only mean anything if a short and a long compete for the same budget. That competition is real: in an account, a short ties up risk a long cannot then use.
+
+The rule that long and short are never pooled governs reporting, not accounting. Shared account, separate books. Expectancy, win rate and every scoreboard panel are computed per direction; the caps and the equity are shared.
+
+**The nightly cap is 60, split forty long and twenty short, unused slots released**
+Applied to the shared candidate list before any version selects. The split is deliberately not proportional: short setups are rarest in a strong market, which is exactly when they are most interesting, and a proportional split would erase them from the record on those nights. Capping per version would leave the disagreements unscoreable, which is the wrong data to lose.
+
+**Plans are resting orders and fills go in time order when the caps bind**
+Every plan that passes its checks is placed, and each is a complete instruction before the open: this price, this stop, this size. Nothing is decided during the session. When more plans trigger than the caps allow, the earliest trigger fills and later ones are blocked with a reason, which is what resting orders actually do.
+
+The alternative, reserving capacity for the best-ranked plans and placing only those, was rejected. It requires trusting the ranking rule, which is an authored guess with a scoreboard panel devoted to finding out whether it works, and it ends some days with slots unused because the reserved names never triggered. The cost of time order is real and worth naming: a mediocre setup triggering at 9:31 consumes capacity a better one triggering at 10:15 cannot then use. That is a first-class execution-family experiment once there is enough record to run it.
+
+**The screen and the cap both rank on give-up distance in daily-range units, ascending**
+R is the move divided by the stop, and range units normalise the stop against that stock's own noise, so a 0.30 setup earns more R per unit of noise risk than a 0.48 one for the same move. The only ranking available with a stated mechanism rather than a preference, and an obvious early proposal target.
+
+**The market-mood label is recorded on every setup and filters nothing in the baseline**
+Baking it in now would be an untested assumption. Adding it later as a version is a measurement. Both raw scores are stored beside the label so a later proposal can use the continuous form rather than the three buckets.
+
+## How changes are judged
+
+**Versions select from one shared nightly candidate list rather than each re-scanning**
+Makes the comparison paired. Unpaired, a small improvement needs thousands of observations; paired it needs hundreds. That is the difference between a verdict in months and a verdict in years.
+
+**Two experiment families, selection and execution, scored differently and never mixed in one version**
+An execution change alters the size of the R unit rather than the choice of stock, so its results cannot be differenced the same way. A version changing both teaches you nothing about which change caused the result.
+
+**Acceptance measures expectancy, never win rate**
+Win rate is reported alongside as a diagnostic. Any version raising win rate while lowering expectancy is rejected automatically. Widening the stop does exactly that, and this rule is written before any results exist on purpose.
+
+**Targets and minimum samples are written at creation and are immutable**
+Twenty worthless candidates give a 64% chance that at least one looks impressive by luck. Pre-registration is the only defence, and a target that can move after the result is not a target.
+
+**An approved proposal creates a new version from zero, and a running version is never edited**
+Editing contaminates a record retroactively and there is no way to detect it afterwards.
+
+**Replay screens proposals and the forward paired test admits them**
+Replay is free, and free tests are how you overfit. It kills bad proposals cheaply and never accepts one.
+
+**Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight**
+One spent per evidence-pack decision, never reused. Makes the cost of a free test explicit and finite, and exhaustion is a designed dead end rather than a bug.
+
+The windows cannot all exist when the register is created, and an earlier version of this decision wrongly implied they could. Evidence accumulates forward only, so the first quarter closes three months after go-live and the eighth two years after. The register is created empty and a window becomes available the day its quarter completes. In practice the research loop reaches its first pack-version decision with two or three windows in hand, which is enough, because a decision spends one.
+
+## The research loop
+
+**The AI writes only to the proposal store**
+Nothing it produces feeds any component that scores AI output: no signal value, no forward return, no threshold, no ranking. An AI that can both propose and deploy will eventually find a rule that fits data it has already seen.
+
+**Proposals come in two kinds, rule changes over existing signals and requests for a new signal**
+The signal library is a hard ceiling on the proposal space and the model cannot lift it. Without the second kind the loop plateaus within months, because there are only so many ways to rearrange ten checks.
+
+**The model is a frozen parameter of the pack version, and changing it forks the record**
+The success criterion is that proposals against a later pack beat proposals against an earlier one. If the model changes between them, that comparison measures the model and the pack together and can separate neither. The model is therefore pinned by exact identifier alongside the pack version, and every proposal records which model produced it.
+
+A model change is not an upgrade, it is a new generation. The prior record keeps its meaning as history and the hit-rate comparison restarts.
+
+Two consequences worth stating. A vendor retiring a pinned model is a **forced** fork, so the research record is bounded by model lifetime and that is a property of the design rather than an accident. And cost cannot be the reason to switch: the entire spread between the cheapest and dearest option is a few dollars a year, so a switch has to be justified by proposal quality measured against a spent holdout window, like any other change.
+
+**The evidence pack is versioned, and the success criterion is proposal hit rate by pack version**
+The model is a fixed function and does not improve between January and December. The evidence, the library and the arithmetic do. Attributing improvement to the pack is the honest form of the claim and the only form that is measurable.
+
+**One meaningless signal is planted in the conditional tables**
+Day of month, or something equally inert. It will show a spurious pattern in some deciles because everything does. A proposal citing it fails that pack version immediately. A tripwire that fires before damage, at the cost of one column.
+
+**Abstention is a valid recorded proposal outcome**
+A weekly job that must produce a suggestion will produce one in weeks when there is nothing there. A pack version that never abstains has learned to always find something, which is a warning rather than a triumph.
+
+**Signals are admitted on whether they tighten outcome-similar neighbourhoods, independently of any rule using them**
+A signal can be judged on rows already stored, with no version and no forward period. Rejected above 0.70 correlation with something already present, unless stored as a residual.
+
+**The correction threshold scales with signals screened, not signals shown**
+Adding a signal makes every other signal marginally harder to claim. Statistically correct, and it creates natural resistance to adding things casually.
+
+## Data and platform
+
+**Every line of code runs unmodified on Windows and on Apple Silicon macOS**
+Development happens on Windows today and moves to macOS. Both are case-insensitive filesystems and both name timezones differently from Linux, so the two machines agree with each other and are capable of being wrong in the same way at the same time. The CI matrix catches it only after the code is written, so the constraint is stated in the hard rules where a session reads before writing. Anything platform-specific lives behind an abstraction or outside the application entirely: scheduling is the operating system's job, not the application's.
+
+**Averages are computed locally, never through the vendor's technical endpoint**
+About 45,000 calls a day for arithmetic that is one recursive loop over data already stored.
+
+**Minute bars are fetched for every flagged setup, not only the planned ones**
+Otherwise a version selecting a name the baseline passed on cannot be resolved, and the missing cases are exactly the disagreements.
+
+**The vendor screener endpoint is not used**
+It cannot express three averages in a specific order, cannot express the pullback shape at all, and using it would leave no stored history to compute forward returns from. The local store is the measurement system, so it is not optional.
+
+**Spread is captured intraday from day one**
+It determines whether a tight stop is meaningful, and it is the one input that cannot be recovered later. Everything else can be re-queried.
+
+**The runtime is .NET with C#, one codebase for both halves**
+The components most likely to produce a silently wrong answer are the trading and journal ones, and those benefit most from a compiler. Analysis can be pointed at the same store later without changing the application.
+
+**Secrets live in a gitignored appsettings.Secrets.json, registered before environment variables**
+A plaintext gitignored file rather than user-secrets, because user-secrets are encrypted per user per machine and would have to be re-entered on every move, and because one visible file is easier to reason about than a store the tooling hides.
+
+Two properties have to hold or the choice quietly breaks things. The file is registered **before** environment variables in every project, so an environment variable still wins, which is what CI and any future container depend on. And it is optional, so a machine without one falls back to environment variables rather than failing to start. Adding a JSON source after the host builder is constructed puts it last and inverts both properties, and doing that in one project but not another makes two projects resolve the same key differently with nothing on the surface to show it.
+
+**The store contains no absolute paths**
+What keeps it a directory that can be copied to another machine. Easy to preserve from the start, tedious to retrofit once chart exports or log paths have been persisted.
+
+## Corpus and process
+
+**Decisions are named, not numbered**
+A comment citing a number tells you nothing and forces a lookup. A comment citing a name tells you the thing directly. A misremembered name fails to resolve; a misremembered number resolves to the wrong decision and nobody notices.
+
+**Components are named, not coded**
+Same reason. The codes were only ever there because a table wanted a key column.
+
+**Every phase ends in a generated phase report, not in a page somebody looks at**
+"Openable" asks a human to squint at a screen and form an opinion, which does not scale, cannot be automated, and gives a build session nothing to check its own work against. One command produces one report covering three questions, and a phase does not sign off until that report is green.
+
+**Does the code match the architecture.** The component catalogue, the limits table, the check lists and the call budget are all structured tables. The report parses them and asserts each claim against the code: every component named exists and is registered, every limit matches its config value, every named check exists in the detector, every declared writer is the only writer. A claim the report cannot examine is listed as unexamined rather than passed.
+
+**Does it produce the right numbers.** A committed golden fixture holds real bars for a small set of tickers over a fixed window, with expected outputs frozen beside them. The pipeline runs against it and the report diffs actual against expected. Live data changes nightly and cannot be diffed against anything; a frozen fixture gives the same answer today and in six months, so a difference means the code changed.
+
+**How much was actually checked.** Every check reports its coverage, so the report shows what was examined rather than only what passed.
+
+The report is written as HTML for a person and as JSON beside it for a machine, from the same run. The build session reads the JSON and can tell whether its own checkpoint landed without asking anyone.
+
+**Headings carry no numbers, and anchors are slugs**
+Section numbers have the property that got decisions renamed: a misremembered number resolves to the wrong place silently, and every insertion renumbers everything after it. Sections in this corpus were renumbered four times before the first commit, each time leaving stale cross-references behind.
+
+It matters more than style because the phase report parses this document's tables. A parser anchored on numbers breaks on every insertion; anchored on heading text it does not. HTML anchors are slugs of the heading for the same reason, since an id of `s16` is as positional as the number was.
+
+Checkpoint identifiers keep their numbers. `1.7` and `4.5` name work in a sequence where the sequence is the point, and nothing parses the build plan.
+
+**Nothing in the corpus is struck through**
+A spec is edited cleanly and its prior text goes to the changelog. A record is corrected by a new dated entry naming what it corrects. Strikethrough leaves a document that is half history and half current state, and the reader has to decide which on every line.
+
+**Data ownership is declared once, in SCHEMA.md**
+Restating writers in the architecture document would be the same fact in two places, which is how a corpus starts to drift and how sync passes start eating whole sessions.
+
+**The corpus is eight documents plus one artefact, and a ninth requires retiring one**
+Five specs, three records, one artefact. A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+
+**Phase 2 thresholds are calibrated once against nightly counts, before phase 3**
+At that moment no forward return exists anywhere in the store, so there is nothing to fit toward. It is a row count and nothing else. Recorded as a dated event with before and after counts. After phase 3 begins those thresholds move only through the normal proposal route.
+
+**The fresh-session rule applies to sessions that have committed code, not documents**
+The protection being bought is that a session does not review its own code. The wider wording costs a session per phase and buys nothing.
+
+---
+
+## Previously decided
+
+(none yet)
+
+A superseded decision moves here under its original name, gains one line naming what replaced it, and keeps its reasoning. A superseded decision that loses its reasoning is worse than one never written down, because the next session will re-derive the same wrong answer.

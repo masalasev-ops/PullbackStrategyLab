@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PullbackStrategyLab — Architecture</title>
+<style>
+:root{
+  --ink:#1c1c1a; --ink2:#4a4a45; --ink3:#77776f;
+  --bg:#faf9f6; --card:#ffffff; --rule:#e0dcd3; --rule2:#c9c4b8;
+  --l1:#3d6fb4; --l2:#1d8a70; --l3:#b07a12; --l4:#c0492f; --l5:#6b52ab; --l6:#4a7c2b; --l7:#6f6f68;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.68 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:1140px;margin:0 auto;padding:56px 32px 96px}
+h1{font-size:31px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--ink3);font-size:15.5px;margin:0 0 14px;max-width:790px}
+h2{font-size:21px;font-weight:600;margin:58px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--rule2)}
+h3{font-size:16.5px;font-weight:600;margin:34px 0 10px}
+h4{font-size:13px;font-weight:600;margin:26px 0 8px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+p{margin:0 0 14px;max-width:860px}
+code,.id{font-family:var(--mono);font-size:.87em}
+.id{background:#f0ede6;border:1px solid var(--rule);border-radius:3px;padding:1px 5px;white-space:nowrap}
+ul,ol{margin:0 0 14px;padding-left:22px;max-width:860px} li{margin:0 0 8px}
+table{width:100%;border-collapse:collapse;margin:14px 0 22px;font-size:14px}
+th{text-align:left;font-weight:600;border-bottom:1.5px solid var(--rule2);padding:8px 10px;vertical-align:bottom}
+td{border-bottom:1px solid var(--rule);padding:9px 10px;vertical-align:top}
+tr:hover td{background:#f4f2ec}
+.matrix{font-size:12px} .matrix td,.matrix th{padding:5px 5px;text-align:center}
+.matrix td:first-child,.matrix th:first-child{text-align:left;white-space:nowrap}
+.matrix .w{font-weight:700;color:var(--l4)} .matrix .r{color:var(--ink3)}
+.plain{background:#eef3ea;border-left:3px solid var(--l6);padding:15px 19px;margin:18px 0;max-width:880px}
+.plain b.lab{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--l6);margin-bottom:6px}
+.plain p:last-child{margin-bottom:0}
+.rule{background:#fff;border:1px solid var(--rule);border-left:3px solid var(--ink);padding:15px 19px;margin:16px 0;max-width:880px}
+.rule b.lab{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);margin-bottom:6px}
+.rule p:last-child{margin-bottom:0}
+.warn{background:#fbf1ee;border-left:3px solid var(--l4);padding:15px 19px;margin:16px 0;max-width:880px}
+.warn b.lab{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--l4);margin-bottom:6px}
+.warn p:last-child{margin-bottom:0}
+.fig{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:26px 22px 20px;margin:20px 0 0;overflow-x:auto}
+.figalone{margin-bottom:24px}
+.figcap{font-size:13px;color:var(--ink3);margin:16px 0 0;padding-top:12px;border-top:1px solid var(--rule)}
+.figcap b{color:var(--ink2)}
+.row{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;min-width:min-content}
+.col{display:flex;flex-direction:column;gap:8px}
+.box{background:#fff;border:1px solid var(--rule2);border-radius:4px;padding:9px 11px;min-width:152px;font-size:13px;line-height:1.35}
+.box .bid{font-family:var(--mono);font-size:11px;color:var(--ink3);display:block}
+.box .bt{font-weight:600;display:block}
+.box .bs{color:var(--ink3);font-size:11.5px;display:block;margin-top:3px;line-height:1.4}
+.b1{border-top:3px solid var(--l1)} .b2{border-top:3px solid var(--l2)} .b3{border-top:3px solid var(--l3)}
+.b4{border-top:3px solid var(--l4)} .b5{border-top:3px solid var(--l5)} .b6{border-top:3px solid var(--l6)}
+.store{background:#f4f2ec;border:1px dashed var(--rule2);border-radius:4px;padding:8px 11px;font-family:var(--mono);font-size:12px;min-width:134px;line-height:1.45}
+.arr{display:flex;align-items:center;justify-content:center;padding:0 10px;color:var(--ink3);font-size:18px;flex:0 0 auto}
+.arrd{display:flex;align-items:center;justify-content:center;padding:6px 0;color:var(--ink3);font-size:16px}
+.wall{border:none;border-left:3px dashed var(--l4);margin:0 18px;align-self:stretch;position:relative;width:0}
+.wall span{position:absolute;top:50%;left:-58px;width:112px;transform:translateY(-50%) rotate(-90deg);
+  text-align:center;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--l4);font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink3);margin-top:14px}
+.legend i{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:5px}
+.key{display:grid;grid-template-columns:92px 1fr;gap:11px 16px;font-size:14.5px;margin:0 0 30px;
+  background:#fff;border:1px solid var(--rule);border-top:none;border-radius:0 0 6px 6px;padding:20px 22px}
+.key .k{font-family:var(--mono);font-size:12px;color:var(--ink3);padding-top:3px}
+.key .v{max-width:820px}
+.gate{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid var(--rule);font-size:14.5px}
+.gate .gid{font-family:var(--mono);font-size:12.5px;font-weight:700;padding-top:2px;word-break:break-word}
+.gl .gid{color:var(--l2)} .gs .gid{color:var(--l4)}
+.gate .gn{font-weight:600}
+.gate .gd em{color:var(--ink3);font-style:normal;display:block;font-size:13.5px;margin-top:3px;line-height:1.55}
+.tl{display:flex;align-items:stretch;margin:6px 0 0;min-width:min-content}
+.tl .slot{flex:1;min-width:132px;border-left:1px solid var(--rule2);padding:6px 12px 6px 11px;font-size:12.5px;line-height:1.5}
+.tl .slot b{display:block;font-family:var(--mono);font-size:11px;color:var(--ink3);font-weight:600;margin-bottom:3px}
+.kpi{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 22px}
+.kpi div{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;min-width:176px}
+.kpi span{display:block;font-size:12px;color:var(--ink3)}
+.kpi strong{display:block;font-size:23px;font-weight:600;margin-top:2px}
+.toc{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:18px 22px;margin:26px 0 8px;
+  columns:2;column-gap:36px;font-size:14px}
+.toc a{display:block;color:var(--ink2);text-decoration:none;padding:3px 0;break-inside:avoid}
+.toc a:hover{color:var(--l1);text-decoration:underline}
+
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;vertical-align:middle;margin-left:8px}
+.pl{background:#e3f0ea;color:#14614f} .ps{background:#fbe8e4;color:#8f3423}
+@media(max-width:760px){.wrap{padding:32px 16px 64px}.row{flex-wrap:wrap}.wall{display:none}
+  .toc{columns:1}.key{grid-template-columns:72px 1fr}.gate{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>PullbackStrategyLab</h1>
+<p class="sub">A paper-trading laboratory that tests two mirror-image stock-market patterns every day, and a research loop that improves the rules using evidence the lab collects about itself. No real money is involved at any point.</p>
+<p class="sub">The opening sections assume no investing knowledge. The machinery sections explain the machinery. The reference sections are engineering reference.</p>
+
+<div class="toc">
+<a href="#what-this-is-in-plain-terms">What this is, in plain terms</a>
+<a href="#the-two-patterns">The two patterns</a>
+<a href="#vocabulary">Vocabulary</a>
+<a href="#one-day-in-the-life">One day in the life</a>
+<a href="#the-three-loops">The three loops</a>
+<a href="#the-nightly-pipeline">The nightly pipeline</a>
+<a href="#the-long-checks">The long checks</a>
+<a href="#the-short-checks">The short checks</a>
+<a href="#the-trading-day">The trading day</a>
+<a href="#what-gets-measured">What gets measured</a>
+<a href="#two-experiment-families">Two experiment families</a>
+<a href="#replay-and-holdout-windows">Replay and holdout windows</a>
+<a href="#finding-missing-quantitative-signals">Finding missing quantitative signals</a>
+<a href="#the-ai-layer-and-its-limits">The AI layer and its limits</a>
+<a href="#the-screens">The screens</a>
+<a href="#component-catalogue">Component catalogue</a>
+<a href="#where-data-ownership-is-declared">Where data ownership is declared</a>
+<a href="#failure-behaviour">Failure behaviour</a>
+<a href="#build-order">Build order</a>
+<a href="#data-budget">Data budget</a>
+<a href="#authored-parameters">Authored parameters</a>
+</div>
+
+<h2 id="what-this-is-in-plain-terms">What this is, in plain terms</h2>
+
+<p>There is a pattern in stock prices that a number of traders claim to make money from. This project does not assume the claim is true. It builds a machine that tests it honestly, with fake money, every day, and then tries to improve the rule using evidence the machine collects about its own behaviour.</p>
+
+<p>Almost everyone who attempts this makes the same mistake: they record their trades, add up the profit, and conclude something. That does not work here, and understanding why is the key to the rest of the document.</p>
+
+<div class="plain"><b class="lab">Why the trade log is the wrong place to look</b>
+<p>This strategy loses on roughly three trades out of four. It survives because the occasional winner is worth ten or twenty times what a loss costs. So the result over any short period is decided by whether one or two big winners happened to land, not by whether the rule is any good.</p>
+<p>In fishing terms: you want to know whether a spot on the river is good. You cast four times, catch nothing, conclude it is bad. But the fish there are rare and enormous, so four casts tells you nothing. You would need hundreds.</p>
+<p>On this strategy's published figures it takes roughly <b>420 trades</b> to establish that it makes money at all, and over <b>1,100</b> to tell whether a small improvement helped. At a few trades a day that is years, by which point the market has changed and the answer is stale.</p></div>
+
+<p>So the lab records something else <b>as well</b>, and this is the central design idea. Every night it writes down <i>every stock that matched the pattern</i>, whether or not it will be traded, then over the following ten sessions records what each of those stocks actually did.</p>
+
+<p><b>The trading does not stop or wait.</b> A subset of those same setups gets a committed plan, and the ones that trigger open a position the very next session and run to their exits, days for a short and weeks for a long. What takes two weeks is the follow-up measurement, and it runs on every flagged setup in parallel with whatever the trades are doing.</p>
+
+<p>A typical night makes the ratio concrete. Twenty-two stocks are flagged and all twenty-two are followed up. Fourteen pass every check and get a plan. Five trade through their trigger the next morning. Two survive the concurrency and risk caps and actually open. So the same night yields twenty-two observations and two trades, and the twenty are not a consolation prize for the trades that did not happen. A stock nobody bought is worth exactly as much to the evidence store as one that filled, which is the entire reason the store exists.</p>
+
+<p>Back to the river: rather than judging the spot by your four casts, you mark every promising place along the bank, come back later, and record what was actually swimming at each one. You are measuring the judgement instead of the luck of the casting.</p>
+
+<div class="kpi">
+  <div><span>Trades to prove it works at all</span><strong>~420</strong></div>
+  <div><span>Paired trades to spot a small gain</span><strong>~1,100</strong></div>
+  <div><span>Setup observations for the same question</span><strong>~160</strong></div>
+  <div><span>Which takes about</span><strong>13 days</strong></div>
+</div>
+
+<p>The AI reads that second record. It never sees money, never places a trade, and never changes anything by itself. It writes a suggestion with its reasoning and the test that would refute it. A person approves or rejects. Approved suggestions run alongside the original rule, on the same stocks on the same nights, so the two can be compared directly.</p>
+
+<h2 id="the-two-patterns">The two patterns</h2>
+
+<p>The lab tests both directions. They are mirror images with the same skeleton and different management.</p>
+
+<h3>The long side <span class="pill pl">buy</span></h3>
+<p>A stock jumps sharply on unusually heavy trading. Something changed: an earnings surprise, a product, a shift affecting its industry. Moves like that often continue for weeks but never in a straight line. After the jump some holders take profit and the price drifts down for a few days. Then, if the enthusiasm is real, it turns back up. The strategy waits through the drift and buys as it ends.</p>
+
+<h3>The short side <span class="pill ps">sell</span></h3>
+<p>The same thing upside down. A stock has been falling steadily, its moving averages sloping down and squeezing together. It bounces for a few days into those falling averages, which act as a ceiling rather than a floor. The strategy sells short into that bounce as it stalls, betting the decline resumes.</p>
+
+<div class="plain"><b class="lab">Selling short, for readers who have not met it</b>
+<p>You borrow shares you do not own, sell them, and buy them back later. If the price fell in between, you keep the difference. It is the ordinary trade run backwards, and everything about the strategy inverts with it: the give-up point sits above rather than below, and the profit comes from the price falling.</p></div>
+
+<p>Shorts are managed far more quickly than longs. Longs are allowed to run for weeks on a trailing exit. Shorts are taken in pieces and closed fast, because declines are sharper and shorter than advances, and because being wrong on a short has no natural ceiling.</p>
+
+<div class="plain"><b class="lab">What makes either one a strategy rather than a hunch</b>
+<p>Before anything is bought or sold, two prices are written down: the entry, and the price at which you admit you were wrong. The second is deliberately very close, typically two or three percent away.</p>
+<p>That closeness is the whole trick. Because the maximum loss is small and known in advance, you can afford to be wrong most of the time. Lose three percent three times, then make forty, and you are well ahead.</p>
+<p>Everything is therefore measured in <b>R</b>, meaning "the amount you were risking". A loss is <b>−1R</b>. A trade that made twelve times what you risked is <b>+12R</b>. R lets you compare a trade in a $9 stock against one in a $400 stock.</p></div>
+
+<h4>Three real long trades published by the trader this is modelled on</h4>
+<table>
+<tr><th style="width:90px">Stock</th><th style="width:180px">Give-up point set at</th><th style="width:90px">Result</th><th>What it means</th></tr>
+<tr><td>COIN</td><td>2.87% below entry</td><td>+12R</td><td>A move of about 34%, worth twelve times the amount risked.</td></tr>
+<tr><td>SOFI</td><td>1.97% below entry</td><td>+19R</td><td>A 37% move, barely bigger than COIN's, worth 50% more purely because the give-up point was tighter.</td></tr>
+<tr><td>GME</td><td>3.23% below entry</td><td>+54R</td><td>A very large move. One trade like this pays for fifty losses and leaves change.</td></tr>
+</table>
+
+<p>The COIN and SOFI comparison is the one to sit with. Almost the same move, very different results, entirely because of where the give-up point sat. Half the work in this strategy is not picking the stock, it is finding a moment to enter where that point can be placed very close.</p>
+
+<h2 id="vocabulary">Vocabulary</h2>
+<table>
+<tr><th style="width:186px">Term</th><th>What it means</th></tr>
+<tr><td><b>Moving average</b></td><td>The average price over the last N days, recalculated daily. The 9-day tracks price closely, the 50-day moves slowly. Traders treat them as a rough floor under a rising stock and a rough ceiling over a falling one.</td></tr>
+<tr><td><b>The ladder</b></td><td>9-day above 21-day above 50-day means a steady rise. The reverse order means a steady fall. This lab uses those as its definitions of uptrend and downtrend.</td></tr>
+<tr><td><b>ADR</b></td><td>Average daily range: how far a stock typically travels between its high and low in one day, as a percentage. A sleepy utility might be 1.5%, a hot tech stock 7%. It matters because a give-up point must sit outside a stock's normal daily noise or you are thrown out of good trades for nothing.</td></tr>
+<tr><td><b>Thrust</b></td><td>The sharp move that puts a stock on the watchlist. Upward for longs, downward for shorts.</td></tr>
+<tr><td><b>Pullback / bounce</b></td><td>The few days of drifting back after the thrust. The thing the strategy waits for. Called a pullback going long and a bounce going short.</td></tr>
+<tr><td><b>Trigger</b></td><td>The price saying the drift is over and the original direction has resumed. Entry happens here, not before.</td></tr>
+<tr><td><b>Stop</b></td><td>The pre-committed give-up price. Set before entry, never widened afterwards.</td></tr>
+<tr><td><b>R</b></td><td>One unit of risk. Risk $750 and +3R means you made $2,250; −1R means you lost the $750.</td></tr>
+<tr><td><b>VWAP</b></td><td>The average price everyone has paid for that stock so far today. Traders read whether price sits above or below it as a rough signal of who is winning.</td></tr>
+<tr><td><b>Setup</b></td><td>One stock, one night, one direction, matching the pattern. The basic unit of record.</td></tr>
+<tr><td><b>Signal</b></td><td>One measured quantity recorded about a setup, meaning a column in the table. Retrace depth, daily range and days since the thrust are signals. The full set is the signal library, and it bounds what any rule can be built from.</td></tr>
+<tr><td><b>Forward return</b></td><td>What a stock went on to do over the next 1, 3, 5 and 10 days after being flagged. Recorded for every flagged setup including ones never traded. The lab's main measuring instrument.</td></tr>
+<tr><td><b>MFE and MAE</b></td><td>The best and the worst the stock reached at any point during those ten days. Together they say whether a setup was a good spot with a bad exit point, or genuinely poor.</td></tr>
+<tr><td><b>Baseline and variant</b></td><td>The baseline is the original rule, frozen forever. A variant is a copy with exactly one thing changed, run side by side so that change can be judged alone.</td></tr>
+<tr><td><b>Replay</b></td><td>Re-filtering the stored setup rows with a different rule. Not a backtest, because the rows were written on the night with only what was knowable then, and the outcome column was filled in later by time passing.</td></tr>
+<tr><td><b>Context pack</b></td><td>The summarised evidence handed to the AI. It is versioned, because improving the pack is the main way this system gets better.</td></tr>
+<tr><td><b>Point-in-time</b></td><td>Only ever using information that genuinely existed at the moment being simulated. Breaking this is the most common way a strategy test produces an imaginary profit.</td></tr>
+</table>
+
+<h2 id="one-day-in-the-life">One day in the life</h2>
+<p>Following one stock through the system, using real prices from August 2026.</p>
+
+<div class="fig figalone">
+<div class="tl">
+  <div class="slot"><b>Tue 12 Aug, evening</b>The lab downloads closing prices for the whole US market. SMCI rose 19% on roughly five times its usual volume. Flagged as a thrust.</div>
+  <div class="slot"><b>13 to 20 Aug</b>SMCI drifts from a high of $42.31 down to $36.50 over four days, never closing below its 9-day average. That drift is the pullback.</div>
+  <div class="slot"><b>Fri 21 Aug, evening</b>A setup row is written: SMCI, the result of every check, entry at $37.67, give up at $36.42, and the share count that makes a loss cost 0.75% of the account.</div>
+  <div class="slot"><b>Frozen</b>The plan cannot be edited. It exists in the database before Monday opens, which is what stops anyone quietly improving it with hindsight.</div>
+  <div class="slot"><b>Mon 24 Aug, evening</b>Minute-by-minute prices are downloaded and the day is replayed. Did $37.67 trade, at what time, at what realistic fill? Did it then fall to $36.42?</div>
+  <div class="slot"><b>Next 10 days</b>Regardless of the trade, the lab records what SMCI did over 1, 3, 5 and 10 days, plus the best and worst it reached. Same for every setup flagged that night, traded or not.</div>
+  <div class="slot"><b>Day 10</b>The setup closes for scoring. It becomes one row of evidence, one paired observation for every variant, and a candidate for twin-pair analysis.</div>
+</div>
+<p class="figcap"><b>Figure 1.</b> The trade is the small part. The durable output is the setup record and the follow-up behind it, both of which exist whether or not anything was bought.</p>
+</div>
+
+<div class="rule"><b class="lab">The one thing to take away</b>
+<p>The plan is written before the market opens and never touched afterwards. Most of this architecture exists to protect that single property, because a strategy test whose rules can move after you have seen the outcome is not a test of anything.</p></div>
+
+<h2 id="the-three-loops">The three loops</h2>
+
+<p>Three cycles at three speeds. The session loop runs daily and produces trades. The measurement loop runs daily and produces evidence. The research loop runs weekly and produces suggestions. Only the third involves any AI, and it is walled off from the other two.</p>
+
+<div class="fig">
+<div class="row">
+  <div class="col">
+    <div class="box b1"><span class="bid">ingest</span><span class="bt">Collect the data</span><span class="bs">Prices, splits, spreads, sectors</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b2"><span class="bid">detect</span><span class="bt">Find both patterns</span><span class="bs">Averages, scans, long and short checks</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b3"><span class="bid">plan</span><span class="bt">Write the plans</span><span class="bs">Entry, give-up point, size</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col">
+    <div class="box b4"><span class="bid">session</span><span class="bt">Replay the day</span><span class="bs">Triggered, filled, stopped, exited</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b5"><span class="bid">record</span><span class="bt">Record and follow up</span><span class="bs">Setups, trades, forward returns</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b5"><span class="bid">measure</span><span class="bt">Turn it into numbers</span><span class="bs">Loss causes, ceiling, variant scores</span></div>
+  </div>
+  <div class="wall"><span>approval wall</span></div>
+  <div class="col">
+    <div class="box b6"><span class="bid">research</span><span class="bt">Find the blind spots</span><span class="bs">Twin pairs, versioned pack, one call</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b6"><span class="bid">registry</span><span class="bt">Register and vet</span><span class="bs">Rule change or signal request</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b6"><span class="bid">screen and settle</span><span class="bt">Screen, then settle</span><span class="bs">Replay first, forward test decides</span></div>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:var(--l1)"></i>collect</span><span><i style="background:var(--l2)"></i>detect</span>
+  <span><i style="background:var(--l3)"></i>plan</span><span><i style="background:var(--l4)"></i>trade</span>
+  <span><i style="background:var(--l5)"></i>measure</span><span><i style="background:var(--l6)"></i>research</span>
+</div>
+<p class="figcap"><b>Figure 2.</b> Everything left of the dashed line runs daily with no AI involvement whatsoever. Nothing crosses back leftward without a person approving it.</p>
+</div>
+<div class="key">
+<div class="k">Collect</div><div class="v">Downloads the whole US market's closing prices in one bulk request, plus splits. Splits matter more than they sound: if a company divides its shares four-for-one and nobody tells the system, every average it calculates becomes nonsense overnight and the nonsense looks entirely plausible.</div>
+<div class="k">Find</div><div class="v">Computes each stock's averages and daily range, then runs two detectors, one per direction. Anything passing becomes a candidate for tomorrow.</div>
+<div class="k">Plan</div><div class="v">Turns each candidate into a committed instruction: enter here, give up here, this many shares. Written and locked before the market opens.</div>
+<div class="k">Replay</div><div class="v">Downloads the day's minute bars after the close and works out what would have happened to each plan. Prices at this resolution are published two to three hours after the close, so watching live buys nothing and costs a great deal of infrastructure.</div>
+<div class="k">Record</div><div class="v">Writes everything down, including plans that never triggered and orders blocked by a limit. Then returns over ten days to record what every flagged stock actually did.</div>
+<div class="k">Numbers</div><div class="v">Classifies why each loss happened, computes the theoretical ceiling on the win rate from the actual outcome distribution, and scores each variant against the baseline.</div>
+<div class="k">Research</div><div class="v">Finds pairs of setups that look identical but behaved differently, summarises the evidence, asks the AI one question a week, and files the answer as a written proposal that changes nothing on its own.</div>
+</div>
+
+<div class="plain"><b class="lab">Why the wall exists</b>
+<p>An AI that can both suggest a change and put it into production will, given enough attempts, find a rule that looks brilliant on data it has already seen and is worthless on anything new. This is not an AI failing. It is what happens to any search process turned loose on a fixed dataset, including a human with a spreadsheet and a free afternoon.</p></div>
+
+<h2 id="the-nightly-pipeline">The nightly pipeline</h2>
+
+<p>Runs unattended between roughly 5:30pm and 9:00pm Eastern.</p>
+
+<div class="fig">
+<div class="row">
+  <div class="col">
+    <div class="box b1"><span class="bid">DailyBarIngestor</span><span class="bt">Daily prices</span><span class="bs">One bulk request, whole market</span></div>
+    <div class="box b1"><span class="bid">ActionIngestor</span><span class="bt">Splits and dividends</span></div>
+    <div class="box b1"><span class="bid">IndexIngestor</span><span class="bt">Market indexes</span></div>
+    <div class="box b1"><span class="bid">UniverseBuilder</span><span class="bt">Universe snapshot</span><span class="bs">Who was listed tonight</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col">
+    <div class="box b2"><span class="bid">IndicatorEngine</span><span class="bt">Averages</span><span class="bs">9, 21, 50 day, ADR, ATR</span></div>
+    <div class="box b2"><span class="bid">ScanEngine</span><span class="bt">Movers, both ways</span><span class="bs">Gainers and decliners</span></div>
+    <div class="box b2"><span class="bid">TierClassifier</span><span class="bt">Ladder grade</span><span class="bs">Rising, mixed or falling</span></div>
+    <div class="box b2"><span class="bid">RegimeLabeler</span><span class="bt">Market mood</span><span class="bs">Read from the indexes</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b2"><span class="bid">LongSetupDetector</span><span class="bt">Long detector</span><span class="bs">Pullback in an uptrend</span></div>
+    <div class="box b2"><span class="bid">ShortSetupDetector</span><span class="bt">Short detector</span><span class="bs">Bounce in a downtrend</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b2"><span class="bid">SignalVectorizer</span><span class="bt">Freeze the evidence</span><span class="bs">Snapshot of what was knowable</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b2"><span class="bid">SetupCapper</span><span class="bt">Apply the nightly cap</span><span class="bs">Same cap for every variant</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b3"><span class="bid">plan</span><span class="bt">Build the plans</span><span class="bs">One per variant</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b3"><span class="bid">WatchlistPublisher</span><span class="bt">Publish the watchlist</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b1"><span class="bid">IntradayFetcher, SpreadSnapshotter</span><span class="bt">Fetch minute bars</span><span class="bs">Every flagged setup, plus spreads</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="store">setups</div>
+    <div class="store">frozen signals</div>
+    <div class="store">trade plans</div>
+    <div class="store">minute bars</div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 3.</b> Two detectors, one shared signal freeze, one shared cap. Variants never re-scan the market; they choose from the same list, which is what makes their comparison paired rather than independent.</p>
+</div>
+<div class="key">
+<div class="k">IndicatorEngine</div><div class="v"><b>Averages computed locally</b> from stored prices, never requested from the provider. Moving averages are recursive, so today's value needs only today's close and yesterday's stored value. Asking the provider to calculate them instead would cost about 45,000 API calls a day for arithmetic that is one loop.</div>
+<div class="k">ScanEngine</div><div class="v"><b>Six scans, three per direction:</b> yesterday's biggest gainers and decliners, stocks that gapped away from their previous close in either direction, and the biggest movers of the past month both ways. A stock must appear on one to be eligible, because the premise is that something happened.</div>
+<div class="k">RegimeLabeler</div><div class="v"><b>One market-mood label per day, from two scores.</b> Index trend: how many of SPY, QQQ and IWM closed above their own 21-day average, scoring +1 for three, minus 1 for none, 0 for one or two. Breadth: the ratio of universe names passing the long ladder to those passing the short ladder, scoring +1 above 1.5, minus 1 below 0.67, 0 between. The sum gives risk-on at +2, risk-off at minus 2, mixed otherwise.<br><br>Two properties worth noting. The three-state form buffers itself, since you cannot go from risk-on to risk-off without passing through mixed. And breadth costs nothing, because it falls out of the detector funnel that already ran. The label is recorded against every setup but filters nothing in the baseline, which keeps it available as a clean experiment. Both raw scores are stored alongside it so a later proposal can use the continuous version rather than the three buckets.</div>
+<div class="k">SignalVectorizer</div><div class="v"><b>Copies every number the decision depended on</b> into a row that is never updated. Months later the AI sees exactly what was knowable that night and nothing that arrived afterwards. This row is also what makes replay possible.</div>
+<div class="k">SetupCapper</div><div class="v"><b>Caps the night at 60 setups, split 40 long and 20 short,</b> with unused slots on either side released to the other. Each setup costs minute bars tomorrow, which is what sets the number.<br><br>The split is deliberately not proportional. Short setups are rarest in a strong market, which is exactly when they are most interesting, and a proportional split would crowd them out of the record on those nights. Truncation is by rank. The cap applies to the shared candidate list before any variant selects, never to individual variants' picks, because capping per variant would leave the disagreements unscoreable.</div>
+</div>
+
+<h2 id="the-long-checks">The long checks <span class="pill pl">buy</span></h2>
+
+<p>Each check answers one question. The first four are cheap filters deciding whether a stock is worth recording at all. The last six are the pattern test.</p>
+
+<div class="fig figalone gl" style="padding-top:20px">
+<div class="gate gl"><span class="gid">tradable</span><span class="gd"><b>Is it tradable?</b> At least $20 million changes hands daily and the price is above $5.<em>In thinly traded stocks you cannot buy or sell at the price on screen, so any simulated result is fiction.</em></span></div>
+<div class="gate gl"><span class="gid">moves-enough</span><span class="gd"><b>Does it move enough?</b> Typical daily range of 5% or more.<em>A stock moving 1% a day cannot produce a 20% winner in a few weeks, so the arithmetic that makes this work never starts.</em></span></div>
+<div class="gate gl"><span class="gid">uptrend</span><span class="gd"><b>Is it in an uptrend?</b> Price above the 9-day average, which is above the 21-day, which is above the 50-day.<em>The working definition of a healthy rise, as distinct from a stock swinging around going nowhere.</em></span></div>
+<div class="gate gl"><span class="gid">thrust</span><span class="gd"><b>Did something happen?</b> Appeared on an upward mover scan within the last ten days.<em>The premise is that a sharp move reflects real news. No thrust, no premise.</em></span></div>
+<div class="gate gl"><span class="gid">dip-shape</span><span class="gd"><b>Is the dip the right shape?</b> Two to seven days of drifting, giving back no more than 40% of the jump.<em>A shallow brief dip suggests patient holders. A deep or long one suggests they are leaving, which is a different situation wearing the same clothes.</em></span></div>
+<div class="gate gl"><span class="gid">held-floor</span><span class="gd"><b>Did it hold its floor?</b> No daily close below the 21-day average during the dip.<em>Dipping below intraday is fine and normal. Closing below means the stock failed its own trend test that day.</em></span></div>
+<div class="gate gl"><span class="gid">contraction</span><span class="gd"><b>Has it gone quiet?</b> The latest day’s range is narrower than its recent average.<em>Contracting volatility before a move is one of the oldest observations in technical trading. Practically, it also lets the give-up point sit closer.</em></span></div>
+<div class="gate gl"><span class="gid">trigger-near</span><span class="gd"><b>Is the entry close?</b> The trigger sits within 1.5 daily ranges of the current price.<em>If the entry is a week of movement away the setup is not ready, and the situation will have changed by the time it gets there.</em></span></div>
+<div class="gate gl"><span class="gid">exit-tight</span><span class="gd"><b>Can the exit be tight enough?</b> Entry to give-up distance no more than half the stock’s daily range.<em>The check that fails most often, and the most informative one in the system. See the note below.</em></span></div>
+<div class="gate gl" style="border:none"><span class="gid">cluster</span><span class="gd"><b>Are its neighbours moving?</b> Two or more stocks from the same industry flagged the same night.<em>Recorded but not required. Grouped movement suggests an industry shift rather than one company’s news.</em></span></div>
+</div>
+
+<div class="plain"><b class="lab">Why the exit-tight check is the interesting one</b>
+<p>SMCI's daily range was 6.8%, so the give-up point had to be within 3.4% of the entry. The obvious reference from the daily chart, the low of the dip, gives 5.6%. Too wide. The trade fails the strategy's own risk rule.</p>
+<p>The only way to get an exit tight enough is to enter during the day at a moment when a nearby floor has just been established. That is why this is an intraday strategy, and why a test built on daily closing prices alone would quietly be testing a different and worse strategy while appearing to test this one.</p></div>
+
+<h2 id="the-short-checks">The short checks <span class="pill ps">sell</span></h2>
+
+<p>The mirror, with three differences that are not just sign flips.</p>
+
+<div class="fig figalone gs" style="padding-top:20px">
+<div class="gate gs"><span class="gid">tradable-shortable</span><span class="gd"><b>Is it tradable and shortable?</b> Price above $5, market capitalisation above $2 billion, median dollar volume above $50 million, and at least 90 sessions since first listing.<em>Three of those four are stricter than the long side. You cannot short what nobody will lend you, and the feed will not tell you what was borrowable that morning, so the filter stands in for the information. Recent listings are excluded outright because borrow is unreliable there regardless of size.</em></span></div>
+<div class="gate gs"><span class="gid">moves-enough</span><span class="gd"><b>Does it move enough?</b> Typical daily range of 5% or more.<em>Identical to the long side.</em></span></div>
+<div class="gate gs"><span class="gid">downtrend</span><span class="gd"><b>Is it in a downtrend?</b> Price below the 9-day average, below the 21-day, below the 50-day.<em>The ladder inverted.</em></span></div>
+<div class="gate gs"><span class="gid">averages-squeezing</span><span class="gd"><b>Are the averages squeezing?</b> The gap between the 21-day and 50-day averages is narrower than its own recent average.<em>Not a mirror of anything on the long side. The trader’s stated observation is that the tighter those averages, the more reliably a bounce is rejected there.</em></span></div>
+<div class="gate gs"><span class="gid">thrust</span><span class="gd"><b>Did something happen?</b> Appeared on a downward mover scan within the last ten days.</span></div>
+<div class="gate gs"><span class="gid">bounce-shape</span><span class="gd"><b>Is the bounce the right shape?</b> Two to seven days of rising, recovering no more than 40% of the drop.</span></div>
+<div class="gate gs"><span class="gid">reached-ceiling</span><span class="gd"><b>Has it reached the ceiling?</b> Price is within half a daily range of the 21-day or 50-day average, or of the declining average price anchored to the last swing high.<em>The level is where the bounce is expected to stall. On the long side the equivalent level is where the dip is expected to hold.</em></span></div>
+<div class="gate gs"><span class="gid">no-reclaim</span><span class="gd"><b>Did it fail to reclaim?</b> No daily close above the 50-day average during the bounce.<em>A close above it says the downtrend may be over, which is the short-side equivalent of the held-floor check.</em></span></div>
+<div class="gate gs"><span class="gid">exit-tight</span><span class="gd"><b>Can the exit be tight enough?</b> Entry to give-up distance no more than half the daily range, with the give-up point above the bounce high.</span></div>
+<div class="gate gs" style="border:none"><span class="gid">cluster</span><span class="gd"><b>Are its neighbours falling?</b> Two or more from the same industry flagged short the same night.<em>Recorded, not required.</em></span></div>
+</div>
+
+<div class="warn"><b class="lab">The short side has an honesty problem the long side does not</b>
+<p>Whether a stock could actually be borrowed that morning, and at what cost, is not in the price feed. A short that was impossible to place will be recorded by this lab as though it filled cleanly.</p>
+<p>The design mitigates rather than solves this. The that check filter excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
+<p><b>Worth knowing how small the cost term is.</b> At 1.0% a year a four-day hold costs about 0.011% of position value, which against a 3% stop is roughly 0.4% of one R. The rate is set several times higher than a general-collateral borrow actually costs and it still rounds to nothing. So borrow <i>cost</i> is not what decides the short side. Borrow <i>availability</i> is, and that is what the tradable-shortable check exists for.</p></div>
+
+<h4>What differs in management</h4>
+<table>
+<tr><th style="width:150px">Aspect</th><th style="width:270px">Long</th><th>Short</th></tr>
+<tr><td>Holding period</td><td>Days to weeks</td><td>Days. Declines are faster and sharper than advances</td></tr>
+<tr><td>Exit rule</td><td>Trail the 9-day average, let it run</td><td>Trim about 15% past 3R, trim into support, exit if an hourly bar closes back above the 50-day average</td></tr>
+<tr><td>Ambition</td><td>The occasional very large winner carries the year</td><td>Quick repeatable gains, no attempt at outsized winners</td></tr>
+<tr><td>Worst case</td><td>Bounded. The price cannot go below zero</td><td>Unbounded in principle. The give-up point is the only protection, and gaps can jump it</td></tr>
+</table>
+
+<h2 id="the-trading-day">The trading day</h2>
+
+<p>Minute prices arrive after the close, so the lab replays each day against plans locked before it started. The trade record is identical to live monitoring and an entire category of infrastructure disappears.</p>
+
+<div class="fig">
+<div class="row">
+  <div class="col" style="justify-content:center">
+    <div class="store">plans, locked<br>before the open</div>
+    <div class="arrd">↓</div>
+    <div class="box b4"><span class="bid">TriggerResolver</span><span class="bt">Did it trigger?</span><span class="bs">Walked minute by minute</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b4"><span class="bid">VwapEngine</span><span class="bt">Intraday levels</span><span class="bs">VWAP, day's high and low</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b4" style="border-left:3px solid var(--l4)"><span class="bid">RiskGate</span><span class="bt">Risk gate</span><span class="bs">The only thing allowed to open a position, either direction</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b4"><span class="bid">PaperBroker</span><span class="bt">Simulated broker</span><span class="bs">Pessimistic fills</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b4"><span class="bid">PositionManager</span><span class="bt">Manage the position</span><span class="bs">Different rules per direction</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="store">orders</div>
+    <div class="store">fills</div>
+    <div class="store">planned vs actual</div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 4.</b> Every variant's orders pass through one risk gate. Two variants wanting the same stock produce two orders in two separate simulated accounts, both capped by identical code.</p>
+</div>
+<div class="key">
+<div class="k">TriggerResolver</div><div class="v"><b>Walks the day one minute at a time,</b> only ever seeing minutes that had already happened at that point. The restriction is easy to state and easy to break, which is why it gets its own component rather than being a comment in someone else's code.</div>
+<div class="k">Contention</div><div class="v"><b>Every plan that passed its checks is placed, and each is a complete instruction before the open.</b> Nothing is chosen during the session. When more plans trigger than the caps allow, <b>the earliest trigger fills and later ones are blocked with a reason</b>, which is what resting orders do in a real account. Rank order governs which setups are recorded under the nightly cap and how the screen sorts; it does not govern fills. (see: Plans are resting orders and fills go in time order when the caps bind)<br><br>The cost is worth knowing: a mediocre setup triggering at 9:31 consumes capacity a better one triggering at 10:15 cannot use. Reserving capacity for the best-ranked plans instead would require trusting a ranking rule that is currently an authored guess, and would leave slots unused on days the reserved names never trigger.</div>
+<div class="k">RiskGate</div><div class="v"><b>One piece of code sizes every position and blocks anything over the limits.</b> If two components could open positions the limits would live in two places and would eventually disagree. That disagreement would be silent and would invalidate every comparison between variants.</div>
+<div class="k">PaperBroker</div><div class="v"><b>Deliberately pessimistic fills.</b> Real orders do not fill at the price you wanted, and across hundreds of trades the gap matters more than beginners expect.</div>
+<div class="k">PositionManager</div><div class="v"><b>Two rule sets, one per direction.</b> Longs trail and run; shorts trim and close. Sharing one exit routine across both would be the single easiest way to accidentally test a strategy nobody trades.</div>
+</div>
+
+<h4>The limits</h4>
+<table>
+<tr><th style="width:170px">Limit</th><th style="width:180px">Value</th><th>In plain terms</th></tr>
+<tr><td>Risk per trade</td><td>0.75% of equity, so $750</td><td>A single loss costs three quarters of one percent. Position size follows from this and the distance to the give-up point.</td></tr>
+<tr><td>Give-up distance</td><td>At most half the daily range</td><td>Close enough to keep losses small, far enough that ordinary noise does not eject you from a trade that was going to work.</td></tr>
+<tr><td>Position size</td><td>At most 35% of the account</td><td>Only bites when the give-up point is unusually close, which would otherwise justify an alarming position.</td></tr>
+<tr><td>Open at once</td><td>4 positions</td><td>Triggers cluster, because they are driven by the same market conditions.</td></tr>
+<tr><td>Open short positions</td><td>2 of those 4</td><td>Short losses are unbounded in principle, so the exposure cap is tighter on that side.</td></tr>
+<tr><td>Total risk at stake</td><td>3% of the account</td><td>The worst realistic day. Stops four simultaneous losses from being a disaster.</td></tr>
+</table>
+
+<h4>The fill model, pessimistic on purpose</h4>
+<ul>
+<li><b>Entry costs slightly more than the trigger.</b> The order goes in while price is already moving, so it fills a little the wrong side of the number on the plan.</li>
+<li><b>An overnight jump past the give-up point is recorded as a bigger loss than planned.</b> These are real, they are how the bad tail actually looks, and rounding them back to a neat one-unit loss would be lying to yourself in the one place it matters most.</li>
+<li><b>When one minute contains both the give-up price and a profit-taking level, the give-up is assumed first.</b> This makes results look slightly worse than reality, which is the correct direction for an assumption you cannot resolve.</li>
+<li><b>Short results carry a borrow cost</b> subtracted per day held, using a fixed assumed rate recorded alongside the trade.</li>
+</ul>
+
+<h2 id="what-gets-measured">What gets measured</h2>
+
+<p>Each setup is written once and never modified. Everything else attaches to it over the following days.</p>
+
+<div class="fig">
+<div class="tl">
+  <div class="slot"><b>Night 0</b>Setup written: direction, every check result, frozen signals, market mood, spread.</div>
+  <div class="slot"><b>Night 0</b>One plan per variant that selected it. Variants that passed on it are recorded as having passed.</div>
+  <div class="slot"><b>Day 1</b>Triggered, blocked by a limit, or never reached. All three are outcomes worth keeping.</div>
+  <div class="slot"><b>Days 1 to 10</b>Forward returns signed by direction, plus the best and worst reached along the way.</div>
+  <div class="slot"><b>On exit</b>Result in R, plus planned against executed, plus a loss cause if it lost.</div>
+  <div class="slot"><b>Day 10</b>Setup closes for scoring. Feeds the variant scores, the ceiling calculation and twin-pair analysis.</div>
+</div>
+<p class="figcap"><b>Figure 5.</b> Forward returns are recorded for every flagged setup, traded or not. This separates "was the pattern worth spotting" from "was the execution any good", two different questions most trading systems hopelessly confuse.</p>
+</div>
+<div class="key">
+<div class="k">Both halves</div><div class="v">A stock can be a good spot and a bad trade. If the pattern works but the trades lose, the fault is execution and you fix the entry timing. If the trades win but flagged stocks behave no differently from anything else, you got lucky and the pattern is worthless. Recording only trades makes those two look identical.</div>
+<div class="k">Best and worst</div><div class="v">A stock that rose 15% after first dropping 4% is a good spot with a badly placed exit. One that rose 15% smoothly is a good spot with a well placed one. The plain return cannot tell them apart. These two numbers can, and the distinction is what any sensible proposal about stop placement depends on.</div>
+</div>
+
+<h3 id="why-each-loss-happened">Why each loss happened</h3>
+<p>One demoralising number becomes four actionable ones. Every closed loss is classified automatically from data the lab already holds.</p>
+<table>
+<tr><th style="width:170px">Cause</th><th style="width:280px">How it is detected</th><th>What it points at</th></tr>
+<tr><td>Noise stop-out</td><td>Stopped out, but the ten-day follow-up shows the move happened anyway</td><td>Execution. Entry timing or stop placement, not the filter</td></tr>
+<tr><td>Failed setup</td><td>Stopped out and the follow-up is flat or against you</td><td>The filter. This is the bucket selection changes can actually reduce</td></tr>
+<tr><td>Gap loss</td><td>Loss larger than one unit of risk</td><td>Selection. Liquidity floor, or avoiding earnings dates inside the window</td></tr>
+<tr><td>Never triggered</td><td>No trade, but the setup still has a follow-up</td><td>The trigger rule. Evidence about entries you are missing</td></tr>
+</table>
+<p>A 25% win rate where most losses are failed setups is a filter problem worth solving. The same 25% where most are noise stop-outs on stocks that then ran is an execution problem, and no amount of filter improvement will touch it. The system cannot tell you which without this classification.</p>
+
+<h3 id="the-ceiling-computed-rather-than-assumed">The ceiling, computed rather than assumed</h3>
+
+<div class="plain"><b class="lab">Most of the win rate is geometry, not skill</b>
+<p>A give-up point at half the daily range sits 0.8 of one daily standard deviation away. That is very close. With no edge at all, purely random movement hits it 42% of the time in one day and 80% within ten. A coin flip with this stop wins about 20% of the time. The observed rate is 25%, so the entire measured edge of this strategy is worth about five points of win rate.</p>
+<p>Adding drift barely moves it. Even an implausible 10% expected gain over ten days only lifts the win rate to 37%. Chasing the win rate directly is the wrong instinct, and widening the stop to raise it destroys more expectancy than it gains.</p></div>
+
+<p>So the lab computes a reference line instead of assuming one. Given the actual distribution of ten-day outcomes among flagged setups, what win rate would a system with perfect foresight achieve, given that it still has to survive the path? For a population that ends up 15% ahead, the answer is 50%. For one ending 40% ahead, it is 80%.</p>
+
+<p>The number that matters is the gap between achieved and that ceiling.</p>
+<ul>
+<li><b>Achieved 25% against a ceiling of 50%</b> means half the available room is unused and better selection has somewhere to go.</li>
+<li><b>Achieved 25% against a ceiling of 28%</b> means the stop is too tight for these names and the loop should be pointed at the exit rule instead.</li>
+</ul>
+<p>You do not assume which. It is computable from stored rows in phase 3, before any of the research machinery is built.</p>
+
+<h2 id="two-experiment-families">Two experiment families</h2>
+
+<p>Suppose a change is proposed. The naive test is to run it for a few months and compare profit. That is close to useless.</p>
+
+<div class="plain"><b class="lab">The medical trial analogy</b>
+<p>Testing two headache drugs the weak way: give drug A to a hundred people in January and drug B to a different hundred in February. If February is flu season the comparison is worthless, and even without flu you need thousands before individual variation averages out.</p>
+<p>The strong way gives both drugs to the <i>same</i> people and records the difference per person. Individual variation cancels and a few hundred is plenty.</p>
+<p>This system does the strong version. Baseline and variants see the same candidate list on the same nights against the same market. The measurement is the difference, night by night.</p></div>
+
+<div class="fig">
+<div class="row">
+  <div class="col" style="justify-content:center">
+    <div class="store" style="min-width:162px">tonight's candidates<br>both directions</div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col">
+    <div class="box b3"><span class="bid">V0</span><span class="bt">Baseline</span><span class="bs">Frozen, never edited</span></div>
+    <div class="box b6"><span class="bid">F1</span><span class="bt">Selection family</span><span class="bs">Which setups to take</span></div>
+    <div class="box b4"><span class="bid">F2</span><span class="bt">Execution family</span><span class="bs">Where the stop and trigger sit</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b5" style="min-width:196px"><span class="bid">VariantScorer</span><span class="bt">Scored differently</span><span class="bs">Selection on forward return, execution on R</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6" style="min-width:178px"><span class="bid">AcceptanceGate</span><span class="bt">Settle the question</span><span class="bs">Against the target written up front</span></div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 6.</b> Two families, because they are not comparable. A selection change alters which stocks you pick. An execution change alters the size of the R unit itself, so its results cannot be differenced against the baseline in the same way.</p>
+</div>
+<div class="key">
+<div class="k">F1 selection</div><div class="v"><b>Changes a check, leaves entry and exit alone.</b> Scored on the forward return of what it selected against what the baseline selected, on the same nights. Fully replayable, because the answer is already sitting in the stored rows.</div>
+<div class="k">F2 execution</div><div class="v"><b>Changes the stop, the trigger, or the exit, on the same selections.</b> Scored on R per trade, plus the loss-cause mix, plus how often the risk gate had to override. Requires the minute bars, which is why they are now fetched for every flagged setup rather than only planned ones.</div>
+<div class="k">Never mixed</div><div class="v">A variant that changes both is rejected. If it did better you would have learned nothing about which change caused it, and if it did worse you would not know which to undo.</div>
+<div class="k">One clause</div><div class="v">Within a family, a variant differs from the baseline by exactly one clause. The same rule for the same reason.</div>
+</div>
+
+<div class="rule"><b class="lab">Deciding the answer before seeing it</b>
+<p>At creation, two things are locked: the improvement required, and how many observations must accumulate before anyone may look. A variant that misses its target closes as refuted and stays visible in the record rather than quietly vanishing.</p>
+<p><b>Defaults, overridable per proposal with a stated reason.</b> Selection variants settle at <b>160 paired setup observations</b>, which detects about a two-point difference in ten-day forward return. Execution variants settle at <b>200 paired trades</b>, which detects about a 0.35R difference. Both numbers are honest about what they cannot see: an improvement smaller than that needs a longer sample pre-registered up front, and asking for one is a legitimate proposal.</p>
+<p>Without this the loop becomes a machine for false discoveries. Run twenty variants and pick the best and you have picked the luckiest. With twenty genuinely worthless candidates, the chance at least one looks impressive by luck alone is about 64%.</p></div>
+
+<div class="warn"><b class="lab">The trap this loop will walk into if unguarded</b>
+<p>Win rate is trivially improvable in the wrong direction. Widen the stop and fewer trades get stopped by noise, so more of them win, while the same dollar move is worth far fewer R. Going from a 2.5% to a 6% stop might take the win rate from 25% to 40% and halve the expectancy.</p>
+<p>Three standing rules, written now before any results exist. Acceptance measures expectancy, never win rate. Win rate is reported alongside as a diagnostic so you can see which lever a variant pulled. And any variant raising win rate while lowering expectancy is rejected automatically.</p></div>
+
+<h2 id="replay-and-holdout-windows">Replay and holdout windows</h2>
+
+<p>The strategy question takes months. The question of whether a proposal is any good can often be answered in seconds, because the lab's own stored rows already contain the answer.</p>
+
+<div class="fig">
+<div class="row">
+  <div class="col" style="justify-content:center">
+    <div class="store" style="min-width:150px">stored setups<br>+ outcomes</div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6" style="min-width:168px"><span class="bid">ReplayHarness</span><span class="bt">Re-filter with the new rule</span><span class="bs">A different WHERE clause</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6" style="min-width:168px"><span class="bid">HoldoutRegistry</span><span class="bt">Score on an untouched window</span><span class="bs">One of eight, spent forever</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6"><span class="bt">Screened out</span><span class="bs">Never admitted</span></div>
+    <div class="arrd">or</div>
+    <div class="box b3"><span class="bt">Admitted</span><span class="bs">Forward test still decides</span></div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 7.</b> Replay kills bad proposals cheaply. It never accepts one. The forward paired test remains the only thing that admits a change permanently.</p>
+</div>
+
+<div class="plain"><b class="lab">Replay is not backtesting, and the difference is not a technicality</b>
+<p>A backtest reconstructs a past nobody recorded. It has to infer which stocks were in the universe, recover prices that may have been revised since, and avoid accidentally using knowledge that arrived later. Every one of those is a way to manufacture a fake profit.</p>
+<p>A replay re-reads rows the lab wrote forward, on the night, with only what was knowable then. The outcome column was not calculated, it was filled in by time passing. Applying a new rule is a database query over rows that already have their answers attached.</p>
+<p>Weather-station version: every evening you note the barometer, the humidity and your forecast. Next evening you note whether it rained. A year later someone asks what would have happened if you had only forecast rain above 80% humidity. You do not need last year's weather back. You sort the cards you already wrote and count.</p></div>
+
+<h4>What each tier of change can be replayed against</h4>
+<table>
+<tr><th style="width:150px">Tier</th><th style="width:290px">Kind of change</th><th>How it is screened</th></tr>
+<tr><td>Selection</td><td>A different threshold on a check, using signals already frozen</td><td>Full replay. Seconds.</td></tr>
+<tr><td>Execution</td><td>Stop placement, trigger definition, exit rule</td><td>Full replay, because minute bars exist for every flagged setup</td></tr>
+<tr><td>New signal</td><td>A quantity computable from daily bars already stored</td><td>Backfilled across all history, then full replay</td></tr>
+<tr><td>Structural</td><td>A change to the recording floor, or a signal needing data never captured</td><td>Forward only. Those rows do not exist and cannot be made to exist</td></tr>
+</table>
+
+<div class="rule"><b class="lab">The holdout budget</b>
+<p><b>Quarters of forward-collected evidence, non-overlapping, capped at eight.</b> They cannot all exist at the start: evidence accumulates forward only, so the first quarter closes three months after go-live and the eighth two years after. The register is created empty and a window becomes available the day its quarter completes. One window is spent per decision between context-pack versions. A spent window is never reused for any purpose, and the register records its date range, what it was spent on, and the outcome.</p>
+<p>The reason is that replay is free, and free tests are how you overfit. Sort the same cards forty ways and pick the best and you have fitted to those cards. The budget makes the cost explicit and finite.</p>
+<p>Second caveat, recorded so nobody forgets it: the model has seen these tickers and dates in its training data. A proposal citing a famous move in a famous stock is not clean evidence. Prefer scoring on obscure names.</p></div>
+
+<h2 id="finding-missing-quantitative-signals">Finding missing quantitative signals</h2>
+
+<p><b>Signal</b> means one measured quantity recorded about a setup, in other words a column in the table. Retrace depth is a signal. Daily range is a signal. Days since the thrust is a signal. The full set is called the signal library, and it is a hard ceiling on what any rule can be built from: if nothing measures whether volume dried up during the pullback, no rule can ever refer to it.</p>
+
+<p>Nobody knows in advance which missing signal would improve the picks. The AI is not asked to guess one. It is asked to point at where the current library falls short, which is an easier question and one the stored rows can answer on their own.</p>
+
+<div class="fig">
+<div class="row">
+  <div class="col" style="justify-content:center">
+    <div class="box b6" style="min-width:172px"><span class="bid">TwinPairFinder</span><span class="bt">Find the twins</span><span class="bs">Setups that scored alike on every recorded signal</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col">
+    <div class="box b5"><span class="bt">Twins diverged</span><span class="bs">Something unmeasured matters</span></div>
+    <div class="box b5"><span class="bt">Twins agreed, all near zero</span><span class="bs">No edge at this resolution</span></div>
+    <div class="box b5"><span class="bt">Twins agreed, groups differ</span><span class="bs">Signals already separate</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6" style="min-width:164px"><span class="bid">ForwardReturnFiller</span><span class="bt">Signal request</span><span class="bs">Not a rule change</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b6" style="min-width:164px"><span class="bid">SignalBackfiller–SignalAdmissionTest</span><span class="bt">Backfill and vet</span><span class="bs">Across all stored setups</span></div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 8.</b> Three findings, three different responses. Only the first justifies expanding the library. The second says stop, and the third says exploit what you already have.</p>
+</div>
+<div class="key">
+<div class="k">TwinPairFinder</div><div class="v"><b>For each setup, finds its nearest neighbours and compares their outcomes.</b> The metric: every signal is z-scored against its own distribution over the trailing 250 setups, then Euclidean distance is taken across the signals currently shown in the pack. A pair qualifies as a twin when the distance is under 0.5 and the ten-day outcomes differ by more than 15 percentage points.<br><br>Z-scoring is what makes the distance mean anything, since raw units are not comparable between a percentage and a bar count. Two setups with a 33% and 34% retrace, four bars each, near-identical daily range and the same market mood, one of which went +14% and the other minus 6%, are the most informative object in the whole database.</div>
+<div class="k">The question</div><div class="v">Not "predict which one wins", which the model cannot do. It is <b>"these look identical in everything I record and did opposite things, what would you want to see?"</b> The model is generating candidates to test, not making the call.</div>
+<div class="k">SignalBackfiller</div><div class="v"><b>Computes a newly requested signal across every historical setup.</b> Most candidates are pure functions of daily bars already stored, so the entire history can be enriched at once and becomes replayable immediately. This is why library expansion is far cheaper than it first appears.</div>
+<div class="k">SignalAdmissionTest</div><div class="v"><b>Judges the signal on its own,</b> before any rule uses it: does adding it pull outcome-similar setups closer together? A signal earns its place by tightening those neighbourhoods, which needs no variant and no forward period. It is rejected if it correlates above 0.7 with something already present, unless stored as a residual.</div>
+</div>
+
+<h4>Two proposal types, not one</h4>
+<p>The AI can only propose changes expressible in signals that exist. If nothing computes whether volume contracted during the pullback, no proposal can ever reference it. The signal library is a hard ceiling on the proposal space, and the model cannot lift it. So the registry accepts two kinds:</p>
+<ul>
+<li><b>Rule proposals</b> use existing signals and go straight to replay screening, then paired testing. Cheap, resolve in weeks.</li>
+<li><b>Signal requests</b> say the opposite: I cannot separate these two setups with what I have, compute this and I could. That is a build task, not a variant. Slower, and it is the channel that actually makes the system better over time, because it widens what every future proposal can reach.</li>
+</ul>
+<p>Without the second type the loop plateaus quickly. There are only so many ways to rearrange ten checks.</p>
+
+<h4>Which kinds of measurement are missing</h4>
+<p>You can see gaps without running anything. Enumerate the axes rather than the signals: price path, volume, time, position relative to the market, position relative to sector, this security's own history, the event calendar, intraday shape. Now look at the current signal library. It is almost entirely price path, and volume appears nowhere except buried inside a scan definition. Candidates worth computing early:</p>
+<table>
+<tr><th style="width:250px">Candidate</th><th>Why it might discriminate</th></tr>
+<tr><td>Volume shape of the pullback</td><td>Thrust volume against pullback volume. The oldest claim in this style of trading is that healthy pullbacks happen on drying volume. Cheap, and entirely absent today</td></tr>
+<tr><td>Thrust size in volatility units</td><td>A 19% jump means something different for a 7% range stock than a 3% one. This is directly the lever that moves the computed ceiling</td></tr>
+<tr><td>Extension from the 50-day average</td><td>A pullback in something 60% above its long average is a different proposition from one 15% above</td></tr>
+<tr><td>Days since the thrust</td><td>Currently only bounded by a check. The actual value is not stored</td></tr>
+<tr><td>Earnings inside the window</td><td>A trade decided by an earnings gap is not a test of the pattern, and today the system cannot tell those apart</td></tr>
+<tr><td>This stock's history after past thrusts</td><td>Some names run cleanly after every jump and some always fade. Per-security, needs nothing new from the provider</td></tr>
+<tr><td>Intraday shape of the pullback days</td><td>Whether weakness came in the morning and was bought back, or came at the close. The minute bars are already there</td></tr>
+</table>
+
+<div class="rule"><b class="lab">Adding signals has to cost something</b>
+<p>The correction threshold in the pack scales with the number of signals screened, not the number shown. Add a signal and every other signal becomes marginally harder to claim. That is statistically correct and it creates natural resistance to adding things casually.</p>
+<p>Separately, the library may grow to fifty signals while the pack still shows twelve conditional tables, chosen by fixed code using a rule written in advance rather than by the model browsing. Attention stays concentrated, the correction still reflects all fifty, and pack length stops being a function of vocabulary size.</p></div>
+
+<h2 id="the-ai-layer-and-its-limits">The AI layer and its limits</h2>
+
+<p>Everything above works with no AI and would be a worthwhile project on its own. The AI is added last.</p>
+
+<div class="plain"><b class="lab">The model does not improve. Three other things do</b>
+<p>The model is a fixed function. Nothing about it is better in December than in January. What improves is what it is given.</p>
+<p><b>The evidence gets deeper.</b> Month one the pack holds 300 resolved setups. Month twelve it holds 4,000 across several market regimes with variant results attached.</p>
+<p><b>The signal library gets wider.</b> Signals that did not exist become available to reference.</p>
+<p><b>The arithmetic gets sharper.</b> Conditional tables, corrected thresholds and the loss taxonomy are computed for the model rather than left for it to infer.</p>
+<p>Most of the intelligence in this design sits in the pre-computation. Hand a model a well-built conditional table and a mediocre model reads the right answer off it. Hand it raw setups and the best model available guesses.</p></div>
+
+<div class="fig">
+<div class="row">
+  <div class="col" style="justify-content:center">
+    <div class="store">setups + signals</div>
+    <div class="store">outcomes, loss causes</div>
+    <div class="store">variant history</div>
+    <div class="store">twin pairs</div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6"><span class="bid">ContextPacker</span><span class="bt">Build the pack</span><span class="bs">Versioned, aggregates only</span></div>
+    <div class="arrd">↓</div>
+    <div class="box b6"><span class="bid">ResearcherSeat</span><span class="bt">Ask the AI</span><span class="bs">Weekly, one output</span></div>
+  </div>
+  <div class="arr">→</div>
+  <div class="col" style="justify-content:center">
+    <div class="store">proposal, tagged<br>with pack version</div>
+  </div>
+  <div class="wall"><span>a person decides</span></div>
+  <div class="col" style="justify-content:center">
+    <div class="box b6"><span class="bid">VariantAdmitter</span><span class="bt">Admit it</span><span class="bs">Sets the target and start date</span></div>
+    <div class="arrd">↓</div>
+    <div class="store">new variant,<br>starting from zero</div>
+  </div>
+</div>
+<p class="figcap"><b>Figure 9.</b> The only thing the AI can write is a proposal. It cannot create a variant, set or change a target, touch any recorded number, or see a variant's result before that variant's agreed sample has accumulated.</p>
+</div>
+
+<h4>What the pack contains</h4>
+<table>
+<tr><th style="width:190px">Section</th><th style="width:300px">Contents</th><th>Why it changes the answer</th></tr>
+<tr><td>Population</td><td>Count, date span, regime mix, setups per night, long against short</td><td>Stops the model reasoning about a period whose shape it cannot see</td></tr>
+<tr><td>Loss taxonomy</td><td>The four causes with counts</td><td>Turns one number into four, each with a different owner</td></tr>
+<tr><td>Ceiling gap</td><td>Achieved win rate against the computed bound</td><td>Says whether selection has room left or the stop is the binding constraint</td></tr>
+<tr><td>Signal conditionals</td><td>Each shown signal in deciles against forward return, best and worst excursion, with sample counts</td><td>The actual evidence. Without it the model is speculating</td></tr>
+<tr><td>Multiple comparison</td><td>How many signals were screened and the corrected threshold</td><td>Thirty signals guarantee a spurious winner. The pack has to say so</td></tr>
+<tr><td>Twin pairs</td><td>A sample of near-identical setups with divergent outcomes</td><td>The input to signal requests</td></tr>
+<tr><td>Variant history</td><td>Every past proposal, what it predicted, what happened</td><td>The mechanism by which later proposals beat earlier ones</td></tr>
+<tr><td>Signal library</td><td>The explicit list of computable signals</td><td>Tells the model which signals it may reference, and prompts a request when something is missing</td></tr>
+<tr><td>Planted null</td><td>One meaningless signal, such as day of month</td><td>A tripwire. See below</td></tr>
+</table>
+
+<div class="warn"><b class="lab">How you know a richer pack has not made things worse</b>
+<p><b>The planted null.</b> One signal that cannot possibly matter sits in the conditional tables. It will show a spurious pattern in some deciles, because everything does. If a proposal ever cites it, that pack version fails immediately. This is a tripwire that fires before any damage is done and costs one column.</p>
+<p><b>Abstention is a valid output.</b> The proposal schema has an explicit insufficient-evidence option that counts as correct rather than as a failure. A weekly job that must produce a suggestion will produce one in weeks when there is nothing there. Track the abstention rate per pack version: a version that never abstains has learned to always find something.</p>
+<p><b>The best-established pack version keeps running as a control,</b> exactly as the baseline rule does. A bad new version shows up as a divergence against a live reference rather than as a slow drift nobody notices.</p></div>
+
+<h4>What a proposal must contain</h4>
+<ul>
+<li><b>The one thing that changes,</b> in the same rule language the system already evaluates, so there is no interpretation step between the suggestion and the test.</li>
+<li><b>Which family it belongs to,</b> selection or execution. A proposal spanning both is rejected.</li>
+<li><b>Why it should work,</b> in one sentence, committed before any result exists. A mechanism stated in advance is a prediction; the same sentence written afterwards is a story.</li>
+<li><b>The evidence it rests on,</b> as specific setup ids and figures already in the store.</li>
+<li><b>What would refute it,</b> and how many observations settle the question.</li>
+</ul>
+
+<h4>What the AI is never allowed to do</h4>
+<ul>
+<li>Change a rule that is currently running. An approved suggestion always creates a new version starting from zero observations.</li>
+<li>Write to anything that later judges its own work. Every score, forward return and threshold test is ordinary code reading stored prices.</li>
+<li>See results early. A variant's numbers are withheld until its agreed sample is reached.</li>
+<li>Decide anything. Its output is a document. A person reads it and chooses.</li>
+</ul>
+
+<div class="plain"><b class="lab">What success looks like</b>
+<p>Not "the system made money". Over these timescales that is dominated by whether the market was friendly, and it would say nothing about whether any of the machinery contributed.</p>
+<p>Success is that proposals made against pack version 4 hit their pre-registered targets more often than those made against version 2. That attributes the improvement to the thing actually doing the work, which is the evidence and the arithmetic rather than the model, and it tells you whether the last round of signal building was worth the effort.</p></div>
+
+<h2 id="the-screens">The screens</h2>
+
+<p>One rule governs every page in the interface: <b>long and short are never combined into a single list or a single number.</b> They are measured separately because they have different mechanics, different holding periods and different honesty problems, so presenting them together invites reading a pooled figure that means nothing.</p>
+
+<p>The partition is genuine rather than cosmetic. The uptrend check requires price above all three averages and the downtrend check requires it below all three, so no stock can be flagged in both directions on the same night. Nothing is being hidden by the split.</p>
+
+<div class="fig">
+<div class="col" style="gap:12px">
+  <div class="box b5" style="min-width:640px"><span class="bt">Status band, spans both panels</span><span class="bs">Date &nbsp;·&nbsp; market mood &nbsp;·&nbsp; positions open 3 of 4, shorts 1 of 2 &nbsp;·&nbsp; total risk at stake 2.1% of 3% &nbsp;·&nbsp; nightly job clean or degraded &nbsp;·&nbsp; calls used 690 of 5,000</span></div>
+  <div class="row" style="gap:14px">
+    <div class="col" style="flex:1">
+      <div class="box b2" style="min-width:310px"><span class="bt">LONG &nbsp;<span class="pill pl">buy</span> &nbsp;— 14 flagged</span><span class="bs">Ranked. Each row: ticker, chart thumbnail, trigger, give-up price, distance in % and in ADR units, share count, check strip</span></div>
+      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">SMCI &nbsp; 37.67 → 36.42</span><span class="bs">3.4% &nbsp;·&nbsp; 0.50 ADR &nbsp;·&nbsp; 789 sh &nbsp;·&nbsp; that check–that check pass, that check fail</span></div>
+      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">CRWV &nbsp; 112.40 → 109.10</span><span class="bs">2.9% &nbsp;·&nbsp; 0.43 ADR &nbsp;·&nbsp; 227 sh &nbsp;·&nbsp; all pass</span></div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="box b4" style="min-width:310px"><span class="bt">SHORT &nbsp;<span class="pill ps">sell</span> &nbsp;— 6 flagged</span><span class="bs">Same columns, plus assumed borrow cost and the market-cap borrow proxy</span></div>
+      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">XYZ &nbsp; 41.20 → 42.55</span><span class="bs">3.3% &nbsp;·&nbsp; 0.48 ADR &nbsp;·&nbsp; 341 sh &nbsp;·&nbsp; that check–that check pass</span></div>
+      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">ABC &nbsp; 18.05 → 18.70</span><span class="bs">3.6% &nbsp;·&nbsp; 0.52 ADR &nbsp;·&nbsp; 610 sh &nbsp;·&nbsp; that check fail, shown greyed</span></div>
+    </div>
+  </div>
+  <div class="box b4" style="min-width:640px;border-left:3px solid var(--l4)"><span class="bt">Conflict banner, only when it applies</span><span class="bs">A name flagged on one side while a position is open on the other. Never blocked automatically, always surfaced</span></div>
+</div>
+<p class="figcap"><b>Figure 10.</b> The two panels are divided by colour, header and count, matching the check colours in the check lists. The status band spans both because the position cap and total risk are account-wide, and it shows the short sub-cap as its own figure rather than folding it into the total.</p>
+</div>
+<div class="key">
+<div class="k">Ranked</div><div class="v"><b>By give-up distance in daily-range units, tightest first,</b> with ticker alphabetical as the tiebreak so the order is deterministic. The mechanism: R is the move divided by the stop, and expressing the stop in daily-range units normalises it against that stock's own noise, so a 0.30 setup earns more R per unit of noise risk than a 0.48 one for the same move. It is the only ranking available with a stated mechanism rather than a preference.<br><br>This ranking is load-bearing beyond the screen, because the nightly cap truncates by it. It is an authored choice and an obvious early proposal target once the conditional tables exist. Setups that failed a check still appear, greyed, with the failing check named.</div>
+<div class="k">ADR units</div><div class="v">The give-up distance is shown both as a percentage and as a fraction of the stock's daily range, because the percentage alone does not tell you whether the stop is tight for <i>that</i> stock. This is the number the exit-tight check turns on.</div>
+<div class="k">Short extras</div><div class="v">The short panel carries two columns the long panel does not: the assumed borrow cost being deducted, and whether the name cleared the market-cap borrow proxy. Both are unmodelled assumptions and showing them on the screen keeps that visible rather than buried in the failure table.</div>
+<div class="k">Conflict</div><div class="v">Holding a long in a name that the short detector has just flagged is information worth seeing, not an error to suppress. The banner surfaces it and takes no action.</div>
+</div>
+
+<div class="rule"><b class="lab">The rule carries through every other page</b>
+<p>The trade journal shows two sections, not one list with a direction column. The research ledger reports a variant's long and short scores separately. A variant touching both sides reports two numbers and never an average. Any figure in the interface that would require adding a long result to a short result is not displayed at all.</p>
+<p>The reason is the borrow problem in the short checks. Short results carry an assumption that long results do not, so a pooled headline number silently inherits that assumption without showing it.</p></div>
+
+<h3 id="the-lab-scoreboard">The lab scoreboard</h3>
+
+<p>One page answering "is this working" without reference to money. It is the page you would show someone to explain what the project has established, and the page you look at yourself when you are wondering whether to keep going.</p>
+
+<div class="warn"><b class="lab">None of it means anything without a control population</b>
+<p>Flagged setups returning 2% over ten days is not a result. The whole market may have returned 2% that fortnight. Every panel below is a <i>comparison</i>, which is why <b>ControlSampler</b> exists.</p>
+<p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged and records their forward returns identically. Two sets, both free because they come from daily bars already stored:</p>
+<p><b>Loose controls</b> match on liquidity and daily-range decile only. Comparing against these measures the whole funnel, thrust scan included.<br>
+<b>Tight controls</b> also match on the trend ladder and market mood. Comparing against these isolates the pullback checks, and answers the sharper question: is this pattern worth anything beyond simply owning stocks in uptrends?</p>
+<p>The second comparison is the one that can embarrass the project, which is why it belongs on the page.</p></div>
+
+<div class="fig">
+<div class="col" style="gap:14px">
+  <div class="box b5" style="min-width:660px"><span class="bid">band 0 — health</span><span class="bt">Nights recorded 214 &nbsp;·&nbsp; degraded 3 &nbsp;·&nbsp; last clean run yesterday &nbsp;·&nbsp; calls 690 of 5,000 &nbsp;·&nbsp; setups on file 8,140</span><span class="bs">Reads red if degraded nights exceed 5% of the record, because excluded nights are not missing at random</span></div>
+
+  <div class="box b2" style="min-width:660px"><span class="bid">band 1 — is there anything here at all?</span><span class="bt">Flagged against control, 10-day forward return, long and short shown separately</span><span class="bs">vs loose controls &nbsp;+2.9% &nbsp;[+1.4, +4.4] &nbsp;·&nbsp; vs tight controls &nbsp;+1.1% &nbsp;[−0.3, +2.5] &nbsp;·&nbsp; n = 3,180<br>Reads green when the lower bound clears zero. The tight comparison is the honest one and it is expected to be the smaller of the two</span></div>
+
+  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — does the ranking rank?</span><span class="bt">Mean forward return by rank decile, plus the ceiling gap</span><span class="bs">A downward slope from decile 1 to decile 10 means the ordering carries information. A flat line means the rank is decorative and the nightly cap is truncating at random<br>Ceiling gap: achieved win rate 24% against a computed bound of 47%, so selection still has room</span></div>
+
+  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — where the losses come from</span><span class="bt">Loss causes as a share, plotted over time</span><span class="bs">Noise stop-out 38% &nbsp;·&nbsp; failed setup 44% &nbsp;·&nbsp; gap loss 6% &nbsp;·&nbsp; never triggered 12%<br>Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved. They are different wins and this is the only place that separates them</span></div>
+
+  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — is the loop learning?</span><span class="bt">Proposal outcomes by pack version</span><span class="bs">v1: 9 proposals, 2 met target, 1 abstained &nbsp;·&nbsp; v2: 11, 4 met, 2 abstained &nbsp;·&nbsp; v3: 8, 4 met, 3 abstained<br>This is the project's stated success criterion made visible. A rising hit rate across versions is the result. A version that never abstains is a warning, not a triumph</span></div>
+
+  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — the signal library</span><span class="bt">Signals held, admitted, rejected, and how many discriminate</span><span class="bs">31 held &nbsp;·&nbsp; 12 admitted since launch &nbsp;·&nbsp; 7 rejected at the correlation limit &nbsp;·&nbsp; 9 separate outcomes beyond the corrected threshold<br>Alongside it, mean outcome spread among twin pairs over time. That number falling as signals are added is the cleanest evidence the library is genuinely improving</span></div>
+</div>
+<p class="figcap"><b>Figure 11.</b> Four bands, none of them denominated in money. Band 1 asks whether the pattern exists. Band 2 asks whether the lab can sort it. Band 3 asks whether the research loop is adding anything. Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration.</p>
+</div>
+<div class="key">
+<div class="k">Band 1</div><div class="v">The project's central question, and the one phase 3 answers. If the tight comparison never clears zero across a full year, the pattern has nothing in it beyond owning uptrending stocks, and that is the finding. It arrives long before any conclusion about profit could.</div>
+<div class="k">Band 2</div><div class="v">Two different failures with the same symptom. A flat rank curve means the ordering is decorative. A ceiling gap near zero means the stop is too tight for these names and no selection change can help. Both would otherwise look like "the strategy is not working".</div>
+<div class="k">Band 3</div><div class="v">The only band that measures the AI, and it measures the evidence rather than the model. Proposals made against a richer pack hitting their targets more often is the claim; anything else is a story.</div>
+<div class="k">Sample sizes</div><div class="v">Every panel shows its own count. A number without one is not shown at all, since the failure mode this whole system exists to avoid is reading a pattern in forty observations.</div>
+</div>
+
+<h2 id="component-catalogue">Component catalogue</h2>
+<p>What each component is and when it runs. <b>Which stores it reads and writes is declared once, in <code>SCHEMA.md</code>,</b> and asserted against the code by the writer-ownership check. Restating ownership here would be the same fact in two documents, which is how a corpus starts to drift.</p>
+<table>
+<tr><th style="width:210px">Component</th><th style="width:132px">Runs</th><th>What it does</th></tr>
+<tr><td><b>UniverseBuilder</b></td><td>Nightly</td><td>Builds the tradable list and snapshots who was listed each night</td></tr>
+<tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30</td><td>Pulls the whole market’s closing prices in one bulk request</td></tr>
+<tr><td><b>ActionIngestor</b></td><td>Nightly / weekly</td><td>Splits and dividends, and forces an average rebuild when a split lands</td></tr>
+<tr><td><b>IntradayFetcher</b></td><td>Nightly 20:30</td><td>Minute bars for every flagged setup, after the close</td></tr>
+<tr><td><b>IndexIngestor</b></td><td>Nightly</td><td>Index bars for the market-mood inputs</td></tr>
+<tr><td><b>SectorResolver</b></td><td>On first sighting</td><td>Sector, industry and market cap, on first sighting, cached</td></tr>
+<tr><td><b>SpreadSnapshotter</b></td><td>Twice per session</td><td>Bid-ask spread twice a session. The only intraday job, and unrecoverable if missed</td></tr>
+<tr><td><b>IndicatorEngine</b></td><td>Nightly 18:00</td><td>Moving averages, daily range, true range and dollar volume, computed locally</td></tr>
+<tr><td><b>ScanEngine</b></td><td>Nightly 18:10</td><td>Six mover scans, three per direction</td></tr>
+<tr><td><b>TierClassifier</b></td><td>Nightly 18:10</td><td>Grades every name rising, mixed or falling</td></tr>
+<tr><td><b>ThemeClusterer</b></td><td>Nightly 18:15</td><td>Counts same-sector names flagged together</td></tr>
+<tr><td><b>RegimeLabeler</b></td><td>Nightly 18:15</td><td>Market mood from index trend and breadth</td></tr>
+<tr><td><b>LongSetupDetector</b></td><td>Nightly 18:20</td><td>The long pullback pattern, ten checks, all results kept</td></tr>
+<tr><td><b>ShortSetupDetector</b></td><td>Nightly 18:20</td><td>The short bounce pattern, ten checks, all results kept</td></tr>
+<tr><td><b>SignalVectorizer</b></td><td>Nightly 18:25</td><td>Freezes the point-in-time signal row that makes replay possible</td></tr>
+<tr><td><b>SetupCapper</b></td><td>Nightly 18:28</td><td>Truncates the night to 60, forty long and twenty short</td></tr>
+<tr><td><b>VariantResolver</b></td><td>Nightly 18:30</td><td>Resolves which rule versions are live tonight</td></tr>
+<tr><td><b>PlanBuilder</b></td><td>Nightly 18:30</td><td>One committed plan per version per candidate</td></tr>
+<tr><td><b>WatchlistPublisher</b></td><td>Nightly 18:40</td><td>Publishes the morning watchlist</td></tr>
+<tr><td><b>RunLogger</b></td><td>Every stage</td><td>Sole writer of the run log. Stages call it rather than writing the table themselves, and rows written is measured from the store rather than self-reported</td></tr>
+<tr><td><b>SessionReplayClock</b></td><td>Nightly 21:00</td><td>Walks the stored minute bars for a session</td></tr>
+<tr><td><b>VwapEngine</b></td><td>Nightly 21:00</td><td>Session and anchored average price</td></tr>
+<tr><td><b>TriggerResolver</b></td><td>Nightly 21:05</td><td>Decides whether a committed trigger traded, minute by minute</td></tr>
+<tr><td><b>RiskGate</b></td><td>On trigger</td><td>Sizes every position and enforces every cap. The only thing that may open a position</td></tr>
+<tr><td><b>PaperBroker</b></td><td>On order</td><td>Fills at a deliberately pessimistic price</td></tr>
+<tr><td><b>PositionManager</b></td><td>Nightly 21:15</td><td>Trails, trims and exits. Separate rule sets per direction</td></tr>
+<tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Makes the setup row immutable once written</td></tr>
+<tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
+<tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
+<tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>
+<tr><td><b>LossClassifier</b></td><td>Nightly 21:35</td><td>Classifies every loss into one of four causes</td></tr>
+<tr><td><b>CeilingCalculator</b></td><td>Weekly</td><td>Computes the win-rate ceiling from the outcome distribution</td></tr>
+<tr><td><b>VariantScorer</b></td><td>Nightly 21:40</td><td>Differences each version against the baseline, night by night</td></tr>
+<tr><td><b>TwinPairFinder</b></td><td>Weekly</td><td>Finds near-identical setups that behaved differently</td></tr>
+<tr><td><b>ContextPacker</b></td><td>Weekly</td><td>Builds the versioned evidence summary for the researcher</td></tr>
+<tr><td><b>ResearcherSeat</b></td><td>Weekly</td><td>Asks the model once a week and files the answer</td></tr>
+<tr><td><b>ProposalRegistry</b></td><td>On write</td><td>Holds proposals: rule changes and signal requests</td></tr>
+<tr><td><b>VariantAdmitter</b></td><td>Manual</td><td>The human step. Writes the target and the sample, once</td></tr>
+<tr><td><b>SignalBackfiller</b></td><td>On admission</td><td>Computes a newly admitted signal across all stored history</td></tr>
+<tr><td><b>SignalAdmissionTest</b></td><td>On admission</td><td>Admits a signal only if it tightens outcome-similar neighbourhoods</td></tr>
+<tr><td><b>ReplayHarness</b></td><td>On proposal</td><td>Re-filters stored setups with a new rule, in seconds</td></tr>
+<tr><td><b>HoldoutRegistry</b></td><td>On replay</td><td>Tracks the eight holdout windows and refuses to re-spend one</td></tr>
+<tr><td><b>AcceptanceGate</b></td><td>Nightly 21:45</td><td>Settles a matured version against its pre-registered target</td></tr>
+<tr><td><b>Watchlist page</b></td><td>On request</td><td>The morning screen, long and short divided</td></tr>
+<tr><td><b>Setup inspector</b></td><td>On request</td><td>One setup: chart, checks, signals, what happened next</td></tr>
+<tr><td><b>Trade journal page</b></td><td>On request</td><td>Closed trades with their loss causes</td></tr>
+<tr><td><b>Research ledger page</b></td><td>On request</td><td>Proposals, samples, targets, holdout register</td></tr>
+<tr><td><b>Pack comparison page</b></td><td>On request</td><td>Proposal hit rate by evidence-pack version</td></tr>
+<tr><td><b>ControlSampler</b></td><td>Nightly 18:26</td><td>Draws matched control stocks nightly, loose and tight</td></tr>
+<tr><td><b>ScoreboardBuilder</b></td><td>Nightly 21:50</td><td>Computes the scoreboard panels</td></tr>
+<tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
+</table>
+<div class="rule"><b class="lab">Ordering</b>
+<p>The 51 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. Nothing depends on the ordering, because components are referred to by name.</p></div>
+
+<h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
+<p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
+<p>The rule being enforced is <b>one writer per table per operation</b>, not one writer per table. Several stores legitimately have two owners on different operations, and a rule that counts exceptions gets longer every time the design is correct.</p>
+<div class="rule"><b class="lab">Three separations worth asserting directly</b>
+<p><b>The two detectors</b> both write <code>setup</code>, on disjoint rows rather than disjoint columns, separated by direction. Assert that neither writes a row of the other’s direction.</p>
+<p><b>SignalVectorizer and SignalBackfiller</b> both write <code>setup_signal</code>. The vectorizer writes new rows nightly; the backfiller adds signals to old rows and may never touch a signal the vectorizer owns for that date.</p>
+<p><b>VariantAdmitter and AcceptanceGate</b> both write <code>variant</code>. The admitter writes the definition and the target once at creation and never again; the gate writes only status and resolution date. This is precisely the row where a future change could quietly let a result rewrite its own target.</p></div>
+
+<h2 id="failure-behaviour">Failure behaviour</h2>
+<table>
+<tr><th style="width:230px">Condition</th><th>Behaviour, and why</th></tr>
+<tr><td>Intraday prices unavailable for a day</td><td>No trades resolved and every setup flagged that night excluded from variant scoring. A variant that could not be tested must not be scored as though it chose to pass.</td></tr>
+<tr><td>Price gaps past the give-up point</td><td>Recorded as a loss larger than planned and tagged. Never rounded back, because the size and frequency of these is a genuine property of the strategy and one of the things you most want to learn.</td></tr>
+<tr><td>A short could not have been borrowed</td><td>Not detectable from the feed. Mitigated by a market-cap floor and a borrow-cost deduction, and recorded as an unmodelled assumption on every short trade. Long and short results are never pooled.</td></tr>
+<tr><td>Unprocessed split</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: a split corrupts every moving average at once and produces plausible-looking nonsense.</td></tr>
+<tr><td>Detector errors on one stock</td><td>An error row is written for that stock and date. Silently skipping shrinks the recorded universe without anyone noticing, which is the kind of defect that survives for months.</td></tr>
+<tr><td>Nightly setup cap reached</td><td>The cap truncates the shared candidate list by rank before any variant selects, and the truncation is recorded. Never applied per variant, or the disagreements go unscoreable.</td></tr>
+<tr><td>Daily API ceiling reached</td><td>The nightly job counts as it goes and stops rather than overrunning. A stopped job writes a partial-run row and the affected setups are marked degraded.</td></tr>
+<tr><td>Two variants pick the same stock</td><td>Two orders in two separate simulated accounts, both tagged, both capped by the same code. Never combined.</td></tr>
+<tr><td>Risk gate blocks an order</td><td>A blocked row with the reason. A variant that missed a winner because it was full reads very differently from one that never spotted it.</td></tr>
+<tr><td>AI usage allowance exhausted</td><td>The weekly job queues and no proposal is produced. Nothing else affected, and the seat never returns a partial suggestion.</td></tr>
+<tr><td>Holdout windows exhausted</td><td>No further pack-version decisions can be made by replay. The remaining channel is the forward hit rate, which is slower. This is a designed dead end, not a bug.</td></tr>
+<tr><td>Proposal cites the planted null signal</td><td>That pack version is failed immediately and no proposal from it is admitted.</td></tr>
+<tr><td>Variant sample never accumulates</td><td>Stays open, ledger shows its age. No timeout that quietly accepts or rejects, because a timeout is a decision made by the calendar rather than by evidence.</td></tr>
+<tr><td>Follow-up date is a holiday</td><td>The next trading day is used and the actual date stored alongside the intended horizon.</td></tr>
+<tr><td>Someone edits the baseline</td><td>Not permitted while variants run. Doing so closes every open variant as unresolved and starts a new generation, because they were being compared against a rule that no longer exists.</td></tr>
+</table>
+
+<h3 id="the-phase-report">The phase report</h3>
+
+<p>Every phase ends in a generated report rather than in a page somebody looks at. One command, <code>tools/verify-phase</code>, writes <code>artifacts/phase-report.html</code> for a person and <code>artifacts/phase-report.json</code> for a build session, from the same run. A phase does not sign off until it is green, and green includes that nothing is listed as unexamined.</p>
+
+<div class="plain"><b class="lab">Why "openable" was not enough</b>
+<p>A page a human squints at produces an opinion, not a verdict. It cannot be automated, it gives a build session nothing to check its own work against, and after a few phases nobody remembers what the page looked like when it was right. That is the loop where things get built for months and nobody can say whether they are correct.</p></div>
+
+<table>
+<tr><th style="width:190px">Section</th><th>What it asserts</th></tr>
+<tr><td>Document conformance</td><td>The component catalogue, the limits table, the check lists and the call budget in this document are structured tables. The report parses them and asserts each claim against the code: every component named exists and is registered, every limit matches its config value, every named check exists in the detector, every declared writer is the only writer.</td></tr>
+<tr><td>Fixture diff</td><td>A committed golden fixture holds real bars for a small set of tickers over a fixed window, with expected outputs frozen beside them. The pipeline runs against it and the report diffs actual against expected, stage by stage.</td></tr>
+<tr><td>Coverage</td><td>What each check actually examined, not only whether it passed. A claim the report could not examine is listed as <b>unexamined</b>, which is not a pass.</td></tr>
+</table>
+
+<div class="rule"><b class="lab">Why the fixture is frozen rather than live</b>
+<p>Live data changes every night, so there is nothing to diff against and no way to tell a code change from a market change. A frozen fixture gives the same answer today and in six months, so a difference means the code moved. It also makes the report meaningful on a weekend, on a holiday, and on a machine with no API key.</p>
+<p>Every checkpoint from the harness onward adds its own expectations to the fixture. A checkpoint that adds behaviour and no expectation has widened the unexamined set rather than the tested one, and the report says so.</p></div>
+
+<h2 id="build-order">Build order</h2>
+<p>Every phase produces two things: a screen you can open, and a generated report that says whether what was built matches this document. Neither replaces the other. The screen is how you notice something looks wrong; the report is how you know, and how a build session checks its own work without asking anyone. The harness is described in 18.1 and is built at the seventh checkpoint of phase 1, before most of what it checks exists.</p>
+
+<table>
+<tr><th style="width:52px">Phase</th><th style="width:180px">Builds</th><th style="width:36%">What you can open</th><th>What the phase report adds</th></tr>
+
+<tr><td><b>P1</b></td><td>UniverseBuilder, DailyBarIngestor, ActionIngestor, IndexIngestor, IndicatorEngine, RunLogger, <b>the phase report harness and golden fixture</b>, web shell, chart page</td>
+<td>A web shell with routing, navigation and one shared chart component, so no later checkpoint invents its own. Then daily charts with the three averages and the daily range for any stock, drawn from your own stored prices. You compare one against a chart you already trust.</td>
+<td>Indicator values for the fixture's 30 tickers diffed against frozen expectations. Every component named in the catalogue asserted to exist and be registered. Every limit in the parameters table asserted against its config value. Anything it cannot examine listed as unexamined.</td></tr>
+
+<tr><td><b>P2</b></td><td>ScanEngine, TierClassifier, ThemeClusterer, RegimeLabeler, both detectors, SignalVectorizer, SetupCapper, setup inspector</td>
+<td>Last night's flagged setups, both directions, as a gallery of marked-up charts showing which checks passed and which failed. You page through by keyboard and record agree or disagree per setup. This is where the strategy actually transfers into code.</td>
+<td>Fixture setups diffed check by check, so a change to any gate shows up as a named difference rather than a count. The ten long and ten short check names asserted to exist in the detectors. Your agreement rate reported as a number.</td></tr>
+
+<tr><td><b>P3</b></td><td>SetupJournal, ForwardReturnFiller, ControlSampler, CeilingCalculator, ScoreboardBuilder, scoreboard page</td>
+<td>The same gallery with follow-up returns filling in behind it, plus the scoreboard's first two bands live against matched controls. <b>This is the project's own decision point.</b></td>
+<td>Forward returns and control draws diffed against the fixture, including the holiday case. The computed ceiling recomputed and compared. Confirms `setup` is still empty of anything reconstructed from history.</td></tr>
+
+<tr><td><b>P4</b></td><td>Watchlist page first, then IntradayFetcher, SpreadSnapshotter, VwapEngine, TriggerResolver, RiskGate, PaperBroker, PositionManager, PlanAudit, TradeJournal, LossClassifier, trade journal page</td>
+<td>The watchlist is built before the trading machinery on purpose, so every checkpoint after it lands on a screen you already have. Then simulated trades, each with an intraday chart showing trigger, fill, give-up point and exit, plus planned against executed and the classified loss cause.</td>
+<td>The fixture gains a session of minute bars, so fills, stops, gap losses and the contention case are diffed rather than eyeballed. Order provenance asserted. Realised risk against intended risk reported per position.</td></tr>
+
+<tr><td><b>P5</b></td><td>VariantScorer, VariantAdmitter, ReplayHarness, HoldoutRegistry, research ledger page</td>
+<td>Hand-written versions in both families scoring nightly against the baseline, with the difference series visible and the holdout register showing what has been spent. Still no AI anywhere.</td>
+<td>The harness re-run of the baseline's own rule must reproduce the baseline's historical selections exactly. If it does not, the harness and the live detector disagree and every replay result is worthless.</td></tr>
+
+<tr><td><b>P6</b></td><td>TwinPairFinder, ContextPacker, ResearcherSeat, ProposalRegistry, SignalBackfiller, SignalAdmissionTest, AcceptanceGate, pack comparison page</td>
+<td>Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling, and proposal hit rate compared across pack versions.</td>
+<td>The pack built from the fixture is byte-stable across runs, so a pack change is a deliberate change. The planted null signal is present. No component outside the proposal store accepts a write from the researcher.</td></tr>
+</table>
+
+<div class="rule"><b class="lab">Why both, and not just the screen</b>
+<p>A page you look at produces an opinion. After three phases nobody remembers what it looked like when it was right, and a build session cannot look at it at all. That is the loop where work continues for months and nobody can say whether it is correct.</p>
+<p>A report alone is not enough either, because a suite can be green over things nobody thought to check. That is what the unexamined category is for, and why every checkpoint owes its expectations to the fixture.</p></div>
+
+<h4>Effort and elapsed time</h4>
+<p>Roughly 35 to 45 focused coding sessions with both sides and the research machinery, so about fourteen weeks at three evenings a week. The calendar is not set by the code. Phase 3 needs three months of running before phase 5 has anything to score, and phase 5 needs a few months more before proposals settle. Expect the loop to close once around month seven. Anything faster is measuring noise.</p>
+
+<div class="rule"><b class="lab">The cheapest way to find out whether any of this is worth doing</b>
+<p>Phase 3 answers the project's own question before the trading and research layers exist, rather than after the whole build. If flagged stocks behave no differently from comparable unflagged ones, the pattern has nothing in it and everything downstream would be optimising noise. If the achieved win rate already sits at the computed ceiling, selection has no room and the loop should be pointed at execution instead. Either answer is worth having before phase 4 starts.</p></div>
+
+<h3 id="running-on-windows-and-macos">Running on Windows and macOS</h3>
+
+<p>The runtime is .NET with C#, and this is a hard rule rather than a preference (see: Every line of code runs unmodified on Windows and on Apple Silicon macOS). Anything reaching for a Windows-only API is out, and that includes the registry, drive letters, and the Windows timezone database.</p>
+
+<table>
+<tr><th style="width:210px">What differs</th><th style="width:300px">Where it bites</th><th>Handling</th></tr>
+<tr><td>Timezone identifiers</td><td>Every session boundary, every nightly job trigger, every "was this bar in regular hours" test</td><td>IANA names only, never Windows names. Do not enable invariant globalization, which is the setting that makes IANA lookup fail silently. One clock abstraction, everything stored in UTC, conversion only where a session boundary is being decided</td></tr>
+<tr><td>Filesystem case sensitivity</td><td>macOS is insensitive by default, Linux is not</td><td>Lowercase file and directory names throughout, enforced by a check. A mismatch that works on both your machines will fail the first time it touches a Linux CI runner</td></tr>
+<tr><td>Path separators and roots</td><td>Anywhere a path is composed or persisted</td><td>One configured data root, path composition through the platform API, and <b>no absolute path ever written into a database row</b></td></tr>
+<tr><td>Scheduling</td><td>Task Scheduler against launchd</td><td>Scheduling stays outside the application. One CLI entrypoint per job, invoked by whatever the platform provides. The app holds no timer logic, which also makes a failed 6pm job easy to rerun by hand</td></tr>
+<tr><td>Native dependencies</td><td>Apple Silicon needs arm64 builds</td><td>SQLite and Parquet are fine on both. Avoid anything requiring a native server install, since that is the part of a migration that costs a weekend</td></tr>
+<tr><td>Line endings</td><td>Any file the lab writes and later parses</td><td>Write LF, read either. Configure it in the repo rather than relying on the editor</td></tr>
+</table>
+
+<div class="rule"><b class="lab">The migration test, worth applying from day one</b>
+<p>Copy the data root to another machine, point the application at it, and run the nightly job. If that works, migration is a copy. The property that makes it work is that nothing inside the store refers to where the store lives, which is easy to preserve from the start and tedious to retrofit once chart exports or log paths have been persisted.</p>
+<p>One thing that does not migrate: the RTX 3090. Nothing here needs it, since the researcher runs through the Claude Agent SDK rather than locally, but it is worth knowing before any part of the design starts assuming local inference.</p></div>
+
+<h3 id="moving-the-store-to-another-machine">Moving the store to another machine</h3>
+
+<p>The SQLite file format is architecture and operating-system independent, so the database itself is portable with no conversion. The care is entirely in how it is copied, not what it is copied to.</p>
+
+<div class="warn"><b class="lab">The failure mode this procedure exists to avoid</b>
+<p>Copying a live database gives you a torn file. Worse, write-ahead logging means the most recent writes live in a <code>-wal</code> sibling file, so copying only the <code>.db</code> loses data <i>silently</i> and produces a store that opens cleanly and is missing several nights of setups.</p></div>
+
+<h4>The procedure</h4>
+<table>
+<tr><th style="width:44px">#</th><th style="width:250px">Step</th><th>Detail</th></tr>
+<tr><td><b>1</b></td><td>Stop the worker</td><td>Confirm no nightly or replay job is mid-run. A partial nightly leaves setups without their signal rows.</td></tr>
+<tr><td><b>2</b></td><td>Record the source counts</td><td>Row counts for <code>setup</code>, <code>setup_signal</code>, <code>forward_return</code>, <code>trade</code> and <code>variant</code>, plus the maximum setup id. Written down before anything is copied, or you have nothing to compare against.</td></tr>
+<tr><td><b>3</b></td><td>Write a clean single file</td><td><code>VACUUM INTO '/path/to/pullbackstrategylab-migrate.db';</code> from the SQLite CLI. This folds the write-ahead log in, drops free pages, and produces one consistent file with no siblings to forget.</td></tr>
+<tr><td><b>4</b></td><td>Copy the bar files too</td><td>If bars are in Parquet rather than in the database, copy that directory alongside. It is inert data and needs no special handling.</td></tr>
+<tr><td><b>5</b></td><td>Verify on arrival</td><td><code>PRAGMA integrity_check;</code> then re-run the step 2 counts and compare. Integrity check alone proves the file is not corrupt, <b>not</b> that it is complete. Both are needed.</td></tr>
+<tr><td><b>6</b></td><td>Copy the secrets file</td><td><code>appsettings.Secrets.json</code> is gitignored, so it does not arrive with the repository. Copy it deliberately and separately from the store, or re-create it. Verify by running one stage that makes a vendor call rather than assuming (see: Secrets live in a gitignored appsettings.Secrets.json, registered before environment variables).</td></tr>
+<tr><td><b>7</b></td><td>Recreate the schedule</td><td>Task Scheduler entries become launchd definitions. Written fresh, which is one of the reasons scheduling is kept outside the application.</td></tr>
+<tr><td><b>8</b></td><td>Fix config paths</td><td>Any absolute path in configuration is repointed at the new data root. There should be none inside the database itself.</td></tr>
+<tr><td><b>9</b></td><td>Run one nightly job and inspect it</td><td>Not just "it did not throw". Open the watchlist page and confirm the setups look like the previous night's, and that the timezone resolved so session boundaries land where they should.</td></tr>
+<tr><td><b>10</b></td><td>Retire the source</td><td>Archive the old store read-only. See the warning below.</td></tr>
+</table>
+
+<div class="warn"><b class="lab">One machine is authoritative, permanently</b>
+<p>After the move, the new machine owns the store. Running the nightly job on both produces two stores that diverge from the first night and <b>cannot be merged</b>, because setup ids are assigned independently on each and the same id will refer to different stocks on different nights.</p>
+<p>If both machines must run, one of them runs against a read-only copy for inspection and never executes a job that writes.</p></div>
+
+<div class="rule"><b class="lab">Two things to do long before you need this</b>
+<p><b>Keep the live database out of any synced folder.</b> OneDrive, Dropbox or iCloud touching an open SQLite file is a genuine corruption risk rather than a theoretical one, because the sync client will copy the file mid-write and may hold a handle while the engine tries to rename.</p>
+<p><b>Run the whole procedure once in phase 1,</b> when the store holds a week of data and losing it costs nothing. That is when you find out which paths are hardcoded and which secrets do not travel, rather than discovering it during an actual move with a year of setups at stake.</p></div>
+
+<h2 id="data-budget">Data budget</h2>
+<p>Hard ceiling of 5,000 calls a day, enforced in config with the nightly job counting as it goes.</p>
+<table>
+<tr><th style="width:330px">Nightly job</th><th style="width:110px">Calls</th><th>Note</th></tr>
+<tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>Replaces 6,000 individual requests</td></tr>
+<tr><td>Splits, bulk</td><td>100</td><td>Daily. Non-negotiable</td></tr>
+<tr><td>Dividends, bulk</td><td>~20</td><td>Weekly rather than daily</td></tr>
+<tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>~60 names at 5 calls each</td></tr>
+<tr><td>Spread snapshots</td><td>120</td><td>60 names, twice a session. Unrecoverable later</td></tr>
+<tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>Lazy, cached permanently</td></tr>
+<tr><td><b>Daily total</b></td><td><b>~690</b></td><td>Peaks near 1,000 on heavy nights</td></tr>
+</table>
+<p>One-time backfill is about 7,000 calls over two days: 3,000 for full price history at one call per ticker, 3,000 for split history, and 1,000 of minute bars to calibrate the fill model.</p>
+
+<h4>The three ways to blow it, all avoidable</h4>
+<ul>
+<li><b>Computing averages through the provider's API</b> rather than locally. About 45,000 calls a day for arithmetic that is one recursive loop over data you already hold.</li>
+<li><b>Requesting prices one ticker at a time</b> rather than in bulk. Thirty times the cost for identical data.</li>
+<li><b>Polling intraday prices during the session.</b> About 78,000 calls a day for data that is only published two to three hours after the close.</li>
+</ul>
+<p>The provider's screener endpoint is also deliberately unused. It cannot express a condition involving three moving averages in a specific order, it cannot express the pullback shape at all, it costs five calls per request, and using it would leave no stored history to compute follow-up returns from. The local store is not optional, because it is the measurement system.</p>
+
+<h3 id="model-budget">Model budget</h3>
+
+<p>The researcher is one call a week against the pack described in the AI layer. About 8,400 tokens in and 1,500 out, so 52 runs a year. Rates below are per million tokens as published on 25 August 2026 and will move; the arithmetic is what matters, not the figures.</p>
+
+<table>
+<tr><th style="width:120px">Vendor</th><th style="width:190px">Model</th><th style="width:130px">In / out per Mtok</th><th style="width:110px">Per run</th><th>Per year</th></tr>
+<tr><td>DeepSeek</td><td>V4 Flash, off-peak</td><td>$0.22 / $0.66</td><td>$0.003</td><td>$0.15</td></tr>
+<tr><td>DeepSeek</td><td>V4 Pro, off-peak</td><td>$0.66 / $1.98</td><td>$0.009</td><td>$0.44</td></tr>
+<tr><td>Anthropic</td><td>Haiku 4.5</td><td>$1 / $5</td><td>$0.016</td><td>$0.83</td></tr>
+<tr><td>Anthropic</td><td>Sonnet 5</td><td>$2 / $10</td><td>$0.032</td><td>$1.65</td></tr>
+<tr><td>Anthropic</td><td>Opus 5</td><td>$5 / $25</td><td>$0.080</td><td>$4.13</td></tr>
+<tr><td>Anthropic</td><td>Fable 5</td><td>$10 / $50</td><td>$0.159</td><td>$8.27</td></tr>
+</table>
+
+<p>DeepSeek charges double during two weekday windows and its published rates changed materially in August, so treat the off-peak rows as the ones that apply here. The weekly job runs overnight and can be scheduled outside peak deliberately. Anthropic's Batch API halves both directions for the same reason, since nothing waits on this call.</p>
+
+<div class="rule"><b class="lab">Cost cannot decide this, so something else must</b>
+<p>The whole spread from cheapest to dearest is about eight dollars a year. Even a badly built pack that dumps four thousand raw setup rows instead of aggregates lands near thirty-five dollars a year at the top of the range. There is no budget argument to be had.</p>
+<p>What does decide it is that <b>the model is a confounder for the project's own success criterion</b>. That criterion is whether proposals against a later pack beat proposals against an earlier one, and a model change between the two makes the comparison meaningless. So the model is pinned by exact identifier alongside the pack version, and a change forks the record rather than upgrading it. (see: The model is a frozen parameter of the pack version, and changing it forks the record)</p>
+<p>A practical consequence: running the seat through the Claude Agent SDK on an existing subscription costs nothing marginal, which is the strongest argument for it, but the pinning requirement still applies and a vendor retiring the pinned model is a forced fork either way.</p></div>
+
+<div class="plain"><b class="lab">What the money argument was actually protecting</b>
+<p>The rule that the pack carries aggregates rather than raw rows reads like cost discipline and is not. At these rates the raw version is affordable. The real reason is that a model handed raw data will find patterns by rummaging, which is precisely what pre-registration and the planted null signal exist to prevent. Keep the rule; drop the cost justification wherever it appears.</p></div>
+
+<h2 id="authored-parameters">Authored parameters</h2>
+<p>Every value chosen rather than derived, with the basis for each and the point at which it should be revisited. Nothing here is left open. A value changes only by the same route as anything else: a proposal, a stated mechanism, and a paired test.</p>
+<table>
+<tr><th style="width:250px">Parameter</th><th style="width:150px">Value</th><th style="width:110px">Review point</th><th>Basis</th></tr>
+<tr><td>Price floor, both sides</td><td>$5</td><td>Never</td><td>Below it spreads widen enough to swallow the stop. Also matches the range the strategy is actually traded in</td></tr>
+<tr><td>Liquidity floor, long</td><td>$20M median daily</td><td>Signal proposal</td><td>The filter doing the real work. Price is a weak proxy for it</td></tr>
+<tr><td>Liquidity floor, short</td><td>$50M median daily</td><td>Signal proposal</td><td>Stricter because dollar volume predicts borrow availability better than size does</td></tr>
+<tr><td>Market cap floor, short</td><td>$2B</td><td>Signal proposal</td><td>Borrow-availability proxy. Cap comes free from the sector lookup already being made</td></tr>
+<tr><td>Listing age floor, short</td><td>90 sessions</td><td>Never</td><td>Borrow on recent listings is unreliable at any size</td></tr>
+<tr><td>Assumed borrow cost</td><td>1.0% annualised, per calendar day held</td><td>Never</td><td>Several times a general-collateral rate, and still worth about 0.4% of one R on a four-day hold. Set high deliberately; the term is immaterial either way</td></tr>
+<tr><td>Daily range floor</td><td>5%</td><td>Phase 2 count check</td><td>From the trader's stated preference. A crude proxy for move-to-volatility and an early replacement candidate</td></tr>
+<tr><td>Starting equity</td><td>$100,000 notional, fixed</td><td>Never</td><td>Set by share rounding, not ambition. Below about $50,000 the rounding error on a high-priced name becomes material to the R figures. Never compounds, or two versions would size differently and stop being paired</td></tr>
+<tr><td>Accounts</td><td>One per version, both directions</td><td>Never</td><td>The caps only mean anything if a short and a long compete for the same budget. Reporting stays separate by direction</td></tr>
+<tr><td>Risk per trade</td><td>0.75% of equity</td><td>Never</td><td>Midpoint of the 0.5 to 1% range the strategy is described with</td></tr>
+<tr><td>Give-up distance cap</td><td>0.5 daily ranges</td><td>Execution family</td><td>The strategy's own rule. Changing it moves the size of the R unit, so it belongs to the execution family only</td></tr>
+<tr><td>Position cap</td><td>35% of equity</td><td>Never</td><td>Only binds when the give-up point is tighter than about 1.4%</td></tr>
+<tr><td>Concurrent positions</td><td>4, of which at most 2 short</td><td>Never</td><td>Short losses are unbounded in principle, so that side carries the tighter cap</td></tr>
+<tr><td>Total risk at stake</td><td>3% of equity</td><td>Never</td><td>The worst realistic day, with four positions open</td></tr>
+<tr><td>Pullback shape</td><td>2 to 7 bars, retrace at most 40%</td><td>Phase 2 count check</td><td>Authored. Phase 2 measures the nightly count these produce</td></tr>
+<tr><td>Trigger reachability</td><td>Within 1.5 daily ranges</td><td>Phase 2 count check</td><td>Authored</td></tr>
+<tr><td>Contraction test</td><td>Against the 20-day average range</td><td>Signal proposal</td><td>Authored</td></tr>
+<tr><td>Cluster threshold</td><td>2 names, same industry, same night</td><td>Signal proposal</td><td>Recorded, never gating in the baseline</td></tr>
+<tr><td>Forward horizons</td><td>1, 3, 5, 10 sessions</td><td>Never</td><td>10 is the scoring horizon and interacts directly with the ceiling arithmetic</td></tr>
+<tr><td>Nightly setup cap</td><td>60, split 40 long and 20 short, unused slots released</td><td>If the budget changes</td><td>Set by the intraday call budget, not by anything about the strategy. The split is fixed rather than proportional so short coverage survives strong markets</td></tr>
+<tr><td>Screen and cap ranking</td><td>Give-up distance in daily-range units, ascending; ticker alphabetical as tiebreak</td><td>Signal proposal</td><td>R is move divided by stop, and range units normalise the stop against that stock's own noise. The only ranking with a stated mechanism</td></tr>
+<tr><td>Regime label</td><td>Index trend score plus breadth score; risk-on at +2, risk-off at minus 2, mixed otherwise</td><td>Signal proposal</td><td>Both inputs already exist. Three states buffer themselves. Raw scores stored alongside the label</td></tr>
+<tr><td>Selection variant sample</td><td>160 paired setup observations</td><td>Per proposal</td><td>Detects about a two-point difference in ten-day forward return</td></tr>
+<tr><td>Execution variant sample</td><td>200 paired trades</td><td>Per proposal</td><td>Detects about a 0.35R difference. Smaller effects need a longer sample pre-registered</td></tr>
+<tr><td>Holdout windows</td><td>8, one calendar quarter each, oldest first</td><td>Never</td><td>One spent per pack-version decision, never reused. A designed dead end when exhausted</td></tr>
+<tr><td>Twin-pair threshold</td><td>Distance under 0.5 after z-scoring; outcomes differing by over 15 points</td><td>Phase 6</td><td>Z-scored over the trailing 250 setups, across the signals shown in the pack</td></tr>
+<tr><td>Signal correlation limit</td><td>0.70</td><td>Never</td><td>Above it, store the residual rather than the raw signal</td></tr>
+<tr><td>Researcher model</td><td>Pinned by exact identifier</td><td>Forks the record</td><td>A confounder for the success criterion, so it is frozen alongside the pack version. Cost is not a reason to change it: the whole spread is a few dollars a year</td></tr>
+<tr><td>Researcher cadence</td><td>Weekly</td><td>Never</td><td>The evidence barely moves in a day, and a nightly ask would produce an idea whether or not there is one</td></tr>
+<tr><td>Daily API ceiling</td><td>5,000 calls</td><td>Never</td><td>About seven times the expected nightly usage. The job counts as it goes and stops rather than overrunning</td></tr>
+</table>
+
+<div class="rule"><b class="lab">The one-time calibration, and why it is not tuning</b>
+<p>Four thresholds are marked "phase 2 count check". They were chosen without knowing how many setups they produce, and phase 2 is the first time that can be measured. If the nightly count falls outside roughly 5 to 60 on either side, they are adjusted <b>once</b>, before phase 3 begins recording in earnest.</p>
+<p>That adjustment is calibration against a population count, not tuning against results, because no forward return exists yet at that point. It is recorded as a dated one-time event with the before and after counts. After phase 3 starts, these thresholds change only through the normal proposal route like anything else.</p></div>
+
+</div>
+</body>
+</html>

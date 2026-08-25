@@ -1,0 +1,31 @@
+# build
+bin/
+obj/
+*.user
+
+# the store, and anything derived from it
+/data/
+*.db
+*.db-wal
+*.db-shm
+*.parquet
+
+# generated reports
+/artifacts/
+
+# local scratch
+/prompts/*
+!/prompts/.gitkeep
+
+# local agent permissions, machine specific
+.claude/settings.local.json
+
+# secrets
+appsettings.Secrets.json
+**/appsettings.Secrets.json
+appsettings.*.Local.json
+.env
+
+# os
+.DS_Store
+Thumbs.db

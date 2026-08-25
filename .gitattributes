@@ -1,0 +1,25 @@
+# Line endings are normalised in the repository so the same bytes arrive on both
+# machines. A shell script checked out with CRLF fails on macOS, and the golden
+# fixture is diffed byte for byte by tools/verify-phase.
+# (see: Every line of code runs unmodified on Windows and on Apple Silicon macOS)
+
+* text=auto eol=lf
+
+# Windows-only entry points. PowerShell reads LF, but these are never run on macOS
+# and editors on Windows are happier with CRLF.
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Must stay LF or they will not run on macOS.
+*.sh    text eol=lf
+tools/verify-phase text eol=lf
+tools/migrate      text eol=lf
+tools/snapshot-db  text eol=lf
+
+# Never touched.
+*.db      binary
+*.parquet binary
+*.png     binary
+*.jpg     binary
+*.ico     binary
