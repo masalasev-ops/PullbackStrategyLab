@@ -1,0 +1,42 @@
+@using PullbackStrategyLab.Web.Shell
+@*
+    The shell every page renders inside: the mark, the five-item nav and the status band.
+
+    The nav is rendered from Navigation.Items rather than written out here, so the list of
+    screens lives in one place and a page without a nav entry is a page nobody can reach.
+
+    No script and no external stylesheet. The one sheet is local, because a page that fetches
+    from anywhere is a page that does not render on a machine with no network, and the whole
+    lab is meant to run on a laptop.
+    see: Pages are server-rendered with no build step, and any script is local rather than fetched
+*@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · PullbackStrategyLab</title>
+    <link rel="stylesheet" href="~/lab.css" />
+</head>
+<body>
+<header class="mark">
+    <a href="/">PullbackStrategyLab</a>
+    <span class="paper">paper trading only</span>
+</header>
+
+<nav class="nav" aria-label="Screens">
+    @foreach (NavigationItem item in Navigation.Items)
+    {
+        string current = string.Equals(Context.Request.Path.Value, item.Path, StringComparison.OrdinalIgnoreCase)
+            ? "on"
+            : string.Empty;
+        <a class="@current" href="@item.Path" title="@item.What">@item.Title</a>
+    }
+</nav>
+
+<main class="body">
+    @await Html.PartialAsync("_StatusBand", (LabStatusView)ViewData["Status"]!)
+    @RenderBody()
+</main>
+</body>
+</html>

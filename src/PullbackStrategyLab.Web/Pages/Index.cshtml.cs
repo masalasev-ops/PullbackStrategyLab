@@ -1,23 +1,21 @@
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using PullbackStrategyLab.Web.Shell;
 
 namespace PullbackStrategyLab.Web.Pages;
 
 /// <summary>
-/// A placeholder that says it is one. An empty page that says it is empty is honest, and
-/// a page of invented rows is not.
+/// The front door: what the lab is, which screens exist and when each is filled, and the shared
+/// chart component rendering its empty state.
 /// </summary>
-public sealed class IndexModel : PageModel
+public sealed class IndexModel : ScreenModel
 {
-    private readonly LabApiClient _api;
-
-    public IndexModel(LabApiClient api)
-    {
-        _api = api;
-    }
-
-    public string ApiBaseAddress => _api.BaseAddress?.ToString() ?? "not configured";
-
-    public void OnGet()
+    public IndexModel(LabApiClient api) : base(api)
     {
     }
+
+    /// <summary>
+    /// The shared component with nothing in it. There is no store behind the Web project and no
+    /// bars to draw until 1.10, and it renders that rather than an empty box, which would read
+    /// as a stock that did not move.
+    /// </summary>
+    public CandlestickGeometry Chart { get; } = CandlestickChart.Lay([], [], 720, 260);
 }

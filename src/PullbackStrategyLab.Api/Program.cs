@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
 namespace PullbackStrategyLab.Api;
@@ -49,6 +50,11 @@ public static class Program
                 MigrationRunner.ReadUserVersion(connection),
                 configured.Value.DailyCallCeiling));
         });
+
+        // What the status band across the top of every screen reads. One request per page load,
+        // answered from the store read-only.
+        app.MapGet("/status", (StoreConnectionFactory connections, IClock clock, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabStatus.Read(connections, clock, configured.Value.DailyCallCeiling)));
 
         app.Run();
     }

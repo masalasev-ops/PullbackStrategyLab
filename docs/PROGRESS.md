@@ -529,3 +529,63 @@ Carried:    One `CONFIRMED` value per ticker against a charting platform's reado
             floor it means. 1,900 calls and about 130 MB. Due 1.12.
             RUNBOOK's step 5, the split history for every survivor, still not run. Due 1.12, where it
             is either run or dropped rather than carried further.
+
+## 1.8 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      The web shell. A layout carrying the mark, the five-item nav and the status band,
+            rendered from `Navigation.Items` rather than written out in the markup, so a page
+            without a nav entry is a page nobody can reach and a nav entry without a page is a
+            link that 404s, and one test asserts both against one list.
+            Five screens, each rendering an empty state that names what fills it and at which
+            checkpoint. Nothing is stubbed: a test asserts no page carries any of the mockup's
+            tickers, because a page of invented rows reads as a working screen and is the one
+            thing that cannot be told apart from the real one later.
+            The status band, and `/status` on the read surface behind it. It reports what the
+            store holds and returns null for market mood, open positions and risk at stake,
+            which phases 2 and 4 build; the band renders those as the checkpoint that fills
+            them rather than as a zero, because a zero reads as "none open" where the truth is
+            "positions are not a thing yet".
+            The shared candlestick component, as geometry in C# and a partial that positions
+            nothing it was not handed. Every chart in the lab is this one: the gallery at 2.9
+            draws hundreds small and the chart page at 1.10 draws one large, and a second
+            implementation would eventually disagree about which basis the prices are on, which
+            is a disagreement nobody can see in a picture.
+            One local stylesheet. No script anywhere, asserted per page.
+
+Measured:   `tools/ci.ps1` green on Windows, 19 steps, 157 tests. `tools/verify-phase` green:
+            81 architecture claims unchanged, 257 expectations, 0 unexamined.
+            Twelve new expectations, all `DERIVED`: the chart's layout over the fixture's IESC
+            window, derived by `tools/derive-indicators.py --chart` from a written statement of
+            what the layout should be. 0 disagreements.
+            Both hosts started against the live store: the band reads session 2026-08-25,
+            2,070 names, 1,482,108 bars, 4,758 of 5,000 calls. Every route answers 200.
+
+Verified:   The pages are asserted by asking the host for them rather than by reading the
+            .cshtml, because a route that does not resolve and a view that does not compile
+            both look perfectly fine in the source. The read surface is answered from a stub, so
+            both states of the band, up and down, are tests rather than one being a state nobody
+            exercises.
+
+Findings:   Observation. `/lab.css` returned 404 from the real host while every page returned
+            200. Reading: the host sets its content root to where the binary sits, for the same
+            reason the Worker's does, and `wwwroot` was not copied there. Every page rendered,
+            every route resolved, and every page was unstyled. The done condition as written,
+            every page reachable and rendering its empty state, was satisfied by a build with a
+            missing stylesheet. Now copied by the project file and asserted by a test that reads
+            the sheet back.
+            Observation. The price axis labelled 100.36, 104.22, 108.08. Reading: `rough /
+            magnitude switch { ... }` parses as `rough / (magnitude switch { ... })`, so the
+            step was never rounded to a round number. It looked like a chart with an odd scale
+            rather than like a defect, which is the whole reason the geometry is separated from
+            the drawing and frozen as numbers.
+            Observation. The shell's tests took 51 seconds. Reading: every page load reads the
+            status band and the read surface was not running, so each request waited out the
+            client timeout. Answering from a stub took it to one second and gained the reachable
+            case, which no test had. The timeout is now three seconds rather than the client's
+            hundred-second default, which is a page rendering without its figures rather than a
+            page that hangs.
+            Observation. `path-casing` examined 21 paths this checkpoint, having had no work at
+            all before 1.7. Reading: CLAUDE.md says to drop the check if nothing reads a file by
+            a path built from a string, and the fixture is read that way, so it stays.
+
+Carried:    Nothing new.

@@ -14,4 +14,13 @@
     <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!--
+    The static files, copied beside the binary. The host sets its content root to where the
+    binary sits, for the same reason the Worker's does, so the web root has to be there too or
+    the stylesheet 404s and the pages render unstyled with nothing failing.
+  -->
+  <ItemGroup>
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

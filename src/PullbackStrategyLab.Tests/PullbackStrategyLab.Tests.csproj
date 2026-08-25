@@ -13,8 +13,22 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!--
+      The shell's pages are asserted by asking the host for them rather than by reading the
+      .cshtml, because a route that does not resolve and a view that does not compile both look
+      fine in the source. It is a test-only dependency and the shipped hosts do not carry it.
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <!--
+    The web framework, so the shell can be asked for its pages. A test project on the plain
+    SDK has no ASP.NET Core reference, and the testing package alone does not bring one.
+  -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>

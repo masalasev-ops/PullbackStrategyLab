@@ -1726,6 +1726,91 @@
       "value": "3.3095",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "chart.IESC.sessions",
+      "tier": "DERIVED",
+      "value": "60",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.low",
+      "tier": "DERIVED",
+      "value": "246.5500",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars",
+      "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
+    },
+    {
+      "id": "chart.IESC.high",
+      "tier": "DERIVED",
+      "value": "408.2550",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.upCandles",
+      "tier": "DERIVED",
+      "value": "25",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.priceTicks",
+      "tier": "DERIVED",
+      "value": "4",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.firstTick",
+      "tier": "DERIVED",
+      "value": "250.0000",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.lastTick",
+      "tier": "DERIVED",
+      "value": "400.0000",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.bodyWidth",
+      "tier": "DERIVED",
+      "value": "6.86",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.firstCentre",
+      "tier": "DERIVED",
+      "value": "5.53",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.lastCentre",
+      "tier": "DERIVED",
+      "value": "658.47",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.lastHighY",
+      "tier": "DERIVED",
+      "value": "97.81",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+    },
+    {
+      "id": "chart.IESC.lastLowY",
+      "tier": "DERIVED",
+      "value": "124.52",
+      "checkpoint": "1.8",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
     }
   ]
 }

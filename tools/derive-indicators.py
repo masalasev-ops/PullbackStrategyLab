@@ -34,7 +34,21 @@ The adjusted basis: the store holds a raw open, high, low and close and an adjus
 so the high and the low are put on the adjusted basis through each bar's own factor,
 adj_close / close.
 
+The chart mode, --chart, derives the shared component's layout instead. A chart is the one
+place where looking at the result is least reliable: a scale that clips an average, a body
+drawn upside down and an axis on the wrong step all look like a chart. So the layout is
+derived here from its own statement of what it should be:
+
+  scale     lowest adjusted low to highest adjusted high across the window, and across every
+            average drawn with it. A flat series widens by half a unit either side.
+  y(price)  (high - price) / (high - low) * plot height, measured down from the top.
+  x(i)      (i + 0.5) * plot width / count, so a candle sits in the middle of its slot.
+  body      0.62 of a slot wide, never under one unit.
+  ticks     five or so labels on a round step: the span over five, rounded up to 1, 2, 5 or 10
+            times its own power of ten, starting at the first multiple at or above the low.
+
 Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> ...]
+        python tools/derive-indicators.py --chart <store.db> <as-of> <ticker> <sessions> <width> <height>
 """
 
 import sqlite3
@@ -178,7 +192,120 @@ def stored(connection, ticker, as_of):
     return dict(zip(names, (Decimal(v) for v in row)))
 
 
+PRICE_GUTTER = 56
+DATE_GUTTER = 22
+BODY_FRACTION = Decimal("0.62")
+WANTED_TICKS = 5
+COORDINATE = Decimal("0.01")
+
+
+def chart_window(connection, ticker, as_of, sessions):
+    """The same point-in-time window, with the open, which a candle needs and an average does not."""
+    bound = as_of + "T23:59:59.999Z"
+    rows = connection.execute(
+        """
+        SELECT bar_date, open, high, low, close, adj_close
+          FROM daily_bar b
+         WHERE b.ticker = ?
+           AND b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.bar_date DESC
+         LIMIT ?
+        """,
+        (ticker, as_of, bound, bound, sessions),
+    ).fetchall()
+
+    rows.reverse()
+    out = []
+    for date, o, h, l, c, adj in rows:
+        close = Decimal(c)
+        factor = Decimal(1) if close == 0 else Decimal(adj) / close
+        out.append(
+            {
+                "date": date,
+                "open": Decimal(o) * factor,
+                "high": Decimal(h) * factor,
+                "low": Decimal(l) * factor,
+                "close": Decimal(adj),
+            }
+        )
+    return out
+
+
+def ticks(low, high):
+    """A round step covering the span in about five labels."""
+    rough = (high - low) / WANTED_TICKS
+    magnitude = Decimal(10) ** (rough.log10() // 1)
+    ratio = rough / magnitude
+    step = magnitude * (Decimal(1) if ratio <= 1 else
+                        Decimal(2) if ratio <= 2 else
+                        Decimal(5) if ratio <= 5 else Decimal(10))
+
+    out = []
+    price = (low / step).__ceil__() * step
+    while price <= high:
+        out.append(price)
+        price += step
+    return out
+
+
+def derive_chart(bars, width, height):
+    low = min(b["low"] for b in bars)
+    high = max(b["high"] for b in bars)
+    if high == low:
+        low -= Decimal("0.5")
+        high += Decimal("0.5")
+
+    plot_width = Decimal(width - PRICE_GUTTER)
+    plot_height = Decimal(height - DATE_GUTTER)
+    step = plot_width / len(bars)
+
+    def y(price):
+        return (high - price) / (high - low) * plot_height
+
+    labels = ticks(low, high)
+
+    return {
+        "sessions": len(bars),
+        "low": low.quantize(PLACES),
+        "high": high.quantize(PLACES),
+        "upCandles": sum(1 for b in bars if b["close"] >= b["open"]),
+        "priceTicks": len(labels),
+        "firstTick": labels[0].quantize(PLACES),
+        "lastTick": labels[-1].quantize(PLACES),
+        "bodyWidth": max(Decimal(1), step * BODY_FRACTION).quantize(COORDINATE),
+        "firstCentre": (step / 2).quantize(COORDINATE),
+        "lastCentre": ((len(bars) - 1) * step + step / 2).quantize(COORDINATE),
+        "lastHighY": y(bars[-1]["high"]).quantize(COORDINATE),
+        "lastLowY": y(bars[-1]["low"]).quantize(COORDINATE),
+    }
+
+
+def chart_main(argv):
+    store, as_of, ticker = argv[0], argv[1], argv[2]
+    sessions, width, height = int(argv[3]), int(argv[4]), int(argv[5])
+
+    connection = sqlite3.connect(store)
+    bars = chart_window(connection, ticker, as_of, sessions)
+
+    if not bars:
+        print(f"no bars for {ticker} as of {as_of}", file=sys.stderr)
+        return 2
+
+    print(f"{ticker}  chart as of {as_of}, {bars[0]['date']} to {bars[-1]['date']}, {width}x{height}")
+    for name, value in derive_chart(bars, width, height).items():
+        print(f"  chart.{ticker}.{name:<12} {value}")
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--chart":
+        return chart_main(argv[2:])
+
     if len(argv) < 4:
         print(__doc__.strip().splitlines()[-1], file=sys.stderr)
         return 2

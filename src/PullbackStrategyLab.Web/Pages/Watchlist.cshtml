@@ -1,0 +1,18 @@
+@page "/watchlist"
+@using PullbackStrategyLab.Web.Shell
+@model WatchlistModel
+@*
+    The empty state, which is the whole page until 4.1. It names what will fill it and
+    which checkpoint fills it, because an empty page that says so is honest and a page of
+    invented rows is not.
+*@
+<h1>@Model.Item.Title</h1>
+<p class="lede">@Model.Item.What.</p>
+
+<div class="empty-state">
+    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
+    <p>The shell, its navigation, the status band and the shared chart component are what
+       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
+       invented data reads as a working screen and is the one thing that cannot be told apart
+       from the real one later.</p>
+</div>

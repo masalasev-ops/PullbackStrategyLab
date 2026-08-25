@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
+using PullbackStrategyLab.Web.Shell;
 using PullbackStrategyLab.Worker.Vendor;
 
 namespace PullbackStrategyLab.Tests.Support;
@@ -32,6 +33,17 @@ public sealed class PhaseReplay : IDisposable
     /// is the type filter, the two floors and the parsing, over the whole real market.
     /// </summary>
     public const int ReplayScreeningSessions = 1;
+
+    /// <summary>
+    /// How many sessions the fixture lays a chart over, and the box it lays them in. Sixty is
+    /// about a quarter, which is the window the chart page opens on, and the box is the one the
+    /// front door renders at.
+    /// </summary>
+    public const int ChartSessions = 60;
+
+    public const int ChartWidth = 720;
+
+    public const int ChartHeight = 260;
 
     private readonly TemporaryDirectory _root = new();
     private readonly FixtureVendorHandler _handler;
@@ -204,6 +216,7 @@ public sealed class PhaseReplay : IDisposable
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
         measurements.AddRange(IndicatorFigures());
+        measurements.AddRange(ChartFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -253,6 +266,58 @@ public sealed class PhaseReplay : IDisposable
 
         return figures;
     }
+
+    /// <summary>
+    /// The shared chart's layout over one of the fixture's tickers.
+    ///
+    /// A chart is the one place where looking at the result is least reliable: a scale that
+    /// clips an average, a body drawn upside down and an axis on the wrong step all look like a
+    /// chart. So the geometry is frozen as numbers and derived independently, and the ticker is
+    /// the one carrying a real split, because the adjusted basis is exactly what a chart can be
+    /// wrong about while still looking right.
+    /// </summary>
+    private IReadOnlyList<Measurement> ChartFigures()
+    {
+        const string Ticker = "IESC";
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        IReadOnlyList<StoredDailyBar> window =
+            DailyBarReader.Read(connection, Ticker, AsOf, ChartSessions, _clock.UtcNow);
+
+        // The adjusted basis, the same crossing the engine makes: the store holds an adjusted
+        // close and a raw high and low, so the high and low are put on the adjusted basis
+        // through each bar's own factor.
+        var candles = window
+            .Select(bar =>
+            {
+                decimal factor = bar.Close == 0m ? 1m : bar.AdjustedClose / bar.Close;
+                decimal open = bar.Open * factor;
+                return new Candle(bar.BarDate, open, bar.High * factor, bar.Low * factor, bar.AdjustedClose);
+            })
+            .ToArray();
+
+        CandlestickGeometry chart = CandlestickChart.Lay(candles, [], ChartWidth, ChartHeight);
+
+        return
+        [
+            new Measurement($"chart.{Ticker}.sessions", chart.Candles.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement($"chart.{Ticker}.low", Figure(chart.Low)),
+            new Measurement($"chart.{Ticker}.high", Figure(chart.High)),
+            new Measurement($"chart.{Ticker}.upCandles", chart.Candles.Count(c => c.Up).ToString(CultureInfo.InvariantCulture)),
+            new Measurement($"chart.{Ticker}.priceTicks", chart.PriceTicks.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement($"chart.{Ticker}.firstTick", Figure(chart.PriceTicks[0].Price)),
+            new Measurement($"chart.{Ticker}.lastTick", Figure(chart.PriceTicks[^1].Price)),
+            new Measurement($"chart.{Ticker}.bodyWidth", Coordinate(chart.Candles[0].BodyWidth)),
+            new Measurement($"chart.{Ticker}.firstCentre", Coordinate(chart.Candles[0].Centre)),
+            new Measurement($"chart.{Ticker}.lastCentre", Coordinate(chart.Candles[^1].Centre)),
+            new Measurement($"chart.{Ticker}.lastHighY", Coordinate(chart.Candles[^1].HighY)),
+            new Measurement($"chart.{Ticker}.lastLowY", Coordinate(chart.Candles[^1].LowY)),
+        ];
+    }
+
+    /// <summary>A screen coordinate, to two places. It is a length rather than a price.</summary>
+    public static string Coordinate(double value) =>
+        Math.Round(value, 2, MidpointRounding.AwayFromZero).ToString("0.00", CultureInfo.InvariantCulture);
 
     public static string Figure(decimal value) =>
         Math.Round(value, 4, MidpointRounding.AwayFromZero).ToString("0.0000", CultureInfo.InvariantCulture);
