@@ -99,3 +99,24 @@ Findings:   Observation. 2N is 4,140. Reading: RUNBOOK's backfill says steps 4 a
 
 Carried:    A partial universe run leaves membership as the last complete screen set it and writes tonight's snapshot from that membership. Whether a night screened over five sessions should instead write nothing is a judgement the count distribution at 2.11 will inform. Due at 2.11.
             The daily call budget counts against the UTC date, and the vendor's own reset boundary is still assumed rather than confirmed. Raised at 1.1, still open.
+
+## 1.4 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `DailyBarIngestor`, one bulk request a night, storing bars for the names in the universe. Migration 003 creates `daily_bar` with PK (`ticker`, `bar_date`, `observed_at`) and a foreign key to `security`.
+            `DailyBarReader`, the one way stored bars are read and the one place the point-in-time rule lives. Every read takes an as-of date and there is no overload that does not, because a read that could omit it would compile, run, and return a bar the lab could not have seen.
+            `bar-append-only` as a named CI step: nothing in the shipped source deletes or updates a bar table. It carries a deliberate tripwire that fails when `intraday_bar` is created, so the one legitimate update SCHEMA declares, VwapEngine on `vwap_session`, has to be written into the check by name and by column rather than the check being widened until it passes.
+
+Measured:   22,770 bar rows over 20,700 distinct ticker and date pairs, 2,070 tickers, 10 sessions from 2026-08-11 to 2026-08-24. Obtained by running `daily-bars` once per session date against live EODHD.
+            The 2,070 rows above the distinct pairs are one redundant observation of 2026-08-24, written by the run that exposed the idempotence defect below. They are left in place: the table is append-only, and a read still returns the right figure because the latest observation carries the same values.
+            100 calls per session, which is the whole market and the largest single line in the nightly budget. 3,915 calls used on 2026-08-25 against the 5,000 ceiling, across universe building, bar ingest and the reruns.
+            `tools/ci.ps1` green on Windows, 15 steps, 73 tests.
+
+Verified:   `tools/ci.ps1` against a dropped store, then `daily-bars` against live EODHD, then the same date again: 0 written, 2,070 already stored unchanged. A test asserts the write connection reports `journal_mode=wal` and `foreign_keys=1`, and a second asserts a bar for a ticker with no `security` row is refused, which is what foreign keys being on actually buys.
+
+Findings:   Observation. The first version passed its idempotence test and was not idempotent. Re-running `daily-bars` for 2026-08-24 wrote 2,070 rows again with identical figures. Reading: the ingestor compared against observations made at or before the **bar date**, and a date being backfilled is observed today, so it found nothing and rewrote everything under a new observation. It looked idempotent for tonight's date and was not idempotent for any other, and the unit test only ever ran tonight's date. The bound is now the run's own instant, the parameter is a `DateTimeOffset` rather than a `DateOnly` so the two questions cannot be confused again, and a test backfills a date a fortnight old.
+            Reading, worth keeping separate from the above: a same-day test cannot reach this defect at all. The live run is what found it, on the first checkpoint where a live run was possible.
+            Observation. `daily-bars` for 2026-08-25 returned nothing at 13:00 ET. Reading: the bulk endpoint publishes after the close and RUNBOOK schedules this stage at 17:30 ET, so an empty response before the close is correct behaviour rather than a fault. It is reported as a clean run writing zero rows, which is the same shape a holiday produces.
+            Observation. Bars are stored for universe members only, roughly 2,070 of 17,996 listed names. Reading: this keeps the store near 0.5 million rows a year rather than 4.5 million. A name joining the universe later has no history until the per-ticker endpoint backfills it, which is RUNBOOK's step 4 and is priced per ticker.
+
+Carried:    The per-ticker history backfill, RUNBOOK's steps 4 and 5, is not built. Ten sessions of bulk history is enough for nothing that needs a 50-day average, so 1.6's indicator values cannot be computed over a converged window until it exists. Due at 1.6.
+            A name that joins the universe after go-live has no history until that backfill runs. Due at 1.6.

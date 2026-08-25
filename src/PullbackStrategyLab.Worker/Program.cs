@@ -33,6 +33,7 @@ public static class Program
         builder.Services.AddSingleton<MigrateStage>();
         builder.Services.AddSingleton<SnapshotStage>();
         builder.Services.AddSingleton<UniverseBuilder>();
+        builder.Services.AddSingleton<DailyBarIngestor>();
 
         // Only the Worker holds a vendor client. The Api never calls the vendor and gets no key.
         builder.Services.AddHttpClient<IMarketDataVendor, EodhdClient>();
@@ -49,6 +50,7 @@ public static class Program
                 MigrateStage.Name => host.Services.GetRequiredService<MigrateStage>().Run(rest),
                 SnapshotStage.Name => host.Services.GetRequiredService<SnapshotStage>().Run(rest),
                 UniverseBuilder.Name => host.Services.GetRequiredService<UniverseBuilder>().RunAsync(rest).GetAwaiter().GetResult(),
+                DailyBarIngestor.Name => host.Services.GetRequiredService<DailyBarIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
             };
@@ -86,6 +88,7 @@ public static class Program
         MigrateStage.Name,
         SnapshotStage.Name,
         UniverseBuilder.Name,
+        DailyBarIngestor.Name,
     ];
 
     private static void WriteUsage()

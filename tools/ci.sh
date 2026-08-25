@@ -68,6 +68,7 @@ step 'check-writer-ownership'       run_check 'writer-ownership'
 step 'check-api-isolation'          run_check 'api-isolation'
 step 'check-ci-parity'              run_check 'ci-parity'
 step 'check-clock-usage'            run_check 'clock-usage'
+step 'check-bar-append-only'        run_check 'bar-append-only'
 
 step 'suite' dotnet test "$test_project" --no-build --nologo
 

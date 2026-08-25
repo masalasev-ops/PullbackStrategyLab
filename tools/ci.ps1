@@ -76,6 +76,7 @@ Invoke-Step 'check-writer-ownership'       { Invoke-Check 'writer-ownership' }
 Invoke-Step 'check-api-isolation'          { Invoke-Check 'api-isolation' }
 Invoke-Step 'check-ci-parity'              { Invoke-Check 'ci-parity' }
 Invoke-Step 'check-clock-usage'            { Invoke-Check 'clock-usage' }
+Invoke-Step 'check-bar-append-only'        { Invoke-Check 'bar-append-only' }
 
 Invoke-Step 'suite' { dotnet test $TestProject --no-build --nologo }
 

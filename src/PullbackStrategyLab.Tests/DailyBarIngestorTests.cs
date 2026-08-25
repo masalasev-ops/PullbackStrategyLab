@@ -1,0 +1,272 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Tests.Support;
+using PullbackStrategyLab.Worker.Stages;
+using Xunit;
+
+namespace PullbackStrategyLab.Tests;
+
+/// <summary>
+/// The bar store, and the two properties that make a replay mean anything: bars are
+/// append-only, and a read sees only what had been observed by its as-of date.
+/// </summary>
+public sealed class DailyBarIngestorTests : IDisposable
+{
+    private static readonly DateOnly BarDate = new(2026, 8, 25);
+
+    private readonly TemporaryDirectory _root = new();
+    private readonly StoreConnectionFactory _connections;
+    private readonly FixedClock _clock = new(new DateTimeOffset(2026, 8, 25, 21, 30, 0, TimeSpan.Zero));
+
+    public DailyBarIngestorTests()
+    {
+        _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
+        new MigrationRunner(_connections).Apply();
+        Universe("AAA", "BBB");
+    }
+
+    public void Dispose() => _root.Dispose();
+
+    private DailyBarIngestor Ingestor(FakeMarketDataVendor vendor, int dailyCallCeiling = 5000)
+    {
+        var options = Options.Create(new PullbackStrategyLabOptions
+        {
+            DataRoot = _root.Path,
+            DailyCallCeiling = dailyCallCeiling,
+        });
+
+        return new DailyBarIngestor(vendor, _connections, new RunLogger(_clock, options), _clock, options);
+    }
+
+    [Fact]
+    public async Task Bars_are_stored_for_the_names_in_the_universe_and_no_others()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+        vendor.Bar(BarDate, "BBB", close: 200m, volume: 2_000);
+        vendor.Bar(BarDate, "ZZZ", close: 300m, volume: 3_000);
+
+        DailyBarIngestResult result = await Ingestor(vendor).IngestAsync(BarDate);
+
+        Assert.Equal(3, result.Published);
+        Assert.Equal(2, result.InUniverse);
+        Assert.Equal(2, result.Inserted);
+        Assert.Equal(["AAA", "BBB"], StoredTickers());
+    }
+
+    [Fact]
+    public async Task Re_running_the_same_date_changes_no_row()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+
+        DailyBarIngestor ingestor = Ingestor(vendor);
+        await ingestor.IngestAsync(BarDate);
+
+        // The clock has moved on, so a naive append would write a second row under a later
+        // observed_at and call it a correction.
+        _clock.Advance(TimeSpan.FromHours(1));
+        DailyBarIngestResult second = await ingestor.IngestAsync(BarDate);
+
+        Assert.Equal(0, second.Inserted);
+        Assert.Equal(1, second.Unchanged);
+        Assert.Equal(0, second.RowsWritten);
+        Assert.Equal(1, RowCount());
+    }
+
+    [Fact]
+    public async Task Re_running_a_backfilled_date_changes_no_row_either()
+    {
+        // The case a same-day test cannot reach. A bar dated a fortnight ago is observed today,
+        // so an ingestor comparing against observations made by the bar date finds nothing and
+        // rewrites the same figures under a new observation on every run. It looks idempotent
+        // for tonight's date and is not idempotent at all for any other.
+        DateOnly backfilled = BarDate.AddDays(-14);
+
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(backfilled, "AAA", close: 100m, volume: 1_000);
+
+        DailyBarIngestor ingestor = Ingestor(vendor);
+        await ingestor.IngestAsync(backfilled);
+
+        _clock.Advance(TimeSpan.FromMinutes(5));
+        DailyBarIngestResult second = await ingestor.IngestAsync(backfilled);
+
+        Assert.Equal(0, second.Inserted);
+        Assert.Equal(1, second.Unchanged);
+        Assert.Equal(1, RowCount());
+    }
+
+    [Fact]
+    public async Task A_vendor_correction_arrives_as_a_new_row_and_the_original_stays()
+    {
+        var first = new FakeMarketDataVendor();
+        first.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+        await Ingestor(first).IngestAsync(BarDate);
+
+        _clock.Advance(TimeSpan.FromDays(1));
+
+        var corrected = new FakeMarketDataVendor();
+        corrected.Bar(BarDate, "AAA", close: 101m, volume: 1_000);
+        DailyBarIngestResult result = await Ingestor(corrected).IngestAsync(BarDate);
+
+        Assert.Equal(1, result.Corrections);
+
+        // Two rows for one bar. The wrong figure is still there, because a replay of the night
+        // the lab acted on it has to see what the lab saw.
+        Assert.Equal(2, RowCount());
+    }
+
+    [Fact]
+    public async Task A_read_sees_the_figure_that_had_been_observed_by_its_as_of_date_and_not_the_correction()
+    {
+        var first = new FakeMarketDataVendor();
+        first.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+        await Ingestor(first).IngestAsync(BarDate);
+
+        _clock.Advance(TimeSpan.FromDays(2));
+
+        var corrected = new FakeMarketDataVendor();
+        corrected.Bar(BarDate, "AAA", close: 101m, volume: 1_000);
+        await Ingestor(corrected).IngestAsync(BarDate);
+
+        var reader = new DailyBarReader(_connections);
+
+        // The single most important property in the system. A read as of the night itself sees
+        // 100, because that is what the lab had; a read as of today sees the correction.
+        Assert.Equal(100m, reader.Read("AAA", BarDate, sessions: 5).Single().Close);
+        Assert.Equal(101m, reader.Read("AAA", BarDate.AddDays(2), sessions: 5).Single().Close);
+    }
+
+    [Fact]
+    public async Task A_bar_dated_after_the_as_of_date_is_invisible_to_a_read()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+        vendor.Bar(BarDate.AddDays(1), "AAA", close: 110m, volume: 1_000);
+
+        DailyBarIngestor ingestor = Ingestor(vendor);
+        await ingestor.IngestAsync(BarDate);
+        _clock.Advance(TimeSpan.FromDays(1));
+        await ingestor.IngestAsync(BarDate.AddDays(1));
+
+        var reader = new DailyBarReader(_connections);
+
+        Assert.Single(reader.Read("AAA", BarDate, sessions: 10));
+        Assert.Equal(2, reader.Read("AAA", BarDate.AddDays(1), sessions: 10).Count);
+    }
+
+    [Fact]
+    public async Task Bars_come_back_oldest_first_and_the_window_takes_the_most_recent()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Trading("AAA", BarDate, 10, close: 100m, volume: 1_000);
+
+        DailyBarIngestor ingestor = Ingestor(vendor);
+        for (DateOnly d = BarDate.AddDays(-13); d <= BarDate; d = d.AddDays(1))
+        {
+            await ingestor.IngestAsync(d);
+        }
+
+        IReadOnlyList<StoredDailyBar> bars = new DailyBarReader(_connections).Read("AAA", BarDate, sessions: 3);
+
+        Assert.Equal(3, bars.Count);
+        Assert.True(bars[0].BarDate < bars[1].BarDate && bars[1].BarDate < bars[2].BarDate);
+        Assert.Equal(BarDate, bars[^1].BarDate);
+    }
+
+    [Fact]
+    public async Task The_nightly_pull_is_one_bulk_request()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+
+        DailyBarIngestResult result = await Ingestor(vendor).IngestAsync(BarDate);
+
+        // A hundred, which is the whole market. It replaces about six thousand individual
+        // requests and is the single largest line in the nightly budget.
+        Assert.Equal(100, result.CallsUsed);
+        Assert.Single(vendor.DatesRequested);
+    }
+
+    [Fact]
+    public async Task A_run_that_reaches_the_ceiling_completes_partial_and_writes_nothing()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+
+        DailyBarIngestResult result = await Ingestor(vendor, dailyCallCeiling: 50).IngestAsync(BarDate);
+
+        Assert.Equal(RunOutcome.Partial, result.Outcome);
+        Assert.Equal(0, RowCount());
+    }
+
+    [Fact]
+    public void The_write_connection_reports_wal_and_foreign_keys_on()
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        // Both are silently off by default in SQLite, and off-by-default is how they stay
+        // wrong. Asserted here as well as at the store tests, because this is the checkpoint
+        // whose done condition names them.
+        Assert.Equal("wal", StoreConnectionFactory.ReadPragma(connection, "journal_mode"), ignoreCase: true);
+        Assert.Equal("1", StoreConnectionFactory.ReadPragma(connection, "foreign_keys"));
+    }
+
+    [Fact]
+    public void A_bar_for_a_ticker_with_no_security_row_is_refused_by_the_store()
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+            VALUES ('NOPE', '2026-08-25', '1', '1', '1', '1', '1', 1, '2026-08-25T21:30:00.000Z');
+            """;
+
+        // Which is what foreign_keys being on actually buys. With it off this row would land
+        // and nothing would ever join to it.
+        Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+    }
+
+    private void Universe(params string[] tickers)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        foreach (string ticker in tickers)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                INSERT INTO security (ticker, name, exchange, type, first_seen)
+                VALUES (@t, @t, 'NASDAQ', 'Common Stock', '2026-08-25');
+                INSERT INTO universe_member (ticker, added_on) VALUES (@t, '2026-08-25');
+                """;
+            command.Parameters.AddWithValue("@t", ticker);
+            command.ExecuteNonQuery();
+        }
+    }
+
+    private int RowCount()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM daily_bar;";
+        return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private IReadOnlyList<string> StoredTickers()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT DISTINCT ticker FROM daily_bar ORDER BY ticker;";
+
+        var tickers = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            tickers.Add(reader.GetString(0));
+        }
+
+        return tickers;
+    }
+}

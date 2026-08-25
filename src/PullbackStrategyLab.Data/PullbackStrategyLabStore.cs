@@ -40,6 +40,7 @@ public static class PullbackStrategyLabStore
         services.AddSingleton<StoreConnectionFactory>();
         services.AddSingleton<MigrationRunner>();
         services.AddSingleton<RunLogger>();
+        services.AddSingleton<DailyBarReader>();
         return services;
     }
 }
