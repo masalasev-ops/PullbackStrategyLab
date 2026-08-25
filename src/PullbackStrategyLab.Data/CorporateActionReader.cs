@@ -6,9 +6,13 @@ namespace PullbackStrategyLab.Data;
 /// The one way stored corporate actions are read, and the one place the rebuild demand they
 /// create is answered.
 ///
-/// Every read takes an as-of date, for the same reason every bar read does: a split observed
-/// on Thursday did not exist on Wednesday, and a replay that saw it would be answering with
-/// knowledge the lab did not have. There is no overload without one.
+/// Actions are append-only and read exactly as bars are: every read takes an as-of date, only
+/// observations made by the end of that date are visible, and within a grain the latest such
+/// observation wins. Vendors restate corporate actions, and a restatement arriving on Thursday
+/// must not change what Monday's replay sees.
+///
+/// There is no overload without an as-of date. A read that could omit it would compile, run,
+/// and answer with a ratio the lab did not have.
 /// </summary>
 public sealed class CorporateActionReader
 {
@@ -20,8 +24,8 @@ public sealed class CorporateActionReader
     }
 
     /// <summary>
-    /// Every action for one ticker effective on or before <paramref name="asOf"/> and observed
-    /// by the end of that date, oldest first.
+    /// Every action for one ticker effective on or before <paramref name="asOf"/>, as it was
+    /// last observed by the end of that date, oldest first.
     /// </summary>
     public IReadOnlyList<StoredCorporateAction> Read(string ticker, DateOnly asOf)
     {
@@ -36,12 +40,19 @@ public sealed class CorporateActionReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT ticker, effective_date, type, ratio, observed_at
-              FROM corporate_action
-             WHERE ticker = @ticker
-               AND effective_date <= @as_of
-               AND observed_at <= @observed_before
-             ORDER BY effective_date, type;
+            SELECT a.ticker, a.effective_date, a.type, a.ratio, a.observed_at
+              FROM corporate_action a
+             WHERE a.ticker = @ticker
+               AND a.effective_date <= @as_of
+               AND a.observed_at <= @observed_before
+               AND a.observed_at = (
+                     SELECT MAX(l.observed_at)
+                       FROM corporate_action l
+                      WHERE l.ticker = a.ticker
+                        AND l.effective_date = a.effective_date
+                        AND l.type = a.type
+                        AND l.observed_at <= @observed_before)
+             ORDER BY a.effective_date, a.type;
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
@@ -51,23 +62,41 @@ public sealed class CorporateActionReader
     }
 
     /// <summary>
-    /// Every action already stored for one effective date, whatever its type. What the ingestor
-    /// compares tonight's bulk response against, so a rerun writes nothing.
+    /// Every action on one effective date as last observed at or before
+    /// <paramref name="observedBefore"/>. What the ingestor compares tonight's bulk response
+    /// against, so a rerun writes nothing and a restatement writes one row.
+    ///
+    /// The bound is an instant rather than a date, and the distinction is the one that bit the
+    /// bar ingestor. The ingestor asks "has the vendor changed anything since we last looked",
+    /// so its bound is now; a signal asks "what did the lab know on the night", so its bound is
+    /// that night. Passing the effective date as both makes a backfilled date look unobserved
+    /// to the run that just wrote it.
     ///
     /// Keyed on ticker and type together, because a stock can pay a dividend and split on the
-    /// same day and the grain says those are two rows.
+    /// same day and the grain says those are two actions.
     /// </summary>
-    public static IReadOnlyDictionary<string, StoredCorporateAction> ReadDate(SqliteConnection connection, DateOnly effectiveDate)
+    public static IReadOnlyDictionary<string, StoredCorporateAction> ReadDate(
+        SqliteConnection connection,
+        DateOnly effectiveDate,
+        DateTimeOffset observedBefore)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT ticker, effective_date, type, ratio, observed_at
-              FROM corporate_action
-             WHERE effective_date = @effective_date;
+            SELECT a.ticker, a.effective_date, a.type, a.ratio, a.observed_at
+              FROM corporate_action a
+             WHERE a.effective_date = @effective_date
+               AND a.observed_at = (
+                     SELECT MAX(l.observed_at)
+                       FROM corporate_action l
+                      WHERE l.ticker = a.ticker
+                        AND l.effective_date = a.effective_date
+                        AND l.type = a.type
+                        AND l.observed_at <= @observed_before);
             """;
         command.Parameters.AddWithValue("@effective_date", StoreText.DateToStorageText(effectiveDate));
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
 
         return ReadAll(command).ToDictionary(a => Key(a.Ticker, a.Type), StringComparer.Ordinal);
     }
@@ -98,13 +127,18 @@ public sealed class CorporateActionReader
 /// <summary>
 /// Which stocks may not have their averages computed, and as of when.
 ///
-/// A demand row with no rebuilt_at is a stock whose calculations refuse to run. Failing loudly
-/// is the point: a split corrupts every moving average a stock has at once and the result
-/// looks entirely reasonable, so the alternative to a loud refusal is a plausible wrong number
-/// rather than an obvious one.
+/// A demand with no rebuilt_at is a stock whose calculations refuse to run. Failing loudly is
+/// the point: an unprocessed action corrupts every moving average a stock has at once and the
+/// result looks entirely reasonable, so the alternative to a loud refusal is a plausible wrong
+/// number rather than an obvious one.
+/// see: An unprocessed corporate action of any kind blocks calculation, not only a split
 ///
-/// Point in time like everything else. Asked as of a night the split was outstanding, the
-/// answer is that the stock was blocked, even if it has been rebuilt since.
+/// A demand is keyed on the action as observed, so a restated ratio arrives as a second demand
+/// rather than as a failed attempt to reopen the first.
+/// see: A rebuild demand is keyed on the action as observed, and a restated action raises a new one
+///
+/// Point in time like everything else. Asked as of a night a demand was outstanding, the answer
+/// is that the stock was blocked, even if it has been satisfied since.
 /// </summary>
 public sealed class IndicatorRebuildReader
 {
@@ -115,26 +149,27 @@ public sealed class IndicatorRebuildReader
         _connections = connections ?? throw new ArgumentNullException(nameof(connections));
     }
 
-    public IReadOnlyList<RebuildDemand> Pending(DateOnly asOf)
+    public IReadOnlyList<RebuildDemand> Open(DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Pending(connection, asOf);
+        return Open(connection, asOf);
     }
 
-    public static IReadOnlyList<RebuildDemand> Pending(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<RebuildDemand> Open(SqliteConnection connection, DateOnly asOf)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
         using SqliteCommand command = connection.CreateCommand();
 
-        // Outstanding as of that night: requested by then, and either never rebuilt or rebuilt
-        // afterwards. The second half is what makes the answer a replay rather than a status.
+        // Outstanding as of that night: observed by then, and either never satisfied or
+        // satisfied afterwards. The second half is what makes the answer a replay rather than
+        // a status.
         command.CommandText = """
-            SELECT ticker, effective_date, requested_at, rebuilt_at
+            SELECT ticker, effective_date, type, observed_at, rebuilt_at
               FROM indicator_rebuild
-             WHERE requested_at <= @observed_before
+             WHERE observed_at <= @observed_before
                AND (rebuilt_at IS NULL OR rebuilt_at > @observed_before)
-             ORDER BY ticker, effective_date;
+             ORDER BY ticker, effective_date, type, observed_at;
             """;
         command.Parameters.AddWithValue("@observed_before", CorporateActionReader.EndOf(asOf));
 
@@ -145,8 +180,9 @@ public sealed class IndicatorRebuildReader
             demands.Add(new RebuildDemand(
                 reader.GetString(0),
                 StoreText.StorageTextToDate(reader.GetString(1)),
-                StoreText.StorageTextToTimestamp(reader.GetString(2)),
-                reader.IsDBNull(3) ? null : StoreText.StorageTextToTimestamp(reader.GetString(3))));
+                CorporateActionTypeText.FromStorageText(reader.GetString(2)),
+                StoreText.StorageTextToTimestamp(reader.GetString(3)),
+                reader.IsDBNull(4) ? null : StoreText.StorageTextToTimestamp(reader.GetString(4))));
         }
 
         return demands;
@@ -154,30 +190,27 @@ public sealed class IndicatorRebuildReader
 
     /// <summary>The tickers a calculation must refuse to run for on that date, and nothing else.</summary>
     public static IReadOnlySet<string> BlockedTickers(SqliteConnection connection, DateOnly asOf) =>
-        Pending(connection, asOf).Select(d => d.Ticker).ToHashSet(StringComparer.Ordinal);
+        Open(connection, asOf).Select(d => d.Ticker).ToHashSet(StringComparer.Ordinal);
 }
 
-/// <summary>One stored corporate action. Ratios are decimal in code and TEXT in storage.</summary>
+/// <summary>One stored corporate action, as observed. Ratios are decimal in code and TEXT in storage.</summary>
 public sealed record StoredCorporateAction(
     string Ticker,
     DateOnly EffectiveDate,
     CorporateActionType Type,
     decimal Ratio,
-    DateTimeOffset ObservedAt)
-{
-    /// <summary>
-    /// True when this action changes the scale of every adjusted close before it, which is what
-    /// forces a rebuild. A one-for-one split is a vendor artefact rather than an event and
-    /// rescales nothing, so it is excluded here rather than filtered by whoever reads this.
-    /// </summary>
-    public bool RescalesHistory => Type == CorporateActionType.Split && Ratio != 1m;
-}
+    DateTimeOffset ObservedAt);
 
-/// <summary>One outstanding rebuild, and the split that demanded it.</summary>
+/// <summary>
+/// One outstanding rebuild, identified by the action that raised it as that action was
+/// observed. A restatement of the same action is a different observation and therefore a
+/// different demand.
+/// </summary>
 public sealed record RebuildDemand(
     string Ticker,
     DateOnly EffectiveDate,
-    DateTimeOffset RequestedAt,
+    CorporateActionType Type,
+    DateTimeOffset ObservedAt,
     DateTimeOffset? RebuiltAt);
 
 public enum CorporateActionType
@@ -185,7 +218,7 @@ public enum CorporateActionType
     /// <summary>A change of share count. Rescales every adjusted close before it.</summary>
     Split,
 
-    /// <summary>Cash per share. Stored, and does not demand a rebuild in this build.</summary>
+    /// <summary>Cash per share. Moves every adjusted close before it by a smaller factor, and by one all the same.</summary>
     Dividend,
 }
 

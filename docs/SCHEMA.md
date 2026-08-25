@@ -79,11 +79,13 @@ Grain: ticker + effective date + type.
 | `ratio` | TEXT | on a split, new shares over old as a factor, so 4 for a four-for-one. On a dividend, cash per share |
 | `observed_at` | TEXT | |
 
-Insert ActionIngestor · PK (`ticker`, `effective_date`, `type`)
+Insert ActionIngestor · PK (`ticker`, `effective_date`, `type`, `observed_at`)
 
 *Note on `ratio`.* It carries a factor for one type and a money amount for the other, which is the one column in this schema whose name does not describe half its contents. It stays one column because the grain already separates the two by `type` and a second nullable column would put the same fact in two places, but the note stays here so nobody averages the column.
 
-**An action is an event, not a measurement.** Unlike a bar, the first observation of it stands: a rerun of the night finds the row and does nothing rather than writing a second observation, and there is no update declared. A vendor publishing a different ratio for a split already stored is therefore not absorbed. It is counted, printed, and demands the rebuild again, because the factor the history was rebuilt against may be the wrong one.
+**Append-only. Never deleted, never updated,** on the same terms as `daily_bar` and for the same reason. Vendors restate corporate actions. A restatement arrives as a new row with a later `observed_at`, and reads take the latest `observed_at` at or before the as-of date, so a ratio revised on Thursday does not change what Monday's replay sees.
+
+**A restatement raises a rebuild demand of its own.** Whatever was computed against the old ratio was computed against a number the vendor no longer publishes, and the demand is keyed on the observation rather than on the action, so the new one stands beside the old rather than trying to reopen it.
 
 ### `index_bar`
 Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
@@ -131,21 +133,24 @@ Insert IndicatorEngine · Update TierClassifier (`ladder_grade` only)
 *Note on `adr_20`.* Every ratio in this schema is a fraction. `adr_20` reads as though it were a percentage because of its name, so it is the one column whose name argues against the rule. It stays a fraction and this note stays here rather than the column being renamed, because `adr` appears in the signal library and in the screens.
 
 ### `indicator_rebuild`
-Grain: ticker + the effective date of the split that demanded it. One row per split, and the row stays after it is honoured.
+Grain: the corporate action that raised the demand, as that action was observed. One row per observation, and the row stays after it is satisfied.
 
 | Column | Type | Note |
 |---|---|---|
-| `ticker`, `effective_date` | TEXT | PK. The split that demanded the rebuild |
-| `requested_at` | TEXT | when the split was observed |
-| `rebuilt_at` | TEXT | NULL until the ticker has been recomputed from scratch |
+| `ticker`, `effective_date`, `type`, `observed_at` | TEXT | PK. The key of the `corporate_action` row that raised it |
+| `rebuilt_at` | TEXT | NULL until the ticker has been recomputed against a history observed after the action |
 
 Insert ActionIngestor · Update IndicatorEngine (`rebuilt_at` only)
 
-**A row with a NULL `rebuilt_at` is a stock whose calculations must refuse to run.** That is where the architecture's unprocessed-split behaviour is read from. A split rescales every adjusted close before it, so an average taken across the boundary is arithmetic on two different units and its answer is wrong by a factor while looking entirely reasonable.
+**A row with a NULL `rebuilt_at` is a stock whose calculations must refuse to run.** That is where the architecture's unprocessed-action behaviour is read from. Any corporate action moves every adjusted close before it, so an average taken across the boundary is arithmetic on two different units and its answer is wrong while looking entirely reasonable. Magnitude does not enter it (see: An unprocessed corporate action of any kind blocks calculation, not only a split).
 
-**The demand is recorded, not queued.** The row is never deleted and never cleared; it gains a date. A queue that empties answers "is anything outstanding" and nothing else, and the question worth answering months later is which splits this store has honoured and when.
+**The key is the action as observed, not the ticker and the date.** A vendor restating a ratio writes a second `corporate_action` observation, which raises a second demand rather than failing to reopen a demand already satisfied. Without that, a ticker rebuilt against a factor that later changed would stay rebuilt, permanently, with the record showing a satisfied demand and the wrong number computed from it (see: A rebuild demand is keyed on the action as observed, and a restated action raises a new one).
+
+**The demand is recorded, not queued.** The row is never deleted and never cleared; it gains a date. A queue that empties answers "is anything outstanding" and destroys the history on its way to the answer.
 
 **Two components, on purpose.** ActionIngestor raises the demand and IndicatorEngine satisfies it. A component that can both raise and close its own condition raises nothing.
+
+**No foreign key to `corporate_action`, though the key is its key.** SQLite rewrites a child's foreign key clause when the parent is renamed, and a hand-written table rebuild renames, so declaring one would make each table's rebuild depend on the order of the other's. A test asserts every demand joins to an action instead, which is the property the constraint would have bought.
 
 ### `scan_hit`
 Grain: ticker + date + scan.

@@ -37,12 +37,22 @@ public sealed partial class MigrationRunner
         return Apply(connection);
     }
 
-    public MigrationResult Apply(SqliteConnection connection)
+    /// <summary>
+    /// Applies whatever is outstanding, or everything up to <paramref name="throughVersion"/>.
+    ///
+    /// The bound exists for one caller: the test that asserts a table rebuild does not lose
+    /// rows has to stand the store up at the version before the rebuild, put rows in it, and
+    /// then step forward. Stopping short is not something a running lab ever does, which is why
+    /// the parameter is optional and the default is everything.
+    /// </summary>
+    public MigrationResult Apply(SqliteConnection connection, int? throughVersion = null)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
         int startingVersion = ReadUserVersion(connection);
-        List<Migration> outstanding = All().Where(m => m.Number > startingVersion).ToList();
+        List<Migration> outstanding = All()
+            .Where(m => m.Number > startingVersion && (throughVersion is null || m.Number <= throughVersion))
+            .ToList();
 
         foreach (Migration migration in outstanding)
         {

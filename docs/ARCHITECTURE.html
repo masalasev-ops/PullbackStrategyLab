@@ -854,7 +854,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Intraday prices unavailable for a day</td><td>No trades resolved and every setup flagged that night excluded from variant scoring. A variant that could not be tested must not be scored as though it chose to pass.</td></tr>
 <tr><td>Price gaps past the give-up point</td><td>Recorded as a loss larger than planned and tagged. Never rounded back, because the size and frequency of these is a genuine property of the strategy and one of the things you most want to learn.</td></tr>
 <tr><td>A short could not have been borrowed</td><td>Not detectable from the feed. Mitigated by a market-cap floor and a borrow-cost deduction, and recorded as an unmodelled assumption on every short trade. Long and short results are never pooled.</td></tr>
-<tr><td>Unprocessed split</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: a split corrupts every moving average at once and produces plausible-looking nonsense.</td></tr>
+<tr><td>Unprocessed corporate action</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: any action that moves the adjusted close corrupts every moving average at once and produces plausible-looking nonsense. A split does it by a factor and a dividend by a smaller one, and magnitude does not enter it (see: An unprocessed corporate action of any kind blocks calculation, not only a split).</td></tr>
 <tr><td>Detector errors on one stock</td><td>An error row is written for that stock and date. Silently skipping shrinks the recorded universe without anyone noticing, which is the kind of defect that survives for months.</td></tr>
 <tr><td>Nightly setup cap reached</td><td>The cap truncates the shared candidate list by rank before any variant selects, and the truncation is recorded. Never applied per variant, or the disagreements go unscoreable.</td></tr>
 <tr><td>Daily API ceiling reached</td><td>The nightly job counts as it goes and stops rather than overrunning. A stopped job writes a partial-run row and the affected setups are marked degraded.</td></tr>
@@ -978,15 +978,16 @@ tr:hover td{background:#f4f2ec}
 <h2 id="data-budget">Data budget</h2>
 <p>Hard ceiling of 5,000 calls a day, enforced in config with the nightly job counting as it goes.</p>
 <table>
-<tr><th style="width:330px">Nightly job</th><th style="width:110px">Calls</th><th>Note</th></tr>
-<tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>Replaces 6,000 individual requests</td></tr>
-<tr><td>Splits, bulk</td><td>100</td><td>Daily. Non-negotiable</td></tr>
-<tr><td>Dividends, bulk</td><td>~20</td><td>Weekly rather than daily</td></tr>
-<tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>~60 names at 5 calls each</td></tr>
-<tr><td>Spread snapshots</td><td>120</td><td>60 names, twice a session. Unrecoverable later</td></tr>
-<tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>Lazy, cached permanently</td></tr>
-<tr><td><b>Daily total</b></td><td><b>~690</b></td><td>Peaks near 1,000 on heavy nights</td></tr>
+<tr><th style="width:260px">Nightly job</th><th style="width:100px">Calls a night</th><th style="width:100px">Cost per request</th><th style="width:100px">Cadence</th><th>Note</th></tr>
+<tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>100</td><td>nightly</td><td>Replaces 6,000 individual requests</td></tr>
+<tr><td>Splits, bulk</td><td>100</td><td>100</td><td>nightly</td><td>Non-negotiable</td></tr>
+<tr><td>Dividends, bulk</td><td>20</td><td>100</td><td>weekly</td><td>The same request as the other two and the same price. 100 a week over five sessions is the 20, which is an amortised nightly figure and was never the price of a call</td></tr>
+<tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>5</td><td>nightly</td><td>~60 names at 5 calls each</td></tr>
+<tr><td>Spread snapshots</td><td>120</td><td>1</td><td>twice a session</td><td>60 names, twice a session. Unrecoverable later</td></tr>
+<tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>1</td><td>as needed</td><td>Lazy, cached permanently</td></tr>
+<tr><td><b>Daily total</b></td><td><b>~690</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
 </table>
+<p><b>Calls a night and cost per request are different numbers and the table now says which is which.</b> They coincide on every nightly row and they do not on the dividend row, where a weekly request of 100 amortises to 20 a night across five sessions. Charging a budget 20 for a request that costs 100 under-counts by 80 every time it runs, which is the accounting error the ceiling exists to catch, so the cost column is what a stage charges and the cadence column is what makes it weekly. Both are checked: <code>pinned-constants</code> reads the cost against the vendor client's constant and the cadence against the stage's default.</p>
 <p>One-time backfill is about 7,000 calls over two days: 3,000 for full price history at one call per ticker, 3,000 for split history, and 1,000 of minute bars to calibrate the fill model.</p>
 
 <h4>The three ways to blow it, all avoidable</h4>

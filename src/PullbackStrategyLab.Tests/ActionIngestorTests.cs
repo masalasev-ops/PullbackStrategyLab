@@ -46,10 +46,11 @@ public sealed class ActionIngestorTests : IDisposable
     }
 
     [Fact]
-    public async Task A_split_demands_a_rebuild_for_that_ticker_and_only_that_ticker()
+    public async Task An_action_demands_a_rebuild_for_that_ticker_and_only_that_ticker()
     {
         // The done condition. AAA splits four for one, BBB pays a dividend the same evening,
-        // CCC does nothing at all.
+        // CCC does nothing at all. The third is the half that is easy to get wrong and
+        // impossible to notice.
         var vendor = new FakeMarketDataVendor();
         vendor.Split(EffectiveDate, "AAA", 4m);
         vendor.Dividend(EffectiveDate, "BBB", 0.44m);
@@ -57,10 +58,14 @@ public sealed class ActionIngestorTests : IDisposable
         ActionIngestResult result = await Ingestor(vendor).IngestAsync(EffectiveDate, withDividends: true);
 
         Assert.Equal(2, result.Inserted);
-        Assert.Equal(1, result.RebuildsDemanded);
+
+        // Both actions move the adjusted close, so both raise a demand. Magnitude does not enter
+        // it: a dividend distorts an average less than a split does, and "less wrong" is not a
+        // category this design has.
+        Assert.Equal(2, result.DemandsRaised);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate).Order(StringComparer.Ordinal));
+        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate).Order(StringComparer.Ordinal));
 
         // The dividend is stored, and it is stored as cash per share rather than as a factor.
         StoredCorporateAction dividend = Assert.Single(CorporateActionReader.Read(connection, "BBB", EffectiveDate));
@@ -79,7 +84,7 @@ public sealed class ActionIngestorTests : IDisposable
         ActionIngestResult result = await Ingestor(vendor).IngestAsync(EffectiveDate);
 
         Assert.Equal(1, result.Inserted);
-        Assert.Equal(0, result.RebuildsDemanded);
+        Assert.Equal(0, result.DemandsRaised);
     }
 
     [Fact]
@@ -95,10 +100,10 @@ public sealed class ActionIngestorTests : IDisposable
         await ingestor.IngestAsync(EffectiveDate.AddDays(7));
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        IReadOnlyList<RebuildDemand> pending = IndicatorRebuildReader.Pending(connection, EffectiveDate.AddDays(7));
+        IReadOnlyList<RebuildDemand> open = IndicatorRebuildReader.Open(connection, EffectiveDate.AddDays(7));
 
-        Assert.Equal(2, pending.Count);
-        Assert.All(pending, d => Assert.Equal("AAA", d.Ticker));
+        Assert.Equal(2, open.Count);
+        Assert.All(open, d => Assert.Equal("AAA", d.Ticker));
     }
 
     [Fact]
@@ -128,38 +133,92 @@ public sealed class ActionIngestorTests : IDisposable
         ActionIngestResult second = await ingestor.IngestAsync(EffectiveDate);
 
         Assert.Equal(0, second.Inserted);
-        Assert.Equal(1, second.AlreadyStored);
+        Assert.Equal(1, second.Unchanged);
         Assert.Equal(0, second.RowsWritten);
         Assert.Equal(1, CountRows("corporate_action"));
         Assert.Equal(1, CountRows("indicator_rebuild"));
     }
 
     [Fact]
-    public async Task A_changed_ratio_for_a_split_already_stored_is_counted_rather_than_absorbed()
+    public async Task A_restated_ratio_raises_a_second_demand_and_leaves_the_first_alone()
     {
+        // The case 004 could not represent at all. A ticker is rebuilt, the vendor then restates
+        // the ratio, and under a key of ticker and date the restatement had nowhere to go: the
+        // action could not be stored twice, and the demand it should raise collided with one
+        // already satisfied. The stock stayed rebuilt against a factor nobody publishes.
         var first = new FakeMarketDataVendor();
         first.Split(EffectiveDate, "AAA", 4m);
         await Ingestor(first).IngestAsync(EffectiveDate);
 
+        Stamp("AAA", EffectiveDate, CorporateActionType.Split, _clock.UtcNow.AddHours(1));
         _clock.Advance(TimeSpan.FromDays(1));
 
         var corrected = new FakeMarketDataVendor();
         corrected.Split(EffectiveDate, "AAA", 5m);
         ActionIngestResult result = await Ingestor(corrected).IngestAsync(EffectiveDate);
 
-        // The grain is one row per ticker, date and type, so the stored row stands: this is not
-        // a correction the table can absorb. What it is instead is a reason to stop trusting
-        // that stock's averages, which is why it is counted rather than swallowed.
-        Assert.Equal(1, result.RatioConflicts);
-        Assert.Equal(0, result.Inserted);
+        Assert.Equal(1, result.Restatements);
+        Assert.Equal(1, result.Inserted);
+        Assert.Equal(1, result.DemandsRaised);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Equal(4m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate)).Ratio);
 
-        // And the demand raised on the first night is still standing, so the stock is blocked
-        // regardless. Reopening a rebuild already honoured is owed at 1.6, where the component
-        // that owns rebuilt_at exists.
+        // Two observations of one action, and two demands: the satisfied one from the first
+        // night and an open one from the restatement. Nothing was mutated and nothing cleared.
+        Assert.Equal(2, CountRows("corporate_action"));
+        Assert.Equal(2, CountRows("indicator_rebuild"));
         Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate.AddDays(1)));
+
+        // And a read takes the latest observation, so the ratio in force is the restated one.
+        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(1))).Ratio);
+    }
+
+    [Fact]
+    public async Task A_restatement_does_not_change_what_a_night_before_it_saw()
+    {
+        var first = new FakeMarketDataVendor();
+        first.Split(EffectiveDate, "AAA", 4m);
+        await Ingestor(first).IngestAsync(EffectiveDate);
+
+        _clock.Advance(TimeSpan.FromDays(2));
+
+        var corrected = new FakeMarketDataVendor();
+        corrected.Split(EffectiveDate, "AAA", 5m);
+        await Ingestor(corrected).IngestAsync(EffectiveDate);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // The same property the bar reader holds. A replay of the night the lab acted has to see
+        // the factor the lab had, including the one that turned out to be wrong.
+        Assert.Equal(4m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate)).Ratio);
+        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(2))).Ratio);
+    }
+
+    [Fact]
+    public async Task Every_demand_names_an_action_that_is_actually_stored()
+    {
+        // What the foreign key would have bought. It is not declared, because SQLite rewrites a
+        // child's foreign key clause when the parent is renamed and a hand-written table rebuild
+        // renames, so each table's rebuild would depend on the order of the other's.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Split(EffectiveDate, "AAA", 4m);
+        vendor.Dividend(EffectiveDate, "BBB", 0.44m);
+        await Ingestor(vendor).IngestAsync(EffectiveDate, withDividends: true);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM indicator_rebuild r
+             WHERE NOT EXISTS (
+                     SELECT 1 FROM corporate_action a
+                      WHERE a.ticker = r.ticker
+                        AND a.effective_date = r.effective_date
+                        AND a.type = r.type
+                        AND a.observed_at = r.observed_at);
+            """;
+
+        Assert.Equal(0L, command.ExecuteScalar());
     }
 
     [Fact]
@@ -245,7 +304,7 @@ public sealed class ActionIngestorTests : IDisposable
 
         // What IndicatorEngine will do at 1.6, written here by hand because the component that
         // owns the update does not exist yet.
-        Stamp("AAA", EffectiveDate, _clock.UtcNow.AddDays(2));
+        Stamp("AAA", EffectiveDate, CorporateActionType.Split, _clock.UtcNow.AddDays(2));
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
@@ -282,18 +341,19 @@ public sealed class ActionIngestorTests : IDisposable
     /// because putting it in shipped code before its component exists would give the update to
     /// whichever type happened to hold the statement.
     /// </summary>
-    private void Stamp(string ticker, DateOnly effectiveDate, DateTimeOffset at)
+    private void Stamp(string ticker, DateOnly effectiveDate, CorporateActionType type, DateTimeOffset at)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             UPDATE indicator_rebuild
                SET rebuilt_at = @at
-             WHERE ticker = @ticker AND effective_date = @effective_date;
+             WHERE ticker = @ticker AND effective_date = @effective_date AND type = @type;
             """;
         command.Parameters.AddWithValue("@at", StoreText.TimestampToStorageText(at));
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@effective_date", StoreText.DateToStorageText(effectiveDate));
+        command.Parameters.AddWithValue("@type", type.ToStorageText());
         command.ExecuteNonQuery();
     }
 

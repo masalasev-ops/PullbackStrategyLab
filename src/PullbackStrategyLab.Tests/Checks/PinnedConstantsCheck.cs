@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
+using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Worker.Vendor;
 using Xunit;
 using Xunit.Abstractions;
@@ -75,14 +76,27 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, long",
             ParameterMoney(architecture, "Liquidity floor, long"), defaults.Universe.LiquidityFloorLong, "UniverseOptions.LiquidityFloorLong"));
 
-        // The two bulk request costs, stated in the data budget and held in the vendor client.
+        // The three bulk request costs, stated in the data budget and held in the vendor client.
         // The budget is only meaningful if the cost a stage charges is the cost the table was
         // added up from, and a request whose price drifted would spend the ceiling faster than
         // any document said while every stage still reported staying inside it.
-        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, whole-market daily bars",
-            BudgetCalls(architecture, "Whole-market daily bars"), EodhdClient.BulkEndOfDayCost, "EodhdClient.BulkEndOfDayCost"));
-        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, splits",
-            BudgetCalls(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, whole-market daily bars, cost",
+            BudgetCost(architecture, "Whole-market daily bars"), EodhdClient.BulkEndOfDayCost, "EodhdClient.BulkEndOfDayCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, splits, cost",
+            BudgetCost(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, dividends, cost",
+            BudgetCost(architecture, "Dividends, bulk"), EodhdClient.BulkDividendCost, "EodhdClient.BulkDividendCost"));
+
+        // And the cadence beside the cost, because on the dividend row the two are what the
+        // budget's twenty was hiding. A weekly cadence is only weekly if the nightly invocation
+        // does not ask for dividends, so that is what the code side of this pin reads.
+        pins.Add(Pin.Text("ARCHITECTURE.html, data budget, dividends, cadence",
+            string.Equals(BudgetCadence(architecture, "Dividends, bulk"), "weekly", StringComparison.Ordinal),
+            !ActionIngestor.RequestsDividendsByDefault,
+            "ActionIngestor.RequestsDividendsByDefault"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, data budget, splits, cadence",
+            string.Equals(BudgetCadence(architecture, "Splits, bulk"), "nightly", StringComparison.Ordinal),
+            true, "the splits request the stage always makes"));
 
         // The session zone, named in the build plan and defaulted in configuration.
         pins.Add(Pin.Text("BUILD_PLAN.md 1.2, the session zone",
@@ -127,12 +141,12 @@ public sealed class PinnedConstantsCheck
             "the parameter arrives with the checkpoint that builds the component it governs");
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
-        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk"];
+        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "Daily total"];
         coverage.NotExamined(
-            "rows of the data budget with no request cost to pin them to",
+            "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,
-            "the request arrives with the checkpoint that makes it, and the dividends row is a nightly "
-            + "average of a weekly request rather than the price of one, so it pins to nothing by design");
+            "the request arrives with the checkpoint that makes it. No row of this table is unexaminable "
+            + "by design any more: every one states a cost per request and a cadence separately");
 
         coverage.Report();
 
@@ -170,21 +184,31 @@ public sealed class PinnedConstantsCheck
     }
 
     /// <summary>
-    /// The calls column of one data budget row. The table writes some figures with a leading
-    /// tilde, which is the document saying the number is an estimate, so only the rows without
-    /// one are pinned and the rest are reported as unexamined.
+    /// The cost-per-request column of one data budget row. Separate from the calls-a-night
+    /// column beside it, which is what a job contributes to a night and is an average wherever
+    /// the cadence is not nightly.
+    ///
+    /// A tilde is the document saying the figure is an estimate, and an estimate cannot pin a
+    /// constant. A row that acquires one fails here rather than being quietly dropped from what
+    /// the check examines.
     /// </summary>
-    private static int BudgetCalls(string architecture, string job)
+    private static int BudgetCost(string architecture, string job)
     {
-        string value = HtmlTable.BodyRowsUnder(architecture, "Data budget")
-            .Single(r => r[0].StartsWith(job, StringComparison.Ordinal))[1];
+        string value = BudgetCell(architecture, job, column: 2);
 
         Assert.False(value.Contains('~', StringComparison.Ordinal),
-            $"The data budget states \"{value}\" for {job}, which is an estimate rather than a cost. "
-            + "An estimate cannot pin a constant, so this row belongs in the unexamined count instead.");
+            $"The data budget states \"{value}\" as the cost per request for {job}, which is an estimate. "
+            + "An estimate cannot pin a constant, so either the figure is a cost or the row is unexamined.");
 
         return int.Parse(new string(value.Where(char.IsDigit).ToArray()), CultureInfo.InvariantCulture);
     }
+
+    private static string BudgetCadence(string architecture, string job) =>
+        BudgetCell(architecture, job, column: 3);
+
+    private static string BudgetCell(string architecture, string job, int column) =>
+        HtmlTable.BodyRowsUnder(architecture, "Data budget")
+            .Single(r => r[0].StartsWith(job, StringComparison.Ordinal))[column].Trim();
 
     private static string ParameterCell(string architecture, string parameter) =>
         HtmlTable.BodyRowsUnder(architecture, "Authored parameters")

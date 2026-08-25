@@ -11,6 +11,14 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// It fails on a near-miss rather than ignoring it. Names invite paraphrase, and a
 /// paraphrased citation silently stops resolving, which leaves a comment that looks like
 /// a citation and points at nothing.
+///
+/// A name resolves whether it is current or superseded. This check answers "does the name
+/// exist", and `no-superseded-citation` answers "is it the one still in force", which is a
+/// different question with a different answer for the records: a dated PROGRESS entry names
+/// what authorised it at the time and that citation stays correct after the decision is
+/// replaced. Folding the two questions into this one check made a supersession break every
+/// record that had ever cited the decision, which would leave a session choosing between
+/// rewriting history and never superseding anything.
 /// </summary>
 public sealed class DecisionResolvesCheck
 {
@@ -23,9 +31,11 @@ public sealed class DecisionResolvesCheck
     public void Every_cited_decision_name_resolves_exactly()
     {
         var coverage = new CheckCoverage("decision-resolves", _output);
-        var known = new HashSet<string>(Corpus.DecisionNames, StringComparer.Ordinal);
+        var known = new HashSet<string>(
+            Corpus.DecisionNames.Concat(Corpus.SupersededDecisionNames), StringComparer.Ordinal);
 
         List<string> duplicates = Corpus.DecisionNames
+            .Concat(Corpus.SupersededDecisionNames)
             .GroupBy(n => n, StringComparer.Ordinal)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
@@ -45,6 +55,7 @@ public sealed class DecisionResolvesCheck
 
         coverage
             .Examined("decision names in DECISIONS.md", Corpus.DecisionNames.Count)
+            .Examined("names under Previously decided, which also resolve", Corpus.SupersededDecisionNames.Count)
             .Examined("citations resolved", Corpus.Citations.Count)
             .Examined("files read for citations", RepositoryLayout.CorpusFiles.Count + RepositoryLayout.SourceFiles.Count);
         coverage.Report();
@@ -69,7 +80,7 @@ public sealed class DecisionResolvesCheck
         string? best = null;
         int bestDistance = int.MaxValue;
 
-        foreach (string candidate in Corpus.DecisionNames)
+        foreach (string candidate in Corpus.DecisionNames.Concat(Corpus.SupersededDecisionNames))
         {
             int distance = Distance(name, candidate);
             if (distance < bestDistance)

@@ -9,19 +9,26 @@ using PullbackStrategyLab.Worker.Vendor;
 namespace PullbackStrategyLab.Worker.Stages;
 
 /// <summary>
-/// Pulls the day's splits and, when asked for them, dividends, and records the rebuild a split
-/// forces.
+/// Pulls the day's splits and, when asked for them, dividends, and raises the rebuild every
+/// action that moves the adjusted close demands.
 ///
-/// Splits matter more than they sound. The stored adjusted closes were adjusted as of the night
-/// each was observed, so the evening after a four-for-one, everything already in the store is on
-/// the old scale and everything arriving is on the new one. An average taken across that
-/// boundary is arithmetic on two different units, and the number it produces is wrong by a
-/// factor while looking entirely reasonable. Nothing downstream can detect it.
+/// The stored adjusted closes were adjusted as of the night each was observed, so the evening
+/// after a four-for-one everything already in the store is on the old scale and everything
+/// arriving is on the new one. An average taken across that boundary is arithmetic on two
+/// different units, and the number it produces is wrong by a factor while looking entirely
+/// reasonable. A dividend does the same thing by a smaller factor, and smaller is not a
+/// category this design has.
+/// see: An unprocessed corporate action of any kind blocks calculation, not only a split
 ///
-/// So this stage does not fix anything. It records that a fix is owed, one row per split, and
-/// the rebuild demand is what makes calculations for that stock refuse to run until it is
-/// honoured. Demanding the rebuild and performing it are deliberately different components:
-/// IndicatorEngine at 1.6 stamps rebuilt_at, and until then the demand simply stands.
+/// So this stage does not fix anything. It records that a fix is owed, one demand per action
+/// as that action was observed, and the demand is what makes calculations for that stock
+/// refuse to run until it is satisfied. Raising the demand and satisfying it are deliberately
+/// different components: IndicatorEngine stamps rebuilt_at once it has recomputed the ticker
+/// against a history observed after the action.
+///
+/// Both tables are append-only. A vendor restating a ratio writes a new observation, which
+/// raises a new demand rather than failing to reopen an old one.
+/// see: A rebuild demand is keyed on the action as observed, and a restated action raises a new one
 /// </summary>
 public sealed class ActionIngestor
 {
@@ -33,6 +40,14 @@ public sealed class ActionIngestor
     /// plist and one scheduled task rather than in a date calculation here.
     /// </summary>
     public const string WithDividendsFlag = "--with-dividends";
+
+    /// <summary>
+    /// False, and load-bearing. The data budget states the dividend request as weekly, and this
+    /// is the code side of that claim: a nightly invocation asks for splits and nothing else.
+    /// `pinned-constants` compares the two, so flipping this fails the check rather than
+    /// quietly adding a hundred calls a night.
+    /// </summary>
+    public const bool RequestsDividendsByDefault = false;
 
     private readonly IMarketDataVendor _vendor;
     private readonly StoreConnectionFactory _connections;
@@ -68,8 +83,8 @@ public sealed class ActionIngestor
         ActionIngestResult result = await IngestAsync(effectiveDate, withDividends, cancellationToken).ConfigureAwait(false);
 
         Console.WriteLine($"{Name}: {effectiveDate:yyyy-MM-dd}, {result.SplitsPublished} splits and {result.DividendsPublished} dividends published for the market");
-        Console.WriteLine($"{Name}: {result.InUniverse} in the universe, {result.Inserted} written, {result.AlreadyStored} already stored");
-        Console.WriteLine($"{Name}: {result.RebuildsDemanded} rebuild(s) demanded, {result.RatioConflicts} ratio conflict(s)");
+        Console.WriteLine($"{Name}: {result.InUniverse} in the universe, {result.Inserted} written, {result.Unchanged} already stored unchanged, {result.Restatements} restatements");
+        Console.WriteLine($"{Name}: {result.DemandsRaised} rebuild demand(s) raised over {result.TickersBlocked} ticker(s)");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
@@ -77,12 +92,15 @@ public sealed class ActionIngestor
 
     public async Task<ActionIngestResult> IngestAsync(
         DateOnly effectiveDate,
-        bool withDividends = false,
+        bool withDividends = RequestsDividendsByDefault,
         CancellationToken cancellationToken = default)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, "corporate_action", "indicator_rebuild");
 
+        // One observed_at for the whole run, so a night's ingest is one observation rather than
+        // several hundred instants that happen to be close together. It is also the demand's
+        // key, which is what ties a demand to the observation that raised it.
         DateTimeOffset observedAt = run.StartedAt;
         string exchange = _options.Vendor.Exchange;
 
@@ -91,9 +109,9 @@ public sealed class ActionIngestor
 
         if (splits.BudgetExhausted)
         {
-            // Nothing is stored and nothing is demanded. A split half-ingested is worse than one
+            // Nothing is stored and nothing is demanded. A night half-ingested is worse than one
             // not ingested at all: the second is a gap the rerun closes, and the first is a
-            // store that believes it has tonight's splits.
+            // store that believes it has tonight's actions.
             RunSummary stopped = run.Complete(RunOutcome.Partial);
             return ActionIngestResult.Stopped(effectiveDate, stopped);
         }
@@ -114,14 +132,14 @@ public sealed class ActionIngestor
         }
 
         HashSet<string> universe = ReadUniverse(connection);
-        IReadOnlyDictionary<string, StoredCorporateAction> alreadyStored =
-            CorporateActionReader.ReadDate(connection, effectiveDate);
+        IReadOnlyDictionary<string, StoredCorporateAction> lastObserved =
+            CorporateActionReader.ReadDate(connection, effectiveDate, observedAt);
 
         int inUniverse = 0;
         int inserted = 0;
         int unchanged = 0;
-        int ratioConflicts = 0;
-        var rebuilds = new List<VendorCorporateAction>();
+        int restatements = 0;
+        var demands = new List<VendorCorporateAction>();
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
@@ -136,49 +154,41 @@ public sealed class ActionIngestor
 
                 inUniverse++;
 
-                if (alreadyStored.TryGetValue(CorporateActionReader.Key(action.Ticker, action.Type), out StoredCorporateAction? stored))
+                if (lastObserved.TryGetValue(CorporateActionReader.Key(action.Ticker, action.Type), out StoredCorporateAction? stored))
                 {
-                    unchanged++;
-
-                    if (stored.Ratio != action.Ratio)
+                    if (stored.Ratio == action.Ratio)
                     {
-                        // The grain is one row per ticker, date and type, so the stored row stands
-                        // and this is not a correction the table can absorb. Counted and printed
-                        // rather than swallowed, because it means the factor that stock's history
-                        // was rebuilt against may be the wrong one.
-                        //
-                        // If the rebuild has not been honoured yet, the demand is still standing
-                        // and this changes nothing: the stock is already blocked. If it has, this
-                        // stage cannot re-open it, because rebuilt_at belongs to IndicatorEngine
-                        // and a stage that could clear another component's column would be the
-                        // second writer the whole scheme exists to prevent. Reopening is owed at
-                        // 1.6, where the component that owns the column exists.
-                        ratioConflicts++;
+                        unchanged++;
+                        continue;
                     }
 
-                    continue;
+                    // The vendor has restated the action. It arrives as a new observation rather
+                    // than as an edit, exactly as a corrected bar does, and it raises a demand of
+                    // its own: whatever was computed against the old ratio was computed against a
+                    // number the vendor no longer publishes.
+                    restatements++;
                 }
 
                 Insert(connection, transaction, action, observedAt);
                 inserted++;
 
-                if (action.RescalesHistory)
+                if (action.MovesAdjustedClose)
                 {
-                    rebuilds.Add(action);
+                    demands.Add(action);
                 }
             }
 
-            foreach (VendorCorporateAction rebuild in rebuilds)
+            foreach (VendorCorporateAction demand in demands)
             {
-                DemandRebuild(connection, transaction, rebuild, observedAt);
+                RaiseDemand(connection, transaction, demand, observedAt);
             }
 
             transaction.Commit();
         }
 
         // Partial when dividends were asked for and the ceiling refused them. The splits that
-        // did land are stored, because they are the half that matters and the run entry says
-        // the night was incomplete.
+        // did land are stored, because they are the half that runs nightly and the run entry
+        // says the night was incomplete.
         RunOutcome outcome = withDividends && !dividendsRequested ? RunOutcome.Partial : RunOutcome.Clean;
         RunSummary summary = run.Complete(outcome);
 
@@ -189,8 +199,9 @@ public sealed class ActionIngestor
             inUniverse,
             inserted,
             unchanged,
-            ratioConflicts,
-            rebuilds.Select(r => r.Ticker).Distinct(StringComparer.Ordinal).Count(),
+            restatements,
+            demands.Count,
+            demands.Select(d => d.Ticker).Distinct(StringComparer.Ordinal).Count(),
             summary.RowsWritten,
             summary.CallsUsed,
             outcome);
@@ -216,13 +227,13 @@ public sealed class ActionIngestor
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
-        // The grain is one row per ticker, date and type, so a rerun of the night finds the row
-        // and does nothing rather than writing a second observation. Unlike a bar, an action is
-        // an event rather than a measurement: the first observation of it is the one that stands.
+        // Insert only. There is no update and no delete against this table anywhere in the lab:
+        // a restatement is a new observation, so the store still says what the lab believed on
+        // the night it acted.
         command.CommandText = """
             INSERT INTO corporate_action (ticker, effective_date, type, ratio, observed_at)
             VALUES (@ticker, @effective_date, @type, @ratio, @observed_at)
-            ON CONFLICT (ticker, effective_date, type) DO NOTHING;
+            ON CONFLICT (ticker, effective_date, type, observed_at) DO NOTHING;
             """;
         command.Parameters.AddWithValue("@ticker", action.Ticker);
         command.Parameters.AddWithValue("@effective_date", StoreText.DateToStorageText(action.EffectiveDate));
@@ -232,23 +243,24 @@ public sealed class ActionIngestor
         command.ExecuteNonQuery();
     }
 
-    private static void DemandRebuild(SqliteConnection connection, SqliteTransaction transaction, VendorCorporateAction action, DateTimeOffset observedAt)
+    private static void RaiseDemand(SqliteConnection connection, SqliteTransaction transaction, VendorCorporateAction action, DateTimeOffset observedAt)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
-        // Insert only, and never a clear. IndicatorEngine stamps rebuilt_at when it has recomputed
-        // the ticker from scratch, and SCHEMA declares that update as its own. A demand this stage
-        // could also close would put both halves of the handshake in one component, and a
-        // component that can both raise and satisfy its own condition raises nothing.
+        // Insert only, and never a clear. IndicatorEngine stamps rebuilt_at once it has
+        // recomputed the ticker, and SCHEMA declares that update as its own. A stage that could
+        // both raise and close a demand raises nothing, and the failure would be silent: created
+        // and closed in the same pass, every check still green, no calculation ever blocked.
         command.CommandText = """
-            INSERT INTO indicator_rebuild (ticker, effective_date, requested_at, rebuilt_at)
-            VALUES (@ticker, @effective_date, @requested_at, NULL)
-            ON CONFLICT (ticker, effective_date) DO NOTHING;
+            INSERT INTO indicator_rebuild (ticker, effective_date, type, observed_at, rebuilt_at)
+            VALUES (@ticker, @effective_date, @type, @observed_at, NULL)
+            ON CONFLICT (ticker, effective_date, type, observed_at) DO NOTHING;
             """;
         command.Parameters.AddWithValue("@ticker", action.Ticker);
         command.Parameters.AddWithValue("@effective_date", StoreText.DateToStorageText(action.EffectiveDate));
-        command.Parameters.AddWithValue("@requested_at", StoreText.TimestampToStorageText(observedAt));
+        command.Parameters.AddWithValue("@type", action.Type.ToStorageText());
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
         command.ExecuteNonQuery();
     }
 }
@@ -259,13 +271,14 @@ public sealed record ActionIngestResult(
     int DividendsPublished,
     int InUniverse,
     int Inserted,
-    int AlreadyStored,
-    int RatioConflicts,
-    int RebuildsDemanded,
+    int Unchanged,
+    int Restatements,
+    int DemandsRaised,
+    int TickersBlocked,
     int RowsWritten,
     int CallsUsed,
     RunOutcome Outcome)
 {
     public static ActionIngestResult Stopped(DateOnly effectiveDate, RunSummary summary) =>
-        new(effectiveDate, 0, 0, 0, 0, 0, 0, 0, summary.RowsWritten, summary.CallsUsed, RunOutcome.Partial);
+        new(effectiveDate, 0, 0, 0, 0, 0, 0, 0, 0, summary.RowsWritten, summary.CallsUsed, RunOutcome.Partial);
 }

@@ -172,14 +172,21 @@ Development happens on Windows today and moves to macOS. Both are case-insensiti
 **Averages are computed locally, never through the vendor's technical endpoint**
 About 45,000 calls a day for arithmetic that is one recursive loop over data already stored.
 
-**A split records a rebuild demand that is stamped rather than cleared**
-A split rescales every adjusted close before it. The stored ones were adjusted as of the night each was observed, so the evening after a four-for-one everything already in the store is on the old scale and everything arriving is on the new one, and an average taken across that boundary is arithmetic on two different units. It is wrong by a factor and it looks entirely reasonable, which is why the architecture's answer is that calculations refuse to run for that stock rather than that they carry on.
+**An unprocessed corporate action of any kind blocks calculation, not only a split**
+The rule was written naming splits because a split is the loud case. The reason it gives, that an unprocessed action corrupts every moving average a stock has at once, covers any action that moves the adjusted close, and a dividend does. A rule narrower than its own stated reason is a rule that will be applied inconsistently by whoever reads it next.
 
-Refusing requires somewhere to read the refusal from, and the alternative to a stored demand is deriving it: comparing the split's observation time against the time the indicators were last computed. That was rejected because it makes the store answer only the present tense. The question worth answering months later is which splits this store has honoured and when, and a derivation cannot answer it at all.
+Magnitude does not enter it. A dividend distorts an average less than a split does, and "less wrong" is not a category this design has.
 
-So the demand is a row, and the row is never deleted and never cleared. It gains a `rebuilt_at`. A queue that empties answers "is anything outstanding" and destroys the history on its way to the answer.
+Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
 
-**ActionIngestor raises the demand and IndicatorEngine closes it**, which is one writer per operation rather than an arrangement of convenience. A component that can both raise and satisfy its own condition raises nothing, and the failure mode is silent: the demand is created and closed in the same pass, every check still passes, and no calculation is ever blocked.
+**A rebuild demand is keyed on the action as observed, and a restated action raises a new one**
+Vendors restate corporate actions. Keyed on ticker and effective date, a restated ratio has nowhere to go: the action cannot be stored twice, and the demand it should raise collides with one that may already have been satisfied. The stock stays rebuilt, against a factor the vendor no longer publishes, with the record showing a demand met and the wrong number computed from it. Nothing downstream can see any of that.
+
+Bars already solve this and the discipline is copied without variation: append-only, keyed with `observed_at`, reads take the latest observation at or before the as-of date. The demand is keyed on the action as it was observed, so a restatement raises a new demand rather than failing to reopen an old one. Nothing is mutated and nothing is cleared.
+
+The demand's key is the action's key rather than a copy of the action's value. The two say the same thing about which observation is owed a rebuild, and one of them cannot drift from the row it describes.
+
+Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision above.
 
 **Minute bars are fetched for every flagged setup, not only the planned ones**
 Otherwise a version selecting a name the baseline passed on cannot be resolved, and the missing cases are exactly the disagreements.
@@ -261,6 +268,15 @@ The protection being bought is that a session does not review its own code. The 
 
 ## Previously decided
 
-(none yet)
-
 A superseded decision moves here under its original name, gains one line naming what replaced it, and keeps its reasoning. A superseded decision that loses its reasoning is worse than one never written down, because the next session will re-derive the same wrong answer.
+
+**A split records a rebuild demand that is stamped rather than cleared**
+A split rescales every adjusted close before it. The stored ones were adjusted as of the night each was observed, so the evening after a four-for-one everything already in the store is on the old scale and everything arriving is on the new one, and an average taken across that boundary is arithmetic on two different units. It is wrong by a factor and it looks entirely reasonable, which is why the architecture's answer is that calculations refuse to run for that stock rather than that they carry on.
+
+Refusing requires somewhere to read the refusal from, and the alternative to a stored demand is deriving it: comparing the split's observation time against the time the indicators were last computed. That was rejected because it makes the store answer only the present tense. The question worth answering months later is which splits this store has honoured and when, and a derivation cannot answer it at all.
+
+So the demand is a row, and the row is never deleted and never cleared. It gains a `rebuilt_at`. A queue that empties answers "is anything outstanding" and destroys the history on its way to the answer.
+
+**ActionIngestor raises the demand and IndicatorEngine closes it**, which is one writer per operation rather than an arrangement of convenience. A component that can both raise and satisfy its own condition raises nothing, and the failure mode is silent: the demand is created and closed in the same pass, every check still passes, and no calculation is ever blocked.
+
+Superseded on 2026-08-25 by **An unprocessed corporate action of any kind blocks calculation, not only a split** and **A rebuild demand is keyed on the action as observed, and a restated action raises a new one**. What it got right survives in both: the demand is a stored row rather than a derivation, it is stamped rather than cleared, and the component that raises it is not the one that closes it. What it got wrong was the trigger, which named splits alone, and the key, which named the ticker and the date rather than the action as observed.

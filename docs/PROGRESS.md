@@ -171,3 +171,60 @@ Findings:   Observation. The data budget states roughly 20 calls for the bulk di
 Carried:    Nothing reads `indicator_rebuild` to refuse a calculation yet. The reader exists and has no caller, because the thing that would refuse does not exist. Due at 1.6.
             A vendor publishing a different ratio for a split already stored is counted and printed and cannot reopen a rebuild already stamped, because `rebuilt_at` belongs to IndicatorEngine and this stage may not clear another component's column. Where the rebuild is still outstanding, which is the ordinary case, the stock is blocked regardless. Due at 1.6.
             The dividend question above. Due at 1.6.
+
+## Phase 1 corrections — 2026-08-25 — phase-1-ingest-and-charts — amends 1.5
+
+Not a checkpoint entry. Three defects in what 1.5 shipped, two of which were the same defect
+reported as two carried obligations, and one resting state in the corpus that was wrong.
+
+Built:      Migration 005. `corporate_action` and `indicator_rebuild` are rebuilt, both keyed on
+            the action as observed. Actions are append-only on the same terms as bars: a
+            restatement is a new row with a later `observed_at`, and reads take the latest
+            observation at or before the as-of date (see: A rebuild demand is keyed on the action as observed, and a restated action raises a new one).
+            The demand's key is the action's key, so a restated ratio raises a second demand
+            beside the first rather than failing to reopen it.
+            Any action that moves the adjusted close now raises a demand, not only a split
+            (see: An unprocessed corporate action of any kind blocks calculation, not only a split).
+            The data budget states cost per request and cadence in columns of their own. Both are
+            pinned: the cost against `EodhdClient.BulkDividendCost`, the cadence against
+            `ActionIngestor.RequestsDividendsByDefault`, which is false and load-bearing.
+            `MigrationRowSurvivalTests`, which stands the store up at version 4, puts three
+            actions and two demands in it, migrates, and asserts the counts and the rows.
+
+Measured:   Live, after migrating the store and running `actions 2026-08-21 --with-dividends`:
+            8 splits and 189 dividends published for the market, 24 in the universe, 24 written,
+            24 demands raised over 24 tickers. The store now holds 44 actions and 25 open
+            demands over 25 tickers, and 0 demands that do not name an action.
+            `tools/ci.ps1` green on Windows, 16 steps, 98 tests.
+
+Findings:   Observation. Under 004 a restated ratio could not be stored at all: the primary key
+            was the action, so the second observation collided with the first and was dropped.
+            Reading: the two carried obligations from 1.5 were one defect. A ticker rebuilt
+            against a factor the vendor later changed stayed rebuilt, permanently, with the
+            record showing a satisfied demand and the wrong number computed from it, and no
+            reader anywhere to notice. Bars had already solved this and the discipline was not
+            copied.
+            Observation. `decision-resolves` failed the moment a decision was superseded, on a
+            citation inside PROGRESS. Reading: it resolved citations against the current section
+            of DECISIONS.md only, so it was answering "is this name in force" rather than "does
+            this name exist", which is `no-superseded-citation`'s question. Folded together, a
+            supersession breaks every record that ever cited the decision, and the only ways out
+            are rewriting history or never superseding anything. `decision-resolves` now resolves
+            against both sections and `no-superseded-citation` exempts the records, counting and
+            reporting the exemption rather than applying it quietly.
+            Observation. The 20 actions of 2026-08-24 already in the live store were observed
+            before the rule widened, so the 19 dividends among them raised no demand and their
+            tickers are not blocked. Reading: no indicator has ever been computed, so there is
+            nothing invalidated today, and the per-ticker history refetch owed at 1.6 re-observes
+            every member's history, which is what a rebuild is. Carried rather than repaired,
+            because a repair would have a migration writing rows into a table SCHEMA declares one
+            component as the writer of.
+
+Carried:    The 2026-08-24 gap above. Due at 1.6.
+            `indicator_rebuild` still has a reader and no caller. IndicatorEngine is what refuses,
+            and it does not exist yet. Due at 1.6.
+            The dividend pull is weekly, so a dividend effective on a Tuesday is unobserved until
+            the weekly run and the stock is not blocked in between, computing on an adjusted
+            series that has already moved. Making it nightly costs 80 more calls a night against
+            a 5,000 ceiling. Raised here rather than decided here, because the cadence is stated
+            in two specs and changing it is a decision. Due at 1.6.

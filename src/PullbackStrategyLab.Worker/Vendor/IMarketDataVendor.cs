@@ -90,11 +90,21 @@ public sealed record VendorCorporateAction(
     decimal Ratio)
 {
     /// <summary>
-    /// True when this action changes the scale of every adjusted close before it, which is what
-    /// forces a rebuild. A one-for-one split is a vendor artefact rather than an event and
-    /// rescales nothing, so it is excluded here rather than filtered by whoever reads this.
+    /// True when this action moves every adjusted close before it, which is what forces a
+    /// rebuild. A split does it by a factor and a dividend by a smaller one, and magnitude does
+    /// not enter it: "less wrong" is not a category this design has.
+    /// see: An unprocessed corporate action of any kind blocks calculation, not only a split
+    ///
+    /// The two exclusions are actions that move nothing. A one-for-one split is a vendor
+    /// bookkeeping artefact rather than an event, and a dividend of zero is a row with no
+    /// payment in it.
     /// </summary>
-    public bool RescalesHistory => Type == CorporateActionType.Split && Ratio != 1m;
+    public bool MovesAdjustedClose => Type switch
+    {
+        CorporateActionType.Split => Ratio != 1m,
+        CorporateActionType.Dividend => Ratio != 0m,
+        _ => false,
+    };
 }
 
 /// <summary>

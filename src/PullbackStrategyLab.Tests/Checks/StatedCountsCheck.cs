@@ -118,6 +118,17 @@ public sealed partial class StatedCountsCheck
             FirstInteger(budget.Single(r => r[0].StartsWith("Daily total", StringComparison.Ordinal))[1]),
             "the sum of the job rows"));
 
+        // The one row whose calls a night is not its cost per request. A weekly request of 100
+        // amortises across five sessions, and stating both numbers only helps if the arithmetic
+        // between them is checked: otherwise the cost can move and the nightly figure, and the
+        // total built from it, stay where they were.
+        IReadOnlyList<string> dividends = budget.Single(r => r[0].StartsWith("Dividends, bulk", StringComparison.Ordinal));
+        claims.Add(new Claim(
+            "ARCHITECTURE.html, the dividend row amortises its cost over a trading week",
+            FirstInteger(dividends[1]),
+            FirstInteger(dividends[2]) / SessionsAWeek,
+            "the cost per request divided by the sessions in a trading week"));
+
         // RUNBOOK.md, the backfill total, which carries a term in N.
         IReadOnlyList<IReadOnlyList<string>> backfill = MarkdownTable.BodyRowsAfter(runbook, "### Backfill, one time");
         List<IReadOnlyList<string>> backfillJobs = backfill.Where(r => !IsTotalRow(r[1])).ToList();
@@ -166,6 +177,12 @@ public sealed partial class StatedCountsCheck
             $"Only {claims.Count} stated counts were checked. This check is a registry, so a number this low means "
             + "entries were removed rather than that the corpus stopped stating counts.");
     }
+
+    /// <summary>
+    /// Five. What a weekly request amortises across, and the reason the data budget's dividend
+    /// row reads 20 a night against a cost of 100.
+    /// </summary>
+    private const int SessionsAWeek = 5;
 
     private static bool IsTotalRow(string cell) =>
         cell.Contains("total", StringComparison.OrdinalIgnoreCase);
