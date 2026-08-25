@@ -135,15 +135,21 @@ Grain: ticker + date. Computed locally from `daily_bar`, never requested from th
 
 | Column | Type | Note |
 |---|---|---|
-| `ticker`, `as_of` | TEXT | PK |
+| `ticker`, `as_of`, `computed_at` | TEXT | PK |
 | `ema_9`, `ema_21`, `ema_50` | TEXT | on adjusted close |
 | `atr_14` | TEXT | |
 | `adr_20` | TEXT | **fraction**, so 0.068 not 6.8. Named against the convention; see note |
 | `dollar_volume_median_20` | TEXT | |
 | `range_avg_20` | TEXT | for the contraction test |
-| `ladder_grade` | TEXT | `rising`, `mixed`, `falling`. Written by TierClassifier |
+| `ladder_grade` | TEXT | `rising`, `mixed`, `falling`. Null until TierClassifier writes an observation carrying it |
 
-Insert IndicatorEngine · Update TierClassifier (`ladder_grade` only)
+Insert IndicatorEngine · Insert TierClassifier, **disjoint by computation**: each writes its own `computed_at` and neither ever writes the other's
+
+**Append-only, on the same terms as `daily_bar`.** A computation is an observation, and a read takes the latest `computed_at` at or before its as-of date. This is what lets a rebuild reach the rows it invalidates: a ticker recomputed after a corporate action is honoured gains a second row for every affected session, and a replay of a night before the rebuild still returns the figures the lab acted on, wrong ones included. It was keyed on ticker and date alone until 2026-08-25, which meant a row computed on a basis the vendor had since restated stood for ever.
+
+**A rerun that produces the same figures writes nothing.** Append-only is not the same as writing a row every time.
+
+**Why two inserters rather than an inserter and an updater.** With the table append-only there is nothing to update, so TierClassifier writes a later observation of the session carrying the grade. It copies the seven computed figures forward, which is duplication and is the price of the row being a complete observation rather than a fragment: a reader takes the latest row and gets an answer, rather than assembling one from two.
 
 *Note on `adr_20`.* Every ratio in this schema is a fraction. `adr_20` reads as though it were a percentage because of its name, so it is the one column whose name argues against the rule. It stays a fraction and this note stays here rather than the column being renamed, because `adr` appears in the signal library and in the screens.
 
@@ -213,7 +219,7 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `agreement` | TEXT NULL | `agree`, `disagree`, null. Written by Setup inspector from the gallery |
 | `agreement_note` | TEXT NULL | |
 
-Insert LongSetupDetector / ShortSetupDetector, disjoint by `direction` · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 
@@ -232,7 +238,7 @@ Grain: setup + signal. The frozen point-in-time evidence.
 | `setup_id`, `signal_name`, `value` | TEXT |
 | `computed_at` | TEXT |
 
-Insert SignalVectorizer (nightly, new rows) · Insert SignalBackfiller (backfill, adds signals to old setups; may never touch a signal SignalVectorizer owns for that date)
+Insert SignalVectorizer · Insert SignalBackfiller, **disjoint by date and signal**: the vectorizer writes new rows nightly and the backfiller adds signals to old setups, and may never touch a signal the vectorizer owns for that date
 
 ### `signal_definition`
 Grain: signal name. The library.
@@ -318,13 +324,16 @@ Grain: run id. Every stage writes a start and an end entry here, so it is delive
 | `started_at`, `ended_at` | TEXT | |
 | `outcome` | TEXT | `clean`, `partial`, `failed` |
 | `rows_written` | INTEGER | measured from the store, not self-reported by the stage |
-| `calls_used` | INTEGER | counted as the stage runs, against the daily ceiling |
+| `calls_used` | INTEGER | counted as the stage runs |
+| `counts_against_ceiling` | INTEGER | 0 or 1. Whether the daily total sees this run's calls |
 
 Insert RunLogger · Update RunLogger
 
 **One writer, not one per stage.** Stages do not write this table. They call `RunLogger`, which owns both operations. Declaring every stage as a writer would put the run-accounting logic in a dozen places and `writer-ownership` could never pass.
 
 **`rows_written` is measured, not reported.** A stage counting its own output will report what it believes it wrote. The nightly halt keys on this number, so it is read back from the store.
+
+**`counts_against_ceiling` is how a one-time operation stays out of the nightly budget.** The ceiling guards the evening's job; the history backfill is not the evening's job, and charging the two against each other is what once made the backfill look like a two-day procedure. Its calls are still recorded, because what a run cost is worth knowing about every run. The run says so in the store rather than being recognised by its stage name, which would put the exception in the query rather than in the record.
 
 ## Store configuration
 

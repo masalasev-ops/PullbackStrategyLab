@@ -786,13 +786,13 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:210px">Component</th><th style="width:132px">Runs</th><th>What it does</th></tr>
 <tr><td><b>UniverseBuilder</b></td><td>Nightly</td><td>Builds the tradable list and snapshots who was listed each night</td></tr>
-<tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30</td><td>Pulls the whole market’s closing prices in one bulk request</td></tr>
-<tr><td><b>ActionIngestor</b></td><td>Nightly / weekly</td><td>Splits and dividends, and forces an average rebuild when a split lands</td></tr>
+<tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30, and 17:45 for the refetch</td><td>Pulls the whole market’s closing prices in one bulk request. Also owns the per-ticker history refetch, which is how a corporate action is honoured and how the one-time backfill is done, because a second component issuing the same insert would be a second writer of the same table</td></tr>
+<tr><td><b>ActionIngestor</b></td><td>Nightly 17:20</td><td>Splits and dividends, and raises a rebuild demand for any action that moves the adjusted close. It raises the demand and never satisfies it</td></tr>
 <tr><td><b>IntradayFetcher</b></td><td>Nightly 20:30</td><td>Minute bars for every flagged setup, after the close</td></tr>
 <tr><td><b>IndexIngestor</b></td><td>Nightly</td><td>Index bars for the market-mood inputs</td></tr>
 <tr><td><b>SectorResolver</b></td><td>On first sighting</td><td>Sector, industry and market cap, on first sighting, cached</td></tr>
 <tr><td><b>SpreadSnapshotter</b></td><td>Twice per session</td><td>Bid-ask spread twice a session. The only intraday job, and unrecoverable if missed</td></tr>
-<tr><td><b>IndicatorEngine</b></td><td>Nightly 18:00</td><td>Moving averages, daily range, true range and dollar volume, computed locally</td></tr>
+<tr><td><b>IndicatorEngine</b></td><td>Nightly 18:00</td><td>Moving averages, daily range, true range and dollar volume, computed locally. Refuses to run for a stock with a rebuild demand outstanding, and satisfies the demand once the history has been refetched</td></tr>
 <tr><td><b>ScanEngine</b></td><td>Nightly 18:10</td><td>Six mover scans, three per direction</td></tr>
 <tr><td><b>TierClassifier</b></td><td>Nightly 18:10</td><td>Grades every name rising, mixed or falling</td></tr>
 <tr><td><b>ThemeClusterer</b></td><td>Nightly 18:15</td><td>Counts same-sector names flagged together</td></tr>
@@ -981,14 +981,15 @@ tr:hover td{background:#f4f2ec}
 <tr><th style="width:260px">Nightly job</th><th style="width:100px">Calls a night</th><th style="width:100px">Cost per request</th><th style="width:100px">Cadence</th><th>Note</th></tr>
 <tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>100</td><td>nightly</td><td>Replaces 6,000 individual requests</td></tr>
 <tr><td>Splits, bulk</td><td>100</td><td>100</td><td>nightly</td><td>Non-negotiable</td></tr>
-<tr><td>Dividends, bulk</td><td>20</td><td>100</td><td>weekly</td><td>The same request as the other two and the same price. 100 a week over five sessions is the 20, which is an amortised nightly figure and was never the price of a call</td></tr>
+<tr><td>Dividends, bulk</td><td>100</td><td>100</td><td>nightly</td><td>The same request as the other two and the same price. It ran weekly until 2026-08-25, which meant a dividend effective on a Tuesday went unobserved for up to four sessions while the stock carried on computing</td></tr>
 <tr><td>History refetch for the names carrying an action</td><td>25</td><td>1</td><td>nightly</td><td>One call a name, whatever the depth. About 25 on an evening the dividend pull runs and one or two otherwise, which is what honouring a corporate action costs</td></tr>
 <tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>5</td><td>nightly</td><td>~60 names at 5 calls each</td></tr>
 <tr><td>Spread snapshots</td><td>120</td><td>1</td><td>twice a session</td><td>60 names, twice a session. Unrecoverable later</td></tr>
 <tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>1</td><td>as needed</td><td>Lazy, cached permanently</td></tr>
-<tr><td><b>Daily total</b></td><td><b>~715</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
+<tr><td><b>Daily total</b></td><td><b>~795</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
 </table>
-<p><b>Calls a night and cost per request are different numbers and the table now says which is which.</b> They coincide on every nightly row and they do not on the dividend row, where a weekly request of 100 amortises to 20 a night across five sessions. Charging a budget 20 for a request that costs 100 under-counts by 80 every time it runs, which is the accounting error the ceiling exists to catch, so the cost column is what a stage charges and the cadence column is what makes it weekly. Both are checked: <code>pinned-constants</code> reads the cost against the vendor client's constant and the cadence against the stage's default.</p>
+<p><b>Calls a night and cost per request are different numbers and the table says which is which.</b> They coincide wherever a job makes one request a night and they do not where a job makes several, as the minute bars do at five calls a name. Charging a budget the wrong one of the two is the accounting error the ceiling exists to catch, so the cost column is what a stage charges per request and the cadence column is how often it charges it. Both are checked: <code>pinned-constants</code> reads each cost against the vendor client's constant and the dividend cadence against the stage's default.</p>
+<p><b>The dividend row is the reason the two columns are separate,</b> and it is worth keeping the history. It read 20 a night at a cost of 100 because the request ran weekly, and the 20 was an amortised figure that could pin nothing. Splitting the columns made the weekly cadence legible, and legible is what made it obviously wrong: a corporate action blocks calculation, and an action nobody has observed blocks nothing.</p>
 <p>One-time backfill is about 7,000 calls over two days: 3,000 for full price history at one call per ticker, 3,000 for split history, and 1,000 of minute bars to calibrate the fill model.</p>
 
 <h4>The three ways to blow it, all avoidable</h4>

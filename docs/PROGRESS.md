@@ -333,3 +333,74 @@ Carried:    One `CONFIRMED` value per ticker against a charting platform's own r
             describes and has not run. Due 1.7.
             The dividend pull is weekly, so a dividend effective on a Tuesday is unobserved until
             the weekly run and the stock is not blocked in between. Raised at 1.5, still open.
+
+## Phase 1 corrections — 2026-08-25 — phase-1-ingest-and-charts — the backfill, the cadence, the computed store, and input provenance
+
+Not a checkpoint entry. Four changes in one pass, three of which discharge obligations 1.6
+carried and one of which is owed to 1.7.
+
+Built:      Migration 008 adds `counts_against_ceiling` to `run_log`. The ceiling guards the
+            evening's job and a one-time operation is not the evening's job; charging the two
+            against each other is the whole of why the backfill looked like a two-day procedure.
+            The calls are still recorded, and the run says which kind it is in the store rather
+            than being recognised by its stage name.
+            Dividends are pulled nightly. `ActionIngestor.RequestsDividendsByDefault` is true and
+            `--splits-only` is the opt-out for an evening where the budget is short.
+            Migration 009 rekeys `indicator_daily` on (`ticker`, `as_of`, `computed_at`) and makes
+            it append-only. A rebuild now reaches the sessions it invalidates: each gains a later
+            observation and the earlier one stands. `IndicatorDailyReader` takes the latest
+            computation at or before its as-of date.
+            `DailyBarReader.Read` gained an explicit observation bound. The as-of date says which
+            bars are in the window and the instant says what was known when the answer was
+            produced, and they only coincide by habit.
+            `writer-ownership` reads declared disjointness instead of carrying a list of tables to
+            forgive. `setup`, `setup_signal` and now `indicator_daily` state in SCHEMA how their
+            two writers stay apart, and the check reads the declaration.
+
+Measured:   The one-time backfill, RUNBOOK step 4, run live against EODHD on 2026-08-25.
+            2,070 tickers selected, 2,070 fetched, 2,070 calls, from 2023-08-25 to 2026-08-24.
+            1,480,032 bars published, 1,439,679 written, 40,353 already stored unchanged.
+            Recorded outside the daily ceiling; the counted total for the day finished at 4,755
+            against 5,000 with the backfill's 2,070 alongside it rather than inside it.
+            The store now holds 1,482,108 bars over 2,070 tickers, three years deep, at 216.5 MB.
+            2,016 indicator rows. 37 rebuild demands, 0 open.
+            The first full indicator run: 1,989 computed, 27 unchanged, 54 short of the
+            150-session warm-up, 0 blocked. The 54 are names listed for less than 150 sessions.
+            The three tickers re-derived against the rebuilt store: 21 values, 0 disagreements at
+            4 decimal places, unchanged from the values recorded at 1.6 despite every bar in the
+            window having been re-observed by a different code path.
+            `tools/ci.ps1` green on Windows, 16 steps, 113 tests.
+
+Verified:   The nightly dividend cadence end to end, live, on today's session. `actions 2026-08-25`
+            published 1 split and 50 dividends, 12 of them in the universe, and raised 12 demands
+            over 12 tickers. `indicators` then blocked all 12 and computed none of them.
+            `backfill --rebuild` fetched those 12 for 12 calls, counted against the ceiling because
+            it is nightly work, and wrote **0 bars**: the vendor's series was already on the basis
+            the store held. `indicators` then satisfied all 12 and blocked none.
+            That last run is the strongest evidence produced this phase. Under the satisfaction
+            rule this session replaced, a refetch that wrote no bars left the ticker blocked for
+            ever, so all twelve would have been stuck on the first evening the corrected cadence
+            ran. The two changes were made independently and the second one exercised the first.
+
+Findings:   Observation. Migration 009 first stamped each existing row's `computed_at` as the end
+            of its own session. Reading: that puts a migrated row in front of every recomputation
+            made the same evening, which is exactly the wrongness the rekey exists to remove. It
+            was caught on the live store before any recomputation depended on it. The stamp is now
+            the first instant of the session: visible from that session onward, and behind any
+            real computation. The live store was restored from the pre-migration snapshot and
+            migrated again, which cost the run-log record of one `actions` run and its 200 calls.
+            Those calls were genuinely spent and are not in the day's counted total.
+            Observation. The first recompute returned nothing. Reading: it read the window through
+            a bound derived from the session date, so a rebuild done today could not see bars
+            refetched today when recomputing a session three weeks old. The session and the
+            observation instant are two different bounds and the reader was conflating them.
+            Observation. The 20 actions of 2026-08-24 still raised no demands, because they were
+            already stored when the rule widened. Reading: the obligation carried from 1.5 said
+            the full backfill would close this by re-observing every member's history, and it has.
+
+Carried:    One `CONFIRMED` value per ticker against a charting platform's own readout. Due 1.7.
+            The split-history backfill, RUNBOOK step 5, is a second 2,070 calls and has not run.
+            Nothing depends on it yet: splits are picked up nightly from the bulk endpoint, so what
+            is missing is only the history of splits before the lab started. Due 1.7.
+            54 universe members are short of the warm-up and get no indicator row. They are names
+            listed for less than 150 sessions, which is a fact about them rather than a defect.

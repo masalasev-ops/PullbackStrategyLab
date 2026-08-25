@@ -222,32 +222,44 @@ public sealed class ActionIngestorTests : IDisposable
     }
 
     [Fact]
-    public async Task Dividends_are_not_requested_unless_they_are_asked_for()
+    public async Task Dividends_are_pulled_nightly_and_not_on_a_cadence_of_their_own()
     {
-        // A bulk request a night, every night, for data nothing downstream reads yet. Nothing
-        // else in the system would notice this starting.
+        // They ran weekly until 2026-08-25, and weekly contradicted the rule they exist to
+        // serve: a dividend effective on a Tuesday went unobserved for up to four sessions
+        // while the stock carried on computing on a series that had already moved.
         var vendor = new FakeMarketDataVendor();
         vendor.Split(EffectiveDate, "AAA", 4m);
         vendor.Dividend(EffectiveDate, "BBB", 0.44m);
 
         ActionIngestResult result = await Ingestor(vendor).IngestAsync(EffectiveDate);
 
-        (DateOnly Date, CorporateActionType Type) asked = Assert.Single(vendor.ActionsRequested);
-        Assert.Equal(EffectiveDate, asked.Date);
-        Assert.Equal(CorporateActionType.Split, asked.Type);
-        Assert.Equal(0, result.DividendsPublished);
-        Assert.Equal(EodhdClient.BulkSplitCost, result.CallsUsed);
+        Assert.Equal(
+            [(EffectiveDate, CorporateActionType.Split), (EffectiveDate, CorporateActionType.Dividend)],
+            vendor.ActionsRequested);
+        Assert.Equal(1, result.DividendsPublished);
+        Assert.Equal(EodhdClient.BulkSplitCost + EodhdClient.BulkDividendCost, result.CallsUsed);
+
+        // And the stock paying it is blocked, which is the whole point of the change.
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate).Order(StringComparer.Ordinal));
     }
 
     [Fact]
-    public async Task Asking_for_dividends_costs_a_second_bulk_request()
+    public async Task The_splits_only_form_costs_one_request_and_leaves_the_dividend_payers_unblocked()
     {
+        // The opt-out, for an evening where the budget is short and the splits are the half that
+        // cannot wait. It has a cost and the cost is the point of the assertion below.
         var vendor = new FakeMarketDataVendor();
         vendor.Split(EffectiveDate, "AAA", 4m);
+        vendor.Dividend(EffectiveDate, "BBB", 0.44m);
 
-        ActionIngestResult result = await Ingestor(vendor).IngestAsync(EffectiveDate, withDividends: true);
+        ActionIngestResult result = await Ingestor(vendor).IngestAsync(EffectiveDate, withDividends: false);
 
-        Assert.Equal(EodhdClient.BulkSplitCost + EodhdClient.BulkDividendCost, result.CallsUsed);
+        Assert.Equal(EodhdClient.BulkSplitCost, result.CallsUsed);
+        Assert.Equal(0, result.DividendsPublished);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate));
     }
 
     [Fact]
@@ -272,8 +284,7 @@ public sealed class ActionIngestorTests : IDisposable
         vendor.Split(EffectiveDate, "AAA", 4m);
         vendor.Dividend(EffectiveDate, "BBB", 0.44m);
 
-        ActionIngestResult result = await Ingestor(vendor, dailyCallCeiling: 150)
-            .IngestAsync(EffectiveDate, withDividends: true);
+        ActionIngestResult result = await Ingestor(vendor, dailyCallCeiling: 150).IngestAsync(EffectiveDate);
 
         Assert.Equal(RunOutcome.Partial, result.Outcome);
         Assert.Equal(1, result.Inserted);

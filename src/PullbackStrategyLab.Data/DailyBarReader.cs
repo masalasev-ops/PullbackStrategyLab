@@ -34,7 +34,25 @@ public sealed class DailyBarReader
         return Read(connection, ticker, asOf, sessions);
     }
 
-    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string ticker, DateOnly asOf, int sessions)
+    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string ticker, DateOnly asOf, int sessions) =>
+        Read(connection, ticker, asOf, sessions, StorageTextToInstant(EndOf(asOf)));
+
+    /// <summary>
+    /// The same window, with the observation bound stated separately from the as-of date.
+    ///
+    /// The two are different questions and they only coincide by habit. The as-of date says
+    /// which bars are in the window; the observation instant says what the lab knew when the
+    /// answer was produced. A computation made tonight for tonight bounds both the same way. A
+    /// computation made tonight for a session three weeks ago, which is what a rebuild does,
+    /// wants every bar up to that session as they are known now, and deriving the observation
+    /// bound from the session date instead gives it the figures the rebuild exists to replace.
+    /// </summary>
+    public static IReadOnlyList<StoredDailyBar> Read(
+        SqliteConnection connection,
+        string ticker,
+        DateOnly asOf,
+        int sessions,
+        DateTimeOffset observedBefore)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -62,7 +80,7 @@ public sealed class DailyBarReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
         command.Parameters.AddWithValue("@sessions", sessions);
 
         var bars = new List<StoredDailyBar>();
@@ -180,6 +198,8 @@ public sealed class DailyBarReader
     /// <summary>The last instant of a date, in the form observed_at is stored in.</summary>
     private static string EndOf(DateOnly date) =>
         StoreText.DateToStorageText(date) + "T23:59:59.999Z";
+
+    private static DateTimeOffset StorageTextToInstant(string text) => StoreText.StorageTextToTimestamp(text);
 }
 
 /// <summary>

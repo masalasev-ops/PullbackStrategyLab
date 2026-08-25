@@ -26,8 +26,10 @@ public sealed class RunScope : ICallBudget, IDisposable
         string stage,
         DateTimeOffset startedAt,
         IReadOnlyDictionary<string, int> baselineRowCounts,
-        int callsAlreadyUsedToday)
+        int callsAlreadyUsedToday,
+        CallCounting counting)
     {
+        Counting = counting;
         _runLogger = runLogger;
         _connection = connection;
         _baselineRowCounts = baselineRowCounts;
@@ -46,9 +48,18 @@ public sealed class RunScope : ICallBudget, IDisposable
     /// <summary>Vendor calls this run has spent.</summary>
     public int CallsUsed { get; private set; }
 
-    /// <summary>What is left of the day's ceiling, across every stage that has already run.</summary>
+    /// <summary>Whether this run's calls count against the day's ceiling.</summary>
+    public CallCounting Counting { get; }
+
+    /// <summary>
+    /// What is left of the day's ceiling, across every stage that has already run, or no limit
+    /// at all for a run outside it. A one-time operation is not the nightly job and is not
+    /// charged against the guard the nightly job needs.
+    /// </summary>
     public int CallsRemaining =>
-        Math.Max(0, _runLogger.DailyCallCeiling - _callsAlreadyUsedToday - CallsUsed);
+        Counting == CallCounting.OutsideTheDailyCeiling
+            ? int.MaxValue
+            : Math.Max(0, _runLogger.DailyCallCeiling - _callsAlreadyUsedToday - CallsUsed);
 
     /// <summary>
     /// Counts one vendor call. Returns false when the day's ceiling is reached, so the

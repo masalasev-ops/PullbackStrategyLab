@@ -66,6 +66,7 @@ public sealed partial class DailyBarIngestor
         Console.WriteLine($"{BackfillName}: {result.Selected} ticker(s) selected, {result.Fetched} fetched, from {result.From:yyyy-MM-dd}");
         Console.WriteLine($"{BackfillName}: {result.BarsPublished} bars published, {result.Inserted} written, {result.Unchanged} already stored unchanged");
         Console.WriteLine($"{BackfillName}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
+        Console.WriteLine($"{BackfillName}: {(result.CountedAgainstCeiling ? "counted against" : "outside")} the daily ceiling");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
     }
@@ -79,7 +80,15 @@ public sealed partial class DailyBarIngestor
         ArgumentNullException.ThrowIfNull(named);
 
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, BackfillName, "daily_bar", "history_refetch");
+
+        // The whole-universe run is RUNBOOK's step 4, a one-time operation rather than part of
+        // the evening, so it is not charged against the guard the evening needs. The rebuild and
+        // the named forms are nightly work and are charged like everything else.
+        CallCounting counting = selection == BackfillSelection.EveryUniverseMember
+            ? CallCounting.OutsideTheDailyCeiling
+            : CallCounting.AgainstTheDailyCeiling;
+
+        using RunScope run = _runLogger.Begin(connection, BackfillName, counting, "daily_bar", "history_refetch");
 
         DateTimeOffset observedAt = run.StartedAt;
         DateOnly from = asOf.AddYears(-BackfillYears);
@@ -152,7 +161,8 @@ public sealed partial class DailyBarIngestor
 
         return new BackfillResult(
             from, asOf, tickers.Count, fetched, published, inserted, unchanged,
-            summary.RowsWritten, summary.CallsUsed, outcome);
+            summary.RowsWritten, summary.CallsUsed, outcome,
+            counting == CallCounting.AgainstTheDailyCeiling);
     }
 
     private static void RecordRefetch(
@@ -222,4 +232,5 @@ public sealed record BackfillResult(
     int Unchanged,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    bool CountedAgainstCeiling);

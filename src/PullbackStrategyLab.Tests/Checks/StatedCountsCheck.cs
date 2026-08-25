@@ -118,16 +118,20 @@ public sealed partial class StatedCountsCheck
             FirstInteger(budget.Single(r => r[0].StartsWith("Daily total", StringComparison.Ordinal))[1]),
             "the sum of the job rows"));
 
-        // The one row whose calls a night is not its cost per request. A weekly request of 100
-        // amortises across five sessions, and stating both numbers only helps if the arithmetic
-        // between them is checked: otherwise the cost can move and the nightly figure, and the
-        // total built from it, stay where they were.
-        IReadOnlyList<string> dividends = budget.Single(r => r[0].StartsWith("Dividends, bulk", StringComparison.Ordinal));
-        claims.Add(new Claim(
-            "ARCHITECTURE.html, the dividend row amortises its cost over a trading week",
-            FirstInteger(dividends[1]),
-            FirstInteger(dividends[2]) / SessionsAWeek,
-            "the cost per request divided by the sessions in a trading week"));
+        // The three rows that make one request a night: their calls a night is their cost per
+        // request, and stating both numbers only helps if the arithmetic between them is checked.
+        // Otherwise a cost can move while the nightly figure, and the total built from it, stay
+        // where they were. The rows making several requests a night are named out, because for
+        // them the two figures are genuinely different quantities.
+        foreach (string job in OneRequestANight)
+        {
+            IReadOnlyList<string> row = budget.Single(r => r[0].StartsWith(job, StringComparison.Ordinal));
+            claims.Add(new Claim(
+                $"ARCHITECTURE.html, {job} makes one request a night",
+                FirstInteger(row[1]),
+                FirstInteger(row[2]),
+                "the cost per request against the calls a night"));
+        }
 
         // RUNBOOK.md, the backfill total, which carries a term in N.
         IReadOnlyList<IReadOnlyList<string>> backfill = MarkdownTable.BodyRowsAfter(runbook, "### Backfill, one time");
@@ -179,10 +183,12 @@ public sealed partial class StatedCountsCheck
     }
 
     /// <summary>
-    /// Five. What a weekly request amortises across, and the reason the data budget's dividend
-    /// row reads 20 a night against a cost of 100.
+    /// The data budget rows that make exactly one request an evening, so their cost per request
+    /// and their contribution to a night are the same number. Named rather than derived from the
+    /// cadence column, because a row that stopped matching would leave the check quietly narrower.
     /// </summary>
-    private const int SessionsAWeek = 5;
+    private static readonly string[] OneRequestANight =
+        ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk"];
 
     private static bool IsTotalRow(string cell) =>
         cell.Contains("total", StringComparison.OrdinalIgnoreCase);

@@ -38,7 +38,19 @@ public sealed class RunLogger
     /// stage. A stage counting its own output reports what it believes it wrote, and the
     /// nightly halt keys on this number.
     /// </summary>
-    public RunScope Begin(SqliteConnection connection, string stage, params string[] tablesWritten)
+    public RunScope Begin(SqliteConnection connection, string stage, params string[] tablesWritten) =>
+        Begin(connection, stage, CallCounting.AgainstTheDailyCeiling, tablesWritten);
+
+    /// <summary>
+    /// Opens a run that says whether its vendor calls count against the day's ceiling.
+    ///
+    /// The ceiling guards the nightly job. A one-time operation is not the nightly job, and
+    /// charging the two against each other is what made the history backfill look like a
+    /// two-day procedure: it was never too large for the vendor, only for a budget that had
+    /// already spent itself on the evening's work. The calls are recorded either way, because
+    /// what a run cost is worth knowing about every run.
+    /// </summary>
+    public RunScope Begin(SqliteConnection connection, string stage, CallCounting counting, params string[] tablesWritten)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(stage);
@@ -55,19 +67,21 @@ public sealed class RunLogger
         using (SqliteCommand command = connection.CreateCommand())
         {
             command.CommandText = """
-                INSERT INTO run_log (run_id, stage, started_at, ended_at, outcome, rows_written, calls_used)
-                VALUES (@run_id, @stage, @started_at, NULL, NULL, NULL, 0);
+                INSERT INTO run_log
+                    (run_id, stage, started_at, ended_at, outcome, rows_written, calls_used, counts_against_ceiling)
+                VALUES (@run_id, @stage, @started_at, NULL, NULL, NULL, 0, @counts);
                 """;
             command.Parameters.AddWithValue("@run_id", runId);
             command.Parameters.AddWithValue("@stage", stage);
             command.Parameters.AddWithValue("@started_at", StoreText.TimestampToStorageText(startedAt));
+            command.Parameters.AddWithValue("@counts", counting == CallCounting.AgainstTheDailyCeiling ? 1 : 0);
             command.ExecuteNonQuery();
         }
 
         int callsAlreadyUsedToday = CallsUsedOn(connection, DateOnly.FromDateTime(startedAt.UtcDateTime));
         var baseline = tablesWritten.ToDictionary(t => t, t => CountRows(connection, t), StringComparer.Ordinal);
 
-        return new RunScope(this, connection, runId, stage, startedAt, baseline, callsAlreadyUsedToday);
+        return new RunScope(this, connection, runId, stage, startedAt, baseline, callsAlreadyUsedToday, counting);
     }
 
     /// <summary>The end entry. Called by the scope, never by a stage.</summary>
@@ -107,7 +121,8 @@ public sealed class RunLogger
         command.CommandText = """
             SELECT COALESCE(SUM(calls_used), 0)
               FROM run_log
-             WHERE substr(started_at, 1, 10) = @utc_date;
+             WHERE substr(started_at, 1, 10) = @utc_date
+               AND counts_against_ceiling = 1;
             """;
         command.Parameters.AddWithValue("@utc_date", StoreText.DateToStorageText(utcDate));
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
@@ -120,6 +135,19 @@ public sealed class RunLogger
         command.CommandText = $"SELECT COUNT(*) FROM {table};";
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
+}
+
+/// <summary>
+/// Whether a run's vendor calls count against the day's ceiling. A one-time operation does not,
+/// and says so in the run log rather than being recognised by its stage name.
+/// </summary>
+public enum CallCounting
+{
+    /// <summary>The nightly default. Every stage in the evening's sequence.</summary>
+    AgainstTheDailyCeiling,
+
+    /// <summary>A one-time operation. Its calls are recorded and the nightly total does not see them.</summary>
+    OutsideTheDailyCeiling,
 }
 
 public enum RunOutcome

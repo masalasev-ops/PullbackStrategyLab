@@ -13,6 +13,10 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// one recursive loop over data already held.
 /// see: Averages are computed locally, never through the vendor's technical endpoint
 ///
+/// A computation is an observation. A rebuild writes a second row for a session rather than
+/// replacing the first, so a replay of the night the lab acted still returns the figures it
+/// acted on, including the wrong ones.
+///
 /// It refuses rather than approximates, in two cases, and both leave no row rather than a
 /// number. A ticker whose window is shorter than the warm-up has not converged: a 50-day
 /// exponential average seeded fifty sessions ago is still carrying its seed. A ticker with a
@@ -79,7 +83,7 @@ public sealed class IndicatorEngine
         IndicatorResult result = Compute(asOf);
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Members} universe member(s)");
-        Console.WriteLine($"{Name}: {result.Computed} computed, {result.AlreadyWritten} already written, {result.ShortOfWarmup} short of the {WarmupSessions}-session warm-up, {result.Blocked} blocked by an open demand");
+        Console.WriteLine($"{Name}: {result.Computed} computed, {result.Recomputed} recomputed, {result.Unchanged} unchanged, {result.ShortOfWarmup} short of the {WarmupSessions}-session warm-up, {result.Blocked} blocked by an open demand");
         Console.WriteLine($"{Name}: {result.DemandsSatisfied} demand(s) satisfied");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
 
@@ -103,7 +107,8 @@ public sealed class IndicatorEngine
             HistoryRefetchReader.LatestByTicker(connection, EndOf(asOf));
 
         int computed = 0;
-        int alreadyWritten = 0;
+        int recomputed = 0;
+        int unchanged = 0;
         int shortOfWarmup = 0;
         int blocked = 0;
         int satisfied = 0;
@@ -112,7 +117,8 @@ public sealed class IndicatorEngine
         {
             foreach (string ticker in members)
             {
-                IReadOnlyList<StoredDailyBar> window = DailyBarReader.Read(connection, ticker, asOf, WarmupSessions);
+                IReadOnlyList<StoredDailyBar> window =
+                    DailyBarReader.Read(connection, ticker, asOf, WarmupSessions, computedAt);
 
                 if (window.Count < WarmupSessions)
                 {
@@ -133,19 +139,50 @@ public sealed class IndicatorEngine
                     continue;
                 }
 
-                if (Insert(connection, transaction, ticker, asOf, Calculate(window)) == 0)
+                IndicatorValues values = Calculate(window);
+                StoredIndicators? previous = IndicatorDailyReader.Latest(connection, ticker, asOf);
+
+                if (previous is not null && previous.SameFigures(values))
                 {
-                    alreadyWritten++;
+                    // The same numbers as the last computation of this session, so there is
+                    // nothing to observe. Append-only is not the same as writing a row every
+                    // time: a rerun after a failed stage must cost nothing and change nothing.
+                    unchanged++;
                 }
                 else
                 {
-                    computed++;
+                    Insert(connection, transaction, ticker, asOf, computedAt, values);
+
+                    if (previous is null)
+                    {
+                        computed++;
+                    }
+                    else
+                    {
+                        recomputed++;
+                    }
                 }
 
                 // Every demand this window does account for is satisfied by it. Stamped rather
                 // than cleared, so the record still says which actions this store has honoured
                 // and when.
-                satisfied += Stamp(connection, transaction, ticker, lastRefetch, computedAt);
+                // Skipped where the ticker has no demand at all, which is every ticker on almost
+                // every night. Running the statement anyway would be two thousand no-op updates
+                // an evening for the sake of one line fewer.
+                int stamped = openDemands[ticker].Any()
+                    ? Stamp(connection, transaction, ticker, lastRefetch, computedAt)
+                    : 0;
+
+                satisfied += stamped;
+
+                if (stamped > 0)
+                {
+                    // A rebuild reaches backwards. Every session already computed for this ticker
+                    // was computed on the basis the action invalidated, so each is recomputed and
+                    // the new figures land as a later observation beside the old ones. This is the
+                    // thing the store could not do while a session held one row.
+                    recomputed += Recompute(connection, transaction, ticker, asOf, computedAt);
+                }
             }
 
             transaction.Commit();
@@ -154,7 +191,7 @@ public sealed class IndicatorEngine
         RunSummary summary = run.Complete(RunOutcome.Clean);
 
         return new IndicatorResult(
-            asOf, members.Count, computed, alreadyWritten, shortOfWarmup, blocked, satisfied,
+            asOf, members.Count, computed, recomputed, unchanged, shortOfWarmup, blocked, satisfied,
             summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
     }
 
@@ -317,6 +354,72 @@ public sealed class IndicatorEngine
             : (sorted[middle - 1] + sorted[middle]) / 2m;
     }
 
+    /// <summary>
+    /// Recomputes every session already written for one ticker, except the one just computed.
+    ///
+    /// Only called where a rebuild demand has just been satisfied, which is rare and is the one
+    /// case where the figures already stored were computed against a price history the vendor
+    /// has since restated. Each session that changes gains a later observation; each that does
+    /// not is left alone.
+    /// </summary>
+    private static int Recompute(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string ticker,
+        DateOnly excluding,
+        DateTimeOffset computedAt)
+    {
+        DateOnly[] sessions = SessionsAlreadyComputed(connection, ticker)
+            .Where(d => d != excluding)
+            .ToArray();
+
+        int written = 0;
+
+        foreach (DateOnly session in sessions)
+        {
+            // Bounded by this computation's instant rather than by the session's own evening.
+            // The session says which bars; now says what is known about them.
+            IReadOnlyList<StoredDailyBar> window =
+                DailyBarReader.Read(connection, ticker, session, WarmupSessions, computedAt);
+
+            if (window.Count < WarmupSessions)
+            {
+                continue;
+            }
+
+            IndicatorValues values = Calculate(window);
+            StoredIndicators? previous = IndicatorDailyReader.Latest(connection, ticker, session);
+
+            if (previous is not null && previous.SameFigures(values))
+            {
+                continue;
+            }
+
+            Insert(connection, transaction, ticker, session, computedAt, values);
+            written++;
+        }
+
+        return written;
+    }
+
+    private static IReadOnlyList<DateOnly> SessionsAlreadyComputed(SqliteConnection connection, string ticker)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT as_of FROM indicator_daily WHERE ticker = @ticker ORDER BY as_of;
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+
+        var sessions = new List<DateOnly>();
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            sessions.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+        }
+
+        return sessions;
+    }
+
     /// <summary>The last instant of a session, in the form observed_at is stored in.</summary>
     private static DateTimeOffset EndOf(DateOnly session) =>
         new(session.Year, session.Month, session.Day, 23, 59, 59, 999, TimeSpan.Zero);
@@ -347,24 +450,24 @@ public sealed class IndicatorEngine
         SqliteTransaction transaction,
         string ticker,
         DateOnly asOf,
+        DateTimeOffset computedAt,
         IndicatorValues values)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
-        // Insert only. SCHEMA declares IndicatorEngine as the inserter of this table and
-        // TierClassifier as its only updater, on ladder_grade alone, so an upsert here would give
-        // this component an undeclared update on a table somebody else owns. A night already
-        // written therefore stands, and the run reports how many it left alone rather than
-        // overwriting them quietly.
+        // Insert only, and never an update. A computation is an observation like a bar or an
+        // action: a rebuild writes a second row for the same session under a later computed_at,
+        // and a read as of a night before it still returns what the lab had then.
         command.CommandText = """
             INSERT INTO indicator_daily
-                (ticker, as_of, ema_9, ema_21, ema_50, atr_14, adr_20, dollar_volume_median_20, range_avg_20)
-            VALUES (@ticker, @as_of, @ema_9, @ema_21, @ema_50, @atr_14, @adr_20, @dollar_volume_median_20, @range_avg_20)
-            ON CONFLICT (ticker, as_of) DO NOTHING;
+                (ticker, as_of, computed_at, ema_9, ema_21, ema_50, atr_14, adr_20, dollar_volume_median_20, range_avg_20)
+            VALUES (@ticker, @as_of, @computed_at, @ema_9, @ema_21, @ema_50, @atr_14, @adr_20, @dollar_volume_median_20, @range_avg_20)
+            ON CONFLICT (ticker, as_of, computed_at) DO NOTHING;
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
         command.Parameters.AddWithValue("@ema_9", StoreText.PriceToStorageText(values.EmaShort));
         command.Parameters.AddWithValue("@ema_21", StoreText.PriceToStorageText(values.EmaMedium));
         command.Parameters.AddWithValue("@ema_50", StoreText.PriceToStorageText(values.EmaLong));
@@ -413,13 +516,14 @@ public sealed record IndicatorValues(
     decimal AverageTrueRange,
     decimal AverageDailyRange,
     decimal DollarVolumeMedian,
-    decimal RangeAverage);
+    decimal RangeAverage) : IIndicatorFigures;
 
 public sealed record IndicatorResult(
     DateOnly AsOf,
     int Members,
     int Computed,
-    int AlreadyWritten,
+    int Recomputed,
+    int Unchanged,
     int ShortOfWarmup,
     int Blocked,
     int DemandsSatisfied,

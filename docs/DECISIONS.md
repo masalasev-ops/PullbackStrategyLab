@@ -48,6 +48,13 @@ The phase report breaks fixture coverage down by tier rather than as one number.
 
 Settled before the fixture existed, because retrofitting provenance onto expectations already generated is guesswork.
 
+**Fixture inputs record where they came from, and a path a live run exercises needs a captured one**
+Two tiers. CAPTURED, stored verbatim from a real vendor response with the date and endpoint recorded. AUTHORED, hand-built to hold a case a live run cannot produce.
+
+Authored inputs are necessary and they encode their author's beliefs about the vendor, which is precisely what a fixture cannot check, because the person writing the assumption and the person writing the test are the same. Two defects in phase 1 passed their unit tests and failed on live data for that single reason: an ingestor that compared against observations made by the bar date, and a rebuild rule that assumed a refetch restates every bar in a series.
+
+So a path a live run exercises has at least one CAPTURED input. An authored fixture may hold the edge case; it may not be the only evidence for the ordinary case. The phase report breaks inputs down by tier alongside expectations, and a path with no captured input is reported as unexamined however many authored cases pass.
+
 **A fixture expectation changes only with a recorded reason, and the report counts what changed**
 When a diff fails, regenerating the expectations is the cheapest way to make it pass and it destroys the fixture's only purpose. So a changed expectation carries a reason line, and the report states how many expectations changed since the last commit alongside how many passed.
 

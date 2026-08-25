@@ -9,8 +9,8 @@ using PullbackStrategyLab.Worker.Vendor;
 namespace PullbackStrategyLab.Worker.Stages;
 
 /// <summary>
-/// Pulls the day's splits and, when asked for them, dividends, and raises the rebuild every
-/// action that moves the adjusted close demands.
+/// Pulls the day's splits and dividends, and raises the rebuild every action that moves the
+/// adjusted close demands.
 ///
 /// The stored adjusted closes were adjusted as of the night each was observed, so the evening
 /// after a four-for-one everything already in the store is on the old scale and everything
@@ -35,19 +35,24 @@ public sealed class ActionIngestor
     public const string Name = "actions";
 
     /// <summary>
-    /// Asks for dividends as well. Off by default because the dividend pull is weekly rather
-    /// than nightly, and the schedule is what makes it weekly: the flag lives in one launchd
-    /// plist and one scheduled task rather than in a date calculation here.
+    /// Asks for splits and nothing else. For a rerun on an evening where the budget is short and
+    /// the splits are the half that cannot wait; the stocks paying a dividend that evening then
+    /// go unblocked, which is the cost and is why this is not the default.
     /// </summary>
-    public const string WithDividendsFlag = "--with-dividends";
+    public const string SplitsOnlyFlag = "--splits-only";
 
     /// <summary>
-    /// False, and load-bearing. The data budget states the dividend request as weekly, and this
-    /// is the code side of that claim: a nightly invocation asks for splits and nothing else.
-    /// `pinned-constants` compares the two, so flipping this fails the check rather than
-    /// quietly adding a hundred calls a night.
+    /// True, and load-bearing. The data budget states the dividend request as nightly and this is
+    /// the code side of that claim, which `pinned-constants` compares.
+    ///
+    /// It was weekly, and weekly contradicted the rule it exists to serve. A dividend effective on
+    /// a Tuesday went unobserved until the weekly run, so the stock computed for up to four
+    /// sessions on an adjusted series that had already moved and nothing blocked it: exactly the
+    /// plausible wrong number the whole rebuild path exists to prevent, arrived at by economising
+    /// eighty calls a night on a budget that did not need economising.
+    /// see: An unprocessed corporate action of any kind blocks calculation, not only a split
     /// </summary>
-    public const bool RequestsDividendsByDefault = false;
+    public const bool RequestsDividendsByDefault = true;
 
     private readonly IMarketDataVendor _vendor;
     private readonly StoreConnectionFactory _connections;
@@ -74,7 +79,7 @@ public sealed class ActionIngestor
         ArgumentNullException.ThrowIfNull(args);
 
         string? date = args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
-        bool withDividends = args.Contains(WithDividendsFlag, StringComparer.Ordinal);
+        bool withDividends = RequestsDividendsByDefault && !args.Contains(SplitsOnlyFlag, StringComparer.Ordinal);
 
         DateOnly effectiveDate = date is not null
             ? DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)
@@ -187,8 +192,8 @@ public sealed class ActionIngestor
         }
 
         // Partial when dividends were asked for and the ceiling refused them. The splits that
-        // did land are stored, because they are the half that runs nightly and the run entry
-        // says the night was incomplete.
+        // did land are stored, because they are the half that cannot wait, and the run entry says
+        // the night was incomplete.
         RunOutcome outcome = withDividends && !dividendsRequested ? RunOutcome.Partial : RunOutcome.Clean;
         RunSummary summary = run.Complete(outcome);
 

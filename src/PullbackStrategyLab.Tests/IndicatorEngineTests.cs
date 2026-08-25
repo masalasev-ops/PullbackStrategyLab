@@ -314,20 +314,72 @@ public sealed class IndicatorEngineTests : IDisposable
     }
 
     [Fact]
-    public async Task A_night_already_written_is_left_alone_and_reported_rather_than_overwritten()
+    public async Task A_rerun_that_produces_the_same_figures_writes_no_row()
     {
         await StoreSessions("AAA", IndicatorEngine.WarmupSessions);
 
+        AtEndOf(AsOf);
         Assert.Equal(1, Engine().Compute(AsOf).Computed);
 
         _clock.Advance(TimeSpan.FromHours(1));
         IndicatorResult second = Engine().Compute(AsOf);
 
-        // SCHEMA declares TierClassifier as the only updater of this table, so the engine may
-        // insert and nothing else. A night already written stands, and the count says so.
+        // Append-only is not the same as writing a row every time. A rerun after a failed stage
+        // has to cost nothing and change nothing, exactly as it does for a bar.
         Assert.Equal(0, second.Computed);
-        Assert.Equal(1, second.AlreadyWritten);
+        Assert.Equal(0, second.Recomputed);
+        Assert.Equal(1, second.Unchanged);
         Assert.Equal(1, CountIndicators());
+    }
+
+    [Fact]
+    public async Task A_rebuild_reaches_a_session_already_computed_and_leaves_what_it_said_intact()
+    {
+        // The property the table was rekeyed for. A session is computed, an action lands
+        // afterwards, the history is refetched, and the session is computed again on the new
+        // basis. A read as of the original night still returns what the lab had that night, and
+        // a read as of today returns what it has now.
+        FakeMarketDataVendor vendor = await StoreSessions("AAA", IndicatorEngine.WarmupSessions);
+
+        AtEndOf(AsOf);
+        Assert.Equal(1, Engine().Compute(AsOf).Computed);
+
+        StoredIndicators original;
+        using (SqliteConnection connection = _connections.OpenReadOnly())
+        {
+            original = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(connection, "AAA", AsOf, AsOf));
+        }
+
+        // The action, a session later, and the vendor's adjusted series moves with it.
+        DateOnly actionOn = AsOf.AddDays(1);
+        AtEndOf(actionOn);
+        vendor.Split(actionOn, "AAA", 4m);
+        vendor.Adjust("AAA", 0.25m);
+        await Actions(vendor).IngestAsync(actionOn);
+
+        Assert.Equal(1, Engine().Compute(actionOn).Blocked);
+
+        DateOnly rebuiltOn = AsOf.AddDays(2);
+        AtEndOf(rebuiltOn);
+        await Ingestor(vendor).BackfillAsync(BackfillSelection.TickersWithAnOpenDemand, [], rebuiltOn);
+
+        IndicatorResult after = Engine().Compute(rebuiltOn);
+        Assert.Equal(1, after.DemandsSatisfied);
+        Assert.Equal(1, after.Recomputed);
+
+        using SqliteConnection read = _connections.OpenReadOnly();
+
+        // Two observations of the same session, and neither has replaced the other.
+        Assert.Equal(2, CountRowsFor("AAA", AsOf));
+
+        StoredIndicators asItWasThen = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, AsOf));
+        StoredIndicators asItIsNow = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, rebuiltOn));
+
+        Assert.Equal(original.EmaShort, asItWasThen.EmaShort);
+        Assert.NotEqual(original.EmaShort, asItIsNow.EmaShort);
+
+        // A quarter of the price, because that is what a four-for-one does to an adjusted series.
+        Assert.Equal(original.EmaShort / 4m, asItIsNow.EmaShort);
     }
 
     /// <summary>
@@ -429,6 +481,16 @@ public sealed class IndicatorEngineTests : IDisposable
     }
 
     private int CountIndicators() => CountRows("indicator_daily");
+
+    private int CountRowsFor(string ticker, DateOnly session)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM indicator_daily WHERE ticker = @t AND as_of = @s;";
+        command.Parameters.AddWithValue("@t", ticker);
+        command.Parameters.AddWithValue("@s", StoreText.DateToStorageText(session));
+        return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+    }
 
     private int CountRows(string table)
     {

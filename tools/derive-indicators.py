@@ -156,10 +156,17 @@ def derive(bars):
 
 
 def stored(connection, ticker, as_of):
+    """The latest computation of that session, which is what a read as of today returns.
+
+    indicator_daily is append-only: a rebuild writes a second row for a session rather than
+    replacing the first, so a query without the ordering below picks whichever row the engine
+    happens to return and would compare against a superseded one.
+    """
     row = connection.execute(
         """
         SELECT ema_9, ema_21, ema_50, atr_14, adr_20, dollar_volume_median_20, range_avg_20
           FROM indicator_daily WHERE ticker = ? AND as_of = ?
+         ORDER BY computed_at DESC LIMIT 1
         """,
         (ticker, as_of),
     ).fetchone()

@@ -24,7 +24,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 
 **The screen is one call per surviving name, and that number is measured rather than estimated.** Two counts matter and both are cheap to get before writing any code. The exchange symbol list is one call and returns every US ticker with a type field, so counting common stock gives N's upper bound today. The floors then cut that to N itself, which step 3 measures.
 
-The only thing depending on N is whether the backfill runs in one day or two: steps 4 and 5 cost 2N together, so with the other steps the day fits comfortably while 2N stays under about 4,000. Above that, split steps 4 and 5 across two days. Nothing else in the design is sensitive to the count, which is why no figure for it is written down anywhere.
+**The backfill is not counted against the nightly ceiling.** The ceiling guards the evening's job, and a one-time operation is not the evening's job; charging the two against each other is what once made this look like a two-day procedure. The run records its calls like any other and the nightly total does not see them, which the run log says outright rather than leaving to be inferred from the stage name.
 
 | Order | Job | Calls |
 |---|---|---|
@@ -36,7 +36,7 @@ The only thing depending on N is whether the backfill runs in one day or two: st
 | 6 | Minute bars for 200 names to calibrate the fill model | ~1,000 |
 | | **Total** | **~3,005 + 2N** |
 
-Steps 1 to 3 are one day, steps 4 to 6 the next. Nothing downstream depends on doing them together, and splitting keeps each day well inside the ceiling.
+**Size, measured rather than estimated.** N was 2,070 when this was first run, so steps 4 and 5 are 2,070 calls each and the whole procedure is about 7,145. It is one operation and it runs in one sitting; the order within it is what matters, not the calendar.
 
 ---
 
@@ -47,8 +47,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | Time (ET) | Stage | Calls |
 |---|---|---|
 | during session | spread snapshots, two passes | 120 |
-| 17:20 | `actions`, splits bulk | 100 |
-| 17:20 | `actions --with-dividends`, weekly rather than nightly. 100 a week over five sessions is the 20, which is an amortised figure and was never the price of a call | 20 |
+| 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
+| 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
 | 17:30 | bulk daily bars | 100 |
 | 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
 | 18:00 | `indicators` | 0 |
@@ -67,7 +67,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | scoreboard | 0 |
-| **total** | | **~715 against a 5,000 ceiling** |
+| **total** | | **~795 against a 5,000 ceiling** |
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
 

@@ -107,19 +107,33 @@ public sealed class WriterOwnershipCheck
             }
         }
 
-        // One writer per table per operation, asserted on the declaration itself.
+        // One writer per table per operation, asserted on the declaration itself. Where a store
+        // legitimately has two, the declaration says how they are disjoint and this reads that
+        // rather than carrying a list of tables to forgive. A hardcoded exception is a fact about
+        // the checker; a declaration is a fact about the design, and a reader of SCHEMA finds
+        // only one of them.
+        int declaredDisjoint = 0;
+
         foreach (StoreDeclaration store in declared.Where(s => live.Contains(s.Store)))
         {
             foreach (IGrouping<StoreOperation, Writer> group in store.Writers.GroupBy(w => w.Operation))
             {
                 int distinct = group.Select(w => w.Component).Distinct(StringComparer.Ordinal).Count();
-                if (distinct > 1 && !string.Equals(store.Store, "setup", StringComparison.Ordinal)
-                                 && !string.Equals(store.Store, "setup_signal", StringComparison.Ordinal))
+                if (distinct <= 1)
                 {
-                    failures.Add(
-                        $"SCHEMA declares {distinct} writers for {group.Key} on {store.Store}: "
-                        + string.Join(", ", group.Select(w => w.Component).Distinct(StringComparer.Ordinal)));
+                    continue;
                 }
+
+                if (store.StatesDisjointness)
+                {
+                    declaredDisjoint++;
+                    continue;
+                }
+
+                failures.Add(
+                    $"SCHEMA declares {distinct} writers for {group.Key} on {store.Store} and does not say how they "
+                    + "are disjoint: "
+                    + string.Join(", ", group.Select(w => w.Component).Distinct(StringComparer.Ordinal)));
             }
         }
 
@@ -130,6 +144,7 @@ public sealed class WriterOwnershipCheck
             .Examined("writes found in the shipped source", SourceWrites.InProductionSource.Count)
             .Examined("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
+            .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
             .NotExamined("declared writers of a store no migration has created yet", tableNotCreated,
                 "the table arrives with the checkpoint that builds its component")
             .NotExamined("declared writers whose component has not been built yet", componentNotBuilt,

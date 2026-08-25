@@ -57,7 +57,8 @@ public static partial class SchemaDeclarations
 
             stores.Add(new StoreDeclaration(
                 headings[i].Groups["store"].Value,
-                declarations.SelectMany(ParseWriters).ToArray()));
+                declarations.SelectMany(ParseWriters).ToArray(),
+                declarations.Any(StatesDisjointness)));
         }
 
         // The phases declared at store level, one row each. Bounded to the two sections that
@@ -74,12 +75,22 @@ public static partial class SchemaDeclarations
 
         foreach (Match row in StoreRow().Matches(schema[storeLevelStart..storeLevelEnd]))
         {
-            stores.Add(new StoreDeclaration(
-                row.Groups["store"].Value,
-                ParseWriters(row.Groups["writer"].Value.Trim())));
+            string writer = row.Groups["writer"].Value.Trim();
+            stores.Add(new StoreDeclaration(row.Groups["store"].Value, ParseWriters(writer), StatesDisjointness(writer)));
         }
 
         return stores;
+    }
+
+    /// <summary>
+    /// Whether a declaration says how writers sharing an operation are disjoint. The word is
+    /// required literally, so a declaration that means it has to say it: two inserters with no
+    /// stated separation is the shape a table acquires a second owner in.
+    /// </summary>
+    public static bool StatesDisjointness(string declaration)
+    {
+        ArgumentNullException.ThrowIfNull(declaration);
+        return declaration.Contains("disjoint", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -143,4 +154,12 @@ public enum StoreOperation
 
 public sealed record Writer(StoreOperation Operation, string Component, bool Resolved);
 
-public sealed record StoreDeclaration(string Store, IReadOnlyList<Writer> Writers);
+/// <summary>
+/// A store, its declared writers, and whether the declaration says how two writers sharing an
+/// operation stay out of each other's way.
+///
+/// The flag is read from the declaration rather than held as a list of tables the check knows
+/// to forgive. A hardcoded exception is a fact about the checker; a declaration is a fact about
+/// the design, and only one of the two is somewhere a reader of SCHEMA will find it.
+/// </summary>
+public sealed record StoreDeclaration(string Store, IReadOnlyList<Writer> Writers, bool StatesDisjointness);

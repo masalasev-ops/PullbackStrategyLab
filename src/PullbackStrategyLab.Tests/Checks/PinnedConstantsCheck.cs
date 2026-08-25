@@ -89,12 +89,11 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, history refetch, cost",
             BudgetCost(architecture, "History refetch"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
 
-        // And the cadence beside the cost, because on the dividend row the two are what the
-        // budget's twenty was hiding. A weekly cadence is only weekly if the nightly invocation
-        // does not ask for dividends, so that is what the code side of this pin reads.
+        // And the cadence beside the cost. A nightly cadence is only nightly if the nightly
+        // invocation actually asks for dividends, so that is what the code side of this pin reads.
         pins.Add(Pin.Text("ARCHITECTURE.html, data budget, dividends, cadence",
-            string.Equals(BudgetCadence(architecture, "Dividends, bulk"), "weekly", StringComparison.Ordinal),
-            !ActionIngestor.RequestsDividendsByDefault,
+            string.Equals(BudgetCadence(architecture, "Dividends, bulk"), "nightly", StringComparison.Ordinal),
+            ActionIngestor.RequestsDividendsByDefault,
             "ActionIngestor.RequestsDividendsByDefault"));
         pins.Add(Pin.Text("ARCHITECTURE.html, data budget, splits, cadence",
             string.Equals(BudgetCadence(architecture, "Splits, bulk"), "nightly", StringComparison.Ordinal),

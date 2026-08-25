@@ -19,6 +19,7 @@ namespace PullbackStrategyLab.Tests;
 public sealed class MigrationRowSurvivalTests
 {
     private const int BeforeTheRekey = 4;
+    private const int BeforeTheIndicatorRekey = 8;
 
     [Fact]
     public void Migration_005_rebuilds_both_tables_and_loses_no_row()
@@ -101,6 +102,51 @@ public sealed class MigrationRowSurvivalTests
         // Which 004 could not do at all. The primary key was the action, so the restatement had
         // nowhere to go and the store kept a factor the vendor no longer publishes.
         Assert.Equal(2, Count(connection, "corporate_action"));
+    }
+
+    [Fact]
+    public void Migration_009_rebuilds_the_indicator_table_and_loses_no_row()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        MigrationResult before = runner.Apply(connection, throughVersion: BeforeTheIndicatorRekey);
+        Assert.Equal(BeforeTheIndicatorRekey, before.ToVersion);
+
+        Execute(connection, """
+            INSERT INTO security (ticker, name, exchange, type, first_seen) VALUES
+                ('AAA', 'AAA', 'NASDAQ', 'Common Stock', '2026-08-01'),
+                ('BBB', 'BBB', 'NASDAQ', 'Common Stock', '2026-08-01');
+
+            INSERT INTO indicator_daily
+                (ticker, as_of, ema_9, ema_21, ema_50, atr_14, adr_20, dollar_volume_median_20, range_avg_20, ladder_grade)
+            VALUES
+                ('AAA', '2026-08-24', '10', '11', '12', '1.5', '0.02', '1000000', '0.3', 'rising'),
+                ('AAA', '2026-08-25', '10', '11', '12', '1.5', '0.02', '1000000', '0.3', NULL),
+                ('BBB', '2026-08-25', '20', '21', '22', '2.5', '0.03', '2000000', '0.6', 'falling');
+            """);
+
+        Assert.Equal(3, Count(connection, "indicator_daily"));
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("009-indicator-as-computed.sql", after.Applied);
+        Assert.Equal(3, Count(connection, "indicator_daily"));
+
+        // Every row keeps its figures and its grade, and gains a computed_at of the first instant
+        // of its own session: visible from that session onward, and behind any real computation
+        // made later.
+        StoredIndicators row = Assert.IsType<StoredIndicators>(
+            IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 24)));
+
+        Assert.Equal(10m, row.EmaShort);
+        Assert.Equal("rising", row.LadderGrade);
+        Assert.Equal(new DateTimeOffset(2026, 8, 24, 0, 0, 0, TimeSpan.Zero), row.ComputedAt);
+
+        // And a read as of the day before the session sees nothing, which is the point of the
+        // column: the values were not available before the evening that produced them.
+        Assert.Null(IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 23)));
     }
 
     private static void Execute(SqliteConnection connection, string sql)
