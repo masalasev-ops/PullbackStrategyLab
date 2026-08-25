@@ -1,0 +1,30 @@
+<Project>
+
+  <!--
+    Every setting the whole solution shares, pinned once. The framework version is
+    here rather than in DECISIONS.md because it is visible in one file and a build
+    enforces it, which is the test for whether a choice needs a decision entry.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!--
+      Set explicitly rather than left at its default. This is the setting that makes
+      IANA timezone lookup fail silently, and a silent timezone failure moves every
+      session boundary in the system.
+      see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+
+</Project>

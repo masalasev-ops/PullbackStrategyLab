@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# Writes a full copy of the store with VACUUM INTO, which folds the write-ahead log in and
+# leaves one consistent file with no siblings to forget. Snapshots are the recovery path;
+# there is no other.
+
+set -euo pipefail
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec dotnet run --project "$repository_root/src/PullbackStrategyLab.Worker" -- snapshot-db "$@"

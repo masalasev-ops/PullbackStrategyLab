@@ -362,7 +362,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="warn"><b class="lab">The short side has an honesty problem the long side does not</b>
 <p>Whether a stock could actually be borrowed that morning, and at what cost, is not in the price feed. A short that was impossible to place will be recorded by this lab as though it filled cleanly.</p>
-<p>The design mitigates rather than solves this. The that check filter excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
+<p>The design mitigates rather than solves this. The <code>tradable-shortable</code> check excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
 <p><b>Worth knowing how small the cost term is.</b> At 1.0% a year a four-day hold costs about 0.011% of position value, which against a 3% stop is roughly 0.4% of one R. The rate is set several times higher than a general-collateral borrow actually costs and it still rounds to nothing. So borrow <i>cost</i> is not what decides the short side. Borrow <i>availability</i> is, and that is what the tradable-shortable check exists for.</p></div>
 
 <h4>What differs in management</h4>

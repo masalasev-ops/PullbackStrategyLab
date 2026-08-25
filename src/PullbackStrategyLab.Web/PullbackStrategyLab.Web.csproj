@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Web references Core alone. It reads through the Api over HTTP and never opens
+    the store, so it has no reference to Data and no way to acquire a connection.
+    see: The Web project reads through the Api and never opens the store
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\PullbackStrategyLab.Core\PullbackStrategyLab.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

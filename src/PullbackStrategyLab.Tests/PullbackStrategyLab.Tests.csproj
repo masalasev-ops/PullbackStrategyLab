@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The one declared exemption from the Api-to-Worker isolation check. This project
+    references everything by design, which is why the check names it here rather
+    than a later session finding the reference and assuming the check is broken.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PullbackStrategyLab.Core\PullbackStrategyLab.Core.csproj" />
+    <ProjectReference Include="..\PullbackStrategyLab.Data\PullbackStrategyLab.Data.csproj" />
+    <ProjectReference Include="..\PullbackStrategyLab.Api\PullbackStrategyLab.Api.csproj" />
+    <ProjectReference Include="..\PullbackStrategyLab.Web\PullbackStrategyLab.Web.csproj" />
+    <ProjectReference Include="..\PullbackStrategyLab.Worker\PullbackStrategyLab.Worker.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,58 @@
+name: ci
+
+# The matrix runs both platforms from the first code commit rather than being added later.
+# Development happens on Windows today and moves to macOS, and the two machines agree with
+# each other and are capable of being wrong in the same way at the same time. A matrix added
+# after the code is written finds those faults in a batch instead of one at a time.
+# see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Both runners always report. Cancelling the pair on the first failure is what hides a
+      # platform-specific fault behind an unrelated one.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # The two scripts are not translations of each other, and the ci-parity check inside
+      # the suite asserts they run the same steps in the same order.
+      - name: tools/ci.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/ci.ps1
+
+      - name: tools/ci.sh
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./tools/ci.sh
+
+      - name: check coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-${{ matrix.os }}
+          path: artifacts/checks/
+          if-no-files-found: warn

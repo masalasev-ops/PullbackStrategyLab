@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+
+    <!--
+      Pinned above what Microsoft.Data.Sqlite 10.0.0 pulls in. The transitive
+      SQLitePCLRaw 2.1.11 carries a published advisory against the native e_sqlite3
+      library, and the build treats warnings as errors, so the bump is explicit here
+      rather than left to whatever the transitive graph resolves to.
+    -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PullbackStrategyLab.Core\PullbackStrategyLab.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
+</Project>

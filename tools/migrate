@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#
+# Applies outstanding migrations. Calls snapshot-db internally first and refuses to run
+# without a successful snapshot, unless there is no store yet, in which case there is
+# nothing to snapshot and nothing to lose.
+#
+# One CLI entrypoint per job. This is a thin wrapper so the operator has a short command;
+# the logic lives in the Worker, where both platforms run the same code.
+
+set -euo pipefail
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec dotnet run --project "$repository_root/src/PullbackStrategyLab.Worker" -- migrate "$@"

@@ -1,0 +1,91 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Worker.Stages;
+
+namespace PullbackStrategyLab.Worker;
+
+/// <summary>
+/// One CLI entrypoint per job, invoked by Task Scheduler on Windows or launchd on macOS.
+/// The application holds no timer logic and no scheduling of its own, which is what makes
+/// a failed 18:00 stage easy to rerun by hand and what keeps the two platforms from needing
+/// different code.
+/// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+/// </summary>
+public static class Program
+{
+    public static int Main(string[] args)
+    {
+        if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
+        {
+            WriteUsage();
+            return args.Length == 0 ? 2 : 0;
+        }
+
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        builder.AddPullbackStrategyLabStore();
+        builder.Services.AddSingleton<MigrateStage>();
+        builder.Services.AddSingleton<SnapshotStage>();
+
+        using IHost host = builder.Build();
+
+        string stage = args[0];
+        string[] rest = args[1..];
+
+        try
+        {
+            return stage switch
+            {
+                MigrateStage.Name => host.Services.GetRequiredService<MigrateStage>().Run(rest),
+                SnapshotStage.Name => host.Services.GetRequiredService<SnapshotStage>().Run(rest),
+                "list-stages" => ListStages(),
+                _ => UnknownStage(stage),
+            };
+        }
+        catch (Exception e)
+        {
+            // A stage that throws says so on stderr and exits non-zero. Nothing here
+            // swallows an exception into a clean exit, because the scheduler only sees
+            // the exit code.
+            Console.Error.WriteLine($"{stage}: {e.Message}");
+            return 1;
+        }
+    }
+
+    private static int ListStages()
+    {
+        foreach (string name in StageNames)
+        {
+            Console.WriteLine(name);
+        }
+
+        return 0;
+    }
+
+    private static int UnknownStage(string stage)
+    {
+        Console.Error.WriteLine($"Unknown stage '{stage}'.");
+        WriteUsage();
+        return 2;
+    }
+
+    /// <summary>Every stage this build can run, which is what `list-stages` prints.</summary>
+    public static IReadOnlyList<string> StageNames { get; } =
+    [
+        MigrateStage.Name,
+        SnapshotStage.Name,
+    ];
+
+    private static void WriteUsage()
+    {
+        Console.Error.WriteLine("usage: PullbackStrategyLab.Worker <stage> [options]");
+        Console.Error.WriteLine();
+        Console.Error.WriteLine("stages:");
+        foreach (string name in StageNames)
+        {
+            Console.Error.WriteLine($"  {name}");
+        }
+
+        Console.Error.WriteLine("  list-stages");
+    }
+}
