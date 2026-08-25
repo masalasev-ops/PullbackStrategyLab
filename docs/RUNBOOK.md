@@ -10,7 +10,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 2. Clone, then `dotnet restore` and `dotnet build`.
 3. Create the data root outside the repository and outside any synced folder. Set `PullbackStrategyLab:DataRoot` to it. **Never place the store inside OneDrive, Dropbox or iCloud.** A sync client copying an open database mid-write is a real corruption risk, not a theoretical one.
 4. Put the vendor API key in `appsettings.Secrets.json`, beside `appsettings.json` in each project that needs it. Gitignored, never committed. It is plaintext, so treat it like a key file: it travels by deliberate copy rather than by accident, and it stays out of any backup that leaves the machine.
-5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. If it is, the researcher seat bills at API rates instead of using the subscription.
+5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. It stays out on both researcher transports: on the subscription path its presence silently defeats plan auth and bills API rates, and on the API path the key belongs in `appsettings.Secrets.json` with every other secret, so one in the environment means two places supply the same credential and nothing on the surface says which won.
 6. `tools/migrate` to create the schema. It calls `tools/snapshot-db` first and refuses to run without a successful snapshot.
 7. `tools/ci.ps1` or `tools/ci.sh`. Green before anything else.
 

@@ -943,7 +943,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="rule"><b class="lab">The migration test, worth applying from day one</b>
 <p>Copy the data root to another machine, point the application at it, and run the nightly job. If that works, migration is a copy. The property that makes it work is that nothing inside the store refers to where the store lives, which is easy to preserve from the start and tedious to retrofit once chart exports or log paths have been persisted.</p>
-<p>One thing that does not migrate: the RTX 3090. Nothing here needs it, since the researcher runs through the Claude Agent SDK rather than locally, but it is worth knowing before any part of the design starts assuming local inference.</p></div>
+<p>One thing that does not migrate: the RTX 3090. Nothing here needs it, since the researcher runs against a hosted model on either transport rather than locally, but it is worth knowing before any part of the design starts assuming local inference.</p></div>
 
 <h3 id="moving-the-store-to-another-machine">Moving the store to another machine</h3>
 
@@ -1016,7 +1016,7 @@ tr:hover td{background:#f4f2ec}
 <div class="rule"><b class="lab">Cost cannot decide this, so something else must</b>
 <p>The whole spread from cheapest to dearest is about eight dollars a year. Even a badly built pack that dumps four thousand raw setup rows instead of aggregates lands near thirty-five dollars a year at the top of the range. There is no budget argument to be had.</p>
 <p>What does decide it is that <b>the model is a confounder for the project's own success criterion</b>. That criterion is whether proposals against a later pack beat proposals against an earlier one, and a model change between the two makes the comparison meaningless. So the model is pinned by exact identifier alongside the pack version, and a change forks the record rather than upgrading it. (see: The model is a frozen parameter of the pack version, and changing it forks the record)</p>
-<p>A practical consequence: running the seat through the Claude Agent SDK on an existing subscription costs nothing marginal, which is the strongest argument for it, but the pinning requirement still applies and a vendor retiring the pinned model is a forced fork either way.</p></div>
+<p>A practical consequence: <b>the transport is a configuration switch</b>. The subscription path runs the seat through the Agent SDK against an existing Claude plan and costs nothing marginal; the API path calls the Messages API and costs the table above, which is a few dollars a year. Neither is the only option and the choice is reversible at any time, <b>provided the served model string does not change</b>. If it does, switching forks the record exactly as changing the model does. The pinning requirement is unaffected and now applies to the transport as well, and a vendor retiring the pinned model is a forced fork either way. (see: The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface)</p></div>
 
 <div class="plain"><b class="lab">What the money argument was actually protecting</b>
 <p>The rule that the pack carries aggregates rather than raw rows reads like cost discipline and is not. At these rates the raw version is affordable. The real reason is that a model handed raw data will find patterns by rummaging, which is precisely what pre-registration and the planted null signal exist to prevent. Keep the rule; drop the cost justification wherever it appears.</p></div>

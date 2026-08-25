@@ -134,3 +134,16 @@ Built:      `shell-executable`, a check of its own with its own CI step, asserti
 
 Verified:   The check was demonstrated against a deliberate regression, `git update-index --chmod=-x tools/migrate`, and named the file and both modes. That demonstration is recorded here rather than as a test, because the property is git index state and a unit test asserting it would need a scratch repository to break; the check itself is permanent and runs on every CI run.
             `tools/ci.ps1` green on Windows, 16 steps, 74 tests.
+
+## Phase 1 corrections — 2026-08-25 — phase-1-ingest-and-charts — amends 6.5, nothing built
+
+Not a checkpoint entry. The format covers anything decided along the way, and this was decided during phase 1 against a checkpoint five phases out, so it is filed under the phase that did the work rather than the phase that will consume it. No code changed.
+
+Built:      Nothing. `docs/DECISIONS.md` gains **The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface**, and four spec edits follow from it with their prior text in `CHANGELOG.md`.
+
+Findings:   Observation. Five places treated one transport as the implementation rather than as one of two: BUILD_PLAN's 6.5 deliverable and its trap note, ARCHITECTURE's model budget and its migration note, and RUNBOOK's setup step 5. Reading: the trap note and the setup step are the two that would have caused harm, because each gave a reason for banning `ANTHROPIC_API_KEY` that applies to only one path, which reads as permission to set it on the other. The variable stays banned and both reasons are now stated.
+            Observation. RUNBOOK was not among the three edits the change was scoped to. Reading: its stated done condition was that no document treats either transport as the only option, and that document did, so it was edited and the departure is named in its changelog entry rather than left for a sweep to find.
+
+Verified:   `tools/ci.ps1` green on Windows, 16 steps, 74 tests. `decision-resolves` examines 56 decision names and 59 citations across 64 files, and the new name resolves from ARCHITECTURE and from BUILD_PLAN. `stated-counts` unaffected: no count in any document describes the number of decisions.
+
+Carried:    The empty tool set is a property of configuration on the subscription path rather than of there being no mechanism, so it holds only as long as the test asserting it does. Due at 6.5, where that test is a done condition.

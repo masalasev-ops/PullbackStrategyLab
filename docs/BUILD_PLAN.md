@@ -120,13 +120,13 @@ Nothing here depends on any open question. Start immediately.
 | 6.2 | SignalAdmissionTest | A signal is admitted only if it tightens outcome-similar neighbourhoods, and rejected above 0.70 correlation unless stored as a residual |
 | 6.3 | TwinPairFinder | Z-scored over the trailing 250 setups. Pairs under 0.5 distance with outcomes over 15 points apart |
 | 6.4 | ContextPacker, versioned, with the planted null signal | Pack version recorded on every proposal. The null appears in the conditional tables |
-| 6.5 | ResearcherSeat via the Claude Agent SDK | Subscription auth, no `ANTHROPIC_API_KEY` present in the environment. Budget exhaustion queues the job and returns nothing |
+| 6.5 | ResearcherSeat, built against the narrow interface, with both implementations present and selected by configuration | A test asserts the subscription implementation is constructed with an **empty tool set**. A test asserts `ANTHROPIC_API_KEY` is absent from the environment. A proposal row carries the **configured model**, the **transport** used and the **served model** string the response reported. Budget or plan-limit exhaustion queues the job and returns nothing, on both paths, and never a partial proposal (see: The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface) |
 | 6.6 | ProposalRegistry, rule proposals and signal requests | Abstention is a valid recorded outcome, not a failure |
 | 6.7 | AcceptanceGate | Reads only status and resolution date. Cannot touch a target |
 | 6.8 | Scoreboard band 3 and the Pack comparison page | **Openable.** Proposal hit rate by pack version |
 | 6.9 | Phase sign-off | Fresh session, and `tools/verify-phase` green with nothing unexamined |
 
-**6.5 has a trap:** if `ANTHROPIC_API_KEY` is set anywhere in the environment it wins over subscription auth and you are billed at API rates. Assert its absence at startup and fail loudly.
+**6.5 has a trap, and it survives the transport switch.** `ANTHROPIC_API_KEY` stays banned from the environment on both paths, for a reason that now applies to each of them: on the subscription path its presence silently defeats plan auth and bills API rates, and on the API path the key belongs in configuration like every other secret, so one in the environment means two places supply the same credential and nothing on the surface says which won. Assert its absence at startup and fail loudly.
 
 **A proposal citing the planted null signal fails that pack version immediately.** No proposal from that version is admitted.
 

@@ -131,6 +131,17 @@ Nothing it produces feeds any component that scores AI output: no signal value, 
 **Proposals come in two kinds, rule changes over existing signals and requests for a new signal**
 The signal library is a hard ceiling on the proposal space and the model cannot lift it. Without the second kind the loop plateaus within months, because there are only so many ways to rearrange ten checks.
 
+**The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface**
+One method: a pack in, proposal text out. Two implementations behind it, chosen by configuration. The API implementation calls the Messages API with the key read from configuration. The subscription implementation uses the Agent SDK, which is the only path that can draw on a Claude plan, configured with an empty tool set.
+
+The interface is the narrow path rather than the union of the two. An agent framework exists to let a model act, and this component's defining property is that it cannot: it writes a proposal and nothing else. On the API path that property is structural, because the Messages API with no tools has no mechanism to act through. On the subscription path it depends on configuration instead, so a test asserts the tool set is empty and the implementation never gains a file, shell or network tool. A capability that is absent by configuration is one edit away from being present, which is why it is asserted rather than assumed.
+
+`ANTHROPIC_API_KEY` is never read from the environment on either path. On the subscription path its presence silently defeats plan auth and bills API rates; on the API path the key comes from configuration like every other secret. One assertion covers both cases: absent from the environment, always.
+
+**Every proposal records three things: the model identifier configured, the transport used, and the model string the response reports as having served it.** The third is the strongest of the three, because it says what actually ran rather than what was asked for.
+
+A transport switch part way through a record is neutral only if the served model string is unchanged. If it differs, the switch forks the record exactly as a model change does, and for the same reason: the success criterion compares proposals made against one pack version with proposals made against another, so anything that changes between them is a confounder. The subscription path carries the weaker pinning guarantee, because a plan-served model can move without anyone asking it to, which is what makes recording the served string rather than the configured one load-bearing.
+
 **The model is a frozen parameter of the pack version, and changing it forks the record**
 The success criterion is that proposals against a later pack beat proposals against an earlier one. If the model changes between them, that comparison measures the model and the pack together and can separate neither. The model is therefore pinned by exact identifier alongside the pack version, and every proposal records which model produced it.
 
