@@ -982,11 +982,12 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>100</td><td>nightly</td><td>Replaces 6,000 individual requests</td></tr>
 <tr><td>Splits, bulk</td><td>100</td><td>100</td><td>nightly</td><td>Non-negotiable</td></tr>
 <tr><td>Dividends, bulk</td><td>100</td><td>100</td><td>nightly</td><td>The same request as the other two and the same price. It ran weekly until 2026-08-25, which meant a dividend effective on a Tuesday went unobserved for up to four sessions while the stock carried on computing</td></tr>
+<tr><td>Index bars, three trackers</td><td>3</td><td>1</td><td>nightly</td><td>One call a symbol on the per-ticker endpoint. Asking the bulk endpoint for three symbols would be a hundred calls to learn three numbers</td></tr>
 <tr><td>History refetch for the names carrying an action</td><td>25</td><td>1</td><td>nightly</td><td>One call a name, whatever the depth. About 25 on an evening the dividend pull runs and one or two otherwise, which is what honouring a corporate action costs</td></tr>
 <tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>5</td><td>nightly</td><td>~60 names at 5 calls each</td></tr>
 <tr><td>Spread snapshots</td><td>120</td><td>1</td><td>twice a session</td><td>60 names, twice a session. Unrecoverable later</td></tr>
 <tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>1</td><td>as needed</td><td>Lazy, cached permanently</td></tr>
-<tr><td><b>Daily total</b></td><td><b>~795</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
+<tr><td><b>Daily total</b></td><td><b>~798</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
 </table>
 <p><b>Calls a night and cost per request are different numbers and the table says which is which.</b> They coincide wherever a job makes one request a night and they do not where a job makes several, as the minute bars do at five calls a name. Charging a budget the wrong one of the two is the accounting error the ceiling exists to catch, so the cost column is what a stage charges per request and the cadence column is how often it charges it. Both are checked: <code>pinned-constants</code> reads each cost against the vendor client's constant and the dividend cadence against the stage's default.</p>
 <p><b>The dividend row is the reason the two columns are separate,</b> and it is worth keeping the history. It read 20 a night at a cost of 100 because the request ran weekly, and the 20 was an amortised figure that could pin nothing. Splitting the columns made the weekly cadence legible, and legible is what made it obviously wrong: a corporate action blocks calculation, and an action nobody has observed blocks nothing.</p>

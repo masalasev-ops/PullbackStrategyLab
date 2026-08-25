@@ -47,6 +47,8 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   SCREENS.html
 /tools            ci.ps1  ci.sh  verify-phase  snapshot-db  migrate
                   derive-indicators.py  one-time verification aid, not run by CI
+/fixtures         captured  the golden fixture's inputs, verbatim vendor responses
+                  with a manifest naming the endpoint, query and instant of each
 /prompts          gitignored. spent build prompts, kept locally
 /data             gitignored. the store lives here
 .gitattributes    line endings, normalised to LF in the repository
@@ -131,6 +133,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `order-provenance` | No order row exists whose writer was not RiskGate |
 | `check-completeness` | Every setup row has a result recorded for every check defined at its date |
 | `stated-counts` | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
+| `fixture-inputs` | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
 
 **`coverage-reported` is the one that matters most and is easiest to lose.** Under-reporting is survivorship: a check that errors loudly gets fixed because it blocks, while a check that silently narrows its own scope keeps passing. So the only broken checks that survive in verification code are the ones that under-report. Green means "nothing I ran failed", never "nothing is wrong".
 

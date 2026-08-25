@@ -103,9 +103,11 @@ Insert DailyBarIngestor
 **This is what satisfies a rebuild demand.** IndicatorEngine reads the latest refetch of a ticker at or before the as-of date and treats every demand observed at or before it as accounted for.
 
 ### `index_bar`
-Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
+Grain: symbol + date + `observed_at`. SPY, QQQ, IWM. Same shape and the same terms as `daily_bar`: **append-only, never deleted, never updated**, a correction arriving as a new row with a later `observed_at`, and reads taking the latest observation at or before the as-of date.
 
-Insert IndexIngestor
+Insert IndexIngestor · PK (`symbol`, `bar_date`, `observed_at`)
+
+**No foreign key to `security`.** A tracker is not part of the tradable universe and never appears in a screen. It is read to say what the market did, which is a different question from what any one stock did.
 
 ### `intraday_bar`
 Grain: ticker + minute. Phase 4. Fetched for every flagged setup, not only planned ones, because a variant selecting a name the baseline passed on must still be resolvable.

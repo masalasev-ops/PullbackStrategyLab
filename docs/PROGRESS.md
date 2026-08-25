@@ -404,3 +404,43 @@ Carried:    One `CONFIRMED` value per ticker against a charting platform's own r
             is missing is only the history of splits before the lab started. Due 1.7.
             54 universe members are short of the warm-up and get no indicator row. They are names
             listed for less than 150 sessions, which is a fact about them rather than a defect.
+
+## 1.9 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `IndexIngestor` and migration 010 creating `index_bar`, on the same terms as
+            `daily_bar`: append-only, keyed with `observed_at`, reads taking the latest
+            observation at or before the as-of date. `IndexBarReader` beside it.
+            Three calls, not one bulk request. The bulk endpoint carries all three symbols inside
+            the whole market's response and is priced per market day, so asking it for three
+            symbols would be a hundred calls to learn three numbers. The per-ticker endpoint is
+            one call a symbol at any depth, which makes the nightly update and the backfill the
+            same request.
+            `FixtureCapture`, a one-time stage that stores one real vendor response per endpoint
+            verbatim, with the endpoint, the query and the instant beside it, and `fixture-inputs`
+            as a named CI step asserting every endpoint a live run exercises has one.
+
+Measured:   `index-bars 2026-08-25` against live EODHD: 3 symbols, 2,253 bars over three years,
+            3 calls, 2,253 rows written.
+            `capture-fixture 2026-08-24`: 37 responses, 33 symbols, 15,368,544 bytes, 338 calls,
+            recorded outside the daily ceiling. Two files are most of it: the exchange symbol list
+            at 7.6 MB and the whole-market bulk response at 6.7 MB. The 33 histories are about
+            1 MB together.
+            `tools/ci.ps1` green on Windows, 17 steps, 118 tests.
+
+Verified:   The captured responses are diffed against the manifest by `fixture-inputs`, which also
+            asserts no response and no recorded query carries an `api_token`. The token is in the
+            URL on every request, so a capture that stored the URL would have put the credential
+            in the repository, and the check exists because that would have been silent.
+
+Findings:   Observation. The two bulk responses are 14.3 of the 15.4 MB. Reading: they were kept
+            whole rather than trimmed. Trimming would make them a hand-edited derivative of a
+            captured response, which is neither tier and is exactly the muddle the two tiers
+            exist to prevent. Git packs them well and the fixture is captured once.
+            Observation. The fixture holds 33 histories for 30 tickers. Reading: the three
+            trackers are captured alongside, because the index path is a path a live run
+            exercises and the decision asks for a captured input for each of those, not for each
+            table.
+
+Carried:    RUNBOOK's step 5, the split history for every survivor, is a second 2,070 calls and
+            has not run. Nothing depends on it: splits arrive nightly from the bulk endpoint, so
+            what is missing is only the history of splits from before the lab started. Due 1.7.

@@ -142,7 +142,7 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 | 1.6 | Both phase 1 defects that passed a unit test and failed live are re-read against the input tiers: each would show as unexamined rather than green, because the path had no captured input. If either would still read as green, the tier definition is wrong rather than the defect being unlucky | 1.7 |
 | 1.6 | One `CONFIRMED` value per hand-picked ticker, checked against a charting platform's own readout. The derivation at 1.6 is a second implementation by the same author, which rules out a transcription error and not a shared misreading of a definition. The three values and the exact formula they were computed under are recorded in PROGRESS so the comparison is unambiguous | 1.7 |
 | 1.6 | Indicator rows already written for past sessions are not recomputed when a rebuild lands, so a row computed on the old basis stands. `indicator_daily` is keyed on ticker and date with no observation, and SCHEMA declares TierClassifier as its only updater, so the fix is a decision about the store's shape rather than a code change | 1.7 |
-| 1.6 | The full-universe backfill, RUNBOOK's step 4, has not run. 2N is 4,140 calls against a 5,000 daily ceiling, so it is the two-day operation RUNBOOK describes. Until it runs, indicators exist for the names that carried an action and nothing else | 1.7 |
+| 1.9 | RUNBOOK's step 5, the split history for every survivor, is a second 2,070 calls and has not run. Nothing depends on it: splits arrive nightly from the bulk endpoint, so what is missing is only the history of splits from before the lab started | 1.7 |
 
 ---
 

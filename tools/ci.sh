@@ -69,6 +69,8 @@ step 'check-api-isolation'          run_check 'api-isolation'
 step 'check-ci-parity'              run_check 'ci-parity'
 step 'check-clock-usage'            run_check 'clock-usage'
 step 'check-bar-append-only'        run_check 'bar-append-only'
+step 'check-fixture-inputs'        run_check 'fixture-inputs'
+
 step 'check-shell-executable'       run_check 'shell-executable'
 
 step 'suite' dotnet test "$test_project" --no-build --nologo

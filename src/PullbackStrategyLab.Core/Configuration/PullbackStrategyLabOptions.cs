@@ -40,6 +40,12 @@ public sealed record PullbackStrategyLabOptions
     public ApiOptions Api { get; init; } = new();
 
     public UniverseOptions Universe { get; init; } = new();
+
+    /// <summary>
+    /// The market trackers the regime label is read from. Trackers rather than the indexes
+    /// themselves, because a tracker has a bar with a volume and an index has a level.
+    /// </summary>
+    public IReadOnlyList<string> IndexSymbols { get; init; } = ["SPY", "QQQ", "IWM"];
 }
 
 /// <summary>

@@ -36,9 +36,14 @@ public static class Program
         builder.Services.AddSingleton<DailyBarIngestor>();
         builder.Services.AddSingleton<ActionIngestor>();
         builder.Services.AddSingleton<IndicatorEngine>();
+        builder.Services.AddSingleton<IndexIngestor>();
+        builder.Services.AddSingleton<FixtureCapture>();
 
         // Only the Worker holds a vendor client. The Api never calls the vendor and gets no key.
-        builder.Services.AddHttpClient<IMarketDataVendor, EodhdClient>();
+        // One instance behind two faces: the stages see the interface, and the fixture capture
+        // needs the client itself because it stores responses verbatim rather than parsed.
+        builder.Services.AddHttpClient<EodhdClient>();
+        builder.Services.AddSingleton<IMarketDataVendor>(sp => sp.GetRequiredService<EodhdClient>());
 
         using IHost host = builder.Build();
 
@@ -55,6 +60,8 @@ public static class Program
                 DailyBarIngestor.Name => host.Services.GetRequiredService<DailyBarIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 ActionIngestor.Name => host.Services.GetRequiredService<ActionIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 DailyBarIngestor.BackfillName => host.Services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
+                IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+                FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -96,7 +103,9 @@ public static class Program
         DailyBarIngestor.Name,
         ActionIngestor.Name,
         DailyBarIngestor.BackfillName,
+        IndexIngestor.Name,
         IndicatorEngine.Name,
+        FixtureCapture.Name,
     ];
 
     private static void WriteUsage()

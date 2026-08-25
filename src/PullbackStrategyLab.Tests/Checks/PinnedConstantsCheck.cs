@@ -86,6 +86,16 @@ public sealed class PinnedConstantsCheck
             BudgetCost(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, dividends, cost",
             BudgetCost(architecture, "Dividends, bulk"), EodhdClient.BulkDividendCost, "EodhdClient.BulkDividendCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, cost",
+            BudgetCost(architecture, "Index bars"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, calls a night",
+            int.Parse(new string(BudgetCell(architecture, "Index bars", 1).Where(char.IsDigit).ToArray()), CultureInfo.InvariantCulture),
+            defaults.IndexSymbols.Count, "PullbackStrategyLabOptions.IndexSymbols.Count"));
+        pins.Add(Pin.Text("SCHEMA.md, the three index symbols",
+            schema.Contains("SPY, QQQ, IWM", StringComparison.Ordinal),
+            defaults.IndexSymbols.SequenceEqual(["SPY", "QQQ", "IWM"], StringComparer.Ordinal),
+            "PullbackStrategyLabOptions.IndexSymbols"));
+
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, history refetch, cost",
             BudgetCost(architecture, "History refetch"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
 
@@ -158,7 +168,8 @@ public sealed class PinnedConstantsCheck
             "the parameter arrives with the checkpoint that builds the component it governs");
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
-        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "History refetch", "Daily total"];
+        string[] pinnedBudgetRows =
+            ["Whole-market daily bars", "Splits, bulk", "Dividends, bulk", "Index bars", "History refetch", "Daily total"];
         coverage.NotExamined(
             "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,

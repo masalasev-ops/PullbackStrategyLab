@@ -262,6 +262,35 @@ public sealed class EodhdClient : IMarketDataVendor
         return newShares / oldShares;
     }
 
+    /// <summary>
+    /// One response, exactly as the vendor sent it, with the endpoint and query it was asked
+    /// for. For capturing a fixture input at the CAPTURED tier and for nothing else: no stage
+    /// reads a response this way, because a stage that parsed raw text would be a second reading
+    /// of the vendor's shape.
+    ///
+    /// The query comes back without the token. It is the one field that must never reach a file
+    /// the repository holds.
+    /// see: Fixture inputs record where they came from, and a path a live run exercises needs a captured one
+    /// </summary>
+    public async Task<VendorResult<CapturedResponse>> GetRawAsync(
+        string path,
+        string? query,
+        int cost,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(cost))
+        {
+            return VendorResult<CapturedResponse>.OutOfBudget();
+        }
+
+        string body = await GetStringAsync(path, query, cancellationToken).ConfigureAwait(false);
+        return VendorResult<CapturedResponse>.Delivered(new CapturedResponse(path, query ?? string.Empty, body));
+    }
+
     private async Task<T?> GetAsync<T>(string path, string? query, CancellationToken cancellationToken)
     {
         if (!_options.Vendor.HasApiKey)
@@ -292,6 +321,32 @@ public sealed class EodhdClient : IMarketDataVendor
 
         await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         return await JsonSerializer.DeserializeAsync<T>(body, Json, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The same request, returning the body as text. Shares the failure handling above.</summary>
+    private async Task<string> GetStringAsync(string path, string? query, CancellationToken cancellationToken)
+    {
+        if (!_options.Vendor.HasApiKey)
+        {
+            throw new VendorException(
+                $"No vendor token is configured. It is read from '{VendorOptions.VendorTokenKey}', which lives in "
+                + "appsettings.Secrets.json beside appsettings.json in this project.");
+        }
+
+        string url = $"{path}?api_token={Uri.EscapeDataString(_options.Vendor.ApiKey)}&fmt=json"
+            + (query is null ? string.Empty : "&" + query);
+
+        using HttpResponseMessage response = await _http
+            .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // The token is in the URL, so the URL never appears in a message.
+            throw new VendorException($"{path} returned {(int)response.StatusCode} {response.StatusCode}.");
+        }
+
+        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -374,6 +429,12 @@ public sealed class EodhdClient : IMarketDataVendor
         public decimal? Dividend { get; init; }
     }
 }
+
+/// <summary>
+/// One vendor response held verbatim, with the endpoint and the query it answered. The query
+/// never carries the token.
+/// </summary>
+public sealed record CapturedResponse(string Endpoint, string Query, string Body);
 
 /// <summary>A request the vendor refused or could not answer. Never carries the URL, which carries the token.</summary>
 public sealed class VendorException : Exception

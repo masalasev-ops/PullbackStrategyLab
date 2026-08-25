@@ -77,6 +77,8 @@ Invoke-Step 'check-api-isolation'          { Invoke-Check 'api-isolation' }
 Invoke-Step 'check-ci-parity'              { Invoke-Check 'ci-parity' }
 Invoke-Step 'check-clock-usage'            { Invoke-Check 'clock-usage' }
 Invoke-Step 'check-bar-append-only'        { Invoke-Check 'bar-append-only' }
+Invoke-Step 'check-fixture-inputs'         { Invoke-Check 'fixture-inputs' }
+
 Invoke-Step 'check-shell-executable'       { Invoke-Check 'shell-executable' }
 
 Invoke-Step 'suite' { dotnet test $TestProject --no-build --nologo }

@@ -51,6 +51,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
 | 17:30 | bulk daily bars | 100 |
 | 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
+| 17:50 | `index-bars`, one call a tracker | 3 |
 | 18:00 | `indicators` | 0 |
 | 18:10 | scans, ladder grade | 0 |
 | 18:15 | cluster, regime | 0 |
@@ -67,7 +68,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | scoreboard | 0 |
-| **total** | | **~795 against a 5,000 ceiling** |
+| **total** | | **~798 against a 5,000 ceiling** |
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
 

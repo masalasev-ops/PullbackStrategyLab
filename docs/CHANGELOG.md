@@ -27,6 +27,28 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-08-25 — CLAUDE.md — cites Fixture inputs record where they came from, and a path a live run exercises needs a captured one
+Was:  A repository layout with no `/fixtures`, and a checks table with no `fixture-inputs` row.
+Now:  `/fixtures  captured  the golden fixture's inputs, verbatim vendor responses with a manifest naming the endpoint, query and instant of each`, and a `fixture-inputs` row in the checks table.
+Why:  The decision requires a captured input per endpoint and nothing enforced it. A check nobody runs is not a check, and a directory the layout does not name reads as something somebody forgot about.
+
+### 2026-08-25 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  ### `index_bar`
+      Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
+      Insert IndexIngestor
+Now:  Grain: symbol + date + `observed_at`, the same terms as `daily_bar` stated rather than implied, `Insert IndexIngestor · PK (symbol, bar_date, observed_at)`, and a note headed **No foreign key to `security`**.
+Why:  "Same shape as daily_bar" left the key and the append-only terms to be inferred, and the two places it could have been inferred wrong are the two that matter: whether a correction appends and whether a tracker has to be a listed security.
+
+### 2026-08-25 — ARCHITECTURE.html — cites The vendor is EODHD, and the endpoint mix is what the call budget is built on
+Was:  A data budget with no row for the index bars, totalling ~795.
+Now:  A row reading Index bars, three trackers, 3 a night, 1 per request, nightly, and a total of ~798.
+Why:  The trackers are a nightly cost and the budget did not carry them. Three calls rather than a hundred is also the endpoint split doing its job, and a table that did not state it would leave the next session free to reach for the bulk endpoint.
+
+### 2026-08-25 — RUNBOOK.md — cites The vendor is EODHD, and the endpoint mix is what the call budget is built on
+Was:  A nightly schedule with no index step, totalling ~795.
+Now:  | 17:50 | `index-bars`, one call a tracker | 3 |, and a total of ~798.
+Why:  Same edit in the document an operator follows. The position matters: after the bars and before the indicators, because the regime label at 2.5 reads what this writes.
+
 ### 2026-08-25 — ARCHITECTURE.html — cites An unprocessed corporate action of any kind blocks calculation, not only a split
 Was:  <tr><td><b>ActionIngestor</b></td><td>Nightly / weekly</td><td>Splits and dividends, and forces an average rebuild when a split lands</td></tr>
       <tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30</td><td>Pulls the whole market's closing prices in one bulk request</td></tr>

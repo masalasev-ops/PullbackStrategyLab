@@ -19,6 +19,9 @@ public static class RepositoryLayout
 
     public static string Artifacts => Path.Combine(Root, "artifacts");
 
+    /// <summary>The golden fixture's captured inputs, and the manifest saying where each came from.</summary>
+    public static string Fixtures => Path.Combine(Root, "fixtures", "captured");
+
     /// <summary>The five specs and the three records, plus the artefact. Everything a citation can live in.</summary>
     public static IReadOnlyList<string> CorpusFiles { get; } =
     [
