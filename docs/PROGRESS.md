@@ -147,3 +147,27 @@ Findings:   Observation. Five places treated one transport as the implementation
 Verified:   `tools/ci.ps1` green on Windows, 16 steps, 74 tests. `decision-resolves` examines 56 decision names and 59 citations across 64 files, and the new name resolves from ARCHITECTURE and from BUILD_PLAN. `stated-counts` unaffected: no count in any document describes the number of decisions.
 
 Carried:    The empty tool set is a property of configuration on the subscription path rather than of there being no mechanism, so it holds only as long as the test asserting it does. Due at 6.5, where that test is a done condition.
+
+## 1.5 — 2026-08-25 — phase-1-ingest-and-charts
+
+Built:      `ActionIngestor`, one bulk request a night for splits and an optional second for dividends, storing actions for the names in the universe. Migration 004 creates `corporate_action` with PK (`ticker`, `effective_date`, `type`) and `indicator_rebuild` with PK (`ticker`, `effective_date`), both with a foreign key to `security`.
+            The rebuild demand. A split that rescales history writes a row against that ticker and no other, and the row is stamped rather than cleared when it is honoured (see: A split records a rebuild demand that is stamped rather than cleared). `IndicatorRebuildReader` answers which tickers were blocked as of a given night, point in time like every other read, so a replay of a night the split was outstanding still says the stock was blocked after the rebuild has landed.
+            `CorporateActionReader`, with the same shape as `DailyBarReader`: every read takes an as-of date and there is no overload that does not.
+            `StoreText.RatioToStorageText`, named separately from the price crossing. Ratios are stored as fractions, and a crossing named for what it carries is what stops 6.8 being written where 0.068 was meant.
+            Two more pins in `pinned-constants`: the whole-market bulk cost and the splits bulk cost, read from `EodhdClient` and compared against the data budget table.
+
+Measured:   For 2026-08-24, live: 15 splits and 248 dividends published for the whole market, 20 of them in the 2,070-name universe, 20 rows written and one rebuild demanded. The one split was IESC, two for one. 19 of the 20 were dividends.
+            200 calls for the pair of requests. The splits request is 100 and non-negotiable nightly; the dividends request is 100 and runs weekly.
+            `tools/ci.ps1` green on Windows, 16 steps, 94 tests.
+
+Verified:   The done condition against real data rather than only a synthetic fixture. One split landed in the universe on 2026-08-24 and exactly one ticker is blocked. The synthetic fixture holds the case the live night could not produce: a stock splitting, a second paying a dividend the same evening, a third doing nothing, and only the first blocked.
+            Live rerun of the same date: 0 written, 20 already stored, 0 rows. That is the check 1.4 taught, run against the stage that could repeat the defect.
+
+Findings:   Observation. The data budget states roughly 20 calls for the bulk dividend request. Reading: that is the nightly average of a weekly request rather than the price of one, and the request itself costs 100 like every other bulk call. It is the only row of that table whose figure is an average. Charging the budget 20 would under-count by 80 every time the stage ran, which is exactly the accounting error the ceiling exists to catch, so the constant is the cost and the schedule is what makes it weekly. The row is reported unexamined by `pinned-constants` with that reason, rather than pinned to a number that would be wrong.
+            Observation. RUNBOOK's split-recovery row said to rerun the action ingest and then force an indicator rebuild. Reading: the second half describes an operator action that does not exist and now never will, because the rerun raises the demand by itself. Corrected as a clean edit.
+            Observation. SCHEMA declared where a split is stored and nowhere for the rebuild it forces, while ARCHITECTURE stated both that ActionIngestor forces a rebuild and that an unprocessed split makes calculations refuse to run. Reading: a stated behaviour with no store behind it is one nothing can assert, which is how it would have reached 1.6 as a comment rather than as a mechanism. `indicator_rebuild` is that store and the decision naming it is new.
+            Observation. A dividend also moves the adjusted close, and this build raises a demand only for a split. Reading: the corpus says split throughout, so the rule was followed rather than widened on a guess. Whether an accumulated dividend adjustment is large enough to matter to a 50-day average is a measurement, and 1.6 is where the average exists to measure it against.
+
+Carried:    Nothing reads `indicator_rebuild` to refuse a calculation yet. The reader exists and has no caller, because the thing that would refuse does not exist. Due at 1.6.
+            A vendor publishing a different ratio for a split already stored is counted and printed and cannot reopen a rebuild already stamped, because `rebuilt_at` belongs to IndicatorEngine and this stage may not clear another component's column. Where the rebuild is still outstanding, which is the ordinary case, the stock is blocked regardless. Due at 1.6.
+            The dividend question above. Due at 1.6.

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
+using PullbackStrategyLab.Worker.Vendor;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -74,6 +75,15 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, long",
             ParameterMoney(architecture, "Liquidity floor, long"), defaults.Universe.LiquidityFloorLong, "UniverseOptions.LiquidityFloorLong"));
 
+        // The two bulk request costs, stated in the data budget and held in the vendor client.
+        // The budget is only meaningful if the cost a stage charges is the cost the table was
+        // added up from, and a request whose price drifted would spend the ceiling faster than
+        // any document said while every stage still reported staying inside it.
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, whole-market daily bars",
+            BudgetCalls(architecture, "Whole-market daily bars"), EodhdClient.BulkEndOfDayCost, "EodhdClient.BulkEndOfDayCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, splits",
+            BudgetCalls(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
+
         // The session zone, named in the build plan and defaulted in configuration.
         pins.Add(Pin.Text("BUILD_PLAN.md 1.2, the session zone",
             buildPlan.Contains("America/New_York", StringComparison.Ordinal),
@@ -115,6 +125,15 @@ public sealed class PinnedConstantsCheck
             "rows of the authored parameters table with no code constant yet",
             parameters.Count - pinnedParameters.Length,
             "the parameter arrives with the checkpoint that builds the component it governs");
+
+        IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
+        string[] pinnedBudgetRows = ["Whole-market daily bars", "Splits, bulk"];
+        coverage.NotExamined(
+            "rows of the data budget with no request cost to pin them to",
+            budget.Count - pinnedBudgetRows.Length,
+            "the request arrives with the checkpoint that makes it, and the dividends row is a nightly "
+            + "average of a weekly request rather than the price of one, so it pins to nothing by design");
+
         coverage.Report();
 
         string[] wrong = pins.Where(p => !p.Holds).Select(p => p.Describe()).ToArray();
@@ -148,6 +167,23 @@ public sealed class PinnedConstantsCheck
             "B" => number * 1_000_000_000m,
             _ => number,
         };
+    }
+
+    /// <summary>
+    /// The calls column of one data budget row. The table writes some figures with a leading
+    /// tilde, which is the document saying the number is an estimate, so only the rows without
+    /// one are pinned and the rest are reported as unexamined.
+    /// </summary>
+    private static int BudgetCalls(string architecture, string job)
+    {
+        string value = HtmlTable.BodyRowsUnder(architecture, "Data budget")
+            .Single(r => r[0].StartsWith(job, StringComparison.Ordinal))[1];
+
+        Assert.False(value.Contains('~', StringComparison.Ordinal),
+            $"The data budget states \"{value}\" for {job}, which is an estimate rather than a cost. "
+            + "An estimate cannot pin a constant, so this row belongs in the unexamined count instead.");
+
+        return int.Parse(new string(value.Where(char.IsDigit).ToArray()), CultureInfo.InvariantCulture);
     }
 
     private static string ParameterCell(string architecture, string parameter) =>

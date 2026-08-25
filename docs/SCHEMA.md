@@ -76,10 +76,14 @@ Grain: ticker + effective date + type.
 | `ticker` | TEXT | |
 | `effective_date` | TEXT | |
 | `type` | TEXT | `split` or `dividend` |
-| `ratio` | TEXT | |
+| `ratio` | TEXT | on a split, new shares over old as a factor, so 4 for a four-for-one. On a dividend, cash per share |
 | `observed_at` | TEXT | |
 
-Insert ActionIngestor
+Insert ActionIngestor · PK (`ticker`, `effective_date`, `type`)
+
+*Note on `ratio`.* It carries a factor for one type and a money amount for the other, which is the one column in this schema whose name does not describe half its contents. It stays one column because the grain already separates the two by `type` and a second nullable column would put the same fact in two places, but the note stays here so nobody averages the column.
+
+**An action is an event, not a measurement.** Unlike a bar, the first observation of it stands: a rerun of the night finds the row and does nothing rather than writing a second observation, and there is no update declared. A vendor publishing a different ratio for a split already stored is therefore not absorbed. It is counted, printed, and demands the rebuild again, because the factor the history was rebuilt against may be the wrong one.
 
 ### `index_bar`
 Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
@@ -125,6 +129,23 @@ Grain: ticker + date. Computed locally from `daily_bar`, never requested from th
 Insert IndicatorEngine · Update TierClassifier (`ladder_grade` only)
 
 *Note on `adr_20`.* Every ratio in this schema is a fraction. `adr_20` reads as though it were a percentage because of its name, so it is the one column whose name argues against the rule. It stays a fraction and this note stays here rather than the column being renamed, because `adr` appears in the signal library and in the screens.
+
+### `indicator_rebuild`
+Grain: ticker + the effective date of the split that demanded it. One row per split, and the row stays after it is honoured.
+
+| Column | Type | Note |
+|---|---|---|
+| `ticker`, `effective_date` | TEXT | PK. The split that demanded the rebuild |
+| `requested_at` | TEXT | when the split was observed |
+| `rebuilt_at` | TEXT | NULL until the ticker has been recomputed from scratch |
+
+Insert ActionIngestor · Update IndicatorEngine (`rebuilt_at` only)
+
+**A row with a NULL `rebuilt_at` is a stock whose calculations must refuse to run.** That is where the architecture's unprocessed-split behaviour is read from. A split rescales every adjusted close before it, so an average taken across the boundary is arithmetic on two different units and its answer is wrong by a factor while looking entirely reasonable.
+
+**The demand is recorded, not queued.** The row is never deleted and never cleared; it gains a date. A queue that empties answers "is anything outstanding" and nothing else, and the question worth answering months later is which splits this store has honoured and when.
+
+**Two components, on purpose.** ActionIngestor raises the demand and IndicatorEngine satisfies it. A component that can both raise and close its own condition raises nothing.
 
 ### `scan_hit`
 Grain: ticker + date + scan.

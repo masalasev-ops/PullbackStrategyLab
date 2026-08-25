@@ -139,6 +139,9 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 | Raised | Obligation | Due at |
 |---|---|---|
 | 1.1 | Expectations for 1.1 to 1.6 owed to the golden fixture with their tier. Done condition seven cannot be met before the fixture exists | 1.7 |
+| 1.5 | A dividend also moves the adjusted close, and only a split raises a rebuild demand in this build. Whether the accumulated dividend adjustment is large enough to matter to a 50-day average is unmeasured, so the corpus's rule was followed rather than widened | 1.6 |
+| 1.5 | `indicator_rebuild` has a reader and no caller. Nothing refuses to run yet, because the thing that would refuse does not exist | 1.6 |
+| 1.5 | A vendor publishing a different ratio for a split already stored is counted and printed, and cannot reopen a rebuild already stamped: `rebuilt_at` belongs to IndicatorEngine and ActionIngestor may not clear another component's column | 1.6 |
 
 ---
 

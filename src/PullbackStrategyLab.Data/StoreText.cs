@@ -25,6 +25,21 @@ public static class StoreText
     public static decimal StorageTextToPrice(string text) =>
         decimal.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
 
+    /// <summary>
+    /// A ratio, which is decimal in code and TEXT in storage like a price and for the same
+    /// reason: a split of 3 for 2 is 1.5 exactly in decimal and is not in binary floating
+    /// point, and a factor that is a hair under scales a whole price history a hair under.
+    ///
+    /// Named separately from a price rather than folded into it. Ratios are stored as
+    /// fractions, never percentages, and a crossing named for what it carries is what stops
+    /// 6.8 being written where 0.068 was meant.
+    /// </summary>
+    public static string RatioToStorageText(decimal ratio) =>
+        ratio.ToString(CultureInfo.InvariantCulture);
+
+    public static decimal StorageTextToRatio(string text) =>
+        decimal.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
+
     public static string StatisticToStorageText(double statistic) =>
         statistic.ToString("R", CultureInfo.InvariantCulture);
 

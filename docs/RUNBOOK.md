@@ -47,8 +47,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | Time (ET) | Stage | Calls |
 |---|---|---|
 | during session | spread snapshots, two passes | 120 |
-| 17:20 | splits, bulk | 100 |
-| 17:20 | dividends, bulk, weekly rather than daily | ~20 |
+| 17:20 | `actions`, splits bulk | 100 |
+| 17:20 | `actions --with-dividends`, weekly rather than daily. The 20 is a nightly average of a weekly request, not its price: it costs 100 like every other bulk call | ~20 |
 | 17:30 | bulk daily bars | 100 |
 | 18:00 | indicators | 0 |
 | 18:10 | scans, ladder grade | 0 |
@@ -86,7 +86,7 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 |---|---|
 | A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date |
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
-| A split was missed | Rerun the action ingest for that date, then force an indicator rebuild for that ticker. No other ticker is touched |
+| A split was missed | Rerun `actions` for that date. It writes the split and raises the rebuild demand, and until that demand is stamped, calculations for that ticker refuse to run. No other ticker is touched |
 | Database will not open | Restore the most recent snapshot from the data root, then re-run the nightly stages for the missing dates in order |
 | `git` permission error mid-commit on Windows | Run `git fsck` before retrying. Usually a real-time scanner or file indexer holding a handle on a loose object. Add a scanner exclusion for the repository folder |
 | Researcher produced nothing | Check whether the usage allowance is exhausted. The job queues rather than returning a degraded proposal, and this is expected behaviour |

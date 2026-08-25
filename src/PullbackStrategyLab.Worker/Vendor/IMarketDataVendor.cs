@@ -34,6 +34,26 @@ public interface IMarketDataVendor
         DateOnly date,
         ICallBudget budget,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Every split effective on one date, whole market, one request. Daily and non-negotiable:
+    /// a split nobody recorded corrupts every average that stock has, all at once and silently.
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkSplitsAsync(
+        string exchange,
+        DateOnly date,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Every dividend effective on one date, whole market, one request. Cheaper than splits and
+    /// run weekly rather than nightly, because nothing downstream turns on it yet.
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkDividendsAsync(
+        string exchange,
+        DateOnly date,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -54,6 +74,28 @@ public sealed record VendorResult<T>(T? Value, bool BudgetExhausted)
 
 /// <summary>One row of the exchange symbol list.</summary>
 public sealed record VendorSymbol(string Ticker, string Name, string Exchange, string Type);
+
+/// <summary>
+/// One corporate action as the vendor publishes it. The ratio is decimal from the moment it
+/// arrives: a split of 3 for 2 is 1.5 exactly in decimal and is not in binary floating point,
+/// and a factor a hair under rescales an entire price history a hair under.
+///
+/// For a dividend the ratio is the cash per share rather than a factor, which is the one place
+/// the column name argues against its contents. SCHEMA says so at the column.
+/// </summary>
+public sealed record VendorCorporateAction(
+    string Ticker,
+    DateOnly EffectiveDate,
+    CorporateActionType Type,
+    decimal Ratio)
+{
+    /// <summary>
+    /// True when this action changes the scale of every adjusted close before it, which is what
+    /// forces a rebuild. A one-for-one split is a vendor artefact rather than an event and
+    /// rescales nothing, so it is excluded here rather than filtered by whoever reads this.
+    /// </summary>
+    public bool RescalesHistory => Type == CorporateActionType.Split && Ratio != 1m;
+}
 
 /// <summary>
 /// One daily bar as the vendor publishes it. Prices are decimal from the moment they arrive:

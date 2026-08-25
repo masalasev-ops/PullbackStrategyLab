@@ -172,6 +172,15 @@ Development happens on Windows today and moves to macOS. Both are case-insensiti
 **Averages are computed locally, never through the vendor's technical endpoint**
 About 45,000 calls a day for arithmetic that is one recursive loop over data already stored.
 
+**A split records a rebuild demand that is stamped rather than cleared**
+A split rescales every adjusted close before it. The stored ones were adjusted as of the night each was observed, so the evening after a four-for-one everything already in the store is on the old scale and everything arriving is on the new one, and an average taken across that boundary is arithmetic on two different units. It is wrong by a factor and it looks entirely reasonable, which is why the architecture's answer is that calculations refuse to run for that stock rather than that they carry on.
+
+Refusing requires somewhere to read the refusal from, and the alternative to a stored demand is deriving it: comparing the split's observation time against the time the indicators were last computed. That was rejected because it makes the store answer only the present tense. The question worth answering months later is which splits this store has honoured and when, and a derivation cannot answer it at all.
+
+So the demand is a row, and the row is never deleted and never cleared. It gains a `rebuilt_at`. A queue that empties answers "is anything outstanding" and destroys the history on its way to the answer.
+
+**ActionIngestor raises the demand and IndicatorEngine closes it**, which is one writer per operation rather than an arrangement of convenience. A component that can both raise and satisfy its own condition raises nothing, and the failure mode is silent: the demand is created and closed in the same pass, every check still passes, and no calculation is ever blocked.
+
 **Minute bars are fetched for every flagged setup, not only the planned ones**
 Otherwise a version selecting a name the baseline passed on cannot be resolved, and the missing cases are exactly the disagreements.
 

@@ -12,8 +12,16 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
 {
     private readonly List<VendorSymbol> _symbols = [];
     private readonly Dictionary<DateOnly, List<VendorDailyBar>> _bars = [];
+    private readonly Dictionary<DateOnly, List<VendorCorporateAction>> _actions = [];
 
     public List<DateOnly> DatesRequested { get; } = [];
+
+    /// <summary>
+    /// Which action types were actually asked for, and on what date. A stage that started
+    /// pulling dividends nightly would cost a bulk request a night and nothing else would
+    /// notice, so the fake records the question as well as answering it.
+    /// </summary>
+    public List<(DateOnly Date, CorporateActionType Type)> ActionsRequested { get; } = [];
 
     public int SymbolListRequests { get; private set; }
 
@@ -59,6 +67,26 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
         return this;
     }
 
+    /// <summary>States one split, as a factor: 4 for a four-for-one, 1.5 for a three-for-two.</summary>
+    public FakeMarketDataVendor Split(DateOnly date, string ticker, decimal ratio) =>
+        Action(date, ticker, CorporateActionType.Split, ratio);
+
+    /// <summary>States one dividend, in cash per share.</summary>
+    public FakeMarketDataVendor Dividend(DateOnly date, string ticker, decimal perShare) =>
+        Action(date, ticker, CorporateActionType.Dividend, perShare);
+
+    private FakeMarketDataVendor Action(DateOnly date, string ticker, CorporateActionType type, decimal ratio)
+    {
+        if (!_actions.TryGetValue(date, out List<VendorCorporateAction>? day))
+        {
+            day = [];
+            _actions[date] = day;
+        }
+
+        day.Add(new VendorCorporateAction(ticker, date, type, ratio));
+        return this;
+    }
+
     public Task<VendorResult<IReadOnlyList<VendorSymbol>>> GetExchangeSymbolListAsync(
         string exchange,
         ICallBudget budget,
@@ -95,5 +123,41 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
             : [];
 
         return Task.FromResult(VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(day));
+    }
+
+    public Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkSplitsAsync(
+        string exchange,
+        DateOnly date,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default) =>
+        Actions(date, CorporateActionType.Split, EodhdClient.BulkSplitCost, budget);
+
+    public Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> GetBulkDividendsAsync(
+        string exchange,
+        DateOnly date,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default) =>
+        Actions(date, CorporateActionType.Dividend, EodhdClient.BulkDividendCost, budget);
+
+    private Task<VendorResult<IReadOnlyList<VendorCorporateAction>>> Actions(
+        DateOnly date,
+        CorporateActionType type,
+        int cost,
+        ICallBudget budget)
+    {
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(cost))
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorCorporateAction>>.OutOfBudget());
+        }
+
+        ActionsRequested.Add((date, type));
+
+        IReadOnlyList<VendorCorporateAction> day = _actions.TryGetValue(date, out List<VendorCorporateAction>? actions)
+            ? actions.Where(a => a.Type == type).ToArray()
+            : [];
+
+        return Task.FromResult(VendorResult<IReadOnlyList<VendorCorporateAction>>.Delivered(day));
     }
 }
