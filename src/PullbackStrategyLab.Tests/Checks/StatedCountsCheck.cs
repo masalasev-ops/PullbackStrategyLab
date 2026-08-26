@@ -88,6 +88,22 @@ public sealed partial class StatedCountsCheck
             longChecks.Count,
             "rows of the long check list against the split stated above it"));
 
+        // ARCHITECTURE.html, the rows the one-time calibration at 2.11 revisits. It read "four
+        // thresholds" over three marked rows until the 2.1 spec pass, because the stated count was
+        // of numbers and the table is of rows, and the pullback-shape row carries two numbers.
+        // Nothing derived either figure, so both drifted. Counted over rows now, which is the unit
+        // the table actually has.
+        IReadOnlyList<IReadOnlyList<string>> authored = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
+        Assert.Contains(
+            "Five rows of the authored-parameters table are marked \"phase 2 count check\"",
+            architecture,
+            StringComparison.Ordinal);
+        claims.Add(new Claim(
+            "ARCHITECTURE.html, the rows marked phase 2 count check",
+            5,
+            authored.Count(r => r.Count > 2 && r[2].Equals("Phase 2 count check", StringComparison.OrdinalIgnoreCase)),
+            "rows of the authored parameters table whose review point is the phase 2 count check"));
+
         // BUILD_PLAN.md, six phases.
         Assert.Contains("Six phases.", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim("BUILD_PLAN.md, six phases", 6, PhaseHeading().Matches(buildPlan).Count, "phase headings"));

@@ -283,6 +283,164 @@ Insert ForwardReturnFiller
 
 ---
 
+## Signals
+
+The library. Every quantity the frozen row can carry, its formula, and the stored columns it reads.
+`signal_definition` holds this as data from 6.2, when SignalAdmissionTest exists to write it; until
+then this section is the library, and it is a section here rather than a document of its own (see: The corpus is eight documents plus one artefact, and a ninth requires retiring one).
+
+**Every signal traces to named stored columns, and one does not.** That is the point of writing the
+library down: the source columns are what the point-in-time test is asserted against, and a signal
+whose formula reads something nothing stores cannot be computed, cannot be replayed, and cannot be
+proposed against. The one that does not trace is named at the bottom, as a finding rather than as an
+assumption.
+
+**Status is `active` or `candidate`.** Active means SignalVectorizer freezes it on every setup, and
+the set of active signals is what "copies every number the decision depended on" resolves to.
+Candidate means the formula and the source columns are settled and nothing computes it yet: the raw
+material is stored and append-only, so SignalBackfiller at 6.1 computes a specified formula across
+the whole setup history rather than inventing one at the time. Declaring a candidate costs nothing
+statistically, because the correction threshold scales with signals **screened** rather than signals
+declared (see: The correction threshold scales with signals screened, not signals shown).
+
+**Prices are read on the adjusted basis and ratios are fractions,** on the conventions above. Where a
+formula needs an intraday price on the adjusted basis, it is put there through that bar's own factor
+`adj_close / close`, which is what IndicatorEngine does for high and low. Raw prices appear only in
+the trade geometry, because that is what trades tomorrow.
+
+### Trend and position
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `close_adjusted` | the setup session's adjusted close | `daily_bar.adj_close` | active |
+| `ema_9_distance` | (adjusted close − `ema_9`) / `ema_9` | `daily_bar.adj_close`, `indicator_daily.ema_9` | active |
+| `ema_21_distance` | (adjusted close − `ema_21`) / `ema_21` | `daily_bar.adj_close`, `indicator_daily.ema_21` | active |
+| `ema_50_distance` | (adjusted close − `ema_50`) / `ema_50` | `daily_bar.adj_close`, `indicator_daily.ema_50` | active |
+| `ema_gap_21_50` | (`ema_21` − `ema_50`) / `ema_50` | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ema_gap_21_50_avg_20` | mean of `ema_gap_21_50` over the last 20 sessions | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ladder_grade` | the grade TierClassifier wrote for that session | `indicator_daily.ladder_grade` | active |
+
+*`ema_50_distance` is the extension-from-the-long-average measurement the architecture lists as
+missing. It costs nothing beyond a subtraction over two columns already stored, so it is active
+rather than a candidate.*
+
+### Volatility
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `adr_20` | as stored, a fraction | `indicator_daily.adr_20` | active |
+| `atr_14` | as stored | `indicator_daily.atr_14` | active |
+| `range_avg_20` | as stored | `indicator_daily.range_avg_20` | active |
+| `range_today_over_avg` | (high − low) on the adjusted basis, over `range_avg_20` | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close`, `indicator_daily.range_avg_20` | active |
+
+*`range_today_over_avg` is the number the contraction check turns on, stored as a value rather than
+as a verdict. A check result says whether it was under one; the signal says how far under.*
+
+### The thrust
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `thrust_scan` | which scan the most recent qualifying hit came from | `scan_hit.scan` | active |
+| `thrust_rank` | its rank on that scan | `scan_hit.rank` | active |
+| `thrust_session` | the session of that hit | `scan_hit.as_of` | active |
+| `days_since_thrust` | trading sessions from `thrust_session` to the setup date | `scan_hit.as_of`, `daily_bar.bar_date` | active |
+| `thrust_magnitude` | the scan magnitude that put it on the list, on the adjusted basis | `daily_bar.adj_close`, `daily_bar.open`, `daily_bar.close` | active |
+| `thrust_size_in_ranges` | `thrust_magnitude` / `adr_20` | `daily_bar.adj_close`, `daily_bar.open`, `daily_bar.close`, `indicator_daily.adr_20` | active |
+
+*`days_since_thrust` was bounded by a check and never stored, which the architecture lists as a gap.
+`thrust_size_in_ranges` is the other one it lists, and it is the lever the computed ceiling moves on:
+a 19% jump means something different for a 7% range stock than for a 3% one.*
+
+### The pullback
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `pullback_bars` | sessions from the thrust extreme to the setup date | `daily_bar.bar_date` | active |
+| `pullback_extreme` | lowest adjusted low since the thrust extreme, long; highest adjusted high, short | `daily_bar.low`, `daily_bar.high`, `daily_bar.close`, `daily_bar.adj_close` | active |
+| `retrace_depth` | (thrust extreme − `pullback_extreme`) / (thrust extreme − thrust origin), signed so both directions read the same way | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close` | active |
+| `closes_beyond_floor` | sessions in the pullback closing below `ema_21`, long; above `ema_50`, short | `daily_bar.adj_close`, `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+
+*`closes_beyond_floor` reads a different average per direction, because the checks do: `held-floor`
+is the 21-day and `no-reclaim` is the 50-day. One signal rather than two, because the pair is one
+question asked of whichever average that direction's floor is.*
+
+### The trade geometry
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `trigger_price` | as written, a raw price | `setup.trigger_price` | active |
+| `stop_price` | as written, a raw price | `setup.stop_price` | active |
+| `stop_distance_ranges` | \|trigger − stop\| / (`adr_20` × close) | `setup.stop_distance_ranges` | active |
+| `trigger_distance_ranges` | \|trigger − close\| / (`adr_20` × close) | `daily_bar.close`, `setup.trigger_price`, `indicator_daily.adr_20` | active |
+
+### Liquidity and the name
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `dollar_volume_median_20` | as stored | `indicator_daily.dollar_volume_median_20` | active |
+| `market_cap` | as stored, short side only | `security.market_cap` | active |
+| `listing_age_sessions` | trading sessions since `first_seen` | `security.first_seen`, `daily_bar.bar_date` | active |
+| `industry` | as stored | `security.industry` | active |
+| `cluster_count` | same-industry scan hits that night | `scan_hit.cluster_count` | active |
+
+### The market
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `regime_index_score` | as stored | `regime_daily.index_score` | active |
+| `regime_breadth_score` | as stored | `regime_daily.breadth_score` | active |
+| `regime_label` | as stored | `regime_daily.label` | active |
+
+*Frozen on the setup and filtering nothing, which is what keeps the label available as a clean
+experiment (see: The market-mood label is recorded on every setup and filters nothing in the baseline). Both raw scores sit beside it so a proposal can use the continuous form.*
+
+### Volume, the axis the library does not have
+
+The architecture's own verdict on the library is that it "is almost entirely price path, and volume
+appears nowhere except buried inside a scan definition". That stays true of the active set. The three
+below are declared with their formulas and their source columns and are not frozen, because no phase
+2 decision depends on them and adding them to the frozen row would be widening the library on a
+guess rather than through the admission route.
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `volume_thrust` | raw volume on `thrust_session` | `daily_bar.volume` | candidate |
+| `volume_pullback_mean` | mean raw volume over the pullback bars | `daily_bar.volume` | candidate |
+| `volume_dryup` | `volume_pullback_mean` / `volume_thrust` | `daily_bar.volume` | candidate |
+
+*Raw volume, not adjusted, on the same reasoning `dollar_volume_median_20` uses it: it is what
+changed hands. `daily_bar` is append-only and holds volume from the first ingest, so 6.1 computes
+these across the whole stored history whenever they are admitted.*
+
+### The remaining candidates
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `prior_thrust_outcome` | this security's adjusted move over the ten sessions after each earlier scan hit, averaged | `daily_bar.adj_close`, `scan_hit.as_of` | candidate |
+| `intraday_pullback_shape` | the fraction of each pullback session's range travelled after midday | `intraday_bar` | candidate, owed at 4.2 |
+| `day_of_month` | the calendar day of `as_of`, meaning nothing | `setup.as_of` | candidate, planted at 6.4 |
+
+*`day_of_month` is the planted null control and carries `is_null_control` when the table exists. It
+is declared here rather than at 6.4 so the column it reads is on the record; planting it is
+ContextPacker's job (see: One meaningless signal is planted in the conditional tables).*
+
+### The one that does not trace, recorded as a finding
+
+**`earnings_in_window` has no source column and no budgeted call, so it is not in this library at
+all.** The architecture lists it among the missing measurements, with the reason: "A trade decided by
+an earnings gap is not a test of the pattern, and today the system cannot tell those apart." Nothing
+stored carries an earnings date. `corporate_action` holds splits and dividends and neither implies
+one, and the vendor's calendar endpoint is not among the endpoints the call budget is built on.
+
+Recorded here rather than written as a candidate with an empty source, because a candidate whose
+source columns are blank reads as work scheduled and is actually a purchase nobody has priced. What
+it would cost, so a later session decides rather than rediscovers: one calendar endpoint added to the
+vendor client, and a per-symbol or per-day call whose price against the 5,000 ceiling has not been
+measured. Until that is taken, no rule can refer to whether a setup straddled earnings, and the
+effect sits inside the outcome distribution unlabelled.
+
+---
+
 ## Trading — phase 4
 
 Declared at store level. Columns owed at their checkpoint.

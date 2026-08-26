@@ -94,6 +94,35 @@ The rule that long and short are never pooled governs reporting, not accounting.
 **The nightly cap is 60, split forty long and twenty short, unused slots released**
 Applied to the shared candidate list before any version selects. The split is deliberately not proportional: short setups are rarest in a strong market, which is exactly when they are most interesting, and a proportional split would erase them from the record on those nights. Capping per version would leave the disagreements unscoreable, which is the wrong data to lose.
 
+**A released cap slot goes to the side that still has candidates**
+Each side takes the lesser of its candidate count and its allocation. Whatever either leaves unfilled is offered to the other, by rank within that other side.
+
+No priority order is needed and that is worth stating rather than leaving as an omission, because the obvious reading of "unused slots released" is that two sides compete for a freed slot and something has to break the tie. They cannot. A slot is only released by a side that ran out of candidates, and a side that ran out is not also asking for more, so the two conditions are mutually exclusive and one pass is deterministic. A stated tiebreak would be a rule covering a case that cannot arise, which reads to the next session as though it can.
+
+**The scans select a fixed count by rank, not a threshold on the move**
+Each of the six scans takes the top fifty universe names by its own magnitude, ranked one to fifty.
+
+The mechanism is calibration. Phase 2 sets these against nightly counts with no forward return anywhere in the store, and a rank cut is the only form that can be calibrated that way: moving fifty to forty changes the count by construction. A percentage floor cannot, because whether eight percent is too strict is a fact about market volatility over the sample rather than about the corpus, and the same floor produces nothing in a quiet quarter and hundreds in a violent one.
+
+Rank is also what makes the six comparable to each other. A one-day move of eight percent and a twenty-session move of twenty-five percent are not the same strictness, and nothing in the design says what would make them so; rank fifty is the same strictness on all six by construction. It bounds the sector-lookup cost as a side effect, which is a convenience rather than the reason.
+
+**Every scan magnitude is computed on the adjusted basis**
+The one-day change, the gap from the previous close to the open, and the twenty-session change, all on adjusted prices, with the open put on that basis through its own bar's `adj_close / close` factor.
+
+Read raw, a two-for-one split is a fifty percent decline. It would top the decliner scan every time one happens, and feed straight into the thrust check as though something had occurred. That failure produces a plausible ranked list rather than an error, which is the same shape as the basis trap the averages already closed and which nothing had closed for the scans. Stated as a decision rather than left to the implementation, because a later session could reasonably read "yesterday's biggest decliners" as raw and nothing on the screen would look wrong.
+
+**The cluster grouping key is industry, not sector**
+Both cluster checks say "same industry" and the authored parameter says "same industry"; the component catalogue said "same-sector" and the two are different columns giving different answers over the same night. One key, read by ThemeClusterer and by both checks.
+
+Industry rather than sector because the check exists to distinguish an industry shift from one company's news, and sector is too coarse for that: two names in the same sector routinely have nothing to do with each other, so a sector count would report grouped movement on almost every busy night and mean nothing.
+
+**A calibration run reconstructs against current membership and computes its indicators in memory**
+The nightly universe snapshot only starts when the lab does, so a historical detector run has no record of who was listed on those dates and reads membership from `universe_member` as it stands today. That is the survivorship bias the calibration table exists to quarantine, and naming it as the mechanism is what keeps it from being read as an oversight later.
+
+It computes each session's averages through the shared arithmetic in Core and writes no `indicator_daily` row. Writing them would be the reconstruction the evidence rule forbids, arrived at from a different direction: the engine computes for the members of a night's snapshot, and there is no snapshot for a night the lab was not running (see: The evidence store holds only setups flagged forward, never setups reconstructed from history) (see: The averages are one implementation, computed nightly and drawn on demand).
+
+It is the same detector, in a mode, rather than a second one. A separate implementation would make the count it produces a fact about the calibration code rather than about the thresholds, which is the one thing the run is for.
+
 **Plans are resting orders and fills go in time order when the caps bind**
 Every plan that passes its checks is placed, and each is a complete instruction before the open: this price, this stop, this size. Nothing is decided during the session. When more plans trigger than the caps allow, the earliest trigger fills and later ones are blocked with a reason, which is what resting orders actually do.
 
