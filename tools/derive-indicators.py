@@ -70,6 +70,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker> [--short]
         python tools/derive-indicators.py --gates   <gate-cases.json>
         python tools/derive-indicators.py --cap     <cap-cases.json>
+        python tools/derive-indicators.py --point-in-time <store.db> <as-of> <ticker>
 """
 
 import datetime
@@ -1381,7 +1382,78 @@ def cap_main(argv):
     return 0
 
 
+# --- the point-in-time bound, read from both sides of one correction --------------------------
+
+
+def observed_close(connection, ticker, as_of, bound):
+    """The adjusted close of one session, as it stood at `bound`.
+
+    The rule written out rather than borrowed: a bar is in the window if it is dated at or before
+    the as-of, it was observed at or before the bound, and no later observation of that same session
+    was also made by the bound. The last clause is the whole of it. Without it a correction and the
+    figure it corrects are both in the answer, and which one a reader gets is whichever the store
+    happened to return.
+    """
+    row = connection.execute(
+        """
+        SELECT b.adj_close FROM daily_bar b
+         WHERE b.ticker = ? AND b.bar_date = ? AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+        """,
+        (ticker, as_of, bound, bound),
+    ).fetchone()
+
+    return None if row is None else Decimal(row[0])
+
+
+def pit_main(argv):
+    """What a read of one session returns from either side of a correction's own instant.
+
+    Two figures rather than one verdict. "The night did not see it" is satisfied perfectly by a read
+    that returns nothing and by a store that never took the row, so the same session read from after
+    the correction is what makes the first figure mean the bound held.
+    """
+    if len(argv) < 3:
+        print("usage: --point-in-time <store.db> <as-of> <ticker>", file=sys.stderr)
+        return 2
+
+    store, as_of, ticker = argv[0], argv[1], argv[2]
+    connection = sqlite3.connect(store)
+
+    on_the_night = observed_close(connection, ticker, as_of, as_of + "T23:59:59.999Z")
+
+    # Whatever the latest observation of that session is, whenever it was made. The bound has to be
+    # past it or this second read would be the first one again.
+    latest = connection.execute(
+        "SELECT MAX(observed_at) FROM daily_bar WHERE ticker = ? AND bar_date = ?",
+        (ticker, as_of)).fetchone()[0]
+
+    afterwards = observed_close(connection, ticker, as_of, latest)
+
+    observations = connection.execute(
+        "SELECT COUNT(*) FROM daily_bar WHERE ticker = ? AND bar_date = ?",
+        (ticker, as_of)).fetchone()[0]
+
+    print("\npoint in time  %s as of %s" % (ticker, as_of))
+    print("  pointInTime.%s.onTheNight   %s"
+          % (ticker, "no bar" if on_the_night is None else on_the_night.quantize(PLACES)))
+    print("  pointInTime.%s.afterwards   %s"
+          % (ticker, "no bar" if afterwards is None else afterwards.quantize(PLACES)))
+    print("  pointInTime.%s.observations %d" % (ticker, observations))
+
+    if on_the_night is not None and afterwards is not None and on_the_night == afterwards:
+        print("  the two reads agree, so nothing here is bounding anything", file=sys.stderr)
+        return 1
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--point-in-time":
+        return pit_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--cap":
         return cap_main(argv[2:])
 

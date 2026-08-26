@@ -354,6 +354,9 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ReadSurfaceFigures());
         measurements.AddRange(GalleryFigures());
 
+        // Last, because it writes a row into the store on purpose and nothing above it may see one.
+        measurements.AddRange(PointInTimeFigures());
+
         return new PhaseReplayResult(
             AsOf,
             _handler.Tier,
@@ -991,6 +994,75 @@ public sealed class PhaseReplay : IDisposable
                 ? "no candles"
                 : Coordinate(thumbnail.Candles[^1].Centre)),
         ];
+    }
+
+    /// <summary>The ticker the future-dated correction is authored against, and the close it carries.</summary>
+    public const string CorrectedTicker = "IESC";
+
+    /// <summary>A close no real session produced, so a read returning it is unmistakable.</summary>
+    public const string CorrectedClose = "999.00";
+
+    /// <summary>
+    /// A correction observed after the night, read from both sides of its own observation.
+    ///
+    /// AUTHORED, and it has to be: the captured day holds one evening's responses, so a vendor
+    /// restating a figure the following evening is a case the fixture cannot contain. It is the same
+    /// tier and the same reasoning as the synthetic split at 1.5.
+    ///
+    /// <b>Two figures rather than one verdict.</b> "The night did not see it" is satisfied perfectly
+    /// by a read that returns nothing at all, and by a store that never took the row. Reading the
+    /// same session from both sides of the correction's own instant is what makes the first figure
+    /// mean the bound held rather than the row being missing.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    private IReadOnlyList<Measurement> PointInTimeFigures()
+    {
+        DateTimeOffset afterwards = _clock.UtcNow.AddDays(1);
+
+        using (SqliteConnection write = _connections.OpenWrite())
+        {
+            using SqliteCommand correction = write.CreateCommand();
+            correction.CommandText = """
+                INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+                SELECT ticker, bar_date, open, high, low, @close, @close, volume, @observed_at
+                  FROM daily_bar
+                 WHERE ticker = @ticker AND bar_date = @as_of
+                 LIMIT 1
+                """;
+            correction.Parameters.AddWithValue("@ticker", CorrectedTicker);
+            correction.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            correction.Parameters.AddWithValue("@close", CorrectedClose);
+            correction.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(afterwards));
+            correction.ExecuteNonQuery();
+        }
+
+        using SqliteConnection read = _connections.OpenReadOnly();
+
+        IReadOnlyList<StoredDailyBar> onTheNight = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1);
+        IReadOnlyList<StoredDailyBar> later = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1, afterwards);
+
+        return
+        [
+            new Measurement($"pointInTime.{CorrectedTicker}.onTheNight",
+                onTheNight.Count == 0 ? "no bar" : Figure(onTheNight[^1].AdjustedClose)),
+            new Measurement($"pointInTime.{CorrectedTicker}.afterwards",
+                later.Count == 0 ? "no bar" : Figure(later[^1].AdjustedClose)),
+            new Measurement($"pointInTime.{CorrectedTicker}.observations",
+                Observations(read, CorrectedTicker, AsOf).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    /// <summary>How many observations the store holds of one session, which must be two by now.</summary>
+    private static int Observations(SqliteConnection connection, string ticker, DateOnly asOf)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*) FROM daily_bar WHERE ticker = @ticker AND bar_date = @as_of
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>A session, written the way the store and the vendor both write one.</summary>

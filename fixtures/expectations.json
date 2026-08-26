@@ -3578,6 +3578,30 @@
       "note": "The fixture names with a full twenty-session window, which is what makes the real floor computable over them."
     },
     {
+      "id": "pointInTime.IESC.afterwards",
+      "tier": "DERIVED",
+      "value": "999.0000",
+      "checkpoint": "2.10",
+      "producedBy": "an independent restatement of the point-in-time bound over the replay store, computed outside the solution by tools/derive-indicators.py --point-in-time",
+      "note": "The same session read from past the correction's own instant. It has to differ from the figure above, or the first one means the row is missing rather than the bound holding."
+    },
+    {
+      "id": "pointInTime.IESC.observations",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "2.10",
+      "producedBy": "an independent restatement of the point-in-time bound over the replay store, computed outside the solution by tools/derive-indicators.py --point-in-time",
+      "note": "Two observations of one session. The store keeps both; the bound decides which one an answer sees."
+    },
+    {
+      "id": "pointInTime.IESC.onTheNight",
+      "tier": "DERIVED",
+      "value": "324.1200",
+      "checkpoint": "2.10",
+      "producedBy": "an independent restatement of the point-in-time bound over the replay store, computed outside the solution by tools/derive-indicators.py --point-in-time",
+      "note": "What the night saw. The correction was observed the following evening and is not in this answer, which is the property the whole lab rests on. AUTHORED input: no captured day can hold a vendor restating a figure a day later."
+    },
+    {
       "id": "read.IESC.drawn",
       "tier": "FROZEN",
       "value": "60",

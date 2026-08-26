@@ -286,7 +286,7 @@ public sealed class SignalVectorizer
         Thrust(connection, setup, asOf, bars, indicators, values);
         Regime(connection, asOf, values);
         Shape(connection, setup, asOf, bars, indicators, values);
-        TheName(connection, setup.Ticker, values);
+        TheName(connection, setup.Ticker, asOf, values);
 
         return values;
     }
@@ -372,26 +372,24 @@ public sealed class SignalVectorizer
     /// answer rather than a placeholder. A cluster count of zero would say the name moved alone,
     /// which is a different statement from not knowing what industry it is in.
     /// </summary>
-    private static void TheName(SqliteConnection connection, string ticker, Dictionary<string, string> values)
+    private static void TheName(
+        SqliteConnection connection,
+        string ticker,
+        DateOnly asOf,
+        Dictionary<string, string> values)
     {
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT industry, market_cap FROM security WHERE ticker = @ticker";
-        command.Parameters.AddWithValue("@ticker", ticker);
-
-        using (SqliteDataReader reader = command.ExecuteReader())
+        // Through the reader, which bounds both on when the lookup was made. Read unbounded, these
+        // two would freeze an industry and a capitalisation resolved after the night they are
+        // evidence about, which is the point-in-time rule broken in the one row written to survive
+        // it: everything else the lab can recompute, and a frozen signal is what nobody recomputes.
+        if (SecurityReader.Industry(connection, ticker, asOf) is string industry)
         {
-            if (reader.Read())
-            {
-                if (!reader.IsDBNull(0))
-                {
-                    values["industry"] = reader.GetString(0);
-                }
+            values["industry"] = industry;
+        }
 
-                if (!reader.IsDBNull(1))
-                {
-                    values["market_cap"] = reader.GetString(1);
-                }
-            }
+        if (SecurityReader.MarketCap(connection, ticker, asOf) is decimal cap)
+        {
+            values["market_cap"] = StoreText.PriceToStorageText(cap);
         }
 
         if (values.TryGetValue("thrust_scan", out string? scan) && values.TryGetValue("thrust_session", out string? on))

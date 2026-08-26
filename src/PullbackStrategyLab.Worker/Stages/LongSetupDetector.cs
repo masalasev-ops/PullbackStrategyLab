@@ -340,13 +340,19 @@ public sealed class LongSetupDetector
     private static IReadOnlyList<DateOnly> SessionsBetween(SqliteConnection connection, DateOnly from, DateOnly to)
     {
         using SqliteCommand command = connection.CreateCommand();
+        // Bounded on what had been observed by the end of the range, not merely dated inside it.
+        // A calibration run reads membership as it stands today on purpose, and that is the one
+        // reconstruction it is entitled to; walking sessions the store learned about afterwards
+        // would be a second one nobody decided on.
         command.CommandText = """
             SELECT DISTINCT bar_date FROM daily_bar
              WHERE bar_date >= @from AND bar_date <= @to
+               AND observed_at <= @observed_before
              ORDER BY bar_date
             """;
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
+        command.Parameters.AddWithValue("@observed_before", StoreText.DateToStorageText(to) + "T23:59:59.999Z");
 
         var sessions = new List<DateOnly>();
         using SqliteDataReader reader = command.ExecuteReader();

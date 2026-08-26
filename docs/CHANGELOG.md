@@ -546,3 +546,13 @@ Why:  The three rules around the agreement column left nowhere to put it. The We
 Was:  | 2.9 | Setup inspector, the gallery page: prev/next, filter by failed check, agreement capture | **Openable.** You page through a night's setups by keyboard and record agree or disagree per setup |
 Now:  The same row naming `LabSetups`, with the done condition stating the two lists, every check on every card, the shared component, the form post working without the script, and a filter that hid everything saying so.
 Why:  "Openable" is a condition only a person can discharge, and everything around it can be held without them. The additions are the properties a build session can assert before that person opens it, so the review they do is a review of a page that already holds them rather than a first pass over whether it renders.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `point-in-time` | 2.10 | No signal definition reads a column whose observed date can exceed the setup date |
+Now:  The same row with `every CI run` in the Runs column and the property stated as its three halves: the readers' signatures, the hand-written statements beside them, and a row observed after the as-of being invisible until the as-of moves past it.
+Why:  The check exists as of 2.10 and runs as a named CI step, so a checkpoint row would now name a checkpoint `PROGRESS.md` records, which `coverage-reported` fails on. The three halves are stated because the first alone is what the corpus had been relying on, and it is the half that proves nothing about a query somebody wrote beside a reader: four such queries were in the shipped source when the check was written.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.10 | Point-in-time test | A deliberately future-dated column causes a loud failure. The test is permanent, not a manual break-and-revert |
+Now:  The same row naming the check and its three halves, with the done condition stating where the loud failure happens, the two named exemption lists, and the two-sided read.
+Why:  "A loud failure" left unsaid where. Append-only point-in-time storage does not throw on a future-dated row; it declines to see it, silently and correctly. The failure that has to be loud is in CI, and saying so is what stops a later session looking for a runtime exception that was never going to arrive.

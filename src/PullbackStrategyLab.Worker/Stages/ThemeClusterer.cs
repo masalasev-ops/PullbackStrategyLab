@@ -70,14 +70,22 @@ public sealed class ThemeClusterer
         // One row per hit, with the name's industry beside it. Names with no industry are returned
         // too, so the stage can say how many it could not group rather than reporting a smaller
         // total as though it had grouped everything.
+        //
+        // The industry is bounded on when it was resolved, not merely read. `security` carries the
+        // attributes as they stand today with one instant saying when the lookup was made, so a
+        // rerun of an old night would otherwise group it by industries nobody knew at the time and
+        // produce a different cluster count for the same evening.
         using SqliteCommand read = connection.CreateCommand();
         read.CommandText = """
-            SELECT h.ticker, h.scan, s.industry
+            SELECT h.ticker, h.scan,
+                   CASE WHEN s.sector_resolved_at IS NOT NULL AND s.sector_resolved_at <= @resolved_before
+                        THEN s.industry END
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
              WHERE h.as_of = @as_of
             """;
         read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        read.Parameters.AddWithValue("@resolved_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
 
         var hits = new List<(string Ticker, string Scan, string? Industry)>();
         using (SqliteDataReader reader = read.ExecuteReader())

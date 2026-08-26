@@ -2320,3 +2320,61 @@ Carried:    **The `CONFIRMED` gallery expectations.** Due at 2.12, where the gal
             can assert about it is asserted; what is left is the looking.
             Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
             `CONFIRMED` indicator values at 2.11; and step 6 of the move.
+
+## 2.10 — 2026-08-26 — phase-2-detection — point in time, and four reads that were not
+
+Built:      `point-in-time` as a named CI step, the twenty-fourth, and the named check the roster has
+            carried since 1.1. Three halves, and the third is the one a convention could not hold.
+
+            **The readers.** Every public read in `PullbackStrategyLab.Data` takes a date, asserted
+            over the reader types by reflection rather than by reading their source. One exemption,
+            by name and with its reason: `UniverseSnapshotReader.CurrentMembers`, which calibration
+            mode uses to read membership as it stands today on purpose.
+
+            **The statements written by hand.** Every SQL statement in the shipped source outside the
+            readers that selects from a table carrying an observation stamp has to bound that stamp.
+            Two exemptions, by file and with their reasons.
+
+            **The behaviour.** A permanent case, not a break-and-revert: a session observed twice,
+            read from both sides of the second observation's own instant.
+
+Measured:   `tools/ci.ps1` green on Windows, **24 steps**, 306 tests. `tools/verify-phase` GREEN: 116
+            claims, 59 passed, 0 unexamined; 715 expectations, **282 `DERIVED`**; coverage examined
+            2,357 with 0 unexamined.
+            The check examines 28 public reads on the readers, 10 statements selecting from a stamped
+            table across 7 stamped tables, 3 named exemptions and 2 directions of the future-dated
+            case, over a corpus of 23 statements read.
+            Over the fixture: IESC's session reads **324.1200** on the night and **999.0000** from
+            past the correction, over 2 observations of one session, all three derived independently
+            by `tools/derive-indicators.py --point-in-time`.
+
+Verified:   Falsified twice and reverted both times. Replacing the vectorizer's bounded name lookup
+            with a raw `SELECT industry FROM security` named the file, the table and the column.
+            Dropping the observation bound from `DailyBarReader`'s window read reported that a bar
+            observed after the as-of instant was visible to a read as of that date.
+
+Findings:   Finding. **Four hand-written reads were unbounded, and one of them fed a frozen signal.**
+            Observation: `SignalVectorizer` read `industry` and `market_cap` straight from `security`
+            with no bound on `sector_resolved_at`; `ThemeClusterer` joined the same table for the
+            same column; both detectors enumerated calibration sessions from `daily_bar` with no
+            bound on `observed_at`. Reading: the vectorizer's is the serious one. Everything else the
+            lab computes can be recomputed, and a frozen signal is the one row nobody recomputes: it
+            exists to say what was knowable on the night, and it was freezing two attributes resolved
+            afterwards. All four are bounded now, the first two through `SecurityReader`, which
+            already held the bound for the short detector's `tradable-shortable`.
+
+            Reading, on why a convention was never going to hold this. Every reader in
+            `PullbackStrategyLab.Data` has taken a date since 1.4, and the corpus took that as the
+            property. It is not: a reader's signature says nothing about a query written beside it,
+            and all four of these were queries written beside one. That is the difference between a
+            rule and a check, on the property the corpus calls the most important in the system.
+
+            Observation. The fixture's figures did not move when the four were fixed. Reading: in the
+            replay the sector lookup runs before the vectorizer on the same session, so the bound
+            changes nothing there and no expectation shifted. A test over the fixture would have
+            passed on all four, which is exactly why the property needed a check that reads the
+            source rather than a case that runs it.
+
+Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` indicator values at 2.11; the `CONFIRMED` gallery expectations at 2.12; and
+            step 6 of the move.

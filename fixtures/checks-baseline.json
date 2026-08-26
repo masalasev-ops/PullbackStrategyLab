@@ -156,6 +156,19 @@
         "SCHEMA.md, the three index symbols": 1
       }
     },
+    "point-in-time": {
+      "scopes": {
+        "public reads on the store's readers": 28,
+        "statements selecting from a stamped table": 10,
+        "stamped tables the check knows about": 7,
+        "exempted files, each with its reason": 2,
+        "directions of the future-dated case": 2,
+        "dateless reads exempted by name, each with its reason": 1
+      },
+      "context": [
+        "SQL statements read across the shipped source"
+      ]
+    },
     "price-storage-form": {
       "scopes": {
         "tables declared across them": 13,
