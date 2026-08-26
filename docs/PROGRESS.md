@@ -1498,3 +1498,137 @@ Stopping:    The scope narrowed each pass and this one, scoped to five named thi
              finding in the same family as the two before it. Under the terms this pass was given that
              is a rule in `CLAUDE.md` rather than a fifth pass, and the rule is written. Phase 2 starts
              at 2.1, whose first work is the obligation above.
+
+## 2.1 — 2026-08-26 — phase-2-detection — the signal library, the floor per scope, and two obligations closed
+
+The first checkpoint of phase 2, and the only one with no strategy in it. Four commits in a stated
+order, because the spec pass authors what the code is written against and a session editing a spec
+beside the code consuming it is the weakest review position available.
+
+Built:      **(a) The malformed obligation row, and the parser that dropped it.**
+            `docs/BUILD_PLAN.md`'s carried-obligations row for the per-scope floor carried two
+            pipe-delimited cells where every other row carries three, its due point written into the
+            obligation prose rather than into the `Due at` column. `Schedule.Read()` guarded with
+            `if (row.Count >= 3)` and dropped it silently.
+            `MarkdownTable` now asserts every body row against its own table's header width and
+            throws naming the table, the row and both widths; the guard at the call site is gone.
+            `FixtureReplayCheck` no longer resolves a permit's obligation with `FirstOrDefault` over
+            `Raised`. Two rows raised at one checkpoint is legitimate, because the table is keyed by
+            who raised an obligation rather than by the obligation; a permit naming such a checkpoint
+            is not, because it uses `Raised` as a key. `MatchingObligations` returns every match and
+            the caller reports none and more-than-one separately. `PermitReason` re-asks `hasLanded`
+            rather than resolving the obligation and stopping there.
+
+            **(b) The spec pass.** `docs/SCHEMA.md` gains a `## Signals` section: every signal with
+            its formula, its source columns and a status of `active` or `candidate`, grouped by axis.
+            Five decisions in `docs/DECISIONS.md`: the scans select a fixed count by rank rather than
+            a threshold on the move; every scan magnitude is computed on the adjusted basis; the
+            cluster grouping key is industry; a released cap slot goes to the side that still has
+            candidates; a calibration run reconstructs against current membership and computes its
+            indicators in memory.
+            `mixed` defined as a grade rather than a gap, the squeeze test pinned to 20 sessions
+            where the contraction test beside it already was, ThemeClusterer restated to count over
+            scan hits so its stated clock and its stated dependency agree, SectorResolver added to a
+            build-order phase for the first time, and two authored-parameter rows added for scan
+            breadth and the month-mover lookback.
+
+            **(c) The examined floor, per scope rather than per check.** A scope whose size is a fact
+            about the corpus is recorded through `CheckCoverage.Context` rather than `Examined`: it
+            is reported, carries no floor, and is never summed with the scope holding the property.
+            `fixtures/checks-baseline.json` holds a floor per scope and the names of the context
+            scopes. Four directions are asserted, not one: below its floor, no floor at all,
+            reclassified from property to context without the baseline agreeing, and a floor naming a
+            scope the run did not produce.
+            `TotalUnexamined` counts admissions rather than their sizes.
+
+            **(d) The four frozen-only checkpoints closed.** `tools/derive-indicators.py --universe`,
+            on the pattern `--index` established at 1.12: it reads `fixtures/captured` and nothing
+            else, restates the security-type filter and both floors from their own statements, and
+            joins the captured bulk day and the captured actions against the surviving list. No
+            vendor call. Fourteen expectations flip to `DERIVED` and all four permits are deleted.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 223 tests. `tools/verify-phase` GREEN: 115
+            claims, 46 passed, 0 failed, 69 out of scope, 0 unexamined; 356 expectations, 101
+            `DERIVED`, 255 `FROZEN`, 0 differed, 0 missing; inputs 37 `CAPTURED`, 48 `AUTHORED`; 14
+            expectations changed since the last commit, which are the fourteen retiered here.
+            Coverage examined 1,331 with 0 unexamined. That figure is not comparable to the 193,691
+            recorded at the phase 1 sign-off, and the difference is the point: the old total summed
+            every scope, so it was `store-portability`'s 189,726 stored values plus noise. It is now
+            the property scopes only, with the corpus scopes reported beside it.
+            The universe screen, derived outside the solution from the captured responses: 17,996
+            common stock listed, 11,983 of them with a row on the captured bulk day, 7,202 clearing
+            the $5 price floor, 2,002 clearing $20M of turnover as well, 5,200 rejected by the
+            liquidity floor. 44,530 bars published, 15 splits, 248 dividends, 57 actions in the
+            universe. 33 seeded histories, 3 of them trackers excluded by security type, 30 in the
+            universe, 0 outside it, and IESC the only one acted on.
+            Every figure equals what the replay records, and none was copied from it.
+
+Verified:   Falsified rather than argued, five times, each reverted and the tree left clean.
+            The obligation row put back to two cells turned `architecture-conformance` red, naming
+            the table, row 4 and both widths.
+            `BarAppendOnlyCheck.BarTables` cut from three bar tables to one **with five ordinary new
+            files added to the Worker** failed, naming three narrowed scopes with the corpus shown
+            beside them at 52. That exact case passed at the phase 1 sign-off, at examined 55 against
+            a floor of 54, with the phase report GREEN and the total higher than the committed run.
+            `PathCasingCheck` gutted so it compared no paths **with forty ordinary new literals
+            added** failed at examined 0 against a floor of 26, corpus 2,578. That case also passed
+            at the sign-off, at examined 2,479 against a floor of 2,468.
+            Two string literals removed from one test file no longer turns `path-casing` red. That
+            case failed at the sign-off, for a reason that has nothing to do with path casing.
+            The `--universe` derivation over a mutated copy of the captured responses, with 500
+            common stock reclassified as ETF and one split row dropped: ten figures move and six do
+            not. `listedCommonStock` falls by exactly 500; `screened`, `survivors`, both liquidity
+            figures, `bars.inUniverse`, `splitsPublished`, `actions.inUniverse` and
+            `tickersInUniverse` all move; AAPL appears among the excluded trackers.
+            `sessionsScreened`, `bars.published`, `dividendsPublished`, `seededHistories`,
+            `tickersOutsideUniverse` and `actionsObserved` hold.
+
+Findings:   Finding. **A floor on `FROZEN expectations diffed` fails on an improvement.** Committed
+            in (c) and found by (d) an hour later, when flipping fourteen expectations to `DERIVED`
+            took `FROZEN` from 269 to 255 and turned the check red for having improved the fixture. A
+            falling `FROZEN` count is ambiguous in a way a floor cannot resolve: it falls when an
+            expectation is deleted, which is a defect, and equally when one is promoted, which is the
+            direction this corpus wants. Reading: flooring it makes every future tier promotion a
+            false alarm, and a guard that cries wolf gets suppressed. `FROZEN` is now context; the
+            property is held by a new total, which a deletion moves and a promotion does not, and by
+            the independent tiers, which only rise. Worth separating: this is the per-scope repair
+            catching a mistake in its own first commit, which is what the mechanism is for.
+
+            Finding. **An admission that covers nothing counted as silence.** `PathCasingCheck`
+            records its no-work branch as `NotExamined(..., 0, ...)`, and `TotalUnexamined` summed
+            the counts, so the record carried an unexamined line while the report read "unexamined 0"
+            on the same page. Raised as an Observation at the phase 1 sign-off and closed here by
+            counting admissions rather than their sizes.
+            That immediately made one admission visible and forced it to be classified honestly:
+            `stated-counts` exempting prose counts nobody registered is an exemption by name with a
+            stated reason, which is CLAUDE.md's definition of out of scope rather than of unexamined,
+            and it is the same shape as `no-superseded-citation` exempting citations inside a record.
+            Its count stays 0 and now says what that 0 is: the check does not scan prose for numbers,
+            so it is the number of exempted items the check can name, not a measurement of the hole.
+
+            Finding. **`earnings_in_window` traces to no stored column.** The architecture lists it
+            among the missing measurements, and 2.1's done condition says a signal that does not
+            trace to named columns is a finding rather than an assumption. Nothing stored carries an
+            earnings date: `corporate_action` holds splits and dividends and neither implies one, and
+            the vendor's calendar endpoint is not among those the call budget is built on. Recorded
+            in the `## Signals` section as a finding with what closing it would cost, rather than as
+            a candidate with blank source columns, because a candidate with no source reads as work
+            scheduled and is a purchase nobody has priced.
+
+            Observation. `MarkdownTable` has eight call sites and seven of them index cells directly,
+            so a ragged row would have thrown there rather than been dropped. The silent skip existed
+            at exactly one. Reading: the blast radius of this defect was the permit mechanism, not
+            every out-of-scope placement in the phase report. Checkpoint rows are read by a regex
+            rather than by this parser, which an earlier reading of the defect had wrong.
+
+            Observation. The plan for 2.1 called for asserting that `Raised` is unique across the
+            obligations table. That would have failed on landing, because two rows are legitimately
+            raised at 1.12 once the malformed row is restored. The property that holds is narrower
+            and is what shipped: an obligation a permit names must resolve to exactly one row.
+
+Carried:    Three obligations. Both of 2.1's are discharged and removed from `BUILD_PLAN.md`'s table.
+            The `CONFIRMED` values, raised at 1.6, due at 2.11.
+            The out-of-scope coverage naming rule, raised at 1.12, moved from 2.6 to 2.2, because 2.2
+            creates `setup` with three of its four declared writers unbuilt and that is what makes
+            `writer-ownership` record a run of out-of-scope items carrying free prose.
+            Step 6 of the move, raised at 1.11, due at the move.
