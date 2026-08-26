@@ -62,6 +62,7 @@ ends, and reports the count, the first and last session, and the last raw and ad
 Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> ...]
         python tools/derive-indicators.py --chart <store.db> <as-of> <ticker> <sessions> <width> <height>
         python tools/derive-indicators.py --index <captured-dir> <as-of> <symbol> [<symbol> ...]
+        python tools/derive-indicators.py --universe <captured-dir> <as-of>
 """
 
 import datetime
@@ -384,12 +385,161 @@ def index_main(argv):
     return 0
 
 
+PRICE_FLOOR = Decimal("5")
+LIQUIDITY_FLOOR = Decimal("20000000")
+SECURITY_TYPE = "Common Stock"
+
+
+def universe_screen(captured):
+    """The screen, restated from the rules rather than read from the code.
+
+    Three rules, each written out here from its own statement: the security type is common
+    stock and nothing else; the price floor is five dollars on the session's close; the
+    liquidity floor is twenty million dollars of median daily turnover over twenty sessions.
+
+    The fixture holds one market day, so the median over twenty sessions is the median of one
+    number, which is that number. That is not the floor the live screen applies and the
+    difference is the fixture's own, recorded against it rather than papered over: the point
+    here is a second implementation of the filter, not a second fixture.
+    """
+    with open(os.path.join(captured, "exchange-symbol-list.json"), encoding="utf-8") as handle:
+        listed = json.load(handle)
+
+    with open(os.path.join(captured, "bulk-end-of-day.json"), encoding="utf-8") as handle:
+        published = json.load(handle)
+
+    common = {row["Code"] for row in listed if row.get("Type") == SECURITY_TYPE}
+    priced = [row for row in published if row["code"] in common]
+
+    above_price = [row for row in priced if Decimal(str(row["close"])) >= PRICE_FLOOR]
+    survivors = [
+        row for row in above_price
+        if Decimal(str(row["close"])) * Decimal(str(row["volume"])) >= LIQUIDITY_FLOOR
+    ]
+
+    return {
+        "published": published,
+        "listedCommonStock": len(common),
+        "screened": len(priced),
+        "sessionsScreened": len({row["date"] for row in published}),
+        "admittedWithoutTheLiquidityFloor": len(above_price),
+        "survivors": len(survivors),
+        "rejectedByTheLiquidityFloor": len(above_price) - len(survivors),
+        "admitted": {row["code"] for row in above_price},
+    }
+
+
+def universe_actions(captured, admitted):
+    """Splits and dividends published for the market, and how many land in the universe.
+
+    Every action that moves the adjusted close raises a rebuild demand and blocks its ticker,
+    which is why the three counts below are equal by construction rather than by coincidence:
+    a dividend does it as surely as a split does, and magnitude does not enter it.
+    """
+    counts = {}
+    in_universe = set()
+    all_acted = set()
+
+    for kind, filename in (("splits", "bulk-splits.json"), ("dividends", "bulk-dividends.json")):
+        with open(os.path.join(captured, filename), encoding="utf-8") as handle:
+            rows = json.load(handle)
+        counts[kind] = len(rows)
+        all_acted.update(row["code"] for row in rows)
+        in_universe.update(row["code"] for row in rows if row["code"] in admitted)
+
+    return {
+        "splitsPublished": counts["splits"],
+        "dividendsPublished": counts["dividends"],
+        "inUniverse": len(in_universe),
+        "blockedTickers": sorted(in_universe),
+        "acted": sorted(all_acted),
+    }
+
+
+def universe_fixture(captured, screen, acted, as_of):
+    """What the fixture is made of, derived from the manifest rather than from the replay.
+
+    The seeded histories are not all candidates. Three of them are the index trackers, and a
+    tracker is an ETF: it fails the security-type filter, it is never part of the tradable
+    universe and it never appears on a screen. So the population for "in the universe" is the
+    seeded histories that are common stock, and partitioning them by the same type rule the
+    screen uses is what makes that a derivation rather than a subtraction of a number somebody
+    already knew.
+    """
+    with open(os.path.join(captured, "manifest.json"), encoding="utf-8") as handle:
+        manifest = json.load(handle)
+
+    with open(os.path.join(captured, "exchange-symbol-list.json"), encoding="utf-8") as handle:
+        types = {row["Code"]: row.get("Type") for row in json.load(handle)}
+
+    seeded = sorted(
+        entry["endpoint"].split("/")[1].split(".")[0]
+        for entry in manifest["responses"]
+        if entry["endpoint"].startswith("eod/")
+    )
+
+    candidates = [ticker for ticker in seeded if types.get(ticker) == SECURITY_TYPE]
+    trackers = [ticker for ticker in seeded if types.get(ticker) != SECURITY_TYPE]
+
+    inside = [ticker for ticker in candidates if ticker in screen["admitted"]]
+    outside = [ticker for ticker in candidates if ticker not in screen["admitted"]]
+
+    return {
+        "seededHistories": len(seeded),
+        "trackersExcludedByType": ", ".join(trackers) if trackers else "none",
+        "tickersInUniverse": len(inside),
+        "tickersOutsideUniverse": ", ".join(outside) if outside else "none",
+        "asOf": as_of,
+        "barsPublished": len(screen["published"]),
+        "barsInUniverse": sum(1 for row in screen["published"] if row["code"] in screen["admitted"]),
+        # Every action that moves the adjusted close raises a demand, so the ticker that was
+        # acted on and the ticker whose rebuild is stamped are the same ticker by the rule.
+        "actionsObserved": ", ".join(sorted(set(acted) & set(candidates))) or "none",
+    }
+
+
+def universe_main(argv):
+    if len(argv) < 2:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    captured, as_of = argv[0], argv[1]
+
+    screen = universe_screen(captured)
+    actions = universe_actions(captured, screen["admitted"])
+    fixture = universe_fixture(captured, screen, actions["acted"], as_of)
+
+    print("\nuniverse  as of %s, from the captured responses and nothing else" % as_of)
+    for name in ("listedCommonStock", "screened", "sessionsScreened", "survivors",
+                 "admittedWithoutTheLiquidityFloor", "rejectedByTheLiquidityFloor"):
+        print("  universe.%-34s %s" % (name, screen[name]))
+
+    print("\nbars")
+    print("  bars.%-38s %s" % ("published", fixture["barsPublished"]))
+    print("  bars.%-38s %s" % ("inUniverse", fixture["barsInUniverse"]))
+
+    print("\nactions")
+    for name in ("splitsPublished", "dividendsPublished", "inUniverse"):
+        print("  actions.%-35s %s" % (name, actions[name]))
+    print("  actions.%-35s %s" % ("blockedTickers", len(actions["blockedTickers"])))
+
+    print("\nfixture")
+    for name in ("seededHistories", "trackersExcludedByType", "tickersInUniverse",
+                 "tickersOutsideUniverse", "actionsObserved"):
+        print("  fixture.%-35s %s" % (name, fixture[name]))
+
+    return 0
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "--chart":
         return chart_main(argv[2:])
 
     if len(argv) > 1 and argv[1] == "--index":
         return index_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--universe":
+        return universe_main(argv[2:])
 
     if len(argv) < 4:
         print(__doc__.strip().splitlines()[-1], file=sys.stderr)

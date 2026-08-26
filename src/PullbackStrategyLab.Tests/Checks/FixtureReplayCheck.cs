@@ -133,8 +133,29 @@ public sealed partial class FixtureReplayCheck
             Path.Combine(RepositoryLayout.Artifacts, "fixture-diff.json"),
             JsonSerializer.Serialize(diff, Json));
 
+        // The total carries the property: an expectation deleted is coverage lost, and that is
+        // what a floor here has to catch.
+        coverage.Examined("expectations diffed", rows.Count);
+
+        // Per tier, and only the independent tiers are floored. A FROZEN count falling is
+        // ambiguous in a way a floor cannot resolve: it falls when an expectation is deleted,
+        // which is a defect, and equally when one is promoted to DERIVED, which is the whole
+        // direction of travel this corpus wants. Flooring it turns every promotion into a red run,
+        // and a guard that cries wolf gets suppressed. Found on the first promotion after the
+        // floors landed, when flipping fourteen 1.3-to-1.7 expectations to DERIVED took FROZEN
+        // from 269 to 255 and failed the check for having improved the fixture.
+        //
+        // So FROZEN is context: its size is a fact about the fixture's composition. The property
+        // is held by the total above, which a deletion moves and a promotion does not, and by the
+        // independent tiers below, which only rise.
         foreach (TierBreakdown tier in byTier)
         {
+            if (string.Equals(tier.Tier, Frozen, StringComparison.Ordinal))
+            {
+                coverage.Context($"{tier.Tier} expectations diffed", tier.Total);
+                continue;
+            }
+
             coverage.Examined($"{tier.Tier} expectations diffed", tier.Total);
         }
 

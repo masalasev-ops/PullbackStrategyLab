@@ -4,62 +4,62 @@
   "expectations": [
     {
       "id": "universe.listedCommonStock",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "17996",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "universe.screened",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "11983",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "universe.sessionsScreened",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "1",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change",
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "One, and the one place the replay differs from a live night. The fixture holds one market day; the live screen walks twenty."
     },
     {
       "id": "universe.survivors",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "2002",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "universe.admittedWithoutTheLiquidityFloor",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "7202",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change",
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "The list the rest of the replay runs against. The floor is a median over twenty sessions and the fixture holds one, so applying it here screens on a number that is not the number the floor means."
     },
     {
       "id": "universe.rejectedByTheLiquidityFloor",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "5200",
       "checkpoint": "1.3",
-      "producedBy": "the replay itself, recorded to detect change",
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "What the floor costs on this one market day. On twenty sessions it would cost less: the fixture control clears the floor three times over on its twenty-session median and fails on this day alone."
     },
     {
       "id": "fixture.tickersInUniverse",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "30",
       "checkpoint": "1.7",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "fixture.tickersOutsideUniverse",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "none",
       "checkpoint": "1.7",
-      "producedBy": "the replay itself, recorded to detect change",
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "None, and it has to stay none. A fixture ticker that falls out of the universe gets no indicator row, and the diff would stay green over a shrinking subject."
     },
     {
@@ -85,24 +85,24 @@
     },
     {
       "id": "actions.splitsPublished",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "15",
       "checkpoint": "1.5",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "actions.dividendsPublished",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "248",
       "checkpoint": "1.5",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "actions.inUniverse",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "57",
       "checkpoint": "1.5",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "actions.inserted",
@@ -127,17 +127,17 @@
     },
     {
       "id": "bars.published",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "44530",
       "checkpoint": "1.4",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "bars.inUniverse",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "7202",
       "checkpoint": "1.4",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
     },
     {
       "id": "bars.inserted",
@@ -387,10 +387,10 @@
     },
     {
       "id": "fixture.actionsObserved",
-      "tier": "FROZEN",
+      "tier": "DERIVED",
       "value": "IESC",
       "checkpoint": "1.7",
-      "producedBy": "the replay itself, recorded to detect change",
+      "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "The fixture was built around a ticker carrying a real split, and this is that claim as a value rather than as a sentence."
     },
     {
@@ -2568,26 +2568,5 @@
       "note": "All three. They are the only captured names the universe excludes and none of them is a floor rejection, which is why the floor's rejecting side is recorded out of scope rather than claimed against them."
     }
   ],
-  "frozenOnly": [
-    {
-      "checkpoint": "1.3",
-      "obligation": "1.1",
-      "why": "the universe counts are whole-market: a second implementation is the security-type filter and both floors over the captured symbol list, not a formula over one window"
-    },
-    {
-      "checkpoint": "1.4",
-      "obligation": "1.1",
-      "why": "the bar counts are whole-market: a second implementation is the bulk response parsed and joined against the universe outside the solution"
-    },
-    {
-      "checkpoint": "1.5",
-      "obligation": "1.1",
-      "why": "the action counts are whole-market, on the same bulk day and the same join"
-    },
-    {
-      "checkpoint": "1.7",
-      "obligation": "1.1",
-      "why": "these are facts about the fixture's own composition, and the screen that decides them is 1.3's, so they close with it"
-    }
-  ]
+  "frozenOnly": []
 }
