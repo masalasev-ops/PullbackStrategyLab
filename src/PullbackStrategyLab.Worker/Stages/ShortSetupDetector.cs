@@ -123,7 +123,11 @@ public sealed class ShortSetupDetector
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.SetupTable);
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
-        Tally tally = Walk(connection, members, asOf, SetupReader.SetupTable);
+        var source = new StoredFigures(connection);
+
+        Tally tally = Walk(
+            connection, members, asOf, SetupReader.SetupTable, source,
+            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions));
 
         // A night that could not read a name did not do everything it set out to do, and saying so
         // is what stops the loss reading as a quiet night.
@@ -135,36 +139,88 @@ public sealed class ShortSetupDetector
             tally.Errored, summary.RowsWritten, outcome);
     }
 
-    /// <summary>A range of past sessions, into the calibration store, against today's membership.</summary>
+    /// <summary>
+    /// A range of past sessions, into the calibration store, against today's membership.
+    ///
+    /// The session is carried in memory, on the terms the long side's entry states, and the ranking
+    /// runs a thrust window ahead of the detection for the same reason. What differs here is the
+    /// market-cap clause of `tradable-shortable`, which is exempted by name: a reconstructed session
+    /// has no capitalisation to read, and every short candidate would fail the first gate.
+    /// </summary>
     public CalibrationResult Calibrate(DateOnly from, DateOnly to)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.CalibrationTable);
 
-        IReadOnlyList<string> members = UniverseSnapshotReader.CurrentMembers(connection);
-        IReadOnlyList<DateOnly> sessions = SessionsBetween(connection, from, to);
+        // The instant the whole run reads as of: now, rather than each session's own date.
+        //
+        // A backfill takes a name's whole history in one evening, so every bar of 2024 in this store
+        // was observed in 2026, and a session bounded on its own instant sees none of it. Bounding
+        // on the end of the range is not enough either, because the range ends on the last session
+        // and the observation that recorded it came after the close. Both were tried on the way
+        // here and both reported a run of nought sessions over a store of one and a half million
+        // bars, which is the shape of failure this whole checkpoint is about: a number that is
+        // wrong and looks like an answer.
+        //
+        // This is the bound a rebuild uses, named there for the same reason, and it is one more
+        // thing these rows carry beside survivorship bias: the series is read as it stands now,
+        // corrections included, rather than as it stood on the night.
+        DateTimeOffset observedBefore = _clock.UtcNow;
+
+        IReadOnlyList<string> listed = UniverseSnapshotReader.CurrentMembers(connection);
+        IReadOnlyList<string> members = UniverseSnapshotReader.CurrentMembersWithHistory(
+            connection, to, IndicatorEngine.WarmupSessions, observedBefore);
+        IReadOnlyList<DateOnly> sessions = SessionsBetween(connection, from, to, observedBefore);
+        IReadOnlyList<DateOnly> warmup = CalibrationFigures.SessionsBefore(
+            connection, from, ShortPullbackRules.ThrustWindowSessions, observedBefore);
+
+        var source = new CalibrationFigures(connection, _clock.UtcNow, observedBefore);
 
         int recorded = 0;
         int passedAll = 0;
         int errored = 0;
+        var nights = new List<NightCount>();
 
-        foreach (DateOnly session in sessions)
+        foreach (DateOnly session in warmup.Concat(sessions))
         {
-            Tally tally = Walk(connection, members, session, SetupReader.CalibrationTable);
+            var windows = new Dictionary<string, IReadOnlyList<StoredDailyBar>>(StringComparer.Ordinal);
+            foreach (string ticker in members)
+            {
+                windows[ticker] = DailyBarReader.Read(
+                    connection, ticker, session, HistorySessions, observedBefore);
+            }
+
+            source.Rank(session, windows);
+
+            if (session < from)
+            {
+                continue;
+            }
+
+            Tally tally = Walk(connection, members, session, SetupReader.CalibrationTable, source,
+                ticker => windows[ticker]);
+
             recorded += tally.Recorded;
             passedAll += tally.PassedAll;
             errored += tally.Errored;
+            nights.Add(new NightCount(session, tally.Examined, tally.Recorded, tally.PassedAll));
         }
 
         RunOutcome outcome = errored == 0 ? RunOutcome.Clean : RunOutcome.Partial;
         RunSummary summary = run.Complete(outcome);
 
         return new CalibrationResult(
-            from, to, sessions.Count, members.Count, recorded, passedAll, errored,
-            summary.RowsWritten, outcome);
+            from, to, sessions.Count, warmup.Count, listed.Count, members.Count, recorded, passedAll,
+            errored, summary.RowsWritten, outcome, nights);
     }
 
-    private Tally Walk(SqliteConnection connection, IReadOnlyList<string> members, DateOnly asOf, string table)
+    private Tally Walk(
+        SqliteConnection connection,
+        IReadOnlyList<string> members,
+        DateOnly asOf,
+        string table,
+        ISessionFigures source,
+        Func<string, IReadOnlyList<StoredDailyBar>> window)
     {
         int examined = 0;
         int recorded = 0;
@@ -180,7 +236,7 @@ public sealed class ShortSetupDetector
 
             try
             {
-                evidence = Evidence(connection, ticker, asOf);
+                evidence = Evidence(ticker, asOf, window(ticker), source);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
@@ -231,9 +287,21 @@ public sealed class ShortSetupDetector
     /// Public for the same reason the long side's is: the replay authors cases the captured data
     /// cannot produce and has to author them from the evidence the detector would have used.
     /// </summary>
-    public static ShortPullbackRules.ShortEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static ShortPullbackRules.ShortEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf) =>
+        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions), new StoredFigures(connection));
+
+    /// <summary>
+    /// The same evidence, with the bar window and the session's figures handed in. The long side's
+    /// overload states why the split is here rather than in each caller.
+    /// </summary>
+    public static ShortPullbackRules.ShortEvidence? Evidence(
+        string ticker,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        ISessionFigures source)
     {
-        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, ticker, asOf, HistorySessions);
+        ArgumentNullException.ThrowIfNull(bars);
+        ArgumentNullException.ThrowIfNull(source);
 
         if (bars.Count == 0 || bars[^1].BarDate != asOf)
         {
@@ -241,14 +309,14 @@ public sealed class ShortSetupDetector
         }
 
         StoredDailyBar last = bars[^1];
-        StoredIndicators? figures = IndicatorDailyReader.Read(connection, ticker, asOf, asOf);
+        StoredIndicators? figures = source.Indicators(ticker, asOf, bars);
 
         // The thrust: the most recent hit on a downward mover scan inside the window.
         DateOnly windowStart = bars.Count >= ShortPullbackRules.ThrustWindowSessions
             ? bars[^ShortPullbackRules.ThrustWindowSessions].BarDate
             : bars[0].BarDate;
 
-        StoredScanHit? thrust = ScanHitReader.ForTicker(connection, ticker, asOf, windowStart)
+        StoredScanHit? thrust = source.Hits(ticker, asOf, windowStart)
             .Where(h => ThrustScans.Contains(h.Scan))
             .OrderByDescending(h => h.AsOf)
             .ThenBy(h => h.Rank)
@@ -287,11 +355,12 @@ public sealed class ShortSetupDetector
         {
             Close = last.AdjustedClose,
             MedianDollarVolume = figures?.DollarVolumeMedian,
-            MarketCap = SecurityReader.MarketCap(connection, ticker, asOf),
+            MarketCap = source.MarketCap(ticker, asOf),
+            MarketCapExempt = source.MarketCapExempt,
             // Counted over the whole stored history rather than over the 170-session read window
             // above, and through the same reader SignalVectorizer freezes it with. The check that
             // decides and the signal that records the decision have to be one number.
-            SessionsListed = DailyBarReader.SessionsStored(connection, ticker, asOf),
+            SessionsListed = source.SessionsListed(ticker, asOf),
             AverageDailyRange = figures?.AverageDailyRange,
             LadderGrade = figures?.LadderGrade,
             GapOverAverageGap = SqueezeRatio(bars),
@@ -358,13 +427,17 @@ public sealed class ShortSetupDetector
         return -1;
     }
 
-    private static IReadOnlyList<DateOnly> SessionsBetween(SqliteConnection connection, DateOnly from, DateOnly to)
+    private static IReadOnlyList<DateOnly> SessionsBetween(
+        SqliteConnection connection,
+        DateOnly from,
+        DateOnly to,
+        DateTimeOffset observedBefore)
     {
         using SqliteCommand command = connection.CreateCommand();
-        // Bounded on what had been observed by the end of the range, not merely dated inside it.
-        // A calibration run reads membership as it stands today on purpose, and that is the one
-        // reconstruction it is entitled to; walking sessions the store learned about afterwards
-        // would be a second one nobody decided on.
+        // Bounded on the run's own instant, which the caller states once for every read it makes.
+        // A session dated inside the range that the store learned about after the run began is not
+        // one this run walks, and a session the backfill acquired last night is: the observation
+        // that matters is when the lab came to know the bar, not when the market printed it.
         command.CommandText = """
             SELECT DISTINCT bar_date FROM daily_bar
              WHERE bar_date >= @from AND bar_date <= @to
@@ -373,7 +446,7 @@ public sealed class ShortSetupDetector
             """;
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
-        command.Parameters.AddWithValue("@observed_before", StoreText.DateToStorageText(to) + "T23:59:59.999Z");
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
 
         var sessions = new List<DateOnly>();
         using SqliteDataReader reader = command.ExecuteReader();

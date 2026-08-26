@@ -239,6 +239,8 @@ Grain: date + ticker + direction. Output of a historical detector run, used to c
 
 Same shape as `setup`, in a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
 
+*Three reconstructions ride on every row, and each is recorded rather than assumed. **Membership** is today's, because a night the lab was not running has no snapshot. **The market-cap clause of `tradable-shortable` is exempt**, because the lookup is bounded on when it was made and a 2024 session has no capitalisation at all; every short verdict here says which clauses ran. And **the bar series is read as the store knows it now**, corrections included, rather than as it stood on the night: a backfill takes a name's whole history in one evening, so every historical bar was observed later than its own session and a read bounded on the session's own instant returns nothing. That third one is not a choice between two readings; it is the only reading that returns anything, which is why it is written down here rather than left as a property of a query.*
+
 Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
 
 ### `detector_error`

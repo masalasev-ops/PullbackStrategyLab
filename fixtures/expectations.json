@@ -5116,6 +5116,197 @@
       "value": "2002",
       "checkpoint": "1.3",
       "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
+    },
+    {
+      "id": "calibration.storedSessions",
+      "tier": "DERIVED",
+      "value": "251",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.from",
+      "tier": "DERIVED",
+      "value": "2026-03-30",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.to",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.sessions",
+      "tier": "DERIVED",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.membersWithHistory",
+      "tier": "DERIVED",
+      "value": "30",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.warmupSessions",
+      "tier": "FROZEN",
+      "value": "10",
+      "checkpoint": "2.11",
+      "producedBy": "the ranking warm-up the run reported, which is the thrust window in sessions",
+      "note": "Ten rather than twenty: the thrust window is ten sessions, and the ranking runs that far ahead of the detection so the first session decided has ranks behind it."
+    },
+    {
+      "id": "calibration.membersListed",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.11",
+      "producedBy": "the members the screen admitted, which is what the run would have walked without the history rule",
+      "note": "Seven thousand two hundred admitted against thirty with a warm-up behind them. The nightly bulk ingest stores the whole market's closes for the evening it runs, so almost every member has one bar and no history at all."
+    },
+    {
+      "id": "calibration.scanBreadth",
+      "tier": "FROZEN",
+      "value": "50",
+      "checkpoint": "2.11",
+      "producedBy": "the scan breadth the run ranked against, recorded beside the candidate count it is compared to"
+    },
+    {
+      "id": "calibration.long.recorded",
+      "tier": "FROZEN",
+      "value": "237",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories"
+    },
+    {
+      "id": "calibration.long.passedAll",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
+    },
+    {
+      "id": "calibration.long.errored",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought. A name the detector could not decide would have a row of its own here."
+    },
+    {
+      "id": "calibration.long.recordedMedian",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.long.recordedHighest",
+      "tier": "FROZEN",
+      "value": "6",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.long.candidateMedian",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night counts of names passing every gating check"
+    },
+    {
+      "id": "calibration.long.candidateHighest",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the same"
+    },
+    {
+      "id": "calibration.long.emptyNights",
+      "tier": "FROZEN",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "how many of the run's nights produced no candidate at all",
+      "note": "Every night, for the reason `passedAll` records."
+    },
+    {
+      "id": "calibration.short.recorded",
+      "tier": "FROZEN",
+      "value": "88",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories"
+    },
+    {
+      "id": "calibration.short.passedAll",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
+    },
+    {
+      "id": "calibration.short.errored",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought. A name the detector could not decide would have a row of its own here."
+    },
+    {
+      "id": "calibration.short.recordedMedian",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.short.recordedHighest",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.short.candidateMedian",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night counts of names passing every gating check"
+    },
+    {
+      "id": "calibration.short.candidateHighest",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the same"
+    },
+    {
+      "id": "calibration.short.emptyNights",
+      "tier": "FROZEN",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "how many of the run's nights produced no candidate at all",
+      "note": "Every night, for the reason `passedAll` records."
+    },
+    {
+      "id": "calibration.rowsInCalibrationSetup",
+      "tier": "FROZEN",
+      "value": "325",
+      "checkpoint": "2.11",
+      "producedBy": "the rows the two calibration runs wrote, counted from the replay store afterwards"
+    },
+    {
+      "id": "calibration.setupRowsOutsideTheForwardNight",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the evidence rows the calibration run left behind, counted from the replay store afterwards",
+      "note": "Nought, and it is the property the checkpoint turns on. A run over history writes to `calibration_setup` and the evidence store keeps only what was flagged forward."
     }
   ],
   "frozenOnly": []

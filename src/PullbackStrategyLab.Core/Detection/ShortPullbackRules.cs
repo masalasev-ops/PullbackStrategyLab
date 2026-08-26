@@ -92,26 +92,56 @@ public static class ShortPullbackRules
     /// cap is not a cleared cap: this is the check standing in for borrow availability, which the
     /// feed does not carry at all, so passing a name nobody has looked up would be the one place a
     /// missing figure turns into a tradable verdict.
+    ///
+    /// <b>Except in calibration, where the clause is exempted by name.</b> The lookup is bounded on
+    /// when it was made, like every other point-in-time read, so a reconstructed 2024 session has no
+    /// capitalisation at all: it was resolved in 2026 or it was never resolved. Left alone, every
+    /// short candidate fails here and the short half of the distribution is empty, and a threshold
+    /// calibrated against an empty distribution is worse than no threshold. Dropping the whole check
+    /// was the other option and is worse still, because it changes what the short side is without
+    /// saying so. One clause is exempted, the other three still measure, and every verdict says which
+    /// on the same pattern `reached-ceiling` uses for its anchored clause.
+    /// see: A calibration run reconstructs against current membership and computes its indicators in memory
     /// </summary>
     private static CheckResult TradableShortable(ShortEvidence e)
     {
         if (e.MedianDollarVolume is not decimal volume
             || e.Close is not decimal close
-            || e.MarketCap is not decimal cap
             || e.SessionsListed is not int listed)
         {
             return CheckResult.Unknown(
                 "tradable-shortable",
-                "no indicator row, no bar, or no resolved market capitalisation for the session");
+                "no indicator row or no bar for the session");
+        }
+
+        if (!e.MarketCapExempt && e.MarketCap is not decimal)
+        {
+            return CheckResult.Unknown(
+                "tradable-shortable",
+                "no resolved market capitalisation for the session");
         }
 
         bool passes = volume >= LiquidityFloor
             && close > PriceFloor
-            && cap > MarketCapFloor
+            && (e.MarketCapExempt || e.MarketCap > MarketCapFloor)
             && listed >= MinimumSessionsListed;
 
-        return new CheckResult("tradable-shortable", passes, volume);
+        return new CheckResult(
+            "tradable-shortable",
+            passes,
+            volume,
+            e.MarketCapExempt ? ClausesRunWithoutTheCap : null);
     }
+
+    /// <summary>
+    /// What `tradable-shortable` actually tested when the cap was exempted, recorded on the verdict.
+    ///
+    /// Every calibration row carries it, so a later session reading a short count knows the gate that
+    /// produced it was three clauses rather than four. Without it the exemption is a fact about a run
+    /// nobody kept, and the count reads as the count the nightly detector would have produced.
+    /// </summary>
+    public const string ClausesRunWithoutTheCap =
+        "liquidity, price and listing age only; the market-cap clause is exempt in calibration";
 
     private static CheckResult MovesEnough(ShortEvidence e) =>
         e.AverageDailyRange is not decimal adr
@@ -226,6 +256,15 @@ public static class ShortPullbackRules
         public decimal? MedianDollarVolume { get; init; }
 
         public decimal? MarketCap { get; init; }
+
+        /// <summary>
+        /// Whether the market-cap clause is exempted by name for this run.
+        ///
+        /// False everywhere but a calibration run, and false by default so a caller that forgets it
+        /// gets the strict gate rather than the lenient one. A default of true would exempt every
+        /// forward night the day somebody added a second constructor.
+        /// </summary>
+        public bool MarketCapExempt { get; init; }
 
         /// <summary>Sessions of stored history, which is what the lab can see of a listing's age.</summary>
         public int? SessionsListed { get; init; }

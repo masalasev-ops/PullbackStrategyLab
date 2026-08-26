@@ -102,6 +102,14 @@ public sealed class PhaseReplay : IDisposable
     public DetectResult DetectLong() =>
         new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
 
+    /// <summary>The long detector in calibration mode, over the store this replay built.</summary>
+    public CalibrationResult CalibrateLong(DateOnly from, DateOnly to) =>
+        new LongSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
+
+    /// <summary>The short detector in calibration mode, likewise.</summary>
+    public CalibrationResult CalibrateShort(DateOnly from, DateOnly to) =>
+        new ShortSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
+
     /// <summary>The short detector, likewise.</summary>
     public DetectResult DetectShort() =>
         new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
@@ -343,6 +351,7 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
+        measurements.AddRange(CalibrationCounts());
         measurements.AddRange(CapFigures());
         measurements.AddRange(IndexFigures());
         measurements.AddRange(ScanFigures());
@@ -557,6 +566,91 @@ public sealed class PhaseReplay : IDisposable
     /// candidates a night has, which is what the calibration run measures.
     /// see: A released cap slot goes to the side that still has candidates
     /// </summary>
+    /// <summary>
+    /// The one-time calibration, run over the fixture's own seeded histories.
+    ///
+    /// <b>What this is for, stated plainly, because the numbers below are not what the checkpoint
+    /// exists to produce.</b> The fixture holds thirty names and the scan breadth is fifty, so every
+    /// measured name is in the top fifty of all six scans on every session: `thrust` passes on every
+    /// row, its most recent hit is always the session itself, and every geometry check that reads a
+    /// pullback therefore has no bars to read. The population is degenerate by construction and no
+    /// threshold could be read off it. What runs here is the code path, diffed session by session, so
+    /// a change to any gate or to the assembly of a reconstructed session shows up as a named
+    /// difference. The distribution a threshold was actually set against came from the live universe
+    /// and is recorded in PROGRESS.
+    /// </summary>
+    private IReadOnlyList<Measurement> CalibrationCounts()
+    {
+        var figures = new List<Measurement>();
+
+        void Record(string id, object value) =>
+            figures.Add(new Measurement(id, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty));
+
+        DateOnly[] sessions;
+        using (SqliteConnection connection = OpenStore())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT DISTINCT bar_date FROM daily_bar ORDER BY bar_date";
+            var dates = new List<DateOnly>();
+            using SqliteDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                dates.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+            }
+
+            sessions = [.. dates];
+        }
+
+        // The first session with a whole warm-up behind it. Earlier ones have no figures at all and
+        // a range that included them would report sessions the run could never have decided.
+        DateOnly from = sessions[IndicatorEngine.WarmupSessions - 1];
+
+        Record("calibration.storedSessions", sessions.Length);
+        figures.Add(new Measurement("calibration.from", Session(from)));
+        figures.Add(new Measurement("calibration.to", Session(AsOf)));
+
+        CalibrationResult longSide = CalibrateLong(from, AsOf);
+        CalibrationResult shortSide = CalibrateShort(from, AsOf);
+
+        Record("calibration.sessions", longSide.Sessions);
+        Record("calibration.warmupSessions", longSide.WarmupSessions);
+        Record("calibration.membersListed", longSide.Listed);
+        Record("calibration.membersWithHistory", longSide.Members);
+        Record("calibration.scanBreadth", ScanEngine.Breadth);
+
+        foreach ((string direction, CalibrationResult side) in
+                 new[] { (SetupDirection.Long, longSide), (SetupDirection.Short, shortSide) })
+        {
+            NightlyCounts.Distribution recorded = NightlyCounts.Of([.. side.Nights.Select(n => n.Recorded)]);
+            NightlyCounts.Distribution candidates = NightlyCounts.Of([.. side.Nights.Select(n => n.PassedAll)]);
+
+            Record($"calibration.{direction}.recorded", side.Recorded);
+            Record($"calibration.{direction}.passedAll", side.PassedAll);
+            Record($"calibration.{direction}.errored", side.Errored);
+            Record($"calibration.{direction}.recordedMedian", recorded.Median);
+            Record($"calibration.{direction}.recordedHighest", recorded.Highest);
+            Record($"calibration.{direction}.candidateMedian", candidates.Median);
+            Record($"calibration.{direction}.candidateHighest", candidates.Highest);
+            Record($"calibration.{direction}.emptyNights", candidates.EmptyNights);
+        }
+
+        // The property the checkpoint turns on, asserted as a figure rather than left to a test that
+        // could be deleted: the evidence store is untouched by a run over history.
+        using (SqliteConnection connection = OpenStore())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM calibration_setup";
+            Record("calibration.rowsInCalibrationSetup", Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture));
+
+            command.CommandText = "SELECT COUNT(*) FROM setup WHERE as_of <> @as_of";
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            Record("calibration.setupRowsOutsideTheForwardNight",
+                Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture));
+        }
+
+        return figures;
+    }
+
     private static IReadOnlyList<Measurement> CapFigures()
     {
         var figures = new List<Measurement>();

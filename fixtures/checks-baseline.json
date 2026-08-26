@@ -155,7 +155,9 @@
         "SCHEMA.md, store configuration, foreign_keys": 1,
         "SCHEMA.md, store configuration, journal_mode": 1,
         "SCHEMA.md, store configuration, synchronous": 1,
-        "SCHEMA.md, the three index symbols": 1
+        "SCHEMA.md, the three index symbols": 1,
+        "ARCHITECTURE.html, the workable nightly count band": 1,
+        "BUILD_PLAN.md, the same band at the checkpoint that applies it": 1
       }
     },
     "point-in-time": {

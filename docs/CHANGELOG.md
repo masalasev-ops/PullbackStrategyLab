@@ -577,6 +577,31 @@ Was:  The 2.7 obligation ended: "Three answers are available and none is obvious
 Now:  The answer taken, with what was rejected and why, and a new row raised at 2.11 carrying the full-history run over the live universe to 3.2 with its price.
 Why:  The choice was taken before 2.11 rather than at it, so the row stating three open answers was no longer true. An obligation that still poses a question somebody has answered reads as open work and gets re-answered.
 
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.11 | One-time calibration, over the golden fixture's seeded histories rather than the live universe. The nightly pipeline replayed session by session into a scratch store, so each detector reads the `indicator_daily` and `scan_hit` rows the stages that own them wrote for that session ... |
+Now:  The row names the mechanism that works: calibration mode carries the session in memory through `IndicatorEngine.Calculate`, `TierClassifier.Grade`, `ScanMagnitudes` and `ScanEngine.Top`. The fixture run becomes the fixture's expectations and the distribution comes from the live universe, with the done condition stating why thirty names cannot answer for a threshold and adding the clause that holds when the band is out of the five thresholds' reach.
+Why:  Replaying the pipeline session by session does not work and could not have: `IndicatorEngine`, `ScanEngine` and `TierClassifier` all read the night's universe snapshot, and a night the lab was not running has none. Giving those three a current-membership mode would write reconstructed `indicator_daily` rows, which the calibration decision forbids. The in-memory session turned out to be assembly rather than a second implementation, because all four pieces of arithmetic were made public at 2.6 for exactly this. And the fixture cannot answer for a threshold at all: thirty names against a scan breadth of fifty puts every name inside every scan on every session.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  | 2.11 | **The calibration run over the full stored history, on the live universe.** ... So the full-history run has a price ... a calibration mode that carries indicators, ladder grades and scan hits in memory, which is a second implementation of three stages ... | 3.2 |
+Now:  The row says the path exists as of 2.11 and what is left is population and running time, with the assumption the scaling rests on named as the thing a live run would replace.
+Why:  The price was wrong by an order of magnitude and the run it was deferring happened at 2.11 instead. An obligation that prices work already done reads as work outstanding.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  | 2.11 | **The calibration run over the live universe, which 2.11 ran over thirty names.** The path exists as of 2.11 and is the same mode: what is left is population and running time ... | 3.2 |
+Now:  removed, and a row raised at 2.11 takes its place: the threshold adjustment the distribution calls for, which the five thresholds cannot deliver, due at 3.1.
+Why:  2.11 ran over the live universe rather than over thirty names, so the obligation was discharged on the day it was written. What the run found instead is that reaching the band needs two checks removed rather than five thresholds moved, and that is a decision rather than a build step.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  "The one-time calibration, and why it is not tuning" ended at the paragraph on the adjustment being calibration against a population count rather than tuning against results.
+Now:  A further paragraph: the count has to come from a population the scans can discriminate within, which the golden fixture is not, with the arithmetic of why thirty names against a breadth of fifty makes every geometry check fail.
+Why:  Nothing in the document said where the distribution comes from, and the obvious reading is the fixture, because that is where every other figure in this corpus is diffed. Over the fixture the count is nought by construction and a session reading it would take that for a fact about the gates.
+
+### 2026-08-26 — SCHEMA.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  The `calibration_setup` section named one reconstruction: membership as it stands today.
+Now:  Three, each recorded rather than assumed: membership, the exempt market-cap clause, and the bar series read as the store knows it now rather than as it stood on the night.
+Why:  The third is not a choice between two readings. A backfill takes a name's whole history in one evening, so every historical bar was observed later than its own session, and a read bounded on the session's own instant returns nothing at all. Both narrower bounds were tried on the way to this and both reported a run of nought sessions over a store of one and a half million bars.
+
 ### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
 Was:  Update LabSetups (`agreement`, `agreement_note`)
       And: **The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever ... The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose.

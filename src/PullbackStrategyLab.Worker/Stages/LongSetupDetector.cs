@@ -113,7 +113,11 @@ public sealed class LongSetupDetector
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.SetupTable);
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
-        Tally tally = Walk(connection, members, asOf, SetupReader.SetupTable);
+        var source = new StoredFigures(connection);
+
+        Tally tally = Walk(
+            connection, members, asOf, SetupReader.SetupTable, source,
+            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions));
 
         // A night that could not read a name did not do everything it set out to do, and saying so
         // is what stops the loss reading as a quiet night.
@@ -130,36 +134,93 @@ public sealed class LongSetupDetector
     ///
     /// Membership is today's, because the nightly snapshot only starts when the lab does. That is the
     /// survivorship bias these rows carry and it is why nothing downstream reads them.
+    ///
+    /// <b>The session is carried in memory rather than read from the store.</b> A night the lab was
+    /// not running has no snapshot, so it has no indicator row, no ladder grade and no scan hit, and
+    /// it may not be given them: writing those would be the reconstruction the evidence rule forbids.
+    /// So each session is assembled from the bar windows this walk is reading anyway, through the
+    /// nightly stages' own arithmetic (see: A calibration run reconstructs against current membership
+    /// and computes its indicators in memory).
+    ///
+    /// <b>The ranking runs ahead of the detection by the thrust window.</b> Every check that reads a
+    /// thrust looks back twenty sessions, so the first session detected needs twenty sessions of
+    /// ranks behind it. Starting both at the same date would report a range whose opening sessions
+    /// found no thrust and recorded nothing, and nothing about the count would say so.
     /// </summary>
     public CalibrationResult Calibrate(DateOnly from, DateOnly to)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.CalibrationTable);
 
-        IReadOnlyList<string> members = UniverseSnapshotReader.CurrentMembers(connection);
-        IReadOnlyList<DateOnly> sessions = SessionsBetween(connection, from, to);
+        // The instant the whole run reads as of: now, rather than each session's own date.
+        //
+        // A backfill takes a name's whole history in one evening, so every bar of 2024 in this store
+        // was observed in 2026, and a session bounded on its own instant sees none of it. Bounding
+        // on the end of the range is not enough either, because the range ends on the last session
+        // and the observation that recorded it came after the close. Both were tried on the way
+        // here and both reported a run of nought sessions over a store of one and a half million
+        // bars, which is the shape of failure this whole checkpoint is about: a number that is
+        // wrong and looks like an answer.
+        //
+        // This is the bound a rebuild uses, named there for the same reason, and it is one more
+        // thing these rows carry beside survivorship bias: the series is read as it stands now,
+        // corrections included, rather than as it stood on the night.
+        DateTimeOffset observedBefore = _clock.UtcNow;
+
+        IReadOnlyList<string> listed = UniverseSnapshotReader.CurrentMembers(connection);
+        IReadOnlyList<string> members = UniverseSnapshotReader.CurrentMembersWithHistory(
+            connection, to, IndicatorEngine.WarmupSessions, observedBefore);
+        IReadOnlyList<DateOnly> sessions = SessionsBetween(connection, from, to, observedBefore);
+        IReadOnlyList<DateOnly> warmup = CalibrationFigures.SessionsBefore(
+            connection, from, LongPullbackRules.ThrustWindowSessions, observedBefore);
+
+        var source = new CalibrationFigures(connection, _clock.UtcNow, observedBefore);
 
         int recorded = 0;
         int passedAll = 0;
         int errored = 0;
+        var nights = new List<NightCount>();
 
-        foreach (DateOnly session in sessions)
+        foreach (DateOnly session in warmup.Concat(sessions))
         {
-            Tally tally = Walk(connection, members, session, SetupReader.CalibrationTable);
+            var windows = new Dictionary<string, IReadOnlyList<StoredDailyBar>>(StringComparer.Ordinal);
+            foreach (string ticker in members)
+            {
+                windows[ticker] = DailyBarReader.Read(
+                    connection, ticker, session, HistorySessions, observedBefore);
+            }
+
+            source.Rank(session, windows);
+
+            if (session < from)
+            {
+                continue;
+            }
+
+            Tally tally = Walk(connection, members, session, SetupReader.CalibrationTable, source,
+                ticker => windows[ticker]);
+
             recorded += tally.Recorded;
             passedAll += tally.PassedAll;
             errored += tally.Errored;
+            nights.Add(new NightCount(session, tally.Examined, tally.Recorded, tally.PassedAll));
         }
 
         RunOutcome outcome = errored == 0 ? RunOutcome.Clean : RunOutcome.Partial;
         RunSummary summary = run.Complete(outcome);
 
         return new CalibrationResult(
-            from, to, sessions.Count, members.Count, recorded, passedAll, errored,
-            summary.RowsWritten, outcome);
+            from, to, sessions.Count, warmup.Count, listed.Count, members.Count, recorded, passedAll,
+            errored, summary.RowsWritten, outcome, nights);
     }
 
-    private Tally Walk(SqliteConnection connection, IReadOnlyList<string> members, DateOnly asOf, string table)
+    private Tally Walk(
+        SqliteConnection connection,
+        IReadOnlyList<string> members,
+        DateOnly asOf,
+        string table,
+        ISessionFigures source,
+        Func<string, IReadOnlyList<StoredDailyBar>> window)
     {
         int examined = 0;
         int recorded = 0;
@@ -175,7 +236,7 @@ public sealed class LongSetupDetector
 
             try
             {
-                evidence = Evidence(connection, ticker, asOf);
+                evidence = Evidence(ticker, asOf, window(ticker), source);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
@@ -227,9 +288,26 @@ public sealed class LongSetupDetector
     /// has to author it from the same evidence the detector would have used. A second assembly there
     /// would make the authored case a test of the test rather than of the rules.
     /// </summary>
-    public static LongPullbackRules.LongEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static LongPullbackRules.LongEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf) =>
+        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions), new StoredFigures(connection));
+
+    /// <summary>
+    /// The same evidence, with the bar window and the session's figures handed in.
+    ///
+    /// What calibration mode uses, and what the nightly path above resolves to. The two differ in
+    /// where the figures come from and nowhere else: a forward night reads them from the store,
+    /// a reconstructed session computes them from this very window through the stages' own
+    /// arithmetic. Splitting it here rather than in each caller is what keeps the rules seeing one
+    /// evidence shape.
+    /// </summary>
+    public static LongPullbackRules.LongEvidence? Evidence(
+        string ticker,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        ISessionFigures source)
     {
-        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, ticker, asOf, HistorySessions);
+        ArgumentNullException.ThrowIfNull(bars);
+        ArgumentNullException.ThrowIfNull(source);
 
         if (bars.Count == 0 || bars[^1].BarDate != asOf)
         {
@@ -237,14 +315,14 @@ public sealed class LongSetupDetector
         }
 
         StoredDailyBar last = bars[^1];
-        StoredIndicators? figures = IndicatorDailyReader.Read(connection, ticker, asOf, asOf);
+        StoredIndicators? figures = source.Indicators(ticker, asOf, bars);
 
         // The thrust: the most recent hit on an upward mover scan inside the window.
         DateOnly windowStart = bars.Count >= LongPullbackRules.ThrustWindowSessions
             ? bars[^LongPullbackRules.ThrustWindowSessions].BarDate
             : bars[0].BarDate;
 
-        StoredScanHit? thrust = ScanHitReader.ForTicker(connection, ticker, asOf, windowStart)
+        StoredScanHit? thrust = source.Hits(ticker, asOf, windowStart)
             .Where(h => h.Scan is "gainer" or "gapper" or "leader")
             .OrderByDescending(h => h.AsOf)
             .ThenBy(h => h.Rank)
@@ -337,13 +415,17 @@ public sealed class LongSetupDetector
         return -1;
     }
 
-    private static IReadOnlyList<DateOnly> SessionsBetween(SqliteConnection connection, DateOnly from, DateOnly to)
+    private static IReadOnlyList<DateOnly> SessionsBetween(
+        SqliteConnection connection,
+        DateOnly from,
+        DateOnly to,
+        DateTimeOffset observedBefore)
     {
         using SqliteCommand command = connection.CreateCommand();
-        // Bounded on what had been observed by the end of the range, not merely dated inside it.
-        // A calibration run reads membership as it stands today on purpose, and that is the one
-        // reconstruction it is entitled to; walking sessions the store learned about afterwards
-        // would be a second one nobody decided on.
+        // Bounded on the run's own instant, which the caller states once for every read it makes.
+        // A session dated inside the range that the store learned about after the run began is not
+        // one this run walks, and a session the backfill acquired last night is: the observation
+        // that matters is when the lab came to know the bar, not when the market printed it.
         command.CommandText = """
             SELECT DISTINCT bar_date FROM daily_bar
              WHERE bar_date >= @from AND bar_date <= @to
@@ -352,7 +434,7 @@ public sealed class LongSetupDetector
             """;
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
-        command.Parameters.AddWithValue("@observed_before", StoreText.DateToStorageText(to) + "T23:59:59.999Z");
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
 
         var sessions = new List<DateOnly>();
         using SqliteDataReader reader = command.ExecuteReader();
@@ -471,17 +553,30 @@ public sealed record DetectResult(
     int RowsWritten,
     RunOutcome Outcome);
 
-/// <summary>What one calibration run counted, over a range of past sessions.</summary>
+/// <summary>
+/// What one calibration run counted, over a range of past sessions.
+///
+/// <c>Nights</c> is the point of the run and the totals are the summary. A threshold is set against
+/// how many candidates a night produces, and a total over five hundred sessions says nothing about
+/// that: the same total is one night of six hundred and five hundred of nothing, or two a night
+/// every night, and only one of those is a lab worth running.
+/// </summary>
 public sealed record CalibrationResult(
     DateOnly From,
     DateOnly To,
     int Sessions,
+    int WarmupSessions,
+    int Listed,
     int Members,
     int Recorded,
     int PassedAll,
     int Errored,
     int RowsWritten,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    IReadOnlyList<NightCount> Nights);
+
+/// <summary>What one reconstructed night produced, which is what the distribution is over.</summary>
+public sealed record NightCount(DateOnly AsOf, int Examined, int Recorded, int PassedAll);
 
 /// <summary>
 /// The counters one pass over the members produced.

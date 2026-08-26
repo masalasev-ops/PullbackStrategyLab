@@ -57,6 +57,19 @@ public sealed class PinnedConstantsCheck
             runbook.Contains("against a 5,000 ceiling", StringComparison.Ordinal),
             defaults.DailyCallCeiling == 5000, "the stated ceiling against the configured default"));
 
+        // The workable band, which three documents state and one class holds. A band that drifted
+        // in prose while the code kept the old numbers would be a threshold decision made against a
+        // rule nobody is applying, and it is stated as words rather than as a figure in a table, so
+        // nothing else here would catch it.
+        pins.Add(Pin.Text("ARCHITECTURE.html, the workable nightly count band",
+            architecture.Contains("outside roughly 5 to 60 on either side", StringComparison.Ordinal),
+            NightlyCounts.BandLow == 5 && NightlyCounts.BandHigh == 60,
+            "NightlyCounts.BandLow and NightlyCounts.BandHigh"));
+        pins.Add(Pin.Text("BUILD_PLAN.md, the same band at the checkpoint that applies it",
+            buildPlan.Contains("falls outside 5 to 60 per side", StringComparison.Ordinal),
+            NightlyCounts.BandLow == 5 && NightlyCounts.BandHigh == 60,
+            "NightlyCounts.BandLow and NightlyCounts.BandHigh"));
+
         // The four store pragmas, stated in SCHEMA and set at open in one place.
         string factory = RepositoryLayout.Read(
             Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "StoreConnectionFactory.cs"));

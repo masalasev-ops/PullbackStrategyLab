@@ -1074,7 +1074,9 @@ tr:hover td{background:#f4f2ec}
 <p>Five rows of the authored-parameters table are marked "phase 2 count check". They were chosen without knowing how many setups they produce, and phase 2 is the first time that can be measured. If the nightly count falls outside roughly 5 to 60 on either side, they are adjusted <b>once</b>, before phase 3 begins recording in earnest.</p>
 
 <p>It read "four thresholds" against three marked rows until the 2.1 spec pass. The count was of thresholds rather than of rows and the two differ, because the pullback-shape row carries two numbers; nothing derived either figure, so both drifted. It is now a row count, derived from the table it describes and asserted by <code>stated-counts</code>, on the rule every other count in this corpus obeys.</p>
-<p>That adjustment is calibration against a population count, not tuning against results, because no forward return exists yet at that point. It is recorded as a dated one-time event with the before and after counts. After phase 3 starts, these thresholds change only through the normal proposal route like anything else.</p></div>
+<p>That adjustment is calibration against a population count, not tuning against results, because no forward return exists yet at that point. It is recorded as a dated one-time event with the before and after counts. After phase 3 starts, these thresholds change only through the normal proposal route like anything else.</p>
+
+<p><b>The count has to come from a population the scans can discriminate within, which the golden fixture is not.</b> A scan takes the top fifty by its own magnitude, so a run over the fixture's thirty seeded names puts every one of them inside every scan on every session: <code>thrust</code> passes on every row, the most recent hit is always the session itself, no pullback has any bars, and every geometry check fails. The run over the fixture is a diff of the code path and its counts are nought by construction. The distribution a threshold is read from comes from the live universe, where two thousand names compete for fifty ranks.</p></div>
 
 </div>
 </body>

@@ -1450,7 +1450,96 @@ def pit_main(argv):
     return 0
 
 
+
+# --- the calibration range, derived from the captured histories ------------------------------
+
+
+def calibration_population(captured):
+    """Which names a calibration run over the fixture could ever decide, and over which sessions.
+
+    Derived from the captured responses rather than from the store the replay built, on the same
+    terms `--universe` uses. Three of the seeded histories are index trackers, an ETF fails the
+    security-type filter, and a tracker is never a universe member: partitioning by the same type
+    rule the screen uses is what makes this a derivation rather than a subtraction of a number
+    somebody already knew.
+
+    The warm-up is the rule and not a number carried over. A name needs a whole warm-up of sessions
+    behind a date before any figure exists for it, so the first session a run can decide is the
+    hundred-and-fiftieth, and a name with fewer than a hundred and fifty stored sessions can never
+    be decided at all.
+    """
+    with open(os.path.join(captured, "manifest.json"), encoding="utf-8") as handle:
+        manifest = json.load(handle)
+
+    with open(os.path.join(captured, "exchange-symbol-list.json"), encoding="utf-8") as handle:
+        types = {row["Code"]: row.get("Type") for row in json.load(handle)}
+
+    sessions_by_ticker = {}
+    every_session = set()
+
+    for entry in manifest["responses"]:
+        if not entry["endpoint"].startswith("eod/"):
+            continue
+
+        ticker = entry["endpoint"].split("/")[1].split(".")[0]
+        with open(os.path.join(captured, entry["file"]), encoding="utf-8") as handle:
+            bars = json.load(handle)
+
+        dates = sorted({bar["date"] for bar in bars})
+        sessions_by_ticker[ticker] = dates
+        every_session.update(dates)
+
+    members = sorted(
+        ticker for ticker, dates in sessions_by_ticker.items()
+        if types.get(ticker) == SECURITY_TYPE and len(dates) >= WARMUP
+    )
+
+    ordered = sorted(every_session)
+
+    return {
+        "storedSessions": len(ordered),
+        "from": ordered[WARMUP - 1],
+        "to": ordered[-1],
+        "sessions": len(ordered) - (WARMUP - 1),
+        "membersWithHistory": len(members),
+        "members": members,
+        "candidatesPerSession": len(members),
+    }
+
+
+def calibration_main(argv):
+    """What a calibration run over this fixture can cover, and why it cannot answer for a threshold.
+
+    The last figure is the one worth printing. A scan takes the top fifty by its own magnitude, and
+    the fixture holds thirty names that could ever be measured, so every one of them is inside the
+    top fifty of all six scans on every session. The most recent thrust is therefore always the
+    session itself, every pullback has no bars, and every geometry check fails on every row. The run
+    exercises the code and the population is degenerate by construction.
+    """
+    if len(argv) < 1:
+        print("usage: --calibration <captured-directory>", file=sys.stderr)
+        return 2
+
+    population = calibration_population(argv[0])
+
+    print("\ncalibration  from the captured responses and nothing else")
+    for name in ("storedSessions", "from", "to", "sessions", "membersWithHistory"):
+        print("  calibration.%-32s %s" % (name, population[name]))
+
+    print("\n  candidates a session       %d, against a scan breadth of %d"
+          % (population["candidatesPerSession"], SCAN_BREADTH))
+
+    if population["candidatesPerSession"] < SCAN_BREADTH:
+        print("  every candidate is inside every scan's breadth, so the thrust is always the session"
+              " itself and no pullback has any bars")
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--calibration":
+        return calibration_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--point-in-time":
         return pit_main(argv[2:])
 

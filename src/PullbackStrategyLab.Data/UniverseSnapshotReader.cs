@@ -49,6 +49,56 @@ public static class UniverseSnapshotReader
         return Read(command);
     }
 
+    /// <summary>
+    /// The names listed today that the store holds at least <paramref name="sessions"/> sessions of
+    /// history for, at or before <paramref name="asOf"/>.
+    ///
+    /// What a calibration run walks, and the count is not a detail. A member the store holds one bar
+    /// for produces no evidence on any session, because every figure the detector reads needs the
+    /// warm-up behind it. The nightly bulk ingest stores the whole market's closes for the evening it
+    /// runs, so in the golden fixture seven thousand two hundred names have a bar and thirty have a
+    /// history: a run that walked "members with any bar at all" would walk all seven thousand, take
+    /// two orders of magnitude longer, and count exactly the same setups.
+    ///
+    /// It is also the honest denominator. The distribution is read as a rate per name so it survives
+    /// a change of universe, and a rate over seven thousand names when thirty could ever have flagged
+    /// is a number about the fixture's symbol list rather than about the thresholds.
+    /// </summary>
+    public static IReadOnlyList<string> CurrentMembersWithHistory(
+        SqliteConnection connection,
+        DateOnly asOf,
+        int sessions,
+        DateTimeOffset observedBefore)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sessions);
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        // The observation instant is the caller's rather than derived from the as-of date, on the
+        // same terms as the reader that takes both. A backfill acquires a name's whole history in
+        // one evening, so every bar of 2024 was observed in 2026 and an instant taken from the
+        // as-of date would see none of it. Derived here, this read answered "no member has any
+        // history" over a store of one and a half million bars, and the run it fed reported six
+        // hundred sessions and nought setups.
+        command.CommandText = """
+            SELECT m.ticker
+              FROM universe_member m
+              JOIN daily_bar b ON b.ticker = m.ticker
+             WHERE m.removed_on IS NULL
+               AND b.bar_date <= @as_of
+               AND b.observed_at <= @observed_before
+             GROUP BY m.ticker
+            HAVING COUNT(DISTINCT b.bar_date) >= @sessions
+             ORDER BY m.ticker
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
+        command.Parameters.AddWithValue("@sessions", sessions);
+
+        return Read(command);
+    }
+
     private static IReadOnlyList<string> Read(SqliteCommand command)
     {
         var tickers = new List<string>();
