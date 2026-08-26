@@ -1058,3 +1058,170 @@ Decided:    **The floor's rejecting side is out of scope, with the reason and th
             call. It rests out of scope because nothing in the fixture fails a floor today, not
             because closing it is expensive, and a session that has a low-liquidity name to hand at
             the next capture should simply close it.
+
+## 1.12 — 2026-08-26 — phase-1-ingest-and-charts — **the phase does not sign off in this pass**
+
+The sign-off pass. A session that had committed nothing to this repository before it started, which
+is what the fresh-session rule buys, reproduced the record rather than reading it and then went at
+the machinery the two review entries above built. The verdict is at the end and it is not green.
+
+The checkpoint and the phase are separate here and the entry is recorded on purpose. 1.12's own done
+condition is a fresh session, findings batched into one pass, and `verify-phase` green with nothing
+unexamined; all three hold, so the checkpoint ran and this is its record. What it produced is a
+verdict of not signed off, and what blocks the phase is a done condition failed at 1.9 and two
+checks that assert less than they claim, none of which is 1.12's to have caused.
+
+Reproduced: `tools/ci.ps1` and `tools/ci.sh` both green at commit 535f9b3, 22 steps each, in the
+            same order, 194 tests. `tools/verify-phase` green: 115 claims, 46 passed, 0 failed, 69
+            out of scope, 0 unexamined; 338 expectations, 69 DERIVED, 269 FROZEN; coverage examined
+            193,544; inputs 37 CAPTURED, 48 AUTHORED; 0 expectations changed since the last commit.
+            Every figure below was read from `artifacts/replay.db` or from `fixtures/captured`, not
+            from an entry above.
+
+Verified:   The check roster reconciled by hand against the corpus rather than through
+            `coverage-reported`: 21 rows in CLAUDE.md, 17 declared "every CI run" and all 17
+            implemented as a trait, invoked as a named step by both scripts, and leaving a record
+            in `artifacts/checks`. 4 rows deferred or matrix, none implemented. Nothing implemented
+            that the roster does not declare, no record without a row, no step invoking a name no
+            test carries. The reconciliation holds in all four directions.
+            All 69 out-of-scope claims name a closing checkpoint, every one of those exists in
+            `BUILD_PLAN.md`, and none of them appears in this file. The 149 out-of-scope coverage
+            items all carry a reason, and the two in `fixture-replay` carry a price: 1,900 calls and
+            about 130 MB for the whole-market screen, one per-ticker call for the floor's rejecting
+            side.
+            The three tracker medians recomputed from `fixtures/captured/history-{SPY,QQQ,IWM}.json`
+            in a separate language, over the trailing twenty sessions to 2026-08-24, as the mean of
+            the two middle values of close times volume: 32,350,637,349, 23,907,112,602 and
+            5,408,259,360, matching the expectations exactly and matching `index_bar` in the replay
+            store. Their DERIVED tier is earned. None of the three is a `universe_member`.
+            30 universe names measured in the store, 30 clearing the liquidity floor, 0 below it, 0
+            short of the window. `tools/derive-indicators.py` reads `daily_bar` and compares against
+            `indicator_daily`, so it derives from the inputs rather than from the outputs.
+            Both carried obligations are still carried with their due points: the CONFIRMED values
+            at 1.12, step 6 of the move at the move. Neither was attempted.
+
+Built:      Six proofs of the table-placement pass in `CheckProofTests`, which had 34 and none of
+            them on the property the whole `architecture-conformance` widening rests on. Before
+            writing them the property was tested the only way that settles it: a table on neither
+            list was added to `ARCHITECTURE.html` and the check was run. It reported one unexamined
+            claim naming the table, and `phase-report` exited 1 saying NOT GREEN. The partition is a
+            partition. `TablePlacementClaims` is now callable so the proof is permanent rather than
+            a break-and-revert done by hand once, and its unused `Schedule` parameter is gone: the
+            placement claims already go through `OutOfScopeProblems` with every other claim, which
+            is where a table exempted to a landed checkpoint is caught.
+
+Measured:   `ci.ps1` and `ci.sh` green, 22 steps, 200 tests. `verify-phase` green, 115 claims, 0
+            unexamined, 338 expectations, coverage examined 193,558.
+
+Findings:   Finding. **A check can run, write a coverage record, and examine nothing, and neither
+            `coverage-reported` nor the phase report will say so.** `coverage-reported` asserts that
+            a check constructs `CheckCoverage` and calls `Report()`, which is a source scan for the
+            shape of a statement, not an assertion about the number in it. `CheckCoverage.Report()`
+            accepts zero examined without complaint. The phase report sums `Examined` across the
+            checks and compares that sum to nothing.
+            Reproduced twice. Breaking the production-source enumerator so nothing was scanned left
+            `bar-append-only` passing with "0 source files scanned" in its own record; that break
+            was caught, but by the floor assertions in `writer-ownership`, `clock-usage` and
+            `architecture-conformance`, which happen to share the enumerator, not by
+            `bar-append-only` and not by `coverage-reported`. Narrowing `BarTables` to the one table
+            no migration has created was not caught by anything: the suite passed 194 of 194, the
+            phase report said GREEN, and the only trace was the total examined moving from 193,544
+            to 193,536.
+            Reading: 193,544 is not an aggregate, it is `store-portability`'s 189,726 plus noise, so
+            it is structurally incapable of showing any other check's scope collapsing. Twelve of
+            the eighteen check files state a floor in advance and the rest do not, and which ones do
+            is not a property anything holds. This is the corpus's own named failure mode, arrived
+            at one level up: green means nothing I ran failed, and nothing was run.
+
+            Finding. **Done condition seven is asserted over the whole fixture and the condition is
+            per checkpoint.** `FixtureReplayCheck` says "Done condition seven, asserted rather than
+            remembered" and then asserts that the fixture holds at least one DERIVED or CONFIRMED
+            row anywhere. The clause reads "The checkpoint's expectations ... and at least one of
+            them is DERIVED or CONFIRMED", and the comment's own next sentence names the right unit.
+            Counted per checkpoint: 1.3 six FROZEN, 1.4 five FROZEN, 1.5 six FROZEN, 1.7 four
+            FROZEN, 1.9 three FROZEN, none of them with a derived expectation of their own. 1.6,
+            1.8, 1.10 and 1.12 clear it.
+            1.3, 1.4 and 1.5 predate the fixture and were back-filled at 1.7 as the plan required,
+            but that row promises only "back-fills expectations for 1.1 to 1.6 with their tiers",
+            which is narrower than the clause it discharges. 1.9 landed after the fixture existed,
+            carries three FROZEN expectations, and has no carried obligation recorded anywhere.
+            Reading: 1.9 failed done condition seven and nothing said so at the time, which is the
+            same shape as an out-of-scope claim resting at a checkpoint that has landed. It is also
+            cheap to close: the index bar counts and date range derive from the three captured
+            histories with no vendor call at all, exactly as the tracker medians just did.
+
+            Finding. An out-of-scope **claim** must name a checkpoint that exists and has not
+            landed, and three assertions enforce it. An out-of-scope **coverage item** carries free
+            prose and nothing reads it. Seven checks record 149 of them. Four name a checkpoint only
+            obliquely, as "the checkpoint that ingests it" or "the checkpoint that builds its
+            component", which is the wording that cannot go stale because it never resolves to
+            anything.
+            Reading: the two halves of the same rule are enforced very differently, and the
+            unenforced half is the larger one by count.
+
+            Observation. `PROGRESS.md` states PAYO's twenty-session median dollar volume as
+            34,889,899.64 at two places, in the entries of 2026-08-26. The fixture, the replay store
+            and an independent computation over the captured history all give 34,889,899.60, which
+            is also what the 1.6 entry records. A transcription, corrected below.
+            Reading: it is a digit and it changes nothing, and it survived in the same entry that
+            argues a figure must not be argued from arithmetic over a progress entry. Nothing checks
+            a figure in a record against the fixture that holds it.
+
+            Observation. 33 DERIVED expectations were added at 1.12 and 30 of them restate values
+            the fixture already held under an `indicators.*` id, byte for byte, from the same script
+            over the same bars. What they add is a second reader path, `UniverseBuilder`'s window
+            selection rather than `IndicatorEngine`'s stored row. What they do not add is a second
+            derivation. The count of new independent facts at 1.12 is three.
+
+            Observation. `PhaseReplay.LiquidityFloorFigures` says it measures from the stored bars
+            "because the floor is UniverseBuilder's and this has to fail if the two ever compute the
+            median differently". The same commit made `UniverseBuilder.Median` a forwarder to
+            `Averages.Median`, so there are no longer two implementations to differ. The comment
+            describes a guard the change beside it removed the possibility of. The change itself is
+            right and the production diff at 1.12 is behaviour-preserving: the removed body was byte
+            for byte what it now calls.
+
+            Observation. The bound in the basis test, `onRaw > onAdjusted * 1.4m`, is a magic number
+            with a comment. What it is a bound on: the ratio of the raw-basis EMA to the
+            adjusted-basis one over IESC's 150-session window, which holds a clean two-for-one with
+            the last three sessions unadjusted. Measured, the ratios are 1.5372 at period 9, 1.7638
+            at 21 and 1.8894 at 50. 1.4 sits under the tightest of the three, ema_9, with about nine
+            percent of headroom, and ema_9 is the tightest because the shortest average carries the
+            most post-split weight. The comment says "roughly twice", which is the factor at the
+            start of the window rather than any of the three ratios the assertion compares.
+
+Decided:    **Phase 1 does not sign off in this pass, and it is not blocked on the CONFIRMED
+            values.** Those are correctly carried, cannot be discharged by any build session, and
+            the basis test added at 1.12 buys part of what they were for by checking the averages
+            against the vendor's own adjusted close, which is a third party's arithmetic if not a
+            platform's readout. Holding the phase on an act no session can perform would make the
+            due point permanent rather than pending.
+            What blocks it is the first two findings, both of which are a check asserting less than
+            its own label claims, which is the defect this corpus is built to catch and the one it
+            has now shipped twice. Four things close it and none is expensive: a floor on examined
+            for every check, or the equivalent read from the records by `coverage-reported`; done
+            condition seven asserted per checkpoint, with proofs; the derived expectations owed at
+            1.9, and at 1.3, 1.4 and 1.5 if the narrow BUILD_PLAN row is corrected rather than
+            relied on; and the out-of-scope coverage reasons put under the rule the claims already
+            obey.
+
+Carried:    The six new proofs are this session's own code and are not covered by this pass. The
+            next session reviews them along with whatever closes the four items above.
+
+Stopping:   This pass found as much as the one before it, and two of its findings are the same
+            shape as that pass's headline. By the stopping rule that means a third pass is owed
+            rather than that the phase is done.
+
+## Phase 1 corrections — 2026-08-26 — phase-1-ingest-and-charts — corrects PAYO's median in two entries
+
+Not a checkpoint entry. Corrects a figure, changes nothing built.
+
+Corrects:   The entry of 2026-08-26 titled "the price basis, and three obligations narrowed" and the
+            entry of 2026-08-26 titled "the floor comparison, and the side nothing exercises" both
+            state PAYO's twenty-session median dollar volume as 34,889,899.64. It is
+            **34,889,899.60**. That is the value in `fixtures/expectations.json` under both
+            `indicators.PAYO.medianDollarVolume` and `liquidity.PAYO.medianDollarVolume20`, the
+            value in the 1.6 entry of 2026-08-25, the value derived from `artifacts/replay.db`, and
+            the value derived from `fixtures/captured/history-PAYO.json` outside the solution.
+            Nothing else in either entry depends on it: the margin over the liquidity floor is 1.7
+            times either way, and PAYO is the closest name to the floor either way.

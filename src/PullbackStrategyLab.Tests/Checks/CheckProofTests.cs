@@ -518,4 +518,104 @@ public sealed class CheckProofTests
                 voided: "the platform computes sma(high,20)/sma(low,20)-1, which is not the mean of (high-low)/close"),
         ]));
     }
+
+    // ---- every table in the document is placed -----------------------------------------------
+    //
+    // The proof the placement pass did not have. It replaced a hardcoded list of five tables with
+    // a hardcoded list of seven claim tables plus ten exempt ones, and the whole improvement rests
+    // on one property: a table on neither list reports unexamined and names itself. Without this
+    // proof that is a partition by assertion, and a partition that has quietly become a filter
+    // looks identical from every angle except this one.
+
+    /// <summary>
+    /// A document holding one table of each kind: read for claims, exempt by reason, deferred to a
+    /// checkpoint, and placed by nobody. The last is the one the proof exists for.
+    /// </summary>
+    private const string FourKindsOfTable = """
+        <h2>Component catalogue</h2>
+        <table><tr><th>Name</th></tr><tr><td>RunLogger</td></tr></table>
+        <h2>Vocabulary</h2>
+        <table><tr><th>Term</th></tr><tr><td>setup</td></tr></table>
+        <h2>What the pack contains</h2>
+        <table><tr><th>Part</th></tr><tr><td>signals</td></tr></table>
+        <h2>A table nobody placed</h2>
+        <table><tr><th>Thing</th></tr><tr><td>alpha</td></tr></table>
+        """;
+
+    private static ArchitectureConformanceCheck.Claim Placement(string heading) =>
+        Assert.Single(ArchitectureConformanceCheck.TablePlacementClaims(FourKindsOfTable),
+            c => c.Subject == heading);
+
+    [Fact]
+    public void A_table_on_neither_list_is_unexamined_and_names_itself()
+    {
+        // The one that has to hold. A table appearing in neither ClaimTables nor TablesWithoutClaims
+        // is not silently absent from the count, which is the state the report cannot show; it is
+        // unexamined, which is the verdict that turns the phase report red.
+        ArchitectureConformanceCheck.Claim orphan = Placement("A table nobody placed");
+
+        Assert.Equal(ArchitectureConformanceCheck.Unexamined, orphan.Verdict);
+        Assert.Equal("Tables in the document", orphan.Table);
+        Assert.Contains("nobody placed", orphan.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_table_in_the_document_gets_exactly_one_claim()
+    {
+        // Absent is worse than unexamined, so the count of claims has to equal the count of tables.
+        // A parser that stops early shortens this list rather than failing, and a placement pass
+        // over three of four tables reads as complete coverage of the document.
+        IReadOnlyList<ArchitectureConformanceCheck.Claim> claims =
+            ArchitectureConformanceCheck.TablePlacementClaims(FourKindsOfTable);
+
+        Assert.Equal(4, claims.Count);
+        Assert.Equal(4, claims.Select(c => c.Subject).Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void A_table_the_check_reads_for_claims_is_passed()
+    {
+        ArchitectureConformanceCheck.Claim read = Placement("Component catalogue");
+
+        Assert.Equal(ArchitectureConformanceCheck.Pass, read.Verdict);
+        Assert.Contains("read for claims", read.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_table_exempt_by_a_written_reason_is_passed_with_that_reason()
+    {
+        ArchitectureConformanceCheck.Claim exempt = Placement("Vocabulary");
+
+        Assert.Equal(ArchitectureConformanceCheck.Pass, exempt.Verdict);
+        Assert.Equal("definitions of terms, not a statement about the code", exempt.Detail);
+    }
+
+    [Fact]
+    public void A_table_a_later_checkpoint_builds_is_out_of_scope_and_carries_that_checkpoint()
+    {
+        // And carrying it is what subjects it to the same rule a deferred row obeys: the plan has
+        // to have the checkpoint and the record must not yet carry it. Placement claims go through
+        // OutOfScopeProblems with every other claim, so a table exempted to a checkpoint that has
+        // landed is caught there rather than resting exempt forever.
+        ArchitectureConformanceCheck.Claim deferred = Placement("What the pack contains");
+
+        Assert.Equal(ArchitectureConformanceCheck.Deferred, deferred.Verdict);
+        Assert.Equal("6.4", deferred.Closes);
+
+        string problem = Assert.Single(Problems(
+            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "What the pack contains", "1.6")));
+        Assert.Contains("already landed", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_table_with_no_heading_above_it_is_unexamined_rather_than_dropped()
+    {
+        // The degenerate document. A table before the first heading has no heading text to place
+        // it by, and the answer must be a verdict rather than a silent skip.
+        ArchitectureConformanceCheck.Claim first = Assert.Single(
+            ArchitectureConformanceCheck.TablePlacementClaims(
+                "<table><tr><th>a</th></tr><tr><td>1</td></tr></table>"));
+
+        Assert.Equal(ArchitectureConformanceCheck.Unexamined, first.Verdict);
+    }
 }

@@ -264,7 +264,7 @@ public sealed partial class ArchitectureConformanceCheck
         //    being the document as far as this check is concerned. A table nobody reads produces
         //    no claim at all, so it is absent from the count rather than unexamined in it, and
         //    absent is the one state the report cannot show you.
-        claims.AddRange(TablePlacementClaims(architecture, schedule));
+        claims.AddRange(TablePlacementClaims(architecture));
 
         var byVerdict = claims.GroupBy(c => c.Verdict, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
@@ -370,7 +370,7 @@ public sealed partial class ArchitectureConformanceCheck
     /// unexamined row either. Absent is worse than unexamined, because unexamined is the verdict
     /// that blocks and absent is the one the report cannot show.
     /// </summary>
-    private static IReadOnlyList<Claim> TablePlacementClaims(string architecture, Schedule schedule)
+    public static IReadOnlyList<Claim> TablePlacementClaims(string architecture)
     {
         const string Table = "Tables in the document";
         var claims = new List<Claim>();
