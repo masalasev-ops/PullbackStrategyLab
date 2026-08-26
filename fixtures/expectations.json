@@ -198,6 +198,150 @@
       "producedBy": "the replay itself, recorded to detect change"
     },
     {
+      "id": "index.IWM.bars",
+      "tier": "DERIVED",
+      "value": "251",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "how many of the vendor's published bars survived into index_bar. A de-duplicating insert dropping one moves this and moves nothing the three stage totals report"
+    },
+    {
+      "id": "index.IWM.firstSession",
+      "tier": "DERIVED",
+      "value": "2025-08-25",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the oldest session stored. The ingestor asks for three years and the capture holds one, so this is the vendor's own range rather than the window bound"
+    },
+    {
+      "id": "index.IWM.lastSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the newest session stored, which is the as-of date the whole replay runs for"
+    },
+    {
+      "id": "index.IWM.firstClose",
+      "tier": "DERIVED",
+      "value": "232.3600",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close a year back, where a year of distributions separates it from the adjusted one"
+    },
+    {
+      "id": "index.IWM.firstAdjustedClose",
+      "tier": "DERIVED",
+      "value": "229.9714",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the adjusted close at the same session. Taken here rather than at the last, where the two are equal for all three trackers and a swapped column would agree with itself"
+    },
+    {
+      "id": "index.IWM.lastClose",
+      "tier": "DERIVED",
+      "value": "297.9700",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close at the as-of session"
+    },
+    {
+      "id": "index.QQQ.bars",
+      "tier": "DERIVED",
+      "value": "251",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "how many of the vendor's published bars survived into index_bar. A de-duplicating insert dropping one moves this and moves nothing the three stage totals report"
+    },
+    {
+      "id": "index.QQQ.firstSession",
+      "tier": "DERIVED",
+      "value": "2025-08-25",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the oldest session stored. The ingestor asks for three years and the capture holds one, so this is the vendor's own range rather than the window bound"
+    },
+    {
+      "id": "index.QQQ.lastSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the newest session stored, which is the as-of date the whole replay runs for"
+    },
+    {
+      "id": "index.QQQ.firstClose",
+      "tier": "DERIVED",
+      "value": "570.3200",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close a year back, where a year of distributions separates it from the adjusted one"
+    },
+    {
+      "id": "index.QQQ.firstAdjustedClose",
+      "tier": "DERIVED",
+      "value": "567.5839",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the adjusted close at the same session. Taken here rather than at the last, where the two are equal for all three trackers and a swapped column would agree with itself"
+    },
+    {
+      "id": "index.QQQ.lastClose",
+      "tier": "DERIVED",
+      "value": "706.3200",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close at the as-of session"
+    },
+    {
+      "id": "index.SPY.bars",
+      "tier": "DERIVED",
+      "value": "251",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "how many of the vendor's published bars survived into index_bar. A de-duplicating insert dropping one moves this and moves nothing the three stage totals report"
+    },
+    {
+      "id": "index.SPY.firstSession",
+      "tier": "DERIVED",
+      "value": "2025-08-25",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the oldest session stored. The ingestor asks for three years and the capture holds one, so this is the vendor's own range rather than the window bound"
+    },
+    {
+      "id": "index.SPY.lastSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the newest session stored, which is the as-of date the whole replay runs for"
+    },
+    {
+      "id": "index.SPY.firstClose",
+      "tier": "DERIVED",
+      "value": "642.4700",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close a year back, where a year of distributions separates it from the adjusted one"
+    },
+    {
+      "id": "index.SPY.firstAdjustedClose",
+      "tier": "DERIVED",
+      "value": "635.4292",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the adjusted close at the same session. Taken here rather than at the last, where the two are equal for all three trackers and a swapped column would agree with itself"
+    },
+    {
+      "id": "index.SPY.lastClose",
+      "tier": "DERIVED",
+      "value": "763.4700",
+      "checkpoint": "1.9",
+      "producedBy": "tools/derive-indicators.py --index over fixtures/captured, which reads the captured responses rather than the store and applies the ingestor's window from its own statement of it",
+      "note": "the raw close at the as-of session"
+    },
+    {
       "id": "indicators.members",
       "tier": "FROZEN",
       "value": "7202",
@@ -2422,6 +2566,28 @@
       "checkpoint": "1.12",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "All three. They are the only captured names the universe excludes and none of them is a floor rejection, which is why the floor's rejecting side is recorded out of scope rather than claimed against them."
+    }
+  ],
+  "frozenOnly": [
+    {
+      "checkpoint": "1.3",
+      "obligation": "1.1",
+      "why": "the universe counts are whole-market: a second implementation is the security-type filter and both floors over the captured symbol list, not a formula over one window"
+    },
+    {
+      "checkpoint": "1.4",
+      "obligation": "1.1",
+      "why": "the bar counts are whole-market: a second implementation is the bulk response parsed and joined against the universe outside the solution"
+    },
+    {
+      "checkpoint": "1.5",
+      "obligation": "1.1",
+      "why": "the action counts are whole-market, on the same bulk day and the same join"
+    },
+    {
+      "checkpoint": "1.7",
+      "obligation": "1.1",
+      "why": "these are facts about the fixture's own composition, and the screen that decides them is 1.3's, so they close with it"
     }
   ]
 }

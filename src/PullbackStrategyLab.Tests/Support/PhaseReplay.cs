@@ -216,6 +216,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
+        measurements.AddRange(IndexFigures());
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(LiquidityFloorFigures());
         measurements.AddRange(ChartFigures());
@@ -231,6 +232,59 @@ public sealed class PhaseReplay : IDisposable
             ReplayScreeningSessions,
             stages,
             measurements);
+    }
+
+    /// <summary>
+    /// What each tracker's history looks like once it is stored, per symbol rather than as the
+    /// three totals the stage reports.
+    ///
+    /// The three totals 1.9 landed with are all FROZEN, which is regression detection: they say
+    /// the stage still does what it did, and nothing about whether it did the right thing. These
+    /// carry DERIVED expectations instead, produced by <c>tools/derive-indicators.py --index</c>
+    /// reading the captured responses directly. That derivation costs no vendor call, since the
+    /// same files the replay serves from are the ones it reads, so this is the cheapest of the
+    /// checkpoints that were frozen-only and it is closed rather than carried.
+    ///
+    /// Per symbol on purpose. A total of 753 bars across three symbols holds while one symbol
+    /// gains what another loses, and the first and last session and the last close are what a
+    /// symbol mix-up, a window off by a session or a close read out of the adjusted column would
+    /// actually move. The raw and adjusted close are taken at the first session rather than the
+    /// last, because at the last captured session the two are equal for all three trackers and a
+    /// pair read out of the wrong column would agree with itself.
+    ///
+    /// The three-year window is not what these test: the ingestor asks for three years, the
+    /// capture holds one, and the vendor's own range is the narrower of the two, so the bound
+    /// never bites here. That is stated rather than left for a later reader to discover, because
+    /// an expectation believed to cover something it does not is worse than one that covers less
+    /// and says so.
+    /// </summary>
+    private IReadOnlyList<Measurement> IndexFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (string symbol in _options.Value.IndexSymbols.Order(StringComparer.Ordinal))
+        {
+            IReadOnlyList<StoredDailyBar> history = IndexBarReader.Read(connection, symbol, AsOf, int.MaxValue);
+
+            if (history.Count == 0)
+            {
+                // Named rather than skipped, on the same reasoning as a missing indicator row: an
+                // expectation that quietly stops having a subject is how a diff stays green over
+                // nothing.
+                figures.Add(new Measurement($"index.{symbol}", "no bars"));
+                continue;
+            }
+
+            figures.Add(new Measurement($"index.{symbol}.bars", history.Count.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"index.{symbol}.firstSession", Session(history[0].BarDate)));
+            figures.Add(new Measurement($"index.{symbol}.lastSession", Session(history[^1].BarDate)));
+            figures.Add(new Measurement($"index.{symbol}.firstClose", Figure(history[0].Close)));
+            figures.Add(new Measurement($"index.{symbol}.firstAdjustedClose", Figure(history[0].AdjustedClose)));
+            figures.Add(new Measurement($"index.{symbol}.lastClose", Figure(history[^1].Close)));
+        }
+
+        return figures;
     }
 
     /// <summary>
@@ -285,8 +339,19 @@ public sealed class PhaseReplay : IDisposable
     /// with the condition that would end it, rather than the two being carried as one open item
     /// that reads as though neither had been done.
     ///
-    /// Measured from the stored bars rather than from the indicator row, because the floor is
-    /// UniverseBuilder's and this has to fail if the two ever compute the median differently.
+    /// Measured from the stored bars rather than from the indicator row, and the difference is
+    /// the window rather than the arithmetic. The indicator row's median is taken over the
+    /// engine's own twenty-session tail of its warm-up window; this one is taken over the window
+    /// the floor is defined on, selected here by a second call to the point-in-time reader. So
+    /// what a disagreement between them would show is a window or a reader that stopped agreeing,
+    /// not two implementations of a median.
+    ///
+    /// There is only one implementation of the median and this shares it deliberately.
+    /// <c>UniverseBuilder.Median</c> forwards to <c>Averages.Median</c>, so calling it here means
+    /// the figure is the one the screen would compute rather than a re-derivation that could
+    /// agree with the definition and disagree with the code. The independent derivation of these
+    /// values lives outside the solution, in <c>tools/derive-indicators.py</c>, which is where a
+    /// second implementation belongs and the only place it can say anything.
     /// </summary>
     private IReadOnlyList<Measurement> LiquidityFloorFigures()
     {
@@ -462,6 +527,9 @@ public sealed class PhaseReplay : IDisposable
             new Measurement($"read.{Ticker}.drawnAgreesWithStored", agrees ? "yes" : "no"),
         ];
     }
+
+    /// <summary>A session, written the way the store and the vendor both write one.</summary>
+    public static string Session(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     /// <summary>A screen coordinate, to two places. It is a length rather than a price.</summary>
     public static string Coordinate(double value) =>

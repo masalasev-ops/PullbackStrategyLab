@@ -47,10 +47,26 @@ derived here from its own statement of what it should be:
   ticks     five or so labels on a round step: the span over five, rounded up to 1, 2, 5 or 10
             times its own power of ten, starting at the first multiple at or above the low.
 
+The index mode, --index, derives what IndexIngestor should have stored for each tracker, and
+it reads the captured vendor responses rather than the store. That is the point: everything
+between the response and the row is what the stage does, so a derivation starting from the
+store would start on the far side of the thing under test. It applies the ingestor's window
+from its own statement of it, `from = as-of minus three years, to = as-of`, inclusive at both
+ends, and reports the count, the first and last session, and the last raw and adjusted close.
+
+  What it can catch: a symbol read into the wrong row, a window off by a session, a close taken
+  from the adjusted column or the reverse, a de-duplicating insert dropping a bar.
+  What it cannot: the three-year bound, because the capture holds one year and the vendor's own
+  range is the narrower of the two. That bound is exercised on a live night and by nothing here.
+
 Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> ...]
         python tools/derive-indicators.py --chart <store.db> <as-of> <ticker> <sessions> <width> <height>
+        python tools/derive-indicators.py --index <captured-dir> <as-of> <symbol> [<symbol> ...]
 """
 
+import datetime
+import json
+import os
 import sqlite3
 import sys
 from decimal import Decimal, getcontext
@@ -302,9 +318,78 @@ def chart_main(argv):
     return 0
 
 
+BACKFILL_YEARS = 3
+
+
+def index_window(captured, symbol, as_of):
+    """The bars the ingestor would have kept for one tracker, from the captured response.
+
+    The window is written out here from the ingestor's own statement of it rather than read
+    from anywhere, for the same reason the formulas above are: a derivation that borrows the
+    number it is checking is checking nothing.
+    """
+    end = datetime.date.fromisoformat(as_of)
+    start = end.replace(year=end.year - BACKFILL_YEARS)
+
+    with open(os.path.join(captured, "history-%s.json" % symbol), encoding="utf-8") as handle:
+        published = json.load(handle)
+
+    kept = [
+        bar for bar in published
+        if start <= datetime.date.fromisoformat(bar["date"]) <= end
+    ]
+    kept.sort(key=lambda bar: bar["date"])
+    return published, kept
+
+
+def derive_index(kept):
+    """The six figures per symbol, chosen for what a wrong one would mean.
+
+    The raw and adjusted close are taken at the first session and not the last. At the last
+    session of a captured window the two are equal for all three trackers, because no
+    distribution has gone ex since, so a pair read out of the wrong column there would agree
+    with itself and say nothing. At the first session they differ by a year of distributions,
+    which is where a swapped column shows.
+    """
+    first, last = kept[0], kept[-1]
+    return {
+        "bars": len(kept),
+        "firstSession": first["date"],
+        "lastSession": last["date"],
+        "firstClose": Decimal(str(first["close"])).quantize(PLACES),
+        "firstAdjustedClose": Decimal(str(first["adjusted_close"])).quantize(PLACES),
+        "lastClose": Decimal(str(last["close"])).quantize(PLACES),
+    }
+
+
+def index_main(argv):
+    if len(argv) < 3:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    captured, as_of, symbols = argv[0], argv[1], argv[2:]
+
+    for symbol in symbols:
+        published, kept = index_window(captured, symbol, as_of)
+        print("\n%s  as of %s, %d bar(s) published, %d inside the window"
+              % (symbol, as_of, len(published), len(kept)))
+
+        if not kept:
+            print("  nothing in the window, so there is nothing to expect")
+            continue
+
+        for name, value in derive_index(kept).items():
+            print("  index.%s.%-18s %s" % (symbol, name, value))
+
+    return 0
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "--chart":
         return chart_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--index":
+        return index_main(argv[2:])
 
     if len(argv) < 4:
         print(__doc__.strip().splitlines()[-1], file=sys.stderr)

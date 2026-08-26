@@ -618,4 +618,171 @@ public sealed class CheckProofTests
 
         Assert.Equal(ArchitectureConformanceCheck.Unexamined, first.Verdict);
     }
+
+    // The examined floor. The narrowing reproduced here is the one that got through the 1.12
+    // review by hand: BarAppendOnlyCheck.BarTables cut from three tables to one left the suite
+    // passing, the phase report GREEN, and one summary number nobody compares eight lower.
+
+    [Fact]
+    public void The_examined_floor_catches_a_check_narrowing_below_it()
+    {
+        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["bar-append-only"] = 54 };
+
+        string? narrowed = CheckCoverage.Shortfall("bar-append-only", 46, recorded);
+
+        Assert.NotNull(narrowed);
+        Assert.Contains("bar-append-only", narrowed, StringComparison.Ordinal);
+        Assert.Contains("46", narrowed, StringComparison.Ordinal);
+        Assert.Contains("54", narrowed, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_examined_floor_is_a_floor_rather_than_an_equality()
+    {
+        // Counts differ between platforms and grow with the corpus. A baseline demanding equality
+        // would go red on a file being added, and a guard that cries wolf gets suppressed, which
+        // is a slower way of deleting it.
+        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["path-casing"] = 2409 };
+
+        Assert.Null(CheckCoverage.Shortfall("path-casing", 2409, recorded));
+        Assert.Null(CheckCoverage.Shortfall("path-casing", 2410, recorded));
+        Assert.NotNull(CheckCoverage.Shortfall("path-casing", 2408, recorded));
+    }
+
+    [Fact]
+    public void A_check_with_no_floor_recorded_fails_rather_than_being_waved_through()
+    {
+        // The obvious way to lose the whole mechanism is to add a check and no floor for it. That
+        // has to fail, or the guard covers whatever was there when it was written and nothing
+        // added since, which is the same silent narrowing one level up.
+        string? missing = CheckCoverage.Shortfall("a-new-check", 9, new Dictionary<string, int>(StringComparer.Ordinal));
+
+        Assert.NotNull(missing);
+        Assert.Contains("a-new-check", missing, StringComparison.Ordinal);
+        Assert.Contains("fixtures/checks-baseline.json", missing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_check_the_roster_declares_has_a_floor_on_disk()
+    {
+        // Against the real baseline rather than a written one, because the failure this catches is
+        // a file drifting out of step with the roster rather than a function being wrong.
+        string[] missing =
+        [
+            .. CoverageReportedCheck.Roster()
+                .Where(r => r.Runs == CoverageReportedCheck.EveryRun)
+                .Select(r => r.Name)
+                .Where(name => !CheckCoverage.Baseline.ContainsKey(name))
+                .Order(StringComparer.Ordinal)
+        ];
+
+        Assert.True(missing.Length == 0,
+            $"{missing.Length} check(s) the roster declares have no floor in fixtures/checks-baseline.json: "
+            + string.Join(", ", missing));
+    }
+
+    [Fact]
+    public void A_floor_naming_a_check_that_does_not_run_is_caught_too()
+    {
+        // The other direction. A stale entry does no harm on its own, and it is how the file stops
+        // being readable as the list of what is guarded.
+        string[] stale =
+        [
+            .. CheckCoverage.Baseline.Keys
+                .Where(name => !CoverageReportedCheck.Roster().Any(r => r.Name == name))
+                .Order(StringComparer.Ordinal)
+        ];
+
+        Assert.True(stale.Length == 0,
+            $"{stale.Length} floor(s) in fixtures/checks-baseline.json name no check in CLAUDE.md's roster: "
+            + string.Join(", ", stale));
+    }
+
+    // Done condition seven, per checkpoint. The blind spot being closed is that one DERIVED
+    // expectation anywhere satisfied the condition for every checkpoint in the fixture.
+
+    private static readonly ArchitectureConformanceCheck.Obligation Open =
+        new("1.1", "2.1", "the derived expectations those checkpoints predate");
+
+    private static FixtureReplayCheck.Expectation Expectation(string id, string tier, string checkpoint) =>
+        new(id, tier, "1", checkpoint, "a proof, not a run", null);
+
+    [Fact]
+    public void One_derived_expectation_does_not_satisfy_the_condition_for_another_checkpoint()
+    {
+        FixtureReplayCheck.Expectation[] expectations =
+        [
+            Expectation("a.one", FixtureReplayCheck.Derived, "1.6"),
+            Expectation("b.one", FixtureReplayCheck.Frozen, "1.4"),
+        ];
+
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            expectations, [], [Open], _ => false));
+
+        Assert.Contains("1.4", problem, StringComparison.Ordinal);
+        Assert.Contains("nothing permits it", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_frozen_only_checkpoint_naming_an_open_obligation_is_permitted()
+    {
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [Open],
+            _ => false));
+    }
+
+    [Fact]
+    public void A_permit_naming_an_obligation_that_is_not_in_the_plan_permits_nothing()
+    {
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.2", "whole-market counts")],
+            [Open],
+            _ => false));
+
+        Assert.Contains("no row raised there", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_whose_obligation_has_fallen_due_permits_nothing()
+    {
+        // The same rule an out-of-scope architecture claim obeys. An obligation due at a
+        // checkpoint the record already carries is one that checkpoint shipped without closing.
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [Open],
+            checkpoint => checkpoint == "2.1"));
+
+        Assert.Contains("PROGRESS already records 2.1", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_a_checkpoint_has_outgrown_is_reported_as_spent()
+    {
+        // Both directions, on the same reasoning writer-ownership is asserted both ways: a permit
+        // left behind would quietly re-permit the checkpoint if its independent expectation were
+        // ever removed.
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Confirmed, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [Open],
+            _ => false));
+
+        Assert.Contains("permit is spent", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_for_a_checkpoint_the_fixture_does_not_reach_is_caught()
+    {
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit("3.4", "1.1", "a checkpoint with nothing in the fixture")],
+            [Open],
+            _ => false));
+
+        Assert.Contains("the diff never reaches", problem, StringComparison.Ordinal);
+    }
 }

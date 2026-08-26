@@ -204,6 +204,36 @@ public sealed partial class FixtureReplayCheck
                 + string.Join(", ", result.AskedOnAnUncoveredEndpoint.Take(6)));
         }
 
+        // Done condition seven, per checkpoint, with the frozen-only ones named and each one's
+        // permission read from BUILD_PLAN rather than assumed.
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+        IReadOnlyList<string> doneConditionSeven = DoneConditionSevenProblems(
+            expected.Expectations, expected.FrozenOnly ?? [], schedule.Obligations, schedule.HasLanded);
+
+        CheckpointTier[] tiers = [.. ByCheckpoint(expected.Expectations)];
+        CheckpointTier[] frozenOnly = [.. tiers.Where(t => t.Independent == 0)];
+
+        coverage.Examined("checkpoints with expectations in the fixture", tiers.Length);
+        coverage.Examined("of those carrying an independently produced expectation", tiers.Length - frozenOnly.Length);
+
+        foreach (CheckpointTier checkpoint in frozenOnly)
+        {
+            Permit? permit = (expected.FrozenOnly ?? [])
+                .FirstOrDefault(f => string.Equals(f.Checkpoint, checkpoint.Checkpoint, StringComparison.Ordinal));
+
+            ArchitectureConformanceCheck.Obligation? obligation = permit is null
+                ? null
+                : schedule.Obligations.FirstOrDefault(o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
+
+            // Out of scope rather than unexamined, and named one checkpoint at a time. A single
+            // row saying "five checkpoints are frozen-only" is the shape of report that let this
+            // sit unnoticed, because it reads as one item rather than as five.
+            coverage.OutOfScope($"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN", 1,
+                obligation is null
+                    ? "nothing permits it"
+                    : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}");
+        }
+
         coverage.Report();
 
         DiffRow[] broken = rows.Where(r => r.Verdict is not ("matched" or "void")).ToArray();
@@ -214,13 +244,17 @@ public sealed partial class FixtureReplayCheck
                 $"{r.Id} [{r.Tier}, {r.Checkpoint}] expected {r.Expected}, got {r.Actual ?? "nothing"}"))
             + (broken.Length > 20 ? $"\n  ... and {broken.Length - 20} more" : string.Empty));
 
-        // Done condition seven, asserted rather than remembered. A fixture of nothing but frozen
-        // values detects change and verifies nothing, and a checkpoint that added only those has
-        // added regression detection and called it verification.
-        int independent = rows.Count(r => r.Tier is Derived or Confirmed);
-        Assert.True(independent > 0,
-            "Every expectation in the fixture is FROZEN. At least one has to be DERIVED or CONFIRMED, or the fixture "
-            + "only says the code still agrees with itself.");
+        // Done condition seven, asserted per checkpoint rather than once over the fixture.
+        //
+        // The condition is written per checkpoint: a checkpoint that adds only frozen expectations
+        // has added regression detection and called it verification. Until the 1.12 review this
+        // asserted one DERIVED anywhere in the fixture, which is a condition sixty later rows can
+        // satisfy on behalf of the one checkpoint that never met it, and it passed the whole time
+        // five checkpoints were frozen-only. Same shape as the label on this comment claiming more
+        // than the line beneath it did.
+        Assert.True(doneConditionSeven.Count == 0,
+            $"{doneConditionSeven.Count} checkpoint(s) do not meet done condition seven:\n  "
+            + string.Join("\n  ", doneConditionSeven));
 
         // A CONFIRMED row is the only tier whose provenance is a person rather than a program, so
         // it is the only one whose provenance can go missing without anything noticing. The rule
@@ -249,6 +283,114 @@ public sealed partial class FixtureReplayCheck
         Assert.True(unexpected.Length == 0,
             $"The replay produced {unexpected.Length} figure(s) no expectation names, so they are unexamined: "
             + string.Join(", ", unexpected.Take(20)));
+    }
+
+    /// <summary>
+    /// Done condition seven, taken per checkpoint: what is wrong with the fixture's tiers, or
+    /// nothing.
+    ///
+    /// The rule the corpus states is that a checkpoint's expectations include at least one that is
+    /// DERIVED or CONFIRMED. A checkpoint that cannot meet it yet is permitted, and the permission
+    /// is not a note in a file: it names a carried obligation, that obligation has to be a row of
+    /// BUILD_PLAN's table, and the checkpoint it falls due at has to be one PROGRESS does not yet
+    /// record. That is the same test an out-of-scope architecture claim passes, for the same
+    /// reason: a deferral that names nothing rests where it is forever, and one that names a
+    /// checkpoint which has already landed is a checkpoint that shipped without coming back.
+    ///
+    /// Asserted in both directions. A permit for a checkpoint that has since gained an independent
+    /// expectation is spent, and leaving it would quietly re-permit the checkpoint if that
+    /// expectation were ever removed.
+    ///
+    /// Pure, and separated from the run so it can be proved against expectations and obligations
+    /// written by hand rather than against whatever the fixture happens to hold today.
+    /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+    /// </summary>
+    public static IReadOnlyList<string> DoneConditionSevenProblems(
+        IReadOnlyList<Expectation> expectations,
+        IReadOnlyList<Permit> permits,
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(expectations);
+        ArgumentNullException.ThrowIfNull(permits);
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        var problems = new List<string>();
+
+        foreach (CheckpointTier checkpoint in ByCheckpoint(expectations))
+        {
+            Permit? permit = permits.FirstOrDefault(
+                p => string.Equals(p.Checkpoint, checkpoint.Checkpoint, StringComparison.Ordinal));
+
+            if (checkpoint.Independent > 0)
+            {
+                if (permit is not null)
+                {
+                    problems.Add(
+                        $"{checkpoint.Checkpoint} is listed as frozen-only and now carries {checkpoint.Independent} "
+                        + "independently produced expectation(s). The permit is spent and leaving it would re-permit "
+                        + "the checkpoint silently if that expectation were ever removed.");
+                }
+
+                continue;
+            }
+
+            if (permit is null)
+            {
+                problems.Add(
+                    $"every one of {checkpoint.Checkpoint}'s {checkpoint.Total} expectation(s) is FROZEN, and nothing "
+                    + "permits it. Done condition seven asks each checkpoint for at least one DERIVED or CONFIRMED "
+                    + "expectation, so either one is added or the checkpoint names a carried obligation that is open.");
+                continue;
+            }
+
+            ArchitectureConformanceCheck.Obligation? obligation = obligations.FirstOrDefault(
+                o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
+
+            if (obligation is null)
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is frozen-only and names an obligation raised at {permit.Obligation}, "
+                    + "and BUILD_PLAN's carried obligations table has no row raised there. A permission resting on "
+                    + "nothing is the same as no permission.");
+                continue;
+            }
+
+            if (hasLanded(obligation.DueAt))
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is frozen-only under the obligation raised at {obligation.Raised}, which "
+                    + $"falls due at {obligation.DueAt}, and PROGRESS already records {obligation.DueAt}. That "
+                    + "checkpoint shipped without discharging it and nothing said so at the time.");
+            }
+        }
+
+        foreach (Permit permit in permits)
+        {
+            if (!expectations.Any(e => string.Equals(e.Checkpoint, permit.Checkpoint, StringComparison.Ordinal)))
+            {
+                problems.Add(
+                    $"{permit.Checkpoint} is listed as frozen-only and has no expectations in the fixture at all, so "
+                    + "the permit names a checkpoint the diff never reaches.");
+            }
+        }
+
+        return problems;
+    }
+
+    /// <summary>Each checkpoint in the fixture, with how many of its expectations verify anything.</summary>
+    public static IReadOnlyList<CheckpointTier> ByCheckpoint(IReadOnlyList<Expectation> expectations)
+    {
+        ArgumentNullException.ThrowIfNull(expectations);
+
+        return
+        [
+            .. expectations
+                .GroupBy(e => e.Checkpoint, StringComparer.Ordinal)
+                .OrderBy(g => g.Key, StringComparer.Ordinal)
+                .Select(g => new CheckpointTier(g.Key, g.Count(), g.Count(e => e.Tier is Derived or Confirmed)))
+        ];
     }
 
     /// <summary>
@@ -322,7 +464,23 @@ public sealed partial class FixtureReplayCheck
             ?? throw new InvalidOperationException($"{RepositoryLayout.Relative(ExpectationsFile)} is not readable as expectations.");
     }
 
-    public sealed record ExpectationFile(string AsOf, string InputTier, IReadOnlyList<Expectation> Expectations);
+    public sealed record ExpectationFile(
+        string AsOf,
+        string InputTier,
+        IReadOnlyList<Expectation> Expectations,
+        IReadOnlyList<Permit>? FrozenOnly = null);
+
+    /// <summary>
+    /// A checkpoint permitted to be frozen-only, and the carried obligation that permits it.
+    ///
+    /// It lives beside the expectations rather than in a check, because it is a fact about this
+    /// fixture's contents and it has to be edited in the same commit as the expectation that
+    /// discharges it.
+    /// </summary>
+    public sealed record Permit(string Checkpoint, string Obligation, string Why);
+
+    /// <summary>One checkpoint's expectations, counted, and how many of them verify anything.</summary>
+    public sealed record CheckpointTier(string Checkpoint, int Total, int Independent);
 
     /// <summary>
     /// One expected figure, and how it was produced. The tier and the producer travel with the

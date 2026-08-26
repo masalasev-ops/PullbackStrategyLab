@@ -651,6 +651,7 @@ public sealed partial class ArchitectureConformanceCheck
     {
         private readonly Dictionary<string, string> _rows = [];
         private readonly HashSet<string> _landed = new(StringComparer.Ordinal);
+        private readonly List<Obligation> _obligations = [];
 
         private Schedule()
         {
@@ -687,6 +688,19 @@ public sealed partial class ArchitectureConformanceCheck
                 }
             }
 
+            // The carried obligations, which are the other half of what BUILD_PLAN schedules: a
+            // checkpoint row says when something gets built, an obligation row says when
+            // something already found gets closed. Read separately from the phase sections above,
+            // because this table is keyed by the checkpoint that raised each item rather than by
+            // the one that does the work.
+            foreach (IReadOnlyList<string> row in MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations"))
+            {
+                if (row.Count >= 3)
+                {
+                    schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
+                }
+            }
+
             MatchCollection landed = LandedEntry().Matches(progress);
             foreach (Match entry in landed)
             {
@@ -703,6 +717,15 @@ public sealed partial class ArchitectureConformanceCheck
 
             return schedule;
         }
+
+        /// <summary>
+        /// The carried obligations BUILD_PLAN records, in the order the table lists them.
+        ///
+        /// A row here is an obligation that is still open by construction: a discharged one is
+        /// removed from the table in the commit that discharges it, so presence is the record and
+        /// there is no second flag to keep in step with it.
+        /// </summary>
+        public IReadOnlyList<Obligation> Obligations => _obligations;
 
         /// <summary>Whether BUILD_PLAN.md has a checkpoint by this identifier at all.</summary>
         public bool Exists(string checkpoint) => _rows.ContainsKey(checkpoint);
@@ -739,6 +762,16 @@ public sealed partial class ArchitectureConformanceCheck
             [.. cell.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                 .Where(part => part.Length > 0 && char.IsUpper(part[0]) && !part.Contains(' ', StringComparison.Ordinal))];
     }
+
+    /// <summary>
+    /// One row of BUILD_PLAN's carried obligations table: the checkpoint that raised it, the
+    /// checkpoint it falls due at, and what it says.
+    ///
+    /// <c>DueAt</c> is not always a checkpoint. The move rehearsal's remaining step falls due at
+    /// the actual move, which is an event rather than a row in the plan, so anything reading this
+    /// treats a due point it cannot parse as still ahead rather than as landed.
+    /// </summary>
+    public sealed record Obligation(string Raised, string DueAt, string What);
 
     /// <summary>
     /// One claim and its verdict. <c>Closes</c> is set on an out-of-scope claim and on no other:

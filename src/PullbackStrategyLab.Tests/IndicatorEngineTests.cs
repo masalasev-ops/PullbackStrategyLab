@@ -180,8 +180,20 @@ public sealed class IndicatorEngineTests : IDisposable
         Assert.Equal(Exponential(vendorAdjusted, 21), computed.EmaMedium);
         Assert.Equal(Exponential(vendorAdjusted, 50), computed.EmaLong);
 
-        // And nowhere near the raw basis. On this window the raw series runs at roughly twice the
-        // adjusted one before the split, so a column swap moves every average by hundreds.
+        // And nowhere near the raw basis, so a column swap moves every average by hundreds.
+        //
+        // Where 1.4 comes from. It is a floor under the tightest of the three ratios this loop
+        // compares, not a description of the series. Measured over IESC's 150-session window, the
+        // raw-basis average divided by the adjusted-basis one is 1.5372 at period 9, 1.7638 at 21
+        // and 1.8894 at 50, so 1.4 clears the tightest of them by about nine percent. Period 9 is
+        // the tightest because the shortest average carries the most weight after the split, where
+        // the two bases have converged; the longer the period, the more pre-split weight it holds
+        // and the further apart they are.
+        //
+        // The split factor at the start of the window is two, and that is a different quantity
+        // from any of the three. Saying the raw series runs at "roughly twice" the adjusted one
+        // described the discontinuity rather than what the assertion measures, and a bound argued
+        // from the wrong quantity is a bound nobody can check.
         foreach ((decimal onAdjusted, decimal onRaw, string name) in new[]
         {
             (computed.EmaShort, Exponential(vendorRaw, 9), "ema_9"),

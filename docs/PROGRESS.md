@@ -1225,3 +1225,118 @@ Corrects:   The entry of 2026-08-26 titled "the price basis, and three obligatio
             the value derived from `fixtures/captured/history-PAYO.json` outside the solution.
             Nothing else in either entry depends on it: the margin over the liquidity floor is 1.7
             times either way, and PAYO is the closest name to the floor either way.
+
+## 1.12 — 2026-08-26 — phase-1-ingest-and-charts — **the two blockers closed, the phase still not signed off**
+
+The third pass, and scoped rather than open-ended. Two sessions had each found a check asserting
+less than its own label claims; the pattern was established, so this pass existed to close it
+rather than to look for a fourth instance. It found no third instance because it did not go
+looking, and that is stated plainly so nobody later reads "no findings" as "looked and found
+nothing".
+
+Built:      `fixtures/checks-baseline.json`, committed: a floor on the examined count of every
+            check the roster declares. `CheckCoverage.Report` writes its record first and then
+            compares, so a check that narrowed still leaves the number it narrowed to where the
+            report can read it, and then fails naming the check and printing both figures. It is a
+            floor and not an equality, because counts differ between platforms and grow with the
+            corpus, and a guard that goes red on a file being added gets suppressed, which is a
+            slower way of deleting it. A check with no floor fails rather than being waved through,
+            or the guard would cover whatever existed when it was written and nothing added since.
+            The file sits beside the golden fixture and for the fixture's reason: it is a reference
+            the run is measured against, never a result the run produces. `git ls-files artifacts`
+            is still empty.
+
+            Done condition seven asserted per checkpoint in `fixture-replay`, where it had been
+            asserted over the whole fixture. A checkpoint with no `DERIVED` or `CONFIRMED`
+            expectation either fails or names a carried obligation, and the naming is checked the
+            way an out-of-scope architecture claim is checked: the obligation has to be a row of
+            BUILD_PLAN's table and its due checkpoint has to be one this file does not yet record.
+            Asserted in both directions, so a permit a checkpoint has outgrown is reported as spent
+            rather than left to re-permit it silently if the expectation were ever removed.
+
+            1.9 closed rather than carried. `tools/derive-indicators.py --index` reads the captured
+            responses rather than the store, applies the ingestor's window from its own statement of
+            it, and produces six figures per tracker; `PhaseReplay.IndexFigures` measures the same
+            six back out of `index_bar`. Eighteen `DERIVED` expectations, no vendor call. The three
+            totals 1.9 landed with stay, and they are what they always were.
+
+            Eleven permanent proofs, five on the floor and six on the per-checkpoint condition,
+            including the two directions of the baseline file against the roster.
+
+            Two record corrections. `PhaseReplay.LiquidityFloorFigures` no longer claims to fail
+            "if the two ever compute the median differently"; there is one implementation and the
+            comment now says what the code does, which is to select the floor's window rather than
+            the engine's through a second call to the point-in-time reader. The bound in the basis
+            test is stated as a floor under the tightest of the three ratios it compares, with the
+            three ratios written down, instead of being attributed to a split factor it never
+            measures.
+
+Measured:   `tools/ci.ps1` green, 22 steps, 211 tests. `tools/verify-phase` GREEN: 115 claims, 46
+            passed, 0 failed, 69 out of scope, 0 unexamined; 356 expectations, 87 `DERIVED`, 269
+            `FROZEN`, 0 differed, 0 missing; coverage examined 193,691 with 0 unexamined; inputs 37
+            `CAPTURED`, 48 `AUTHORED`; 18 expectations changed since the last commit, which are the
+            eighteen added here and no others.
+
+            The falsification, run rather than argued. `BarAppendOnlyCheck.BarTables` narrowed to
+            `daily_bar` alone: the check reported `bar-append-only examined 50 against a floor of
+            54`, the step exited non-zero, and the run named the check. Reverted, and the same
+            narrowing is now written into `CheckProofTests` so it never has to be done by hand
+            again.
+
+            The basis ratios re-derived in this session from `fixtures/captured/history-IESC.json`,
+            outside the solution: over the 150-session window the raw-basis average divided by the
+            adjusted-basis one is 1.5372 at period 9, 1.7638 at 21 and 1.8894 at 50. The assertion's
+            1.4 clears the tightest of them by 9.8 percent. 147 of the 150 bars carry an adjustment,
+            which is why period 9 is the tightest: the shortest average carries the most weight at
+            the end of the window, where the two bases have converged.
+
+            The trackers, derived from the captured responses: 251 bars each, 2025-08-25 to
+            2026-08-24. SPY 642.4700 raw and 635.4292 adjusted at the first session, 763.4700 at the
+            last; QQQ 570.3200 and 567.5839, 706.3200; IWM 232.3600 and 229.9714, 297.9700. The raw
+            and adjusted close are taken at the first session because at the last they are equal for
+            all three, where a pair read out of the wrong column would agree with itself.
+
+Reviewed:   The six proofs the pass above added, which were its own code and outside its own scope.
+            They hold. Each states one verdict of the four the placement partition produces, the
+            orphan case asserts both the verdict and that the claim names the table, and the count
+            proof is what catches a parser stopping early rather than failing. The signature change
+            beside them, `TablePlacementClaims` losing its `schedule` parameter and becoming public,
+            is behaviour-preserving: the parameter was unused, and the schedule rule those claims
+            are subject to is applied at the call site, where every claim goes through
+            `OutOfScopeProblems` after the placement claims are added. No finding.
+
+Decided:    **The `CONFIRMED` values carry rather than block, as a judgement rather than by
+            default.** Nothing reads them before phase 2's calibration, the basis test added at the
+            pass above buys part of what they were for by checking the averages against the vendor's
+            own adjusted close, and no build session can perform the act they need. Their obligation
+            moves from 1.12 to 2.11, which is the first checkpoint that reads those figures; holding
+            a phase on an act no session can perform would make the due point permanent rather than
+            pending.
+
+            **The phase does not sign off in this pass, and the reason is procedural rather than a
+            finding.** This session committed code, and the fresh-session rule is that a session
+            which has committed code must not sign that code off. What needs a session that did not
+            write it is small and enumerable: `CheckCoverage.Shortfall` and the baseline it reads,
+            `FixtureReplayCheck.DoneConditionSevenProblems` and the permit mechanism under it,
+            `PhaseReplay.IndexFigures`, the `--index` mode of `tools/derive-indicators.py`, and the
+            eleven proofs. Everything else in phase 1 has now been through three passes. That is a
+            different state from the pass above, which was blocked on two defects; nothing here is a
+            defect, and the next pass is a review rather than a repair.
+
+Carried:    The out-of-scope coverage naming rule, raised by the pass above as one of four things
+            closing the phase and left undone by this one, is now an obligation in `BUILD_PLAN.md`
+            raised at 1.12 and due at 2.6. It is not a straight copy of the claim rule: two of
+            `fixture-replay`'s exemptions close on a purchase nobody has scheduled rather than on a
+            checkpoint, and what the rule says about those is the work.
+
+            Done condition seven at 1.3, 1.4, 1.5 and 1.7, now an obligation raised at 1.1 and due
+            at 2.1, with those four checkpoints named under `frozenOnly` in the expectations file
+            and the naming asserted. The 1.7 row of `BUILD_PLAN.md` had claimed the obligation
+            discharged; it discharged the tiers and not the condition.
+
+            This session's own code, for the next session.
+
+Stopping:   This pass closed what the pass above named and found nothing new, which is the third
+            pass finding less than the one before it. The stopping rule points at a review rather
+            than a fourth investigation, and the only thing standing between here and sign-off is
+            one session that writes no code.
