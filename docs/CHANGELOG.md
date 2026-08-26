@@ -592,6 +592,16 @@ Was:  | 2.11 | **The calibration run over the live universe, which 2.11 ran over
 Now:  removed, and a row raised at 2.11 takes its place: the threshold adjustment the distribution calls for, which the five thresholds cannot deliver, due at 3.1.
 Why:  2.11 ran over the live universe rather than over thirty names, so the obligation was discharged on the day it was written. What the run found instead is that reaching the band needs two checks removed rather than five thresholds moved, and that is a decision rather than a build step.
 
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.7 | **What market capitalisation a calibration run is entitled to read.** ... What is left is building it, and recording on every calibration verdict that the short distribution was measured against a nine-clause detector | 2.11 |
+Now:  removed.
+Why:  Built at 2.11 and asserted: `CalibrationFigures` reports the clause exempt, `ShortPullbackRules` runs the other three, and a test reads every short row a calibration run wrote and finds the note on each. An obligation whose work has shipped is a row that reads as outstanding.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  The 1.6 obligation fell due at 2.11, because "2.11 is the first thing that reads these figures, since calibration is where a threshold is set against them".
+Now:  The same row, plus the move to 2.12 and its reason, and a due checkpoint of 2.12.
+Why:  The calibration ran and set no threshold, because the distribution showed the band is out of the five thresholds' reach. Nothing yet rests on the three confirmed figures, and 2.12 is where a person is already reading a screen. Left at 2.11 the row would name a checkpoint `PROGRESS.md` records, which is a checkpoint that shipped without coming back to it.
+
 ### 2026-08-26 — ARCHITECTURE.html — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
 Was:  "The one-time calibration, and why it is not tuning" ended at the paragraph on the adjustment being calibration against a population count rather than tuning against results.
 Now:  A further paragraph: the count has to come from a population the scans can discriminate within, which the golden fixture is not, with the arithmetic of why thirty names against a breadth of fifty makes every geometry check fail.

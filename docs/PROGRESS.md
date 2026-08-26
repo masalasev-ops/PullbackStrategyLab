@@ -2378,3 +2378,157 @@ Findings:   Finding. **Four hand-written reads were unbounded, and one of them f
 Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
             `CONFIRMED` indicator values at 2.11; the `CONFIRMED` gallery expectations at 2.12; and
             step 6 of the move.
+
+## 2.11 — 2026-08-26 — phase-2-detection — the one-time calibration, and a band two checks cannot reach
+
+Built:      Calibration mode, in the shape the decision always described and the plan never had.
+            `ISessionFigures` is where a forward night and a reconstructed one differ and the only
+            place they do: the nightly path reads each figure from the store through the reader that
+            owns it, and `CalibrationFigures` computes the same figures from the bar window the walk
+            is already reading. The rules see one evidence shape either way.
+
+            It is assembly rather than a second implementation. The figures come from
+            `IndicatorEngine.Calculate`, the ladder from `TierClassifier.Grade`, the six rankings
+            from `ScanMagnitudes` and `ScanEngine.Top`. All four are the nightly stages' own and all
+            four were made public at 2.6 so this run would not need copies of them.
+
+            `NightlyCounts` in Core: the quartiles a threshold is read against, with the quantile
+            convention written out rather than borrowed, and the rate-per-name scaling that lets a
+            count over one universe be compared against a band stated for another.
+
+            The market-cap clause of `tradable-shortable` is exempt in calibration mode and every
+            short verdict says which clauses ran.
+
+Measured:   `tools/ci.ps1` green on Windows, 24 steps, **324 tests**. `tools/verify-phase` GREEN:
+            116 claims, 59 passed, 0 unexamined; **741 expectations, 287 independent**; coverage
+            examined 2,444 with 0 unexamined.
+
+            **Over the golden fixture**, which is a diff and not a measurement: 102 sessions from
+            2026-03-30, 30 members with a warm-up behind them out of 7,202 listed, 237 long rows and
+            88 short, **nought passing on either side on every night**. Twenty-six expectations, five
+            of them `DERIVED` by `tools/derive-indicators.py --calibration`, which restates the
+            session count, the range and the member count from the captured responses and agrees
+            exactly on all five.
+
+            **Over the live universe**, 2,016 names with a warm-up behind them, 631 sessions from
+            2024-03-21 to 2026-08-24, no vendor call:
+
+            | | long | short |
+            |---|---|---|
+            | rows recorded | 32,533 | 16,917 |
+            | recorded a night, median | 44.0 | 13.0 |
+            | recorded a night, quartiles | 24.5 to 74.0 | 7.0 to 41.0 |
+            | candidates a night, median | 0 | 0 |
+            | candidates a night, highest | 1 | 0 |
+            | candidates in total | 7 | 0 |
+            | nights with no candidate | 624 of 631 | 631 of 631 |
+
+            Per check, over the rows that cleared the recording floor:
+
+            | long | passes | short | passes |
+            |---|---|---|---|
+            | `tradable` | 100% | `tradable-shortable` | 100% |
+            | `moves-enough` | 100% | `moves-enough` | 100% |
+            | `uptrend` | 100% | `downtrend` | 100% |
+            | `thrust` | 100% | `thrust` | 100% |
+            | `held-floor` | 96.1% | `no-reclaim` | 99.2% |
+            | `contraction` | 46.6% | `averages-squeezing` | 29.1% |
+            | `trigger-near` | 31.2% | | |
+            | `exit-tight` | 1.0% | `exit-tight` | 1.1% |
+            | `dip-shape` | 0.7% | `bounce-shape` | 1.1% |
+            | `cluster` | 0% | `cluster` | 0% |
+
+            The quantities behind the three that bind, as distributions rather than as pass rates:
+            the retrace among moves of the right length has a median of **1.088** long and **1.006**
+            short against a cap of 0.40; the stop distance has a median of **1.157** ranges long and
+            **1.191** short against a cap of 0.5; `reached-ceiling`'s distance has a median of
+            **1.802** ranges against a cap of 0.5. Against those, `trigger-near`'s cap of 1.5 ranges
+            sits above a median of 0.513 and 96.2% of measurable rows clear it.
+
+Verified:   Three behavioural tests, because the fixture's figures cannot carry these. A run over
+            history leaves the evidence store byte for byte as it found it, compared row by row
+            rather than by asking whether `setup` is empty, and a rerun of the same range writes
+            nothing new either. Every short row a calibration run writes carries the clause note. And
+            a forward night still fails a name with no resolved capitalisation, which is the
+            direction a leaked default would be silent in.
+
+            The distribution arithmetic is swept rather than sampled: the median of an even number of
+            nights, a night of no candidates counted rather than dropped, one night as its own every
+            quartile, the quantile convention pinned at five points, both ends of the band inclusive,
+            and a rate scaled back to its own universe returning the count it came from. A
+            distribution over no nights is refused rather than reported as noughts.
+
+Findings:   Finding. **The band is out of the five thresholds' reach, and the adjustment is not
+            made.** Observation: the median is nought candidates a night on both sides against a band
+            of 5 to 60, so the condition fires; the recording floors are healthy at 44 and 13 rows a
+            night; the pattern test then admits 7 long rows in 631 sessions and no short row at all;
+            with the retrace cap and the give-up cap set to pass always, the remaining conjunction
+            yields about 6 a night. Reading: 6 is the bottom of the band, so the band is reachable
+            only by removing two checks from each list, and removing a check is a change to what the
+            strategy is rather than a calibration of it. The once-only adjustment is not spent, and
+            `BUILD_PLAN.md`'s done condition now carries the clause that fires here, because spending
+            it on a threshold set that cannot reach the band spends it for nothing.
+
+            Reading, on which of two things is wrong. The thresholds are wrong, or the quantities
+            they are applied to are, and the second has evidence rather than only a possibility. A
+            stop at the extreme of a two-to-seven bar move spans more than one daily range by
+            construction, so a cap of half a range is asking for a shape the geometry cannot make. A
+            retrace whose median is above 1.0 means the typical give-back exceeds the whole thrust it
+            is measured against, which is not a description of a pullback. Both hold on both sides
+            with the same numbers, which is what rules out a long-side accident. `trigger-near` is
+            the counter-example that rules out "everything is too tight": same population, same
+            geometry, cap well above the median, 96% clearing it.
+
+            Reading, offered as a hypothesis and not as a measurement. `PullbackGeometry` measures
+            the thrust from the close before the session the scan flagged. That is the right origin
+            for `gainer` and `gapper`, which flag a one-day move, and the wrong one for `leader` and
+            `laggard`, which flag a twenty-session move and would have their thrust measured as a
+            single day while the give-back is measured over several. Nothing here proves it: the scan
+            that produced a thrust is not recorded on the setup row, which is itself a gap worth
+            naming, and recording it would move the `thrust` expectations at 2.6 and 2.7 for a change
+            that belongs to whoever decides the question.
+
+            Finding. **`cluster` is unmeasured across the whole calibration record.** Observation: it
+            passes on nought rows of 49,450. Reading: `ThemeClusterer` counts same-industry names
+            among a night's scan hits, industry is resolved lazily on first sighting, and a
+            reconstructed session has the industry the lab learned in 2026 or none at all. The
+            calibration hands the check no cluster count, so it is unknown and fails. It gates
+            nothing, so the counts above are unaffected, but no calibration row says anything about
+            clustering and none can.
+
+            Finding. **A reconstructed session cannot be read on its own observation instant, and
+            both narrower bounds fail silently.** Observation: bounding the calibration's reads on
+            each session's own instant returned no bars at all; bounding them on the end of the range
+            returned no sessions at all. Both produced a run that completed clean over a store of one
+            and a half million bars and reported nought. Reading: a backfill takes a name's whole
+            history in one evening, so every historical bar was observed later than its own session
+            and later than the last session in any range that ends at the last close. The run reads
+            as of now, which is the bound a rebuild uses and is named in `DailyBarReader` for the same
+            reason. It is recorded on `calibration_setup` as one of three reconstructions those rows
+            carry rather than left as a property of a query.
+
+            Finding. **The golden fixture cannot produce a candidate and never could.** Observation:
+            nought passing on every night of both directions over 102 sessions. Reading: a scan takes
+            the top fifty by its own magnitude and the fixture holds thirty names with a history, so
+            every one of them is inside every scan on every session; the most recent thrust is
+            therefore always the session itself, no pullback has any bars, and every geometry check
+            fails. This is why the checkpoint was narrowed to the fixture and then run live anyway:
+            the narrowing rested on the in-memory path costing three checkpoints, it cost one file,
+            and the population it narrowed to was the one that could not answer.
+
+            Observation, on a mechanism the plan named and the code cannot support. Replaying the
+            nightly pipeline session by session was recorded as 2.11's mechanism before the
+            checkpoint began. `IndicatorEngine`, `ScanEngine` and `TierClassifier` all read
+            `UniverseSnapshotReader.Members` for the night they compute, and a night the lab was not
+            running has no snapshot. Giving those three a current-membership mode would write
+            reconstructed `indicator_daily` rows, which the calibration decision forbids in the
+            paragraph directly above the one that would have authorised it.
+
+Carried:    The threshold adjustment, due before 3.1 with the numbers above attached, because phase 3
+            must not start recording against thresholds nothing has calibrated.
+            The `CONFIRMED` indicator values for IESC, LITE and PAYO, still due and still not a build
+            session's to discharge. 2.11 was named as the point they were needed because it is where
+            a threshold is set against them; no threshold was set, so nothing rests on them yet, and
+            the obligation moves to 2.12 where a person is already reading a screen.
+            The source-scan assertions nothing exercises, raised at 2.11 and due at 3.1.
+            Step 6 of the move procedure, due at the move.
