@@ -611,6 +611,7 @@ public sealed class PhaseReportStage
     public sealed record CheckCoverageRecord(
         string Check,
         int Examined,
+        int Context,
         int Unexamined,
         int OutOfScope,
         IReadOnlyList<Scope> ExaminedDetail,
@@ -628,7 +629,7 @@ public sealed class PhaseReportStage
 
     public sealed record InputTiers(IReadOnlyList<InputTier> Tiers, IReadOnlyList<string> EndpointsWithNoCapturedInput);
 
-    public sealed record Scope(string What, int Count);
+    public sealed record Scope(string What, int Count, bool IsContext);
 
     public sealed record Gap(string What, int Count, string Why);
 }

@@ -623,30 +623,159 @@ public sealed class CheckProofTests
     // review by hand: BarAppendOnlyCheck.BarTables cut from three tables to one left the suite
     // passing, the phase report GREEN, and one summary number nobody compares eight lower.
 
+    // The scopes bar-append-only actually names, in the shape the defect had: three bar tables
+    // carrying the property, and forty-seven source files whose count is a fact about the corpus.
+    private static CheckCoverage.Scope Property(string what, int count) => new(what, count, IsContext: false);
+
+    private static CheckCoverage.Scope ContextScope(string what, int count) => new(what, count, IsContext: true);
+
+    private static Dictionary<string, CheckCoverage.CheckFloors> Floors(
+        string check,
+        Dictionary<string, int> scopes,
+        params string[] context) =>
+        new(StringComparer.Ordinal) { [check] = new CheckCoverage.CheckFloors(scopes, context) };
+
     [Fact]
     public void The_examined_floor_catches_a_check_narrowing_below_it()
     {
-        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["bar-append-only"] = 54 };
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 },
+            "source files scanned");
 
-        string? narrowed = CheckCoverage.Shortfall("bar-append-only", 46, recorded);
+        string narrowed = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only",
+            [Property("bar tables named by the check", 1), ContextScope("source files scanned", 47)],
+            recorded));
 
-        Assert.NotNull(narrowed);
-        Assert.Contains("bar-append-only", narrowed, StringComparison.Ordinal);
-        Assert.Contains("46", narrowed, StringComparison.Ordinal);
-        Assert.Contains("54", narrowed, StringComparison.Ordinal);
+        Assert.Contains("bar tables named by the check", narrowed, StringComparison.Ordinal);
+        Assert.Contains("examined 1", narrowed, StringComparison.Ordinal);
+        Assert.Contains("floor of 3", narrowed, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Corpus_growth_no_longer_pays_for_a_narrowing()
+    {
+        // The falsification the phase 1 sign-off ran, as a permanent proof. Under one floor per
+        // check this passed: bar-append-only cut from three bar tables to one, with five ordinary
+        // new files added, examined 55 against a floor of 54, and the phase report went GREEN with
+        // the total higher than the committed run. Per scope the growth cannot reach the property.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 },
+            "source files scanned");
+
+        Assert.NotEmpty(CheckCoverage.Shortfalls(
+            "bar-append-only",
+            [Property("bar tables named by the check", 1), ContextScope("source files scanned", 52)],
+            recorded));
+    }
+
+    [Fact]
+    public void Corpus_shrinkage_no_longer_raises_a_false_alarm()
+    {
+        // The other half, and it fired first in practice: deleting two string literals from one
+        // test file dropped path-casing below its floor and turned it red for a reason that has
+        // nothing to do with path casing. A guard that cries wolf gets suppressed, and a
+        // suppressed guard is a dead one arrived at slowly.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "path-casing",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["paths compared against the on-disk name"] = 27 },
+            "string literals read");
+
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing",
+            [Property("paths compared against the on-disk name", 27), ContextScope("string literals read", 2410)],
+            recorded));
     }
 
     [Fact]
     public void The_examined_floor_is_a_floor_rather_than_an_equality()
     {
         // Counts differ between platforms and grow with the corpus. A baseline demanding equality
-        // would go red on a file being added, and a guard that cries wolf gets suppressed, which
-        // is a slower way of deleting it.
-        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["path-casing"] = 2409 };
+        // would go red on a file being added.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "path-casing",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["paths compared against the on-disk name"] = 27 });
 
-        Assert.Null(CheckCoverage.Shortfall("path-casing", 2409, recorded));
-        Assert.Null(CheckCoverage.Shortfall("path-casing", 2410, recorded));
-        Assert.NotNull(CheckCoverage.Shortfall("path-casing", 2408, recorded));
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 27)], recorded));
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 28)], recorded));
+        Assert.NotEmpty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 26)], recorded));
+    }
+
+    [Fact]
+    public void A_scope_that_stops_being_reported_is_caught()
+    {
+        // The direction a single total could never see. A scope renamed or dropped takes its
+        // property with it, and the check keeps passing on whatever else it still counts.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["bar tables named by the check"] = 3,
+                ["writes found in the shipped source"] = 0,
+            });
+
+        string gone = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only", [Property("bar tables named by the check", 3)], recorded));
+
+        Assert.Contains("writes found in the shipped source", gone, StringComparison.Ordinal);
+        Assert.Contains("narrowed to nothing", gone, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_scope_reclassified_as_context_is_caught()
+    {
+        // Otherwise the repair defeats itself: moving a scope from Examined to Context would remove
+        // its floor with a one-word diff nobody reads as a guard being deleted.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 });
+
+        IReadOnlyList<string> problems = CheckCoverage.Shortfalls(
+            "bar-append-only", [ContextScope("bar tables named by the check", 3)], recorded);
+
+        Assert.Contains(problems, p => p.Contains("is recorded as context by the check", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_scope_with_no_floor_fails_rather_than_being_waved_through()
+    {
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only", new Dictionary<string, int>(StringComparer.Ordinal));
+
+        string missing = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only", [Property("a scope nobody floored", 4)], recorded));
+
+        Assert.Contains("a scope nobody floored", missing, StringComparison.Ordinal);
+        Assert.Contains("has no floor", missing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_admission_covering_nothing_still_counts_as_an_admission()
+    {
+        // PathCasingCheck records its no-work branch as NotExamined(..., 0, ...). Summing the
+        // counts made that zero, so the record carried an unexamined line and the report said
+        // "unexamined 0" on the same page. An admission that counts as silence is the failure the
+        // split between unexamined and out of scope exists to prevent, reached from inside.
+        var coverage = new CheckCoverage("a-proof", new NullOutput());
+        coverage.NotExamined("paths compared against the on-disk name", 0, "nothing names a repository path yet");
+
+        Assert.Equal(1, coverage.TotalUnexamined);
+    }
+
+    private sealed class NullOutput : Xunit.Abstractions.ITestOutputHelper
+    {
+        public void WriteLine(string message)
+        {
+        }
+
+        public void WriteLine(string format, params object[] args)
+        {
+        }
     }
 
     [Fact]
@@ -655,11 +784,14 @@ public sealed class CheckProofTests
         // The obvious way to lose the whole mechanism is to add a check and no floor for it. That
         // has to fail, or the guard covers whatever was there when it was written and nothing
         // added since, which is the same silent narrowing one level up.
-        string? missing = CheckCoverage.Shortfall("a-new-check", 9, new Dictionary<string, int>(StringComparer.Ordinal));
+        string missing = Assert.Single(CheckCoverage.Shortfalls(
+            "a-new-check",
+            [Property("things it looked at", 9)],
+            new Dictionary<string, CheckCoverage.CheckFloors>(StringComparer.Ordinal)));
 
-        Assert.NotNull(missing);
         Assert.Contains("a-new-check", missing, StringComparison.Ordinal);
         Assert.Contains("fixtures/checks-baseline.json", missing, StringComparison.Ordinal);
+        Assert.Contains("\"things it looked at\": 9", missing, StringComparison.Ordinal);
     }
 
     [Fact]

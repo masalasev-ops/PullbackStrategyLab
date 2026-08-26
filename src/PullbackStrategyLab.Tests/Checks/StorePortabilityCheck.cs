@@ -90,7 +90,7 @@ public sealed partial class StorePortabilityCheck
         coverage
             .Examined("tables in a populated store", tablesScanned)
             .Examined("text columns across them", columnsScanned)
-            .Examined("stored text values read", checked((int)valuesScanned))
+            .Context("stored text values read", checked((int)valuesScanned))
             .Report();
 
         Assert.True(failures.Count == 0,

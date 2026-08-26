@@ -138,7 +138,7 @@ public sealed partial class FixtureReplayCheck
             coverage.Examined($"{tier.Tier} expectations diffed", tier.Total);
         }
 
-        coverage.Examined("captured responses the replay read", result.ResponsesServed);
+        coverage.Context("captured responses the replay read", result.ResponsesServed);
 
         if (unexpected.Length > 0)
         {

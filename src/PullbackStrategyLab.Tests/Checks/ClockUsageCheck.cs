@@ -52,7 +52,7 @@ public sealed class ClockUsageCheck
         }
 
         coverage
-            .Examined("shipped source files scanned", filesScanned)
+            .Context("shipped source files scanned", filesScanned)
             .Examined("direct clock reads inside the clock implementation", allowedReads)
             .Report();
 

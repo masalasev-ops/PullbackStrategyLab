@@ -76,7 +76,7 @@ public sealed partial class PathCasingCheck
         }
 
         coverage
-            .Examined("string literals read", literals)
+            .Context("string literals read", literals)
             .Examined("literals naming a path into this repository", candidates)
             .Examined("paths compared against the on-disk name", verified);
 

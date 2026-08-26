@@ -140,9 +140,9 @@ public sealed class WriterOwnershipCheck
         coverage
             .Examined("stores declared in SCHEMA.md", declared.Count)
             .Examined("stores a migration has created", live.Count)
-            .Examined("source files read for store writes", SourceWrites.ProductionFilesRead)
+            .Context("source files read for store writes", SourceWrites.ProductionFilesRead)
             .Examined("writes found in the shipped source", SourceWrites.InProductionSource.Count)
-            .Examined("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
+            .Context("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
             .OutOfScope("declared writers of a store no migration has created yet", tableNotCreated,

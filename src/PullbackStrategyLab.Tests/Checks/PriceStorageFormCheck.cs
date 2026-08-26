@@ -117,7 +117,7 @@ public sealed partial class PriceStorageFormCheck
         }
 
         coverage
-            .Examined("migration files read", files.Length)
+            .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
             .Examined("column declarations checked for REAL affinity", columns);
 

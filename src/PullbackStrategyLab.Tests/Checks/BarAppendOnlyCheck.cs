@@ -49,7 +49,7 @@ public sealed class BarAppendOnlyCheck
         coverage
             .Examined("bar tables named by the check", BarTables.Count)
             .Examined("bar tables a migration has created", created.Length)
-            .Examined("source files scanned", SourceWrites.ProductionFilesRead)
+            .Context("source files scanned", SourceWrites.ProductionFilesRead)
             .Examined("writes found against a bar table", inserts.Length + mutations.Length);
 
         if (created.Length < BarTables.Count)

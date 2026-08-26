@@ -43,7 +43,7 @@ public sealed class ApiIsolationCheck
             .ToArray();
 
         coverage
-            .Examined("libraries in the compiled dependency file", names.Length)
+            .Context("libraries in the compiled dependency file", names.Length)
             .Examined("of those belonging to this solution", labLibraries.Length)
             .Report();
 
