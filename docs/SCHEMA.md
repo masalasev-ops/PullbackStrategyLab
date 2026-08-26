@@ -500,6 +500,8 @@ Insert RunLogger · Update RunLogger
 
 **`counts_against_ceiling` is how a one-time operation stays out of the nightly budget.** The ceiling guards the evening's job; the history backfill is not the evening's job, and charging the two against each other is what once made the backfill look like a two-day procedure. Its calls are still recorded, because what a run cost is worth knowing about every run. The run says so in the store rather than being recognised by its stage name, which would put the exception in the query rather than in the record.
 
+**Fixture capture is one-time on the same grounds, and this is the scope statement rather than a second exemption.** The two operations are the same shape: each runs when a person decides to run it, each stores what it fetched for good, and neither recurs. A capture that added an endpoint cost 30 calls on 2026-08-26 because responses already in the manifest are reused verbatim rather than refetched; charged against the evening's allowance those 30 would compete with the night's work for no reason. What decides the flag is whether the run is the evening's job, not which stage issued it, and a third one-time operation inherits the answer without a third entry here.
+
 ## Store configuration
 
 SQLite, one file under the configured data root. These are set at open, in one place, by the same shared extension that wires config.

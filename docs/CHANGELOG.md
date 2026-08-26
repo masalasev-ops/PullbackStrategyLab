@@ -475,3 +475,23 @@ Why:  "Every recorded setup has a result for every check" is satisfied by a fixt
 Was:  Three nightly rows named their stages in prose: the cluster count, the detectors, and the sector resolve.
 Now:  `clusters`, `detect-long` and `sectors` named by the verb an operator types.
 Why:  The stages exist. The sector row keeps its ~50 calls: the lookup is lazy and cached, so the steady-state cost is names newly surfaced by a scan rather than the universe.
+
+### 2026-08-26 — ARCHITECTURE.html — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  The long check list ran straight into the plain box headed "Why the exit-tight check is the interesting one", with nothing between them.
+Now:  A rule box headed "A gate handed nothing fails, on both lists", stating that a gate whose quantity is absent, zero or undefined fails and records what was missing, and naming the vacuous `exit-tight` pass as the failure it closes.
+Why:  The document defined ten thresholds and never said what a gate does when handed no number at all. The long detector's first fixture run passed `exit-tight` on a name whose thrust was the session itself: entry and give-up point at the same price, distance zero, and zero clears every threshold expressed as a maximum. The answer decides verdicts, so it belongs where the strategy is stated rather than only in the code that happened to get it right.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Two directions are tested, with separate detectors, separate management and separate scoring
+Was:  `reached-ceiling`'s note read: The level is where the bounce is expected to stall. On the long side the equivalent level is where the dip is expected to hold.
+Now:  The same, plus a paragraph saying the third clause does not run until 4.4, that the check is narrower than the line describes until then, and why approximating an anchored average price from daily bars is worse than not running the clause.
+Why:  The clause needs a volume-weighted average anchored at the last swing high, computed from minute bars by VwapEngine at 4.4. A daily-bar approximation would put a number that looks like the real thing inside the check that decides whether a bounce reached its ceiling, which is the shape of the vacuous `exit-tight` pass one gate list up: plausible, wrong and silent. A later session reading a passing `reached-ceiling` needs to know which clauses ran.
+
+### 2026-08-26 — SCHEMA.md — cites The vendor is EODHD, and the endpoint mix is what the call budget is built on
+Was:  The `counts_against_ceiling` note named the history backfill as the one-time operation the flag exists for.
+Now:  The same note, followed by a paragraph naming fixture capture on the same grounds and stating the scope rather than a second exemption: what decides the flag is whether the run is the evening's job, so a third one-time operation inherits the answer without a third entry.
+Why:  Second time the distinction surfaced and it was nowhere in the corpus. Adding an endpoint to the fixture cost 30 live calls on 2026-08-26; charged against the evening's allowance they would have competed with the night's work for no reason. Written as a scope statement because two exemptions listed one after another read as a growing list of special cases rather than as one rule.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+Was:  | 2.7 | ShortSetupDetector, ten checks | Same. Plus: no setup row carries a direction its detector does not own |
+Now:  The same row naming the degeneracy proof and the authored boundary suite, with the done condition stating both, the one-sidedness condition, the `AUTHORED` marking, and `reached-ceiling`'s third clause out of scope naming 4.4.
+Why:  2.7 is the first checkpoint at which all twenty gates exist, so it is the first that can assert anything over the gate list as a list. It is also where the one-sidedness raised at 2.6 is closable: forty authored cases give every gate a pass and a fail at no vendor call, where the remedy priced at 2.6 would have left eight gates with three results each instead of two.

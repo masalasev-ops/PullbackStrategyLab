@@ -26,6 +26,13 @@ Historical runs therefore write to a separate calibration table that nothing dow
 **Failed checks are recorded rather than discarded**
 The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
 
+**A gate handed an absent or degenerate quantity fails rather than passing**
+Every gate on both check lists compares a computed quantity against a threshold, and every one of those quantities can genuinely be missing or degenerate: no averages before the warm-up, no thrust without a scan hit, no entry level and no give-up point on a thrust that has not pulled back yet. The gate fails and records what was absent.
+
+The alternative is not a crash, which is what makes this worth deciding rather than assuming. A thrust whose extreme is the current session puts the entry and the give-up point at the same price, so the give-up distance is zero, and zero clears every threshold expressed as a maximum. `exit-tight` passed on that in the first fixture run of the long detector: the tightest possible stop, on a trade that does not exist. A vacuous pass is worse than a fail here, because the loop reads these verdicts to find which checks carry the strategy and a check that passes on nothing is indistinguishable from one that is easy to clear.
+
+Asserted over the gate list rather than per gate, so a check admitted in phase 6 inherits it without anyone remembering to.
+
 **Matched control populations are drawn nightly, loose and tight**
 Flagged setups returning 2% is not a result if everything returned 2%. The loose set matches on liquidity and daily range and measures the whole funnel. The tight set also matches on the trend ladder and market mood, isolating the pullback checks from simply owning stocks in uptrends. The tight comparison is the one that can embarrass the project, which is why it is on the scoreboard.
 
@@ -54,6 +61,13 @@ Two tiers. CAPTURED, stored verbatim from a real vendor response with the date a
 Authored inputs are necessary and they encode their author's beliefs about the vendor, which is precisely what a fixture cannot check, because the person writing the assumption and the person writing the test are the same. Two defects in phase 1 passed their unit tests and failed on live data for that single reason: an ingestor that compared against observations made by the bar date, and a rebuild rule that assumed a refetch restates every bar in a series.
 
 So a path a live run exercises has at least one CAPTURED input. An authored fixture may hold the edge case; it may not be the only evidence for the ordinary case. The phase report breaks inputs down by tier alongside expectations, and a path with no captured input is reported as unexamined however many authored cases pass.
+
+**Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it**
+Two instruments answering two questions. The captured fixture holds a real market day and catches change on real data. An authored case sits either side of one gate's threshold and answers whether that gate's two branches both work. Neither substitutes for the other, and asking the captured fixture for branch coverage is what makes a fixture purchase look like the remedy for a coverage problem.
+
+Measured at 2.6, which is what forced the choice: eight of the ten long checks were one-sided over the fixture, meaning one branch of each had never returned an answer. The cause is arithmetic. Thirty names on one session record two setups, and a gate with two results is one-sided unless those two happen to disagree. The priced remedy was a second as-of date at 33 per-ticker calls; it would have left those eight gates with three results each instead of two, which is a bigger instance of the wrong instrument. What actually closes it is two authored cases per gate, one just inside the threshold and one just outside, at no vendor call and no committed megabyte.
+
+The cases are AUTHORED and are never counted as evidence about the market. They are the same tier as the synthetic split at 1.5 and carry the same limitation: they encode this author's reading of the gate, which is why the expectation over them is produced by a second implementation rather than by the rules themselves.
 
 **A fixture expectation changes only with a recorded reason, and the report counts what changed**
 When a diff fails, regenerating the expectations is the cheapest way to make it pass and it destroys the fixture's only purpose. So a changed expectation carries a reason line, and the report states how many expectations changed since the last commit alongside how many passed.
