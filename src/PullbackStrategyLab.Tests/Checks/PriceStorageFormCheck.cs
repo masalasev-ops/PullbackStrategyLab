@@ -124,7 +124,9 @@ public sealed partial class PriceStorageFormCheck
         if (Exempt.Count > 0)
         {
             coverage.OutOfScope("columns exempted by name", Exempt.Count,
-                string.Join("; ", Exempt.Select(e => $"{e.Key}: {e.Value}")));
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "each is exempt for a stated reason rather than pending anything: "
+                    + string.Join("; ", Exempt.Select(e => $"{e.Key}: {e.Value}"))));
         }
 
         coverage.Report();

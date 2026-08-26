@@ -89,11 +89,26 @@ public sealed partial class CoverageReportedCheck
             .Examined("of those declared to run on every CI run", live.Length)
             .Examined("checks implemented in the suite", implemented.Count)
             .Examined("checks tools/ci.* invokes as a named step", invoked.Count)
-            .OutOfScope("checks deferred to a checkpoint that has not landed", scheduled.Length,
-                "closed by " + string.Join(", ", scheduled.Select(r => r.Runs).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)))
             .OutOfScope("checks whose runner is the workflow matrix", matrix.Length,
-                "the runner set is asserted against the workflow rather than against a test")
-            .Report();
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "the runner set is asserted against the workflow file rather than against a test, so no "
+                    + "checkpoint and no purchase ends it"));
+
+        // One item per closing checkpoint rather than one row summarising all of them. A single
+        // row saying "three checks are deferred" reads as one item and the report cannot group it,
+        // which is the shape that let a permanent count look like a falling one.
+        foreach (IGrouping<string, CoverageReportedCheck.RosterRow> group in
+                 scheduled.GroupBy(r => r.Runs, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            coverage.OutOfScope(
+                $"checks the roster defers to {group.Key}",
+                group.Count(),
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint(group.Key,
+                    "the check starts at the checkpoint the roster names: "
+                    + string.Join(", ", group.Select(r => r.Name).Order(StringComparer.Ordinal))));
+        }
+
+        coverage.Report();
 
         // Stated in advance rather than left self-validating. A parser that stopped matching would
         // otherwise report an empty roster and pass, which is this check's own failure mode.

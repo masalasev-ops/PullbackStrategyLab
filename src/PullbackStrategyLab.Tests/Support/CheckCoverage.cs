@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using PullbackStrategyLab.Tests.Checks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -50,6 +51,7 @@ public sealed class CheckCoverage
     private readonly List<Scope> _examined = [];
     private readonly List<Unexamined> _unexamined = [];
     private readonly List<Unexamined> _outOfScope = [];
+    private readonly List<Deferred> _reasons = [];
     private readonly ITestOutputHelper _output;
 
     public CheckCoverage(string checkName, ITestOutputHelper output)
@@ -100,18 +102,28 @@ public sealed class CheckCoverage
     }
 
     /// <summary>
-    /// Records something this check was not asked to look at, with the reason: a component a
-    /// later phase builds, or a case the check deliberately exempts.
+    /// Records something this check was not asked to look at, and what would end it.
     ///
     /// Separate from <see cref="NotExamined"/> on purpose, and the separation is the discipline.
     /// Unexamined means a claim this phase should have been able to assert and could not, and it
     /// is not a pass. Out of scope means nobody owed it yet. Collapsing them would let forty
     /// later-phase rows hide the one row nobody can check, which is the failure this whole idea
     /// exists to catch, arrived at from the other direction.
+    ///
+    /// <b>The reason is structured rather than prose, as of 2.2.</b> An out-of-scope architecture
+    /// claim has always had to name the checkpoint that ends it, so the count falls as checkpoints
+    /// land rather than resting as a permanent number; a coverage item carried free text and
+    /// nothing read it, and seven checks recorded 149 of them. The rule does not transfer
+    /// unmodified, which is why <see cref="OutOfScopeReason"/> has two shapes: some of these close
+    /// on a checkpoint and some close on a decision nobody has scheduled. Read as prose those two
+    /// are indistinguishable, and two of `fixture-replay`'s exemptions differ by three orders of
+    /// magnitude in what they would cost.
     /// </summary>
-    public CheckCoverage OutOfScope(string what, int count, string why)
+    public CheckCoverage OutOfScope(string what, int count, OutOfScopeReason reason)
     {
-        _outOfScope.Add(new Unexamined(what, count, why));
+        ArgumentNullException.ThrowIfNull(reason);
+        _outOfScope.Add(new Unexamined(what, count, reason.ToString()));
+        _reasons.Add(new Deferred(what, count, reason));
         return this;
     }
 
@@ -195,6 +207,14 @@ public sealed class CheckCoverage
             JsonSerializer.Serialize(
                 new Record(CheckName, TotalExamined, TotalContext, TotalUnexamined, TotalOutOfScope, _examined, _unexamined, _outOfScope),
                 new JsonSerializerOptions { WriteIndented = true }));
+
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+        IReadOnlyList<string> deferrals =
+            DeferralProblems(CheckName, _reasons, schedule.Exists, schedule.HasLanded);
+
+        Assert.True(deferrals.Count == 0,
+            $"{deferrals.Count} deferral(s) in {CheckName} name a checkpoint that cannot end them:\n  "
+            + string.Join("\n  ", deferrals));
 
         IReadOnlyList<string> shortfalls = Shortfalls(CheckName, _examined, Baseline);
         Assert.True(shortfalls.Count == 0,
@@ -342,6 +362,141 @@ public sealed class CheckCoverage
 
     /// <summary>One scope a check named, and whether its size is a fact about the corpus.</summary>
     public sealed record Scope(string What, int Count, bool IsContext);
+
+    /// <summary>What this check deferred, and what would end the deferral.</summary>
+    public IReadOnlyList<Deferred> Deferrals => _reasons;
+
+    /// <summary>One deferred item with its structured reason.</summary>
+    public sealed record Deferred(string What, int Count, OutOfScopeReason Reason);
+
+    /// <summary>
+    /// Why something is out of scope, in one of exactly two shapes.
+    ///
+    /// <b>A checkpoint</b>, which is the ordinary case and obeys the rule an out-of-scope
+    /// architecture claim already obeys: the checkpoint has to exist in BUILD_PLAN and has to be
+    /// one PROGRESS does not yet record, so an item still deferred to a landed checkpoint is one
+    /// that checkpoint shipped without coming back to.
+    ///
+    /// <b>A price</b>, for the ones that close on a decision nobody has scheduled. This is the half
+    /// that does not transfer from the claim rule, and it needs its own shape rather than a
+    /// checkpoint field left empty: an item resting on a purchase is not waiting for anything, and
+    /// writing it as prose is what made two of `fixture-replay`'s exemptions read as equivalent
+    /// when one costs 1,900 vendor calls and about 130 MB committed for ever and the other costs a
+    /// single per-ticker call at the next capture. The price is the thing a later session needs and
+    /// is exactly what prose loses.
+    /// </summary>
+    public sealed record OutOfScopeReason
+    {
+        private OutOfScopeReason(string? checkpoint, string? price, string why)
+        {
+            Checkpoint = checkpoint;
+            Price = price;
+            Why = why;
+        }
+
+        /// <summary>The checkpoint that ends it, or null where it rests on a decision instead.</summary>
+        public string? Checkpoint { get; }
+
+        /// <summary>What taking the decision would cost, or null where a checkpoint ends it.</summary>
+        public string? Price { get; }
+
+        /// <summary>The reason, in words, which is additional to the two above and never instead of them.</summary>
+        public string Why { get; }
+
+        /// <summary>Deferred to a checkpoint, which the report groups by and which has to be open.</summary>
+        public static OutOfScopeReason UntilCheckpoint(string checkpoint, string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint);
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new OutOfScopeReason(checkpoint, null, why);
+        }
+
+        /// <summary>Resting on a decision nobody has taken, with what taking it would cost.</summary>
+        public static OutOfScopeReason UntilDecided(string price, string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(price);
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new OutOfScopeReason(null, price, why);
+        }
+
+        /// <summary>
+        /// Exempt permanently and deliberately, with the reason nothing could close it.
+        ///
+        /// A third shape, found while converting the call sites at 2.2 and added rather than forced
+        /// into the other two. The obligation named a checkpoint and a purchase, and several real
+        /// exemptions are neither: citations inside a dated record, whose correction would rewrite
+        /// history rather than the corpus; a runner set asserted against the workflow rather than
+        /// against a test; columns exempted by name in a migration. Recording those as "priced at
+        /// nothing" would be a lie about the shape, and recording them against a checkpoint would
+        /// invent one.
+        ///
+        /// The risk is obvious and is worth naming, because it is how this rule would be lost: if
+        /// everything becomes by-design the naming rule is decoration. What holds it is that the
+        /// three counts are reported separately, so by-design growing is visible in the report
+        /// rather than absorbed into one out-of-scope number.
+        /// </summary>
+        public static OutOfScopeReason ByDesign(string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new OutOfScopeReason(null, null, why);
+        }
+
+        /// <summary>Whether nothing will ever close this, which is the shape worth counting.</summary>
+        public bool IsPermanent => Checkpoint is null && Price is null;
+
+        public override string ToString() =>
+            Checkpoint is not null ? $"closed by {Checkpoint}: {Why}"
+            : Price is not null ? $"rests on a decision nobody has taken, priced at {Price}: {Why}"
+            : $"exempt by design: {Why}";
+    }
+
+    /// <summary>
+    /// What is wrong with a set of deferrals, or nothing.
+    ///
+    /// Pure, and separated from the run so it can be proved against deferrals written by hand. The
+    /// checkpoint half is the same assertion an out-of-scope architecture claim goes through, and
+    /// it is asserted here rather than trusted because the failure it catches is silent: an item
+    /// deferred to a checkpoint that has landed reads exactly like one deferred to a checkpoint
+    /// that has not.
+    /// </summary>
+    public static IReadOnlyList<string> DeferralProblems(
+        string check,
+        IReadOnlyList<Deferred> deferrals,
+        Func<string, bool> checkpointExists,
+        Func<string, bool> checkpointHasLanded)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(check);
+        ArgumentNullException.ThrowIfNull(deferrals);
+        ArgumentNullException.ThrowIfNull(checkpointExists);
+        ArgumentNullException.ThrowIfNull(checkpointHasLanded);
+
+        var problems = new List<string>();
+
+        foreach (Deferred deferred in deferrals)
+        {
+            if (deferred.Reason.Checkpoint is not string checkpoint)
+            {
+                continue;
+            }
+
+            if (!checkpointExists(checkpoint))
+            {
+                problems.Add(
+                    $"{check} defers \"{deferred.What}\" to checkpoint {checkpoint}, and BUILD_PLAN.md has no such "
+                    + "checkpoint. A deferral to a checkpoint nobody scheduled never ends.");
+                continue;
+            }
+
+            if (checkpointHasLanded(checkpoint))
+            {
+                problems.Add(
+                    $"{check} defers \"{deferred.What}\" to checkpoint {checkpoint}, and PROGRESS.md already records "
+                    + $"{checkpoint}. That checkpoint shipped without coming back to it, and nothing said so at the time.");
+            }
+        }
+
+        return problems;
+    }
 
     private sealed record Unexamined(string What, int Count, string Why);
 

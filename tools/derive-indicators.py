@@ -63,6 +63,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --chart <store.db> <as-of> <ticker> <sessions> <width> <height>
         python tools/derive-indicators.py --index <captured-dir> <as-of> <symbol> [<symbol> ...]
         python tools/derive-indicators.py --universe <captured-dir> <as-of>
+        python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
 """
 
 import datetime
@@ -531,7 +532,100 @@ def universe_main(argv):
     return 0
 
 
+GAP_WINDOW = 20
+
+
+def derive_signals(bars, trigger):
+    """The signals SignalVectorizer freezes, from the bars alone.
+
+    Restated from the library in SCHEMA rather than from the stage, which is the point: the stage
+    reads a stored indicator row and this reads the window, so the two agree only if the engine,
+    the reader and the vectorizer all agree. A distance signal is the one shape where a sign error
+    is invisible, because a stock below its average and a stock above it both produce a plausible
+    small number, so all three distances are derived rather than one.
+
+    The gap average is the mean of (ema21-ema50)/ema50 over the last twenty sessions, each average
+    recomputed over the engine's own warm-up ending at that session. Carrying one running average
+    across the whole window instead would seed it in a different place and differ for a long time
+    on the way to the same answer, which is the trap the chart page already fell into once.
+    """
+    # Every figure but the gap average is computed over the engine's own warm-up, and the wider
+    # window is used only where the gap average needs it. Seeding a recursive average further back
+    # gives a different number that still looks like an average: derived over 169 sessions instead
+    # of 150, atr_14 came out 24.1363 against the engine's 24.1364. The chart page learned this at
+    # 1.10 and it is the same lesson, so the window is chosen per figure rather than once.
+    warm = bars[-WARMUP:]
+    adj = adjusted(warm)
+    closes = [b["close"] for b in adjusted(bars)]
+    last = adj[-1]
+    figures = derive(warm)
+
+    close = last["close"]
+    out = {
+        "close_adjusted": close,
+        "adr_20": figures["adr_20"],
+        "atr_14": figures["atr_14"],
+        "range_avg_20": figures["range_avg_20"],
+        "dollar_volume_median_20": figures["dollar_volume_median_20"],
+    }
+
+    for period, name in ((9, "ema_9_distance"), (21, "ema_21_distance"), (50, "ema_50_distance")):
+        average = ema(closes[-WARMUP:], period)
+        out[name] = (close - average) / average
+
+    medium = ema(closes[-WARMUP:], 21)
+    longer = ema(closes[-WARMUP:], 50)
+    out["ema_gap_21_50"] = (medium - longer) / longer
+
+    gaps = []
+    for end in range(len(closes) - GAP_WINDOW, len(closes)):
+        window_closes = closes[end - WARMUP + 1:end + 1]
+        if len(window_closes) < WARMUP:
+            continue
+        m = ema(window_closes, 21)
+        l = ema(window_closes, 50)
+        gaps.append((m - l) / l)
+
+    if len(gaps) == GAP_WINDOW:
+        out["ema_gap_21_50_avg_20"] = sum(gaps) / GAP_WINDOW
+
+    out["range_today_over_avg"] = (last["high"] - last["low"]) / figures["range_avg_20"]
+
+    raw_close = warm[-1]["close"]
+    daily_range = figures["adr_20"] * raw_close
+    out["trigger_distance_ranges"] = abs(Decimal(trigger) - raw_close) / daily_range
+
+    return out
+
+
+def signals_main(argv):
+    if len(argv) < 4:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, as_of, ticker, trigger = argv[0], argv[1], argv[2], argv[3]
+    connection = sqlite3.connect(store)
+
+    # The warm-up plus the gap window, stated from what the gap average needs rather than as a
+    # constant: twenty averages, each computed over the engine's own warm-up ending at its own
+    # session, need nineteen sessions of history behind the first of them.
+    bars = window(connection, ticker, as_of, WARMUP + GAP_WINDOW - 1)
+
+    if len(bars) < WARMUP:
+        print("only %d sessions, short of the %d-session warm-up" % (len(bars), WARMUP), file=sys.stderr)
+        return 1
+
+    print("\n%s  as of %s, %d sessions, trigger %s" % (ticker, as_of, len(bars), trigger))
+    for name, value in derive_signals(bars, trigger).items():
+        print("  signal.%s-long.%-26s %s" % (ticker, name, value.quantize(PLACES)))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--signals":
+        return signals_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--chart":
         return chart_main(argv[2:])
 

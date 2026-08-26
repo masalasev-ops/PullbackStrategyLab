@@ -199,8 +199,11 @@ public sealed partial class StatedCountsCheck
         coverage.OutOfScope(
             "numbers stated in prose that this registry does not name",
             0,
-            "the check is a registry and exempts counts nobody added to it; closing this means teaching it to "
-            + "find every number in the specs, which is a decision nobody has taken and which 2.2 requires to be priced");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "teaching this check to find every number in the five specs and report which are registered",
+                "the check is a registry and exempts counts nobody added to it. The zero is the number of exempted "
+                + "items it can name, not a measurement of the hole: it does not scan prose for numbers, so it cannot "
+                + "say how many it is missing"));
         coverage.Report();
 
         string[] wrong = claims

@@ -65,9 +65,12 @@ public sealed class WriterOwnershipCheck
             StringComparer.Ordinal);
 
         int declaredWritersExamined = 0;
-        int tableNotCreated = 0;
-        int componentNotBuilt = 0;
         int unresolvedNames = 0;
+
+        // The components whose write cannot be asserted yet, kept by name rather than counted.
+        // A count cannot be grouped by the checkpoint that ends it, and grouping is the whole of
+        // what the naming rule buys: the number falls as checkpoints land instead of resting.
+        var deferredWriters = new List<string>();
 
         foreach (StoreDeclaration store in declared)
         {
@@ -83,7 +86,7 @@ public sealed class WriterOwnershipCheck
 
                 if (!live.Contains(store.Store))
                 {
-                    tableNotCreated++;
+                    deferredWriters.Add(writer.Component);
                     continue;
                 }
 
@@ -93,7 +96,7 @@ public sealed class WriterOwnershipCheck
                     // one checkpoint creates a store and a later one builds a component that
                     // updates it. Separated from the case below rather than folded into it,
                     // because that one is a defect and this one is a schedule.
-                    componentNotBuilt++;
+                    deferredWriters.Add(writer.Component);
                     continue;
                 }
 
@@ -145,10 +148,37 @@ public sealed class WriterOwnershipCheck
             .Context("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
-            .OutOfScope("declared writers of a store no migration has created yet", tableNotCreated,
-                "the table arrives with the checkpoint that builds its component")
-            .OutOfScope("declared writers whose component has not been built yet", componentNotBuilt,
-                "the store exists and the component that writes it arrives at a later checkpoint");
+            ;
+
+        // Grouped by the checkpoint that builds the component, resolved from BUILD_PLAN rather
+        // than described in prose. This is the obligation raised at 1.12: the claim side of the
+        // report has always named a closing checkpoint, and the coverage side carried free text
+        // that nothing read. Two stores fall out of it here, because 2.2 creates `setup` with
+        // three of its four declared writers still unbuilt.
+        var schedule = ArchitectureConformanceCheck.Schedule.Read();
+
+        foreach (IGrouping<string, string> group in deferredWriters
+                     .GroupBy(component => schedule.CheckpointFor(component) ?? "unplaced", StringComparer.Ordinal)
+                     .OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            string[] names = [.. group.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+
+            if (string.Equals(group.Key, "unplaced", StringComparison.Ordinal))
+            {
+                // No checkpoint in BUILD_PLAN names the component. Unexamined rather than deferred:
+                // a deferral to nothing never ends, and this is the one case the naming rule exists
+                // to make visible rather than to absorb.
+                coverage.NotExamined("declared writers whose component no checkpoint builds", names.Length,
+                    "BUILD_PLAN.md places none of these: " + string.Join(", ", names));
+                continue;
+            }
+
+            coverage.OutOfScope(
+                $"declared writers arriving at {group.Key}",
+                names.Length,
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint(group.Key,
+                    "the store or the component arrives with that checkpoint: " + string.Join(", ", names)));
+        }
 
         if (unresolvedNames > 0)
         {

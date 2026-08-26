@@ -2566,6 +2566,142 @@
       "checkpoint": "1.12",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "All three. They are the only captured names the universe excludes and none of them is a floor rejection, which is why the floor's rejecting side is recorded out of scope rather than claimed against them."
+    },
+    {
+      "id": "signal.IESC-long.close_adjusted",
+      "tier": "DERIVED",
+      "value": "324.1200",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.adr_20",
+      "tier": "DERIVED",
+      "value": "0.0670",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.atr_14",
+      "tier": "DERIVED",
+      "value": "24.1364",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals",
+      "note": "Derived over the engine's warm-up, not over the wider window the gap average needs. Seeded 169 sessions back instead of 150 this reads 24.1363; Wilder's smoothing is recursive and the seed is part of the answer."
+    },
+    {
+      "id": "signal.IESC-long.range_avg_20",
+      "tier": "DERIVED",
+      "value": "23.3959",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.dollar_volume_median_20",
+      "tier": "DERIVED",
+      "value": "204580994.6400",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.ema_9_distance",
+      "tier": "DERIVED",
+      "value": "-0.0818",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.ema_21_distance",
+      "tier": "DERIVED",
+      "value": "-0.0824",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.ema_50_distance",
+      "tier": "DERIVED",
+      "value": "-0.0561",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.ema_gap_21_50",
+      "tier": "DERIVED",
+      "value": "0.0287",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.ema_gap_21_50_avg_20",
+      "tier": "DERIVED",
+      "value": "0.0193",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals",
+      "note": "Twenty gaps, each from averages recomputed over the engine's own 150-session warm-up ending at that session rather than from one running average across the wider window. The two differ for a long time on the way to the same place, which is what the chart page found at 1.10."
+    },
+    {
+      "id": "signal.IESC-long.range_today_over_avg",
+      "tier": "DERIVED",
+      "value": "0.7757",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signal.IESC-long.trigger_distance_ranges",
+      "tier": "DERIVED",
+      "value": "1.4215",
+      "checkpoint": "2.2",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals"
+    },
+    {
+      "id": "signals.setups",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.2",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signals.frozen",
+      "tier": "FROZEN",
+      "value": "16",
+      "checkpoint": "2.2",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signals.absent",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.2",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.trigger_price",
+      "tier": "FROZEN",
+      "value": "355.0000",
+      "checkpoint": "2.2",
+      "producedBy": "the authored setup's own input, read back to prove it survives the freeze"
+    },
+    {
+      "id": "signal.IESC-long.stop_price",
+      "tier": "FROZEN",
+      "value": "348.5000",
+      "checkpoint": "2.2",
+      "producedBy": "the authored setup's own input, read back to prove it survives the freeze"
+    },
+    {
+      "id": "signal.IESC-long.stop_distance_ranges",
+      "tier": "FROZEN",
+      "value": "0.2700",
+      "checkpoint": "2.2",
+      "producedBy": "the authored setup's own input, read back to prove it survives the freeze"
+    },
+    {
+      "id": "signal.IESC-long.listing_age_sessions",
+      "tier": "FROZEN",
+      "value": "1.0000",
+      "checkpoint": "2.2",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "One, and a fact about the fixture rather than about IESC. first_seen is the date a ticker first appears in the symbol list, the replay runs universe-build once on the as-of date, so every fixture name is one session old. A live store gives the real figure and this one only detects the count changing shape."
     }
   ],
   "frozenOnly": []

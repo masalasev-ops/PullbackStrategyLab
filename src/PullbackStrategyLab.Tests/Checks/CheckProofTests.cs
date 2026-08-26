@@ -1014,6 +1014,91 @@ public sealed class CheckProofTests
             _ => false));
     }
 
+    // ---- an out-of-scope coverage item names what ends it -----------------------------------
+
+    // The obligation raised at 1.12 and due at 2.2. An out-of-scope architecture claim has always
+    // had to name the checkpoint that ends it; a coverage item carried free prose and nothing read
+    // it, so its count read as permanent rather than as one that falls.
+
+    private static CheckCoverage.Deferred Defer(string what, CheckCoverage.OutOfScopeReason reason) =>
+        new(what, 1, reason);
+
+    [Fact]
+    public void A_deferral_to_a_checkpoint_that_has_landed_is_caught()
+    {
+        string problem = Assert.Single(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("1.3", "why"))],
+            _ => true,
+            checkpoint => checkpoint == "1.3"));
+
+        Assert.Contains("already records 1.3", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_deferral_to_a_checkpoint_nobody_scheduled_is_caught()
+    {
+        string problem = Assert.Single(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("9.9", "why"))],
+            _ => false,
+            _ => false));
+
+        Assert.Contains("no such checkpoint", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_deferral_to_an_open_checkpoint_is_fine()
+    {
+        Assert.Empty(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2", "why"))],
+            _ => true,
+            _ => false));
+    }
+
+    [Fact]
+    public void A_priced_deferral_carries_its_price_and_is_not_asked_for_a_checkpoint()
+    {
+        // The half of the rule that does not transfer from the claim side. Two of fixture-replay's
+        // exemptions close on a purchase rather than on a checkpoint, and read as prose they are
+        // indistinguishable while differing by three orders of magnitude in cost.
+        var expensive = CheckCoverage.OutOfScopeReason.UntilDecided(
+            "1,900 vendor calls and about 130 MB committed for ever", "the whole-market screen");
+        var cheap = CheckCoverage.OutOfScopeReason.UntilDecided(
+            "one per-ticker vendor call at the next capture", "the floor's rejecting side");
+
+        Assert.Empty(CheckCoverage.DeferralProblems("a-check", [Defer("x", expensive), Defer("y", cheap)], _ => false, _ => true));
+
+        Assert.Contains("1,900", expensive.ToString(), StringComparison.Ordinal);
+        Assert.Contains("one per-ticker", cheap.ToString(), StringComparison.Ordinal);
+        Assert.NotEqual(expensive.Price, cheap.Price);
+    }
+
+    [Fact]
+    public void A_by_design_deferral_is_permanent_and_says_so()
+    {
+        var reason = CheckCoverage.OutOfScopeReason.ByDesign("a dated record is meant to say what was true then");
+
+        Assert.True(reason.IsPermanent);
+        Assert.Null(reason.Checkpoint);
+        Assert.Null(reason.Price);
+        Assert.Empty(CheckCoverage.DeferralProblems("a-check", [Defer("x", reason)], _ => false, _ => true));
+    }
+
+    [Fact]
+    public void The_three_shapes_are_told_apart_in_the_record()
+    {
+        // What stops by-design swallowing the rule: the shapes are distinguishable in the record,
+        // so the count of permanent exemptions can be read rather than absorbed into one number.
+        Assert.StartsWith("closed by 4.2",
+            CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2", "why").ToString(), StringComparison.Ordinal);
+        Assert.StartsWith("rests on a decision nobody has taken",
+            CheckCoverage.OutOfScopeReason.UntilDecided("a price", "why").ToString(), StringComparison.Ordinal);
+        Assert.StartsWith("exempt by design",
+            CheckCoverage.OutOfScopeReason.ByDesign("why").ToString(), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void The_coverage_reason_re_asks_whether_the_obligation_has_fallen_due()
     {

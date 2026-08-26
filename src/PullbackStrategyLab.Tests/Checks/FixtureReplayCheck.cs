@@ -175,7 +175,9 @@ public sealed partial class FixtureReplayCheck
             // rather than a hole in it.
             coverage.OutOfScope("requests answered as the vendor answers a name it has nothing on",
                 result.AskedOutsideTheFixture.Count,
-                "the endpoint has captured evidence and was asked about a name or a market day the fixture does not hold");
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "the endpoint has captured evidence and was asked about a name or a market day the fixture does "
+                    + "not hold. That is the fixture's boundary rather than a hole in it, and a fixture has one"));
         }
 
         // The half of the 1.7 obligation the fixture cannot close, stated as one thing rather than
@@ -192,10 +194,11 @@ public sealed partial class FixtureReplayCheck
         // live run closes every night. That is the trade, and it is recorded here so the number is
         // argued with rather than rediscovered.
         coverage.OutOfScope("the whole-market screen under the twenty-session liquidity floor", 1,
-            $"the fixture holds {result.ScreeningSessions} captured market day(s) and the floor is a median over "
-            + $"{new UniverseOptions().LiquidityWindowSessions}. Ends when the capture holds twenty bulk days, which costs "
-            + "1,900 calls and about 130 MB. The per-ticker half of the same floor is measured, not deferred: see the "
-            + "liquidity.* expectations");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "1,900 vendor calls and about 130 MB committed to the repository for ever",
+                $"the fixture holds {result.ScreeningSessions} captured market day(s) and the floor is a median over "
+                + $"{new UniverseOptions().LiquidityWindowSessions}. Ends when the capture holds twenty bulk days. The "
+                + "per-ticker half of the same floor is measured, not deferred: see the liquidity.* expectations"));
 
         // The floor's rejecting side, which nothing in the fixture exercises.
         //
@@ -214,9 +217,11 @@ public sealed partial class FixtureReplayCheck
         // name chosen to fail, at the next capture. It is out of scope because no captured name
         // fails today, not because closing it is expensive.
         coverage.OutOfScope("the liquidity floor's rejecting side", 1,
-            "all 30 measured names clear both floors, the closest at 1.7 times the liquidity floor, and the three "
-            + "trackers are excluded by security type rather than by a floor. Ends when the capture holds one name "
-            + "that fails a floor, which is one per-ticker call at the next capture");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "one per-ticker vendor call at the next capture",
+                "all 30 measured names clear both floors, the closest at 1.7 times the liquidity floor, and the three "
+                + "trackers are excluded by security type rather than by a floor. Ends when the capture holds one "
+                + "name that fails a floor"));
 
         if (result.AskedOnAnUncoveredEndpoint.Count > 0)
         {
@@ -245,8 +250,25 @@ public sealed partial class FixtureReplayCheck
             // Out of scope rather than unexamined, and named one checkpoint at a time. A single
             // row saying "five checkpoints are frozen-only" is the shape of report that let this
             // sit unnoticed, because it reads as one item rather than as five.
-            coverage.OutOfScope($"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN", 1,
-                PermitReason(schedule.Obligations, permit, schedule.HasLanded));
+            //
+            // The deferral is to the checkpoint the permit's obligation falls due at, which puts a
+            // frozen-only checkpoint under the same rule as everything else here: that checkpoint
+            // has to exist and has to be open. Where the permit resolves to nothing the deferral is
+            // by design and says so, because the assertion above has already failed the run and a
+            // second complaint about the same thing would only crowd the page.
+            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches = permit is null
+                ? []
+                : MatchingObligations(schedule.Obligations, permit.Obligation);
+
+            coverage.OutOfScope(
+                $"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN",
+                1,
+                matches.Count == 1
+                    ? CheckCoverage.OutOfScopeReason.UntilCheckpoint(
+                        matches[0].DueAt,
+                        PermitReason(schedule.Obligations, permit, schedule.HasLanded))
+                    : CheckCoverage.OutOfScopeReason.ByDesign(
+                        PermitReason(schedule.Obligations, permit, schedule.HasLanded)));
         }
 
         coverage.Report();

@@ -1632,3 +1632,105 @@ Carried:    Three obligations. Both of 2.1's are discharged and removed from `BU
             creates `setup` with three of its four declared writers unbuilt and that is what makes
             `writer-ownership` record a run of out-of-scope items carrying free prose.
             Step 6 of the move, raised at 1.11, due at the move.
+
+## 2.2 — 2026-08-26 — phase-2-detection — the frozen signal row, and out of scope made structured
+
+Built:      Migration 011: `setup`, `calibration_setup` and `setup_signal`. `setup` constrains
+            `direction` and carries a unique index on (as_of, ticker, direction), because two
+            detectors writing one table makes a duplicate a real possibility rather than a
+            theoretical one and a duplicated setup would be counted twice by everything downstream.
+            `calibration_setup` has no foreign key to `security` where `setup` does, deliberately: a
+            calibration run walks years of history and can reach a ticker listed then and absent
+            now, and refusing that row would silently shrink the count the run exists to produce.
+            `setup_signal` is keyed (setup_id, signal_name), which is what makes "written once"
+            enforceable rather than intended.
+
+            `SignalVectorizer`, verb `vectorize`, freezing sixteen of the library's thirty-three
+            active signals. `SetupReader` and `SetupSignalReader` in Data, every overload taking an
+            as-of with none that omits it, and `SetupReader.ReadCalibration` named separately rather
+            than offered as a default so a caller has to say which store it means.
+
+            **The library is larger than what can be frozen today, and the gap is declared rather
+            than left.** A signal can only be frozen once something stores what it reads, and phase
+            2 builds those producers over several checkpoints. `SignalVectorizer.AwaitingCheckpoint`
+            names seventeen signals against the checkpoint that supplies each: the scans at 2.3, the
+            ladder grade at 2.4, the market mood at 2.5, and the pullback geometry, the sector and
+            the cluster count at 2.6. A test asserts the partition covers the library exactly in
+            both directions, and a second asserts every awaiting checkpoint exists and has not
+            landed.
+
+            **The out-of-scope coverage naming rule**, the obligation raised at 1.12 and moved here
+            from 2.6. `CheckCoverage.OutOfScope` takes a structured reason in one of three shapes
+            rather than prose, and `DeferralProblems` asserts the checkpoint half exactly as an
+            out-of-scope architecture claim is asserted. Twelve call sites converted across nine
+            checks.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 236 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 375 expectations, 113 `DERIVED`; coverage examined 1,435 with 0
+            unexamined; 19 expectations changed since the last commit, which are the nineteen added
+            here.
+            Deferral shapes across every check, counted after the conversion: 87 name a checkpoint,
+            5 carry a price, 3 are permanent by design. Before it, one named a checkpoint.
+            The two priced ones are the pair the obligation cited: the whole-market screen under the
+            twenty-session liquidity floor at 1,900 vendor calls and about 130 MB, and the liquidity
+            floor's rejecting side at one per-ticker call at the next capture.
+            The signal freeze over the fixture: 1 setup, 16 signals frozen, 0 absent.
+
+Verified:   The write-once property four ways, because no one of them reaches what the others do.
+            A second run over the same night writes nothing and reports every signal already frozen.
+            A bar restated underneath a frozen value leaves it alone: that is the only case that
+            distinguishes write-once from a rerun recomputing the same numbers, because the value a
+            rerun would produce is genuinely different. The store's own key refuses a second write,
+            so a mistake in the stage's own check is a failure rather than a duplicate row. And no
+            `UPDATE` against `setup_signal` exists anywhere in the shipped source, which is the
+            direction a behavioural test cannot reach: a future stage could add one and every test
+            above would still pass, because none of them runs it.
+
+            Twelve of the nineteen new expectations are `DERIVED`, computed by
+            `tools/derive-indicators.py --signals` over the fixture's own bars outside the solution.
+            All three exponential distances are derived rather than one, because a sign error there
+            is the invisible case: a stock below its average and one above it both produce a
+            plausible small number.
+
+            The deferral rule falsified rather than argued: `bar-append-only`'s deferral pointed at
+            1.3, a checkpoint PROGRESS records, and the check failed naming the item, the checkpoint
+            and the reason. Reverted.
+
+Findings:   Finding. **The signal-library parser lost two rows to an escaped pipe and would have
+            passed.** `SignalLibrary` read a table cell as "anything but a pipe", and two
+            trade-geometry formulas write absolute value as `\|trigger − stop\|`. Both rows were
+            dropped. Reading: the partition test caught it only because the vectorizer names those
+            two signals, so they showed up as invented rather than as missing; had the vectorizer
+            not named them, an empty-handed parser would have satisfied every assertion made against
+            it, because a smaller library makes the partition easier to hold. This is the same shape
+            as `MarkdownTable` dropping a short row at 2.1, one checkpoint later and in new code.
+            `SignalLibrary` now states a floor of thirty in advance and throws below it.
+
+            Finding. **The independent derivation disagreed with the engine on `atr_14`, and the
+            derivation was wrong.** 24.1363 against 24.1364. The gap average needs the warm-up plus
+            the gap window, so the derivation read 169 sessions and computed every figure over all
+            of them; Wilder's smoothing is recursive and the seed is part of the answer. Reading:
+            this is exactly what the chart page found at 1.10, where a fifty-day line drawn over 210
+            sessions differed from the same average seeded at 150 and both looked like a moving
+            average. The window is now chosen per figure rather than once, and the disagreement is
+            recorded as a note on the expectation rather than only fixed.
+
+            Observation. `signal.IESC-long.listing_age_sessions` is 1 for every fixture name.
+            `first_seen` is the date a ticker first appears in the symbol list and the replay runs
+            `universe-build` once on the as-of date, so listing age in the fixture is a fact about
+            the fixture rather than about the security. Recorded as a note on the expectation: it
+            detects the figure changing shape and says nothing about any stock.
+
+            Observation. A third out-of-scope shape exists that the obligation did not name. It
+            described a checkpoint and a purchase; three real exemptions are neither, and nothing
+            could close them. Reading: `ByDesign` is added rather than forced, and the risk it
+            carries is stated where it is declared. If everything drifts into it the naming rule is
+            decoration, so the three counts are reported separately and by-design growing is visible.
+
+Carried:    Seventeen active signals await their producer, each named against a checkpoint that
+            exists and has not landed. Not an obligation in the table: it is asserted on every run
+            in both directions, so it cannot be forgotten and it closes itself as the checkpoints
+            land.
+            The three obligations from 2.1 are unchanged and none was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move. The out-of-scope naming rule, raised at 1.12 and
+            due here, is discharged and removed from the table.

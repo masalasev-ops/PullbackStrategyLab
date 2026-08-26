@@ -165,7 +165,11 @@ public sealed class PinnedConstantsCheck
         coverage.OutOfScope(
             "rows of the authored parameters table with no code constant yet",
             parameters.Count - pinnedParameters.Length,
-            "the parameter arrives with the checkpoint that builds the component it governs");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "mapping each authored parameter to the checkpoint that builds the component it governs",
+                "each closes when its component is built, and which checkpoint that is has never been derived. The "
+                + "mapping is by parameter name rather than by component name, which is why Schedule cannot resolve "
+                + "it the way it resolves a catalogue row"));
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
         string[] pinnedBudgetRows =
@@ -173,8 +177,11 @@ public sealed class PinnedConstantsCheck
         coverage.OutOfScope(
             "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,
-            "the request arrives with the checkpoint that makes it. No row of this table is unexaminable "
-            + "by design any more: every one states a cost per request and a cadence separately");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "mapping each data-budget row to the checkpoint that makes the request",
+                "the request arrives with the checkpoint that makes it, and that mapping has never been derived. No "
+                + "row of this table is unexaminable by design any more: every one states a cost per request and a "
+                + "cadence separately"));
 
         coverage.Report();
 

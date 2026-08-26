@@ -57,7 +57,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:10 | scans, ladder grade | 0 |
 | 18:15 | cluster, regime | 0 |
 | 18:20 | detectors, both directions | 0 |
-| 18:25 | signal freeze, journal | 0 |
+| 18:25 | `vectorize`, the signal freeze, then journal | 0 |
 | 18:26 | control sampling | 0 |
 | 18:28 | cap | 0 |
 | 18:30 | plans per variant | 0 |

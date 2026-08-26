@@ -395,3 +395,23 @@ Why:  The rule was written forward-looking at the phase 1 sign-off and the code 
 Was:  Five rows in the carried obligations table, two of them falling due at 2.1: the row raised at 1.1 for done condition seven at 1.3, 1.4, 1.5 and 1.7, and the row raised at 1.12 for the examined floor being per check where the property is per scope.
 Now:  Three rows. Both 2.1 rows are removed.
 Why:  Both were discharged at 2.1 and a carried obligation that has been met is a row saying a checkpoint still owes what it has done. The discharges are recorded in `PROGRESS.md` with what was built and how it was verified, which is where a completed obligation belongs; this table carries what is still open. The three that remain are the `CONFIRMED` values at 2.11, the out-of-scope coverage naming rule now at 2.2, and step 6 of the move at the move.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Checks section stated the naming rule for an out-of-scope claim and said nothing about an out-of-scope coverage item.
+Now:  A paragraph naming the three shapes a coverage item may take, and why the third is counted separately.
+Why:  The obligation raised at 1.12 and due at 2.2. A claim has always had to name the checkpoint that ends it; a coverage item carried free prose and nothing read it, and seven checks recorded 149 of them. The rule does not transfer unmodified, which the obligation said and which converting the call sites confirmed twice over. Two of `fixture-replay`'s exemptions close on a purchase rather than a checkpoint and differ by three orders of magnitude in cost, which prose loses. And several close on nothing at all: a citation inside a dated record, a runner set asserted against the workflow, a column exempted by name. Forcing those into a checkpoint would invent one and forcing them into a price would lie about the shape, so there are three and the third is counted separately, because a by-design exemption growing unnoticed is how this rule would be lost.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.2 | SignalVectorizer and the frozen signal row shape, `setup_signal` | Written once, never updated by the vectorizer. Asserted |
+Now:  The same row naming migration 011 and the out-of-scope coverage rule moved here from 2.6, with the four ways the write-once property is asserted and the two conditions on the signal library.
+Why:  "Asserted" named no assertion, and the four that shipped are not interchangeable: a rerun writing nothing does not prove a restated bar leaves a frozen value alone, and neither reaches an `UPDATE` a later stage might add. The obligation moved from 2.6 because 2.2 creates `setup` with three of its four declared writers unbuilt, which is what makes `writer-ownership` record a run of deferred items; 2.6 was already the heaviest checkpoint in the phase and would have met the rule a checkpoint after it was needed.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:25 | signal freeze, journal | 0 |
+Now:  | 18:25 | `vectorize`, the signal freeze, then journal | 0 |
+Why:  The stage now exists and the nightly order names entrypoints by the verb an operator types. Zero calls is unchanged and correct: the vectorizer reads the store and makes no vendor request.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held a row raised at 1.12 for the out-of-scope coverage naming rule, due at 2.2.
+Now:  Removed.
+Why:  Discharged at 2.2. The discharge is recorded in `PROGRESS.md` with what was built and how it was falsified; this table carries what is still open. Two rows remain: the `CONFIRMED` values at 2.11 and step 6 of the move.

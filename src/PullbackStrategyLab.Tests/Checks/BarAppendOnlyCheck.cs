@@ -55,7 +55,8 @@ public sealed class BarAppendOnlyCheck
         if (created.Length < BarTables.Count)
         {
             coverage.OutOfScope("bar tables no migration has created yet", BarTables.Count - created.Length,
-                "the table arrives with the checkpoint that ingests it, and nothing can write one that does not exist");
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2",
+                    "intraday_bar arrives with IntradayFetcher, and nothing can write a table that does not exist"));
         }
 
         coverage.Report();

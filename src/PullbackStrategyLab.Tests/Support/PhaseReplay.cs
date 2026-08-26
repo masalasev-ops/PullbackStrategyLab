@@ -216,7 +216,25 @@ public sealed class PhaseReplay : IDisposable
         measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
+        // 8. The signal freeze, over one authored setup.
+        //
+        //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
+        //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said
+        //    to be one, exercising a path the captured data cannot reach on its own. What is under
+        //    test is the vectorizer, and it takes a setup as given.
+        //
+        //    IESC rather than any of the thirty, because it is the fixture's only name with a real
+        //    corporate action inside the window. A signal read on the raw basis rather than the
+        //    adjusted one is off by the split factor for that name and by nothing at all for the
+        //    other twenty-nine.
+        VectorizeResult vectorized = VectorizeAuthoredSetup();
+        stages.Add(new StageRun(SignalVectorizer.Name, 0, vectorized.RowsWritten, vectorized.Outcome.ToStorageText()));
+        Record("signals.setups", vectorized.Setups);
+        Record("signals.frozen", vectorized.Written);
+        Record("signals.absent", vectorized.Absent);
+
         measurements.AddRange(IndexFigures());
+        measurements.AddRange(SignalFigures());
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(LiquidityFloorFigures());
         measurements.AddRange(ChartFigures());
@@ -294,6 +312,75 @@ public sealed class PhaseReplay : IDisposable
     /// place to stop: a fifteenth decimal of a decimal average is a fact about the order of
     /// operations rather than about the price.
     /// </summary>
+    /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
+    public const string AuthoredSetupTicker = "IESC";
+
+    /// <summary>The trigger and the stop the authored setup carries, as raw prices.</summary>
+    public const string AuthoredTrigger = "355.00";
+
+    /// <summary>Stated beside the trigger so the geometry signals have a subject.</summary>
+    public const string AuthoredStop = "348.50";
+
+    private VectorizeResult VectorizeAuthoredSetup()
+    {
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand setup = connection.CreateCommand();
+            setup.CommandText = """
+                INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
+                                   trigger_price, stop_price, stop_distance_ranges)
+                VALUES (@setup_id, @as_of, @ticker, 'long', '{}', 1, @trigger, @stop, '0.2700')
+                """;
+            setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");
+            setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            setup.Parameters.AddWithValue("@ticker", AuthoredSetupTicker);
+            setup.Parameters.AddWithValue("@trigger", AuthoredTrigger);
+            setup.Parameters.AddWithValue("@stop", AuthoredStop);
+            setup.ExecuteNonQuery();
+        }
+
+        return new SignalVectorizer(_connections, Logger(), _clock, _options).Vectorize(AsOf);
+    }
+
+    private IReadOnlyList<Measurement> SignalFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        IReadOnlyList<StoredSetupSignal> frozen = SetupSignalReader.Read(connection, AsOf);
+
+        foreach (StoredSetupSignal signal in frozen.OrderBy(s => s.SignalName, StringComparer.Ordinal))
+        {
+            // Rounded to four places where the value is a number, on the same terms as every other
+            // figure here. The store keeps the full decimal, because a signal is evidence and
+            // rounding it would be discarding what the night knew; the measurement rounds, because
+            // a diff that turns on the twenty-eighth decimal place is a diff that fails on a
+            // platform rather than on a defect. A signal whose value is a word passes through.
+            string value = decimal.TryParse(
+                signal.Value,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal number)
+                ? Figure(number)
+                : signal.Value;
+
+            figures.Add(new Measurement($"signal.{signal.SetupId}.{signal.SignalName}", value));
+        }
+
+        // Named rather than skipped, on the same terms as a missing indicator row. A signal the
+        // history could not support is a fact about the fixture, and one that quietly stopped being
+        // produced would otherwise leave the diff green over a shrinking subject.
+        foreach (string name in SignalVectorizer.Frozen.Order(StringComparer.Ordinal))
+        {
+            if (!frozen.Any(s => string.Equals(s.SignalName, name, StringComparison.Ordinal)))
+            {
+                figures.Add(new Measurement($"signal.{AuthoredSetupTicker}-long.{name}", "absent"));
+            }
+        }
+
+        return figures;
+    }
+
     private IReadOnlyList<Measurement> IndicatorFigures()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();

@@ -73,10 +73,10 @@
     },
     "fixture-replay": {
       "scopes": {
-        "DERIVED expectations diffed": 101,
-        "checkpoints with expectations in the fixture": 9,
-        "expectations diffed": 356,
-        "of those carrying an independently produced expectation": 9
+        "DERIVED expectations diffed": 113,
+        "checkpoints with expectations in the fixture": 10,
+        "expectations diffed": 375,
+        "of those carrying an independently produced expectation": 10
       },
       "context": [
         "FROZEN expectations diffed",

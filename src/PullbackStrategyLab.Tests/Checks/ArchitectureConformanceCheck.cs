@@ -291,9 +291,17 @@ public sealed partial class ArchitectureConformanceCheck
             Claim[] deferred = [.. table.Where(c => c.Verdict == Deferred)];
             if (deferred.Length > 0)
             {
-                coverage.OutOfScope($"claims in {table.Key}", deferred.Length,
-                    "closed by " + string.Join(", ",
-                        deferred.Select(c => c.Closes).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
+                foreach (IGrouping<string, Claim> byCheckpoint in deferred
+                             .GroupBy(c => c.Closes ?? "unplaced", StringComparer.Ordinal)
+                             .OrderBy(g => g.Key, StringComparer.Ordinal))
+                {
+                    coverage.OutOfScope(
+                        $"claims in {table.Key} closed by {byCheckpoint.Key}",
+                        byCheckpoint.Count(),
+                        CheckCoverage.OutOfScopeReason.UntilCheckpoint(byCheckpoint.Key,
+                            "placed at that checkpoint by BUILD_PLAN: "
+                            + string.Join(", ", byCheckpoint.Select(c => c.Subject).Take(4))));
+                }
             }
 
             Claim[] unexamined = [.. table.Where(c => c.Verdict == Unexamined)];

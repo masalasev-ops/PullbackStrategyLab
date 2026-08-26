@@ -37,6 +37,7 @@ public static class Program
         builder.Services.AddSingleton<ActionIngestor>();
         builder.Services.AddSingleton<IndicatorEngine>();
         builder.Services.AddSingleton<IndexIngestor>();
+        builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
 
@@ -64,6 +65,7 @@ public static class Program
                 IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
+                SignalVectorizer.Name => host.Services.GetRequiredService<SignalVectorizer>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -107,6 +109,7 @@ public static class Program
         DailyBarIngestor.BackfillName,
         IndexIngestor.Name,
         IndicatorEngine.Name,
+        SignalVectorizer.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,
     ];
