@@ -238,7 +238,19 @@ public sealed class PhaseReplay : IDisposable
         Record("tiers.falling", tiers.Falling);
         Record("tiers.noIndicators", tiers.NoIndicators);
 
-        // 10. The signal freeze, over one authored setup.
+        // 10. The market mood, which reads the trackers and the ladder counts the stage above wrote.
+        RegimeResult regime = new RegimeLabeler(_connections, Logger(), _clock, _options).Label(AsOf);
+
+        stages.Add(new StageRun(RegimeLabeler.Name, 0, regime.RowsWritten, regime.Outcome.ToStorageText()));
+        Record("regime.indexesMeasured", regime.IndexesMeasured);
+        Record("regime.indexesAbove", regime.IndexesAbove);
+        Record("regime.longLadderCount", regime.LongLadderCount);
+        Record("regime.shortLadderCount", regime.ShortLadderCount);
+        Record("regime.indexScore", regime.IndexScore);
+        Record("regime.breadthScore", regime.BreadthScore);
+        measurements.Add(new Measurement("regime.label", regime.Label));
+
+        // 11. The signal freeze, over one authored setup.
         //
         //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
         //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said

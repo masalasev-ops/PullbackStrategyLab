@@ -1881,3 +1881,59 @@ Carried:    Ten active signals still await their producer: the market mood at 2.
             geometry, sector, industry and cluster count at 2.6.
             The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
             values at 2.11, and step 6 of the move.
+
+## 2.5 — 2026-08-26 — phase-2-detection — the market mood, and the label that filters nothing
+
+Built:      Migration 013 creates `regime_daily`, one row a night. Both raw scores beside the label
+            and both raw ladder counts beside them, plus how many trackers were above their average,
+            so a later proposal wanting the continuous form does not have to recompute it from bars
+            that may since have been restated.
+            `RegimeLabeler`, verb `regime`. `RegimeReader` in Data. The three mood signals move from
+            `AwaitingCheckpoint` to `Frozen`, which the partition test forced.
+            The tracker averages are computed over the engine's warm-up rather than over 21
+            sessions, through the shared `Averages` in Core. An average seeded 21 sessions back is
+            not the one seeded 150 sessions back and both look like an average, which the chart page
+            found at 1.10 and the signals derivation found again at 2.2.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 266 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 475 expectations, 177 `DERIVED`; coverage examined 1,700 with 0
+            unexamined; 11 expectations changed since the last commit.
+            The mood over the fixture: 3 trackers measured, **1 above its 21-day average**, 9 rising
+            against 5 falling, index score 0, breadth score +1, label **mixed**.
+            All seven figures derived independently by `tools/derive-indicators.py --regime`: 0
+            disagreements.
+            **The closest tracker decides the index score.** SPY closes at 763.47 against a 21-day
+            average of 763.3055, sixteen hundredths above; QQQ and IWM are both below. A seed taken
+            21 sessions back rather than over the warm-up moves an average by more than that, so
+            `regime.indexesAbove` is the figure that would catch it.
+
+Verified:   The label filters nothing, asserted against the shipped source rather than stated. No
+            file outside the labeller, its reader and the vectorizer names either extreme, read with
+            comments stripped so a comment explaining the rule is not read as the code breaking it.
+            The vectorizer is exempt by name because freezing the label onto a setup is recording
+            it, which is what the decision asks for.
+            This is the condition no figure can show. A stage that began branching on the mood would
+            produce identical numbers, and the assumption would be baked into the baseline where the
+            design says it must be a version instead.
+
+            The two boundaries the scores turn on. Neither extreme is reachable without both scores
+            agreeing, swept over every pair. The breadth thresholds are exclusive at both ends, so a
+            ratio of exactly 1.5 scores 0 and 1.55 scores +1; a boundary written with the wrong
+            comparison is the commonest way a threshold is off by one case and never noticed.
+
+Findings:   Observation. Two undefined ratios mean different things and are scored differently. No
+            falling names at all scores +1, because every name that laddered laddered upward, which
+            is the strongest reading the score has. Nothing laddering either way scores 0, because
+            there is no reading. Collapsing them into one guard against dividing by zero would have
+            made an empty market read as a strong one.
+
+            Observation. An unmeasurable tracker is not counted as below. Reading: counting it as
+            below would move the score toward risk-off on exactly the nights the data is thin, which
+            is a bias rather than a missing value, and it would turn a feed outage into a market
+            signal. `IndexScore` therefore takes how many were measured rather than assuming three,
+            and returns 0 when none was.
+
+Carried:    Seven active signals still await their producer, all at 2.6: the pullback geometry, the
+            sector, the industry and the cluster count.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.

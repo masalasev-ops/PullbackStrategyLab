@@ -2663,10 +2663,10 @@
     {
       "id": "signals.frozen",
       "tier": "FROZEN",
-      "value": "23",
+      "value": "26",
       "checkpoint": "2.2",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Changed at 2.4 from 22, and at 2.3 from 16. The vectorizer freezes one more signal each time a checkpoint gives one a store to read: the six thrust signals at 2.3 when ScanEngine landed, and ladder_grade at 2.4 when TierClassifier did. The figure is a count of the library's covered half and it rises as the phase closes the rest."
+      "note": "Changed at 2.5 from 23, at 2.4 from 22, at 2.3 from 16. The vectorizer freezes more of the library each time a checkpoint gives a signal a store to read: the six thrust signals at 2.3, ladder_grade at 2.4, the three mood signals at 2.5. It is a progress figure rather than a property and it moves again at 2.6."
     },
     {
       "id": "signals.absent",
@@ -3339,6 +3339,79 @@
       "value": "9",
       "checkpoint": "2.4",
       "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "regime.breadthScore",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime",
+      "note": "+1, from 9 rising against 5 falling, a ratio of 1.8 against the 1.5 threshold. Breadth costs nothing because it falls out of the ladder grades the stage before it wrote."
+    },
+    {
+      "id": "regime.indexScore",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
+    },
+    {
+      "id": "regime.indexesAbove",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime",
+      "note": "One of three, and the closest of the three decides it: SPY closes at 763.47 against a 21-day average of 763.3055, sixteen hundredths above. QQQ and IWM are both below. A seed taken 21 sessions back rather than over the engine's warm-up moves an average by more than that, so this figure is the one that would catch it."
+    },
+    {
+      "id": "regime.indexesMeasured",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
+    },
+    {
+      "id": "regime.label",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime",
+      "note": "Mixed, from index 0 and breadth +1. The three states buffer themselves: risk_on needs both scores at +1 and risk_off needs both at -1, so neither extreme is reachable without both agreeing and the label cannot jump from one to the other."
+    },
+    {
+      "id": "regime.longLadderCount",
+      "tier": "DERIVED",
+      "value": "9",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
+    },
+    {
+      "id": "regime.shortLadderCount",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "2.5",
+      "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
+    },
+    {
+      "id": "signal.IESC-long.regime_breadth_score",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.5",
+      "producedBy": "read back from the regime row, to prove the mood reaches the frozen signal"
+    },
+    {
+      "id": "signal.IESC-long.regime_index_score",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.5",
+      "producedBy": "read back from the regime row, to prove the mood reaches the frozen signal"
+    },
+    {
+      "id": "signal.IESC-long.regime_label",
+      "tier": "FROZEN",
+      "value": "mixed",
+      "checkpoint": "2.5",
+      "producedBy": "read back from the regime row, to prove the mood reaches the frozen signal"
     }
   ],
   "frozenOnly": []

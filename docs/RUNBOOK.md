@@ -55,7 +55,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 17:50 | `index-bars`, one call a tracker | 3 |
 | 18:00 | `indicators` | 0 |
 | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
-| 18:15 | cluster, regime | 0 |
+| 18:15 | the cluster count, then `regime` | 0 |
 | 18:20 | detectors, both directions | 0 |
 | 18:25 | `vectorize`, the signal freeze, then journal | 0 |
 | 18:26 | control sampling | 0 |

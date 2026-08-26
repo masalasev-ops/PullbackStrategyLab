@@ -60,9 +60,6 @@ public sealed class SignalVectorizer
             ["market_cap"] = "2.6",
             ["industry"] = "2.6",
             ["cluster_count"] = "2.6",
-            ["regime_index_score"] = "2.5",
-            ["regime_breadth_score"] = "2.5",
-            ["regime_label"] = "2.5",
         };
 
     /// <summary>The signals this stage freezes, in the order the library lists them.</summary>
@@ -91,6 +88,9 @@ public sealed class SignalVectorizer
         "days_since_thrust",
         "thrust_magnitude",
         "thrust_size_in_ranges",
+        "regime_index_score",
+        "regime_breadth_score",
+        "regime_label",
     ];
 
     /// <summary>
@@ -105,6 +105,8 @@ public sealed class SignalVectorizer
         "thrust_rank",
         "days_since_thrust",
         "listing_age_sessions",
+        "regime_index_score",
+        "regime_breadth_score",
     };
 
     /// <summary>
@@ -279,8 +281,29 @@ public sealed class SignalVectorizer
         }
 
         Thrust(connection, setup, asOf, bars, indicators, values);
+        Regime(connection, asOf, values);
 
         return values;
+    }
+
+    /// <summary>
+    /// The market mood on the night, frozen on the setup and filtering nothing.
+    ///
+    /// Both raw scores as well as the label, so a later proposal can use the continuous form rather
+    /// than the three buckets without recomputing it from bars that may since have been restated.
+    /// </summary>
+    private static void Regime(SqliteConnection connection, DateOnly asOf, Dictionary<string, string> values)
+    {
+        StoredRegime? regime = RegimeReader.Read(connection, asOf);
+
+        if (regime is null)
+        {
+            return;
+        }
+
+        values["regime_index_score"] = regime.IndexScore.ToString(CultureInfo.InvariantCulture);
+        values["regime_breadth_score"] = regime.BreadthScore.ToString(CultureInfo.InvariantCulture);
+        values["regime_label"] = regime.Label;
     }
 
     /// <summary>

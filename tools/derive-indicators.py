@@ -66,6 +66,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
+        python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
 """
 
 import datetime
@@ -786,7 +787,99 @@ def ladder_main(argv):
     return 0
 
 
+INDEX_PERIOD = 21
+BREADTH_UPPER = Decimal("1.5")
+BREADTH_LOWER = Decimal("0.67")
+
+
+def regime_main(argv):
+    """The market mood, from the two scores, restated from their definitions.
+
+    Index trend: how many of the trackers closed above their own 21-day average, +1 for all of
+    them, -1 for none, 0 otherwise. Breadth: the ratio of rising names to falling ones, +1 above
+    1.5, -1 below 0.67, 0 between. The label is risk_on at +2, risk_off at -2, mixed otherwise, so
+    the three states buffer themselves: neither extreme is reachable without both scores agreeing.
+
+    The tracker averages are computed over the engine's warm-up, not over 21 sessions. An average
+    seeded 21 sessions back is not the one seeded 150 sessions back and both look like an average,
+    which the chart page found at 1.10 and the signals derivation found again at 2.2.
+    """
+    if len(argv) < 2:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, as_of, symbols = argv[0], argv[1], argv[2:] or ["SPY", "QQQ", "IWM"]
+    connection = sqlite3.connect(store)
+
+    above = 0
+    measured = 0
+
+    for symbol in symbols:
+        bound = as_of + "T23:59:59.999Z"
+        rows = connection.execute(
+            """
+            SELECT bar_date, close, adj_close FROM index_bar b
+             WHERE b.symbol = ? AND b.bar_date <= ? AND b.observed_at <= ?
+               AND b.observed_at = (SELECT MAX(l.observed_at) FROM index_bar l
+                                     WHERE l.symbol = b.symbol AND l.bar_date = b.bar_date
+                                       AND l.observed_at <= ?)
+             ORDER BY b.bar_date DESC LIMIT ?
+            """,
+            (symbol, as_of, bound, bound, WARMUP),
+        ).fetchall()
+        rows.reverse()
+
+        if len(rows) < WARMUP or rows[-1][0] != as_of:
+            print("  %s short of the %d-session window, not measured" % (symbol, WARMUP))
+            continue
+
+        measured += 1
+        closes = [Decimal(r[2]) for r in rows]
+        average = ema(closes, INDEX_PERIOD)
+        if closes[-1] > average:
+            above += 1
+        print("  %s close %s against its %d-day average %s" % (symbol, closes[-1], INDEX_PERIOD, average.quantize(PLACES)))
+
+    grades = connection.execute(
+        """
+        SELECT d.ladder_grade, COUNT(*) FROM indicator_daily d
+         WHERE d.as_of = ? AND d.ladder_grade IS NOT NULL
+           AND d.computed_at = (SELECT MAX(l.computed_at) FROM indicator_daily l
+                                 WHERE l.ticker = d.ticker AND l.as_of = d.as_of)
+         GROUP BY d.ladder_grade
+        """,
+        (as_of,),
+    ).fetchall()
+    counts = dict(grades)
+    rising = counts.get("rising", 0)
+    falling = counts.get("falling", 0)
+
+    index_score = 0 if measured == 0 else (1 if above == measured else (-1 if above == 0 else 0))
+
+    if falling == 0:
+        breadth_score = 0 if rising == 0 else 1
+    else:
+        ratio = Decimal(rising) / Decimal(falling)
+        breadth_score = 1 if ratio > BREADTH_UPPER else (-1 if ratio < BREADTH_LOWER else 0)
+
+    total = index_score + breadth_score
+    label = "risk_on" if total == 2 else ("risk_off" if total == -2 else "mixed")
+
+    print("\nregime  as of %s" % as_of)
+    print("  regime.indexesMeasured   %d" % measured)
+    print("  regime.indexesAbove      %d" % above)
+    print("  regime.longLadderCount   %d" % rising)
+    print("  regime.shortLadderCount  %d" % falling)
+    print("  regime.indexScore        %d" % index_score)
+    print("  regime.breadthScore      %d" % breadth_score)
+    print("  regime.label             %s" % label)
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--regime":
+        return regime_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--ladder":
         return ladder_main(argv[2:])
 

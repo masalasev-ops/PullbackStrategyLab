@@ -445,3 +445,13 @@ Why:  "A grade on every member" is satisfied by a stage that grades nothing and 
 Was:  | 18:10 | `scans`, then the ladder grade | 0 |
 Now:  | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
 Why:  The stage exists and the nightly order names entrypoints by the verb an operator types.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The market-mood label is recorded on every setup and filters nothing in the baseline
+Was:  | 2.5 | RegimeLabeler, two scores summed | Both raw scores stored alongside the label. Label filters nothing |
+Now:  The same row naming migration 013 and the mood signals moving to frozen, with "filters nothing" asserted against the shipped source and two boundary conditions stated.
+Why:  "Label filters nothing" is the one condition here that no figure can show, and a stage that quietly began branching on it would produce identical numbers. It is now a source scan with comments stripped and three files exempt by name, on the same pattern the clock ban uses. The two conditions added are the boundaries that decide a mood: neither extreme is reachable without both scores agreeing, which is what makes the three states buffer themselves, and an unmeasurable tracker scores zero rather than minus one, because reading a missing feed as a falling market turns an outage into a signal.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:15 | cluster, regime | 0 |
+Now:  | 18:15 | the cluster count, then `regime` | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. The cluster count arrives at 2.6 and stays prose until then.
