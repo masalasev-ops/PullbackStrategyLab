@@ -16,6 +16,25 @@ public sealed record CheckResult(string Name, bool Passed, decimal? Value, strin
 }
 
 /// <summary>
+/// The two directions, as the store constrains them and as every reader compares them.
+///
+/// In Core rather than on the detectors, because the read surface separates a night's setups by
+/// direction and may not reference the Worker: a constant that lived on the detector would be copied
+/// into a string literal on the other side of that boundary, and a literal is what stops matching
+/// silently. The detectors declare their own direction in terms of these.
+/// see: Long and short are never pooled into one figure
+/// </summary>
+public static class SetupDirection
+{
+    public const string Long = "long";
+
+    public const string Short = "short";
+
+    /// <summary>Both, in the order every screen and every report lists them.</summary>
+    public static IReadOnlyList<string> Both { get; } = [Long, Short];
+}
+
+/// <summary>
 /// The check names, exactly as ARCHITECTURE.html's two gate lists carry them.
 ///
 /// Declared here rather than read from the document at runtime, because the detector is production

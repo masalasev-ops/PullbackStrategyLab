@@ -96,13 +96,41 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         string html = await client.GetStringAsync(path);
 
         // A page that fetches from anywhere is a page that does not render on a machine with no
-        // network, and the whole lab is meant to run on a laptop.
+        // network, and the whole lab is meant to run on a laptop. The rule is that nothing is
+        // fetched, not that nothing is scripted: the gallery carries a local block for keyboard
+        // paging, permitted by name, and what makes it permitted is that it arrives with the page.
         // see: Pages are server-rendered with no build step, and any script is local rather than fetched
-        Assert.DoesNotContain("<script", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<script src", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("//cdn", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("https://", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("integrity=", html, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// A screen that has landed says nothing about waiting for a checkpoint.
+    ///
+    /// The counterpart of the test below, and the pair is what keeps the two honest: an empty state
+    /// left in place after its checkpoint landed reads as a page nobody built, and a page that
+    /// dropped its empty state before landing reads as one that is finished.
+    /// </summary>
+    [Fact]
+    public async Task A_screen_whose_checkpoint_has_landed_no_longer_says_it_is_waiting()
+    {
+        using HttpClient client = Reading();
+
+        foreach (NavigationItem item in Navigation.Items.Where(i => Landed.Contains(i.Path, StringComparer.Ordinal)))
+        {
+            string html = await client.GetStringAsync(item.Path);
+            Assert.DoesNotContain("Nothing here yet", html, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// The nav paths whose page is built. Named rather than derived, because "is it built" is not a
+    /// property of the source that anything here can read: an empty state is a perfectly ordinary
+    /// page, and the difference is whether a checkpoint says it should still be one.
+    /// </summary>
+    private static IReadOnlyList<string> Landed { get; } = ["/setups"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -125,7 +153,7 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     {
         using HttpClient client = Reading();
 
-        foreach (NavigationItem item in Navigation.Items)
+        foreach (NavigationItem item in Navigation.Items.Where(i => !Landed.Contains(i.Path, StringComparer.Ordinal)))
         {
             string html = await client.GetStringAsync(item.Path);
 

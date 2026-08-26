@@ -7,6 +7,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
+using PullbackStrategyLab.Web.Pages;
 using PullbackStrategyLab.Web.Shell;
 using PullbackStrategyLab.Worker.Vendor;
 
@@ -351,6 +352,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(LiquidityFloorFigures());
         measurements.AddRange(ChartFigures());
         measurements.AddRange(ReadSurfaceFigures());
+        measurements.AddRange(GalleryFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -935,6 +937,59 @@ public sealed class PhaseReplay : IDisposable
             new Measurement($"read.{Ticker}.drawnEma21", Figure(Drawn("ema21"))),
             new Measurement($"read.{Ticker}.drawnEma50", Figure(Drawn("ema50"))),
             new Measurement($"read.{Ticker}.drawnAgreesWithStored", agrees ? "yes" : "no"),
+        ];
+    }
+
+    /// <summary>
+    /// What the gallery is handed for the night, and the agreement rate on it.
+    ///
+    /// The rate is over the setups a person has looked at, not over the night: "two of three agreed"
+    /// and "two agreed, one disagreed, and nobody has opened the third" are different facts, and the
+    /// second is the one that says whether the review has happened.
+    ///
+    /// The counts stay per direction, because the gallery is the one screen where pooling them would
+    /// be a single careless loop away.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private IReadOnlyList<Measurement> GalleryFigures()
+    {
+        SetupsResponse night = new LabSetups(_connections).Read(AsOf, _clock.UtcNow);
+
+        SetupView[] all = [.. night.Long, .. night.Short];
+        int looked = all.Count(s => s.Agreement is not null);
+        int agreed = all.Count(s => s.Agreement == "agree");
+
+        // A thumbnail's geometry, laid by the component the chart page draws one large with. It is
+        // the same lay over a shorter window, so a second implementation appearing here would show
+        // as these numbers moving while the chart figures did not.
+        SetupView? first = all.OrderBy(s => s.SetupId, StringComparer.Ordinal).FirstOrDefault();
+
+        CandlestickGeometry thumbnail = CandlestickChart.Lay(
+            first is null
+                ? []
+                : [.. first.Candles.Select(c => new Candle(
+                    DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    c.Open, c.High, c.Low, c.Close))],
+            [],
+            SetupsModel.Width,
+            SetupsModel.Height);
+
+        return
+        [
+            new Measurement("gallery.flagged", night.Flagged.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.long", night.Long.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.short", night.Short.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.checkNames", string.Join(" ", night.CheckNames)),
+            new Measurement("gallery.lookedAt", looked.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.agreed", agreed.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.agreementRate", looked == 0
+                ? "nobody has looked"
+                : Figure((decimal)agreed / looked)),
+            new Measurement("gallery.thumbnail", first?.SetupId ?? "no setup"),
+            new Measurement("gallery.thumbnailCandles", thumbnail.Candles.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.thumbnailLastCentre", thumbnail.Candles.Count == 0
+                ? "no candles"
+                : Coordinate(thumbnail.Candles[^1].Centre)),
         ];
     }
 

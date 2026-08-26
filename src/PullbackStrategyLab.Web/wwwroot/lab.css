@@ -173,3 +173,45 @@ h2 { font-size: 15px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1p
 .legend .a1 { background: #2b6cb0; }
 .legend .a2 { background: #8a6d00; }
 .legend .a3 { background: #6b4fa0; }
+
+/* The setup gallery. A wall of small charts, long and short in separate blocks, and one
+   control per card. The two sides are two blocks rather than two colours, because a colour is
+   something a reader has to remember and a heading is something they read. */
+.gallery { display: grid; gap: 14px; margin: 0 0 22px;
+           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+.setup { border: 1px solid var(--rule); border-radius: 8px; padding: 10px; background: #fff; }
+.setup:focus { outline: 2px solid #2b6cb0; outline-offset: 2px; }
+.setup header { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 13px; }
+.setup header b { font-size: 15px; }
+.setup .rank { color: var(--ink3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.setup .capped, .setup .failed {
+    font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--panel); color: var(--ink2);
+}
+.setup .candles { width: 100%; height: auto; }
+
+.setup .plan { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 8px 0;
+               font-size: 12px; }
+.setup .plan dt { color: var(--ink3); }
+.setup .plan dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.setup .checks { list-style: none; padding: 0; margin: 0 0 8px; font-size: 12px; }
+.setup .checks li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0;
+                    border-bottom: 1px solid var(--rule); }
+.setup .checks li:last-child { border-bottom: none; }
+.setup .checks .reading { color: var(--ink3); font-variant-numeric: tabular-nums;
+                          text-align: right; max-width: 60%; }
+.setup .checks .pass .name { color: var(--long); }
+.setup .checks .fail .name { color: var(--short); }
+
+.setup .agree { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.setup .agree input[type="text"] { flex: 1 1 100%; font: inherit; font-size: 12px;
+    border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; }
+.setup .agree button { font: inherit; font-size: 12px; padding: 3px 9px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+.setup .agree .recorded { color: var(--ink3); font-size: 11px; margin-left: auto; }
+
+h2 .count { color: var(--ink3); font-size: 13px; font-weight: 400; }
+
+kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--rule);
+      border-bottom-width: 2px; border-radius: 3px; background: var(--panel); }

@@ -39,7 +39,7 @@ public sealed class ShortSetupDetector
     public const string CalibrateFlag = "--calibrate";
 
     /// <summary>The direction this detector owns, and the only one it may ever write.</summary>
-    public const string Direction = "short";
+    public const string Direction = SetupDirection.Short;
 
     /// <summary>
     /// The recording floor: the premise, not the first four rows of the list.

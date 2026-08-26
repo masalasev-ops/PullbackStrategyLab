@@ -35,7 +35,7 @@ public sealed class LongSetupDetector
     public const string CalibrateFlag = "--calibrate";
 
     /// <summary>The direction this detector owns, and the only one it may ever write.</summary>
-    public const string Direction = "long";
+    public const string Direction = SetupDirection.Long;
 
     /// <summary>
     /// The recording floor: a name is recorded when it clears the cheap filters and had a thrust.

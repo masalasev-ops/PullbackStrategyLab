@@ -495,7 +495,20 @@ public sealed partial class FixtureReplayCheck
             : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}";
     }
 
-    /// <summary>Each checkpoint in the fixture, with how many of its expectations verify anything.</summary>
+    /// <summary>
+    /// Each checkpoint in the fixture, with how many of its expectations verify anything.
+    ///
+    /// <b>A voided row verifies nothing, whatever tier it carries.</b> `voidedBecause` is how an
+    /// expectation says its subject no longer exists or can no longer be compared, and such a row is
+    /// recorded as void rather than as agreement. Counting it as independent would let a checkpoint
+    /// satisfy done condition seven with a `DERIVED` expectation that compares nothing, which is
+    /// exactly the state that condition exists to make visible.
+    ///
+    /// Theoretical until 2.9, and that is the reason to fix it here rather than when it bites:
+    /// `CONFIRMED` is the tier the void mechanism was written for, because a figure a person read off
+    /// a platform is the one kind that can stop being comparable without any code changing.
+    /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+    /// </summary>
     public static IReadOnlyList<CheckpointTier> ByCheckpoint(IReadOnlyList<Expectation> expectations)
     {
         ArgumentNullException.ThrowIfNull(expectations);
@@ -505,7 +518,10 @@ public sealed partial class FixtureReplayCheck
             .. expectations
                 .GroupBy(e => e.Checkpoint, StringComparer.Ordinal)
                 .OrderBy(g => g.Key, StringComparer.Ordinal)
-                .Select(g => new CheckpointTier(g.Key, g.Count(), g.Count(e => e.Tier is Derived or Confirmed)))
+                .Select(g => new CheckpointTier(
+                    g.Key,
+                    g.Count(),
+                    g.Count(e => e.Tier is Derived or Confirmed && e.VoidedBecause is null)))
         ];
     }
 

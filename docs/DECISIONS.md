@@ -289,6 +289,15 @@ Razor Pages, charts as server-rendered SVG. The property worth protecting is tha
 
 Written as a property rather than as a ban on JavaScript, because a ban would be wrong within one phase. Checkpoint 2.9 requires paging through a night's setups by keyboard with agreement captured per setup, across hundreds of charts. A blanket ban makes each setup a form post and a full page reload, which is exactly the friction that makes a reviewer stop at thirty and the checkpoint fail at what it exists to do. Script that is local, small, unbundled and confined to keyboard navigation and form submission is permitted; script fetched from anywhere is not.
 
+**The agreement a person records is written through the read surface, and it is the only write it makes**
+Two columns of one table, `setup.agreement` and `setup.agreement_note`, written by the read surface on the gallery's behalf. Everything else it does is a read, and nothing else it ever does may be a write.
+
+The three rules around it left nowhere else to put it, and that is worth spelling out because the obvious readings all fail. The Web project reads through the Api and never opens the store, so the page cannot write. The Worker is the sole writer of everything the nightly job produces, and it has no channel a browser can reach. And one writer per table per operation means the write cannot be split between them.
+
+What makes this the right exception rather than the first crack in the rule is that it is not the same kind of write. Every other write in the lab is the evening's job producing evidence on a schedule; this is a person saying what they thought of one row, at a keyboard, on their own time. It touches two columns that no computation reads, it can never conflict with the nightly job over a row that job is writing, and under WAL a single short update from a second connection is what the busy timeout exists for.
+
+The scope is the whole of the guarantee: the read surface writes those two columns of that one table and nothing else. A second write appearing there is a defect rather than a precedent, and SCHEMA declares the writer by the type that issues the statement so `writer-ownership` can hold it.
+
 **The Web project reads through the Api and never opens the store**
 One read path, so a page cannot acquire a second connection to a file the Worker is writing. The store's own rule is one writer and one connection, and a page opening the file directly is the easiest way to lose that quietly. It also keeps the isolation check meaningful: Web talks to Api over HTTP with the base address in configuration, and no page holds a store connection to inspect.
 

@@ -2,17 +2,160 @@
 @using PullbackStrategyLab.Web.Shell
 @model SetupsModel
 @*
-    The empty state, which is the whole page until 2.9. It names what will fill it and
-    which checkpoint fills it, because an empty page that says so is honest and a page of
-    invented rows is not.
-*@
-<h1>@Model.Item.Title</h1>
-<p class="lede">@Model.Item.What.</p>
+    The setup gallery. A night's setups drawn small, long and short kept apart, every check's
+    verdict on the card, and one control per card recording what a person thought.
 
-<div class="empty-state">
-    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
-    <p>The shell, its navigation, the status band and the shared chart component are what
-       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
-       invented data reads as a working screen and is the one thing that cannot be told apart
-       from the real one later.</p>
-</div>
+    The recording is a form post and works with script off. The keyboard paging is a local
+    script, small and unbundled, doing nothing the forms do not: it moves the selection and
+    submits. That split is deliberate, because the function of this page is the record it
+    leaves and the paging is a convenience on top of it.
+    see: Pages are server-rendered with no build step, and any script is local rather than fetched
+*@
+<h1>Setups</h1>
+
+<form class="ask" method="get" action="/setups">
+    <label>Night <input name="asOf" value="@Model.AsOf" size="12" /></label>
+    <label>Failed check
+        <select name="failed">
+            <option value="">any</option>
+            @foreach (string name in Model.Setups.CheckNames)
+            {
+                <option value="@name" selected="@(string.Equals(name, Model.Failed, StringComparison.Ordinal))">@name</option>
+            }
+        </select>
+    </label>
+    <button type="submit">Show</button>
+</form>
+
+@if (Model.Trouble is string trouble)
+{
+    <p class="down">The agreement was not recorded: @trouble</p>
+}
+
+@if (Model.Setups.Nothing is string why)
+{
+    <p class="down">@why</p>
+}
+else if (!Model.Setups.HasSetups)
+{
+    <p class="lede">
+        @Model.Setups.Flagged setup(s) were flagged on @Model.Setups.AsOf and none of them failed
+        <b>@Model.Failed</b>. The filter is showing you an empty night rather than the night being empty.
+    </p>
+}
+else
+{
+    <p class="lede">
+        <b>@Model.Setups.AsOf</b>, @Model.Setups.Shown of @Model.Setups.Flagged shown.
+        Long and short are separate below and are never added together, because a short carries a
+        borrow assumption a long does not. Move with <kbd>J</kbd> and <kbd>K</kbd> or the arrow keys;
+        <kbd>A</kbd> agrees with the selected setup and <kbd>D</kbd> disagrees.
+    </p>
+
+    @foreach (var side in new[]
+    {
+        ("Long", Model.Setups.Long),
+        ("Short", Model.Setups.Short),
+    })
+    {
+        <h2>@side.Item1 <span class="count">@side.Item2.Count</span></h2>
+
+        @if (side.Item2.Count == 0)
+        {
+            <p class="empty-state">Nothing on this side tonight.</p>
+        }
+        else
+        {
+            <div class="gallery">
+                @foreach (SetupCardView card in side.Item2)
+                {
+                    <article class="setup" tabindex="0" data-setup-id="@card.SetupId"
+                             data-agreement="@card.Agreement">
+                        <header>
+                            <b>@card.Ticker</b>
+                            <span class="rank">rank @card.RankLabel</span>
+                            @if (card.CappedOut == true)
+                            {
+                                <span class="capped">capped out</span>
+                            }
+                            @if (!card.PassedAll)
+                            {
+                                <span class="failed">@card.Failed failed</span>
+                            }
+                        </header>
+
+                        @if (Model.Thumbnails.TryGetValue(card.SetupId, out CandlestickGeometry? geometry))
+                        {
+                            <partial name="_Candlestick" model="geometry" />
+                        }
+
+                        <dl class="plan">
+                            <dt>trigger</dt><dd>@card.Price(card.TriggerPrice)</dd>
+                            <dt>give up</dt><dd>@card.Price(card.StopPrice)</dd>
+                            <dt>distance</dt><dd>@card.Ranges(card.StopDistanceRanges) ranges</dd>
+                        </dl>
+
+                        <ul class="checks">
+                            @foreach (SetupCheckRowView check in card.Checks)
+                            {
+                                <li class="@(check.Passed ? "pass" : "fail")">
+                                    <span class="name">@check.Name</span>
+                                    <span class="reading">@check.Reading</span>
+                                </li>
+                            }
+                        </ul>
+
+                        <form method="post" class="agree">
+                            <input type="hidden" name="setupId" value="@card.SetupId" />
+                            <input type="text" name="note" value="@card.AgreementNote"
+                                   placeholder="why, if it is worth saying" />
+                            <button type="submit" name="agreement" value="agree">Agree</button>
+                            <button type="submit" name="agreement" value="disagree">Disagree</button>
+                            <button type="submit" name="agreement" value="">Clear</button>
+                            <span class="recorded">@card.AgreementLabel</span>
+                        </form>
+                    </article>
+                }
+            </div>
+        }
+    }
+
+    @*
+        Keyboard paging. Local, unbundled, and confined to moving the selection and pressing a
+        button that already exists. Nothing here reads or writes anything the forms above do not,
+        so the page works identically with script off and slightly faster with it on.
+    *@
+    <script>
+        (function () {
+            var cards = Array.prototype.slice.call(document.querySelectorAll('article.setup'));
+            if (cards.length === 0) { return; }
+
+            var at = 0;
+
+            function show(next) {
+                at = Math.max(0, Math.min(cards.length - 1, next));
+                cards[at].focus();
+                cards[at].scrollIntoView({ block: 'center' });
+            }
+
+            function press(value) {
+                var button = cards[at].querySelector('button[value="' + value + '"]');
+                if (button) { button.click(); }
+            }
+
+            document.addEventListener('keydown', function (e) {
+                if (e.target && e.target.tagName === 'INPUT') { return; }
+
+                switch (e.key) {
+                    case 'j': case 'ArrowDown': show(at + 1); e.preventDefault(); break;
+                    case 'k': case 'ArrowUp': show(at - 1); e.preventDefault(); break;
+                    case 'a': press('agree'); e.preventDefault(); break;
+                    case 'd': press('disagree'); e.preventDefault(); break;
+                    default: break;
+                }
+            });
+
+            show(0);
+        }());
+    </script>
+}

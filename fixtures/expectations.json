@@ -812,6 +812,73 @@
       "note": "None, and it has to stay none. A fixture ticker that falls out of the universe gets no indicator row, and the diff would stay green over a shrinking subject."
     },
     {
+      "id": "gallery.agreed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.9"
+    },
+    {
+      "id": "gallery.agreementRate",
+      "tier": "FROZEN",
+      "value": "nobody has looked",
+      "checkpoint": "2.9",
+      "note": "A rate over the setups a person has looked at, not over the night. Nought looked at is not a nought rate, and a nought rate would read as a person who disagreed with everything."
+    },
+    {
+      "id": "gallery.checkNames",
+      "tier": "FROZEN",
+      "value": "averages-squeezing bounce-shape cluster contraction dip-shape downtrend exit-tight held-floor moves-enough no-reclaim reached-ceiling thrust tradable tradable-shortable trigger-near uptrend",
+      "checkpoint": "2.9",
+      "note": "Both gate lists, as the filter offers them. Sixteen names rather than twenty, because five ids appear on both lists and the filter is over names rather than over gates."
+    },
+    {
+      "id": "gallery.flagged",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "2.9"
+    },
+    {
+      "id": "gallery.long",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.9"
+    },
+    {
+      "id": "gallery.lookedAt",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.9",
+      "note": "Nobody has. The fixture is a replay and the agreement column is the one column in the store a machine does not produce, so it stays empty until a person opens the gallery."
+    },
+    {
+      "id": "gallery.short",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.9"
+    },
+    {
+      "id": "gallery.thumbnail",
+      "tier": "FROZEN",
+      "value": "2026-08-24-HOOD-long",
+      "checkpoint": "2.9",
+      "note": "Which setup the geometry below was laid over. Named rather than assumed, so a run where the gallery's ordering changed would move the subject rather than silently comparing a different chart."
+    },
+    {
+      "id": "gallery.thumbnailCandles",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "2.9",
+      "producedBy": "the same lay computed outside the solution by tools/derive-indicators.py --chart over the replay store at the gallery's own window and box, 40 sessions in 260 by 110"
+    },
+    {
+      "id": "gallery.thumbnailLastCentre",
+      "tier": "DERIVED",
+      "value": "201.45",
+      "checkpoint": "2.9",
+      "producedBy": "the same lay computed outside the solution by tools/derive-indicators.py --chart over the replay store at the gallery's own window and box, 40 sessions in 260 by 110",
+      "note": "The same number the chart page's own lastCentre carries for a different window and box. Two pictures of the same bars from one component: a second implementation appearing here would move this and leave the chart figures alone."
+    },
+    {
       "id": "gate.long.cluster.inside",
       "tier": "DERIVED",
       "value": "pass",

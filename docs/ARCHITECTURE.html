@@ -835,6 +835,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Chart page</b></td><td>On request</td><td>One stock&#39;s window: candles on the adjusted basis, the three averages, and the figures the lab stored for that session</td></tr>
 <tr><td><b>Watchlist page</b></td><td>On request</td><td>The morning screen, long and short divided</td></tr>
 <tr><td><b>Setup inspector</b></td><td>On request</td><td>One setup: chart, checks, signals, what happened next</td></tr>
+<tr><td><b>LabSetups</b></td><td>On request</td><td>What the setup inspector reads: a night’s setups, both directions kept apart, each with every check’s verdict and a window to read it against. Also the sole writer of the two agreement columns, which is the one write the read surface makes</td></tr>
 <tr><td><b>Trade journal page</b></td><td>On request</td><td>Closed trades with their loss causes</td></tr>
 <tr><td><b>Research ledger page</b></td><td>On request</td><td>Proposals, samples, targets, holdout register</td></tr>
 <tr><td><b>Pack comparison page</b></td><td>On request</td><td>Proposal hit rate by evidence-pack version</td></tr>
@@ -843,7 +844,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 52 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 53 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -901,7 +902,7 @@ tr:hover td{background:#f4f2ec}
 <td>A web shell with routing, navigation and one shared chart component, so no later checkpoint invents its own. Then daily charts with the three averages and the daily range for any stock, drawn from your own stored prices. You compare one against a chart you already trust.</td>
 <td>Indicator values for the fixture's 30 tickers diffed against frozen expectations. Every component named in the catalogue asserted to exist and be registered. Every limit in the parameters table asserted against its config value. Anything it cannot examine listed as unexamined.</td></tr>
 
-<tr><td><b>P2</b></td><td>ScanEngine, TierClassifier, SectorResolver, ThemeClusterer, RegimeLabeler, both detectors, SignalVectorizer, SetupCapper, setup inspector</td>
+<tr><td><b>P2</b></td><td>ScanEngine, TierClassifier, SectorResolver, ThemeClusterer, RegimeLabeler, both detectors, SignalVectorizer, SetupCapper, setup inspector, LabSetups</td>
 <td>Last night's flagged setups, both directions, as a gallery of marked-up charts showing which checks passed and which failed. You page through by keyboard and record agree or disagree per setup. This is where the strategy actually transfers into code.</td>
 <td>Fixture setups diffed check by check, so a change to any gate shows up as a named difference rather than a count. The ten long and ten short check names asserted to exist in the detectors. Your agreement rate reported as a number.</td></tr>
 

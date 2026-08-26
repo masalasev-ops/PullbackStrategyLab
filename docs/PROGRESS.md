@@ -2242,3 +2242,81 @@ Findings:   Finding. **The rule the checkpoint exists for had nothing to run on.
 
 Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
             `CONFIRMED` values at 2.11; and step 6 of the move.
+
+## 2.9 — 2026-08-26 — phase-2-detection — the gallery, and the one write the read surface makes
+
+Built:      `LabSetups` in the Api: a night's setups, both directions as two lists on the wire, each
+            with every check's verdict and a forty-session window to read it against. `/setups/{as-of}`
+            with an optional failed-check filter, and `/setups/{setup-id}/agreement` for the recording.
+
+            The gallery page at `/setups`. Thumbnails from the one shared candlestick component, whose
+            own documentation named this checkpoint as its second consumer; the plan, the checks and
+            the agreement control on each card; the two sides in two blocks under two headings.
+            Filtering by a failed check is a GET, so a filtered night is a URL a person can keep.
+
+            The recording is a form post with an antiforgery token and works with the script removed.
+            The keyboard paging is a local block that moves the selection and presses a button that
+            already exists, which is what makes it a convenience rather than the mechanism.
+
+            `SetupDirection` in Core. The two direction strings were constants on the detectors and the
+            read surface may not reference the Worker, so a page separating a night by direction would
+            have carried the literals on the other side of that boundary.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 300 tests. `tools/verify-phase` GREEN: 116
+            claims, 57 passed, 0 unexamined, 59 out of scope; 712 expectations, **279 `DERIVED`**;
+            coverage examined 2,282 with 0 unexamined.
+            Over the fixture: 3 setups shown, 2 long and 1 short, 16 distinct check names offered by
+            the filter, **0 looked at** and therefore no agreement rate. The thumbnail's geometry
+            derived independently at the gallery's own window and box, forty sessions in 260 by 110:
+            last centre 201.45 against 201.45, forty candles against forty.
+
+Verified:   Every state of the page is a test through the host: a night with both sides, a night with
+            nothing flagged, a filter that hid everything, an agreement recorded, and an agreement the
+            read surface refused. The last one matters most: the page says so above the night and
+            renders the rest, rather than losing a review in progress to an exception.
+
+            The `voidedBecause` fix the plan placed here landed with a proof over hand-written rows: a
+            voided expectation counts toward a checkpoint's total and not toward its independent
+            count, so a checkpoint cannot satisfy done condition seven with a `DERIVED` row that
+            compares nothing. Theoretical until now, which is why the plan put it here: `CONFIRMED` is
+            the tier the void mechanism was written for.
+
+Findings:   Finding. **The agreement column had nowhere to be written from.** Observation: SCHEMA
+            declared "Setup inspector" as its writer; the Web project may not open the store, the
+            Worker has no channel a browser can reach, and one writer per table per operation forbids
+            splitting it. Reading: three rules that are each right left one column unreachable, and
+            the answer is a stated exception rather than a quiet one. The read surface writes those
+            two columns and nothing else, ever. What makes it the right exception is that it is not
+            the same kind of write: a person saying what they thought of one row, on two columns no
+            computation reads, where every other write in the lab is the evening's job producing
+            evidence on a schedule. Named as a decision, with the scope stated as the whole of the
+            guarantee, and the writer declared by the type that issues the statement so
+            `writer-ownership` holds the scope rather than the prose.
+
+            Observation. `LabSetups` had to become a registered instance rather than a static class,
+            which the other two read-surface types are. Reading: a declared writer is resolved against
+            the component catalogue, and a catalogue component has to be something the container can
+            build. That is a real constraint and not an accident: a writer nothing can name is a write
+            nobody owns, which is the same finding the detectors produced at 2.6 arriving from the
+            direction of the catalogue instead of the SQL.
+
+            Observation. The shell test asserting no screen carries a script had to narrow to no
+            screen *fetches* one. Reading: the rule was always about fetching, and the broader
+            assertion was correct only while no page had landed that needed a local block. It gained a
+            counterpart at the same time: a screen whose checkpoint has landed no longer says it is
+            waiting, so an empty state left in place after its checkpoint would fail rather than read
+            as a page nobody built.
+
+            Observation. `architecture-conformance` held the catalogue's row count as an equality
+            against a literal 52. Reading: that is a third copy of a number the document already
+            states about itself and `stated-counts` already checks in both directions, so an ordinary
+            component addition turned it red for a reason that has nothing to do with conformance. It
+            is a floor now, guarding the thing it was for, which is the parser still finding rows.
+
+Carried:    **The `CONFIRMED` gallery expectations.** Due at 2.12, where the gallery review is part of
+            the sign-off. The tier the corpus defines as what the chart page and the setup gallery
+            produce has no entries yet, and a build session cannot make one: it is a person looking at
+            a screen and writing down what they saw. The page is built and every property a session
+            can assert about it is asserted; what is left is the looking.
+            Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` indicator values at 2.11; and step 6 of the move.

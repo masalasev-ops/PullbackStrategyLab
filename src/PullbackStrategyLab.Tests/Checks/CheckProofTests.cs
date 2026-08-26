@@ -839,6 +839,40 @@ public sealed class CheckProofTests
     private static FixtureReplayCheck.Expectation Expectation(string id, string tier, string checkpoint) =>
         new(id, tier, "1", checkpoint, "a proof, not a run", null);
 
+    /// <summary>
+    /// A voided expectation verifies nothing, whatever tier it carries.
+    ///
+    /// `voidedBecause` says the subject no longer exists or can no longer be compared, and the run
+    /// records such a row as void rather than as agreement. Counting it as independent would let a
+    /// checkpoint satisfy done condition seven with a DERIVED row that compares nothing, which is the
+    /// state that condition exists to make visible.
+    ///
+    /// Proved by hand rather than by voiding a real expectation, so the proof is permanent and the
+    /// fixture is never broken to produce it.
+    /// </summary>
+    [Fact]
+    public void A_voided_expectation_does_not_count_toward_a_checkpoint_being_independently_covered()
+    {
+        FixtureReplayCheck.Expectation live = Expectation("a.one", FixtureReplayCheck.Derived, "2.9");
+        FixtureReplayCheck.Expectation voided = live with
+        {
+            Id = "a.two",
+            VoidedBecause = "the platform stopped publishing the figure",
+        };
+
+        FixtureReplayCheck.CheckpointTier both = Assert.Single(
+            FixtureReplayCheck.ByCheckpoint([live, voided]));
+
+        Assert.Equal(2, both.Total);
+        Assert.Equal(1, both.Independent);
+
+        FixtureReplayCheck.CheckpointTier alone = Assert.Single(
+            FixtureReplayCheck.ByCheckpoint([voided]));
+
+        Assert.Equal(1, alone.Total);
+        Assert.Equal(0, alone.Independent);
+    }
+
     [Fact]
     public void One_derived_expectation_does_not_satisfy_the_condition_for_another_checkpoint()
     {

@@ -223,10 +223,10 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `capped_out` | INTEGER | truncated by SetupCapper |
 | `trigger_price`, `stop_price` | TEXT | raw prices |
 | `stop_distance_ranges` | TEXT | the number check nine turns on |
-| `agreement` | TEXT NULL | `agree`, `disagree`, null. Written by Setup inspector from the gallery |
+| `agreement` | TEXT NULL | `agree`, `disagree`, null. What a person thought, recorded from the gallery. Null is "not looked at" and is a different fact from disagreeing |
 | `agreement_note` | TEXT NULL | |
 
-Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 
@@ -534,7 +534,9 @@ SQLite, one file under the configured data root. These are set at open, in one p
 | `busy_timeout` | 5000 ms | Brief contention retries rather than throwing. Zero is the default and it is the wrong default here |
 | `foreign_keys` | `ON` | Off by default in SQLite, per connection, and silently so |
 
-**One writer, one connection.** The Worker is the sole writer by design, and SQLite makes that a practical requirement rather than a stylistic one. The Api opens the file read-only. A second writing connection produces intermittent lock failures that look like load problems and are not.
+**One writer, one connection.** The Worker is the sole writer of everything the nightly job produces, and SQLite makes that a practical requirement rather than a stylistic one. A second writing connection working alongside it produces intermittent lock failures that look like load problems and are not.
+
+**The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever. It is not the same kind of write: a person saying what they thought of one row, at a keyboard, on two columns no computation reads, where every other write in the lab is the evening's job producing evidence on a schedule. It cannot contend for a row that job is writing, and under WAL a single short update is what the busy timeout exists for. The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose (see: The agreement a person records is written through the read surface, and it is the only write it makes).
 
 ### Expected size
 

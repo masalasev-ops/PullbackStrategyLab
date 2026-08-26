@@ -326,7 +326,17 @@ public sealed partial class ArchitectureConformanceCheck
             + string.Join("\n  ", unclosed));
 
         // Stated so the parser stopping cannot pass as a document that got smaller.
-        Assert.True(catalogue.Count == 52, $"The component catalogue parsed {catalogue.Count} rows and states 52.");
+        //
+        // A floor rather than an equality, and the distinction is the one the coverage baseline
+        // already makes. What this guards is that the parser still finds rows; how many rows the
+        // catalogue holds is a fact about the corpus that grows every time a component is added, and
+        // an equality here would be a third copy of that number going red on an ordinary addition.
+        // The exact count is held where it belongs: `stated-counts` compares the parsed rows against
+        // the number the document states about itself, in both directions.
+        Assert.True(catalogue.Count >= 52,
+            $"The component catalogue parsed {catalogue.Count} rows. It held 52 before any of this phase's "
+            + "components were added, so a number below that means the parser stopped matching rather than that the "
+            + "document got smaller.");
         Assert.True(failures.Count == FailureBehaviourCheckpoints.Count,
             $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourCheckpoints.Count} are placed at a checkpoint.");
     }

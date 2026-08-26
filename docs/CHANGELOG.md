@@ -535,3 +535,14 @@ Why:  A cap applied per version leaves the disagreements between versions unscor
 Was:  | 2.8 | SetupCapper, 60 a night, 40 long 20 short, unused slots released | Truncation recorded with the pre-cap count |
 Now:  The same row naming the verb and the arithmetic's home in Core, with the done condition stating the sweep over every arrangement of the two counts, the order-independence of the release, the ranking within a direction, and the shared candidate list asserted against the schema.
 Why:  "Truncation recorded with the pre-cap count" is satisfied by a run over an empty candidate list, which is exactly what the fixture produces: two setups, neither clearing every gating check. The release rule's whole claim is about every arrangement of the two counts, so the condition asks for every arrangement.
+
+### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
+Was:  **One writer, one connection.** The Worker is the sole writer by design ... The Api opens the file read-only. A second writing connection produces intermittent lock failures that look like load problems and are not.
+      And: Update Setup inspector (`agreement`, `agreement_note`) on `setup`.
+Now:  The same note narrowed to "the sole writer of everything the nightly job produces", followed by a paragraph naming the one exception and its scope, and the writer declared as `LabSetups`, the type that issues the statement.
+Why:  The three rules around the agreement column left nowhere to put it. The Web project may not open the store, the Worker has no channel a browser can reach, and one writer per table per operation means it cannot be split. What makes this the right exception rather than the first crack in the rule is that it is not the same kind of write: a person saying what they thought of one row, on two columns no computation reads. The writer is declared by type so `writer-ownership` holds the scope rather than the prose.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The Web project reads through the Api and never opens the store
+Was:  | 2.9 | Setup inspector, the gallery page: prev/next, filter by failed check, agreement capture | **Openable.** You page through a night's setups by keyboard and record agree or disagree per setup |
+Now:  The same row naming `LabSetups`, with the done condition stating the two lists, every check on every card, the shared component, the form post working without the script, and a filter that hid everything saying so.
+Why:  "Openable" is a condition only a person can discharge, and everything around it can be held without them. The additions are the properties a build session can assert before that person opens it, so the review they do is a review of a page that already holds them rather than a first pass over whether it renders.
