@@ -151,10 +151,10 @@ tr:hover td{background:#f4f2ec}
 
 <p>The lab tests both directions. They are mirror images with the same skeleton and different management.</p>
 
-<h3>The long side <span class="pill pl">buy</span></h3>
+<h3 id="the-long-side">The long side <span class="pill pl">buy</span></h3>
 <p>A stock jumps sharply on unusually heavy trading. Something changed: an earnings surprise, a product, a shift affecting its industry. Moves like that often continue for weeks but never in a straight line. After the jump some holders take profit and the price drifts down for a few days. Then, if the enthusiasm is real, it turns back up. The strategy waits through the drift and buys as it ends.</p>
 
-<h3>The short side <span class="pill ps">sell</span></h3>
+<h3 id="the-short-side">The short side <span class="pill ps">sell</span></h3>
 <p>The same thing upside down. A stock has been falling steadily, its moving averages sloping down and squeezing together. It bounces for a few days into those falling averages, which act as a ceiling rather than a floor. The strategy sells short into that bounce as it stalls, betting the decline resumes.</p>
 
 <div class="plain"><b class="lab">Selling short, for readers who have not met it</b>
@@ -362,7 +362,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="warn"><b class="lab">The short side has an honesty problem the long side does not</b>
 <p>Whether a stock could actually be borrowed that morning, and at what cost, is not in the price feed. A short that was impossible to place will be recorded by this lab as though it filled cleanly.</p>
-<p>The design mitigates rather than solves this. The that check filter excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
+<p>The design mitigates rather than solves this. The <code>tradable-shortable</code> check excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
 <p><b>Worth knowing how small the cost term is.</b> At 1.0% a year a four-day hold costs about 0.011% of position value, which against a 3% stop is roughly 0.4% of one R. The rate is set several times higher than a general-collateral borrow actually costs and it still rounds to nothing. So borrow <i>cost</i> is not what decides the short side. Borrow <i>availability</i> is, and that is what the tradable-shortable check exists for.</p></div>
 
 <h4>What differs in management</h4>
@@ -786,13 +786,13 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:210px">Component</th><th style="width:132px">Runs</th><th>What it does</th></tr>
 <tr><td><b>UniverseBuilder</b></td><td>Nightly</td><td>Builds the tradable list and snapshots who was listed each night</td></tr>
-<tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30</td><td>Pulls the whole market’s closing prices in one bulk request</td></tr>
-<tr><td><b>ActionIngestor</b></td><td>Nightly / weekly</td><td>Splits and dividends, and forces an average rebuild when a split lands</td></tr>
+<tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30, and 17:45 for the refetch</td><td>Pulls the whole market’s closing prices in one bulk request. Also owns the per-ticker history refetch, which is how a corporate action is honoured and how the one-time backfill is done, because a second component issuing the same insert would be a second writer of the same table</td></tr>
+<tr><td><b>ActionIngestor</b></td><td>Nightly 17:20</td><td>Splits and dividends, and raises a rebuild demand for any action that moves the adjusted close. It raises the demand and never satisfies it</td></tr>
 <tr><td><b>IntradayFetcher</b></td><td>Nightly 20:30</td><td>Minute bars for every flagged setup, after the close</td></tr>
 <tr><td><b>IndexIngestor</b></td><td>Nightly</td><td>Index bars for the market-mood inputs</td></tr>
 <tr><td><b>SectorResolver</b></td><td>On first sighting</td><td>Sector, industry and market cap, on first sighting, cached</td></tr>
 <tr><td><b>SpreadSnapshotter</b></td><td>Twice per session</td><td>Bid-ask spread twice a session. The only intraday job, and unrecoverable if missed</td></tr>
-<tr><td><b>IndicatorEngine</b></td><td>Nightly 18:00</td><td>Moving averages, daily range, true range and dollar volume, computed locally</td></tr>
+<tr><td><b>IndicatorEngine</b></td><td>Nightly 18:00</td><td>Moving averages, daily range, true range and dollar volume, computed locally. Refuses to run for a stock with a rebuild demand outstanding, and satisfies the demand once the history has been refetched</td></tr>
 <tr><td><b>ScanEngine</b></td><td>Nightly 18:10</td><td>Six mover scans, three per direction</td></tr>
 <tr><td><b>TierClassifier</b></td><td>Nightly 18:10</td><td>Grades every name rising, mixed or falling</td></tr>
 <tr><td><b>ThemeClusterer</b></td><td>Nightly 18:15</td><td>Counts same-sector names flagged together</td></tr>
@@ -828,6 +828,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>ReplayHarness</b></td><td>On proposal</td><td>Re-filters stored setups with a new rule, in seconds</td></tr>
 <tr><td><b>HoldoutRegistry</b></td><td>On replay</td><td>Tracks the eight holdout windows and refuses to re-spend one</td></tr>
 <tr><td><b>AcceptanceGate</b></td><td>Nightly 21:45</td><td>Settles a matured version against its pre-registered target</td></tr>
+<tr><td><b>Chart page</b></td><td>On request</td><td>One stock&#39;s window: candles on the adjusted basis, the three averages, and the figures the lab stored for that session</td></tr>
 <tr><td><b>Watchlist page</b></td><td>On request</td><td>The morning screen, long and short divided</td></tr>
 <tr><td><b>Setup inspector</b></td><td>On request</td><td>One setup: chart, checks, signals, what happened next</td></tr>
 <tr><td><b>Trade journal page</b></td><td>On request</td><td>Closed trades with their loss causes</td></tr>
@@ -838,7 +839,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 51 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 52 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -854,7 +855,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Intraday prices unavailable for a day</td><td>No trades resolved and every setup flagged that night excluded from variant scoring. A variant that could not be tested must not be scored as though it chose to pass.</td></tr>
 <tr><td>Price gaps past the give-up point</td><td>Recorded as a loss larger than planned and tagged. Never rounded back, because the size and frequency of these is a genuine property of the strategy and one of the things you most want to learn.</td></tr>
 <tr><td>A short could not have been borrowed</td><td>Not detectable from the feed. Mitigated by a market-cap floor and a borrow-cost deduction, and recorded as an unmodelled assumption on every short trade. Long and short results are never pooled.</td></tr>
-<tr><td>Unprocessed split</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: a split corrupts every moving average at once and produces plausible-looking nonsense.</td></tr>
+<tr><td>Unprocessed corporate action</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: any action that moves the adjusted close corrupts every moving average at once and produces plausible-looking nonsense. A split does it by a factor and a dividend by a smaller one, and magnitude does not enter it (see: An unprocessed corporate action of any kind blocks calculation, not only a split).</td></tr>
 <tr><td>Detector errors on one stock</td><td>An error row is written for that stock and date. Silently skipping shrinks the recorded universe without anyone noticing, which is the kind of defect that survives for months.</td></tr>
 <tr><td>Nightly setup cap reached</td><td>The cap truncates the shared candidate list by rank before any variant selects, and the truncation is recorded. Never applied per variant, or the disagreements go unscoreable.</td></tr>
 <tr><td>Daily API ceiling reached</td><td>The nightly job counts as it goes and stops rather than overrunning. A stopped job writes a partial-run row and the affected setups are marked degraded.</td></tr>
@@ -879,7 +880,7 @@ tr:hover td{background:#f4f2ec}
 <tr><th style="width:190px">Section</th><th>What it asserts</th></tr>
 <tr><td>Document conformance</td><td>The component catalogue, the limits table, the check lists and the call budget in this document are structured tables. The report parses them and asserts each claim against the code: every component named exists and is registered, every limit matches its config value, every named check exists in the detector, every declared writer is the only writer.</td></tr>
 <tr><td>Fixture diff</td><td>A committed golden fixture holds real bars for a small set of tickers over a fixed window, with expected outputs frozen beside them. The pipeline runs against it and the report diffs actual against expected, stage by stage.</td></tr>
-<tr><td>Coverage</td><td>What each check actually examined, not only whether it passed. A claim the report could not examine is listed as <b>unexamined</b>, which is not a pass.</td></tr>
+<tr><td>Coverage</td><td>What each check actually examined, not only whether it passed. A claim the report could not examine is listed as <b>unexamined</b>, which is not a pass. A claim the build plan places at a checkpoint that has not landed is listed as <b>out of scope</b> and counted separately, because collapsing the two would let a later checkpoint&#39;s rows hide the one row nobody can check. Each of those names the checkpoint that ends it, and the report groups them by it, so the count falls as checkpoints land rather than resting as a permanent number.</td></tr>
 </table>
 
 <div class="rule"><b class="lab">Why the fixture is frozen rather than live</b>
@@ -887,7 +888,7 @@ tr:hover td{background:#f4f2ec}
 <p>Every checkpoint from the harness onward adds its own expectations to the fixture. A checkpoint that adds behaviour and no expectation has widened the unexamined set rather than the tested one, and the report says so.</p></div>
 
 <h2 id="build-order">Build order</h2>
-<p>Every phase produces two things: a screen you can open, and a generated report that says whether what was built matches this document. Neither replaces the other. The screen is how you notice something looks wrong; the report is how you know, and how a build session checks its own work without asking anyone. The harness is described in 18.1 and is built at the seventh checkpoint of phase 1, before most of what it checks exists.</p>
+<p>Every phase produces two things: a screen you can open, and a generated report that says whether what was built matches this document. Neither replaces the other. The screen is how you notice something looks wrong; the report is how you know, and how a build session checks its own work without asking anyone. The harness is described under "The phase report" and is built at the seventh checkpoint of phase 1, before most of what it checks exists.</p>
 
 <table>
 <tr><th style="width:52px">Phase</th><th style="width:180px">Builds</th><th style="width:36%">What you can open</th><th>What the phase report adds</th></tr>
@@ -934,7 +935,7 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:210px">What differs</th><th style="width:300px">Where it bites</th><th>Handling</th></tr>
 <tr><td>Timezone identifiers</td><td>Every session boundary, every nightly job trigger, every "was this bar in regular hours" test</td><td>IANA names only, never Windows names. Do not enable invariant globalization, which is the setting that makes IANA lookup fail silently. One clock abstraction, everything stored in UTC, conversion only where a session boundary is being decided</td></tr>
-<tr><td>Filesystem case sensitivity</td><td>macOS is insensitive by default, Linux is not</td><td>Lowercase file and directory names throughout, enforced by a check. A mismatch that works on both your machines will fail the first time it touches a Linux CI runner</td></tr>
+<tr><td>Filesystem case sensitivity</td><td>macOS is insensitive by default, Linux is not</td><td>Lowercase names for every path the application composes or reads at runtime: the data root and everything under it, the golden fixture, <code>artifacts/</code> and <code>tools/</code>. .NET source and project directories keep the framework’s PascalCase, which the repository layout mandates. Enforced by the <code>path-casing</code> check, which asserts each path literal against the on-disk path byte for byte rather than asserting lowercase, since exact match is the stronger property. A mismatch that works on both your machines will fail the first time it touches a Linux CI runner</td></tr>
 <tr><td>Path separators and roots</td><td>Anywhere a path is composed or persisted</td><td>One configured data root, path composition through the platform API, and <b>no absolute path ever written into a database row</b></td></tr>
 <tr><td>Scheduling</td><td>Task Scheduler against launchd</td><td>Scheduling stays outside the application. One CLI entrypoint per job, invoked by whatever the platform provides. The app holds no timer logic, which also makes a failed 6pm job easy to rerun by hand</td></tr>
 <tr><td>Native dependencies</td><td>Apple Silicon needs arm64 builds</td><td>SQLite and Parquet are fine on both. Avoid anything requiring a native server install, since that is the part of a migration that costs a weekend</td></tr>
@@ -943,7 +944,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="rule"><b class="lab">The migration test, worth applying from day one</b>
 <p>Copy the data root to another machine, point the application at it, and run the nightly job. If that works, migration is a copy. The property that makes it work is that nothing inside the store refers to where the store lives, which is easy to preserve from the start and tedious to retrofit once chart exports or log paths have been persisted.</p>
-<p>One thing that does not migrate: the RTX 3090. Nothing here needs it, since the researcher runs through the Claude Agent SDK rather than locally, but it is worth knowing before any part of the design starts assuming local inference.</p></div>
+<p>One thing that does not migrate: the RTX 3090. Nothing here needs it, since the researcher runs against a hosted model on either transport rather than locally, but it is worth knowing before any part of the design starts assuming local inference.</p></div>
 
 <h3 id="moving-the-store-to-another-machine">Moving the store to another machine</h3>
 
@@ -956,7 +957,7 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:44px">#</th><th style="width:250px">Step</th><th>Detail</th></tr>
 <tr><td><b>1</b></td><td>Stop the worker</td><td>Confirm no nightly or replay job is mid-run. A partial nightly leaves setups without their signal rows.</td></tr>
-<tr><td><b>2</b></td><td>Record the source counts</td><td>Row counts for <code>setup</code>, <code>setup_signal</code>, <code>forward_return</code>, <code>trade</code> and <code>variant</code>, plus the maximum setup id. Written down before anything is copied, or you have nothing to compare against.</td></tr>
+<tr><td><b>2</b></td><td>Record the source counts</td><td>A row count for every table the store holds, derived from the schema rather than from a list here, taken before anything is copied, or you have nothing to compare against. <code>tools/snapshot-db</code> does it: a list goes stale at the migration that adds a table, and a count that silently omits one is the failure this step exists to catch.</td></tr>
 <tr><td><b>3</b></td><td>Write a clean single file</td><td><code>VACUUM INTO '/path/to/pullbackstrategylab-migrate.db';</code> from the SQLite CLI. This folds the write-ahead log in, drops free pages, and produces one consistent file with no siblings to forget.</td></tr>
 <tr><td><b>4</b></td><td>Copy the bar files too</td><td>If bars are in Parquet rather than in the database, copy that directory alongside. It is inert data and needs no special handling.</td></tr>
 <tr><td><b>5</b></td><td>Verify on arrival</td><td><code>PRAGMA integrity_check;</code> then re-run the step 2 counts and compare. Integrity check alone proves the file is not corrupt, <b>not</b> that it is complete. Both are needed.</td></tr>
@@ -978,15 +979,19 @@ tr:hover td{background:#f4f2ec}
 <h2 id="data-budget">Data budget</h2>
 <p>Hard ceiling of 5,000 calls a day, enforced in config with the nightly job counting as it goes.</p>
 <table>
-<tr><th style="width:330px">Nightly job</th><th style="width:110px">Calls</th><th>Note</th></tr>
-<tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>Replaces 6,000 individual requests</td></tr>
-<tr><td>Splits, bulk</td><td>100</td><td>Daily. Non-negotiable</td></tr>
-<tr><td>Dividends, bulk</td><td>~20</td><td>Weekly rather than daily</td></tr>
-<tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>~60 names at 5 calls each</td></tr>
-<tr><td>Spread snapshots</td><td>120</td><td>60 names, twice a session. Unrecoverable later</td></tr>
-<tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>Lazy, cached permanently</td></tr>
-<tr><td><b>Daily total</b></td><td><b>~690</b></td><td>Peaks near 1,000 on heavy nights</td></tr>
+<tr><th style="width:260px">Nightly job</th><th style="width:100px">Calls a night</th><th style="width:100px">Cost per request</th><th style="width:100px">Cadence</th><th>Note</th></tr>
+<tr><td>Whole-market daily bars, one bulk request</td><td>100</td><td>100</td><td>nightly</td><td>Replaces 6,000 individual requests</td></tr>
+<tr><td>Splits, bulk</td><td>100</td><td>100</td><td>nightly</td><td>Non-negotiable</td></tr>
+<tr><td>Dividends, bulk</td><td>100</td><td>100</td><td>nightly</td><td>The same request as the other two and the same price. It ran weekly until 2026-08-25, which meant a dividend effective on a Tuesday went unobserved for up to four sessions while the stock carried on computing</td></tr>
+<tr><td>Index bars, three trackers</td><td>3</td><td>1</td><td>nightly</td><td>One call a symbol on the per-ticker endpoint. Asking the bulk endpoint for three symbols would be a hundred calls to learn three numbers</td></tr>
+<tr><td>History refetch for the names carrying an action</td><td>25</td><td>1</td><td>nightly</td><td>One call a name, whatever the depth. About 25 on an evening the dividend pull runs and one or two otherwise, which is what honouring a corporate action costs</td></tr>
+<tr><td>Minute bars for every flagged setup, both sides</td><td>300</td><td>5</td><td>nightly</td><td>~60 names at 5 calls each</td></tr>
+<tr><td>Spread snapshots</td><td>120</td><td>1</td><td>twice a session</td><td>60 names, twice a session. Unrecoverable later</td></tr>
+<tr><td>Sector lookup for newly flagged names</td><td>~50</td><td>1</td><td>as needed</td><td>Lazy, cached permanently</td></tr>
+<tr><td><b>Daily total</b></td><td><b>~798</b></td><td></td><td></td><td>Peaks near 1,000 on heavy nights</td></tr>
 </table>
+<p><b>Calls a night and cost per request are different numbers and the table says which is which.</b> They coincide wherever a job makes one request a night and they do not where a job makes several, as the minute bars do at five calls a name. Charging a budget the wrong one of the two is the accounting error the ceiling exists to catch, so the cost column is what a stage charges per request and the cadence column is how often it charges it. Both are checked: <code>pinned-constants</code> reads each cost against the vendor client's constant and the dividend cadence against the stage's default.</p>
+<p><b>The dividend row is the reason the two columns are separate,</b> and it is worth keeping the history. It read 20 a night at a cost of 100 because the request ran weekly, and the 20 was an amortised figure that could pin nothing. Splitting the columns made the weekly cadence legible, and legible is what made it obviously wrong: a corporate action blocks calculation, and an action nobody has observed blocks nothing.</p>
 <p>One-time backfill is about 7,000 calls over two days: 3,000 for full price history at one call per ticker, 3,000 for split history, and 1,000 of minute bars to calibrate the fill model.</p>
 
 <h4>The three ways to blow it, all avoidable</h4>
@@ -1016,7 +1021,7 @@ tr:hover td{background:#f4f2ec}
 <div class="rule"><b class="lab">Cost cannot decide this, so something else must</b>
 <p>The whole spread from cheapest to dearest is about eight dollars a year. Even a badly built pack that dumps four thousand raw setup rows instead of aggregates lands near thirty-five dollars a year at the top of the range. There is no budget argument to be had.</p>
 <p>What does decide it is that <b>the model is a confounder for the project's own success criterion</b>. That criterion is whether proposals against a later pack beat proposals against an earlier one, and a model change between the two makes the comparison meaningless. So the model is pinned by exact identifier alongside the pack version, and a change forks the record rather than upgrading it. (see: The model is a frozen parameter of the pack version, and changing it forks the record)</p>
-<p>A practical consequence: running the seat through the Claude Agent SDK on an existing subscription costs nothing marginal, which is the strongest argument for it, but the pinning requirement still applies and a vendor retiring the pinned model is a forced fork either way.</p></div>
+<p>A practical consequence: <b>the transport is a configuration switch</b>. The subscription path runs the seat through the Agent SDK against an existing Claude plan and costs nothing marginal; the API path calls the Messages API and costs the table above, which is a few dollars a year. Neither is the only option and the choice is reversible at any time, <b>provided the served model string does not change</b>. If it does, switching forks the record exactly as changing the model does. The pinning requirement is unaffected and now applies to the transport as well, and a vendor retiring the pinned model is a forced fork either way. (see: The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface)</p></div>
 
 <div class="plain"><b class="lab">What the money argument was actually protecting</b>
 <p>The rule that the pack carries aggregates rather than raw rows reads like cost discipline and is not. At these rates the raw version is affordable. The real reason is that a model handed raw data will find patterns by rummaging, which is precisely what pre-registration and the planted null signal exist to prevent. Keep the rule; drop the cost justification wherever it appears.</p></div>

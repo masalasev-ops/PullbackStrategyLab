@@ -1,0 +1,79 @@
+@page "/chart/{ticker?}"
+@using PullbackStrategyLab.Web.Shell
+@model ChartModel
+@*
+    The chart page. Any ticker the store holds bars for, its candles on the adjusted basis, the
+    three averages drawn across them and the readout the lab computed for the session.
+
+    The form is a GET, so a chart is a URL you can keep. No script: a chart that needs
+    JavaScript to appear is a chart that does not appear in a saved page or in a print.
+    see: Pages are server-rendered with no build step, and any script is local rather than fetched
+*@
+<h1>Chart</h1>
+
+<form class="ask" method="get" action="/chart">
+    <label>Ticker <input name="ticker" value="@Model.Ticker" placeholder="IESC" size="8" autofocus /></label>
+    <label>Sessions
+        <select name="sessions">
+            @foreach (int window in ChartModel.Windows)
+            {
+                <option value="@window" selected="@(window == Model.Sessions)">@window</option>
+            }
+        </select>
+    </label>
+    <button type="submit">Draw</button>
+</form>
+
+@if (Model.Chart?.Nothing is string why)
+{
+    <p class="down">@why</p>
+}
+else if (Model.Chart is { HasBars: true } chart)
+{
+    <p class="lede">
+        <b>@chart.Ticker</b> as of @chart.AsOf, @chart.Drawn sessions drawn from @chart.Read read.
+        Prices are on the adjusted basis, so a split shows as a continuous series rather than as
+        a cliff. The averages are computed over the sessions behind the left edge as well, so the
+        fifty-day line is converged where it starts rather than climbing out of its own seed.
+    </p>
+}
+else
+{
+    <p class="lede">Name a stock the store holds bars for. The window is drawn from your own
+       stored prices, which is the point: this is the page you compare against a chart you
+       already trust.</p>
+}
+
+@await Html.PartialAsync("_Candlestick", Model.Geometry)
+
+@if (Model.Chart?.Readout is ChartReadoutView readout)
+{
+    <h2>What the lab computed for @readout.AsOf</h2>
+    <p class="lede">Read from the store rather than recomputed for this page. The last point of
+       each line above is the same computation over the same window, so these are the numbers
+       the picture is drawn from and the numbers the lab acted on at once.</p>
+
+    <div class="band">
+        <div><b>EMA 9</b>@readout.Price(readout.Ema9)</div>
+        <div><b>EMA 21</b>@readout.Price(readout.Ema21)</div>
+        <div><b>EMA 50</b>@readout.Price(readout.Ema50)</div>
+        <div><b>ADR 20</b>@readout.Percent(readout.Adr20)</div>
+        <div><b>Range 20</b>@readout.Price(readout.RangeAverage)</div>
+        <div><b>ATR 14</b>@readout.Price(readout.Atr14)</div>
+        <div><b>Median $vol</b>@readout.Money(readout.DollarVolumeMedian)</div>
+    </div>
+}
+else if (Model.Chart is { HasBars: true })
+{
+    <h2>What the lab computed</h2>
+    <p class="lede">Nothing yet for this session. The averages above are drawn from the stored
+       bars; the lab writes its own figures on the nights it runs, and this stock has none for
+       this session.</p>
+}
+
+<h2>The three averages</h2>
+<ul class="legend">
+    <li><span class="swatch a1"></span>EMA 9</li>
+    <li><span class="swatch a2"></span>EMA 21</li>
+    <li><span class="swatch a3"></span>EMA 50</li>
+</ul>

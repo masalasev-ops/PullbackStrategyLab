@@ -10,7 +10,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 2. Clone, then `dotnet restore` and `dotnet build`.
 3. Create the data root outside the repository and outside any synced folder. Set `PullbackStrategyLab:DataRoot` to it. **Never place the store inside OneDrive, Dropbox or iCloud.** A sync client copying an open database mid-write is a real corruption risk, not a theoretical one.
 4. Put the vendor API key in `appsettings.Secrets.json`, beside `appsettings.json` in each project that needs it. Gitignored, never committed. It is plaintext, so treat it like a key file: it travels by deliberate copy rather than by accident, and it stays out of any backup that leaves the machine.
-5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. If it is, the researcher seat bills at API rates instead of using the subscription.
+5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. It stays out on both researcher transports: on the subscription path its presence silently defeats plan auth and bills API rates, and on the API path the key belongs in `appsettings.Secrets.json` with every other secret, so one in the environment means two places supply the same credential and nothing on the surface says which won.
 6. `tools/migrate` to create the schema. It calls `tools/snapshot-db` first and refuses to run without a successful snapshot.
 7. `tools/ci.ps1` or `tools/ci.sh`. Green before anything else.
 
@@ -24,7 +24,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 
 **The screen is one call per surviving name, and that number is measured rather than estimated.** Two counts matter and both are cheap to get before writing any code. The exchange symbol list is one call and returns every US ticker with a type field, so counting common stock gives N's upper bound today. The floors then cut that to N itself, which step 3 measures.
 
-The only thing depending on N is whether the backfill runs in one day or two: steps 4 and 5 cost 2N together, so with the other steps the day fits comfortably while 2N stays under about 4,000. Above that, split steps 4 and 5 across two days. Nothing else in the design is sensitive to the count, which is why no figure for it is written down anywhere.
+**The backfill is not counted against the nightly ceiling.** The ceiling guards the evening's job, and a one-time operation is not the evening's job; charging the two against each other is what once made this look like a two-day procedure. The run records its calls like any other and the nightly total does not see them, which the run log says outright rather than leaving to be inferred from the stage name.
 
 | Order | Job | Calls |
 |---|---|---|
@@ -32,11 +32,12 @@ The only thing depending on N is whether the backfill runs in one day or two: st
 | 2 | Bulk end-of-day, last 20 sessions, whole market | ~2,000 |
 | 3 | Apply the price and liquidity floors. Survivor count **N**, measured not assumed | 0 |
 | 4 | Full daily history for the survivors, one call each, any depth | N |
-| 5 | Full split history for the survivors | N |
-| 6 | Minute bars for 200 names to calibrate the fill model | ~1,000 |
-| | **Total** | **~3,005 + 2N** |
+| 5 | Minute bars for 200 names to calibrate the fill model | ~1,000 |
+| | **Total** | **~3,005 + N** |
 
-Steps 1 to 3 are one day, steps 4 to 6 the next. Nothing downstream depends on doing them together, and splitting keeps each day well inside the ceiling.
+**Size, measured rather than estimated.** N was 2,070 when this was first run, so step 4 is 2,070 calls and the whole procedure is about 5,075. It is one operation and it runs in one sitting; the order within it is what matters, not the calendar.
+
+**There is no split-history step, and there was never any code for one.** The table used to carry a second per-name pass for the full split history of every survivor, a second N calls. It was dropped at the 1.12 sign-off after the review found that the vendor client has only the bulk per-date splits endpoint and the per-ticker daily-history endpoint: nothing anywhere fetches one name's splits, so the step described work that had no implementation and the obligation raised at 1.9 was never a matter of spending calls. What it would have bought is the history of splits from before the lab started running. Nothing depends on that. Splits arrive nightly from the bulk endpoint, so every split from the first night onward is recorded; and the one thing that would read older splits, a detector run over stored history, goes to `calibration_setup` at 2.11 rather than to `setup`, where survivorship bias already rules those rows out as evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history). If a reason to want it appears later, it arrives as a checkpoint that builds the endpoint, captures a fixture input for it and states its expectations, like any other ingestion path.
 
 ---
 
@@ -47,10 +48,12 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | Time (ET) | Stage | Calls |
 |---|---|---|
 | during session | spread snapshots, two passes | 120 |
-| 17:20 | splits, bulk | 100 |
-| 17:20 | dividends, bulk, weekly rather than daily | ~20 |
+| 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
+| 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
 | 17:30 | bulk daily bars | 100 |
-| 18:00 | indicators | 0 |
+| 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
+| 17:50 | `index-bars`, one call a tracker | 3 |
+| 18:00 | `indicators` | 0 |
 | 18:10 | scans, ladder grade | 0 |
 | 18:15 | cluster, regime | 0 |
 | 18:20 | detectors, both directions | 0 |
@@ -66,7 +69,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | scoreboard | 0 |
-| **total** | | **~690 against a 5,000 ceiling** |
+| **total** | | **~798 against a 5,000 ceiling** |
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
 
@@ -86,7 +89,7 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 |---|---|
 | A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date |
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
-| A split was missed | Rerun the action ingest for that date, then force an indicator rebuild for that ticker. No other ticker is touched |
+| A corporate action was missed | Rerun `actions` for that date, with `--with-dividends` if a dividend is what was missed. It writes the action and raises the rebuild demand, and until that demand is satisfied, calculations for that ticker refuse to run. No other ticker is touched |
 | Database will not open | Restore the most recent snapshot from the data root, then re-run the nightly stages for the missing dates in order |
 | `git` permission error mid-commit on Windows | Run `git fsck` before retrying. Usually a real-time scanner or file indexer holding a handle on a loose object. Add a scanner exclusion for the repository folder |
 | Researcher produced nothing | Check whether the usage allowance is exhausted. The job queues rather than returning a degraded proposal, and this is expected behaviour |
@@ -106,10 +109,10 @@ The SQLite file format is architecture and OS independent, so the database is po
 | # | Step | Detail |
 |---|---|---|
 | 1 | Stop the worker | Confirm no stage is mid-run. A partial nightly leaves setups without their signal rows |
-| 2 | Record source counts | `setup`, `setup_signal`, `forward_return`, `trade`, `variant`, plus max setup id. **Written down before anything is copied**, or there is nothing to compare against |
+| 2 | Record source counts | A row count for every table the store holds, derived from the schema rather than from a list here, **taken before anything is copied** or there is nothing to compare against. `tools/snapshot-db` does it: a list in this document goes stale at the migration that adds a table, and a count that silently omits one is the failure this step exists to catch |
 | 3 | Write one clean file | `VACUUM INTO '/path/pullbackstrategylab-migrate.db';` Folds in the log, drops free pages, leaves no siblings to forget |
 | 4 | Copy bar files too | If bars are outside the database, copy that directory alongside |
-| 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. Integrity check proves the file is not corrupt, **not** that it is complete. Both are needed |
+| 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. `tools/snapshot-db` does both against the copy and exits non-zero on either. Integrity check proves the file is not corrupt, **not** that it is complete. Both are needed |
 | 6 | Copy the secrets file | `appsettings.Secrets.json` is gitignored, so it does not arrive with the repository. Copy it deliberately and separately from the store, or re-create it. Verify by running one stage that makes a vendor call rather than assuming |
 | 7 | Recreate the schedule | Task Scheduler entries become launchd definitions |
 | 8 | Repoint config paths | There should be none inside the database itself |

@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-08-26",
+  "note": "The floor under each check's examined count, recorded on the date above from a full run. A floor rather than an equality: counts differ between platforms and grow with the corpus, and a baseline that went red on a file being added would be suppressed and then dead. At or above passes. Below fails, names the check and prints both figures. Raising a floor is a one-line commit whose message says what the check examines; lowering one carries what changing a fixture expectation carries. Committed because it is a reference the run is measured against, never a result the run produces, which is why it lives here and not under artifacts/.",
+  "checks": {
+    "api-isolation": 12,
+    "architecture-conformance": 46,
+    "bar-append-only": 54,
+    "ci-parity": 44,
+    "clock-usage": 48,
+    "coverage-reported": 72,
+    "decision-resolves": 272,
+    "fixture-inputs": 43,
+    "fixture-replay": 407,
+    "no-superseded-citation": 93,
+    "path-casing": 2468,
+    "pinned-constants": 30,
+    "price-storage-form": 107,
+    "shell-executable": 4,
+    "stated-counts": 20,
+    "store-portability": 189726,
+    "writer-ownership": 245
+  }
+}

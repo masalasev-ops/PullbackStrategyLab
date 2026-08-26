@@ -1,0 +1,175 @@
+/*
+  The one stylesheet, served from this host. Nothing is fetched from anywhere: the lab runs on
+  a laptop and a page that needs the network to look right is a page that does not look right
+  on a train.
+  see: Pages are server-rendered with no build step, and any script is local rather than fetched
+
+  The palette follows SCREENS.html, which is the mockup this shell is built against.
+*/
+
+:root {
+    --ink: #16150f;
+    --ink2: #45443c;
+    --ink3: #7c7a6f;
+    --rule: #ddd9cc;
+    --paper: #fdfcf8;
+    --panel: #faf9f6;
+    --long: #1f6b3a;
+    --short: #a33227;
+    --good: #1f6b3a;
+    color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 14px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+
+a { color: inherit; }
+
+.mark {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--rule);
+}
+
+.mark a {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+}
+
+/* Stated on every page rather than in a footer nobody scrolls to. */
+.paper {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink3);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1px 6px;
+}
+
+.nav {
+    display: flex;
+    gap: 2px;
+    padding: 0 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+}
+
+.nav a {
+    padding: 9px 13px;
+    color: var(--ink3);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav a.on {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+    font-weight: 600;
+}
+
+.body {
+    padding: 16px 14px 48px;
+    max-width: 1100px;
+}
+
+.band {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--panel);
+    padding: 9px 14px;
+    font-size: 13px;
+}
+
+.band div {
+    padding: 0 18px 0 0;
+    margin-right: 18px;
+    border-right: 1px solid var(--rule);
+}
+
+.band div:last-child {
+    border: none;
+    margin: 0;
+    padding-right: 0;
+}
+
+.band b {
+    display: block;
+    font-size: 11px;
+    color: var(--ink3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.down {
+    border-left: 3px solid var(--short);
+    background: #a3322710;
+    padding: 8px 12px;
+    margin: 0 0 12px;
+    font-size: 13px;
+}
+
+h1 { font-size: 20px; margin: 22px 0 6px; }
+h2 { font-size: 15px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--rule); }
+
+.lede { color: var(--ink2); max-width: 68ch; margin: 0 0 12px; }
+
+.empty-state {
+    border: 1px dashed var(--rule);
+    border-radius: 6px;
+    padding: 16px 18px;
+    color: var(--ink2);
+    max-width: 68ch;
+}
+
+.empty-state p { margin: 0 0 10px; }
+.empty-state p:last-child { margin: 0; }
+
+.screens { list-style: none; padding: 0; margin: 0 0 12px; }
+.screens li { padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.screens a { font-weight: 600; }
+.screens .what { color: var(--ink2); margin-left: 10px; }
+.screens .when { color: var(--ink3); margin-left: 10px; font-size: 12px; }
+
+/* The shared chart. One set of rules, so a thumbnail and a full-size chart read alike. */
+.candles { border: 1px solid var(--rule); border-radius: 6px; background: #fff; }
+.candles .grid { stroke: var(--rule); stroke-width: 1; }
+.candles .axis { fill: var(--ink3); font-size: 10px; }
+.candles .empty { fill: var(--ink3); font-size: 12px; }
+.candles .wick { stroke-width: 1; }
+.candles .up .wick, .candles .up .body { stroke: var(--long); fill: var(--long); }
+.candles .down .wick, .candles .down .body { stroke: var(--short); fill: var(--short); }
+.candles .average { stroke-width: 1.4; }
+.candles .a1 { stroke: #2b6cb0; }
+.candles .a2 { stroke: #8a6d00; }
+.candles .a3 { stroke: #6b4fa0; }
+
+/* The chart page: the ask, and the legend for the three averages. */
+.ask { display: flex; gap: 14px; align-items: flex-end; margin: 0 0 14px; font-size: 13px; }
+.ask label { display: flex; flex-direction: column; gap: 3px; color: var(--ink3); font-size: 11px;
+             text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.ask input, .ask select, .ask button {
+    font: inherit; font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 4px; padding: 5px 8px; background: #fff;
+}
+.ask button { background: var(--panel); font-weight: 600; cursor: pointer; }
+
+.legend { list-style: none; padding: 0; margin: 0; display: flex; gap: 18px; font-size: 13px; }
+.legend .swatch { display: inline-block; width: 20px; height: 3px; margin-right: 7px;
+                  vertical-align: middle; border-radius: 2px; }
+.legend .a1 { background: #2b6cb0; }
+.legend .a2 { background: #8a6d00; }
+.legend .a3 { background: #6b4fa0; }

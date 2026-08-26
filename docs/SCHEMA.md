@@ -76,15 +76,38 @@ Grain: ticker + effective date + type.
 | `ticker` | TEXT | |
 | `effective_date` | TEXT | |
 | `type` | TEXT | `split` or `dividend` |
-| `ratio` | TEXT | |
+| `ratio` | TEXT | on a split, new shares over old as a factor, so 4 for a four-for-one. On a dividend, cash per share |
 | `observed_at` | TEXT | |
 
-Insert ActionIngestor
+Insert ActionIngestor · PK (`ticker`, `effective_date`, `type`, `observed_at`)
+
+*Note on `ratio`.* It carries a factor for one type and a money amount for the other, which is the one column in this schema whose name does not describe half its contents. It stays one column because the grain already separates the two by `type` and a second nullable column would put the same fact in two places, but the note stays here so nobody averages the column.
+
+**Append-only. Never deleted, never updated,** on the same terms as `daily_bar` and for the same reason. Vendors restate corporate actions. A restatement arrives as a new row with a later `observed_at`, and reads take the latest `observed_at` at or before the as-of date, so a ratio revised on Thursday does not change what Monday's replay sees.
+
+**A restatement raises a rebuild demand of its own.** Whatever was computed against the old ratio was computed against a number the vendor no longer publishes, and the demand is keyed on the observation rather than on the action, so the new one stands beside the old rather than trying to reopen it.
+
+### `history_refetch`
+Grain: ticker + the instant its whole series was re-observed. Append-only, one row per refetch.
+
+| Column | Type | Note |
+|---|---|---|
+| `ticker`, `refetched_at` | TEXT | PK |
+| `from_date`, `to_date` | TEXT | the window asked for |
+| `bars_written` | INTEGER | how many bars actually changed, which is often zero and is not what the row is for |
+
+Insert DailyBarIngestor
+
+**The row is written even when nothing changed.** The fact anybody downstream needs is that the series was looked at, not that it moved, and those are different facts (see: A rebuild is satisfied by a recorded refetch, not by inferring one from what changed).
+
+**This is what satisfies a rebuild demand.** IndicatorEngine reads the latest refetch of a ticker at or before the as-of date and treats every demand observed at or before it as accounted for.
 
 ### `index_bar`
-Grain: symbol + date. SPY, QQQ, IWM. Same shape as `daily_bar`.
+Grain: symbol + date + `observed_at`. SPY, QQQ, IWM. Same shape and the same terms as `daily_bar`: **append-only, never deleted, never updated**, a correction arriving as a new row with a later `observed_at`, and reads taking the latest observation at or before the as-of date.
 
-Insert IndexIngestor
+Insert IndexIngestor · PK (`symbol`, `bar_date`, `observed_at`)
+
+**No foreign key to `security`.** A tracker is not part of the tradable universe and never appears in a screen. It is read to say what the market did, which is a different question from what any one stock did.
 
 ### `intraday_bar`
 Grain: ticker + minute. Phase 4. Fetched for every flagged setup, not only planned ones, because a variant selecting a name the baseline passed on must still be resolvable.
@@ -114,17 +137,43 @@ Grain: ticker + date. Computed locally from `daily_bar`, never requested from th
 
 | Column | Type | Note |
 |---|---|---|
-| `ticker`, `as_of` | TEXT | PK |
+| `ticker`, `as_of`, `computed_at` | TEXT | PK |
 | `ema_9`, `ema_21`, `ema_50` | TEXT | on adjusted close |
 | `atr_14` | TEXT | |
 | `adr_20` | TEXT | **fraction**, so 0.068 not 6.8. Named against the convention; see note |
 | `dollar_volume_median_20` | TEXT | |
 | `range_avg_20` | TEXT | for the contraction test |
-| `ladder_grade` | TEXT | `rising`, `mixed`, `falling`. Written by TierClassifier |
+| `ladder_grade` | TEXT | `rising`, `mixed`, `falling`. Null until TierClassifier writes an observation carrying it |
 
-Insert IndicatorEngine · Update TierClassifier (`ladder_grade` only)
+Insert IndicatorEngine · Insert TierClassifier, **disjoint by computation**: each writes its own `computed_at` and neither ever writes the other's
+
+**Append-only, on the same terms as `daily_bar`.** A computation is an observation, and a read takes the latest `computed_at` at or before its as-of date. This is what lets a rebuild reach the rows it invalidates: a ticker recomputed after a corporate action is honoured gains a second row for every affected session, and a replay of a night before the rebuild still returns the figures the lab acted on, wrong ones included. It was keyed on ticker and date alone until 2026-08-25, which meant a row computed on a basis the vendor had since restated stood for ever.
+
+**A rerun that produces the same figures writes nothing.** Append-only is not the same as writing a row every time.
+
+**Why two inserters rather than an inserter and an updater.** With the table append-only there is nothing to update, so TierClassifier writes a later observation of the session carrying the grade. It copies the seven computed figures forward, which is duplication and is the price of the row being a complete observation rather than a fragment: a reader takes the latest row and gets an answer, rather than assembling one from two.
 
 *Note on `adr_20`.* Every ratio in this schema is a fraction. `adr_20` reads as though it were a percentage because of its name, so it is the one column whose name argues against the rule. It stays a fraction and this note stays here rather than the column being renamed, because `adr` appears in the signal library and in the screens.
+
+### `indicator_rebuild`
+Grain: the corporate action that raised the demand, as that action was observed. One row per observation, and the row stays after it is satisfied.
+
+| Column | Type | Note |
+|---|---|---|
+| `ticker`, `effective_date`, `type`, `observed_at` | TEXT | PK. The key of the `corporate_action` row that raised it |
+| `rebuilt_at` | TEXT | NULL until the ticker has been recomputed against a history observed after the action |
+
+Insert ActionIngestor · Update IndicatorEngine (`rebuilt_at` only)
+
+**A row with a NULL `rebuilt_at` is a stock whose calculations must refuse to run.** That is where the architecture's unprocessed-action behaviour is read from. Any corporate action moves every adjusted close before it, so an average taken across the boundary is arithmetic on two different units and its answer is wrong while looking entirely reasonable. Magnitude does not enter it (see: An unprocessed corporate action of any kind blocks calculation, not only a split).
+
+**The key is the action as observed, not the ticker and the date.** A vendor restating a ratio writes a second `corporate_action` observation, which raises a second demand rather than failing to reopen a demand already satisfied. Without that, a ticker rebuilt against a factor that later changed would stay rebuilt, permanently, with the record showing a satisfied demand and the wrong number computed from it (see: A rebuild demand is keyed on the action as observed, and a restated action raises a new one).
+
+**The demand is recorded, not queued.** The row is never deleted and never cleared; it gains a date. A queue that empties answers "is anything outstanding" and destroys the history on its way to the answer.
+
+**Two components, on purpose.** ActionIngestor raises the demand and IndicatorEngine satisfies it. A component that can both raise and close its own condition raises nothing.
+
+**No foreign key to `corporate_action`, though the key is its key.** SQLite rewrites a child's foreign key clause when the parent is renamed, and a hand-written table rebuild renames, so declaring one would make each table's rebuild depend on the order of the other's. A test asserts every demand joins to an action instead, which is the property the constraint would have bought.
 
 ### `scan_hit`
 Grain: ticker + date + scan.
@@ -172,7 +221,7 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `agreement` | TEXT NULL | `agree`, `disagree`, null. Written by Setup inspector from the gallery |
 | `agreement_note` | TEXT NULL | |
 
-Insert LongSetupDetector / ShortSetupDetector, disjoint by `direction` · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 
@@ -181,7 +230,7 @@ Grain: date + ticker + direction. Output of a historical detector run, used to c
 
 Same shape as `setup`, in a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
 
-Insert SetupDetector, calibration mode only · Read by nobody
+Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
 
 ### `setup_signal`
 Grain: setup + signal. The frozen point-in-time evidence.
@@ -191,7 +240,7 @@ Grain: setup + signal. The frozen point-in-time evidence.
 | `setup_id`, `signal_name`, `value` | TEXT |
 | `computed_at` | TEXT |
 
-Insert SignalVectorizer (nightly, new rows) · Insert SignalBackfiller (backfill, adds signals to old setups; may never touch a signal SignalVectorizer owns for that date)
+Insert SignalVectorizer · Insert SignalBackfiller, **disjoint by date and signal**: the vectorizer writes new rows nightly and the backfiller adds signals to old setups, and may never touch a signal the vectorizer owns for that date
 
 ### `signal_definition`
 Grain: signal name. The library.
@@ -277,13 +326,16 @@ Grain: run id. Every stage writes a start and an end entry here, so it is delive
 | `started_at`, `ended_at` | TEXT | |
 | `outcome` | TEXT | `clean`, `partial`, `failed` |
 | `rows_written` | INTEGER | measured from the store, not self-reported by the stage |
-| `calls_used` | INTEGER | counted as the stage runs, against the daily ceiling |
+| `calls_used` | INTEGER | counted as the stage runs |
+| `counts_against_ceiling` | INTEGER | 0 or 1. Whether the daily total sees this run's calls |
 
 Insert RunLogger · Update RunLogger
 
 **One writer, not one per stage.** Stages do not write this table. They call `RunLogger`, which owns both operations. Declaring every stage as a writer would put the run-accounting logic in a dozen places and `writer-ownership` could never pass.
 
 **`rows_written` is measured, not reported.** A stage counting its own output will report what it believes it wrote. The nightly halt keys on this number, so it is read back from the store.
+
+**`counts_against_ceiling` is how a one-time operation stays out of the nightly budget.** The ceiling guards the evening's job; the history backfill is not the evening's job, and charging the two against each other is what once made the backfill look like a two-day procedure. Its calls are still recorded, because what a run cost is worth knowing about every run. The run says so in the store rather than being recognised by its stage name, which would put the exception in the query rather than in the record.
 
 ## Store configuration
 

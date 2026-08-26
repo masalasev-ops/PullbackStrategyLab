@@ -1,0 +1,34 @@
+@page "/"
+@using PullbackStrategyLab.Web.Shell
+@model IndexModel
+@{
+    ViewData["Title"] = "The lab";
+}
+@*
+    The front door. It is the shell itself rather than a redirect to the watchlist, because the
+    watchlist is empty until 4.1 and a front door that lands on an empty screen tells a reader
+    nothing about what they are looking at.
+*@
+<h1>PullbackStrategyLab</h1>
+<p class="lede">A paper-trading laboratory that tests two mirror-image price patterns on US
+   equities every night, records every setup it flags whether or not it trades it, and improves
+   the selection rules from that record. No real money, ever.</p>
+
+<h2>The screens</h2>
+<ul class="screens">
+    @foreach (NavigationItem item in Navigation.Items)
+    {
+        <li>
+            <a href="@item.Path">@item.Title</a>
+            <span class="what">@item.What</span>
+            <span class="when">checkpoint @item.ArrivesAt</span>
+        </li>
+    }
+</ul>
+
+<h2>The shared chart</h2>
+<p class="lede">Every chart in the lab is one component, built here so no later checkpoint
+   invents a second one. It has no bars until checkpoint 1.10 puts the store behind it, and it
+   says so rather than drawing an empty box.</p>
+
+@await Html.PartialAsync("_Candlestick", Model.Chart)

@@ -1,0 +1,24 @@
+@using PullbackStrategyLab.Web.Shell
+@model LabStatusView
+@*
+    The band across the top of every screen. It spans the whole page because the position cap
+    and the total risk are account-wide rather than per side.
+
+    Every figure the lab does not produce yet renders as a dash and the checkpoint that will
+    produce it, never as a zero. A zero reads as "none open" where the truth is "positions are
+    not a thing yet".
+*@
+@if (!Model.Reachable)
+{
+    <p class="down">The read surface is not answering: @Model.Unreachable. The pages render; the figures do not.</p>
+}
+
+<div class="band">
+    <div><b>Session</b>@Model.SessionText</div>
+    <div><b>Store</b>@Model.StoreText</div>
+    <div><b>Last run</b>@Model.LastRunText</div>
+    <div><b>Calls today</b>@Model.CallsText</div>
+    <div><b>Mood</b>@(Model.MarketMood ?? LabStatusView.Awaiting("2.5"))</div>
+    <div><b>Open</b>@(Model.PositionsOpen?.ToString() ?? LabStatusView.Awaiting("4.7"))</div>
+    <div><b>Risk at stake</b>@(Model.RiskAtStake?.ToString("0.00'%'") ?? LabStatusView.Awaiting("4.7"))</div>
+</div>

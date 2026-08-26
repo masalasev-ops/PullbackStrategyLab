@@ -1,0 +1,69 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Html
+@using System.Text.Encodings.Web
+@using PullbackStrategyLab.Web.Shell
+@model CandlestickGeometry
+@*
+    The one candlestick component. Every chart in the lab is this partial: the gallery at 2.9
+    draws hundreds small and the chart page at 1.10 draws one large, and a second implementation
+    would eventually disagree about which basis the prices are on, which is a disagreement
+    nobody can see in a picture.
+
+    SVG rather than a canvas and a script, because the page is server-rendered and a chart that
+    needs JavaScript to appear is a chart that does not appear in a saved page, in a print, or
+    with script off.
+    see: Pages are server-rendered with no build step, and any script is local rather than fetched
+
+    The geometry arrives computed. This file positions nothing it was not handed.
+
+    SVG's own <text> element is written through a helper below, because Razor claims that tag
+    name for switching out of a code block and will not let it carry attributes.
+*@
+<svg class="candles" width="@Model.Width" height="@Model.Height"
+     viewBox="0 0 @Model.Width @Model.Height" role="img"
+     aria-label="@(Model.IsEmpty ? "No bars to draw" : $"{Model.Candles.Count} sessions")">
+
+    @if (Model.IsEmpty)
+    {
+        @Label("empty", Model.Width / 2.0, Model.Height / 2.0, "middle", "no bars for this window")
+    }
+    else
+    {
+        foreach (PriceTick tick in Model.PriceTicks)
+        {
+            <line class="grid" x1="0" y1="@F(tick.Y)" x2="@F(Model.PlotWidth)" y2="@F(tick.Y)" />
+            @Label("axis", Model.PlotWidth + 6, tick.Y + 3.5, "start", tick.Price.ToString("0.##", CultureInfo.InvariantCulture))
+        }
+
+        foreach (CandleGeometry candle in Model.Candles)
+        {
+            <g class="@(candle.Up ? "up" : "down")">
+                <line class="wick" x1="@F(candle.Centre)" y1="@F(candle.HighY)" x2="@F(candle.Centre)" y2="@F(candle.LowY)" />
+                <rect class="body" x="@F(candle.Centre - (candle.BodyWidth / 2))" y="@F(candle.BodyTop)"
+                      width="@F(candle.BodyWidth)" height="@F(candle.BodyHeight)" />
+            </g>
+        }
+
+        int line = 0;
+        foreach (AverageGeometry average in Model.Averages)
+        {
+            line++;
+            <polyline class="average a@(line)" points="@average.Points" fill="none">
+                <title>@average.Name</title>
+            </polyline>
+        }
+    }
+</svg>
+
+@functions {
+    // Two decimals, invariant. An SVG coordinate written under a comma-decimal culture is a
+    // coordinate the browser reads as two numbers, and the chart silently falls apart.
+    private static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    // One SVG text element, with its content encoded. Written here rather than as markup
+    // because Razor owns the <text> tag name.
+    private static IHtmlContent Label(string cssClass, double x, double y, string anchor, string content) =>
+        new HtmlString(string.Create(
+            CultureInfo.InvariantCulture,
+            $"""<text class="{cssClass}" x="{F(x)}" y="{F(y)}" text-anchor="{anchor}">{HtmlEncoder.Default.Encode(content)}</text>"""));
+}

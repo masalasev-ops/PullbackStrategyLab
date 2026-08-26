@@ -1,0 +1,266 @@
+{
+  "tier": "CAPTURED",
+  "asOf": "2026-08-24",
+  "vendor": "EODHD",
+  "responses": [
+    {
+      "file": "exchange-symbol-list.json",
+      "endpoint": "exchange-symbol-list/US",
+      "query": "",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 7629806
+    },
+    {
+      "file": "bulk-end-of-day.json",
+      "endpoint": "eod-bulk-last-day/US",
+      "query": "date=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 6704237
+    },
+    {
+      "file": "bulk-splits.json",
+      "endpoint": "eod-bulk-last-day/US",
+      "query": "type=splits&date=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 1229
+    },
+    {
+      "file": "bulk-dividends.json",
+      "endpoint": "eod-bulk-last-day/US",
+      "query": "type=dividends&date=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 53978
+    },
+    {
+      "file": "history-IESC.json",
+      "endpoint": "eod/IESC.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29463
+    },
+    {
+      "file": "history-LITE.json",
+      "endpoint": "eod/LITE.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29419
+    },
+    {
+      "file": "history-PAYO.json",
+      "endpoint": "eod/PAYO.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 27329
+    },
+    {
+      "file": "history-AAPL.json",
+      "endpoint": "eod/AAPL.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30362
+    },
+    {
+      "file": "history-MSFT.json",
+      "endpoint": "eod/MSFT.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30349
+    },
+    {
+      "file": "history-NVDA.json",
+      "endpoint": "eod/NVDA.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30649
+    },
+    {
+      "file": "history-AMZN.json",
+      "endpoint": "eod/AMZN.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29973
+    },
+    {
+      "file": "history-GOOGL.json",
+      "endpoint": "eod/GOOGL.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30310
+    },
+    {
+      "file": "history-META.json",
+      "endpoint": "eod/META.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30078
+    },
+    {
+      "file": "history-TSLA.json",
+      "endpoint": "eod/TSLA.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29855
+    },
+    {
+      "file": "history-JPM.json",
+      "endpoint": "eod/JPM.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30094
+    },
+    {
+      "file": "history-XOM.json",
+      "endpoint": "eod/XOM.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30428
+    },
+    {
+      "file": "history-JNJ.json",
+      "endpoint": "eod/JNJ.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30105
+    },
+    {
+      "file": "history-WMT.json",
+      "endpoint": "eod/WMT.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30368
+    },
+    {
+      "file": "history-PG.json",
+      "endpoint": "eod/PG.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30202
+    },
+    {
+      "file": "history-KO.json",
+      "endpoint": "eod/KO.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29072
+    },
+    {
+      "file": "history-PFE.json",
+      "endpoint": "eod/PFE.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29189
+    },
+    {
+      "file": "history-T.json",
+      "endpoint": "eod/T.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29175
+    },
+    {
+      "file": "history-F.json",
+      "endpoint": "eod/F.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29205
+    },
+    {
+      "file": "history-BAC.json",
+      "endpoint": "eod/BAC.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29043
+    },
+    {
+      "file": "history-CSCO.json",
+      "endpoint": "eod/CSCO.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29457
+    },
+    {
+      "file": "history-INTC.json",
+      "endpoint": "eod/INTC.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29183
+    },
+    {
+      "file": "history-AMD.json",
+      "endpoint": "eod/AMD.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29850
+    },
+    {
+      "file": "history-COIN.json",
+      "endpoint": "eod/COIN.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29763
+    },
+    {
+      "file": "history-PLTR.json",
+      "endpoint": "eod/PLTR.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30065
+    },
+    {
+      "file": "history-SOFI.json",
+      "endpoint": "eod/SOFI.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 28819
+    },
+    {
+      "file": "history-RIVN.json",
+      "endpoint": "eod/RIVN.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 28868
+    },
+    {
+      "file": "history-CCL.json",
+      "endpoint": "eod/CCL.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29168
+    },
+    {
+      "file": "history-NCLH.json",
+      "endpoint": "eod/NCLH.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 28680
+    },
+    {
+      "file": "history-HOOD.json",
+      "endpoint": "eod/HOOD.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 29426
+    },
+    {
+      "file": "history-SPY.json",
+      "endpoint": "eod/SPY.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30414
+    },
+    {
+      "file": "history-QQQ.json",
+      "endpoint": "eod/QQQ.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30451
+    },
+    {
+      "file": "history-IWM.json",
+      "endpoint": "eod/IWM.US",
+      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "capturedAt": "2026-08-25T19:52:38.559Z",
+      "bytes": 30482
+    }
+  ]
+}

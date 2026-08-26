@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PullbackStrategyLab.Core\PullbackStrategyLab.Core.csproj" />
+    <ProjectReference Include="..\PullbackStrategyLab.Data\PullbackStrategyLab.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
