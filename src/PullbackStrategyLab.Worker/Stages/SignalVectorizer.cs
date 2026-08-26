@@ -42,7 +42,7 @@ public sealed class SignalVectorizer
     public const int HistorySessions = 170;
 
     /// <summary>The window the squeeze test compares against, and the one the contraction test uses.</summary>
-    public const int GapWindow = 20;
+    public const int GapWindow = AverageGap.Window;
 
     /// <summary>
     /// Active signals this stage cannot freeze yet, each against the checkpoint that supplies what
@@ -502,63 +502,34 @@ public sealed class SignalVectorizer
         values[name] = StoreText.RatioToStorageText((close - average) / average);
     }
 
+    /// <summary>
+    /// The mean gap between the two longer averages across the window.
+    ///
+    /// The arithmetic lives in Core because `averages-squeezing` decides on the same series and the
+    /// check that decides and the signal that records the decision have to be one number.
+    /// </summary>
     private static string? GapAverage(IReadOnlyList<StoredDailyBar> bars)
     {
         decimal[] closes = [.. bars.Select(b => b.AdjustedClose)];
 
-        IReadOnlyList<decimal?> medium = Averages.ExponentialSeries(closes, 21, IndicatorEngine.WarmupSessions);
-        IReadOnlyList<decimal?> longer = Averages.ExponentialSeries(closes, 50, IndicatorEngine.WarmupSessions);
+        IReadOnlyList<decimal> gaps = AverageGap.Series(
+            closes, IndicatorEngine.EmaMediumPeriod, IndicatorEngine.EmaLongPeriod, IndicatorEngine.WarmupSessions);
 
-        var gaps = new List<decimal>();
-        for (int i = 0; i < closes.Length; i++)
-        {
-            if (medium[i] is not decimal m || longer[i] is not decimal l || l == 0m)
-            {
-                continue;
-            }
-
-            gaps.Add((m - l) / l);
-        }
-
-        if (gaps.Count < GapWindow)
-        {
-            return null;
-        }
-
-        decimal total = 0m;
-        for (int i = gaps.Count - GapWindow; i < gaps.Count; i++)
-        {
-            total += gaps[i];
-        }
-
-        return StoreText.RatioToStorageText(total / GapWindow);
+        return AverageGap.Average(gaps) is decimal average ? StoreText.RatioToStorageText(average) : null;
     }
 
-    private static string? ListingAge(SqliteConnection connection, string ticker, DateOnly asOf)
-    {
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT first_seen FROM security WHERE ticker = @ticker";
-        command.Parameters.AddWithValue("@ticker", ticker);
-
-        if (command.ExecuteScalar() is not string firstSeen)
-        {
-            return null;
-        }
-
-        // Trading sessions rather than calendar days, because the floor it feeds is stated in
-        // sessions and the two differ by two fifths.
-        using SqliteCommand sessions = connection.CreateCommand();
-        sessions.CommandText = """
-            SELECT COUNT(DISTINCT bar_date) FROM daily_bar
-             WHERE ticker = @ticker AND bar_date >= @first_seen AND bar_date <= @as_of
-            """;
-        sessions.Parameters.AddWithValue("@ticker", ticker);
-        sessions.Parameters.AddWithValue("@first_seen", firstSeen);
-        sessions.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-
-        long count = Convert.ToInt64(sessions.ExecuteScalar(), CultureInfo.InvariantCulture);
-        return count.ToString(CultureInfo.InvariantCulture);
-    }
+    /// <summary>
+    /// The listing age this setup's decision rested on, in sessions.
+    ///
+    /// Delegated rather than computed, because the short side's `tradable-shortable` check decides
+    /// on this number and a signal that froze a different one would describe a decision nobody made.
+    /// It did: this counted sessions since `security.first_seen`, which is when the universe build
+    /// first saw the ticker, so it read 1 for every name on the fixture's only night while the check
+    /// had cleared a floor of ninety.
+    /// </summary>
+    private static string? ListingAge(SqliteConnection connection, string ticker, DateOnly asOf) =>
+        DailyBarReader.SessionsStored(connection, ticker, asOf)
+            .ToString(CultureInfo.InvariantCulture);
 
     private static void Insert(
         SqliteConnection connection,

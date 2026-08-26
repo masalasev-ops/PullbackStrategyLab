@@ -45,9 +45,16 @@ public sealed class FixtureInputsCheck
     {
         // Every synthetic vendor the suite builds. Counted from the source rather than declared,
         // because a number kept by hand beside a growing suite is a number that stops being true.
-        int authored = RepositoryLayout.SourceFiles
+        int vendors = RepositoryLayout.SourceFiles
             .Where(f => f.Contains("PullbackStrategyLab.Tests", StringComparison.Ordinal))
             .Sum(f => Occurrences(RepositoryLayout.Read(f), "new FakeMarketDataVendor("));
+
+        // And the gate boundary cases, which are authored inputs of a second kind: constructed
+        // evidence rather than a constructed vendor response. Counted here rather than left out,
+        // because this artefact is what answers "what does the lab's verification rest on", and an
+        // authored input the report cannot see is one nobody weighs.
+        int gateCases = GateCases.All.Count;
+        int authored = vendors + gateCases;
 
         Directory.CreateDirectory(RepositoryLayout.Artifacts);
         File.WriteAllText(
@@ -59,8 +66,11 @@ public sealed class FixtureInputsCheck
                         $"verbatim vendor responses over {endpointsCovered} endpoint(s), held with the query and instant of each",
                         "the vendor's own behaviour, which is the half a fixture written here cannot supply"),
                     new InputTier("AUTHORED", authored,
-                        "synthetic vendor responses built in the suite",
-                        "cases the captured day does not contain, at the cost of encoding this author's belief about the vendor"),
+                        $"{vendors} synthetic vendor response(s) built in the suite and {gateCases} gate boundary "
+                        + "case(s), two per gate, either side of its own threshold",
+                        "cases the captured day does not contain: the vendor cases at the price of encoding this "
+                        + "author's belief about the vendor, the gate cases at the price of encoding this author's "
+                        + "reading of the gate, and neither one saying anything about the market"),
                 ],
                 uncovered),
                 Json));

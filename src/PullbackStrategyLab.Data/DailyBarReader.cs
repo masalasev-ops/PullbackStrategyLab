@@ -106,6 +106,42 @@ public sealed class DailyBarReader
     }
 
     /// <summary>
+    /// How many sessions of this ticker the store holds at or before <paramref name="asOf"/>.
+    ///
+    /// This is what the lab can see of a listing's age, and the two are the same number where it
+    /// matters. The backfill takes a name's whole history in one call whatever its depth, so a
+    /// genuinely recent listing has exactly as many stored sessions as it has traded; an old name
+    /// saturates at the depth that was fetched, which is years above any floor stated in sessions.
+    ///
+    /// <b>Not the same as the age of the lab's own record of the name.</b> <c>security.first_seen</c>
+    /// is when the universe build first saw a ticker, so counting from it reads 1 for every name on
+    /// the lab's first night and 2 on its second, whatever those names have been doing since 1968.
+    /// The short side's listing-age floor asks about the stock, so it is counted here.
+    ///
+    /// One implementation, because the check that decides and the signal that freezes the decision
+    /// have to be the same number. They were not: the check read a window of bars and the signal
+    /// counted from <c>first_seen</c>, and the frozen evidence said 1 where the check had cleared 90.
+    /// </summary>
+    public static int SessionsStored(SqliteConnection connection, string ticker, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(DISTINCT bar_date) FROM daily_bar
+             WHERE ticker = @ticker
+               AND bar_date <= @as_of
+               AND observed_at <= @observed_before
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+
+        return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
     /// The latest observation of every ticker's bar on one date, made at or before
     /// <paramref name="observedBefore"/>. One query for the whole market rather than one per
     /// name: the ingestor compares a few thousand bars a night and a query each would make the

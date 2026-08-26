@@ -44,6 +44,7 @@ public static class Program
         builder.Services.AddSingleton<SectorResolver>();
         builder.Services.AddSingleton<ThemeClusterer>();
         builder.Services.AddSingleton<LongSetupDetector>();
+        builder.Services.AddSingleton<ShortSetupDetector>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
 
@@ -78,6 +79,7 @@ public static class Program
                 SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
                 ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
                 LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
+                ShortSetupDetector.Name => host.Services.GetRequiredService<ShortSetupDetector>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -127,6 +129,7 @@ public static class Program
         ThemeClusterer.Name,
         RegimeLabeler.Name,
         LongSetupDetector.Name,
+        ShortSetupDetector.Name,
         SignalVectorizer.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,

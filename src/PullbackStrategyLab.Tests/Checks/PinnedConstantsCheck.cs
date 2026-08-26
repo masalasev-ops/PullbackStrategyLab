@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -152,6 +154,58 @@ public sealed class PinnedConstantsCheck
                 true, "the configured default"));
         }
 
+        // The detection thresholds, both sides. Every one of these is a number the document states
+        // and a constant the detectors decide on, and five of them are marked "phase 2 count check",
+        // which means 2.11 may move them once. A threshold moved in the code and not in the table,
+        // or the other way round, is exactly what that checkpoint is most likely to produce.
+        // The same table row as the universe floor above, pinned a second time against a different
+        // constant. Both are $5 and both are stated by that one row, and the two drifting apart
+        // would mean the screen admits a name the detector will not trade or the reverse.
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Price floor, the detectors' side",
+            ParameterMoney(architecture, "Price floor, both sides"), LongPullbackRules.PriceFloor,
+            "LongPullbackRules.PriceFloor"));
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, short",
+            ParameterMoney(architecture, "Liquidity floor, short"), ShortPullbackRules.LiquidityFloor,
+            "ShortPullbackRules.LiquidityFloor"));
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Market cap floor, short",
+            ParameterMoney(architecture, "Market cap floor, short"), ShortPullbackRules.MarketCapFloor,
+            "ShortPullbackRules.MarketCapFloor"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Listing age floor, short",
+            ParameterCell(architecture, "Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
+            ShortPullbackRules.MinimumSessionsListed == 90, "ShortPullbackRules.MinimumSessionsListed"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Daily range floor",
+            ParameterCell(architecture, "Daily range floor").Contains("5%", StringComparison.Ordinal),
+            LongPullbackRules.DailyRangeFloor == 0.05m, "LongPullbackRules.DailyRangeFloor"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Pullback shape",
+            ParameterCell(architecture, "Pullback shape").Contains("2 to 7 bars, retrace at most 40%", StringComparison.Ordinal),
+            LongPullbackRules.MinimumPullbackBars == 2
+                && LongPullbackRules.MaximumPullbackBars == 7
+                && LongPullbackRules.MaximumRetrace == 0.40m,
+            "LongPullbackRules.MinimumPullbackBars, MaximumPullbackBars and MaximumRetrace"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger reachability",
+            ParameterCell(architecture, "Trigger reachability").Contains("Within 1.5 daily ranges", StringComparison.Ordinal),
+            LongPullbackRules.TriggerReachRanges == 1.5m, "LongPullbackRules.TriggerReachRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Give-up distance cap",
+            ParameterCell(architecture, "Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
+            LongPullbackRules.GiveUpRanges == 0.5m && ShortPullbackRules.GiveUpRanges == 0.5m,
+            "LongPullbackRules.GiveUpRanges and ShortPullbackRules.GiveUpRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Cluster threshold",
+            ParameterCell(architecture, "Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
+            LongPullbackRules.ClusterThreshold == 2, "LongPullbackRules.ClusterThreshold"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Squeeze test",
+            ParameterCell(architecture, "Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
+            ShortPullbackRules.SqueezeWindowSessions == 20 && AverageGap.Window == 20,
+            "ShortPullbackRules.SqueezeWindowSessions and AverageGap.Window"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Contraction test",
+            ParameterCell(architecture, "Contraction test").Contains("Against the 20-day average range", StringComparison.Ordinal),
+            IndicatorEngine.RangeWindow == 20, "IndicatorEngine.RangeWindow"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Scan breadth",
+            ParameterCell(architecture, "Scan breadth").Contains("Top 50 per scan", StringComparison.Ordinal),
+            ScanEngine.Breadth == 50, "ScanEngine.Breadth"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Month-mover lookback",
+            ParameterCell(architecture, "Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
+            ScanEngine.MonthWindow == 20, "ScanEngine.MonthWindow"));
+
         IReadOnlyList<IReadOnlyList<string>> parameters = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
 
         foreach (Pin pin in pins)
@@ -161,7 +215,14 @@ public sealed class PinnedConstantsCheck
 
         // Named so the number moves when a parameter gains a constant, rather than being a
         // literal somebody has to remember to decrement.
-        string[] pinnedParameters = ["Daily API ceiling", "Price floor", "Liquidity floor, long"];
+        string[] pinnedParameters =
+        [
+            "Daily API ceiling", "Price floor", "Liquidity floor, long",
+            "Liquidity floor, short", "Market cap floor, short",
+            "Listing age floor, short", "Daily range floor", "Pullback shape", "Trigger reachability",
+            "Give-up distance cap", "Cluster threshold", "Squeeze test", "Contraction test",
+            "Scan breadth", "Month-mover lookback",
+        ];
         coverage.OutOfScope(
             "rows of the authored parameters table with no code constant yet",
             parameters.Count - pinnedParameters.Length,

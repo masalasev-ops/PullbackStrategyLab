@@ -243,7 +243,30 @@ public sealed class PhaseReplay : IDisposable
         Record("tiers.falling", tiers.Falling);
         Record("tiers.noIndicators", tiers.NoIndicators);
 
-        // 10. The market mood, which reads the trackers and the ladder counts the stage above wrote.
+        // 10. The sector lookup, which three later stages read and which used to run after all
+        //     three of them. RUNBOOK scheduled it at 19:00 while `clusters` at 18:15 and both
+        //     detectors at 18:20 read what it writes, so on a live night a name newly surfaced by a
+        //     scan had no industry when the cluster count was taken and no market capitalisation
+        //     when `tradable-shortable` decided. Neither one errors: the cluster reads nought and
+        //     the short check fails for want of a figure. This replay ran it first and so could
+        //     never have shown it, which is the failure the stage order here exists to prevent.
+        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
+            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
+        Record("sectors.unresolved", sectors.Unresolved);
+        Record("sectors.asked", sectors.Asked);
+        Record("sectors.resolved", sectors.Resolved);
+
+        // 11. The cluster count, then the market mood, then the two detectors.
+        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
+
+        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
+        Record("clusters.hits", clusters.Hits);
+        Record("clusters.withIndustry", clusters.WithIndustry);
+        Record("clusters.counted", clusters.Counted);
+        Record("clusters.clustered", clusters.Clustered);
+
         RegimeResult regime = new RegimeLabeler(_connections, Logger(), _clock, _options).Label(AsOf);
 
         stages.Add(new StageRun(RegimeLabeler.Name, 0, regime.RowsWritten, regime.Outcome.ToStorageText()));
@@ -255,23 +278,6 @@ public sealed class PhaseReplay : IDisposable
         Record("regime.breadthScore", regime.BreadthScore);
         measurements.Add(new Measurement("regime.label", regime.Label));
 
-        // 11. The sector lookup, the cluster count, and the long detector.
-        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
-            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
-        Record("sectors.unresolved", sectors.Unresolved);
-        Record("sectors.asked", sectors.Asked);
-        Record("sectors.resolved", sectors.Resolved);
-
-        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
-
-        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
-        Record("clusters.hits", clusters.Hits);
-        Record("clusters.withIndustry", clusters.WithIndustry);
-        Record("clusters.counted", clusters.Counted);
-        Record("clusters.clustered", clusters.Clustered);
-
         DetectResult detected = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
 
         stages.Add(new StageRun(LongSetupDetector.Name, 0, detected.RowsWritten, detected.Outcome.ToStorageText()));
@@ -280,6 +286,15 @@ public sealed class PhaseReplay : IDisposable
         Record("detect.long.belowFloor", detected.BelowFloor);
         Record("detect.long.recorded", detected.Recorded);
         Record("detect.long.passedAll", detected.PassedAll);
+
+        DetectResult shorted = new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        stages.Add(new StageRun(ShortSetupDetector.Name, 0, shorted.RowsWritten, shorted.Outcome.ToStorageText()));
+        Record("detect.short.members", shorted.Members);
+        Record("detect.short.examined", shorted.Examined);
+        Record("detect.short.belowFloor", shorted.BelowFloor);
+        Record("detect.short.recorded", shorted.Recorded);
+        Record("detect.short.passedAll", shorted.PassedAll);
 
         // 12. The signal freeze, over one authored setup.
         //
@@ -393,25 +408,31 @@ public sealed class PhaseReplay : IDisposable
     /// </summary>
     private IReadOnlyList<Measurement> CheckSidednessFigures()
     {
-        string replay = Path.Combine(RepositoryLayout.Artifacts, "replay.db");
         var figures = new List<Measurement>();
 
         using SqliteConnection connection = _connections.OpenReadOnly();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = "SELECT direction, check_results FROM setup";
 
-        var passes = new Dictionary<string, int>(StringComparer.Ordinal);
-        var fails = new Dictionary<string, int>(StringComparer.Ordinal);
+        // Keyed by direction and name rather than by name, because five of the twenty gate ids
+        // appear on both lists and a dictionary keyed on the id alone would add a long `exit-tight`
+        // pass to a short `exit-tight` fail and report the pair as two-sided. That is the pooling
+        // rule arriving in the one place it is easiest to break by accident.
+        // see: Long and short are never pooled into one figure
+        var passes = new Dictionary<(string Direction, string Name), int>();
+        var fails = new Dictionary<(string Direction, string Name), int>();
 
         using (SqliteDataReader reader = command.ExecuteReader())
         {
             while (reader.Read())
             {
+                string direction = reader.GetString(0);
+
                 foreach (CheckResult result in
                          JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), CheckJson) ?? [])
                 {
-                    Dictionary<string, int> side = result.Passed ? passes : fails;
-                    side[result.Name] = side.GetValueOrDefault(result.Name) + 1;
+                    Dictionary<(string, string), int> side = result.Passed ? passes : fails;
+                    side[(direction, result.Name)] = side.GetValueOrDefault((direction, result.Name)) + 1;
                 }
             }
         }
@@ -436,24 +457,55 @@ public sealed class PhaseReplay : IDisposable
             }
         }
 
-        var oneSided = new List<string>();
+        // The authored boundary cases, evaluated through the shipped rules and kept in a bucket of
+        // their own. They are what answers whether both branches of a gate work; they say nothing
+        // about the market and are never added to the counts above, which are the detectors' rows.
+        // see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+        var authored = new Dictionary<(string Direction, string Name), (bool Pass, bool Fail)>();
 
-        foreach (string name in SetupChecks.Long)
+        foreach (GateCases.GateCase gateCase in GateCases.All)
         {
-            int passed = passes.GetValueOrDefault(name);
-            int failed = fails.GetValueOrDefault(name);
+            CheckResult verdict = GateCases.Evaluate(gateCase)
+                .Single(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
 
-            figures.Add(new Measurement($"check.long.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
-            figures.Add(new Measurement($"check.long.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(gateCase.Id, verdict.Passed ? "pass" : "fail"));
 
-            if (passed + failed > 0 && (passed == 0 || failed == 0))
-            {
-                oneSided.Add(name);
-            }
+            (bool pass, bool fail) = authored.GetValueOrDefault((gateCase.Direction, gateCase.Gate));
+            authored[(gateCase.Direction, gateCase.Gate)] =
+                (pass || verdict.Passed, fail || !verdict.Passed);
         }
 
-        figures.Add(new Measurement("check.long.oneSided",
-            oneSided.Count == 0 ? "none" : string.Join(" ", oneSided.Order(StringComparer.Ordinal))));
+        foreach ((string direction, IReadOnlyList<string> gates) in
+                 new[] { ("long", SetupChecks.Long), ("short", SetupChecks.Short) })
+        {
+            var oneSided = new List<string>();
+
+            foreach (string name in gates)
+            {
+                int passed = passes.GetValueOrDefault((direction, name));
+                int failed = fails.GetValueOrDefault((direction, name));
+                (bool authoredPass, bool authoredFail) = authored.GetValueOrDefault((direction, name));
+
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
+
+                // Sidedness asks whether anything has ever exercised both branches, so it reads both
+                // populations. The two counts above stay separate, so a reader can still see that a
+                // gate the market never passed was passed by a case built to pass it.
+                bool everPassed = passed > 0 || authoredPass;
+                bool everFailed = failed > 0 || authoredFail;
+
+                if (!everPassed || !everFailed)
+                {
+                    oneSided.Add(name);
+                }
+            }
+
+            figures.Add(new Measurement($"check.{direction}.oneSided",
+                oneSided.Count == 0 ? "none" : string.Join(" ", oneSided.Order(StringComparer.Ordinal))));
+        }
 
         return figures;
     }

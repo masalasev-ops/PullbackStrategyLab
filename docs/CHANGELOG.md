@@ -495,3 +495,18 @@ Why:  Second time the distinction surfaced and it was nowhere in the corpus. Add
 Was:  | 2.7 | ShortSetupDetector, ten checks | Same. Plus: no setup row carries a direction its detector does not own |
 Now:  The same row naming the degeneracy proof and the authored boundary suite, with the done condition stating both, the one-sidedness condition, the `AUTHORED` marking, and `reached-ceiling`'s third clause out of scope naming 4.4.
 Why:  2.7 is the first checkpoint at which all twenty gates exist, so it is the first that can assert anything over the gate list as a list. It is also where the one-sidedness raised at 2.6 is closable: forty authored cases give every gate a pass and a fail at no vendor call, where the remedy priced at 2.6 would have left eight gates with three results each instead of two.
+
+### 2026-08-26 — RUNBOOK.md — cites Two directions are tested, with separate detectors, separate management and separate scoring
+Was:  | 18:20 | `detect-long`, then the short detector | 0 |
+Now:  | 18:20 | `detect-long`, then `detect-short` | 0 |
+Why:  The stage exists and has a verb. An operator following this file at 18:20 needed the name they would type, and "the short detector" was the placeholder standing in until there was one.
+
+### 2026-08-26 — RUNBOOK.md — cites The cluster grouping key is industry, not sector
+Was:  | 19:00 | `sectors`, resolved once per name and cached | ~50 |, sitting between the watchlist at 18:40 and the minute bars at 20:30.
+Now:  The same stage at 18:12, between `tiers` and `clusters`, with a line saying it was moved and why.
+Why:  Three stages read what it writes and all three ran before it. `clusters` at 18:15 counts same-industry names and `tradable-shortable` at 18:20 reads the market capitalisation, so on a live night a name newly surfaced by a scan had neither when they ran. Neither consumer errors on a missing sector: the cluster count reads nought and the short check fails for want of a figure, and both look like an ordinary quiet night. The fixture replay could never have shown it, because the replay ran the lookup first. The stage order there is now asserted against this table rather than kept in step by hand.
+
+### 2026-08-26 — RUNBOOK.md — cites Components are named, not coded
+Was:  | 17:30 | bulk daily bars | 100 |
+Now:  | 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
+Why:  The row described the work and not the verb an operator types at 17:30, which is the same gap the short detector's row had. Found by the check that asserts the replay's stage order against this table: a row naming no verb is a row the schedule cannot be read from.

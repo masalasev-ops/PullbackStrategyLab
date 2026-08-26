@@ -91,6 +91,20 @@ public sealed class CheckCompletenessCheck
             .Examined("setup rows read back from the replay store", rowsChecked)
             .Examined("check results across those rows", setups.Sum(s => s.Names.Count));
 
+        // The one gate that runs narrower than the document words it. Recorded here rather than in
+        // the PROGRESS entry alone, because a later session reading a passing `reached-ceiling` has
+        // no other way to know which of its three clauses were tested.
+        coverage.OutOfScope(
+            "clauses of the short reached-ceiling gate that cannot run yet",
+            1,
+            CheckCoverage.OutOfScopeReason.UntilCheckpoint(
+                "4.4",
+                "the third clause compares the price against the average price anchored to the last swing high, "
+                + "which is a volume-weighted average over minute bars and is what VwapEngine computes at 4.4. The "
+                + "check runs its 21-day and 50-day clauses until then. Approximating the anchored level from daily "
+                + "bars would put a plausible wrong number inside the check that decides whether the bounce reached "
+                + "its ceiling"));
+
         if (setups.Count == 0)
         {
             coverage.NotExamined("setup rows read back from the replay store", 1,

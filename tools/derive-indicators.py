@@ -67,7 +67,8 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
-        python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker>
+        python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker> [--short]
+        python tools/derive-indicators.py --gates   <gate-cases.json>
 """
 
 import datetime
@@ -917,6 +918,22 @@ def checks_main(argv):
     store, as_of, ticker = argv[0], argv[1], argv[2]
     connection = sqlite3.connect(store)
 
+    # The short list is its own restatement rather than the long one with the signs flipped,
+    # because three of its ten gates are not sign flips and one shared shape reads a different
+    # average. Flipping would agree with the detector by construction on exactly the checks the
+    # detector is most likely to have got wrong.
+    if "--short" in argv:
+        verdicts = short_checks(connection, as_of, ticker)
+        if verdicts is None:
+            print("%s: short of the warm-up" % ticker, file=sys.stderr)
+            return 1
+
+        print("\n%s  as of %s  short" % (ticker, as_of))
+        for name in SHORT_ORDER:
+            print("  setup.%s-%s-short.%-18s %s"
+                  % (as_of, ticker, name, "pass" if verdicts[name] else "fail"))
+        return 0
+
     bars = window(connection, ticker, as_of, WARMUP)
     if len(bars) < WARMUP or bars[-1]["date"] != as_of:
         print("%s: %d sessions, short of the warm-up" % (ticker, len(bars)), file=sys.stderr)
@@ -997,7 +1014,302 @@ def checks_main(argv):
     return 0
 
 
+# --- the short gates, and the authored boundary cases ------------------------------------
+
+SHORT_LIQUIDITY_FLOOR = Decimal("50000000")
+MARKET_CAP_FLOOR = Decimal("2000000000")
+LISTING_AGE_FLOOR = 90
+SQUEEZE_WINDOW = 20
+CEILING_REACH = Decimal("0.5")
+
+
+def ema_series(values, period, warmup):
+    """The average at every session the warm-up can support, absent before it.
+
+    Seeded once and marched forward, which is what the engine does. Reseeding on each prefix
+    would give a different number for every session but the last, and the difference decays
+    slowly enough to be invisible.
+    """
+    out = [None] * len(values)
+    if len(values) < warmup:
+        return out
+
+    seed = sum(values[:period]) / period
+    multiplier = Decimal(2) / (period + 1)
+    value = seed
+    for i in range(period, len(values)):
+        value = value + (values[i] - value) * multiplier
+        if i >= warmup - 1:
+            out[i] = value
+    return out
+
+
+def gap_series(closes, warmup):
+    """The 21-to-50 distance as a signed fraction of the 50-day, at every session it exists."""
+    medium = ema_series(closes, 21, warmup)
+    longer = ema_series(closes, 50, warmup)
+    return [
+        (m - l) / l
+        for m, l in zip(medium, longer)
+        if m is not None and l is not None and l != 0
+    ]
+
+
+def squeeze_ratio(closes, warmup):
+    """Today's distance over its own mean distance across the window. Absolute, not signed.
+
+    In a downtrend the 21-day sits below the 50-day, so a signed comparison would read "narrower"
+    as "further below" and invert the rule on the one side this check runs.
+    """
+    gaps = gap_series(closes, warmup)
+    if len(gaps) < SQUEEZE_WINDOW:
+        return None
+    tail = gaps[-SQUEEZE_WINDOW:]
+    average = sum(abs(g) for g in tail) / SQUEEZE_WINDOW
+    if average == 0:
+        return None
+    return abs(gaps[-1]) / average
+
+
+SHORT_ORDER = ("tradable-shortable", "moves-enough", "downtrend", "averages-squeezing", "thrust",
+               "bounce-shape", "reached-ceiling", "no-reclaim", "exit-tight", "cluster")
+
+
+def short_checks(connection, as_of, ticker):
+    """The ten short checks, restated from the gate list rather than read from the detector.
+
+      tradable-shortable  price above $5, cap above $2B, $50M median turnover, 90 sessions listed.
+      moves-enough        typical daily range of 5% or more. Identical to the long side.
+      downtrend           price below the 9-day, which is below the 21-day, below the 50-day.
+      averages-squeezing  the 21-to-50 gap narrower than its own average over 20 sessions.
+      thrust              appeared on a downward mover scan within the last ten sessions.
+      bounce-shape        two to seven sessions of rising, recovering no more than 40% of the drop.
+      reached-ceiling     within half a daily range of the 21-day or the 50-day average. The third
+                          clause, the average price anchored to the last swing high, needs minute
+                          bars and arrives at 4.4; it is not approximated here either.
+      no-reclaim          no daily close above the 50-day average during the bounce.
+      exit-tight          entry to give-up distance no more than half the daily range.
+      cluster             two or more same-industry names on the same scan the same night.
+    """
+    bars = window(connection, ticker, as_of, WARMUP + RANGE_WINDOW)
+    if len(bars) < WARMUP or bars[-1]["date"] != as_of:
+        return None
+
+    adj = adjusted(bars)
+    figures = derive(bars[-WARMUP:])
+    closes = [b["close"] for b in adj]
+    close = closes[-1]
+    bound = as_of + "T23:59:59.999Z"
+
+    cap = connection.execute(
+        "SELECT market_cap FROM security"
+        " WHERE ticker = ? AND market_cap IS NOT NULL AND sector_resolved_at IS NOT NULL"
+        "   AND sector_resolved_at <= ?",
+        (ticker, bound)).fetchone()
+
+    listed = connection.execute(
+        "SELECT COUNT(DISTINCT bar_date) FROM daily_bar"
+        " WHERE ticker = ? AND bar_date <= ? AND observed_at <= ?",
+        (ticker, as_of, bound)).fetchone()[0]
+
+    hit = connection.execute(
+        "SELECT as_of, scan, cluster_count FROM scan_hit"
+        " WHERE ticker = ? AND as_of <= ? AND scan IN ('decliner','gapdown','laggard')"
+        " ORDER BY as_of DESC, rank LIMIT 1",
+        (ticker, as_of)).fetchone()
+
+    verdicts = {}
+    verdicts["tradable-shortable"] = (
+        cap is not None
+        and figures["dollar_volume_median_20"] >= SHORT_LIQUIDITY_FLOOR
+        and close > PRICE_FLOOR
+        and Decimal(cap[0]) > MARKET_CAP_FLOOR
+        and listed >= LISTING_AGE_FLOOR)
+
+    verdicts["moves-enough"] = figures["adr_20"] >= RANGE_FLOOR
+
+    short_, medium, long_ = (ema(closes[-WARMUP:], p) for p in EMA_PERIODS)
+    verdicts["downtrend"] = close < short_ < medium < long_
+
+    ratio = squeeze_ratio(closes, WARMUP)
+    verdicts["averages-squeezing"] = ratio is not None and ratio < 1
+
+    if hit is None:
+        verdicts["thrust"] = False
+    else:
+        sessions_since = sum(1 for b in bars if b["date"] > hit[0] and b["date"] <= as_of)
+        verdicts["thrust"] = sessions_since <= THRUST_WINDOW
+
+    daily_range = figures["adr_20"] * bars[-1]["close"]
+    nearest = min(abs(close - medium), abs(close - long_))
+    verdicts["reached-ceiling"] = daily_range != 0 and nearest / daily_range <= CEILING_REACH
+
+    if hit is None:
+        for name in ("bounce-shape", "no-reclaim", "exit-tight"):
+            verdicts[name] = False
+    else:
+        thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
+        extreme_index = min(range(thrust_index, len(adj)), key=lambda i: adj[i]["low"])
+        extreme = adj[extreme_index]["low"]
+        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        bounce_bars = len(adj) - 1 - extreme_index
+
+        high = extreme if bounce_bars == 0 else max(
+            adj[i]["high"] for i in range(extreme_index + 1, len(adj)))
+        drop = origin - extreme
+        recovery = None if drop == 0 else (high - extreme) / drop
+
+        verdicts["bounce-shape"] = (
+            MIN_PULLBACK <= bounce_bars <= MAX_PULLBACK
+            and recovery is not None and 0 <= recovery <= MAX_RETRACE)
+
+        verdicts["no-reclaim"] = sum(
+            1 for i in range(extreme_index + 1, len(adj)) if adj[i]["close"] > long_) == 0
+
+        if bounce_bars == 0:
+            # No bounce means no entry and no give-up point. A distance of zero would clear the
+            # threshold, which is a tight stop on a trade that does not exist.
+            verdicts["exit-tight"] = False
+        else:
+            trigger = min(bars[i]["low"] for i in range(extreme_index + 1, len(bars)))
+            stop = max(bars[i]["high"] for i in range(extreme_index + 1, len(bars)))
+            verdicts["exit-tight"] = abs(trigger - stop) / daily_range <= GIVE_UP
+
+    cluster = None if hit is None else hit[2]
+    verdicts["cluster"] = (cluster or 0) >= CLUSTER_THRESHOLD
+
+    return verdicts
+
+
+def number(fields, key):
+    return None if key not in fields else Decimal(fields[key])
+
+
+def whole(fields, key):
+    return None if key not in fields else int(fields[key])
+
+
+def gate_verdict(direction, gate, f):
+    """One gate over one constructed evidence, restated from the document's wording.
+
+    A gate handed nothing fails. That is a rule rather than a convenience: an absent quantity has
+    not cleared a threshold, and the alternative is not an error but a pass, which is how a gate
+    ends up reading as easy to clear when it was never tested at all.
+    """
+    if direction == "long":
+        if gate == "tradable":
+            v, c = number(f, "medianDollarVolume"), number(f, "close")
+            return v is not None and c is not None and v >= LIQUIDITY_FLOOR and c > PRICE_FLOOR
+        if gate == "moves-enough":
+            a = number(f, "averageDailyRange")
+            return a is not None and a >= RANGE_FLOOR
+        if gate == "uptrend":
+            return f.get("ladderGrade") == "rising"
+        if gate == "thrust":
+            s = whole(f, "sessionsSinceThrust")
+            return s is not None and s <= THRUST_WINDOW
+        if gate == "dip-shape":
+            b, r = whole(f, "pullback.pullbackBars"), number(f, "pullback.retraceDepth")
+            return (b is not None and MIN_PULLBACK <= b <= MAX_PULLBACK
+                    and r is not None and 0 <= r <= MAX_RETRACE)
+        if gate == "held-floor":
+            b = whole(f, "closesBeyondFloor")
+            return b is not None and b == 0
+        if gate == "contraction":
+            r = number(f, "rangeTodayOverAverage")
+            return r is not None and r < 1
+        if gate == "trigger-near":
+            d = number(f, "triggerDistanceRanges")
+            return d is not None and d <= TRIGGER_REACH
+        if gate == "exit-tight":
+            d = number(f, "stopDistanceRanges")
+            return d is not None and d <= GIVE_UP
+        if gate == "cluster":
+            c = whole(f, "clusterCount")
+            return (c or 0) >= CLUSTER_THRESHOLD
+    else:
+        if gate == "tradable-shortable":
+            v, c = number(f, "medianDollarVolume"), number(f, "close")
+            cap, listed = number(f, "marketCap"), whole(f, "sessionsListed")
+            return (v is not None and c is not None and cap is not None and listed is not None
+                    and v >= SHORT_LIQUIDITY_FLOOR and c > PRICE_FLOOR
+                    and cap > MARKET_CAP_FLOOR and listed >= LISTING_AGE_FLOOR)
+        if gate == "moves-enough":
+            a = number(f, "averageDailyRange")
+            return a is not None and a >= RANGE_FLOOR
+        if gate == "downtrend":
+            return f.get("ladderGrade") == "falling"
+        if gate == "averages-squeezing":
+            r = number(f, "gapOverAverageGap")
+            return r is not None and r < 1
+        if gate == "thrust":
+            s = whole(f, "sessionsSinceThrust")
+            return s is not None and s <= THRUST_WINDOW
+        if gate == "bounce-shape":
+            b, r = whole(f, "bounce.pullbackBars"), number(f, "bounce.retraceDepth")
+            return (b is not None and MIN_PULLBACK <= b <= MAX_PULLBACK
+                    and r is not None and 0 <= r <= MAX_RETRACE)
+        if gate == "reached-ceiling":
+            d = number(f, "distanceToNearestAverageRanges")
+            return d is not None and d <= CEILING_REACH
+        if gate == "no-reclaim":
+            b = whole(f, "closesBeyondFloor")
+            return b is not None and b == 0
+        if gate == "exit-tight":
+            d = number(f, "stopDistanceRanges")
+            return d is not None and d <= GIVE_UP
+        if gate == "cluster":
+            c = whole(f, "clusterCount")
+            return (c or 0) >= CLUSTER_THRESHOLD
+
+    raise SystemExit("no restatement for the %s gate %s" % (direction, gate))
+
+
+def gates_main(argv):
+    """The authored boundary cases, decided by a second reading of the same gate list.
+
+    Reads fixtures/gate-cases.json, applies each case's overrides to its direction's baseline and
+    restates every gate from the wording in ARCHITECTURE.html. Nothing here imports the lab, so a
+    threshold that moved in one place and not the other shows as a named difference.
+
+    These cases say nothing about the market. What they answer is whether both branches of every
+    gate work, which thirty real names on one session cannot: two setups give a gate two results,
+    and two results are one-sided unless they happen to disagree.
+    """
+    if len(argv) < 1:
+        print("usage: --gates <gate-cases.json>", file=sys.stderr)
+        return 2
+
+    with open(argv[0], encoding="utf-8") as handle:
+        book = json.load(handle)
+
+    if book["tier"] != "AUTHORED":
+        print("gate-cases.json says tier %s, not AUTHORED" % book["tier"], file=sys.stderr)
+        return 1
+
+    print("\ngates  from %s" % os.path.basename(argv[0]))
+    differences = 0
+
+    for case in book["cases"]:
+        fields = dict(book["baseline"][case["direction"]])
+        fields.update(case["set"])
+
+        got = "pass" if gate_verdict(case["direction"], case["gate"], fields) else "fail"
+        flag = ""
+        if got != case["expect"]:
+            differences += 1
+            flag = "   <-- differs, the file expects %s" % case["expect"]
+
+        print("  gate.%s.%s.%-8s %s%s" % (case["direction"], case["gate"], case["side"], got, flag))
+
+    print("  %d case(s), %d differing from the side each was built for" % (len(book["cases"]), differences))
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--gates":
+        return gates_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--checks":
         return checks_main(argv[2:])
 
