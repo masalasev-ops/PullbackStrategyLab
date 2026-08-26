@@ -567,6 +567,16 @@ Was:  | `coverage-reported` | every CI run | Every check the roster says runs is
 Now:  The same row, plus: every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records.
 Why:  Each check declares its source-scan assertions in its own coverage record and `CheckCoverage.Report` fails a check that declares neither. A scan written in an ordinary test has no coverage record to declare in, so nothing would say whether a behavioural test backs it and the sweep would report a clean list while missing them. Three such scans exist today, and the check names them rather than counting them.
 
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.11 | One-time calibration | Detector run over the full stored history **into `calibration_setup`, never into `setup`** ... Nightly count distribution inspected. If the median falls outside 5 to 60 per side, thresholds adjusted **once**, before phase 3 ... |
+Now:  The run covers the golden fixture's seeded histories, replaying the nightly pipeline session by session into a scratch store so each detector reads the rows the stages that own them wrote. The market-cap clause of `tradable-shortable` is exempted by name. The distribution is recorded per side as a raw count and as a rate per name per session, and the band is applied to the scaled rate with the scaling named as an assumption.
+Why:  The row rested on the plan's premise that calibration mode computes what it needs in memory. It computes the averages that way and not the rest: the detectors read `indicator_daily` and `scan_hit`, and the live store holds one session of each, so a full-history run was three stages of second implementation whose only consumer is a table nothing downstream reads. Over the fixture the same run needs no path that does not exist. What the narrowing costs is population, so the row says how the band survives thirty names instead of pretending it does.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  The 2.7 obligation ended: "Three answers are available and none is obviously right ... The choice belongs at 2.11, where the distribution is what a threshold is set against."
+Now:  The answer taken, with what was rejected and why, and a new row raised at 2.11 carrying the full-history run over the live universe to 3.2 with its price.
+Why:  The choice was taken before 2.11 rather than at it, so the row stating three open answers was no longer true. An obligation that still poses a question somebody has answered reads as open work and gets re-answered.
+
 ### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
 Was:  Update LabSetups (`agreement`, `agreement_note`)
       And: **The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever ... The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose.
