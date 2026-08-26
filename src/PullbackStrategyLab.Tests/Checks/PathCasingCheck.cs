@@ -78,7 +78,13 @@ public sealed partial class PathCasingCheck
         coverage
             .Context("string literals read", literals)
             .Examined("literals naming a path into this repository", candidates)
-            .Examined("paths compared against the on-disk name", verified);
+            .Examined("paths compared against the on-disk name", verified)
+            .Scan("every path literal in the source matches the on-disk name byte for byte",
+                CheckCoverage.Backing.Runner(
+                    "rehearsal",
+                    "no test can hold this on either development machine, because case sensitivity is a property "
+                    + "of the filesystem and both machines are insensitive by default. What exercises it is the "
+                    + "rehearsal job opening every one of these files on ubuntu-latest on each push"));
 
         if (verified == 0)
         {

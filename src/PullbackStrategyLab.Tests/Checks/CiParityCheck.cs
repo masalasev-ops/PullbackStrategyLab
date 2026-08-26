@@ -48,6 +48,9 @@ public sealed partial class CiParityCheck
         coverage
             .Examined("steps declared in tools/ci.ps1", windows.Length)
             .Examined("steps declared in tools/ci.sh", unix.Length)
+            .NoSourceScan(
+                "the two scripts are the subject rather than a description of one. A step deleted from a script "
+                + "is a step that stops running, so there is no gap between what the text says and what happens")
             .Report();
 
         Assert.True(windows.Length > 0, "tools/ci.ps1 declares no steps, so the parser stopped matching.");

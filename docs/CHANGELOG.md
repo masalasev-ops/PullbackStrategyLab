@@ -562,6 +562,11 @@ Was:  Verification ended at the paragraph on a mechanical sweep destroying the m
 Now:  Three further paragraphs: that an assertion must fail when the thing it guards is removed and the proof of that is permanent, that this is the fourth instance and therefore a rule, and how it is held, with the three shapes a backing can take and the rule that an unbacked scan is reported rather than failing the run.
 Why:  The failure table's detector-error claim passed with the catch clause deleted, because the private method issuing the insert was still in the file with nothing calling it. Three earlier instances had the same shape and each was closed one at a time; a fourth is the signal to write the property down and hold it mechanically rather than to close it again.
 
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads |
+Now:  The same row, plus: every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records.
+Why:  Each check declares its source-scan assertions in its own coverage record and `CheckCoverage.Report` fails a check that declares neither. A scan written in an ordinary test has no coverage record to declare in, so nothing would say whether a behavioural test backs it and the sweep would report a clean list while missing them. Three such scans exist today, and the check names them rather than counting them.
+
 ### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
 Was:  Update LabSetups (`agreement`, `agreement_note`)
       And: **The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever ... The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose.

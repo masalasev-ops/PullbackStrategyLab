@@ -285,6 +285,41 @@ public sealed partial class ArchitectureConformanceCheck
                     claims),
                 Json));
 
+        // The failure table is where this check reads source text to conclude something about
+        // behaviour, and it is where the fourth instance of an assertion outliving its subject
+        // shipped: the detector-error claim passed with the catch clause deleted, because the
+        // private method issuing the insert was still in the file with nothing calling it. Each
+        // of the four names what exercises it, so a claim resting on text alone is visible.
+        coverage
+            .Scan("Failure behaviour: Detector errors on one stock",
+                CheckCoverage.Backing.Test(
+                    "DetectorErrorTests.A_name_the_detector_cannot_read_gets_an_error_row_and_the_run_goes_partial",
+                    "both detectors are run over a store with one name made unreadable, and the row and the "
+                    + "partial outcome are read back. Added when the scan alone was found to pass with the catch "
+                    + "clause removed"))
+            .Scan("Failure behaviour: Nightly setup cap reached",
+                CheckCoverage.Backing.Test(
+                    "NightlyCapTests.The_release_rule_holds_over_every_arrangement_of_the_two_counts",
+                    "the arithmetic the cap applies is swept over every arrangement of the two counts, so the "
+                    + "scan is left holding only that the stage still reads the night whole and reports what it "
+                    + "truncated"))
+            .Scan("Failure behaviour: Unprocessed corporate action",
+                CheckCoverage.Backing.Test(
+                    "IndicatorEngineTests.A_ticker_with_an_open_demand_is_refused_and_the_others_are_not",
+                    "a ticker with an open rebuild demand gets no row and the rest of the night does, which is "
+                    + "the behaviour the blocked counter in the scan stands for"))
+            .Scan("Failure behaviour: Daily API ceiling reached",
+                CheckCoverage.Backing.Test(
+                    "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning",
+                    "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
+                    + "The scan asks only that the run scope still exposes what is left"))
+            .Scan("the catalogue's components exist and are registered, found by scanning declarations and registrations",
+                CheckCoverage.Backing.None(
+                    "nothing builds the host and asks the container to resolve every catalogue component. A "
+                    + "component registered in a line the registration pattern does not match would be reported "
+                    + "as unregistered, which fails loudly; one whose registration is present and unreachable "
+                    + "would not, and that is the direction with no test under it"));
+
         foreach (IGrouping<string, Claim> table in claims.GroupBy(c => c.Table, StringComparer.Ordinal))
         {
             coverage.Examined($"claims in {table.Key}", table.Count(c => c.Verdict is Pass or Fail));

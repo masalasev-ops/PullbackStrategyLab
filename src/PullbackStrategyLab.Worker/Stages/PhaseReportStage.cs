@@ -479,7 +479,49 @@ public sealed class PhaseReportStage
                 + $"<td class=\"{(record.Unexamined > 0 ? "red" : string.Empty)}\">{record.Unexamined}</td><td>{E(why)}</td></tr>");
         }
 
-        page.Append("</table></body></html>");
+        page.Append("</table>");
+
+        // Section four. What the checks conclude by reading the source, and what exercises it.
+        //
+        // A source scan that finds a pattern is not evidence the behaviour exists, and this corpus
+        // has now shipped four assertions that survived the removal of their own subject. The list
+        // is here rather than in a check because an unbacked scan is scheduled work rather than a
+        // condition on the next commit, so it is reported and does not turn the report red.
+        Scan[] scans = [.. report.Coverage.SelectMany(c => c.Scans.Select(s => s with { What = $"{c.Check}: {s.What}" }))];
+
+        int byTest = scans.Count(s => s.BackedByTest is not null);
+        int byJob = scans.Count(s => s.BackedByJob is not null);
+        int byNothing = scans.Length - byTest - byJob;
+
+        page.Append("<h2>Source-scan assertions</h2>");
+        page.Append(CultureInfo.InvariantCulture,
+            $"<p>{scans.Length} assertion(s) made by reading the shipped source. "
+            + $"<b>{byTest}</b> are exercised by a behavioural test, <b>{byJob}</b> by a CI job, and "
+            + $"<b class=\"{(byNothing > 0 ? "deferred" : string.Empty)}\">{byNothing}</b> by nothing. "
+            + $"An unbacked scan is reported here rather than failing the run; the three are counted apart so "
+            + $"the third growing is visible rather than absorbed.</p>");
+
+        page.Append("<table><tr><th>Assertion</th><th>Exercised by</th><th>Why</th></tr>");
+        foreach (Scan scan in scans.OrderBy(s => s.BackedByTest is null && s.BackedByJob is null ? 0 : 1)
+                     .ThenBy(s => s.What, StringComparer.Ordinal))
+        {
+            string by = scan.BackedByTest ?? (scan.BackedByJob is string job ? $"the {job} job" : "nothing");
+            string cell = scan.BackedByTest is null && scan.BackedByJob is null ? " class=\"deferred\"" : string.Empty;
+            page.Append(CultureInfo.InvariantCulture,
+                $"<tr><td>{E(scan.What)}</td><td{cell}>{E(by)}</td><td>{E(scan.Why)}</td></tr>");
+        }
+
+        page.Append("</table>");
+
+        string[] noScan = [.. report.Coverage.Where(c => c.NoSourceScan is not null).Select(c => c.Check)];
+        if (noScan.Length > 0)
+        {
+            page.Append(CultureInfo.InvariantCulture,
+                $"<p>{noScan.Length} check(s) concluded nothing about behaviour by reading source and said so: "
+                + $"{E(string.Join(", ", noScan.Order(StringComparer.Ordinal)))}.</p>");
+        }
+
+        page.Append("</body></html>");
         return page.ToString();
     }
 
@@ -616,7 +658,16 @@ public sealed class PhaseReportStage
         int OutOfScope,
         IReadOnlyList<Scope> ExaminedDetail,
         IReadOnlyList<Gap> UnexaminedDetail,
-        IReadOnlyList<Gap> OutOfScopeDetail);
+        IReadOnlyList<Gap> OutOfScopeDetail,
+        IReadOnlyList<Scan> Scans,
+        string? NoSourceScan)
+    {
+        /// <summary>Empty rather than null for a record written before the scans existed.</summary>
+        public IReadOnlyList<Scan> Scans { get; init; } = Scans ?? [];
+    }
+
+    /// <summary>One assertion a check makes by reading the shipped source, and what exercises it.</summary>
+    public sealed record Scan(string What, string? BackedByTest, string? BackedByJob, string Why);
 
     /// <summary>
     /// The checks the roster in CLAUDE.md says run on every CI run, written by coverage-reported

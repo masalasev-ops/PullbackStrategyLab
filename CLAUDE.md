@@ -129,7 +129,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `decision-resolves` | every CI run | Every decision name cited in code or docs matches a bold decision name in DECISIONS.md exactly, and no two decisions share a name |
 | `no-superseded-citation` | every CI run | No cited name resolves to a decision under "Previously decided" |
 | `pinned-constants` | every CI run | Numeric constants stated in docs match the code constant they describe |
-| `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads |
+| `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads. Every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records |
 | `path-casing` | every CI run | Every file path appearing as a string literal in source matches the on-disk path exactly, byte for byte |
 | `two-platform` | the matrix | The suite passes on both windows and macos runners |
 | `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |

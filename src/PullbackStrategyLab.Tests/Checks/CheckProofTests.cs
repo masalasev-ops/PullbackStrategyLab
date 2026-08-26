@@ -625,6 +625,112 @@ public sealed class CheckProofTests
 
     // The scopes bar-append-only actually names, in the shape the defect had: three bar tables
     // carrying the property, and forty-seven source files whose count is a fact about the corpus.
+    [Fact]
+    public void A_check_that_says_nothing_about_its_source_scans_fails()
+    {
+        // The half that makes the sweep complete. A check added later is asked the question rather
+        // than being assumed to have none, because the four assertions that outlived their subjects
+        // were all in things nobody had thought to ask it of.
+        string missing = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check", [], noSourceScan: null, Backs, Jobs));
+
+        Assert.Contains("declares neither a source-scan assertion nor NoSourceScan", missing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_check_that_declares_both_a_scan_and_no_source_scan_fails()
+    {
+        string both = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion("something read from the source", CheckCoverage.Backing.None("nothing yet"))],
+            noSourceScan: "it reads no source",
+            Backs,
+            Jobs));
+
+        Assert.Contains("also declares NoSourceScan", both, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_backing_naming_a_test_that_does_not_exist_fails()
+    {
+        // The direction that matters. A backing which has gone stale reads as covered, so it is
+        // worse than none: nothing distinguishes it from one that still holds.
+        string stale = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "no delete against a bar table",
+                CheckCoverage.Backing.Test("SomeTests.A_test_that_was_renamed_away", "it used to run this"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+
+        Assert.Contains("no test by that name exists", stale, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_backing_naming_a_job_the_workflow_does_not_have_fails()
+    {
+        string stale = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "path literals match the on-disk name",
+                CheckCoverage.Backing.Runner("linux", "it used to run there"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+
+        Assert.Contains("the workflow has no job by that name", stale, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_unbacked_scan_is_reported_and_does_not_fail()
+    {
+        // Deliberate, and the part most likely to be read as a hole. The fix for an unbacked scan
+        // is a behavioural test per scan, which is scheduled work; a rule that blocked on it would
+        // be answered by writing Backing.None reasons that say nothing, and the list would still
+        // be empty while nothing exercised anything.
+        Assert.Empty(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "every write belongs to its declared writer",
+                CheckCoverage.Backing.None("nothing runs the pipeline and asks who wrote each row"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+    }
+
+    [Fact]
+    public void The_two_name_sets_a_backing_resolves_against_are_populated()
+    {
+        // Stated in advance rather than left self-validating. Both sets are read from outside the
+        // source text, and either one coming back empty would make every backing resolve to
+        // nothing while every check kept passing, which is this mechanism's own failure mode.
+        Assert.True(CheckCoverage.TestNames.Count >= 250,
+            $"the assembly scan found {CheckCoverage.TestNames.Count} tests. It has held at least 250 since 2.10.");
+        Assert.Contains("StoreTests.The_open_connection_reports_the_four_pragmas_from_schema", CheckCoverage.TestNames);
+        Assert.Equal(["rehearsal", "suite"], CheckCoverage.WorkflowJobs.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void The_sweep_finds_the_files_that_read_the_shipped_source()
+    {
+        // Handed an empty map of implemented checks, every scanning file is one nobody records.
+        // That is the detection working; against the real map the same call is what leaves the
+        // three scans written in ordinary tests on the list rather than out of sight.
+        (IReadOnlyList<string> scanning, IReadOnlyList<string> outside) =
+            CoverageReportedCheck.SourceScanningFiles(new Dictionary<string, string>(StringComparer.Ordinal));
+
+        Assert.True(scanning.Count >= 12,
+            $"the sweep found {scanning.Count} files reading the shipped source. It has held at least twelve "
+            + "since 2.11, so the pattern list stopped matching.");
+        Assert.Equal(scanning.Count, outside.Count);
+        Assert.Contains("src/PullbackStrategyLab.Tests/Checks/BarAppendOnlyCheck.cs", outside);
+    }
+
+    private static bool Backs(string test) => CheckCoverage.TestNames.Contains(test);
+
+    private static bool Jobs(string job) => CheckCoverage.WorkflowJobs.Contains(job);
+
     private static CheckCoverage.Scope Property(string what, int count) => new(what, count, IsContext: false);
 
     private static CheckCoverage.Scope ContextScope(string what, int count) => new(what, count, IsContext: true);

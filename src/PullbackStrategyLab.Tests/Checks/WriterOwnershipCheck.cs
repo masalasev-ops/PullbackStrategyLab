@@ -146,6 +146,12 @@ public sealed class WriterOwnershipCheck
             .Context("source files read for store writes", SourceWrites.ProductionFilesRead)
             .Examined("writes found in the shipped source", SourceWrites.InProductionSource.Count)
             .Context("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
+            .Scan("every write in the shipped source belongs to the component SCHEMA declares for it",
+                CheckCoverage.Backing.None(
+                    "nothing runs the pipeline and asks which component wrote each row. The behavioural form of "
+                    + "this is order-provenance, which the roster starts at 4.6 and which covers orders alone. "
+                    + "Until then a component that issued a write through a helper the scan does not recognise "
+                    + "would be attributed to nobody, and the check would report a smaller set rather than fail"))
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
             ;

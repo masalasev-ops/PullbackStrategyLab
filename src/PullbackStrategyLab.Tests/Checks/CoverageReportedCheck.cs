@@ -84,11 +84,27 @@ public sealed partial class CoverageReportedCheck
 
         WriteRoster(live);
 
+        (IReadOnlyList<string> scanning, IReadOnlyList<string> outsideACheck) = SourceScanningFiles(implemented);
+
         coverage
             .Examined("checks declared in CLAUDE.md's roster", roster.Count)
             .Examined("of those declared to run on every CI run", live.Length)
             .Examined("checks implemented in the suite", implemented.Count)
             .Examined("checks tools/ci.* invokes as a named step", invoked.Count)
+            .Examined("files in the suite that read the shipped source", scanning.Count)
+            .Examined("of those belonging to a check, which declares its scans in its own record",
+                scanning.Count - outsideACheck.Count)
+            .Scan("every check the roster declares is implemented, found by the trait it carries",
+                CheckCoverage.Backing.None(
+                    "no test runs a check and confirms it ran. What closes it instead is the phase report, which "
+                    + "requires a coverage record from every check the roster says runs, so a check present in "
+                    + "the source and absent from the run turns the report red rather than shrinking it. That is "
+                    + "a second mechanism rather than a behavioural test, and it is why this scan is listed here"))
+            .OutOfScope("source-scan assertions made outside a check, which leave no coverage record",
+                outsideACheck.Count,
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint("3.1",
+                    "a scan in an ordinary test has no coverage record to declare its backing in, so the sweep "
+                    + "cannot say whether one exists: " + string.Join(", ", outsideACheck)))
             .OutOfScope("checks whose runner is the workflow matrix", matrix.Length,
                 CheckCoverage.OutOfScopeReason.ByDesign(
                     "the runner set is asserted against the workflow file rather than against a test, so no "
@@ -277,6 +293,77 @@ public sealed partial class CoverageReportedCheck
     private static string Bare(string cell) => cell.Trim().Trim('`').Trim();
 
     /// <summary>Every check the suite implements, by the trait it carries, and the file it lives in.</summary>
+    /// <summary>
+    /// How a file says it reads the shipped source. Anything matching one of these concludes
+    /// something by reading code the lab ships, rather than by running it.
+    /// </summary>
+    private static readonly string[] ReadsShippedSource =
+    [
+        "RepositoryLayout.ProductionSourceFiles",
+        "RepositoryLayout.SourceFiles",
+        "RepositoryLayout.Source,",
+        "SourceWrites.InProductionSource",
+        "SourceWrites.ProductionFilesRead",
+    ];
+
+    /// <summary>
+    /// The helpers that expose the shipped source to everything else, exempt with their reason.
+    ///
+    /// Each of these reads the source so that a check does not have to, and none of them asserts
+    /// anything. Leaving them in the list would put four permanent rows on it and make a list whose
+    /// whole purpose is that it be short read as noise.
+    /// </summary>
+    private static readonly Dictionary<string, string> ScanHelpers = new(StringComparer.Ordinal)
+    {
+        ["src/PullbackStrategyLab.Tests/Support/RepositoryLayout.cs"] = "it is where the source file list is defined",
+        ["src/PullbackStrategyLab.Tests/Support/SourceWrites.cs"] = "the shared write scanner, which asserts nothing of its own",
+        ["src/PullbackStrategyLab.Tests/Support/Corpus.cs"] = "the citation index, read by two checks that both declare no source scan",
+    };
+
+    /// <summary>
+    /// Files in the suite that read the shipped source, and the ones among them that carry no
+    /// check and so leave no coverage record.
+    ///
+    /// This is the half a per-check declaration cannot reach. Every check declares its scans or
+    /// declares that it makes none, and <c>CheckCoverage.Report</c> fails a check that declares
+    /// neither. A scan written in an ordinary test has no coverage record to declare in, so nothing
+    /// would say whether a behavioural test backs it, and the sweep would report a clean list while
+    /// missing them entirely.
+    /// </summary>
+    public static (IReadOnlyList<string> Scanning, IReadOnlyList<string> OutsideACheck) SourceScanningFiles(
+        IReadOnlyDictionary<string, string> implemented)
+    {
+        ArgumentNullException.ThrowIfNull(implemented);
+
+        var checkFiles = new HashSet<string>(implemented.Values, StringComparer.Ordinal);
+        var scanning = new List<string>();
+        var outside = new List<string>();
+
+        foreach (string file in RepositoryLayout.SourceFiles)
+        {
+            string relative = RepositoryLayout.Relative(file);
+            if (ScanHelpers.ContainsKey(relative))
+            {
+                continue;
+            }
+
+            string source = CSharpSource.WithoutComments(RepositoryLayout.Read(file));
+            if (!ReadsShippedSource.Any(p => source.Contains(p, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            scanning.Add(relative);
+
+            if (!checkFiles.Contains(relative))
+            {
+                outside.Add(relative);
+            }
+        }
+
+        return (scanning, outside);
+    }
+
     private static IReadOnlyDictionary<string, string> ImplementedChecks()
     {
         var found = new Dictionary<string, string>(StringComparer.Ordinal);

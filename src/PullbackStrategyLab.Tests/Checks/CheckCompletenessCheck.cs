@@ -89,7 +89,11 @@ public sealed class CheckCompletenessCheck
             .Examined("gates in the short check list", shortGates.Count)
             .Examined("checks the detectors declare", SetupChecks.Long.Count + SetupChecks.Short.Count)
             .Examined("setup rows read back from the replay store", rowsChecked)
-            .Examined("check results across those rows", setups.Sum(s => s.Names.Count));
+            .Examined("check results across those rows", setups.Sum(s => s.Names.Count))
+            .NoSourceScan(
+                "it reads rows the detectors actually wrote in a run, and the names they declare, from the "
+                + "compiled code. A detector that stopped recording a check leaves rows missing it rather than "
+                + "text missing from a file");
 
         // The one gate that runs narrower than the document words it. Recorded here rather than in
         // the PROGRESS entry alone, because a later session reading a passing `reached-ceiling` has

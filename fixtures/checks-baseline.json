@@ -60,7 +60,9 @@
         "checks declared in CLAUDE.md's roster": 21,
         "of those declared to run on every CI run": 17,
         "checks implemented in the suite": 17,
-        "checks tools/ci.* invokes as a named step": 17
+        "checks tools/ci.* invokes as a named step": 17,
+        "files in the suite that read the shipped source": 15,
+        "of those belonging to a check, which declares its scans in its own record": 12
       }
     },
     "decision-resolves": {

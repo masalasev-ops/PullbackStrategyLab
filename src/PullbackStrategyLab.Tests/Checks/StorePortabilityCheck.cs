@@ -91,6 +91,9 @@ public sealed partial class StorePortabilityCheck
             .Examined("tables in a populated store", tablesScanned)
             .Examined("text columns across them", columnsScanned)
             .Context("stored text values read", checked((int)valuesScanned))
+            .NoSourceScan(
+                "it reads a store the pipeline actually populated, so what it examines is what was written "
+                + "rather than what a statement looks like")
             .Report();
 
         Assert.True(failures.Count == 0,

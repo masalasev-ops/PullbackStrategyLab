@@ -189,7 +189,18 @@ public sealed class PointInTimeCheck
             .Examined("exempted files, each with its reason", Exempt.Count)
             .Examined("dateless reads exempted by name, each with its reason", DatelessByName.Count)
             .Examined("directions of the future-dated case", 2)
-            .Context("SQL statements read across the shipped source", statementsExamined);
+            .Context("SQL statements read across the shipped source", statementsExamined)
+            .Scan("every public read on a store reader takes a date",
+                CheckCoverage.Backing.Test(
+                    "DailyBarIngestorTests.A_bar_dated_after_the_as_of_date_is_invisible_to_a_read",
+                    "a bar dated past the as-of is stored and then not returned, which is what a signature "
+                    + "carrying a date is for. The signature is necessary and this is what it buys"))
+            .Scan("every hand-written statement selecting from a stamped table bounds that stamp",
+                CheckCoverage.Backing.Test(
+                    "DailyBarIngestorTests.A_read_sees_the_figure_that_had_been_observed_by_its_as_of_date_and_not_the_correction",
+                    "the same session is read from both sides of a correction's instant and gives two figures. "
+                    + "That is what a bound does; the scan is what says every statement written by hand beside a "
+                    + "reader has one, which is the half four unbounded queries were on the wrong side of"));
 
         // Calibration mode reconstructs against membership as it stands today, deliberately, which
         // is why its rows go to a table nothing downstream reads. It is out of scope by design

@@ -239,6 +239,10 @@ public sealed partial class FixtureReplayCheck
         CheckpointTier[] tiers = [.. ByCheckpoint(expected.Expectations)];
         CheckpointTier[] frozenOnly = [.. tiers.Where(t => t.Independent == 0)];
 
+        coverage.NoSourceScan(
+            "it runs the pipeline over the golden fixture and diffs what the run produced. Every figure it "
+            + "compares was computed by the code rather than read out of it");
+
         coverage.Examined("checkpoints with expectations in the fixture", tiers.Length);
         coverage.Examined("of those carrying an independently produced expectation", tiers.Length - frozenOnly.Length);
 

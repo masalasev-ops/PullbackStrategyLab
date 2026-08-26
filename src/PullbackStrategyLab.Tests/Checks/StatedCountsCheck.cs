@@ -179,6 +179,11 @@ public sealed partial class StatedCountsCheck
             coverage.Examined(claim.What, 1);
         }
 
+        coverage.NoSourceScan(
+            "every claim compares a number a document states about itself against the number derived from that "
+            + "same document. The text is the subject on both sides, and nothing here concludes anything about "
+            + "what the shipped code does");
+
         // Out of scope rather than unexamined, and reclassified at 2.1 rather than left as it was.
         //
         // It was NotExamined with a count of zero, which summed to nothing, so the record carried

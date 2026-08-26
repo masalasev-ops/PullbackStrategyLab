@@ -52,7 +52,9 @@ public sealed class CheckCoverage
     private readonly List<Unexamined> _unexamined = [];
     private readonly List<Unexamined> _outOfScope = [];
     private readonly List<Deferred> _reasons = [];
+    private readonly List<ScanAssertion> _scans = [];
     private readonly ITestOutputHelper _output;
+    private string? _noSourceScan;
 
     public CheckCoverage(string checkName, ITestOutputHelper output)
     {
@@ -87,6 +89,51 @@ public sealed class CheckCoverage
     public CheckCoverage Context(string what, int count)
     {
         _examined.Add(new Scope(what, count, IsContext: true));
+        return this;
+    }
+
+    /// <summary>
+    /// Records one assertion this check makes by reading the shipped source, and what exercises
+    /// the behaviour it concludes.
+    ///
+    /// A source scan that finds a pattern is not evidence the behaviour exists. The failure table's
+    /// "Detector errors on one stock" claim was asserted by looking for the insert statement and the
+    /// partial outcome in each detector, and it passed with the catch clause deleted: the private
+    /// method issuing the insert was still in the file with nothing calling it. That is the fourth
+    /// instance of an assertion surviving the removal of its own subject, which is why the backing is
+    /// declared here rather than left to be remembered.
+    ///
+    /// <b>An unbacked scan does not fail the run.</b> The fix is a behavioural test per scan, which
+    /// is scheduled work rather than a condition on the next commit, and a rule that blocks on it
+    /// would be answered by writing <see cref="Backing.None"/> reasons that say nothing. What fails
+    /// is a backing that has gone stale: a test name that resolves to no test, or a job name the
+    /// workflow does not have. A stale backing is worse than none, because it reads as covered.
+    /// </summary>
+    public CheckCoverage Scan(string what, Backing backing)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(what);
+        ArgumentNullException.ThrowIfNull(backing);
+        _scans.Add(new ScanAssertion(what, backing));
+        return this;
+    }
+
+    /// <summary>
+    /// Declares that this check concludes nothing about the shipped system's behaviour by reading
+    /// its source, with the reason.
+    ///
+    /// Required rather than optional, which is the half that makes the sweep complete. A check
+    /// added later that declares neither a scan nor this fails in <see cref="Report"/>, so the
+    /// declaration cannot be forgotten by the one check nobody thought to revisit.
+    ///
+    /// The usual reason is that the text the check reads is its own subject. A document's own
+    /// consistency, the two CI scripts, a migration's SQL and the compiled dependency file are all
+    /// the thing itself rather than a description of something else, so removing what they assert
+    /// removes the subject and the check with it.
+    /// </summary>
+    public CheckCoverage NoSourceScan(string why)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(why);
+        _noSourceScan = why;
         return this;
     }
 
@@ -182,7 +229,23 @@ public sealed class CheckCoverage
             summary.Append(", unexamined ").Append(TotalUnexamined).Append(" admission(s)");
         }
 
+        if (_scans.Count > 0)
+        {
+            summary.Append(", ").Append(_scans.Count).Append(" source scan(s) of which ")
+                .Append(_scans.Count(s => s.Backing.IsUnbacked)).Append(" unbacked");
+        }
+
         _output.WriteLine(summary.ToString());
+
+        foreach (ScanAssertion scan in _scans)
+        {
+            _output.WriteLine($"  scan               {scan.What} — {scan.Backing}");
+        }
+
+        if (_noSourceScan is not null)
+        {
+            _output.WriteLine($"  no source scan     {_noSourceScan}");
+        }
 
         foreach (Scope scope in _examined)
         {
@@ -205,7 +268,11 @@ public sealed class CheckCoverage
         File.WriteAllText(
             Path.Combine(directory, $"{CheckName}.json"),
             JsonSerializer.Serialize(
-                new Record(CheckName, TotalExamined, TotalContext, TotalUnexamined, TotalOutOfScope, _examined, _unexamined, _outOfScope),
+                new Record(
+                    CheckName, TotalExamined, TotalContext, TotalUnexamined, TotalOutOfScope,
+                    _examined, _unexamined, _outOfScope,
+                    [.. _scans.Select(s => new ScanRecord(s.What, s.Backing.TestName, s.Backing.JobName, s.Backing.Why))],
+                    _noSourceScan),
                 new JsonSerializerOptions { WriteIndented = true }));
 
         ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
@@ -215,6 +282,12 @@ public sealed class CheckCoverage
         Assert.True(deferrals.Count == 0,
             $"{deferrals.Count} deferral(s) in {CheckName} name a checkpoint that cannot end them:\n  "
             + string.Join("\n  ", deferrals));
+
+        IReadOnlyList<string> scans = ScanProblems(
+            CheckName, _scans, _noSourceScan, TestNames.Contains, WorkflowJobs.Contains);
+
+        Assert.True(scans.Count == 0,
+            $"{scans.Count} problem(s) with {CheckName}'s source-scan declarations:\n  " + string.Join("\n  ", scans));
 
         IReadOnlyList<string> shortfalls = Shortfalls(CheckName, _examined, Baseline);
         Assert.True(shortfalls.Count == 0,
@@ -363,6 +436,203 @@ public sealed class CheckCoverage
     /// <summary>One scope a check named, and whether its size is a fact about the corpus.</summary>
     public sealed record Scope(string What, int Count, bool IsContext);
 
+    /// <summary>The source-scan assertions this check declared, with their backing.</summary>
+    public IReadOnlyList<ScanAssertion> Scans => _scans;
+
+    /// <summary>One assertion made by reading the shipped source, and what exercises it.</summary>
+    public sealed record ScanAssertion(string What, Backing Backing);
+
+    /// <summary>
+    /// What exercises a source-scan assertion, in one of exactly three shapes.
+    ///
+    /// <b>A test</b>, which is the shape the rule asks for: a behavioural test that runs the path
+    /// and fails when the behaviour is removed. The name has to resolve to a test that exists, on
+    /// the same grounds <c>decision-resolves</c> demands an exact decision name. A backing that has
+    /// gone stale is worse than none, because it reads as covered and nothing distinguishes it from
+    /// one that still holds.
+    ///
+    /// <b>A runner</b>, for the properties a CI job exercises and no test can. <c>path-casing</c> is
+    /// the whole of this category today: the bug it targets is invisible on both development
+    /// machines because both filesystems are case-insensitive, so what actually exercises it is the
+    /// rehearsal job opening the files on Linux. Recording that as "nothing backs it" would be false
+    /// and would put a covered property on a list of gaps.
+    ///
+    /// <b>None</b>, where nothing exercises it. Reported, listed by the phase report, and scheduled
+    /// rather than fixed in the pass that found it.
+    ///
+    /// The three are counted separately for the same reason <see cref="OutOfScopeReason"/>'s three
+    /// are: the way this rule would be lost is everything drifting into the shape that asks least,
+    /// and a count per shape makes that drift visible rather than absorbed.
+    /// </summary>
+    public sealed record Backing
+    {
+        private Backing(string? testName, string? jobName, string why)
+        {
+            TestName = testName;
+            JobName = jobName;
+            Why = why;
+        }
+
+        /// <summary>The backing test, as <c>TypeName.MethodName</c>, or null.</summary>
+        public string? TestName { get; }
+
+        /// <summary>The backing workflow job, or null.</summary>
+        public string? JobName { get; }
+
+        /// <summary>Why this is the backing, which is additional to naming it and never instead.</summary>
+        public string Why { get; }
+
+        /// <summary>Whether nothing exercises the behaviour, which is the shape worth counting.</summary>
+        public bool IsUnbacked => TestName is null && JobName is null;
+
+        /// <summary>A behavioural test, named as <c>TypeName.MethodName</c>, that must exist.</summary>
+        public static Backing Test(string testName, string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(testName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new Backing(testName, null, why);
+        }
+
+        /// <summary>A workflow job that exercises it, named as the job id in the workflow file.</summary>
+        public static Backing Runner(string jobName, string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(jobName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new Backing(null, jobName, why);
+        }
+
+        /// <summary>Nothing exercises it. Reported rather than failed, and scheduled.</summary>
+        public static Backing None(string why)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(why);
+            return new Backing(null, null, why);
+        }
+
+        public override string ToString() =>
+            TestName is not null ? $"backed by {TestName}: {Why}"
+            : JobName is not null ? $"backed by the {JobName} job: {Why}"
+            : $"nothing exercises it: {Why}";
+    }
+
+    /// <summary>
+    /// What is wrong with a check's scan declarations, or nothing.
+    ///
+    /// Pure, and separated from the run so the guard can be proved against declarations written by
+    /// hand. Three things fail: declaring neither a scan nor <see cref="NoSourceScan"/>, declaring
+    /// both, and naming a test or a job that does not exist. An unbacked scan is not among them.
+    /// </summary>
+    public static IReadOnlyList<string> ScanProblems(
+        string check,
+        IReadOnlyList<ScanAssertion> scans,
+        string? noSourceScan,
+        Func<string, bool> testExists,
+        Func<string, bool> jobExists)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(check);
+        ArgumentNullException.ThrowIfNull(scans);
+        ArgumentNullException.ThrowIfNull(testExists);
+        ArgumentNullException.ThrowIfNull(jobExists);
+
+        var problems = new List<string>();
+
+        if (scans.Count == 0 && noSourceScan is null)
+        {
+            problems.Add(
+                $"{check} declares neither a source-scan assertion nor NoSourceScan. A check concludes something "
+                + "about the shipped system by reading its source or it does not, and which one has to be written "
+                + "down: an assertion that survives the removal of its own subject is the defect this corpus has "
+                + "now shipped four times, and every one of them was in something nobody had asked the question of.");
+        }
+
+        if (scans.Count > 0 && noSourceScan is not null)
+        {
+            problems.Add(
+                $"{check} declares {scans.Count} source-scan assertion(s) and also declares NoSourceScan. One of the "
+                + "two is wrong, and leaving both would let the check read as exempt while it scans.");
+        }
+
+        foreach (ScanAssertion scan in scans)
+        {
+            if (scan.Backing.TestName is string test && !testExists(test))
+            {
+                problems.Add(
+                    $"{check} says \"{scan.What}\" is backed by {test}, and no test by that name exists. A backing "
+                    + "that has gone stale is worse than none, because it reads as covered.");
+            }
+
+            if (scan.Backing.JobName is string job && !jobExists(job))
+            {
+                problems.Add(
+                    $"{check} says \"{scan.What}\" is backed by the {job} job, and the workflow has no job by that "
+                    + "name. A property whose only exercise is a runner has none once that runner is renamed.");
+            }
+        }
+
+        return problems;
+    }
+
+    /// <summary>
+    /// Every test in this assembly, as <c>TypeName.MethodName</c>. What a backing has to resolve to.
+    ///
+    /// Read from the assembly rather than from the source text, so a name that compiles but is no
+    /// longer a test, or a test renamed by an IDE, fails here rather than passing a grep.
+    /// </summary>
+    public static IReadOnlySet<string> TestNames { get; } = ReadTestNames();
+
+    /// <summary>The job ids in the workflow. What a runner backing has to resolve to.</summary>
+    public static IReadOnlySet<string> WorkflowJobs { get; } = ReadWorkflowJobs();
+
+    private static IReadOnlySet<string> ReadTestNames()
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (Type type in typeof(CheckCoverage).Assembly.GetTypes())
+        {
+            foreach (System.Reflection.MethodInfo method in type.GetMethods(
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly))
+            {
+                if (method.GetCustomAttributes(inherit: true).Any(a =>
+                        a is FactAttribute or TheoryAttribute))
+                {
+                    names.Add($"{type.Name}.{method.Name}");
+                }
+            }
+        }
+
+        return names;
+    }
+
+    private static IReadOnlySet<string> ReadWorkflowJobs()
+    {
+        var jobs = new HashSet<string>(StringComparer.Ordinal);
+        string workflow = Path.Combine(RepositoryLayout.Root, ".github", "workflows", "ci.yml");
+
+        if (!File.Exists(workflow))
+        {
+            return jobs;
+        }
+
+        string text = File.ReadAllText(workflow).Replace("\r\n", "\n", StringComparison.Ordinal);
+        int start = text.IndexOf("\njobs:\n", StringComparison.Ordinal);
+        if (start < 0)
+        {
+            return jobs;
+        }
+
+        // Only the jobs block, because "push:" under "on:" sits at the same indent and would
+        // resolve as a job that never existed.
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(
+            text[(start + "\njobs:\n".Length)..],
+            @"^  (?<job>[A-Za-z][A-Za-z0-9_-]*):\s*$",
+            System.Text.RegularExpressions.RegexOptions.Multiline))
+        {
+            jobs.Add(match.Groups["job"].Value);
+        }
+
+        return jobs;
+    }
+
     /// <summary>What this check deferred, and what would end the deferral.</summary>
     public IReadOnlyList<Deferred> Deferrals => _reasons;
 
@@ -508,5 +778,9 @@ public sealed class CheckCoverage
         int OutOfScope,
         IReadOnlyList<Scope> ExaminedDetail,
         IReadOnlyList<Unexamined> UnexaminedDetail,
-        IReadOnlyList<Unexamined> OutOfScopeDetail);
+        IReadOnlyList<Unexamined> OutOfScopeDetail,
+        IReadOnlyList<ScanRecord> Scans,
+        string? NoSourceScan);
+
+    private sealed record ScanRecord(string What, string? BackedByTest, string? BackedByJob, string Why);
 }

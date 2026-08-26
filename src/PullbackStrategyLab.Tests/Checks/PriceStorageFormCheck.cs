@@ -119,7 +119,11 @@ public sealed partial class PriceStorageFormCheck
         coverage
             .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
-            .Examined("column declarations checked for REAL affinity", columns);
+            .Examined("column declarations checked for REAL affinity", columns)
+            .NoSourceScan(
+                "the migration text is the declaration itself. The store is built by executing exactly these "
+                + "statements, so a column's affinity cannot differ from what the statement says, and removing "
+                + "the declaration removes the column");
 
         if (Exempt.Count > 0)
         {

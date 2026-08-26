@@ -173,7 +173,11 @@ public sealed class FixtureInputsCheck
         coverage
             .Examined("captured responses in the manifest", responses.Length)
             .Examined("vendor endpoints a live run exercises", EndpointsALiveRunExercises.Count)
-            .Examined("of those with at least one captured input", EndpointsALiveRunExercises.Count - uncovered.Length);
+            .Examined("of those with at least one captured input", EndpointsALiveRunExercises.Count - uncovered.Length)
+            .NoSourceScan(
+                "the manifest and the captured responses are the subject. It counts synthetic vendors by reading "
+                + "the suite's own source, and a count is not an assertion about behaviour: the figure is reported "
+                + "so the artefact can say what the lab's verification rests on, and nothing passes or fails on it");
 
         if (uncovered.Length > 0)
         {

@@ -218,6 +218,15 @@ public sealed class PinnedConstantsCheck
             coverage.Examined(pin.What, 1);
         }
 
+        // Most pins read the constant from the compiled code, so the value is the value. Four do
+        // not: the store pragmas are matched against the text of the statements in the factory,
+        // which is a claim about what the connection does made by reading how it is opened.
+        coverage.Scan("the four store pragmas, matched against the statements StoreConnectionFactory issues",
+            CheckCoverage.Backing.Test(
+                "StoreTests.The_open_connection_reports_the_four_pragmas_from_schema",
+                "the test opens a connection and asks it what each pragma is set to, which is the only thing "
+                + "that distinguishes a statement issued from a statement present in the file"));
+
         // Named so the number moves when a parameter gains a constant, rather than being a
         // literal somebody has to remember to decrement.
         string[] pinnedParameters =

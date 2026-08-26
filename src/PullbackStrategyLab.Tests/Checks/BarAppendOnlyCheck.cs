@@ -50,7 +50,13 @@ public sealed class BarAppendOnlyCheck
             .Examined("bar tables named by the check", BarTables.Count)
             .Examined("bar tables a migration has created", created.Length)
             .Context("source files scanned", SourceWrites.ProductionFilesRead)
-            .Examined("writes found against a bar table", inserts.Length + mutations.Length);
+            .Examined("writes found against a bar table", inserts.Length + mutations.Length)
+            .Scan("no delete or update against a bar table exists in the shipped source",
+                CheckCoverage.Backing.Test(
+                    "DailyBarIngestorTests.A_vendor_correction_arrives_as_a_new_row_and_the_original_stays",
+                    "the ingestor is handed a corrected figure for a session it already stored, and the test "
+                    + "asserts both rows are present afterwards. That is the property; this scan is the half "
+                    + "that says no other component in the shipped source can undo it"));
 
         if (created.Length < BarTables.Count)
         {
