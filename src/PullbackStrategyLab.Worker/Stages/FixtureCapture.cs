@@ -92,6 +92,29 @@ public sealed class FixtureCapture
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
     }
 
+    /// <summary>
+    /// The manifest a previous capture left, or null. Missing and unreadable are the same answer
+    /// here: capture everything, which costs calls and is never wrong.
+    /// </summary>
+    private static CaptureManifest? ReadManifest(string directory)
+    {
+        string file = Path.Combine(directory, "manifest.json");
+
+        if (!File.Exists(file))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CaptureManifest>(File.ReadAllText(file), Manifest);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     public async Task<CaptureResult> CaptureAsync(DateOnly asOf, string outDirectory, CancellationToken cancellationToken = default)
     {
         using SqliteConnection connection = _connections.OpenWrite();
@@ -108,9 +131,30 @@ public sealed class FixtureCapture
 
         var entries = new List<CaptureEntry>();
         long bytes = 0;
+        int reused = 0;
+
+        // What a previous capture into this directory already holds, so re-running to add one
+        // endpoint costs that endpoint rather than the whole fixture again. The captured responses
+        // are fifteen megabytes and most of them cost a hundred calls each; re-spending that to
+        // learn nothing new is the kind of cost that stops a fixture being extended at all.
+        CaptureManifest? existing = ReadManifest(directory);
 
         async Task<bool> Capture(string name, string path, string? query, int cost)
         {
+            string existingFile = name + ".json";
+            CaptureEntry? already = existing?.Responses
+                .FirstOrDefault(e => string.Equals(e.File, existingFile, StringComparison.Ordinal));
+
+            if (already is not null && File.Exists(Path.Combine(directory, existingFile)))
+            {
+                // Kept verbatim, instant and all. Re-stamping it with tonight's time would say the
+                // response was captured now, which is exactly the provenance the tier records.
+                entries.Add(already);
+                bytes += already.Bytes;
+                reused++;
+                return true;
+            }
+
             VendorResult<CapturedResponse> response = await _vendor
                 .GetRawAsync(path, query, cost, run, cancellationToken).ConfigureAwait(false);
 
@@ -147,6 +191,25 @@ public sealed class FixtureCapture
 
         int capturedTickers = 0;
 
+        // The lazy sector lookup, one call a name. Captured for the fixture's own tickers only:
+        // the endpoint a live run exercises needs a captured input, and one response per endpoint
+        // is what the decision asks for rather than one per name in the market.
+        if (complete)
+        {
+            foreach (string ticker in tickers)
+            {
+                if (!await Capture(
+                        $"fundamentals-{ticker}",
+                        $"fundamentals/{ticker}.{exchange}",
+                        "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+                        EodhdClient.FundamentalsCost).ConfigureAwait(false))
+                {
+                    complete = false;
+                    break;
+                }
+            }
+        }
+
         if (complete)
         {
             foreach (string ticker in tickers.Concat(_options.IndexSymbols))
@@ -175,6 +238,7 @@ public sealed class FixtureCapture
         RunOutcome outcome = complete ? RunOutcome.Clean : RunOutcome.Partial;
         RunSummary summary = run.Complete(outcome);
 
+        Console.WriteLine($"{Name}: {reused} response(s) reused from the existing capture, {entries.Count - reused} newly captured");
         return new CaptureResult(directory, entries.Count, capturedTickers, bytes, summary.CallsUsed, outcome);
     }
 }

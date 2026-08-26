@@ -32,6 +32,15 @@
         "source files scanned"
       ]
     },
+    "check-completeness": {
+      "scopes": {
+        "gates in the long check list": 10,
+        "gates in the short check list": 10,
+        "checks the detectors declare": 20,
+        "setup rows read back from the replay store": 2,
+        "check results across those rows": 20
+      }
+    },
     "ci-parity": {
       "scopes": {
         "steps declared in tools/ci.ps1": 22,
@@ -73,10 +82,10 @@
     },
     "fixture-replay": {
       "scopes": {
-        "DERIVED expectations diffed": 177,
-        "checkpoints with expectations in the fixture": 13,
-        "expectations diffed": 475,
-        "of those carrying an independently produced expectation": 13
+        "DERIVED expectations diffed": 197,
+        "checkpoints with expectations in the fixture": 14,
+        "expectations diffed": 568,
+        "of those carrying an independently produced expectation": 14
       },
       "context": [
         "FROZEN expectations diffed",

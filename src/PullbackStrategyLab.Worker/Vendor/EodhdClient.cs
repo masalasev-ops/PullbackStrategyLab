@@ -51,6 +51,13 @@ public sealed class EodhdClient : IMarketDataVendor
     /// </summary>
     public const int DailyHistoryCost = 1;
 
+    /// <summary>
+    /// One fundamentals lookup. Priced per request like the per-ticker history, and asked once per
+    /// name for ever rather than nightly, which is what keeps the sector lookup at about fifty calls
+    /// a night in the steady state instead of one per universe member.
+    /// </summary>
+    public const int FundamentalsCost = 1;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
@@ -178,6 +185,50 @@ public sealed class EodhdClient : IMarketDataVendor
 
         return VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(bars);
     }
+
+    public async Task<VendorResult<VendorFundamentals?>> GetFundamentalsAsync(
+        string ticker,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(FundamentalsCost))
+        {
+            return VendorResult<VendorFundamentals?>.OutOfBudget();
+        }
+
+        // Only the three fields the lab uses. The whole fundamentals document is large and most of
+        // it is accounting the strategy never reads, so the request names its filter: asking for
+        // everything and keeping three fields would spend the same call and store a great deal more.
+        FundamentalsRow? row = await GetAsync<FundamentalsRow>(
+            $"fundamentals/{Uri.EscapeDataString(ticker)}.{Uri.EscapeDataString(_options.Vendor.Exchange)}",
+            query: "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+            cancellationToken).ConfigureAwait(false);
+
+        return VendorResult<VendorFundamentals?>.Delivered(
+            row is null ? null : new VendorFundamentals(ticker, row.Sector, row.Industry, row.MarketCapitalization));
+    }
+
+    /// <summary>
+    /// The filtered fundamentals response: three fields, flattened by the vendor's own filter.
+    ///
+    /// <b>The property names are the filter's, not the document's.</b> Asking for
+    /// <c>General::Sector</c> returns a key literally called <c>General::Sector</c> rather than a
+    /// nested object, so the names are pinned here rather than left to the serializer's convention.
+    /// Found by capturing the real response: the convention-named version deserialized to a row of
+    /// nulls without erroring, which would have left every name unresolved and looked like a vendor
+    /// that had nothing on any of them.
+    ///
+    /// The cap comes back as a JSON number and is read as decimal rather than long, on the same
+    /// reasoning volume was at 1.3: a vendor that publishes one value with a fractional part would
+    /// otherwise make the whole response unreadable over one field.
+    /// </summary>
+    private sealed record FundamentalsRow(
+        [property: JsonPropertyName("General::Sector")] string? Sector,
+        [property: JsonPropertyName("General::Industry")] string? Industry,
+        [property: JsonPropertyName("Highlights::MarketCapitalization")] decimal? MarketCapitalization);
 
     private static string Iso(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 

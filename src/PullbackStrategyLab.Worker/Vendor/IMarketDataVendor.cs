@@ -63,6 +63,18 @@ public interface IMarketDataVendor
     /// Every bar comes back adjusted as the vendor adjusts it today, which is exactly what makes
     /// this the way a corporate action is honoured: the whole series arrives on one basis.
     /// </summary>
+    /// <summary>
+    /// One name's sector, industry and market capitalisation, for the lazy lookup behind the
+    /// cluster check and the short side's borrow proxy.
+    ///
+    /// One call a ticker, made once and cached for ever. The three facts move slowly enough that
+    /// re-asking nightly would spend a call a name to learn nothing.
+    /// </summary>
+    Task<VendorResult<VendorFundamentals?>> GetFundamentalsAsync(
+        string ticker,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
+
     Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
         string ticker,
         DateOnly from,
@@ -142,3 +154,12 @@ public sealed record VendorDailyBar(
     /// </summary>
     public decimal DollarVolume => Close * Volume;
 }
+
+/// <summary>
+/// What the fundamentals lookup returns. Three facts, any of which the vendor may not have.
+///
+/// The market cap is decimal because it is money, and it is the short side's borrow proxy rather
+/// than a statistic. A name whose cap the vendor does not carry is not a name with a cap of zero,
+/// which would clear no floor and read as a deliberate rejection.
+/// </summary>
+public sealed record VendorFundamentals(string Ticker, string? Sector, string? Industry, decimal? MarketCap);

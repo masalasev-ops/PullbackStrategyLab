@@ -1937,3 +1937,110 @@ Carried:    Seven active signals still await their producer, all at 2.6: the pul
             sector, the industry and the cluster count.
             The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
             values at 2.11, and step 6 of the move.
+
+## 2.6 — 2026-08-26 — phase-2-detection — the long detector, and eight of ten checks one-sided
+
+Built:      `PullbackGeometry` and `LongPullbackRules` in Core, pure and shared. The nightly run, the
+            calibration run and a test all evaluate the same rules, because a calibration count
+            produced by a second implementation would be a fact about the calibration code rather
+            than about the thresholds, which is the one thing that run is for.
+            The mirror is a parameter rather than a second class: long and short are the same
+            geometry read in opposite directions, and what is genuinely not a sign flip stays in the
+            detectors where the corpus says the three differences are.
+
+            `LongSetupDetector`, verb `detect-long`, with `--calibrate from to` writing to
+            `calibration_setup` off current membership. Ten checks, every result recorded, nothing
+            short-circuiting. A recording floor of the four cheap filters, so a recorded setup is one
+            where the pattern test had something to say rather than two thousand rows a night of
+            names that moved one percent.
+
+            `SectorResolver`, verb `sectors`, lazy and cached, with `fundamentals` added to the
+            vendor client and to the captured fixture. `ThemeClusterer`, verb `clusters`, counting
+            same-industry names **on the same scan**: two names in one industry, one gaining and one
+            declining, are the industry splitting rather than shifting.
+
+            `check-completeness` as a named CI step, reading ARCHITECTURE's own gate ids and
+            reconciling them against the detectors in both directions.
+
+            `capture-fixture` is now idempotent: a response already in the manifest is reused
+            verbatim, instant and all. Re-running to add one endpoint cost 30 calls rather than 338,
+            and re-stamping a kept response would have said it was captured tonight, which is exactly
+            the provenance the tier records.
+
+            The last seven signals move from `AwaitingCheckpoint` to `Frozen`. **The awaiting list is
+            now empty and all thirty-three active signals have a producer**, which the partition test
+            written at 2.2 has forced one checkpoint at a time.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 267 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 568 expectations, 197 `DERIVED`; coverage examined 1,908 with 0
+            unexamined; inputs **67 `CAPTURED`**, up from 37, being the 30 fundamentals responses.
+            30 fundamentals calls spent live against EODHD, recorded outside the daily ceiling.
+            Over the fixture: 7,202 members examined, 7,201 below the recording floor, **1 setup
+            recorded** and 0 passing every gating check. 180 scan hits, all 30 names resolved to an
+            industry, 114 hits in an industry group of two or more.
+            All twenty check verdicts across the two setups derived independently by
+            `tools/derive-indicators.py --checks`, which restates each gate from ARCHITECTURE's own
+            wording: 0 disagreements.
+
+Verified:   The detector's one real setup, HOOD, is a name whose thrust is the session itself. Its
+            checks read: tradable, moves-enough, uptrend and thrust pass; dip-shape, contraction,
+            trigger-near, exit-tight and cluster fail. IESC, the authored case, fails uptrend because
+            it split on this session and sits below all three averages.
+            The authored setup's check results come from the shipped rules over the evidence the
+            detector would have assembled, not from a literal. What is authored is the trigger and
+            the stop, which is the part a detector cannot supply for a name that has not pulled back.
+
+Findings:   Finding. **Eight of the ten checks are one-sided over the fixture, and the cause is the
+            sample rather than the checks.** Measured rather than observed, which is what this
+            checkpoint added: per check, how many setups passed and how many failed, with the
+            one-sided ones named individually.
+            Only two setups are recorded, so a check with two results is one-sided unless those two
+            happen to disagree. Two do: `uptrend` and `contraction`. The other eight have returned
+            one answer each.
+            Reading, and it matters for the remedy: the priced remedy the plan carried was a second
+            as-of date at 33 per-ticker calls, and it does not fix this. A second session over the
+            same thirty names would record perhaps one or two more setups, and eight checks would
+            still have two or three results each. What would fix it is a fixture with enough
+            sessions or enough names to record tens of setups, which is a different and much larger
+            purchase than the one that was priced.
+            **The decision is held rather than taken.** The instruction under which this phase is
+            being built says more than two one-sided checks are declined with a written paragraph,
+            and more than half is a different case worth waiting on. Eight of ten is more than half,
+            so this is recorded and carried rather than decided here.
+
+            Finding. **The detector counted vacuous passes on a name that had not pulled back.**
+            HOOD's thrust is the session itself, so the extreme is the last bar, the trigger and the
+            stop are the same price, and the give-up distance is zero. `exit-tight` and
+            `trigger-near` both passed: the tightest possible stop, on a trade that does not exist.
+            Reading: a vacuous pass is worse than a fail here, because the research loop reads these
+            results to find which checks carry the strategy and a check that passes on nothing looks
+            like a check that is easy to clear. `exit-tight` is the one the corpus calls the most
+            informative in the system, so a false pass on it is the most expensive one available.
+            Both distances are now absent where there is no pullback, and both checks fail with the
+            reason recorded.
+
+            Finding. **`writer-ownership` could not see the detector's writes at all.** The insert
+            named its table through an interpolated string, because one method serves both `setup`
+            and `calibration_setup`, and the scanner reads literals. It reported the detector as
+            declaring two inserts and issuing none.
+            Reading: a write nothing can attribute is a write nobody owns, and the check was right to
+            refuse it. The statement is now written out twice, once per table, and the duplication is
+            the price of the write being visible to the thing that audits ownership.
+
+            Observation. `check-completeness` first read the store `fixture-replay` leaves behind and
+            failed intermittently on a file lock, because the two run in the same assembly. Reading:
+            a shared artefact between two checks is a coupling neither declares and it fails on
+            timing rather than on the property. It runs its own replay now.
+
+            Observation. The captured fundamentals response returns keys named `General::Sector`
+            rather than a nested object, so the convention-named record deserialized to a row of
+            nulls without erroring. Reading: that would have left every name unresolved and looked
+            exactly like a vendor with nothing on any of them. Found by capturing the real response
+            rather than by reading the vendor's documentation, which is the third time this phase
+            that running the thing found what reading it did not.
+
+Carried:    **The one-sidedness decision, held for a human.** Eight of ten checks one-sided over two
+            recorded setups. The remedy the plan priced does not close it, and what would is a
+            materially larger fixture. Due before 2.12.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.

@@ -173,6 +173,32 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
     /// under. The real endpoint returns a name's whole series adjusted as the vendor adjusts it
     /// today, so a test that wants a rebuilt series states the new figures and asks again.
     /// </summary>
+    /// <summary>What the fundamentals lookup returns per ticker, and which names were asked about.</summary>
+    public Dictionary<string, VendorFundamentals> Fundamentals { get; } = new(StringComparer.Ordinal);
+
+    public List<string> FundamentalsRequested { get; } = [];
+
+    public Task<VendorResult<VendorFundamentals?>> GetFundamentalsAsync(
+        string ticker,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(EodhdClient.FundamentalsCost))
+        {
+            return Task.FromResult(VendorResult<VendorFundamentals?>.OutOfBudget());
+        }
+
+        FundamentalsRequested.Add(ticker);
+
+        // Absent rather than empty for a name the fixture says nothing about. A vendor that has no
+        // fundamentals for a ticker returns nothing, and the stage has to tell that apart from a
+        // name whose sector is genuinely blank.
+        return Task.FromResult(VendorResult<VendorFundamentals?>.Delivered(
+            Fundamentals.TryGetValue(ticker, out VendorFundamentals? found) ? found : null));
+    }
+
     public Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
         string ticker,
         DateOnly from,

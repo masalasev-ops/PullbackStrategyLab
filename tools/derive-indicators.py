@@ -67,6 +67,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
+        python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker>
 """
 
 import datetime
@@ -876,7 +877,130 @@ def regime_main(argv):
     return 0
 
 
+LIQUIDITY_FLOOR = Decimal("20000000")
+PRICE_FLOOR = Decimal("5")
+RANGE_FLOOR = Decimal("0.05")
+THRUST_WINDOW = 10
+MIN_PULLBACK, MAX_PULLBACK = 2, 7
+MAX_RETRACE = Decimal("0.40")
+TRIGGER_REACH = Decimal("1.5")
+GIVE_UP = Decimal("0.5")
+CLUSTER_THRESHOLD = 2
+
+
+def checks_main(argv):
+    """The ten long checks, restated from the gate list rather than read from the detector.
+
+    Each gate as ARCHITECTURE.html words it:
+
+      tradable      $20M median daily turnover and a price above $5.
+      moves-enough  typical daily range of 5% or more.
+      uptrend       price above the 9-day, which is above the 21-day, above the 50-day.
+      thrust        appeared on an upward mover scan within the last ten sessions.
+      dip-shape     two to seven sessions of drift, giving back no more than 40% of the jump.
+      held-floor    no daily close below the 21-day average during the dip.
+      contraction   the latest day's range is narrower than its 20-session average.
+      trigger-near  the trigger sits within 1.5 daily ranges of the current price.
+      exit-tight    entry to give-up distance no more than half the daily range.
+      cluster       two or more same-industry names on the same scan the same night.
+
+    A check whose input is absent fails and says so. That is not the same as a threshold that was
+    not cleared, and the distinction is why the detector records a note beside the verdict: with no
+    pullback at all there is no trigger and no give-up point, so trigger-near and exit-tight have
+    nothing to measure. Passing them on a distance of zero would be the tightest possible stop on a
+    trade that does not exist.
+    """
+    if len(argv) < 3:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, as_of, ticker = argv[0], argv[1], argv[2]
+    connection = sqlite3.connect(store)
+
+    bars = window(connection, ticker, as_of, WARMUP)
+    if len(bars) < WARMUP or bars[-1]["date"] != as_of:
+        print("%s: %d sessions, short of the warm-up" % (ticker, len(bars)), file=sys.stderr)
+        return 1
+
+    adj = adjusted(bars)
+    figures = derive(bars)
+    close = adj[-1]["close"]
+
+    hit = connection.execute(
+        """
+        SELECT as_of, scan, cluster_count FROM scan_hit
+         WHERE ticker = ? AND as_of <= ? AND scan IN ('gainer','gapper','leader')
+         ORDER BY as_of DESC, rank LIMIT 1
+        """, (ticker, as_of)).fetchone()
+
+    verdicts = {}
+    verdicts["tradable"] = figures["dollar_volume_median_20"] >= LIQUIDITY_FLOOR and close > PRICE_FLOOR
+    verdicts["moves-enough"] = figures["adr_20"] >= RANGE_FLOOR
+
+    closes = [b["close"] for b in adj]
+    short, medium, long_ = (ema(closes, p) for p in EMA_PERIODS)
+    verdicts["uptrend"] = close > short > medium > long_
+
+    if hit is None:
+        sessions_since = None
+        verdicts["thrust"] = False
+    else:
+        sessions_since = sum(1 for b in bars if b["date"] > hit[0] and b["date"] <= as_of)
+        verdicts["thrust"] = sessions_since <= THRUST_WINDOW
+
+    if hit is None:
+        for name in ("dip-shape", "held-floor", "contraction", "trigger-near", "exit-tight"):
+            verdicts[name] = False
+    else:
+        thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
+        extreme_index = max(range(thrust_index, len(adj)), key=lambda i: adj[i]["high"])
+        extreme = adj[extreme_index]["high"]
+        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        pullback_bars = len(adj) - 1 - extreme_index
+
+        if pullback_bars == 0:
+            low = extreme
+        else:
+            low = min(adj[i]["low"] for i in range(extreme_index + 1, len(adj)))
+
+        move = extreme - origin
+        retrace = None if move == 0 else (extreme - low) / move
+
+        verdicts["dip-shape"] = (
+            MIN_PULLBACK <= pullback_bars <= MAX_PULLBACK
+            and retrace is not None and 0 <= retrace <= MAX_RETRACE)
+
+        beyond = sum(1 for i in range(extreme_index + 1, len(adj)) if adj[i]["close"] < medium)
+        verdicts["held-floor"] = beyond == 0
+
+        today_range = adj[-1]["high"] - adj[-1]["low"]
+        verdicts["contraction"] = today_range < figures["range_avg_20"]
+
+        if pullback_bars == 0:
+            verdicts["trigger-near"] = False
+            verdicts["exit-tight"] = False
+        else:
+            trigger = max(bars[i]["high"] for i in range(extreme_index + 1, len(bars)))
+            stop = min(bars[i]["low"] for i in range(extreme_index + 1, len(bars)))
+            daily_range = figures["adr_20"] * bars[-1]["close"]
+            verdicts["trigger-near"] = abs(trigger - bars[-1]["close"]) / daily_range <= TRIGGER_REACH
+            verdicts["exit-tight"] = abs(trigger - stop) / daily_range <= GIVE_UP
+
+    cluster = None if hit is None else hit[2]
+    verdicts["cluster"] = (cluster or 0) >= CLUSTER_THRESHOLD
+
+    print("\n%s  as of %s" % (ticker, as_of))
+    for name in ("tradable", "moves-enough", "uptrend", "thrust", "dip-shape",
+                 "held-floor", "contraction", "trigger-near", "exit-tight", "cluster"):
+        print("  setup.%s.%-14s %s" % (ticker, name, "pass" if verdicts[name] else "fail"))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--checks":
+        return checks_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--regime":
         return regime_main(argv[2:])
 

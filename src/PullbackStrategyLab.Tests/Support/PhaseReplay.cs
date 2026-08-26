@@ -1,8 +1,10 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Web.Shell;
@@ -82,6 +84,9 @@ public sealed class PhaseReplay : IDisposable
     public EodhdClient Vendor { get; }
 
     public FixtureVendorHandler Fixture => _handler;
+
+    /// <summary>A read-only connection to the store this replay built, for a caller that wants rows.</summary>
+    public SqliteConnection OpenStore() => _connections.OpenReadOnly();
 
     public void Dispose()
     {
@@ -250,7 +255,33 @@ public sealed class PhaseReplay : IDisposable
         Record("regime.breadthScore", regime.BreadthScore);
         measurements.Add(new Measurement("regime.label", regime.Label));
 
-        // 11. The signal freeze, over one authored setup.
+        // 11. The sector lookup, the cluster count, and the long detector.
+        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
+            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
+        Record("sectors.unresolved", sectors.Unresolved);
+        Record("sectors.asked", sectors.Asked);
+        Record("sectors.resolved", sectors.Resolved);
+
+        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
+
+        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
+        Record("clusters.hits", clusters.Hits);
+        Record("clusters.withIndustry", clusters.WithIndustry);
+        Record("clusters.counted", clusters.Counted);
+        Record("clusters.clustered", clusters.Clustered);
+
+        DetectResult detected = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        stages.Add(new StageRun(LongSetupDetector.Name, 0, detected.RowsWritten, detected.Outcome.ToStorageText()));
+        Record("detect.long.members", detected.Members);
+        Record("detect.long.examined", detected.Examined);
+        Record("detect.long.belowFloor", detected.BelowFloor);
+        Record("detect.long.recorded", detected.Recorded);
+        Record("detect.long.passedAll", detected.PassedAll);
+
+        // 12. The signal freeze, over one authored setup.
         //
         //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
         //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said
@@ -269,6 +300,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(IndexFigures());
         measurements.AddRange(ScanFigures());
+        measurements.AddRange(CheckSidednessFigures());
         measurements.AddRange(SignalFigures());
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(LiquidityFloorFigures());
@@ -347,6 +379,87 @@ public sealed class PhaseReplay : IDisposable
     /// place to stop: a fifteenth decimal of a decimal average is a fact about the order of
     /// operations rather than about the price.
     /// </summary>
+    /// <summary>
+    /// How each check came out across the fixture, pass and fail counted separately.
+    ///
+    /// A count of results diffed says the detector ran. It does not say whether a check was ever
+    /// exercised on both sides, and thirty names on one session will fail most of them at the same
+    /// early gate. A check with no passes, or no failures, is <b>one-sided</b>: the branch nobody
+    /// reached is asserted by nothing, and "300 results diffed" reads as full coverage while six of
+    /// the ten have only ever returned one answer.
+    ///
+    /// Named individually rather than counted, because the useful sentence is "held-floor and
+    /// contraction are one-sided" and not "two checks are one-sided".
+    /// </summary>
+    private IReadOnlyList<Measurement> CheckSidednessFigures()
+    {
+        string replay = Path.Combine(RepositoryLayout.Artifacts, "replay.db");
+        var figures = new List<Measurement>();
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT direction, check_results FROM setup";
+
+        var passes = new Dictionary<string, int>(StringComparer.Ordinal);
+        var fails = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                foreach (CheckResult result in
+                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), CheckJson) ?? [])
+                {
+                    Dictionary<string, int> side = result.Passed ? passes : fails;
+                    side[result.Name] = side.GetValueOrDefault(result.Name) + 1;
+                }
+            }
+        }
+
+        // Per setup, per check, the verdict. This is what makes a changed gate show up as a named
+        // difference rather than as a count moving: "dip-shape on HOOD went from fail to pass" is
+        // actionable and "one more setup passed" is not.
+        using (SqliteCommand perSetup = connection.CreateCommand())
+        {
+            perSetup.CommandText = "SELECT setup_id, check_results FROM setup ORDER BY setup_id";
+            using SqliteDataReader rows = perSetup.ExecuteReader();
+
+            while (rows.Read())
+            {
+                string setupId = rows.GetString(0);
+                foreach (CheckResult result in
+                         JsonSerializer.Deserialize<CheckResult[]>(rows.GetString(1), CheckJson) ?? [])
+                {
+                    figures.Add(new Measurement(
+                        $"setup.{setupId}.{result.Name}", result.Passed ? "pass" : "fail"));
+                }
+            }
+        }
+
+        var oneSided = new List<string>();
+
+        foreach (string name in SetupChecks.Long)
+        {
+            int passed = passes.GetValueOrDefault(name);
+            int failed = fails.GetValueOrDefault(name);
+
+            figures.Add(new Measurement($"check.long.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"check.long.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
+
+            if (passed + failed > 0 && (passed == 0 || failed == 0))
+            {
+                oneSided.Add(name);
+            }
+        }
+
+        figures.Add(new Measurement("check.long.oneSided",
+            oneSided.Count == 0 ? "none" : string.Join(" ", oneSided.Order(StringComparer.Ordinal))));
+
+        return figures;
+    }
+
+    private static readonly JsonSerializerOptions CheckJson = new(JsonSerializerDefaults.Web);
+
     /// <summary>How many ranks of each scan the fixture records, since thirty names cannot fill fifty.</summary>
     public const int ScanRanksRecorded = 3;
 
@@ -394,12 +507,25 @@ public sealed class PhaseReplay : IDisposable
     {
         using (SqliteConnection connection = _connections.OpenWrite())
         {
+            // The check results come from the shipped rules over the evidence the detector would
+            // have assembled, not from a literal. An authored row carrying an invented verdict
+            // would be a test of the test; what is authored here is the trigger and the stop, which
+            // is the part a detector cannot supply for a name that has not pulled back.
+            LongPullbackRules.LongEvidence? evidence =
+                LongSetupDetector.Evidence(connection, AuthoredSetupTicker, AsOf);
+
+            IReadOnlyList<CheckResult> results = evidence is null
+                ? []
+                : LongPullbackRules.Evaluate(evidence);
+
             using SqliteCommand setup = connection.CreateCommand();
             setup.CommandText = """
                 INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
                                    trigger_price, stop_price, stop_distance_ranges)
-                VALUES (@setup_id, @as_of, @ticker, 'long', '{}', 1, @trigger, @stop, '0.2700')
+                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700')
                 """;
+            setup.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckJson));
+            setup.Parameters.AddWithValue("@passed_all", SetupChecks.PassedAll(results) ? 1 : 0);
             setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");
             setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
             setup.Parameters.AddWithValue("@ticker", AuthoredSetupTicker);

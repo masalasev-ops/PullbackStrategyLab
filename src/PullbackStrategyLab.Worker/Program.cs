@@ -41,6 +41,9 @@ public static class Program
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
+        builder.Services.AddSingleton<SectorResolver>();
+        builder.Services.AddSingleton<ThemeClusterer>();
+        builder.Services.AddSingleton<LongSetupDetector>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
 
@@ -72,6 +75,9 @@ public static class Program
                 ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
                 TierClassifier.Name => host.Services.GetRequiredService<TierClassifier>().Run(rest),
                 RegimeLabeler.Name => host.Services.GetRequiredService<RegimeLabeler>().Run(rest),
+                SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
+                ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
+                LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -117,7 +123,10 @@ public static class Program
         IndicatorEngine.Name,
         ScanEngine.Name,
         TierClassifier.Name,
+        SectorResolver.Name,
+        ThemeClusterer.Name,
         RegimeLabeler.Name,
+        LongSetupDetector.Name,
         SignalVectorizer.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,

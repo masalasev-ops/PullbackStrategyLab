@@ -55,14 +55,14 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 17:50 | `index-bars`, one call a tracker | 3 |
 | 18:00 | `indicators` | 0 |
 | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
-| 18:15 | the cluster count, then `regime` | 0 |
-| 18:20 | detectors, both directions | 0 |
+| 18:15 | `clusters`, then `regime` | 0 |
+| 18:20 | `detect-long`, then the short detector | 0 |
 | 18:25 | `vectorize`, the signal freeze, then journal | 0 |
 | 18:26 | control sampling | 0 |
 | 18:28 | cap | 0 |
 | 18:30 | plans per variant | 0 |
 | 18:40 | publish watchlist | 0 |
-| 19:00 | sector resolve for new names | ~50 |
+| 19:00 | `sectors`, resolved once per name and cached | ~50 |
 | 20:30 | minute bars for flagged setups | 300 |
 | 21:00 | session replay, fills, positions | 0 |
 | 21:30 | forward returns | 0 |

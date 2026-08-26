@@ -53,13 +53,6 @@ public sealed class SignalVectorizer
     public static IReadOnlyDictionary<string, string> AwaitingCheckpoint { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["pullback_bars"] = "2.6",
-            ["pullback_extreme"] = "2.6",
-            ["retrace_depth"] = "2.6",
-            ["closes_beyond_floor"] = "2.6",
-            ["market_cap"] = "2.6",
-            ["industry"] = "2.6",
-            ["cluster_count"] = "2.6",
         };
 
     /// <summary>The signals this stage freezes, in the order the library lists them.</summary>
@@ -91,6 +84,13 @@ public sealed class SignalVectorizer
         "regime_index_score",
         "regime_breadth_score",
         "regime_label",
+        "pullback_bars",
+        "pullback_extreme",
+        "retrace_depth",
+        "closes_beyond_floor",
+        "market_cap",
+        "industry",
+        "cluster_count",
     ];
 
     /// <summary>
@@ -107,6 +107,9 @@ public sealed class SignalVectorizer
         "listing_age_sessions",
         "regime_index_score",
         "regime_breadth_score",
+        "pullback_bars",
+        "closes_beyond_floor",
+        "cluster_count",
     };
 
     /// <summary>
@@ -282,8 +285,129 @@ public sealed class SignalVectorizer
 
         Thrust(connection, setup, asOf, bars, indicators, values);
         Regime(connection, asOf, values);
+        Shape(connection, setup, asOf, bars, indicators, values);
+        TheName(connection, setup.Ticker, values);
 
         return values;
+    }
+
+    /// <summary>
+    /// The pullback's shape, through the same Core geometry the detector decided on.
+    ///
+    /// One implementation, two callers, on the terms the averages already established. A second
+    /// implementation here would eventually disagree with the detector, and the disagreement would
+    /// be invisible: every one of these is a plausible small number whichever way it was computed,
+    /// so the frozen evidence would quietly stop describing the decision it was frozen for.
+    /// </summary>
+    private static void Shape(
+        SqliteConnection connection,
+        StoredSetup setup,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        StoredIndicators? indicators,
+        Dictionary<string, string> values)
+    {
+        if (!values.TryGetValue("thrust_session", out string? session))
+        {
+            return;
+        }
+
+        DateOnly thrustSession = StoreText.StorageTextToDate(session);
+        int thrustIndex = -1;
+        for (int i = 0; i < bars.Count; i++)
+        {
+            if (bars[i].BarDate == thrustSession)
+            {
+                thrustIndex = i;
+                break;
+            }
+        }
+
+        if (thrustIndex < 0)
+        {
+            return;
+        }
+
+        bool isLong = string.Equals(setup.Direction, "long", StringComparison.Ordinal);
+        PullbackGeometry.Bar[] shaped = [.. bars.Select(OnBothBases)];
+        PullbackGeometry.Pullback? pullback = PullbackGeometry.Of(shaped, thrustIndex, isLong);
+
+        if (pullback is null)
+        {
+            return;
+        }
+
+        values["pullback_bars"] = pullback.PullbackBars.ToString(CultureInfo.InvariantCulture);
+        values["pullback_extreme"] = StoreText.PriceToStorageText(pullback.PullbackExtreme);
+
+        if (pullback.RetraceDepth is decimal depth)
+        {
+            values["retrace_depth"] = StoreText.RatioToStorageText(depth);
+        }
+
+        if (indicators is not null)
+        {
+            // The floor is the 21-day average long and the 50-day short, which is the one place the
+            // two check lists are not mirrors: held-floor reads the medium average and no-reclaim
+            // reads the long one.
+            decimal floor = isLong ? indicators.EmaMedium : indicators.EmaLong;
+            values["closes_beyond_floor"] =
+                PullbackGeometry.ClosesBeyondFloor(shaped, pullback, floor, isLong)
+                    .ToString(CultureInfo.InvariantCulture);
+        }
+    }
+
+    private static PullbackGeometry.Bar OnBothBases(StoredDailyBar bar)
+    {
+        decimal factor = bar.Close == 0m ? 1m : bar.AdjustedClose / bar.Close;
+        return new PullbackGeometry.Bar(
+            bar.Open * factor, bar.High * factor, bar.Low * factor, bar.AdjustedClose, bar.High, bar.Low);
+    }
+
+    /// <summary>
+    /// What the lab knows about the security itself: its industry, its market cap, and how many
+    /// same-industry names moved with it tonight.
+    ///
+    /// All three absent until SectorResolver has been asked about the name, and absent is the true
+    /// answer rather than a placeholder. A cluster count of zero would say the name moved alone,
+    /// which is a different statement from not knowing what industry it is in.
+    /// </summary>
+    private static void TheName(SqliteConnection connection, string ticker, Dictionary<string, string> values)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT industry, market_cap FROM security WHERE ticker = @ticker";
+        command.Parameters.AddWithValue("@ticker", ticker);
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            if (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                {
+                    values["industry"] = reader.GetString(0);
+                }
+
+                if (!reader.IsDBNull(1))
+                {
+                    values["market_cap"] = reader.GetString(1);
+                }
+            }
+        }
+
+        if (values.TryGetValue("thrust_scan", out string? scan) && values.TryGetValue("thrust_session", out string? on))
+        {
+            using SqliteCommand cluster = connection.CreateCommand();
+            cluster.CommandText =
+                "SELECT cluster_count FROM scan_hit WHERE ticker = @ticker AND as_of = @as_of AND scan = @scan";
+            cluster.Parameters.AddWithValue("@ticker", ticker);
+            cluster.Parameters.AddWithValue("@as_of", on);
+            cluster.Parameters.AddWithValue("@scan", scan);
+
+            if (cluster.ExecuteScalar() is long count)
+            {
+                values["cluster_count"] = count.ToString(CultureInfo.InvariantCulture);
+            }
+        }
     }
 
     /// <summary>

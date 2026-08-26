@@ -2656,17 +2656,18 @@
     {
       "id": "signals.setups",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "2",
       "checkpoint": "2.2",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Changed at 2.6 from 1. two, not one: the detector now records its own alongside the authored case."
     },
     {
       "id": "signals.frozen",
       "tier": "FROZEN",
-      "value": "26",
+      "value": "66",
       "checkpoint": "2.2",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Changed at 2.5 from 23, at 2.4 from 22, at 2.3 from 16. The vectorizer freezes more of the library each time a checkpoint gives a signal a store to read: the six thrust signals at 2.3, ladder_grade at 2.4, the three mood signals at 2.5. It is a progress figure rather than a property and it moves again at 2.6."
+      "note": "Changed at 2.6 from 26. sixty-six, not twenty-six: the library's last seven signals gained producers at 2.6, so all thirty-three are frozen, and there are now two setups to freeze them onto."
     },
     {
       "id": "signals.absent",
@@ -3412,6 +3413,664 @@
       "value": "mixed",
       "checkpoint": "2.5",
       "producedBy": "read back from the regime row, to prove the mood reaches the frozen signal"
+    },
+    {
+      "id": "check.long.cluster.failed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.cluster.passed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.contraction.failed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.contraction.passed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.dip-shape.failed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.dip-shape.passed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.exit-tight.failed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.exit-tight.passed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.held-floor.failed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.held-floor.passed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.moves-enough.failed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.moves-enough.passed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.oneSided",
+      "tier": "FROZEN",
+      "value": "cluster dip-shape exit-tight held-floor moves-enough thrust tradable trigger-near",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Eight of the ten checks are one-sided over the fixture, and the cause is the sample rather than the checks: only two setups are recorded, so a check with two results is one-sided unless those two happen to disagree. Two do, uptrend and contraction. This is measured rather than assumed and it is a finding about the fixture's size, not about the detector."
+    },
+    {
+      "id": "check.long.thrust.failed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.thrust.passed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.tradable.failed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.tradable.passed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.trigger-near.failed",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.trigger-near.passed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.uptrend.failed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.uptrend.passed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "clusters.clustered",
+      "tier": "FROZEN",
+      "value": "114",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "114 of 180 scan hits sit in an industry group of two or more on the same scan. Grouped by scan as well as by industry: two names in one industry, one gaining and one declining, are the industry splitting rather than shifting."
+    },
+    {
+      "id": "clusters.counted",
+      "tier": "FROZEN",
+      "value": "180",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "clusters.hits",
+      "tier": "FROZEN",
+      "value": "180",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "clusters.withIndustry",
+      "tier": "FROZEN",
+      "value": "180",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "detect.long.belowFloor",
+      "tier": "FROZEN",
+      "value": "7201",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "detect.long.examined",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "detect.long.members",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "detect.long.passedAll",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "None. exit-tight is the check the corpus says fails most often and it fails here for a reason worth keeping: HOOD's thrust is the session itself, so there is no pullback, no level to enter against and no give-up point. The distances are absent rather than zero, because a stop distance of nought would pass exit-tight on a trade that does not exist."
+    },
+    {
+      "id": "detect.long.recorded",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "One, from 7,202 members and 7,201 below the recording floor. The floor is the four cheap filters, and over thirty seeded names on one session exactly one clears all four."
+    },
+    {
+      "id": "sectors.asked",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "sectors.resolved",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Thirty of thirty asked. The lookup is lazy and cached: a name is asked about once and stamped even when the vendor has nothing, or it would be re-asked every night for ever."
+    },
+    {
+      "id": "sectors.unresolved",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.adr_20",
+      "tier": "FROZEN",
+      "value": "0.0523",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.atr_14",
+      "tier": "FROZEN",
+      "value": "6.1121",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.close_adjusted",
+      "tier": "FROZEN",
+      "value": "103.6200",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.closes_beyond_floor",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.cluster_count",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.days_since_thrust",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.dollar_volume_median_20",
+      "tier": "FROZEN",
+      "value": "1696659849.5000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_21_distance",
+      "tier": "FROZEN",
+      "value": "0.0642",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_50_distance",
+      "tier": "FROZEN",
+      "value": "0.0753",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_9_distance",
+      "tier": "FROZEN",
+      "value": "0.0498",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_gap_21_50",
+      "tier": "FROZEN",
+      "value": "0.0105",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_gap_21_50_avg_20",
+      "tier": "FROZEN",
+      "value": "0.0104",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.industry",
+      "tier": "FROZEN",
+      "value": "Capital Markets",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ladder_grade",
+      "tier": "FROZEN",
+      "value": "rising",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.listing_age_sessions",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.market_cap",
+      "tier": "FROZEN",
+      "value": "100778131456.0000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.pullback_bars",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.pullback_extreme",
+      "tier": "FROZEN",
+      "value": "109.1250",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.range_avg_20",
+      "tier": "FROZEN",
+      "value": "4.9501",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.range_today_over_avg",
+      "tier": "FROZEN",
+      "value": "1.2091",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.regime_breadth_score",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.regime_index_score",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.regime_label",
+      "tier": "FROZEN",
+      "value": "mixed",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.retrace_depth",
+      "tier": "FROZEN",
+      "value": "0.0000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.stop_distance_ranges",
+      "tier": "FROZEN",
+      "value": "0.0000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.stop_price",
+      "tier": "FROZEN",
+      "value": "109.1250",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.thrust_magnitude",
+      "tier": "FROZEN",
+      "value": "0.0833",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.thrust_rank",
+      "tier": "FROZEN",
+      "value": "8",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.thrust_scan",
+      "tier": "FROZEN",
+      "value": "leader",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.thrust_session",
+      "tier": "FROZEN",
+      "value": "2026-08-24",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.thrust_size_in_ranges",
+      "tier": "FROZEN",
+      "value": "1.5939",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.trigger_distance_ranges",
+      "tier": "FROZEN",
+      "value": "1.0162",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.trigger_price",
+      "tier": "FROZEN",
+      "value": "109.1250",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.closes_beyond_floor",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.cluster_count",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.industry",
+      "tier": "FROZEN",
+      "value": "Engineering & Construction",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.market_cap",
+      "tier": "FROZEN",
+      "value": "12481812480.0000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.pullback_bars",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.pullback_extreme",
+      "tier": "FROZEN",
+      "value": "341.7984",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.retrace_depth",
+      "tier": "FROZEN",
+      "value": "0.0000",
+      "checkpoint": "2.6",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.cluster",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.contraction",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.dip-shape",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.exit-tight",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks",
+      "note": "Fails, and fails for the right reason. HOOD's thrust is the session itself, so there is no pullback, no level to enter against and no give-up point. The distance is absent rather than zero: a stop distance of nought would pass this check on a trade that does not exist, and the corpus calls exit-tight the most informative check in the system."
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.held-floor",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.thrust",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.trigger-near",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.uptrend",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.cluster",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.contraction",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.dip-shape",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.exit-tight",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.held-floor",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.thrust",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.trigger-near",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.uptrend",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "2.6",
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks",
+      "note": "Fails. IESC split two-for-one on this session and sits below all three averages; the ladder grade is mixed. It is the fixture's split case and it is the one name where reading the raw basis would change the answer, so a pass here would be the basis trap showing up in a check."
     }
   ],
   "frozenOnly": []

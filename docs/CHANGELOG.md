@@ -455,3 +455,23 @@ Why:  "Label filters nothing" is the one condition here that no figure can show,
 Was:  | 18:15 | cluster, regime | 0 |
 Now:  | 18:15 | the cluster count, then `regime` | 0 |
 Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. The cluster count arrives at 2.6 and stays prose until then.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `check-completeness` | 2.6 | Every setup row has a result recorded for every check defined at its date |
+Now:  The same row with `every CI run` in the Runs column, and the reconciliation stated as running in both directions against ARCHITECTURE's own gate lists.
+Why:  The check exists as of 2.6 and runs as a named CI step, so a checkpoint row would now name a checkpoint `PROGRESS.md` records, which `coverage-reported` fails on. Both directions matter and reading one would catch half the divergences: a gate the detector does not run is a rule the document states and the lab does not apply, and a check the detector runs that no gate names is a rule the lab applies and the document does not state.
+
+### 2026-08-26 — SCHEMA.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  `scan_hit.cluster_count` noted as "same-sector hits that night".
+Now:  "same-industry hits that night", with a note stating why and citing the decision.
+Why:  Missed by the 2.1 spec pass, which settled the key everywhere else. Sector and industry are different columns giving different answers on the same night.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Failed checks are recorded rather than discarded
+Was:  | 2.6 | LongSetupDetector, ten checks, all results recorded, with SectorResolver and ThemeClusterer behind the cluster check | `check-completeness` passes: every recorded setup has a result for every check |
+Now:  The same row naming the shared Core rules and the last seven signals moving to frozen, with the reconciliation stated in both directions and the one-sidedness measurement added as a condition.
+Why:  "Every recorded setup has a result for every check" is satisfied by a fixture where every check has only ever returned one answer, and 300 results diffed then reads as full coverage while the branch nobody reached is asserted by nothing. The report now names one-sided checks individually, because the useful sentence is which checks rather than how many, and the decision on the remedy sits at this checkpoint rather than at sign-off, where the session that would have to take it cannot.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  Three nightly rows named their stages in prose: the cluster count, the detectors, and the sector resolve.
+Now:  `clusters`, `detect-long` and `sectors` named by the verb an operator types.
+Why:  The stages exist. The sector row keeps its ~50 calls: the lookup is lazy and cached, so the steady-state cost is names newly surfaced by a scan rather than the universe.
