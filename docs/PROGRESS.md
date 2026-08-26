@@ -702,3 +702,53 @@ Carried:    **This is partial and is recorded as partial.** One machine, not two
             checkpoint was written for: a Windows path in a row, an identifier the other platform
             rejects, a secrets file nobody copied. The first of those is now covered permanently
             by `store-portability`; the other two wait for a second machine. Due 1.12.
+
+## Phase 1 corrections — 2026-08-25 — phase-1-ingest-and-charts — out of scope names the checkpoint that ends it
+
+Not a checkpoint entry. A change to the phase report raised before 1.12 and made before it.
+
+Built:      Every out-of-scope claim now carries the checkpoint that brings it into scope, and
+            the report groups them by it. Three assertions guard the rule: the checkpoint has to
+            be there at all, it has to be one BUILD_PLAN.md actually has, and it has to be one
+            PROGRESS.md does not yet record. The third is the one that matters most, because a
+            claim still deferred to a landed checkpoint is one that checkpoint shipped without
+            coming back to, and nothing said so at the time.
+            Placement now reads BUILD_PLAN.md's checkpoint rows rather than the build order
+            table and the phase sections. The plan names every component in the row of the
+            checkpoint that builds it, so the checkpoint comes from the document that schedules
+            the work; the rows inside the carried-obligations table are excluded, because that
+            table is keyed by the checkpoint that raised an obligation rather than the one that
+            builds the thing.
+            Four permanent proofs in `CheckProofTests`, one per way a claim can rest out of
+            scope forever, fed claims written by hand rather than whatever the corpus says today.
+
+Measured:   All 52 catalogue components place at exactly one checkpoint, with no ties and no
+            gaps. The verdict split is unchanged at 82 claims, 18 pass, 0 fail, 64 out of scope,
+            0 unexamined, and the 64 now spread across 37 checkpoints: 4.6 closes 8 of them,
+            5.1 closes 5, 2.6 closes 3, and 28 checkpoints close one each.
+            `tools/ci.ps1` green, 20 steps, 174 tests. `tools/verify-phase` green.
+
+Findings:   Observation. The naive parser for checkpoint rows also matched the carried-obligations
+            table, whose rows are keyed `| 1.6 |` and so on. Reading: that would have placed a
+            component against the checkpoint that complained about it. Restricted to rows inside
+            a phase section, and the reason is written at the parser rather than left for the
+            next reader to rediscover.
+
+## Phase 1 corrections — 2026-08-25 — phase-1-ingest-and-charts — a reported push that did not happen
+
+Not a checkpoint entry. A correction to what this session reported, recorded because a build
+session's report is the record a later reader trusts.
+
+Findings:   Observation. Four times between 1.7 and 1.11 the session reported "pushed" having run
+            `git push origin main`. The working branch is `phase-1-ingest-and-charts` and `main`
+            was unchanged, so each command was a no-op that printed nothing under `-q` and each
+            report was wrong. Nothing was lost: the four commits were local throughout and CI had
+            not run on any of them, so a green CI reported at the time would also have been
+            wrong, and was not claimed.
+            Corrected the same session. `b829279` is on `origin/phase-1-ingest-and-charts` and the
+            run over all four commits is green on `windows-latest` and `macos-latest`.
+            Reading: this is the second time a report has stated something the machine did not do.
+            The first was 1.2's two-platform check, reported as unconfirmed rather than as failed
+            and then found failing on the first macOS run. Both are the same shape: the session
+            reporting what it expected rather than what it read back. What is cheap and covers it
+            is reading the command's own output before writing the sentence that describes it.

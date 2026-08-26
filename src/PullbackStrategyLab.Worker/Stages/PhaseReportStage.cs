@@ -149,6 +149,14 @@ public sealed class PhaseReportStage
             reasons.Add($"{claims.Unexamined} architecture claim(s) are unexamined, which is not a pass.");
         }
 
+        int unclosed = (conformance?.Detail ?? [])
+            .Count(c => c.Verdict == "deferred" && string.IsNullOrWhiteSpace(c.Closes));
+
+        if (unclosed > 0)
+        {
+            reasons.Add($"{unclosed} out-of-scope claim(s) name no checkpoint that ends them, so they rest there forever.");
+        }
+
         if (expectations.Differed > 0)
         {
             reasons.Add($"{expectations.Differed} fixture expectation(s) did not hold.");
@@ -182,6 +190,7 @@ public sealed class PhaseReportStage
 
         return new Report(
             conformance?.Phase ?? 0,
+            conformance?.LastLanded ?? "nothing recorded",
             generatedAt.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss'Z'", CultureInfo.InvariantCulture),
             reasons.Count == 0,
             reasons,
@@ -328,6 +337,29 @@ public sealed class PhaseReportStage
             + $"{report.Claims.OutOfScope} placed in a later phase, <b class=\"{(report.Claims.Unexamined > 0 ? "red" : string.Empty)}\">{report.Claims.Unexamined}</b> unexamined. "
             + $"Unexamined is not a pass.</p>");
 
+        Claim[] outOfScope = [.. report.ClaimDetail.Where(c => c.Verdict == "deferred")];
+        if (outOfScope.Length > 0)
+        {
+            page.Append("<h3>Out of scope, by the checkpoint that ends it</h3>");
+            page.Append(CultureInfo.InvariantCulture,
+                $"<p>The last checkpoint recorded is {E(report.LastLanded)}. Every row here closes at a checkpoint "
+                + $"ahead of it, so this count falls as they land rather than resting as a permanent number.</p>");
+            page.Append("<table><tr><th>Closes at</th><th>Claims</th><th>Which</th></tr>");
+
+            foreach (IGrouping<string, Claim> group in outOfScope
+                .GroupBy(c => c.Closes ?? "nothing", StringComparer.Ordinal)
+                .OrderBy(g => Checkpoint(g.Key)))
+            {
+                string which = string.Join(", ", group.Select(c => c.Subject).Order(StringComparer.Ordinal));
+                page.Append(CultureInfo.InvariantCulture,
+                    $"<tr><td class=\"{(group.Key == "nothing" ? "red" : string.Empty)}\">{E(group.Key)}</td>"
+                    + $"<td>{group.Count()}</td><td>{E(which)}</td></tr>");
+            }
+
+            page.Append("</table>");
+        }
+
+        page.Append("<h3>Every claim</h3>");
         page.Append("<table><tr><th>Table</th><th>Subject</th><th>Verdict</th><th>Detail</th></tr>");
         foreach (Claim claim in report.ClaimDetail.OrderBy(c => Rank(c.Verdict)).ThenBy(c => c.Table, StringComparer.Ordinal))
         {
@@ -420,6 +452,17 @@ public sealed class PhaseReportStage
         return page.ToString();
     }
 
+    /// <summary>Checkpoints sort by their two numbers, so 1.10 follows 1.9 rather than 1.1.</summary>
+    private static int Checkpoint(string identifier)
+    {
+        string[] parts = identifier.Split('.');
+        return parts.Length == 2
+            && int.TryParse(parts[0], CultureInfo.InvariantCulture, out int phase)
+            && int.TryParse(parts[1], CultureInfo.InvariantCulture, out int step)
+                ? (phase * 1000) + step
+                : int.MaxValue;
+    }
+
     private static int Rank(string verdict) => verdict switch
     {
         "fail" => 0,
@@ -468,6 +511,7 @@ public sealed class PhaseReportStage
 
     public sealed record Report(
         int Phase,
+        string LastLanded,
         string GeneratedAt,
         bool Green,
         IReadOnlyList<string> Reasons,
@@ -491,6 +535,7 @@ public sealed class PhaseReportStage
 
     public sealed record Conformance(
         int Phase,
+        string LastLanded,
         int Claims,
         int Passed,
         int Failed,
@@ -498,7 +543,13 @@ public sealed class PhaseReportStage
         int Unexamined,
         IReadOnlyList<Claim> Detail);
 
-    public sealed record Claim(string Table, string Subject, string Verdict, string Detail);
+    /// <summary>
+    /// One claim. <c>Closes</c> is the checkpoint that brings an out-of-scope claim into scope,
+    /// and it is what stops the out-of-scope count reading as a permanent number. Whether that
+    /// checkpoint exists and is still ahead is the conformance check's assertion, not this
+    /// reporter's: a second implementation of it here would be a second place to keep right.
+    /// </summary>
+    public sealed record Claim(string Table, string Subject, string Verdict, string Detail, string? Closes = null);
 
     public sealed record FixtureDiff(
         string AsOf,

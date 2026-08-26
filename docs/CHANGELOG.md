@@ -37,6 +37,16 @@ Was:  | 2 | Record source counts | `setup`, `setup_signal`, `forward_return`, `t
 Now:  A row count for every table the store holds, derived from the schema rather than from a list, taken before anything is copied, and `tools/snapshot-db` doing it rather than a person.
 Why:  Five of the named tables do not exist yet and the list would go stale at every migration that adds one. A count that silently omits a table is exactly the failure the step exists to catch: the copy opens cleanly, every counted table matches, and the one nobody counted is empty.
 
+### 2026-08-25 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  One paragraph separating unexamined from out of scope, with out of scope defined as "the corpus places it in a later phase".
+Now:  The same, with "later phase" replaced by "a checkpoint that has not landed", plus a paragraph requiring every out-of-scope claim to name the checkpoint that ends it, requiring that checkpoint to exist in BUILD_PLAN.md and to be one PROGRESS.md does not yet record, and stating that the report groups them by it.
+Why:  The fourth verdict's failure mode is a claim resting there forever, indistinguishable from one nobody got to. A phase is too coarse to close a claim against, and a claim still deferred to a checkpoint that has landed is one that checkpoint shipped without coming back to. Naming the checkpoint makes the count fall as work lands rather than reading as a permanent sixty-four.
+
+### 2026-08-25 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  A claim this document places in a later phase is listed as out of scope and counted separately, because collapsing the two would let a later phase's rows hide the one row nobody can check.
+Now:  The same against a checkpoint rather than a phase, plus: each of those names the checkpoint that ends it, and the report groups them by it, so the count falls as checkpoints land rather than resting as a permanent number.
+Why:  Same change, in the document that describes the report.
+
 ### 2026-08-25 — ARCHITECTURE.html — cites Components are named, not coded
 Was:  A component catalogue of 51 rows with no chart page, and an ordering note reading "The 51 components are listed by layer".
 Now:  A **Chart page** row above the watchlist page, and "The 52 components are listed by layer", with a sentence saying the chart page sits with the screens rather than with the ingest components it draws from.

@@ -229,4 +229,63 @@ public sealed class CheckProofTests
 
     private static (string Type, string Table, StoreOperation Operation) Shape(SourceWrite write) =>
         (write.Type, write.Table, write.Operation);
+    // ---- out of scope names the checkpoint that ends it ----------------------------------
+
+    /// <summary>The plan as these proofs pretend it reads: 1.6 has landed, 2.6 has not, 9.9 does not exist.</summary>
+    private static bool Scheduled(string checkpoint) => checkpoint is "1.6" or "2.6";
+
+    private static bool Landed(string checkpoint) => checkpoint is "1.6";
+
+    private static IReadOnlyList<string> Problems(params ArchitectureConformanceCheck.Claim[] claims) =>
+        ArchitectureConformanceCheck.OutOfScopeProblems(claims, Scheduled, Landed);
+
+    [Fact]
+    public void An_out_of_scope_claim_closing_at_a_checkpoint_still_ahead_is_accepted()
+    {
+        Assert.Empty(Problems(
+            ArchitectureConformanceCheck.Claim.OutOfScope("Component catalogue", "ScanEngine", "2.6")));
+    }
+
+    [Fact]
+    public void An_out_of_scope_claim_with_no_checkpoint_is_caught()
+    {
+        // The failure mode the checkpoint exists to prevent: a claim that rests out of scope
+        // forever, indistinguishable from one nobody got to.
+        var orphan = new ArchitectureConformanceCheck.Claim(
+            "Component catalogue", "ScanEngine", ArchitectureConformanceCheck.Deferred, "later", Closes: null);
+
+        string problem = Assert.Single(Problems(orphan));
+        Assert.Contains("names no checkpoint", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_out_of_scope_claim_naming_a_checkpoint_the_plan_does_not_have_is_caught()
+    {
+        string problem = Assert.Single(Problems(
+            ArchitectureConformanceCheck.Claim.OutOfScope("The limits", "Risk per trade", "9.9")));
+
+        Assert.Contains("BUILD_PLAN.md does not have", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_out_of_scope_claim_naming_a_checkpoint_that_has_landed_is_caught()
+    {
+        // The one the count is for. 1.6 is in PROGRESS, so a claim still deferred to it is a
+        // claim that checkpoint shipped without bringing into scope, and nothing said so at the
+        // time.
+        string problem = Assert.Single(Problems(
+            ArchitectureConformanceCheck.Claim.OutOfScope("Failure behaviour", "Unprocessed corporate action", "1.6")));
+
+        Assert.Contains("already landed", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_claim_that_is_not_out_of_scope_is_not_asked_for_a_checkpoint()
+    {
+        // A passing claim carries no checkpoint and must not be reported for it, or every green
+        // run would be full of noise about claims that are already settled.
+        Assert.Empty(Problems(
+            ArchitectureConformanceCheck.Claim.Passed("Component catalogue", "RunLogger", "declared and registered"),
+            ArchitectureConformanceCheck.Claim.NotExamined("The limits", "Open at once", "nothing reads this row yet")));
+    }
 }

@@ -1,7 +1,7 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
 using Xunit;
@@ -13,18 +13,25 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// Every claim ARCHITECTURE.html makes in a table, asserted against the code, one verdict each.
 ///
 /// Four verdicts, and the fourth is the point. <b>pass</b> and <b>fail</b> are what a test gives
-/// you. <b>deferred</b> is a claim about a component the corpus itself places in a later phase,
-/// which is not this phase's business and is counted separately so it can never be mistaken for
-/// coverage. <b>unexamined</b> is a claim this phase should have been able to assert and could
-/// not, and it is not a pass.
+/// you. <b>out of scope</b> is a claim about something the corpus itself schedules for a
+/// checkpoint that has not landed, which is not this phase's business and is counted separately
+/// so it can never be mistaken for coverage. <b>unexamined</b> is a claim this phase should have
+/// been able to assert and could not, and it is not a pass.
 ///
-/// The difference between deferred and unexamined is the whole discipline. Collapsing them would
-/// let forty later-phase rows hide one row nobody can check, which is exactly the failure
+/// The difference between out of scope and unexamined is the whole discipline. Collapsing them
+/// would let sixty later rows hide one row nobody can check, which is exactly the failure
 /// coverage-reported exists to prevent.
 ///
-/// A component is placed in a phase by reading the corpus rather than by a list kept here: the
-/// build order table first, and the build plan's phase sections where the build order describes
-/// a component rather than naming it. A component neither document places is unexamined, loudly,
+/// <b>Out of scope names the checkpoint that ends it.</b> Without that, a claim rests there
+/// forever and is indistinguishable from one nobody got to, and the count reads as a permanent
+/// sixty-four rather than as a number that falls as checkpoints land. So every out-of-scope
+/// claim carries the checkpoint that closes it, that checkpoint has to exist in BUILD_PLAN.md,
+/// and it has to be one that has not landed: a claim deferred to a checkpoint already recorded
+/// in PROGRESS is a claim the checkpoint shipped without coming back to.
+///
+/// Placement is read from the corpus rather than from a list kept here. BUILD_PLAN.md names
+/// every component in the row of the checkpoint that builds it, so the checkpoint comes from the
+/// document that schedules the work, and a component no checkpoint names is unexamined, loudly,
 /// because a component nobody scheduled is a real finding.
 /// see: Every phase ends in a generated phase report, not in a page somebody looks at
 /// </summary>
@@ -48,6 +55,12 @@ public sealed partial class ArchitectureConformanceCheck
     [GeneratedRegex(@"^## Phase (?<phase>\d)", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex PhaseHeading();
 
+    [GeneratedRegex(@"^\|\s*(?<checkpoint>\d+\.\d+)\s*\|(?<rest>.*)$", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex CheckpointRow();
+
+    [GeneratedRegex(@"^## (?<checkpoint>\d+\.\d+) ", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex LandedEntry();
+
     [GeneratedRegex(@"\b(?:class|record|interface|enum)\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)", RegexOptions.CultureInvariant)]
     private static partial Regex TypeDeclaration();
 
@@ -59,36 +72,42 @@ public sealed partial class ArchitectureConformanceCheck
 
     /// <summary>
     /// The failure-behaviour table states conditions in prose, so it names no component a parser
-    /// could follow. Each row is placed here by hand against the phase that builds the behaviour,
-    /// and a row this list does not name is unexamined rather than skipped, which is what makes
-    /// adding a row to that table visible.
+    /// could follow. Each row is placed here by hand against the checkpoint that builds the
+    /// behaviour, and a row this list does not name is unexamined rather than skipped, which is
+    /// what makes adding a row to that table visible.
     /// </summary>
-    public static IReadOnlyDictionary<string, int> FailureBehaviourPhases { get; } = new Dictionary<string, int>(StringComparer.Ordinal)
+    public static IReadOnlyDictionary<string, string> FailureBehaviourCheckpoints { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["Intraday prices unavailable for a day"] = 4,
-        ["Price gaps past the give-up point"] = 4,
-        ["A short could not have been borrowed"] = 4,
-        ["Unprocessed corporate action"] = 1,
-        ["Detector errors on one stock"] = 2,
-        ["Nightly setup cap reached"] = 2,
-        ["Daily API ceiling reached"] = 1,
-        ["Two variants pick the same stock"] = 4,
-        ["Risk gate blocks an order"] = 4,
-        ["AI usage allowance exhausted"] = 6,
-        ["Holdout windows exhausted"] = 5,
-        ["Proposal cites the planted null signal"] = 6,
-        ["Variant sample never accumulates"] = 5,
-        ["Follow-up date is a holiday"] = 3,
-        ["Someone edits the baseline"] = 5,
+        ["Intraday prices unavailable for a day"] = "4.2",
+        ["Price gaps past the give-up point"] = "4.7",
+        ["A short could not have been borrowed"] = "4.7",
+        ["Unprocessed corporate action"] = "1.6",
+        ["Detector errors on one stock"] = "2.7",
+        ["Nightly setup cap reached"] = "2.8",
+        ["Daily API ceiling reached"] = "1.3",
+        ["Two variants pick the same stock"] = "5.1",
+        ["Risk gate blocks an order"] = "4.6",
+        ["AI usage allowance exhausted"] = "6.5",
+        ["Holdout windows exhausted"] = "5.4",
+        ["Proposal cites the planted null signal"] = "6.4",
+        ["Variant sample never accumulates"] = "6.7",
+        ["Follow-up date is a holiday"] = "3.2",
+        ["Someone edits the baseline"] = "5.1",
     };
+
+    /// <summary>
+    /// The limits are the risk caps, and RiskGate is the only thing that may apply them. They
+    /// travel with it, which is why one entry places the whole table.
+    /// see: RiskGate is the sole writer of orders, for both directions and every version
+    /// </summary>
+    public const string LimitsAreEnforcedBy = "RiskGate";
 
     /// <summary>
     /// Which route answers for each screen in the catalogue.
     ///
-    /// Recorded here because a screen has no class a catalogue name resolves to. Every one of
-    /// these is a page a later phase fills, and the nav's own list is the five that are already
-    /// reachable; a screen this list does not name is unexamined rather than skipped, so adding
-    /// a screen to the catalogue is visible.
+    /// Recorded here because a screen has no class a catalogue name resolves to. A screen this
+    /// list does not name is unexamined rather than skipped, so adding a screen to the catalogue
+    /// is visible.
     /// </summary>
     public static IReadOnlyDictionary<string, string> Screens { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
@@ -106,20 +125,12 @@ public sealed partial class ArchitectureConformanceCheck
     /// compiled routes: the check reads the repository, and a page whose route was deleted
     /// should fail here rather than in a browser.
     /// </summary>
-    private static IReadOnlyList<string> RoutedPages { get; } = RepositoryLayout.Root is var root
-        ? [.. Directory.EnumerateFiles(Path.Combine(root, "src", "PullbackStrategyLab.Web", "Pages"), "*.cshtml", SearchOption.AllDirectories)
+    private static IReadOnlyList<string> RoutedPages { get; } =
+        [.. Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Web", "Pages"), "*.cshtml", SearchOption.AllDirectories)
             .Select(File.ReadAllText)
             .Select(text => PageRoute().Match(text))
             .Where(m => m.Success)
-            .Select(m => m.Groups["route"].Value)]
-        : [];
-
-    /// <summary>
-    /// The limits are the risk caps, and RiskGate is the only thing that may apply them. They
-    /// travel with it, which is why one entry places the whole table.
-    /// see: RiskGate is the sole writer of orders, for both directions and every version
-    /// </summary>
-    public const string LimitsAreEnforcedBy = "RiskGate";
+            .Select(m => m.Groups["route"].Value)];
 
     [Fact]
     [Trait("check", "architecture-conformance")]
@@ -127,9 +138,8 @@ public sealed partial class ArchitectureConformanceCheck
     {
         var coverage = new CheckCoverage("architecture-conformance", _output);
         string architecture = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "ARCHITECTURE.html"));
-        string buildPlan = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "BUILD_PLAN.md"));
 
-        int phase = CurrentPhase();
+        Schedule schedule = Schedule.Read();
         var claims = new List<Claim>();
 
         IReadOnlyList<IReadOnlyList<string>> catalogue = HtmlTable.BodyRowsUnder(architecture, "Component catalogue");
@@ -139,26 +149,25 @@ public sealed partial class ArchitectureConformanceCheck
         IReadOnlyList<IReadOnlyList<string>> sections = HtmlTable.BodyRowsUnder(architecture, "The phase report");
 
         string[] componentNames = [.. catalogue.Select(r => r[0])];
-        var places = new ComponentPlacement(buildOrder, buildPlan);
         HashSet<string> declared = DeclaredTypes();
         HashSet<string> registered = RegisteredTypes();
 
         // 1. The component catalogue. Every component named exists and is registered, or the
-        //    corpus places it in a phase that has not run.
+        //    build plan schedules it for a checkpoint that has not landed.
         foreach (string component in componentNames)
         {
-            int? placed = places.PhaseOf(component);
+            string? owed = schedule.CheckpointFor(component);
 
-            if (placed is null)
+            if (owed is null)
             {
-                claims.Add(new Claim("Component catalogue", component, Unexamined,
-                    "neither the build order nor the build plan places this component in a phase, so nothing says when it is owed"));
+                claims.Add(Claim.NotExamined("Component catalogue", component,
+                    "no checkpoint in BUILD_PLAN.md names this component, so nothing says when it is owed"));
                 continue;
             }
 
-            if (placed > phase)
+            if (!schedule.HasLanded(owed))
             {
-                claims.Add(new Claim("Component catalogue", component, Deferred, $"built at phase {placed}"));
+                claims.Add(Claim.OutOfScope("Component catalogue", component, owed));
                 continue;
             }
 
@@ -169,24 +178,24 @@ public sealed partial class ArchitectureConformanceCheck
                 // resolves to, and asserting one would be asserting a naming convention.
                 claims.Add(Screens.TryGetValue(component, out string? route)
                     ? RoutedPages.Contains(route, StringComparer.Ordinal)
-                        ? new Claim("Component catalogue", component, Pass, $"a page answers {route}")
-                        : new Claim("Component catalogue", component, Fail,
-                            $"phase {placed} has run and no page declares the route {route}")
-                    : new Claim("Component catalogue", component, Unexamined,
+                        ? Claim.Passed("Component catalogue", component, $"a page answers {route}")
+                        : Claim.Failed("Component catalogue", component,
+                            $"{owed} has landed and no page declares the route {route}")
+                    : Claim.NotExamined("Component catalogue", component,
                         "a screen with no route recorded against it, so nothing says what would answer for it"));
                 continue;
             }
 
             if (!declared.Contains(component))
             {
-                claims.Add(new Claim("Component catalogue", component, Fail,
-                    $"phase {placed} has run and no type named {component} is declared in the source"));
+                claims.Add(Claim.Failed("Component catalogue", component,
+                    $"{owed} has landed and no type named {component} is declared in the source"));
                 continue;
             }
 
             claims.Add(registered.Contains(component)
-                ? new Claim("Component catalogue", component, Pass, "declared and registered")
-                : new Claim("Component catalogue", component, Fail,
+                ? Claim.Passed("Component catalogue", component, "declared and registered")
+                : Claim.Failed("Component catalogue", component,
                     $"{component} is declared and is not registered with the container, so nothing can resolve it"));
         }
 
@@ -195,47 +204,43 @@ public sealed partial class ArchitectureConformanceCheck
         //    list is a component with no description.
         foreach (IReadOnlyList<string> row in buildOrder)
         {
-            string[] missing = ComponentPlacement.NamesIn(row[1])
+            string[] missing = Schedule.NamesIn(row[1])
                 .Where(n => !componentNames.Contains(n, StringComparer.Ordinal))
                 .ToArray();
 
             claims.Add(missing.Length == 0
-                ? new Claim("Build order", row[0], Pass, "every component it names is in the catalogue")
-                : new Claim("Build order", row[0], Fail,
+                ? Claim.Passed("Build order", row[0], "every component it names is in the catalogue")
+                : Claim.Failed("Build order", row[0],
                     "names components the catalogue does not describe: " + string.Join(", ", missing)));
         }
 
         // 3. The limits. Risk caps, enforced by the one component that may open a position.
-        int? riskGate = places.PhaseOf(LimitsAreEnforcedBy);
+        string? riskGate = schedule.CheckpointFor(LimitsAreEnforcedBy);
         foreach (IReadOnlyList<string> row in limits)
         {
             claims.Add(riskGate is null
-                ? new Claim("The limits", row[0], Unexamined, $"nothing places {LimitsAreEnforcedBy}, which is what applies these")
-                : riskGate > phase
-                    ? new Claim("The limits", row[0], Deferred, $"{LimitsAreEnforcedBy} is built at phase {riskGate}")
-                    : new Claim("The limits", row[0], Unexamined, $"{LimitsAreEnforcedBy} exists and no assertion reads this row yet"));
+                ? Claim.NotExamined("The limits", row[0], $"no checkpoint names {LimitsAreEnforcedBy}, which is what applies these")
+                : !schedule.HasLanded(riskGate)
+                    ? Claim.OutOfScope("The limits", row[0], riskGate)
+                    : Claim.NotExamined("The limits", row[0], $"{LimitsAreEnforcedBy} exists and no assertion reads this row yet"));
         }
 
         // 4. Failure behaviour. Placed by hand because the table names conditions rather than
-        //    components, and asserted where this phase built the behaviour.
+        //    components, and asserted where the checkpoint that builds the behaviour has landed.
         foreach (IReadOnlyList<string> row in failures)
         {
             string condition = row[0];
 
-            if (!FailureBehaviourPhases.TryGetValue(condition, out int owed))
+            if (!FailureBehaviourCheckpoints.TryGetValue(condition, out string? owed))
             {
-                claims.Add(new Claim("Failure behaviour", condition, Unexamined,
-                    "no phase is recorded against this condition, so nothing says when the behaviour is owed"));
+                claims.Add(Claim.NotExamined("Failure behaviour", condition,
+                    "no checkpoint is recorded against this condition, so nothing says when the behaviour is owed"));
                 continue;
             }
 
-            if (owed > phase)
-            {
-                claims.Add(new Claim("Failure behaviour", condition, Deferred, $"the behaviour is built at phase {owed}"));
-                continue;
-            }
-
-            claims.Add(AssertFailureBehaviour(condition));
+            claims.Add(schedule.HasLanded(owed)
+                ? AssertFailureBehaviour(condition)
+                : Claim.OutOfScope("Failure behaviour", condition, owed));
         }
 
         // 5. The phase report's own three sections, asserted against the report this run writes.
@@ -244,8 +249,8 @@ public sealed partial class ArchitectureConformanceCheck
         foreach (IReadOnlyList<string> row in sections)
         {
             claims.Add(PhaseReportSections.Names.Contains(row[0], StringComparer.OrdinalIgnoreCase)
-                ? new Claim("The phase report", row[0], Pass, "the report writes this section")
-                : new Claim("The phase report", row[0], Fail,
+                ? Claim.Passed("The phase report", row[0], "the report writes this section")
+                : Claim.Failed("The phase report", row[0],
                     $"the document promises a \"{row[0]}\" section and the report writes "
                     + string.Join(", ", PhaseReportSections.Names)));
         }
@@ -258,7 +263,8 @@ public sealed partial class ArchitectureConformanceCheck
             Path.Combine(RepositoryLayout.Artifacts, "doc-conformance.json"),
             JsonSerializer.Serialize(
                 new Conformance(
-                    phase,
+                    schedule.Phase,
+                    schedule.LastLanded,
                     claims.Count,
                     byVerdict.GetValueOrDefault(Pass),
                     byVerdict.GetValueOrDefault(Fail),
@@ -271,10 +277,12 @@ public sealed partial class ArchitectureConformanceCheck
         {
             coverage.Examined($"claims in {table.Key}", table.Count(c => c.Verdict is Pass or Fail));
 
-            int deferred = table.Count(c => c.Verdict == Deferred);
-            if (deferred > 0)
+            Claim[] deferred = [.. table.Where(c => c.Verdict == Deferred)];
+            if (deferred.Length > 0)
             {
-                coverage.OutOfScope($"claims in {table.Key}", deferred, "the corpus places them in a later phase");
+                coverage.OutOfScope($"claims in {table.Key}", deferred.Length,
+                    "closed by " + string.Join(", ",
+                        deferred.Select(c => c.Closes).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
             }
 
             Claim[] unexamined = [.. table.Where(c => c.Verdict == Unexamined)];
@@ -292,10 +300,62 @@ public sealed partial class ArchitectureConformanceCheck
             $"{failed.Length} architecture claim(s) do not hold:\n  "
             + string.Join("\n  ", failed.Select(c => $"[{c.Table}] {c.Subject}: {c.Detail}")));
 
+        IReadOnlyList<string> unclosed = OutOfScopeProblems(claims, schedule.Exists, schedule.HasLanded);
+        Assert.True(unclosed.Count == 0,
+            $"{unclosed.Count} out-of-scope claim(s) do not name a checkpoint that will end them:\n  "
+            + string.Join("\n  ", unclosed));
+
         // Stated so the parser stopping cannot pass as a document that got smaller.
         Assert.True(catalogue.Count == 52, $"The component catalogue parsed {catalogue.Count} rows and states 52.");
-        Assert.True(failures.Count == FailureBehaviourPhases.Count,
-            $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourPhases.Count} are placed in a phase.");
+        Assert.True(failures.Count == FailureBehaviourCheckpoints.Count,
+            $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourCheckpoints.Count} are placed at a checkpoint.");
+    }
+
+    /// <summary>
+    /// What is wrong with the out-of-scope claims, taken as a set. Three things, and each is a
+    /// different way of resting there forever:
+    ///
+    /// A claim with no checkpoint is indistinguishable from one nobody got to. A claim naming a
+    /// checkpoint the plan does not have closes at nothing, which is the same thing spelled
+    /// differently. A claim naming a checkpoint PROGRESS already records is worse than either,
+    /// because that checkpoint shipped and did not bring the claim into scope, and nothing said
+    /// so at the time.
+    ///
+    /// Separated from the run above so it can be proved against claims written by hand rather
+    /// than against whatever the corpus happens to say today. A check nobody can break on
+    /// purpose is a check nobody knows the state of.
+    /// </summary>
+    public static IReadOnlyList<string> OutOfScopeProblems(
+        IReadOnlyList<Claim> claims,
+        Func<string, bool> checkpointExists,
+        Func<string, bool> checkpointHasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+        ArgumentNullException.ThrowIfNull(checkpointExists);
+        ArgumentNullException.ThrowIfNull(checkpointHasLanded);
+
+        var problems = new List<string>();
+
+        foreach (Claim claim in claims.Where(c => c.Verdict == Deferred))
+        {
+            string where = $"[{claim.Table}] {claim.Subject}";
+
+            if (string.IsNullOrWhiteSpace(claim.Closes))
+            {
+                problems.Add($"{where} is out of scope and names no checkpoint that ends it.");
+            }
+            else if (!checkpointExists(claim.Closes))
+            {
+                problems.Add($"{where} closes at {claim.Closes}, which BUILD_PLAN.md does not have.");
+            }
+            else if (checkpointHasLanded(claim.Closes))
+            {
+                problems.Add($"{where} closes at {claim.Closes}, which has already landed, so that checkpoint "
+                    + "shipped without bringing it into scope.");
+            }
+        }
+
+        return problems;
     }
 
     /// <summary>
@@ -312,30 +372,16 @@ public sealed partial class ArchitectureConformanceCheck
         return condition switch
         {
             "Unprocessed corporate action" => engine.Contains("blocked++", StringComparison.Ordinal)
-                ? new Claim("Failure behaviour", condition, Pass, "IndicatorEngine leaves no row and counts the ticker as blocked")
-                : new Claim("Failure behaviour", condition, Fail, "IndicatorEngine no longer refuses on an open demand"),
+                ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
+                : Claim.Failed("Failure behaviour", condition, "IndicatorEngine no longer refuses on an open demand"),
 
             "Daily API ceiling reached" => runScope.Contains("CallsRemaining", StringComparison.Ordinal)
-                ? new Claim("Failure behaviour", condition, Pass, "the run scope reports what is left and a stage stops rather than overrunning")
-                : new Claim("Failure behaviour", condition, Fail, "the run scope no longer exposes the remaining ceiling"),
+                ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
+                : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
 
-            _ => new Claim("Failure behaviour", condition, Unexamined,
-                "placed in this phase and no assertion reads it"),
+            _ => Claim.NotExamined("Failure behaviour", condition,
+                "the checkpoint that builds it has landed and no assertion reads this row"),
         };
-    }
-
-    /// <summary>
-    /// Which phase the build is on, read from the last entry in PROGRESS rather than stated here.
-    /// A number in a second place is a number that goes stale the moment a checkpoint lands.
-    /// </summary>
-    public static int CurrentPhase()
-    {
-        string progress = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "PROGRESS.md"));
-        MatchCollection entries = Regex.Matches(progress, @"^## (?<checkpoint>\d+)\.\d+ ", RegexOptions.Multiline | RegexOptions.CultureInvariant);
-
-        Assert.True(entries.Count > 0, "PROGRESS records no checkpoint, so nothing says which phase the build is on.");
-
-        return int.Parse(entries[^1].Groups["checkpoint"].Value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static HashSet<string> DeclaredTypes()
@@ -375,47 +421,99 @@ public sealed partial class ArchitectureConformanceCheck
     }
 
     /// <summary>
-    /// Where the corpus says each component is built. The build order table first, because that
-    /// is the document describing the system; the build plan's phase sections after it, because
-    /// the build order describes some components rather than naming them and the plan names
-    /// every one.
+    /// What the corpus schedules and what it records as done: BUILD_PLAN.md's checkpoint rows on
+    /// one side and PROGRESS.md's entries on the other.
+    ///
+    /// Both are read rather than restated. The plan names every component in the row of the
+    /// checkpoint that builds it, and the record says which checkpoints have landed, so "is this
+    /// claim mine to assert" is answered by the two documents that already know rather than by a
+    /// number kept here that would go stale at the next checkpoint.
     /// </summary>
-    private sealed class ComponentPlacement
+    private sealed class Schedule
     {
-        private readonly Dictionary<int, string> _byPhase = [];
+        private readonly Dictionary<string, string> _rows = [];
+        private readonly HashSet<string> _landed = new(StringComparer.Ordinal);
 
-        public ComponentPlacement(IReadOnlyList<IReadOnlyList<string>> buildOrder, string buildPlan)
+        private Schedule()
         {
-            foreach (IReadOnlyList<string> row in buildOrder)
-            {
-                int phase = int.Parse(new string([.. row[0].Where(char.IsDigit)]), System.Globalization.CultureInfo.InvariantCulture);
-                _byPhase[phase] = string.Join(" ", row.Skip(1)).ToUpperInvariant();
-            }
-
-            MatchCollection headings = PhaseHeading().Matches(buildPlan);
-            for (int i = 0; i < headings.Count; i++)
-            {
-                int phase = int.Parse(headings[i].Groups["phase"].Value, System.Globalization.CultureInfo.InvariantCulture);
-                int start = headings[i].Index;
-                int end = i + 1 < headings.Count ? headings[i + 1].Index : buildPlan.Length;
-
-                _byPhase[phase] = _byPhase.GetValueOrDefault(phase, string.Empty)
-                    + " " + buildPlan[start..end].ToUpperInvariant();
-            }
         }
 
-        public int? PhaseOf(string component)
+        /// <summary>The phase the build is on, which is the major number of the last checkpoint recorded.</summary>
+        public int Phase { get; private set; }
+
+        /// <summary>The last checkpoint PROGRESS records, which is the pointer the whole corpus uses.</summary>
+        public string LastLanded { get; private set; } = string.Empty;
+
+        public static Schedule Read()
         {
-            string needle = component.ToUpperInvariant();
-            foreach (int phase in _byPhase.Keys.Order())
+            var schedule = new Schedule();
+
+            string buildPlan = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "BUILD_PLAN.md"));
+            string progress = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "PROGRESS.md"));
+
+            // Only the rows inside a phase section. The carried-obligations table at the end of
+            // BUILD_PLAN is keyed by the checkpoint that raised each obligation, so reading it
+            // as a schedule would place a component against the checkpoint that complained
+            // about it rather than the one that builds it.
+            MatchCollection phases = PhaseHeading().Matches(buildPlan);
+            for (int i = 0; i < phases.Count; i++)
             {
-                if (_byPhase[phase].Contains(needle, StringComparison.Ordinal))
+                int start = phases[i].Index;
+                int end = i + 1 < phases.Count ? phases[i + 1].Index : buildPlan.Length;
+
+                foreach (Match row in CheckpointRow().Matches(buildPlan[start..end]))
                 {
-                    return phase;
+                    string checkpoint = row.Groups["checkpoint"].Value;
+                    schedule._rows[checkpoint] = schedule._rows.GetValueOrDefault(checkpoint, string.Empty)
+                        + " " + row.Groups["rest"].Value.ToUpperInvariant();
                 }
             }
 
-            return null;
+            MatchCollection landed = LandedEntry().Matches(progress);
+            foreach (Match entry in landed)
+            {
+                schedule._landed.Add(entry.Groups["checkpoint"].Value);
+            }
+
+            Assert.NotEmpty(schedule._rows);
+            Assert.NotEmpty(schedule._landed);
+
+            // The last entry in PROGRESS, which is how the whole corpus answers "which checkpoint
+            // is the build on". Stated as a pointer rather than as a number anywhere.
+            schedule.LastLanded = landed[^1].Groups["checkpoint"].Value;
+            schedule.Phase = int.Parse(schedule.LastLanded.Split('.')[0], CultureInfo.InvariantCulture);
+
+            return schedule;
+        }
+
+        /// <summary>Whether BUILD_PLAN.md has a checkpoint by this identifier at all.</summary>
+        public bool Exists(string checkpoint) => _rows.ContainsKey(checkpoint);
+
+        /// <summary>Whether PROGRESS.md records an entry for it.</summary>
+        public bool HasLanded(string checkpoint) => _landed.Contains(checkpoint);
+
+        /// <summary>
+        /// The checkpoint whose row names this component, earliest first. Earliest because a
+        /// later checkpoint mentioning a component is refining it rather than introducing it,
+        /// and the question here is when it first has to exist.
+        /// </summary>
+        public string? CheckpointFor(string component)
+        {
+            string needle = component.ToUpperInvariant();
+
+            return _rows
+                .Where(r => r.Value.Contains(needle, StringComparison.Ordinal))
+                .Select(r => r.Key)
+                .OrderBy(Order)
+                .FirstOrDefault();
+        }
+
+        /// <summary>Checkpoints sort by their two numbers, so 1.10 follows 1.9 rather than 1.1.</summary>
+        private static int Order(string checkpoint)
+        {
+            string[] parts = checkpoint.Split('.');
+            return (int.Parse(parts[0], CultureInfo.InvariantCulture) * 1000)
+                + int.Parse(parts[1], CultureInfo.InvariantCulture);
         }
 
         /// <summary>The component names in a build-order cell: the comma-separated items that read as one.</summary>
@@ -424,10 +522,29 @@ public sealed partial class ArchitectureConformanceCheck
                 .Where(part => part.Length > 0 && char.IsUpper(part[0]) && !part.Contains(' ', StringComparison.Ordinal))];
     }
 
-    public sealed record Claim(string Table, string Subject, string Verdict, string Detail);
+    /// <summary>
+    /// One claim and its verdict. <c>Closes</c> is set on an out-of-scope claim and on no other:
+    /// it is the checkpoint that brings the claim into scope, and it is what stops the
+    /// out-of-scope count reading as a permanent number.
+    /// </summary>
+    public sealed record Claim(string Table, string Subject, string Verdict, string Detail, string? Closes = null)
+    {
+        public static Claim Passed(string table, string subject, string detail) =>
+            new(table, subject, Pass, detail);
+
+        public static Claim Failed(string table, string subject, string detail) =>
+            new(table, subject, Fail, detail);
+
+        public static Claim OutOfScope(string table, string subject, string closes) =>
+            new(table, subject, Deferred, $"brought into scope at checkpoint {closes}", closes);
+
+        public static Claim NotExamined(string table, string subject, string detail) =>
+            new(table, subject, Unexamined, detail);
+    }
 
     public sealed record Conformance(
         int Phase,
+        string LastLanded,
         int Claims,
         int Passed,
         int Failed,
