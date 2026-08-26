@@ -1340,3 +1340,161 @@ Stopping:   This pass closed what the pass above named and found nothing new, wh
             pass finding less than the one before it. The stopping rule points at a review rather
             than a fourth investigation, and the only thing standing between here and sign-off is
             one session that writes no code.
+
+## Phase 1 sign-off — 2026-08-26 — phase-1-ingest-and-charts — **the phase signs off, with one finding and a rule**
+
+The fourth pass and the first that could sign anything off. A session that had committed nothing to
+this repository, so the fresh-session rule is satisfied; nothing it commits is code, so it stays
+satisfied through the sign-off itself. Scope was the five things the pass above enumerated as its own
+work and nothing else: `CheckCoverage.Shortfall` and the baseline it reads, `FixtureReplayCheck`'s
+`DoneConditionSevenProblems` and the permit mechanism, `PhaseReplay.IndexFigures`, the `--index` mode
+of `tools/derive-indicators.py`, and the eleven proofs.
+
+Reproduced:  `tools/ci.ps1` green at 9c74c86, 22 steps, 211 tests. `tools/verify-phase` GREEN: 115
+             claims, 46 passed, 0 failed, 69 out of scope, 0 unexamined; 356 expectations, 87
+             `DERIVED`, 269 `FROZEN`, 0 differed, 0 missing, 0 void; coverage examined 193,691 with 0
+             unexamined; inputs 37 `CAPTURED`, 48 `AUTHORED`. Every figure the pass above recorded.
+             `git ls-files artifacts` is empty and `fixtures/checks-baseline.json` is tracked.
+             The eighteen index figures re-derived here by running `tools/derive-indicators.py
+             --index fixtures/captured 2026-08-24 SPY QQQ IWM`. All eighteen match
+             `fixtures/expectations.json` exactly. The script reads the captured responses and nothing
+             else, and its window is written out from the ingestor's statement rather than read from
+             the code: at an as-of of 2026-07-24 it keeps 230 bars instead of 251, and with the
+             three-year bound cut to zero it keeps 1, so the window is arithmetic rather than a
+             constant that happens to agree.
+             Eleven proofs counted, five on the floor and six on the per-checkpoint condition, in a
+             `CheckProofTests` of 51. All are `[Fact]`s in the suite, so they run in `tools/ci.*` step
+             22 rather than being a break-and-revert done by hand once.
+
+Broken:      Five falsifications, run rather than argued, each reverted and the tree left clean.
+             **A check narrowed below its floor.** `BarAppendOnlyCheck.BarTables` cut from three
+             tables to one: the check failed with "bar-append-only examined 50 against a floor of 54",
+             naming the check and both figures, the coverage record was still written showing the 50,
+             and `tools/verify-phase` exited 1 with NOT GREEN. `path-casing` failed in the same run
+             for an unrelated reason, recorded under Findings.
+             **A baseline entry removed.** With `clock-usage` deleted from the baseline the check
+             failed with "clock-usage has no floor ... add it to the checks object as clock-usage 48",
+             and the proof `Every_check_the_roster_declares_has_a_floor_on_disk` failed naming it.
+             Adding a floor for a check the roster does not declare failed the other proof by name.
+             Both directions hold against the real file rather than only against a written one.
+             **An obligation marked as discharged.** A `## 2.1` entry appended to this file made
+             `hasLanded("2.1")` true, and `fixture-replay` failed with four problems, one per
+             frozen-only checkpoint, each saying the obligation raised at 1.1 falls due at 2.1 and
+             PROGRESS already records it. **A permit outgrown.** One of 1.4's expectations flipped to
+             `DERIVED`: the check failed with "1.4 is listed as frozen-only and now carries 1
+             independently produced expectation(s). The permit is spent". **A permit removed and a
+             frozen-only checkpoint invented.** Deleting 1.7's permit and adding a `FROZEN`-only 2.3
+             failed with both named and "nothing permits it" against each.
+             **The `--index` derivation pointed elsewhere.** Over a mutated copy of the captured
+             responses with SPY and QQQ swapped and one IWM bar deleted, seven of the eighteen figures
+             move: the six SPY and QQQ closes swap with each other and `index.IWM.bars` falls to 250.
+             The other eleven do not, because the three trackers share a session calendar. That is what
+             the per-symbol closes exist to separate, and it is stated here rather than left to read as
+             coverage the derivation does not have.
+
+Verified:    The eighteen `DERIVED` index expectations bite on the production code, which is the
+             direction that decides whether 1.9 is closed or decorated. `IndexIngestor` made to write
+             `adjusted_close` into the raw close column: three expectations failed,
+             `index.{SPY,QQQ,IWM}.firstClose`, and **all three of the `FROZEN` totals 1.9 landed with
+             passed unchanged**. `IndexIngestor` made to drop the oldest bar per symbol: thirteen
+             failed, twelve of them the new `DERIVED` ones and one the `inserted` total. So the three
+             frozen totals detect a dropped row and detect nothing about which column was read, and
+             the eighteen detect both. Done condition seven at 1.9 is met rather than paperworked.
+             The judgement the pass above rested its `CONFIRMED` decision on, checked rather than
+             taken: `A_split_inside_the_window_leaves_the_averages_on_the_vendors_adjusted_basis`
+             asserts its fixture holds the case in counts stated in advance, writes out the recursion
+             so it shares nothing with `Averages`, and bounds the raw basis in both directions. It
+             buys the basis half of what a `CONFIRMED` reading is for and not the definition half,
+             because its own recursion is the same author's reading of the definition. That is exactly
+             what the entry above claimed for it and no more.
+             All four carried obligations are carried with their due points and none was attempted:
+             done condition seven at 1.3, 1.4, 1.5 and 1.7, raised at 1.1, due at 2.1; the `CONFIRMED`
+             values, raised at 1.6, due at 2.11; out-of-scope coverage naming its closing checkpoint,
+             raised at 1.12, due at 2.6; step 6 of the move, raised at 1.11, due at the move.
+
+Findings:    Finding. **The examined floor is compared per check and the property it guards is per
+             scope, so ordinary corpus growth pays for a narrowing.** `CheckCoverage.Report` sums every
+             scope a check names and compares that one number. In five of the seventeen checks the sum
+             is dominated by a size-of-corpus figure rather than by the property: `bar-append-only`
+             reads 47 source files to hold 3 bar tables, `path-casing` reads 2,412 string literals to
+             compare 27 paths, and `clock-usage`, `writer-ownership` and `store-portability` are the
+             same shape.
+             Run twice rather than reasoned. `BarAppendOnlyCheck.BarTables` cut to one table with five
+             ordinary new files added to the Worker: the check passed at examined 55 against a floor of
+             54, its own record reading "1 bar tables named by the check", `tools/ci.*` green, the
+             phase report GREEN, and the coverage total **higher** than the committed run at 193,735
+             against 193,691. `PathCasingCheck` gutted so it compared no paths at all, with forty
+             ordinary new string literals added: the check passed at examined 2,479 against a floor of
+             2,468, its record reading "0 paths compared against the on-disk name", and the phase
+             report GREEN at 193,732. Five files and forty literals are less than one phase 2
+             checkpoint's worth of code.
+             The same sum misfires from the other side, and that half fires first. In the narrowing
+             falsification above `path-casing` went red because removing two string literals from one
+             test file dropped it below its floor, which has nothing to do with path casing. The
+             corpus's own argument applies to itself here: a guard that cries wolf gets suppressed, and
+             a suppressed guard is a dead one arrived at slowly.
+             Reading: this is the third time the defect has shipped and each time it was inside the
+             thing built to catch the last one. The pattern is not three unlucky checks, it is that the
+             number which is easy to compute gets floored and the number carrying the property is the
+             one nobody separated out. That is written into `CLAUDE.md` as a rule in this commit, on
+             the terms this pass was given. The repair, a floor per scope with the corpus-size scopes
+             marked as context, is code and is carried to 2.1.
+
+             Observation. When a permit's obligation has fallen due the assertion fires and the
+             coverage record beside it still reads "permitted by the obligation raised at 1.1, which
+             falls due at 2.1". The line in `FixtureReplayCheck` that builds that reason resolves the
+             obligation and does not re-ask `hasLanded`. The run is red either way, so what is affected
+             is the report page on a red run, where four checkpoints read as legitimately permitted
+             while the failure above them says they are not.
+
+             Observation. A permit resolves its obligation by the checkpoint that raised it, with
+             `FirstOrDefault` over the obligations table. Until this commit every row had a distinct
+             `Raised`, so the lookup was unambiguous by accident. This commit adds a second row raised
+             at 1.12, and a permit naming 1.12 would now resolve to whichever row `MarkdownTable`
+             returns first. Nothing names 1.12 today and nothing checks that nothing does.
+
+             Observation. `PathCasingCheck` records its no-work branch as `NotExamined(..., 0, ...)`.
+             `TotalUnexamined` sums counts, so an unexamined item with a count of zero adds nothing and
+             the phase report still reports zero unexamined. In the gutted run above the record carried
+             an unexamined line and the report said "unexamined 0" on the same page. It is an admission
+             that counts as silence.
+
+             Observation. A `DERIVED` expectation carrying `voidedBecause` is void in the diff and
+             still counts toward `Independent` in `ByCheckpoint`, so a voided derived row would satisfy
+             done condition seven for its checkpoint while comparing nothing. No expectation in the
+             fixture is void today, and the tier the void mechanism was written for is `CONFIRMED`.
+
+Decided:     **Phase 1 signs off.** Every deliverable from 1.1 to 1.12 exists, runs and is verified;
+             `tools/ci.*` and `tools/verify-phase` are green with nothing unexamined; four passes have
+             found nothing wrong with what the lab produces. The finding above is real and it is
+             forward-looking: no check in the committed tree examines less than it claims today, and
+             every figure in the phase report is true as of this commit. What it defeats is the guard
+             against a future narrowing, and the condition that activates it is phase 2 adding files.
+             So it fails no done condition and breaks no check, which is the corpus's own test for
+             whether a finding reopens a phase, and holding the phase open would put the repair in a
+             session that then could not sign it off, which is another repair-and-review cycle for a
+             defect that bites nothing yet. It goes into `CLAUDE.md` as a rule now and into the plan as
+             an obligation due at 2.1, before phase 2 code starts growing the corpus.
+
+             **The `CONFIRMED` values carry to 2.11 rather than block, confirming the judgement of the
+             pass above rather than overturning it.** Checked rather than accepted: nothing in the
+             solution reads those figures, no expectation is `CONFIRMED` today, and the basis test does
+             buy what it was said to buy. The residual those readings close is a shared misreading of a
+             definition, an exponential seed, Wilder's smoothing against a period-14 exponential, a
+             range as a fraction against a percentage, and that first changes behaviour at 2.6 rather
+             than at 2.11. It is still right at 2.11: that is where a wrong indicator stops being
+             visible and starts being compensated for, because it is where a threshold is set against
+             the distribution the indicator produces, and it is before the first forward night, so
+             discovering it there costs a recalibration against an evidence store that is still empty.
+             Any later due point would not be.
+
+Carried:     Five obligations, four unchanged and one added here. Done condition seven at 1.3, 1.4,
+             1.5 and 1.7, raised at 1.1, due at 2.1. The `CONFIRMED` values, raised at 1.6, due at
+             2.11. Out-of-scope coverage naming its closing checkpoint, raised at 1.12, due at 2.6. The
+             examined floor per scope rather than per check, raised at 1.12, due at 2.1. Step 6 of the
+             move, raised at 1.11, due at the move.
+
+Stopping:    The scope narrowed each pass and this one, scoped to five named things, returned one
+             finding in the same family as the two before it. Under the terms this pass was given that
+             is a rule in `CLAUDE.md` rather than a fifth pass, and the rule is written. Phase 2 starts
+             at 2.1, whose first work is the obligation above.
