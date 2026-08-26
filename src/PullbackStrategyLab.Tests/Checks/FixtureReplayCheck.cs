@@ -221,17 +221,11 @@ public sealed partial class FixtureReplayCheck
             Permit? permit = (expected.FrozenOnly ?? [])
                 .FirstOrDefault(f => string.Equals(f.Checkpoint, checkpoint.Checkpoint, StringComparison.Ordinal));
 
-            ArchitectureConformanceCheck.Obligation? obligation = permit is null
-                ? null
-                : schedule.Obligations.FirstOrDefault(o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
-
             // Out of scope rather than unexamined, and named one checkpoint at a time. A single
             // row saying "five checkpoints are frozen-only" is the shape of report that let this
             // sit unnoticed, because it reads as one item rather than as five.
             coverage.OutOfScope($"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN", 1,
-                obligation is null
-                    ? "nothing permits it"
-                    : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}");
+                PermitReason(schedule.Obligations, permit, schedule.HasLanded));
         }
 
         coverage.Report();
@@ -345,10 +339,10 @@ public sealed partial class FixtureReplayCheck
                 continue;
             }
 
-            ArchitectureConformanceCheck.Obligation? obligation = obligations.FirstOrDefault(
-                o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
+            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
+                MatchingObligations(obligations, permit.Obligation);
 
-            if (obligation is null)
+            if (matches.Count == 0)
             {
                 problems.Add(
                     $"{checkpoint.Checkpoint} is frozen-only and names an obligation raised at {permit.Obligation}, "
@@ -356,6 +350,25 @@ public sealed partial class FixtureReplayCheck
                     + "nothing is the same as no permission.");
                 continue;
             }
+
+            // More than one row raised at the same checkpoint is legitimate: the table is keyed by
+            // who raised an obligation, not by the obligation. What is not legitimate is a permit
+            // naming that checkpoint, because `Raised` is then being used as a key it is not. This
+            // was `FirstOrDefault` until 2.1, unambiguous only because every row happened to carry
+            // a distinct `Raised`; restoring BUILD_PLAN's malformed row put two at 1.12 and made
+            // the lookup silently order-dependent on whatever MarkdownTable returned first.
+            if (matches.Count > 1)
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is frozen-only and names the obligation raised at {permit.Obligation}, "
+                    + $"and BUILD_PLAN's carried obligations table has {matches.Count} rows raised there, falling due "
+                    + $"at {string.Join(" and ", matches.Select(m => m.DueAt))}. The permit resolves to whichever the "
+                    + "parser returns first, so the due point it rests on is not stated. Name the obligations apart, "
+                    + "or discharge this checkpoint rather than permitting it.");
+                continue;
+            }
+
+            ArchitectureConformanceCheck.Obligation obligation = matches[0];
 
             if (hasLanded(obligation.DueAt))
             {
@@ -377,6 +390,66 @@ public sealed partial class FixtureReplayCheck
         }
 
         return problems;
+    }
+
+    /// <summary>
+    /// Every obligation raised at the given checkpoint.
+    ///
+    /// A list rather than a single row, because BUILD_PLAN's carried-obligations table is keyed by
+    /// the checkpoint that raised each item and two obligations can legitimately be raised at one.
+    /// A permit naming such a checkpoint is what is wrong, not the table, and a lookup returning
+    /// the first match would hide exactly that.
+    /// </summary>
+    public static IReadOnlyList<ArchitectureConformanceCheck.Obligation> MatchingObligations(
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        string raised)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentException.ThrowIfNullOrWhiteSpace(raised);
+
+        return [.. obligations.Where(o => string.Equals(o.Raised, raised, StringComparison.Ordinal))];
+    }
+
+    /// <summary>
+    /// Why a frozen-only checkpoint rests out of scope, as the coverage record states it.
+    ///
+    /// Pure, and it re-asks <paramref name="hasLanded"/> rather than resolving the obligation and
+    /// stopping there. Until 2.1 it did stop there, so on a red run the record read "permitted by
+    /// the obligation raised at 1.1, which falls due at 2.1" on the same page as the failure saying
+    /// that permission had expired. The run was red either way; what was wrong was the page.
+    /// </summary>
+    public static string PermitReason(
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        Permit? permit,
+        Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        if (permit is null)
+        {
+            return "nothing permits it";
+        }
+
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
+            MatchingObligations(obligations, permit.Obligation);
+
+        if (matches.Count == 0)
+        {
+            return $"it names an obligation raised at {permit.Obligation} and no row is raised there, so nothing permits it";
+        }
+
+        if (matches.Count > 1)
+        {
+            return $"it names {matches.Count} obligations raised at {permit.Obligation}, so the due point it rests on is not stated";
+        }
+
+        ArchitectureConformanceCheck.Obligation obligation = matches[0];
+
+        return hasLanded(obligation.DueAt)
+            ? $"the obligation raised at {obligation.Raised} fell due at {obligation.DueAt}, which PROGRESS already "
+                + "records, so the permission is spent"
+            : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}";
     }
 
     /// <summary>Each checkpoint in the fixture, with how many of its expectations verify anything.</summary>

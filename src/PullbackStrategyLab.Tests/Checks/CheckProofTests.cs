@@ -785,4 +785,115 @@ public sealed class CheckProofTests
 
         Assert.Contains("the diff never reaches", problem, StringComparison.Ordinal);
     }
+
+    // ---- a malformed table row, and an ambiguous permit -----------------------------------
+
+    // Both found at 2.1 and both the same shape: a lookup answering a narrower question than the
+    // one it was asked, and reporting success. The first was a parser skipping a row that did not
+    // fit; the second was a first-match lookup over a column that is not a key.
+
+    private const string RaggedTable = """
+        ## A table
+
+        | Raised | Obligation | Due at |
+        |---|---|---|
+        | 1.1 | a row with all three cells | 2.1 |
+        | 1.12 | a row missing its last cell |
+        | 1.11 | another complete row | the move |
+        """;
+
+    private const string RectangularTable = """
+        ## A table
+
+        | Raised | Obligation | Due at |
+        |---|---|---|
+        | 1.1 | a row with all three cells | 2.1 |
+        | 1.11 | another complete row | the move |
+        """;
+
+    [Fact]
+    public void A_body_row_narrower_than_its_header_is_rejected_rather_than_dropped()
+    {
+        // The row that found this was BUILD_PLAN's own, carrying the per-scope floor obligation.
+        // Two cells where the rest carry three, dropped by a `row.Count >= 3` guard, so the
+        // obligation driving checkpoint 2.1 was absent from Schedule.Obligations entirely.
+        InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+            () => MarkdownTable.BodyRowsAfter(RaggedTable, "## A table"));
+
+        Assert.Contains("header 3 cells wide", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains("body row 2 cells wide", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains("1.12", thrown.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_rectangular_table_is_read_whole()
+    {
+        // The other direction, so the rejection above is not simply a parser that stopped working.
+        IReadOnlyList<IReadOnlyList<string>> rows = MarkdownTable.BodyRowsAfter(RectangularTable, "## A table");
+
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, row => Assert.Equal(3, row.Count));
+        Assert.Equal("the move", rows[1][^1]);
+    }
+
+    [Fact]
+    public void A_wider_body_row_is_caught_too()
+    {
+        // Width, not a minimum. A guard written as "at least three" accepts a row that gained a
+        // cell, and the last cell is the one every obligation's due point is read from.
+        string? problem = MarkdownTable.RaggedRowProblem(
+            [["1.1", "what", "2.1"], ["1.6", "what", "extra", "2.11"]], 3, "## A table");
+
+        Assert.NotNull(problem);
+        Assert.Contains("body row 4 cells wide", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_naming_a_checkpoint_that_raised_two_obligations_is_ambiguous()
+    {
+        // Two rows raised at one checkpoint is legitimate: the table is keyed by who raised an
+        // obligation, not by the obligation. The permit is what is wrong, because it uses `Raised`
+        // as a key. BUILD_PLAN carries two rows raised at 1.12 today.
+        ArchitectureConformanceCheck.Obligation[] two =
+        [
+            new("1.12", "2.2", "the out-of-scope naming rule"),
+            new("1.12", "2.1", "the examined floor per scope"),
+        ];
+
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.12", "whole-market counts")],
+            two,
+            _ => false));
+
+        Assert.Contains("2 rows raised there", problem, StringComparison.Ordinal);
+        Assert.Contains("not stated", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Two_obligations_raised_at_one_checkpoint_are_fine_when_no_permit_names_it()
+    {
+        // The table is not the defect, so nothing fires when the ambiguity is never consulted.
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [],
+            [new ArchitectureConformanceCheck.Obligation("1.12", "2.2", "one"),
+             new ArchitectureConformanceCheck.Obligation("1.12", "2.1", "another")],
+            _ => false));
+    }
+
+    [Fact]
+    public void The_coverage_reason_re_asks_whether_the_obligation_has_fallen_due()
+    {
+        // The run is red either way when a permit has expired. What was wrong was the page: the
+        // record beside the failure still read "permitted by", because the reason resolved the
+        // obligation and stopped rather than asking the question the assertion above it asked.
+        var permit = new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts");
+
+        Assert.Contains("permitted by the obligation raised at 1.1",
+            FixtureReplayCheck.PermitReason([Open], permit, _ => false), StringComparison.Ordinal);
+
+        Assert.Contains("the permission is spent",
+            FixtureReplayCheck.PermitReason([Open], permit, checkpoint => checkpoint == "2.1"), StringComparison.Ordinal);
+    }
 }

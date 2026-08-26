@@ -693,12 +693,15 @@ public sealed partial class ArchitectureConformanceCheck
             // something already found gets closed. Read separately from the phase sections above,
             // because this table is keyed by the checkpoint that raised each item rather than by
             // the one that does the work.
+            // Every row, with no width guard. There was one, `if (row.Count >= 3)`, and it read a
+            // malformed row as an absent one: BUILD_PLAN's own row for the per-scope floor carried
+            // two cells where the rest carry three, so the obligation driving checkpoint 2.1 sat
+            // outside this list entirely and no permit could resolve against it. The width is now
+            // asserted by MarkdownTable against the table's own header, which fails loudly, so
+            // indexing here is safe and a skip would only hide the same class of fault again.
             foreach (IReadOnlyList<string> row in MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations"))
             {
-                if (row.Count >= 3)
-                {
-                    schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
-                }
+                schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
             }
 
             MatchCollection landed = LandedEntry().Matches(progress);
