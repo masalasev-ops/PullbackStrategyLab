@@ -32,11 +32,12 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 | 2 | Bulk end-of-day, last 20 sessions, whole market | ~2,000 |
 | 3 | Apply the price and liquidity floors. Survivor count **N**, measured not assumed | 0 |
 | 4 | Full daily history for the survivors, one call each, any depth | N |
-| 5 | Full split history for the survivors | N |
-| 6 | Minute bars for 200 names to calibrate the fill model | ~1,000 |
-| | **Total** | **~3,005 + 2N** |
+| 5 | Minute bars for 200 names to calibrate the fill model | ~1,000 |
+| | **Total** | **~3,005 + N** |
 
-**Size, measured rather than estimated.** N was 2,070 when this was first run, so steps 4 and 5 are 2,070 calls each and the whole procedure is about 7,145. It is one operation and it runs in one sitting; the order within it is what matters, not the calendar.
+**Size, measured rather than estimated.** N was 2,070 when this was first run, so step 4 is 2,070 calls and the whole procedure is about 5,075. It is one operation and it runs in one sitting; the order within it is what matters, not the calendar.
+
+**There is no split-history step, and there was never any code for one.** The table used to carry a second per-name pass for the full split history of every survivor, a second N calls. It was dropped at the 1.12 sign-off after the review found that the vendor client has only the bulk per-date splits endpoint and the per-ticker daily-history endpoint: nothing anywhere fetches one name's splits, so the step described work that had no implementation and the obligation raised at 1.9 was never a matter of spending calls. What it would have bought is the history of splits from before the lab started running. Nothing depends on that. Splits arrive nightly from the bulk endpoint, so every split from the first night onward is recorded; and the one thing that would read older splits, a detector run over stored history, goes to `calibration_setup` at 2.11 rather than to `setup`, where survivorship bias already rules those rows out as evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history). If a reason to want it appears later, it arrives as a checkpoint that builds the endpoint, captures a fixture input for it and states its expectations, like any other ingestion path.
 
 ---
 

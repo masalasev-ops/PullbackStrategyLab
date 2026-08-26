@@ -73,8 +73,14 @@ step 'check-fixture-inputs'         run_check 'fixture-inputs'
 step 'check-fixture-replay'         run_check 'fixture-replay'
 step 'check-architecture-conformance' run_check 'architecture-conformance'
 step 'check-store-portability'      run_check 'store-portability'
+step 'check-price-storage-form'     run_check 'price-storage-form'
 
 step 'check-shell-executable'       run_check 'shell-executable'
+
+# Last of the checks, because it is the one that says the others were there. It reconciles
+# CLAUDE.md's roster against the traits in the suite and the steps in this file, and writes the
+# roster the phase report requires a coverage record against.
+step 'check-coverage-reported'      run_check 'coverage-reported'
 
 step 'suite' dotnet test "$test_project" --no-build --nologo
 

@@ -123,6 +123,37 @@ public sealed class PhaseReportStage
             reasons.Add("No check wrote a coverage record, so nothing states what was examined.");
         }
 
+        // A check that stopped running is invisible to everything above: the coverage section is
+        // assembled from the files that are there, so a vanished check leaves one fewer row and
+        // every count still adds up. dotnet test exits zero when a filter matches no test, so the
+        // CI step that was supposed to run it passes by running nothing, and nothing anywhere says
+        // the check is gone. The roster is what the run is measured against, rather than the run
+        // being measured against itself.
+        Expected? expected = ReadPart<Expected>(Path.Combine(artifacts, "expected-checks.json"));
+
+        if (expected is null)
+        {
+            reasons.Add(
+                "The check roster is missing, so nothing says which checks this run owed a coverage record. "
+                + "coverage-reported writes it, so its absence means that check did not run either.");
+        }
+        else
+        {
+            string[] silent =
+            [
+                .. expected.Checks
+                    .Where(name => !coverage.Any(c => string.Equals(c.Check, name, StringComparison.Ordinal)))
+                    .Order(StringComparer.Ordinal)
+            ];
+
+            if (silent.Length > 0)
+            {
+                reasons.Add(
+                    $"{silent.Length} check(s) the roster says run left no coverage record: {string.Join(", ", silent)}. "
+                    + "A check that did not run is not a check that passed.");
+            }
+        }
+
         var claims = new ClaimSummary(
             conformance?.Claims ?? 0,
             conformance?.Passed ?? 0,
@@ -585,6 +616,13 @@ public sealed class PhaseReportStage
         IReadOnlyList<Scope> ExaminedDetail,
         IReadOnlyList<Gap> UnexaminedDetail,
         IReadOnlyList<Gap> OutOfScopeDetail);
+
+    /// <summary>
+    /// The checks the roster in CLAUDE.md says run on every CI run, written by coverage-reported
+    /// where this stage can read them. What the run is measured against, so a check that did not
+    /// run is a missing row rather than a smaller report.
+    /// </summary>
+    public sealed record Expected(IReadOnlyList<string> Checks);
 
     public sealed record InputTier(string Tier, int Count, string What, string WhatItCanSay);
 

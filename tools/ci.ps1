@@ -81,8 +81,14 @@ Invoke-Step 'check-fixture-inputs'         { Invoke-Check 'fixture-inputs' }
 Invoke-Step 'check-fixture-replay'         { Invoke-Check 'fixture-replay' }
 Invoke-Step 'check-architecture-conformance' { Invoke-Check 'architecture-conformance' }
 Invoke-Step 'check-store-portability'      { Invoke-Check 'store-portability' }
+Invoke-Step 'check-price-storage-form'     { Invoke-Check 'price-storage-form' }
 
 Invoke-Step 'check-shell-executable'       { Invoke-Check 'shell-executable' }
+
+# Last of the checks, because it is the one that says the others were there. It reconciles
+# CLAUDE.md's roster against the traits in the suite and the steps in this file, and writes the
+# roster the phase report requires a coverage record against.
+Invoke-Step 'check-coverage-reported'      { Invoke-Check 'coverage-reported' }
 
 Invoke-Step 'suite' { dotnet test $TestProject --no-build --nologo }
 

@@ -174,7 +174,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendor’s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendor\u2019s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "index.symbols",
@@ -231,7 +231,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOK’s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOK\u2019s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.demandsSatisfied",
@@ -752,49 +752,49 @@
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.adr20",
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.INTC.ema9",
@@ -997,49 +997,49 @@
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.adr20",
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.META.ema9",
@@ -1242,49 +1242,49 @@
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.adr20",
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixture\u2019s own bars"
     },
     {
       "id": "indicators.PFE.ema9",
@@ -1732,14 +1732,14 @@
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -1747,70 +1747,70 @@
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.priceTicks",
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.bodyWidth",
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixture\u2019s own bars"
     },
     {
       "id": "read.IESC.drawn",
@@ -1855,6 +1855,496 @@
       "checkpoint": "1.10",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "The property the chart page exists to make visible. It failed on the first live run for the fifty-day line, 343.2979 drawn against 343.3746 stored, because the page read a longer window than the engine and a longer window seeds the average somewhere else. Both looked like a moving average."
+    },
+    {
+      "id": "liquidity.AAPL.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "14441138947.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.AAPL.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.AMD.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "11663252780.4450",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.AMD.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.AMZN.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "9400676744.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.AMZN.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.BAC.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1719328155.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.BAC.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.CCL.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "459153268.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.CCL.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.COIN.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1093833593.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.COIN.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.CSCO.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "2241449727.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.CSCO.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.F.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "633123319.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.F.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.GOOGL.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "8810382852.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.GOOGL.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.HOOD.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1696659849.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.HOOD.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.IESC.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "204580994.6400",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.IESC.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.INTC.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "9849921234.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.INTC.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.JNJ.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1712421493.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.JNJ.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.JPM.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "2040347102.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.JPM.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.KO.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1354764558.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.KO.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.LITE.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "3872506949.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.LITE.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.META.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "8837685280.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.META.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.MSFT.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "14258382587.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.MSFT.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.NCLH.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "270271548.7500",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.NCLH.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.NVDA.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "24664584902.0800",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.NVDA.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.PAYO.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "34889899.6000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.PAYO.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.PFE.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1029039636.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.PFE.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.PG.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "1305450536.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.PG.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.PLTR.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "6243405064.5300",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.PLTR.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.RIVN.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "299768191.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.RIVN.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.SOFI.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "936890820.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.SOFI.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.T.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "887610765.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.T.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.TSLA.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "11568888408.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.TSLA.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.WMT.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "2579468582.0000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.WMT.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.XOM.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "2228965968.5000",
+      "checkpoint": "1.12",
+      "producedBy": "tools/derive-indicators.py, over the replay's own store"
+    },
+    {
+      "id": "liquidity.XOM.clearsTheFloor",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The floor comparison itself. The median behind it is DERIVED; this row is the verdict against the pinned floor, so it detects a change in the floor or in the comparison and verifies neither on its own."
+    },
+    {
+      "id": "liquidity.sessionsInTheWindow",
+      "tier": "FROZEN",
+      "value": "20",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The window the floor is defined over, restated from configuration so a change to it shows up here rather than only in a screen nobody diffs."
+    },
+    {
+      "id": "liquidity.tickersMeasured",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The fixture names with a full twenty-session window, which is what makes the real floor computable over them."
+    },
+    {
+      "id": "liquidity.clearingTheFloor",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Every one of them, which is the weakness of this half of the test and is recorded rather than left to be noticed: the fixture holds no name below the floor, so the comparison exercises the passing side only. The closest is PAYO at 1.7 times the floor."
+    },
+    {
+      "id": "liquidity.belowTheFloor",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Zero, for the reason recorded against liquidity.clearingTheFloor."
+    },
+    {
+      "id": "liquidity.shortOfTheWindow",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Names the fixture holds fewer than twenty sessions for. Zero today, and a number above zero means the capture has narrowed."
     }
   ]
 }

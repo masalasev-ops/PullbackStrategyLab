@@ -122,32 +122,37 @@ Named, and cited by name. A violation is a defect regardless of what else is tru
 
 Executable, named, run by `tools/ci.*`. Each is a property that should hold at every moment, not a guideline anyone remembers.
 
-| Check | Asserts |
-|---|---|
-| `writer-ownership` | Every store has exactly one declared writer per operation, verified in both directions against SCHEMA |
-| `point-in-time` | No signal definition reads a column whose observed date can exceed the setup date |
-| `decision-resolves` | Every decision name cited in code or docs matches a bold decision name in DECISIONS.md exactly, and no two decisions share a name |
-| `no-superseded-citation` | No cited name resolves to a decision under "Previously decided" |
-| `pinned-constants` | Numeric constants stated in docs match the code constant they describe |
-| `coverage-reported` | Every check reports how much it examined, not only whether it passed |
-| `path-casing` | Every file path appearing as a string literal in source matches the on-disk path exactly, byte for byte |
-| `two-platform` | The suite passes on both windows and macos runners |
-| `order-provenance` | No order row exists whose writer was not RiskGate |
-| `check-completeness` | Every setup row has a result recorded for every check defined at its date |
-| `stated-counts` | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
-| `fixture-inputs` | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
-| `fixture-replay` | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one |
-| `architecture-conformance` | Every claim a table in ARCHITECTURE.html makes has a verdict: pass, fail, out of scope for this phase, or unexamined |
-| `store-portability` | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |
-| `api-isolation` | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
-| `bar-append-only` | Nothing in the shipped source deletes or updates a bar table |
-| `ci-parity` | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order |
-| `clock-usage` | Nothing outside the clock reads the machine clock |
-| `shell-executable` | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
+| Check | Runs | Asserts |
+|---|---|---|
+| `writer-ownership` | every CI run | Every store has exactly one declared writer per operation, verified in both directions against SCHEMA |
+| `point-in-time` | 2.10 | No signal definition reads a column whose observed date can exceed the setup date |
+| `decision-resolves` | every CI run | Every decision name cited in code or docs matches a bold decision name in DECISIONS.md exactly, and no two decisions share a name |
+| `no-superseded-citation` | every CI run | No cited name resolves to a decision under "Previously decided" |
+| `pinned-constants` | every CI run | Numeric constants stated in docs match the code constant they describe |
+| `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads |
+| `path-casing` | every CI run | Every file path appearing as a string literal in source matches the on-disk path exactly, byte for byte |
+| `two-platform` | the matrix | The suite passes on both windows and macos runners |
+| `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |
+| `check-completeness` | 2.6 | Every setup row has a result recorded for every check defined at its date |
+| `stated-counts` | every CI run | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
+| `fixture-inputs` | every CI run | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
+| `fixture-replay` | every CI run | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one |
+| `architecture-conformance` | every CI run | Every claim a table in ARCHITECTURE.html makes has a verdict: pass, fail, out of scope for this phase, or unexamined, and every table in the document is placed so none can go unread |
+| `store-portability` | every CI run | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |
+| `price-storage-form` | every CI run | No migration declares a price or money column `REAL`. The storage form is the half of the decimal rule that code review cannot see |
+| `api-isolation` | every CI run | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
+| `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table |
+| `ci-parity` | every CI run | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order |
+| `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |
+| `shell-executable` | every CI run | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
 
 **The table lists every check that runs, not only the properties this file argues for.** A check that runs as a CI step and is not declared here is a property nobody wrote down, and the phase report enumerates checks by name, so the two would disagree with nothing to reconcile them.
 
+**The Runs column is what makes the table a roster rather than a wish.** Every check declared here either runs on every CI run, runs as the matrix, or names the checkpoint that starts it, and `coverage-reported` asserts each of those three against the corpus: an "every CI run" row has to be implemented and invoked by `tools/ci.*`, and a checkpoint row has to name one `BUILD_PLAN.md` has and `PROGRESS.md` does not yet record. Without that column the table reads as the live set while quietly holding rows nothing runs, which is the same defect as a check that under-reports, one level up.
+
 **`coverage-reported` is the one that matters most and is easiest to lose.** Under-reporting is survivorship: a check that errors loudly gets fixed because it blocks, while a check that silently narrows its own scope keeps passing. So the only broken checks that survive in verification code are the ones that under-report. Green means "nothing I ran failed", never "nothing is wrong".
+
+**A check that stops running is the sharpest form of that,** because it narrows its scope to nothing and still says nothing. `dotnet test --filter` exits zero when the filter matches no test, so a renamed check leaves a CI step that passes by running nothing at all. Two things close it: `coverage-reported` reconciles the roster against the implemented checks and the CI steps, and the phase report requires a coverage record from every check the roster says runs, so a check that vanishes between the roster and the run turns the report red instead of shrinking it.
 
 **Unexamined and out of scope are counted separately, and only one of them is a defect.** Unexamined means a claim this phase should have been able to assert and could not. Out of scope means the corpus places it at a checkpoint that has not landed, or exempts it by name and says why. Reporting them as one number would let sixty later rows hide the one row nobody can check, which is the same failure arrived at from the other direction. `tools/verify-phase` is green only with zero unexamined; out of scope is shown beside it and never added to it.
 
@@ -158,6 +163,8 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 **`stated-counts` exists because prose counts go stale silently.** A header stating a checkpoint count over a table with a different number of rows, or a total that does not add up, reads as authoritative and is wrong. Any number a spec states about its own contents is derived from the document it describes and checked, or it is not written. Records are exempt, because an entry in PROGRESS states what was measured on a date and is history rather than a claim about the corpus today.
 
 **`path-casing` targets a bug neither of your machines can see.** Case sensitivity is a property of the filesystem, not the operating system. Windows and macOS are both insensitive by default and Linux is not, so a path written with the wrong case works on both development machines and fails on a runner. Note the check has no work to do if nothing in the project reads a file by a path built from a string; if that turns out to be true after 1.1, drop it rather than carrying it.
+
+**And a runner now exists for it to fail on.** The workflow carries a `rehearsal` job on `ubuntu-latest` that runs `tools/ci.sh` and then the store copy, so the whole pipeline opens its files on a case-sensitive filesystem on every push. It is a separate job rather than a third row in the matrix because Linux is not a platform this lab supports; it is an instrument for one class of fault, and `two-platform` still claims exactly what it says. It came out of the 1.11 obligation, which wanted a second machine and could not have one: a container reaches every step of the move procedure except copying the secrets file, which is a human act and stays open against the real move.
 
 ## Conventions
 

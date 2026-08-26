@@ -255,6 +255,17 @@ public sealed partial class ArchitectureConformanceCheck
                     + string.Join(", ", PhaseReportSections.Names)));
         }
 
+        // 6. The two phase-1 tables that state properties this build already has, asserted rather
+        //    than left to the checkpoint that never comes back for them.
+        claims.AddRange(PortabilityClaims(architecture));
+        claims.AddRange(MoveProcedureClaims(architecture));
+
+        // 7. And every table in the document placed, which is what stops the five above from
+        //    being the document as far as this check is concerned. A table nobody reads produces
+        //    no claim at all, so it is absent from the count rather than unexamined in it, and
+        //    absent is the one state the report cannot show you.
+        claims.AddRange(TablePlacementClaims(architecture, schedule));
+
         var byVerdict = claims.GroupBy(c => c.Verdict, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
 
@@ -310,6 +321,207 @@ public sealed partial class ArchitectureConformanceCheck
         Assert.True(failures.Count == FailureBehaviourCheckpoints.Count,
             $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourCheckpoints.Count} are placed at a checkpoint.");
     }
+
+    /// <summary>
+    /// The tables this check reads for claims, by the heading above each.
+    ///
+    /// Named so <see cref="TablePlacementClaims"/> can tell a table it read from one it did not,
+    /// rather than the two lists drifting apart silently, which is the same defect one level up
+    /// from the one the placement pass exists to catch.
+    /// </summary>
+    public static IReadOnlyList<string> ClaimTables { get; } =
+        ["Component catalogue", "Build order", "The limits", "Failure behaviour", "The phase report",
+         "Running on Windows and macOS", "The procedure"];
+
+    /// <summary>
+    /// Every other table in the document, and why it yields no claim.
+    ///
+    /// Two kinds, and the distinction is the same one the verdicts draw. A table of definitions or
+    /// worked examples asserts nothing about the code and never will, so it is exempt by name with
+    /// the reason written down. A table describing something a later checkpoint builds is out of
+    /// scope and names that checkpoint, exactly as a deferred row does.
+    ///
+    /// A table this list does not name is unexamined, loudly, because a table nobody placed is a
+    /// table nobody read, and that is a finding rather than a gap.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> TablesWithoutClaims { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Three real long trades published by the trader this is modelled on"] =
+            "worked examples of the pattern, not a statement about the code",
+        ["Vocabulary"] = "definitions of terms, not a statement about the code",
+        ["Which kinds of measurement are missing"] =
+            "what the design deliberately does not measure, which no code can be checked against",
+        ["What differs in management"] = "4.8",
+        ["Why each loss happened"] = "4.10",
+        ["What each tier of change can be replayed against"] = "5.3",
+        ["What the pack contains"] = "6.4",
+        ["Model budget"] = "6.5",
+        ["Data budget"] = "read by pinned-constants and stated-counts, cost and cadence per row",
+        ["Authored parameters"] = "read by pinned-constants, one pin per row that has a code constant",
+    };
+
+    /// <summary>
+    /// Every table in the document has a verdict, including the ones this check reads no claims
+    /// from.
+    ///
+    /// The failure this closes is the quietest kind of under-reporting there is. Reading five
+    /// tables by name and reporting eighty-two claims looks like coverage of the document, and the
+    /// twelve tables nobody parsed contribute nothing at all: not a pass, not a fail, and not an
+    /// unexamined row either. Absent is worse than unexamined, because unexamined is the verdict
+    /// that blocks and absent is the one the report cannot show.
+    /// </summary>
+    private static IReadOnlyList<Claim> TablePlacementClaims(string architecture, Schedule schedule)
+    {
+        const string Table = "Tables in the document";
+        var claims = new List<Claim>();
+
+        foreach (string heading in HtmlTable.HeadingOfEveryTable(architecture).Distinct(StringComparer.Ordinal))
+        {
+            if (ClaimTables.Contains(heading, StringComparer.Ordinal))
+            {
+                claims.Add(Claim.Passed(Table, heading, "read for claims by this check"));
+                continue;
+            }
+
+            if (!TablesWithoutClaims.TryGetValue(heading, out string? why))
+            {
+                claims.Add(Claim.NotExamined(Table, heading,
+                    "no claim is read from this table and nothing says why, so it is a table nobody placed"));
+                continue;
+            }
+
+            // A reason that reads as a checkpoint is one, and obeys the same rule a deferred claim
+            // does: the plan has to have it and the record must not yet carry it.
+            claims.Add(Checkpoint().IsMatch(why)
+                ? Claim.OutOfScope(Table, heading, why)
+                : Claim.Passed(Table, heading, why));
+        }
+
+        return claims;
+    }
+
+    [GeneratedRegex(@"^\d+\.\d+$", RegexOptions.CultureInvariant)]
+    private static partial Regex Checkpoint();
+
+    /// <summary>
+    /// The two-platform table, asserted against the properties that already hold rather than left
+    /// to a checkpoint that will not come back for it.
+    ///
+    /// Every row of it describes something phase 1 either does or does not do, and most of them
+    /// already have a check standing behind them. What was missing was the document's own rows
+    /// being tied to those checks, so a row could be reworded into something nothing enforces and
+    /// nothing would notice.
+    /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+    /// </summary>
+    private static IReadOnlyList<Claim> PortabilityClaims(string architecture)
+    {
+        const string Table = "Running on Windows and macOS";
+        var claims = new List<Claim>();
+
+        IReadOnlyList<IReadOnlyList<string>> rows = HtmlTable.BodyRowsUnder(architecture, Table);
+        string properties = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Root, "Directory.Build.props"));
+        string attributes = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Root, ".gitattributes"));
+
+        foreach (IReadOnlyList<string> row in rows)
+        {
+            string what = row[0];
+
+            claims.Add(what switch
+            {
+                "Timezone identifiers" => properties.Contains("<InvariantGlobalization>false</InvariantGlobalization>", StringComparison.Ordinal)
+                    ? Claim.Passed(Table, what, "InvariantGlobalization is set false explicitly, which is what keeps IANA lookup working")
+                    : Claim.Failed(Table, what, "InvariantGlobalization is not set false in Directory.Build.props, so IANA lookup can fail silently"),
+
+                "Filesystem case sensitivity" => Claim.Passed(Table, what, "asserted by path-casing, byte for byte against the on-disk path"),
+
+                "Path separators and roots" => Claim.Passed(Table, what, "asserted by store-portability, which refuses an absolute path in any stored row"),
+
+                "Scheduling" => Claim.Passed(Table, what, "the worker is one CLI entry point per stage and holds no scheduler"),
+
+                "Native dependencies" => Claim.Passed(Table, what, "asserted by the matrix, which runs the suite on macos-latest as well as windows-latest"),
+
+                "Line endings" => attributes.Contains("text=auto", StringComparison.Ordinal) || attributes.Contains("eol=lf", StringComparison.Ordinal)
+                    ? Claim.Passed(Table, what, "normalised in .gitattributes rather than left to each machine's git config")
+                    : Claim.Failed(Table, what, ".gitattributes does not normalise line endings, so the repository depends on each machine's git config"),
+
+                _ => Claim.NotExamined(Table, what,
+                    "a row this check does not name, so adding one to the table is visible rather than silent"),
+            });
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// The move procedure, which this document and RUNBOOK.md both state, compared step by step.
+    ///
+    /// The same procedure written twice is two things to keep right, and at the 1.12 review they
+    /// had already diverged: the rehearsal at 1.11 found step 2 naming five tables that do not
+    /// exist, corrected RUNBOOK.md, and left this document telling an operator to count them, get
+    /// zero, and report success. <c>stated-counts</c> compared the two by row count, ten against
+    /// ten, and passed over it, which is what a count does when the disagreement is in the words.
+    /// </summary>
+    private static IReadOnlyList<Claim> MoveProcedureClaims(string architecture)
+    {
+        const string Table = "The procedure";
+        var claims = new List<Claim>();
+
+        IReadOnlyList<IReadOnlyList<string>> here = HtmlTable.BodyRowsUnder(architecture, Table);
+        IReadOnlyList<IReadOnlyList<string>> runbook = MarkdownTable.BodyRowsAfter(
+            RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "RUNBOOK.md")),
+            "## Moving the store to another machine");
+
+        foreach (IReadOnlyList<string> row in here)
+        {
+            string step = row[0];
+            IReadOnlyList<string>? twin = runbook.FirstOrDefault(r => r[0].Trim() == step);
+
+            if (twin is null)
+            {
+                claims.Add(Claim.Failed(Table, $"step {step}",
+                    "RUNBOOK.md's move procedure has no step with this number, so the two statements of it have diverged in shape"));
+                continue;
+            }
+
+            claims.Add(ProcedureStepClaim(step, row[^1], twin[^1]));
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// One step of the move procedure, as the two documents state it.
+    ///
+    /// Compared on the stores each step names rather than on its wording. The two documents are
+    /// written for different readers and should read differently; what may not differ is which
+    /// stores an operator is told to count, since that is the substance the rehearsal turns on and
+    /// the exact thing that had drifted by 1.12.
+    ///
+    /// Separated from the run so it can be proved against steps written by hand, rather than by
+    /// reverting the document once and putting it back.
+    /// </summary>
+    public static Claim ProcedureStepClaim(string step, string here, string there)
+    {
+        string[] hereStores = StoresNamedIn(here);
+        string[] thereStores = StoresNamedIn(there);
+
+        return hereStores.SequenceEqual(thereStores, StringComparer.Ordinal)
+            ? Claim.Passed("The procedure", $"step {step}", "states the same stores as RUNBOOK.md's step of the same number")
+            : Claim.Failed("The procedure", $"step {step}",
+                $"names stores [{string.Join(", ", hereStores)}] where RUNBOOK.md names [{string.Join(", ", thereStores)}]. "
+                + "The same procedure in two documents, disagreeing about what an operator counts");
+    }
+
+    private static string[] StoresNamedIn(string prose) =>
+        [.. StoreTable().Matches(prose).Select(m => m.Value).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+
+    /// <summary>
+    /// A store named in prose. Deliberately the phase 2 to 5 table names alongside the ones that
+    /// exist, because those are the ones a procedure written before they existed reaches for, and
+    /// naming a table that is not there is what makes the step count nothing.
+    /// </summary>
+    [GeneratedRegex(@"\b(?:setup|setup_signal|forward_return|trade|variant|daily_bar|indicator_daily|run_log)\b", RegexOptions.CultureInvariant)]
+    private static partial Regex StoreTable();
 
     /// <summary>
     /// What is wrong with the out-of-scope claims, taken as a set. Three things, and each is a
@@ -429,7 +641,13 @@ public sealed partial class ArchitectureConformanceCheck
     /// claim mine to assert" is answered by the two documents that already know rather than by a
     /// number kept here that would go stale at the next checkpoint.
     /// </summary>
-    private sealed class Schedule
+    /// <remarks>
+    /// Public because <see cref="CoverageReportedCheck"/> asks the same two questions of the same
+    /// two documents: a check the roster defers to a checkpoint has to name one the plan has and
+    /// the record does not yet carry, which is the rule an out-of-scope claim obeys, applied to a
+    /// row of the check table instead of to a row of an architecture table.
+    /// </remarks>
+    public sealed class Schedule
     {
         private readonly Dictionary<string, string> _rows = [];
         private readonly HashSet<string> _landed = new(StringComparer.Ordinal);

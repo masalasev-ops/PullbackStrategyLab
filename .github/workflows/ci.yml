@@ -56,3 +56,57 @@ jobs:
           name: checks-${{ matrix.os }}
           path: artifacts/checks/
           if-no-files-found: warn
+
+  # The migration rehearsal, on a case-sensitive filesystem.
+  #
+  # 1.11 ran the rehearsal on one machine and was recorded as partial, because the failures it
+  # was written for are the ones only a second machine produces. One of those is filesystem case
+  # sensitivity, and it is not a property of the operating system: Windows and macOS are both
+  # insensitive by default, so the pair of runners above cannot see it however many times it runs.
+  # Linux can, which is why the path-casing check was written against a runner nobody had.
+  #
+  # This is a separate job rather than a third entry in the matrix on purpose. Linux is not a
+  # platform this lab supports; it is an instrument for one class of fault. The two-platform
+  # claim stays what it says.
+  #
+  # What it cannot reach is step 6, copying the secrets file. That is a human act on a real
+  # machine and stays a carried obligation against the actual move.
+  rehearsal:
+    name: rehearsal on a case-sensitive filesystem
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Every step of CI, including path-casing against real directory entries and the fixture
+      # replay, which builds a populated store from the committed capture.
+      - name: tools/ci.sh
+        shell: bash
+        run: ./tools/ci.sh
+
+      # RUNBOOK's steps 2, 3 and 5 over that store: counts before, VACUUM INTO, integrity check
+      # on arrival, counts after, non-zero on any difference.
+      #
+      # Against the store the fixture replay built, not the one ci.sh leaves behind. That one is
+      # migrated and empty, and counting every table in an empty database matches every count and
+      # proves nothing, which is the failure store-portability was moved off it for at 1.11.
+      - name: the store copied and verified on arrival
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s artifacts/replay.db
+          mkdir -p data/rehearsal
+          cp artifacts/replay.db data/rehearsal/pullbackstrategylab.db
+          PullbackStrategyLab__DataRoot="$PWD/data/rehearsal" ./tools/snapshot-db
+
+      - name: check coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-rehearsal-ubuntu
+          path: artifacts/checks/
+          if-no-files-found: warn

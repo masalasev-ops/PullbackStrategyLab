@@ -67,6 +67,37 @@ public static partial class HtmlTable
         return rows;
     }
 
+    /// <summary>
+    /// The heading above every table in the document, in document order, one entry per table.
+    ///
+    /// What makes the set of tables enumerable rather than assumed. A check that reads five
+    /// tables by name and is described as reading the document has narrowed its own scope to a
+    /// list nobody maintains, and the tables it does not read produce no verdict at all: not
+    /// pass, not fail, and not unexamined either, which is worse than any of them because
+    /// unexamined is the verdict that blocks. Found at the 1.12 review, where twelve of the
+    /// document's seventeen tables were invisible to the check that claims to read them.
+    /// </summary>
+    public static IReadOnlyList<string> HeadingOfEveryTable(string html)
+    {
+        ArgumentNullException.ThrowIfNull(html);
+
+        (int Index, string Text)[] headings =
+            [.. HeadingPattern().Matches(html).Select(h => (h.Index, Text(h.Groups["text"].Value)))];
+
+        var perTable = new List<string>();
+
+        foreach (Match table in TableOpen().Matches(html))
+        {
+            (int Index, string Text) above = headings.LastOrDefault(h => h.Index < table.Index);
+            perTable.Add(above.Text ?? string.Empty);
+        }
+
+        return perTable;
+    }
+
+    [GeneratedRegex(@"<table[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex TableOpen();
+
     /// <summary>The index of a heading with this exact text, with any nested markup excluded.</summary>
     public static int FindHeading(string html, string headingText)
     {

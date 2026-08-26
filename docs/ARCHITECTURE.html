@@ -957,7 +957,7 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:44px">#</th><th style="width:250px">Step</th><th>Detail</th></tr>
 <tr><td><b>1</b></td><td>Stop the worker</td><td>Confirm no nightly or replay job is mid-run. A partial nightly leaves setups without their signal rows.</td></tr>
-<tr><td><b>2</b></td><td>Record the source counts</td><td>Row counts for <code>setup</code>, <code>setup_signal</code>, <code>forward_return</code>, <code>trade</code> and <code>variant</code>, plus the maximum setup id. Written down before anything is copied, or you have nothing to compare against.</td></tr>
+<tr><td><b>2</b></td><td>Record the source counts</td><td>A row count for every table the store holds, derived from the schema rather than from a list here, taken before anything is copied, or you have nothing to compare against. <code>tools/snapshot-db</code> does it: a list goes stale at the migration that adds a table, and a count that silently omits one is the failure this step exists to catch.</td></tr>
 <tr><td><b>3</b></td><td>Write a clean single file</td><td><code>VACUUM INTO '/path/to/pullbackstrategylab-migrate.db';</code> from the SQLite CLI. This folds the write-ahead log in, drops free pages, and produces one consistent file with no siblings to forget.</td></tr>
 <tr><td><b>4</b></td><td>Copy the bar files too</td><td>If bars are in Parquet rather than in the database, copy that directory alongside. It is inert data and needs no special handling.</td></tr>
 <tr><td><b>5</b></td><td>Verify on arrival</td><td><code>PRAGMA integrity_check;</code> then re-run the step 2 counts and compare. Integrity check alone proves the file is not corrupt, <b>not</b> that it is complete. Both are needed.</td></tr>

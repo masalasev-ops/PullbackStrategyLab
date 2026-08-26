@@ -752,3 +752,203 @@ Findings:   Observation. Four times between 1.7 and 1.11 the session reported "p
             and then found failing on the first macOS run. Both are the same shape: the session
             reporting what it expected rather than what it read back. What is cheap and covers it
             is reading the command's own output before writing the sentence that describes it.
+
+## Phase 1 review — 2026-08-25 — phase-1-ingest-and-charts — findings and the harness they were found with
+
+Not the 1.12 sign-off entry. A review session read the phase against its done conditions, found four
+defects in the verification harness, and built the fixes. **This session committed code, so under the
+fresh session rule it may not sign the phase off.** The sign-off entry is owed by a session that did
+not write this.
+
+Verified:   `tools/ci.ps1` reproduced green independently before any change: 20 steps, 174 tests.
+            `tools/verify-phase` green, 82 claims, 18 pass, 0 fail, 64 out of scope, 0 unexamined.
+            `c8c8fc6` is on `origin/phase-1-ingest-and-charts` and run 32913545848 is green on both
+            `windows-latest` and `macos-latest`. The 1.11 rehearsal counts were re-read from the live
+            store and match the record to the row on all ten tables.
+            After the work below: `tools/ci.ps1` green, 22 steps, 187 tests. `tools/verify-phase`
+            green, 115 claims, 46 pass, 0 fail, 69 out of scope, 0 unexamined.
+
+Findings:   Observation. `coverage-reported` was a row in CLAUDE.md's Checks table, a paragraph
+            calling it the check that matters most, and no code anywhere. Four of the twenty declared
+            checks did not run, and the table said which of them ran nowhere.
+            Reading: the obligation raised at 1.2, that the table should list every check that runs,
+            was discharged at 1.7 by a sweep rather than by a check, and the table had since drifted
+            the other way with nothing able to notice.
+            Observation. A check that stops running leaves no trace. `dotnet test --filter` exits 0
+            when the filter matches nothing, so the CI step passes; the phase report assembles its
+            coverage section from whatever files sit in `artifacts/checks`, so the run is measured
+            against itself. Reproduced before the fix: deleting one coverage record and re-running
+            the report left the verdict GREEN and changed one summary number nobody compares.
+            Observation. `architecture-conformance` read 5 of ARCHITECTURE.html's 17 tables. The
+            other 12 produced no verdict at all, including "Running on Windows and macOS", whose six
+            rows are live phase-1 properties with checks already standing behind most of them.
+            Reading: absent is worse than unexamined, because unexamined is the verdict that blocks.
+            Observation. ARCHITECTURE.html's move procedure still told an operator to count `setup`,
+            `setup_signal`, `forward_return`, `trade` and `variant`, none of which exists. That is
+            the defect 1.11 found and recorded as fixed; it was fixed in RUNBOOK.md only.
+            Reading: `stated-counts` compared the two statements of the procedure by row count, ten
+            against ten, which is what a count does when the disagreement is in the words.
+            Observation. The hard rule that prices are TEXT in storage had no check, the same shape
+            as the absolute-path rule 1.11 closed. No `REAL` column exists today. It compounds:
+            `store-portability` scans TEXT columns and says in its own source that TEXT suffices
+            because prices are TEXT, so a REAL price column would have narrowed that scan too.
+            Observation. RUNBOOK's first-time setup says to put the data root outside the repository.
+            The shipped default in every `appsettings.json` is `data`, and the store in use is at
+            `data/live` inside it. Gitignored, so nothing leaks. Not fixed; a decision about which of
+            the two is right, left for the sign-off session.
+
+Built:      `coverage-reported`, reconciling CLAUDE.md's roster against the traits in the suite, the
+            steps in `tools/ci.*` and the checkpoints BUILD_PLAN schedules, in four directions. The
+            Checks table gained a Runs column so each row says whether it runs every CI run, runs as
+            the matrix, or names the checkpoint that starts it, and a checkpoint row obeys the rule a
+            deferred claim obeys.
+            `PhaseReportStage` now requires a coverage record from every check the roster says runs,
+            and treats the roster's own absence as a reason, which is what closes the loop rather
+            than moving it. Both cases proved by hand: a deleted record and a missing roster each
+            turn the report NOT GREEN with a named reason and exit 1.
+            `price-storage-form`, asserting that no migration declares a column with REAL affinity,
+            on SQLite's own rule rather than on the literal word, so `DOUBLE PRECISION` cannot pass.
+            `architecture-conformance` now places every table in the document, asserts the six
+            two-platform rows against the properties that hold, and compares the move procedure step
+            by step against RUNBOOK's on the stores each step names rather than on its wording.
+            Eleven permanent proofs in `CheckProofTests`, each breaking one of the new checks on
+            purpose: a declared check nothing implements, a CI step naming a check that does not
+            exist, a step whose name and filter disagree, a check that states no coverage, a check
+            deferred to a checkpoint that has landed or that the plan does not have, and a procedure
+            step naming stores the other document does not.
+
+Measured:   17 tables in ARCHITECTURE.html, all now placed: 12 read for claims or exempt by name
+            with the reason, 5 out of scope naming the checkpoint that ends them. Claims rose from
+            82 to 115 and passes from 18 to 46 with unexamined still 0.
+            21 checks on the roster: 17 every CI run, 1 the matrix, 3 named to 2.6, 2.10 and 4.6.
+            10 migration files, 13 tables, 70 column declarations, 0 with REAL affinity.
+
+Decided:    The obligation raised at 1.9 is **dropped**, on the terms it set itself. It could not be
+            run: the vendor client has `GetBulkSplitsAsync`, per date at 100 calls, and
+            `GetDailyHistoryAsync`, which returns bars. Nothing fetches one name's splits, so
+            RUNBOOK's step 5 described work with no implementation and the obligation's own wording,
+            that it "has not run", named a command that does not exist. What it would buy is the
+            history of splits from before the lab started, which nothing reads: splits arrive nightly
+            from the bulk endpoint from the first night onward, and the detector run that would look
+            further back writes to `calibration_setup` (see: The evidence store holds only setups
+            flagged forward, never setups reconstructed from history). Step 5 is gone from RUNBOOK
+            and the row is gone from the carried-obligations table.
+
+Carried:    Three obligations still fall due at 1.12 and none is discharged. The `CONFIRMED` values
+            from 1.6, which need a person reading a charting platform; the second machine from 1.11;
+            and the fixture's single market day from 1.7. All three need the operator rather than a
+            build session, which is why they are still here.
+
+## Phase 1 review — 2026-08-26 — phase-1-ingest-and-charts — the price basis, and three obligations narrowed
+
+Not the 1.12 sign-off entry. Same review session as the entry above it, which committed code and so
+may not sign this phase off.
+
+Measured:   **The basis. IndicatorEngine reads `adj_close`, and so does the derivation.**
+            `IndicatorEngine.Calculate` fills its price array from `bar.AdjustedClose` and puts high
+            and low on the same basis through each bar's own `adj_close/close` factor;
+            `tools/derive-indicators.py` selects `adj_close` and applies the same factor. Both
+            asserted by reading the two sources, not inferred from the values.
+            **IESC's values are current and are on the adjusted basis.** Recomputed from the live
+            store after the rebuild: ema_9 352.9966, ema_21 353.2321, ema_50 343.3746, atr_14
+            24.1364, adr_20 0.0670, range_avg_20 23.3959, dollar_volume_median_20 204,580,994.64.
+            Identical to the figures recorded at 1.6, 0 disagreements at 4 decimal places over all
+            three tickers.
+            The same window computed on the raw close instead gives ema_9 542.6366, ema_21
+            623.0237 and ema_50 648.7660. The stored figures match the adjusted basis exactly and
+            are nowhere near the raw one.
+            The rebuild had landed before those values were taken. The refetch at
+            2026-08-25T18:39:05.228Z wrote 743 restated bars for IESC, the demand was marked
+            satisfied at 18:43:31.935Z, and the indicator row was computed after that. Its
+            `computed_at` reads 2026-08-25T00:00:00.000Z because migration 009 stamped every row
+            that predated it at the first instant of its own session; 27 rows carry that stamp and
+            1,989 carry a real one.
+
+Findings:   Observation. The premise the basis check was raised on does not hold against any source
+            in the repository. IESC closed 324.12 on 2026-08-24 and its adjusted close was also
+            324.12, in the live store, in `fixtures/captured/history-IESC.json` and in
+            `bulk-end-of-day.json`. There is no 353.97 and no 176.985 anywhere.
+            Reading: the split is in the raw series between 2026-08-19 and 2026-08-20, where the
+            raw close falls from 697.38 to 341.635. The doubling is on the bars before the split,
+            which carry a raw close near 700 against an adjusted close near 350, and the two
+            columns agree from 08-20 onward. So the averages near 353 are the adjusted basis: they
+            sit at the level of the adjusted series through August, and the raw basis over the same
+            window is 543 to 649. The cross-check from the range figures agrees and is independent
+            of any column: range_avg_20 over adr_20 is 23.3959 over 0.0670, a price level of 349,
+            and the last twenty adjusted closes average about that.
+            Observation. Nothing in the suite could have settled that. Every other arithmetic test
+            builds its own bars and sets both price columns from one number, so all of them would
+            have passed unchanged against an engine reading the raw close. Reading: the basis was
+            arguable from a progress entry precisely because no test asserted it against a series
+            somebody else had adjusted.
+            Observation. `UniverseBuilder.Median` was a byte-for-byte copy of `Averages.Median`.
+            Reading: found while wiring the liquidity measurement to the one the screen uses.
+            IndicatorEngine's own comment three files away says computing the median two ways in
+            two components would make the screen and the indicator disagree, and it was computed
+            two ways. The comment asserted the property; the code duplicated it.
+            Observation. A regex in the new CONFIRMED provenance check was written with literal
+            backspace characters where a word boundary was meant, so it required a control
+            character either side of the date and matched nothing. Reading: it made the check
+            accept every input while appearing to test one, and greps rendered it as the intended
+            pattern. It was caught by the permanent proof, on its first run, which is the argument
+            for the rule that a check is not finished until something breaks it on purpose.
+
+Built:      A permanent test that the averages are on the adjusted basis, asserted against the
+            vendor's own `adjusted_close` in the committed capture rather than against a stored
+            figure, on a ticker whose window contains a split. It checks both directions: equal to
+            the adjusted recursion, and at least 1.4 times below the raw one, so the case cannot
+            decay into a comparison between two numbers that are near each other. Proved by
+            pointing the engine at `close` and watching it fail, then restoring it.
+            `UniverseBuilder.Median` now delegates to `Averages.Median`.
+            The liquidity floor, measured over the twenty sessions it is defined on, for every
+            fixture name. 65 new expectations, of which 30 are the medians and are `DERIVED`.
+            A `rehearsal` job on `ubuntu-latest` running `tools/ci.sh` and then the store copy.
+            `voidedBecause` on an expectation, and two rules on `CONFIRMED` rows: the producer must
+            name the platform and the date it was read, and a confirmed `adr20` must either record
+            the platform's definition or be declared void. Six more permanent proofs.
+
+Verified:   `tools/ci.ps1` green, 22 steps, 194 tests. `tools/verify-phase` green: 115 claims, 46
+            pass, 0 fail, 69 out of scope, 0 unexamined; 328 expectations, 66 DERIVED, 262 FROZEN,
+            65 changed since the last commit, which is the 65 added.
+            The liquidity half: 30 fixture names carry a full twenty-session window, 0 are short of
+            it, and all 30 clear the floor. Every one of the 30 medians reproduces under
+            `tools/derive-indicators.py` against the replay's own store, 0 disagreements at 4
+            decimal places. The lowest is PAYO at 34,889,899.64 against a floor of 20,000,000, a
+            margin of 1.7 times.
+            The store copy, run locally against the replay store as the rehearsal job runs it: 10
+            tables, 37,299 rows, integrity ok, every count matched. The ubuntu job itself has not
+            run: it runs on push and nothing has been pushed.
+
+Decided:    The obligation raised at 1.7 is **closed against both halves**. The half the fixture can
+            support is now measured over the window the floor means. The half it cannot, the
+            whole-market screen, is out of scope in `fixture-replay` with the condition that ends
+            it written down: twenty bulk days, 1,900 calls and about 130 MB committed for ever, to
+            close a gap the live run closes nightly. Recorded with it, because it is the weakness
+            of the half that was done: no fixture name is below the floor, so the comparison
+            exercises the passing side only.
+            The obligation raised at 1.11 is **narrowed to step 6**, copying the secrets file, and
+            is due at the actual move rather than at a checkpoint. Everything else it carried now
+            runs on every push on a case-sensitive filesystem.
+
+Carried:    **The `CONFIRMED` values, still owed, and now the only obligation left at 1.12.** The
+            fixture reports 0 CONFIRMED. The machinery is ready and the values are not, because
+            they cannot be produced here: they are a person reading a platform. What is owed is one
+            value per ticker, against the window ending **2026-08-24, 150 sessions**, seeded on the
+            simple mean of the first n:
+
+              LITE  ema_9 862.2732  ema_21 841.9685  ema_50 826.9671  atr_14 81.0755  adr_20 0.0923
+              PAYO  ema_9   7.1103  ema_21   7.0987  ema_50   6.8553  atr_14  0.0432  adr_20 0.0054
+              IESC  ema_9 352.9966  ema_21 353.2321  ema_50 343.3746  atr_14 24.1364  adr_20 0.0670
+
+            LITE and PAYO first: neither has an adjustment anywhere in three years, so a
+            disagreement on them is a formula fault and nothing else. IESC can now be read too, on
+            the basis settled above, and it is the only one of the three where a platform may
+            legitimately differ depending on whether it has applied the two-for-one.
+            Two things to expect rather than to be alarmed by. The nine and twenty-one day averages
+            should agree closely; the fifty-day one may not, because a platform seeding over its
+            whole available history seeds in a different place, and that difference is information
+            about the seed rather than a fault. And `adr_20` here is the mean of (high-low)/close.
+            A platform computing sma(high,20)/sma(low,20)-1 is reporting a different quantity under
+            the same name, and that row is then recorded void rather than as agreement.
+            Each value is written into `fixtures/expectations.json` with a `CONFIRMED` tier and a
+            producer reading "read from PLATFORM on YYYY-MM-DD", which the check now requires.

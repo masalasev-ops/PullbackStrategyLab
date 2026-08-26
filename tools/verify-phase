@@ -35,6 +35,7 @@ fi
 # run's evidence and is the one failure mode a report cannot detect in itself.
 rm -f "$repository_root/artifacts/doc-conformance.json" \
       "$repository_root/artifacts/fixture-diff.json" \
+      "$repository_root/artifacts/expected-checks.json" \
       "$repository_root/artifacts/phase-report.json" \
       "$repository_root/artifacts/phase-report.html"
 rm -rf "$repository_root/artifacts/checks"

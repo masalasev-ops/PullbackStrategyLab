@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Vendor;
@@ -349,23 +350,15 @@ public sealed class UniverseBuilder
     /// <summary>
     /// The median rather than the mean, because one earnings day at twenty times normal volume
     /// would carry a name over the floor it does not otherwise clear.
+    ///
+    /// The one in Core, not a second one here. This stood as a byte-for-byte copy of
+    /// <see cref="Averages.Median"/> until the 1.12 review, which is the arrangement
+    /// IndicatorEngine's own comment argues against three files away: the screen and the stored
+    /// dollar-volume median are the same statistic, and computing it in two places is how they
+    /// come to disagree without anything saying so.
+    /// see: The averages are one implementation, computed nightly and drawn on demand
     /// </summary>
-    internal static decimal Median(List<decimal> values)
-    {
-        ArgumentNullException.ThrowIfNull(values);
-        if (values.Count == 0)
-        {
-            return 0m;
-        }
-
-        decimal[] sorted = [.. values];
-        Array.Sort(sorted);
-
-        int middle = sorted.Length / 2;
-        return sorted.Length % 2 == 1
-            ? sorted[middle]
-            : (sorted[middle - 1] + sorted[middle]) / 2m;
-    }
+    public static decimal Median(IReadOnlyList<decimal> values) => Averages.Median(values);
 }
 
 public sealed record UniverseBuildResult(

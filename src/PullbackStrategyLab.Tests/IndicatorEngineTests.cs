@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
@@ -123,6 +125,116 @@ public sealed class IndicatorEngineTests : IDisposable
 
         Assert.Equal(10_000_000m, IndicatorEngine.Calculate(bars).DollarVolumeMedian);
     }
+
+    // ---- the basis, against the vendor rather than against ourselves ----------------------
+
+    /// <summary>
+    /// A ticker with a split inside the window computes on the adjusted basis, checked against
+    /// the vendor's own <c>adjusted_close</c> rather than against anything the lab stored.
+    ///
+    /// Every other test here builds its own bars, so every one of them would still pass if the
+    /// engine read the raw close: the fixtures set both columns from the same number, or set the
+    /// factor themselves, and a test that supplies both sides of a comparison cannot tell which
+    /// one the code took. The check that matters is against a series somebody else adjusted.
+    ///
+    /// It is asserted in both directions on purpose. Matching the adjusted basis is most of it;
+    /// standing well clear of the raw basis is what makes the test fail loudly if the engine is
+    /// ever pointed at <c>close</c>, rather than passing because the two happen to be near each
+    /// other on a series without much of a split in it.
+    ///
+    /// Raised at the 1.12 sign-off, where a reading of IESC's reported averages held that they
+    /// were on the raw basis. They were not, and nothing in the suite said so: the basis was
+    /// argued from arithmetic over figures in a progress entry, which is the position this test
+    /// exists to stop anyone being in again.
+    /// </summary>
+    [Fact]
+    public void A_split_inside_the_window_leaves_the_averages_on_the_vendors_adjusted_basis()
+    {
+        VendorBar[] history = CapturedHistory("IESC");
+        VendorBar[] window = [.. history.TakeLast(IndicatorEngine.WarmupSessions)];
+
+        // The fixture has to actually hold the case, or this passes by examining nothing. Stated
+        // as counts in advance: a split shows up as bars whose adjusted close is not their raw
+        // close, and as the factor changing across the series.
+        int adjusted = window.Count(b => b.AdjustedClose != b.Close);
+        int unadjusted = window.Count(b => b.AdjustedClose == b.Close);
+
+        Assert.True(adjusted >= 100,
+            $"{adjusted} of {window.Length} captured IESC bars carry an adjustment. The fixture is supposed to hold a "
+            + "two-for-one inside the window, so a number this low means the capture no longer covers the case.");
+        Assert.True(unadjusted >= 1,
+            $"{unadjusted} captured IESC bars sit at their raw close. Without bars on both sides of the split the "
+            + "series has no discontinuity to be wrong about.");
+
+        IndicatorValues computed = IndicatorEngine.Calculate(
+            [.. window.Select(b => new StoredDailyBar(
+                "IESC", b.Date, b.Open, b.High, b.Low, b.Close, b.AdjustedClose, b.Volume,
+                new DateTimeOffset(2026, 8, 25, 0, 0, 0, TimeSpan.Zero)))]);
+
+        // The recursion written out here rather than taken from Averages, so this says something
+        // about the column even if the shared implementation is wrong.
+        decimal[] vendorAdjusted = [.. window.Select(b => b.AdjustedClose)];
+        decimal[] vendorRaw = [.. window.Select(b => b.Close)];
+
+        Assert.Equal(Exponential(vendorAdjusted, 9), computed.EmaShort);
+        Assert.Equal(Exponential(vendorAdjusted, 21), computed.EmaMedium);
+        Assert.Equal(Exponential(vendorAdjusted, 50), computed.EmaLong);
+
+        // And nowhere near the raw basis. On this window the raw series runs at roughly twice the
+        // adjusted one before the split, so a column swap moves every average by hundreds.
+        foreach ((decimal onAdjusted, decimal onRaw, string name) in new[]
+        {
+            (computed.EmaShort, Exponential(vendorRaw, 9), "ema_9"),
+            (computed.EmaMedium, Exponential(vendorRaw, 21), "ema_21"),
+            (computed.EmaLong, Exponential(vendorRaw, 50), "ema_50"),
+        })
+        {
+            Assert.True(onRaw > onAdjusted * 1.4m,
+                $"{name} on the raw basis is {onRaw:F4} against {onAdjusted:F4} on the adjusted one. The two are close "
+                + "enough that this test could no longer tell them apart, so it is not proving what it claims to.");
+        }
+    }
+
+    /// <summary>The textbook recursion, written out so this test shares nothing with the engine.</summary>
+    private static decimal Exponential(IReadOnlyList<decimal> values, int period)
+    {
+        decimal average = values.Take(period).Sum() / period;
+        decimal multiplier = 2m / (period + 1);
+
+        for (int i = period; i < values.Count; i++)
+        {
+            average += (values[i] - average) * multiplier;
+        }
+
+        return average;
+    }
+
+    /// <summary>
+    /// One ticker's history as the vendor returned it, read from the committed capture. The
+    /// point of the test is that these numbers came from outside this repository.
+    /// </summary>
+    private static VendorBar[] CapturedHistory(string ticker)
+    {
+        string file = Path.Combine(RepositoryLayout.Fixtures, $"history-{ticker}.json");
+        Assert.True(File.Exists(file), $"No captured history at {RepositoryLayout.Relative(file)}.");
+
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(file));
+
+        return
+        [
+            .. document.RootElement.EnumerateArray().Select(b => new VendorBar(
+                DateOnly.ParseExact(b.GetProperty("date").GetString()!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                b.GetProperty("open").GetDecimal(),
+                b.GetProperty("high").GetDecimal(),
+                b.GetProperty("low").GetDecimal(),
+                b.GetProperty("close").GetDecimal(),
+                b.GetProperty("adjusted_close").GetDecimal(),
+                b.GetProperty("volume").GetInt64()))
+        ];
+    }
+
+    private sealed record VendorBar(
+        DateOnly Date, decimal Open, decimal High, decimal Low, decimal Close, decimal AdjustedClose, long Volume);
 
     // ---- the refusals --------------------------------------------------------------------
 

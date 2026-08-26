@@ -217,6 +217,7 @@ public sealed class PhaseReplay : IDisposable
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
         measurements.AddRange(IndicatorFigures());
+        measurements.AddRange(LiquidityFloorFigures());
         measurements.AddRange(ChartFigures());
         measurements.AddRange(ReadSurfaceFigures());
 
@@ -265,6 +266,74 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement($"indicators.{ticker}.medianDollarVolume", Figure(stored.DollarVolumeMedian)));
             figures.Add(new Measurement($"indicators.{ticker}.rangeAverage", Figure(stored.RangeAverage)));
         }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The liquidity floor, measured over the twenty sessions it is defined on.
+    ///
+    /// The obligation raised at 1.7 was that the fixture screens the universe over one market
+    /// day while the floor is a median over twenty, so the screen runs on a number the floor does
+    /// not mean. That is true of the whole-market screen and it is not true of these names: the
+    /// fixture holds 251 sessions for each of them, so the twenty-session median is computable
+    /// here today and the floor comparison is the real one.
+    ///
+    /// So the obligation splits. The half that can be tested is tested here, over the per-ticker
+    /// histories. The half that cannot is the whole-market screen, which needs twenty bulk days
+    /// the fixture does not hold; <see cref="FixtureReplayCheck"/> records that as out of scope
+    /// with the condition that would end it, rather than the two being carried as one open item
+    /// that reads as though neither had been done.
+    ///
+    /// Measured from the stored bars rather than from the indicator row, because the floor is
+    /// UniverseBuilder's and this has to fail if the two ever compute the median differently.
+    /// </summary>
+    private IReadOnlyList<Measurement> LiquidityFloorFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // The lab's own floors, not the replay's. _options narrows LiquidityWindowSessions to the
+        // one market day the fixture holds so the whole-market screen can run at all, and reading
+        // the window from there would measure a one-session median and call it the floor, which is
+        // the exact confusion this section exists to remove.
+        var floors = new UniverseOptions();
+        var figures = new List<Measurement>();
+        int measured = 0;
+        int clearing = 0;
+        int short_ = 0;
+
+        foreach (string ticker in FixtureTickers.All.Order(StringComparer.Ordinal))
+        {
+            IReadOnlyList<StoredDailyBar> window =
+                DailyBarReader.Read(connection, ticker, AsOf, floors.LiquidityWindowSessions);
+
+            if (window.Count < floors.LiquidityWindowSessions)
+            {
+                // Named rather than skipped, on the same reasoning as a missing indicator row.
+                figures.Add(new Measurement($"liquidity.{ticker}", "short of the window"));
+                short_++;
+                continue;
+            }
+
+            decimal median = UniverseBuilder.Median([.. window.Select(b => b.Close * b.Volume)]);
+            bool clears = median >= floors.LiquidityFloorLong;
+
+            measured++;
+            if (clears)
+            {
+                clearing++;
+            }
+
+            figures.Add(new Measurement($"liquidity.{ticker}.medianDollarVolume20", Figure(median)));
+            figures.Add(new Measurement($"liquidity.{ticker}.clearsTheFloor", clears ? "yes" : "no"));
+        }
+
+        figures.Add(new Measurement("liquidity.sessionsInTheWindow",
+            floors.LiquidityWindowSessions.ToString(CultureInfo.InvariantCulture)));
+        figures.Add(new Measurement("liquidity.tickersMeasured", measured.ToString(CultureInfo.InvariantCulture)));
+        figures.Add(new Measurement("liquidity.clearingTheFloor", clearing.ToString(CultureInfo.InvariantCulture)));
+        figures.Add(new Measurement("liquidity.belowTheFloor", (measured - clearing).ToString(CultureInfo.InvariantCulture)));
+        figures.Add(new Measurement("liquidity.shortOfTheWindow", short_.ToString(CultureInfo.InvariantCulture)));
 
         return figures;
     }

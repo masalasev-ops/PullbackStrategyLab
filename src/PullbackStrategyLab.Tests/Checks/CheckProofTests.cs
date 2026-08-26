@@ -288,4 +288,234 @@ public sealed class CheckProofTests
             ArchitectureConformanceCheck.Claim.Passed("Component catalogue", "RunLogger", "declared and registered"),
             ArchitectureConformanceCheck.Claim.NotExamined("The limits", "Open at once", "nothing reads this row yet")));
     }
+
+    // ---- coverage-reported ----------------------------------------------------------------
+    //
+    // The check that says the other checks were there. Its own failure is the quietest one in
+    // the corpus, so it is the one most worth being able to break on purpose: every case below
+    // is a way a check can stop running while every run stays green.
+
+    private static IReadOnlyList<string> RosterProblems(
+        IReadOnlyList<CoverageReportedCheck.RosterRow> roster,
+        IReadOnlyDictionary<string, string> implemented,
+        IReadOnlyList<string> invoked,
+        IReadOnlyList<string>? steps = null,
+        IReadOnlySet<string>? reporting = null) =>
+        CoverageReportedCheck.Problems(
+            roster,
+            implemented,
+            reporting ?? implemented.Keys.ToHashSet(StringComparer.Ordinal),
+            invoked,
+            steps ?? [.. invoked.Select(i => "check-" + i)],
+            Scheduled,
+            Landed,
+            "runs-on: [windows-latest, macos-latest]");
+
+    private static CoverageReportedCheck.RosterRow Live(string name) =>
+        new(name, CoverageReportedCheck.EveryRun);
+
+    [Fact]
+    public void A_roster_whose_rows_are_all_implemented_and_invoked_is_accepted()
+    {
+        Assert.Empty(RosterProblems(
+            [Live("clock-usage"), new("point-in-time", "2.6"), new("two-platform", CoverageReportedCheck.TheMatrix)],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            ["clock-usage"]));
+    }
+
+    [Fact]
+    public void A_declared_check_that_nothing_implements_is_caught()
+    {
+        // What coverage-reported itself was between 1.1 and 1.12: a row in the table, a paragraph
+        // arguing for it, and no code anywhere.
+        string problem = Assert.Single(RosterProblems(
+            [Live("coverage-reported")],
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            []));
+
+        Assert.Contains("no test carries", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_ci_step_invoking_a_check_that_does_not_exist_is_caught()
+    {
+        // The silent pass itself. dotnet test exits zero when the filter matches nothing, so this
+        // step would run no test and report success for as long as nobody looked.
+        var problems = RosterProblems(
+            [Live("clock-usage")],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            ["clock-usage", "clock-usge"]);
+
+        Assert.Contains(problems, p => p.Contains("would match no test", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_declared_check_that_ci_never_invokes_is_caught()
+    {
+        string problem = Assert.Single(RosterProblems(
+            [Live("clock-usage")],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            []));
+
+        Assert.Contains("invokes no such check", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_implemented_check_the_roster_does_not_declare_is_caught()
+    {
+        // The direction the corpus already argued for at 1.7, kept assertable rather than swept
+        // once: a check that runs and is not declared is a property nobody wrote down.
+        string problem = Assert.Single(RosterProblems(
+            [],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            ["clock-usage"]));
+
+        Assert.Contains("does not declare it", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_check_that_states_no_coverage_is_caught()
+    {
+        string problem = Assert.Single(RosterProblems(
+            [Live("clock-usage")],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            ["clock-usage"],
+            reporting: new HashSet<string>(StringComparer.Ordinal)));
+
+        Assert.Contains("does not construct CheckCoverage", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_check_deferred_to_a_checkpoint_that_has_landed_is_caught()
+    {
+        // 1.6 is in PROGRESS, so a check still waiting on it is one that checkpoint shipped
+        // without building, and nothing said so at the time.
+        string problem = Assert.Single(RosterProblems(
+            [new("point-in-time", "1.6")],
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            []));
+
+        Assert.Contains("already records it", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_check_deferred_to_a_checkpoint_the_plan_does_not_have_is_caught()
+    {
+        string problem = Assert.Single(RosterProblems(
+            [new("point-in-time", "9.9")],
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            []));
+
+        Assert.Contains("no such checkpoint", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_ci_step_whose_name_and_filter_disagree_is_caught()
+    {
+        var problems = RosterProblems(
+            [Live("clock-usage")],
+            new Dictionary<string, string> { ["clock-usage"] = "ClockUsageCheck.cs" },
+            ["clock-usage"],
+            steps: ["check-clock-usage", "check-store-portability"]);
+
+        Assert.Contains(problems, p => p.Contains("have diverged", StringComparison.Ordinal));
+    }
+
+    // ---- every table in the document is placed -------------------------------------------
+
+    [Fact]
+    public void A_procedure_step_naming_the_same_stores_in_both_documents_is_accepted()
+    {
+        // Written differently on purpose. The two documents address different readers, so the
+        // wording is allowed to differ and the substance is not.
+        ArchitectureConformanceCheck.Claim claim = ArchitectureConformanceCheck.ProcedureStepClaim(
+            "2",
+            "A row count for every table the store holds, derived from the schema.",
+            "Row counts for every table, taken from the schema rather than from a list here.");
+
+        Assert.Equal(ArchitectureConformanceCheck.Pass, claim.Verdict);
+    }
+
+    [Fact]
+    public void A_procedure_step_naming_stores_the_other_document_does_not_is_caught()
+    {
+        // The 1.11 defect exactly, as it still stood in ARCHITECTURE.html at the 1.12 review:
+        // the rehearsal corrected RUNBOOK.md and left the design source of truth telling an
+        // operator to count five tables that do not exist, get zero, and report success.
+        ArchitectureConformanceCheck.Claim claim = ArchitectureConformanceCheck.ProcedureStepClaim(
+            "2",
+            "Row counts for setup, setup_signal, forward_return, trade and variant.",
+            "A row count for every table the store holds, derived from the schema.");
+
+        Assert.Equal(ArchitectureConformanceCheck.Fail, claim.Verdict);
+        Assert.Contains("disagreeing about what an operator counts", claim.Detail, StringComparison.Ordinal);
+    }
+
+    // ---- a confirmed value carries where it came from ------------------------------------
+    //
+    // CONFIRMED is the only tier whose producer is a person, so it is the only one that can lose
+    // its provenance without a program noticing. These are the ways it goes wrong.
+
+    private static FixtureReplayCheck.Expectation Confirmed(
+        string id, string producedBy, string? note = null, string? voided = null) =>
+        new(id, FixtureReplayCheck.Confirmed, "1.00", "1.12", producedBy, note, voided);
+
+    [Fact]
+    public void A_confirmed_value_naming_its_platform_and_the_date_it_was_read_is_accepted()
+    {
+        Assert.Empty(FixtureReplayCheck.WithoutProvenance(
+            [Confirmed("indicators.LITE.ema50", "read from TradingView on 2026-08-26")]));
+    }
+
+    [Fact]
+    public void A_confirmed_value_naming_no_platform_is_caught()
+    {
+        // "Checked against a chart" is what a confirmed value decays into a year later, when
+        // nobody can say which chart or when, and it is then indistinguishable from a derived one.
+        string problem = Assert.Single(FixtureReplayCheck.WithoutProvenance(
+            [Confirmed("indicators.LITE.ema50", "checked against a chart and it agreed")]));
+
+        Assert.Equal("indicators.LITE.ema50", problem);
+    }
+
+    [Fact]
+    public void A_confirmed_value_naming_no_date_is_caught()
+    {
+        Assert.Single(FixtureReplayCheck.WithoutProvenance(
+            [Confirmed("indicators.LITE.ema50", "read from TradingView")]));
+    }
+
+    [Fact]
+    public void A_derived_value_is_not_asked_for_a_platform()
+    {
+        // Only CONFIRMED carries this burden. Asking it of every tier would make every green run
+        // noisy about rows whose producer is a program and is already named.
+        Assert.Empty(FixtureReplayCheck.WithoutProvenance(
+        [
+            new("indicators.LITE.ema50", FixtureReplayCheck.Derived, "1.00", "1.6",
+                "tools/derive-indicators.py, over the fixture's own bars", null),
+        ]));
+    }
+
+    [Fact]
+    public void A_confirmed_daily_range_that_states_no_definition_is_caught()
+    {
+        // The comparison most likely to be made against something that is not the same quantity.
+        string problem = Assert.Single(FixtureReplayCheck.WithoutARangeDefinition(
+            [Confirmed("indicators.PAYO.adr20", "read from TradingView on 2026-08-26")]));
+
+        Assert.Equal("indicators.PAYO.adr20", problem);
+    }
+
+    [Fact]
+    public void A_confirmed_daily_range_recorded_void_is_accepted()
+    {
+        // Void rather than agreement: the platform reports a different quantity under the same
+        // name, so somebody looked and no comparison was possible. That is worth keeping.
+        Assert.Empty(FixtureReplayCheck.WithoutARangeDefinition(
+        [
+            Confirmed("indicators.PAYO.adr20", "read from TradingView on 2026-08-26",
+                voided: "the platform computes sma(high,20)/sma(low,20)-1, which is not the mean of (high-low)/close"),
+        ]));
+    }
 }
