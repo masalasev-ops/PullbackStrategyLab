@@ -330,6 +330,19 @@ public sealed class PhaseReplay : IDisposable
         Record("signals.frozen", vectorized.Written);
         Record("signals.absent", vectorized.Absent);
 
+        // 13. The nightly cap, over whatever the night's detectors left.
+        CapResult capped = new SetupCapper(_connections, Logger(), _clock, _options).Cap(AsOf);
+
+        stages.Add(new StageRun(SetupCapper.Name, 0, capped.RowsWritten, capped.Outcome.ToStorageText()));
+        Record("cap.setups", capped.Setups);
+        Record("cap.candidates", capped.Candidates);
+        Record("cap.longCandidates", capped.LongCandidates);
+        Record("cap.shortCandidates", capped.ShortCandidates);
+        Record("cap.longKept", capped.LongKept);
+        Record("cap.shortKept", capped.ShortKept);
+        Record("cap.cappedOut", capped.CappedOut);
+
+        measurements.AddRange(CapFigures());
         measurements.AddRange(IndexFigures());
         measurements.AddRange(ScanFigures());
         measurements.AddRange(CheckSidednessFigures());
@@ -522,6 +535,47 @@ public sealed class PhaseReplay : IDisposable
 
             figures.Add(new Measurement($"check.{direction}.oneSided",
                 oneSided.Count == 0 ? "none" : string.Join(" ", oneSided.Order(StringComparer.Ordinal))));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The cap over candidate lists the captured day did not produce.
+    ///
+    /// The fixture records two setups and neither clears every gating check, so the live cap above
+    /// caps nothing and its figures are all nought. A release rule that has only ever run on an empty
+    /// list is a rule nothing has tested, and the arrangements that matter, both release directions
+    /// and both sides overflowing, are the ones thirty names on one session cannot reach.
+    ///
+    /// AUTHORED, and about the rule rather than about the market: they say nothing about how many
+    /// candidates a night has, which is what the calibration run measures.
+    /// see: A released cap slot goes to the side that still has candidates
+    /// </summary>
+    private static IReadOnlyList<Measurement> CapFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (CapCases.Scenario scenario in CapCases.Scenarios)
+        {
+            (int takenLong, int takenShort) = NightlyCap.Take(scenario.Long, scenario.Short);
+
+            figures.Add(new Measurement($"cap.{scenario.Name}.long", takenLong.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"cap.{scenario.Name}.short", takenShort.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        // The ordering, as the sequence of setup ids each side comes back in. A sequence rather than
+        // a count, because what a mis-sorted tiebreak moves is which name sits on the boundary and
+        // not how many names there are.
+        IReadOnlyList<NightlyCap.Placement> placements = NightlyCap.Apply(CapCases.OrderingCandidates);
+
+        foreach (string direction in new[] { "long", "short" })
+        {
+            figures.Add(new Measurement(
+                $"cap.ordering.{direction}",
+                string.Join(
+                    " ",
+                    placements.Where(p => p.Direction == direction).OrderBy(p => p.Rank).Select(p => p.SetupId))));
         }
 
         return figures;

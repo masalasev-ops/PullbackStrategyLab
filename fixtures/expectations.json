@@ -117,6 +117,194 @@
       "note": "Thirty. The fixture tickers already hold this session from their histories, so the bulk ingest finds them stored unchanged. Idempotence stated as a number."
     },
     {
+      "id": "cap.both-overflow.long",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "neither side releases anything, so each is held to its own allocation and the split holds. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.both-overflow.short",
+      "tier": "DERIVED",
+      "value": "20",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "neither side releases anything, so each is held to its own allocation and the split holds. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.both-under.long",
+      "tier": "DERIVED",
+      "value": "10",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "neither side fills its own allocation, so nothing is released and nothing is truncated. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.both-under.short",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "neither side fills its own allocation, so nothing is released and nothing is truncated. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.candidates",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8",
+      "note": "None of them clears every gating check, so the live cap has nothing to rank. The release rule is exercised by the authored scenarios instead, and this figure is what says why they are needed."
+    },
+    {
+      "id": "cap.cappedOut",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8"
+    },
+    {
+      "id": "cap.exact.long",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "both sides exactly full, the one arrangement where release and truncation are both zero at the boundary. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.exact.short",
+      "tier": "DERIVED",
+      "value": "20",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "both sides exactly full, the one arrangement where release and truncation are both zero at the boundary. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.long-empty.long",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "a night with no long candidates at all gives the whole sixty to the short side. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.long-empty.short",
+      "tier": "DERIVED",
+      "value": "60",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "a night with no long candidates at all gives the whole sixty to the short side. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.long-overflows.long",
+      "tier": "DERIVED",
+      "value": "55",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "the short side leaves fifteen and the long side takes them, which is the release running one way. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.long-overflows.short",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "the short side leaves fifteen and the long side takes them, which is the release running one way. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.longCandidates",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8"
+    },
+    {
+      "id": "cap.longKept",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8"
+    },
+    {
+      "id": "cap.one-short-of-each.long",
+      "tier": "DERIVED",
+      "value": "39",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "one under each allocation, so two slots go unused rather than being released to a side that does not want them. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.one-short-of-each.short",
+      "tier": "DERIVED",
+      "value": "19",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "one under each allocation, so two slots go unused rather than being released to a side that does not want them. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.ordering.long",
+      "tier": "DERIVED",
+      "value": "o1 o2 o3 o4",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "Ranked on give-up distance in daily-range units, ascending, with ticker alphabetical breaking a tie so the boundary does not depend on the order rows came back in. Ranked within a direction and never across."
+    },
+    {
+      "id": "cap.ordering.short",
+      "tier": "DERIVED",
+      "value": "o6 o5",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "Ranked on give-up distance in daily-range units, ascending, with ticker alphabetical breaking a tie so the boundary does not depend on the order rows came back in. Ranked within a direction and never across."
+    },
+    {
+      "id": "cap.setups",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "2.8",
+      "note": "The three setups on the fixture's night, two from the detectors and one authored for the vectorizer."
+    },
+    {
+      "id": "cap.short-empty.long",
+      "tier": "DERIVED",
+      "value": "60",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "and the mirror, which is the common one in a strong market. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.short-empty.short",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "and the mirror, which is the common one in a strong market. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.short-overflows.long",
+      "tier": "DERIVED",
+      "value": "10",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "the long side leaves thirty and the short side takes them, which is the release running the other way. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.short-overflows.short",
+      "tier": "DERIVED",
+      "value": "50",
+      "checkpoint": "2.8",
+      "producedBy": "an independent restatement of the release rule and the ranking over the authored candidate lists, computed outside the solution by tools/derive-indicators.py --cap",
+      "note": "the long side leaves thirty and the short side takes them, which is the release running the other way. AUTHORED input: a candidate list the captured day did not produce."
+    },
+    {
+      "id": "cap.shortCandidates",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8"
+    },
+    {
+      "id": "cap.shortKept",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.8"
+    },
+    {
       "id": "chart.IESC.bodyWidth",
       "tier": "DERIVED",
       "value": "6.86",

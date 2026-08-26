@@ -2175,3 +2175,70 @@ Carried:    **The market capitalisation a calibration run may read.** Due at 2.1
             per-ticker calls, and it would have left those eight gates with three results each instead
             of two. Both directions now report no check one-sided, and the cases are marked `AUTHORED`
             and written nowhere near `setup`, so nothing reads them as evidence about the market.
+
+## 2.8 — 2026-08-26 — phase-2-detection — the nightly cap, and a rule with nothing to run on
+
+Built:      `NightlyCap` in Core and `SetupCapper` in Worker, verb `cap`, updating `setup.rank` and
+            `setup.capped_out` and nothing else. Forty long, twenty short, unused slots released.
+            Candidates are the setups that cleared every gating check; a recorded setup that failed
+            one keeps a null rank rather than a rank among names it was never ranked against.
+
+            The arithmetic is in Core so it can be swept rather than sampled. The release rule's
+            whole claim is about every arrangement of the two counts, and a stage-shaped test would
+            have asserted it over whichever arrangements a fixture produced.
+
+            **Truncated candidates keep their rank.** A night that recorded only what it kept could
+            never say whether the cap bound, and how far past sixty a night went is what decides
+            whether sixty is the right number.
+
+            `fixtures/cap-cases.json`, eight authored arrangements and one ordering case, with
+            `tools/derive-indicators.py --cap` restating the release rule and the ranking from the
+            decision's own wording.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 291 tests. `tools/verify-phase` GREEN: 115
+            claims, 55 passed, 0 unexamined; 702 expectations, **277 `DERIVED`**; coverage examined
+            2,233 with 0 unexamined.
+            Over the fixture: 3 setups, **0 candidates**, so the live cap ranked nothing and every one
+            of its figures is nought. The eighteen authored figures carry the rule instead, all
+            derived independently: 0 disagreements.
+            The release rule swept over **3,721 arrangements**, every pair of counts from nought to
+            twice the cap, on four properties: no side takes more than it has, the total never
+            exceeds sixty, a slot goes unused only when neither side has a candidate left for it, and
+            neither side is ever cut below its own allocation to make room for the other.
+
+Verified:   **The absent tiebreak is asserted rather than argued.** The corpus says no priority order
+            is needed when a slot is released, because a side that ran out of candidates is not also
+            asking for more. That is a claim about every arrangement, so the sweep runs the rule twice
+            over each one, offering the spare to the long side first and to the short side first, and
+            compares. They agree on all 3,721.
+
+            The ordering case carries a tie on give-up distance broken by ticker, and both sides start
+            at rank one. A pooled ranking would have the short side start at five, which is what
+            reading the two together looks like when it is wrong.
+
+Findings:   Finding. **The rule the checkpoint exists for had nothing to run on.** Observation: the
+            fixture records three setups and none clears every gating check, so the live cap sees zero
+            candidates and its done condition, "truncation recorded with the pre-cap count", is
+            satisfied by a run that truncated nothing. Reading: an untested release rule that reports
+            a clean run is worse than one that fails, because the report says the checkpoint is
+            covered. The arrangements that matter, both release directions and both sides
+            overflowing, are exactly the ones thirty names on one session cannot reach, which is the
+            same shape as the one-sidedness at 2.6 and gets the same answer: authored cases, on the
+            tier that says what they are. The live figures are kept and expected at nought, because
+            that is what says why the authored ones are needed.
+
+            Observation. `setup` carries no column that could make a rank belong to one version, and
+            that is now asserted rather than intended. Reading: the property is unassertable once
+            versions exist. A cap applied per version leaves two versions' disagreements
+            indistinguishable from names the cap removed, and by the time that shows up the record it
+            destroyed cannot be reconstructed. The assertion is on the schema and on the reader's
+            signature, both of which survive a rewrite of the stage.
+
+            Observation. The nightly row for this stage read "cap" rather than the verb, the third
+            row of RUNBOOK's nightly table this phase to describe the work instead of naming what an
+            operator types. Reading: the check that asserts the replay's stage order against that
+            table found it, which is the second thing that check has caught since it was written
+            yesterday.
+
+Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` values at 2.11; and step 6 of the move.

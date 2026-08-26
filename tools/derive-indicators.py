@@ -69,6 +69,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
         python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker> [--short]
         python tools/derive-indicators.py --gates   <gate-cases.json>
+        python tools/derive-indicators.py --cap     <cap-cases.json>
 """
 
 import datetime
@@ -1306,7 +1307,84 @@ def gates_main(argv):
     return 0
 
 
+# --- the nightly cap over the authored candidate lists ------------------------------------
+
+LONG_ALLOCATION = 40
+SHORT_ALLOCATION = 20
+NIGHTLY_TOTAL = LONG_ALLOCATION + SHORT_ALLOCATION
+
+
+def cap_take(long_count, short_count):
+    """How many each side takes, restated from the decision rather than read from the code.
+
+    "Each side takes the lesser of its candidate count and its allocation. Whatever either leaves
+    unfilled is offered to the other, by rank within that other side."
+
+    No priority order is needed and none is written here. A slot is only released by a side that ran
+    out of candidates, and a side that ran out is not also asking for more, so the two conditions are
+    mutually exclusive and one pass is deterministic.
+    """
+    taken_long = min(long_count, LONG_ALLOCATION)
+    taken_short = min(short_count, SHORT_ALLOCATION)
+
+    taken_long += min(NIGHTLY_TOTAL - taken_long - taken_short, long_count - taken_long)
+    taken_short += min(NIGHTLY_TOTAL - taken_long - taken_short, short_count - taken_short)
+
+    return taken_long, taken_short
+
+
+def cap_order(candidates, direction):
+    """One side's candidates, ranked on give-up distance ascending with ticker as the tiebreak.
+
+    Within a direction and never across: a pooled ranking would put a short's give-up distance beside
+    a long's and truncate one on the other's account.
+    """
+    side = [c for c in candidates if c["direction"] == direction]
+    side.sort(key=lambda c: (Decimal(c["stopDistanceRanges"]), c["ticker"]))
+    return [c["setupId"] for c in side]
+
+
+def cap_main(argv):
+    """The cap over fixtures/cap-cases.json, decided a second time.
+
+    Nothing here imports the lab. An allocation that moved in one place and not the other, or a
+    tiebreak that stopped being the ticker, shows as a named difference rather than as a count.
+    """
+    if len(argv) < 1:
+        print("usage: --cap <cap-cases.json>", file=sys.stderr)
+        return 2
+
+    with open(argv[0], encoding="utf-8") as handle:
+        book = json.load(handle)
+
+    if book["tier"] != "AUTHORED":
+        print("cap-cases.json says tier %s, not AUTHORED" % book["tier"], file=sys.stderr)
+        return 1
+
+    allocation = book["allocation"]
+    if (allocation["long"], allocation["short"], allocation["total"]) != (
+            LONG_ALLOCATION, SHORT_ALLOCATION, NIGHTLY_TOTAL):
+        print("the case file states an allocation this derivation does not hold", file=sys.stderr)
+        return 1
+
+    print("\ncap  from %s" % os.path.basename(argv[0]))
+
+    for scenario in book["scenarios"]:
+        taken_long, taken_short = cap_take(scenario["long"], scenario["short"])
+        print("  cap.%s.long   %d" % (scenario["name"], taken_long))
+        print("  cap.%s.short  %d" % (scenario["name"], taken_short))
+
+    candidates = book["ordering"]["candidates"]
+    for direction in ("long", "short"):
+        print("  cap.ordering.%-6s %s" % (direction, " ".join(cap_order(candidates, direction))))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--cap":
+        return cap_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--gates":
         return gates_main(argv[2:])
 

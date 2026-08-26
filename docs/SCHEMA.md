@@ -230,6 +230,10 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Up
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 
+*`rank` and `capped_out` are the night's, not a version's, and there is deliberately no column that could make them a version's. The cap is applied to the shared candidate list before any version selects, and a cap applied per version would leave their disagreements unscoreable. A test asserts the absence rather than the intent, because the intent is unassertable once versions exist and the record it would have destroyed cannot be reconstructed.*
+
+*Both are null on a setup that failed a gating check. Such a row is evidence and was never a candidate, so a rank among names it was not ranked against would be a number with no meaning.*
+
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.
 

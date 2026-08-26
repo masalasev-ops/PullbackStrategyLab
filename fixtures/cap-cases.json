@@ -1,0 +1,36 @@
+{
+  "tier": "AUTHORED",
+  "what": "The nightly cap over candidate lists a real night did not produce: both release directions, both sides overflowing, and each side empty.",
+  "whatItCannotSay": "Nothing about how many candidates a night actually has. That is what the calibration run at 2.11 measures. These say the release rule is arithmetic rather than a preference, which is the half no fixture can show while the fixture records no passing setup at all.",
+  "whyAuthored": "The captured day records two setups and neither clears every gating check, so the cap over the fixture caps nothing. A rule that only ever ran on an empty list is a rule nothing has tested.",
+  "allocation": { "long": 40, "short": 20, "total": 60 },
+  "scenarios": [
+    { "name": "both-under", "long": 10, "short": 5,
+      "why": "neither side fills its own allocation, so nothing is released and nothing is truncated" },
+    { "name": "exact", "long": 40, "short": 20,
+      "why": "both sides exactly full, the one arrangement where release and truncation are both zero at the boundary" },
+    { "name": "long-overflows", "long": 100, "short": 5,
+      "why": "the short side leaves fifteen and the long side takes them, which is the release running one way" },
+    { "name": "short-overflows", "long": 10, "short": 100,
+      "why": "the long side leaves thirty and the short side takes them, which is the release running the other way" },
+    { "name": "both-overflow", "long": 100, "short": 100,
+      "why": "neither side releases anything, so each is held to its own allocation and the split holds" },
+    { "name": "long-empty", "long": 0, "short": 100,
+      "why": "a night with no long candidates at all gives the whole sixty to the short side" },
+    { "name": "short-empty", "long": 100, "short": 0,
+      "why": "and the mirror, which is the common one in a strong market" },
+    { "name": "one-short-of-each", "long": 39, "short": 19,
+      "why": "one under each allocation, so two slots go unused rather than being released to a side that does not want them" }
+  ],
+  "ordering": {
+    "why": "Ranked on give-up distance in daily-range units, ascending, with ticker alphabetical breaking a tie so the boundary does not depend on the order rows came back in. Ranked within a direction and never across.",
+    "candidates": [
+      { "setupId": "o1", "ticker": "ZZZZ", "direction": "long",  "stopDistanceRanges": "0.1000" },
+      { "setupId": "o2", "ticker": "AAAA", "direction": "long",  "stopDistanceRanges": "0.3000" },
+      { "setupId": "o3", "ticker": "BBBB", "direction": "long",  "stopDistanceRanges": "0.3000" },
+      { "setupId": "o4", "ticker": "MMMM", "direction": "long",  "stopDistanceRanges": "0.4900" },
+      { "setupId": "o5", "ticker": "AAAA", "direction": "short", "stopDistanceRanges": "0.2000" },
+      { "setupId": "o6", "ticker": "BBBB", "direction": "short", "stopDistanceRanges": "0.0500" }
+    ]
+  }
+}

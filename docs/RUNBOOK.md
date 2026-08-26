@@ -60,7 +60,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:20 | `detect-long`, then `detect-short` | 0 |
 | 18:25 | `vectorize`, the signal freeze, then journal | 0 |
 | 18:26 | control sampling | 0 |
-| 18:28 | cap | 0 |
+| 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |
 | 18:40 | publish watchlist | 0 |
 | 20:30 | minute bars for flagged setups | 300 |

@@ -520,3 +520,18 @@ Why:  ARCHITECTURE's failure table has said since before any code existed that a
 Was:  2.7's done condition ended at "No setup row carries a direction its detector does not own."
 Now:  The same, plus a name a detector cannot read getting an error row and the run being recorded partial rather than skipped into a night that merely looks lighter.
 Why:  The behaviour is owed at this checkpoint by ARCHITECTURE's failure table, and a done condition that does not state it leaves the phase report to be the only thing that noticed.
+
+### 2026-08-26 — RUNBOOK.md — cites The nightly cap is 60, split forty long and twenty short, unused slots released
+Was:  | 18:28 | cap | 0 |
+Now:  | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
+Why:  The stage exists and has a verb. The same gap `daily-bars` and the short detector had: a row describing the work rather than naming what an operator types, which the check asserting the replay's stage order against this table cannot read.
+
+### 2026-08-26 — SCHEMA.md — cites Versions select from one shared nightly candidate list rather than each re-scanning
+Was:  The `setup` section ended at the note on the two detectors writing disjoint rows.
+Now:  Two further notes: that `rank` and `capped_out` are the night's rather than a version's and that there is deliberately no column that could make them a version's, and that both are null on a setup that failed a gating check.
+Why:  A cap applied per version leaves the disagreements between versions unscoreable, and the property is unassertable once versions exist: by then the record it destroyed cannot be reconstructed. The schema is where it can be held now, so the absence is stated and a test reads it.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A released cap slot goes to the side that still has candidates
+Was:  | 2.8 | SetupCapper, 60 a night, 40 long 20 short, unused slots released | Truncation recorded with the pre-cap count |
+Now:  The same row naming the verb and the arithmetic's home in Core, with the done condition stating the sweep over every arrangement of the two counts, the order-independence of the release, the ranking within a direction, and the shared candidate list asserted against the schema.
+Why:  "Truncation recorded with the pre-cap count" is satisfied by a run over an empty candidate list, which is exactly what the fixture produces: two setups, neither clearing every gating check. The release rule's whole claim is about every arrangement of the two counts, so the condition asks for every arrangement.

@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
+using PullbackStrategyLab.Worker.Stages;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -595,6 +596,12 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
                 : Claim.Failed("Failure behaviour", condition, "IndicatorEngine no longer refuses on an open demand"),
 
+            "Nightly setup cap reached" => TheCapTruncatesTheSharedListAndRecordsIt()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "SetupCapper reads a night by date alone, ranks within a direction, updates rank and capped_out only, and reports the pre-cap counts beside the kept ones")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the cap no longer reads the whole night, or no longer reports what it truncated"),
+
             "Detector errors on one stock" => BothDetectorsRecordAnErrorRow()
                 ? Claim.Passed("Failure behaviour", condition,
                     "both detectors catch per name, insert a detector_error row of their own and record the run partial")
@@ -624,6 +631,30 @@ public sealed partial class ArchitectureConformanceCheck
     /// calling it. A scan for text present is not a scan for a property held, which is the shape
     /// this corpus keeps arriving at from a new direction.
     /// </summary>
+    /// <summary>
+    /// Three things the cap claim rests on: the read, the write, and what is reported.
+    ///
+    /// The read has to be the night, whole, or the cap is being applied to something narrower than
+    /// the shared candidate list. The write has to be rank and capped_out and nothing else, or the
+    /// cap is deciding more than the corpus says it decides. And the pre-cap counts have to be
+    /// reported, or "the truncation is recorded" is satisfied by a run that says how many it kept,
+    /// which is the half that cannot answer whether the cap bound.
+    ///
+    /// The behavioural halves live in <c>NightlyCapTests</c>, which sweeps the release rule, and in
+    /// <c>SharedCandidateListTests</c>, which asserts the schema has nowhere to put a version.
+    /// </summary>
+    private static bool TheCapTruncatesTheSharedListAndRecordsIt()
+    {
+        string source = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "SetupCapper.cs"));
+
+        return source.Contains("SetupReader.Read(connection, asOf)", StringComparison.Ordinal)
+            && source.Contains("UPDATE setup SET rank = @rank, capped_out = @capped_out", StringComparison.Ordinal)
+            && typeof(CapResult).GetProperty(nameof(CapResult.LongCandidates)) is not null
+            && typeof(CapResult).GetProperty(nameof(CapResult.ShortCandidates)) is not null
+            && typeof(CapResult).GetProperty(nameof(CapResult.CappedOut)) is not null;
+    }
+
     private static bool BothDetectorsRecordAnErrorRow() =>
         new[] { "LongSetupDetector.cs", "ShortSetupDetector.cs" }
             .Select(name => RepositoryLayout.Read(

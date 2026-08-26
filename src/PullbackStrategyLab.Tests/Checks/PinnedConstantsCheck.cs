@@ -202,6 +202,11 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Scan breadth",
             ParameterCell(architecture, "Scan breadth").Contains("Top 50 per scan", StringComparison.Ordinal),
             ScanEngine.Breadth == 50, "ScanEngine.Breadth"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Nightly setup cap",
+            ParameterCell(architecture, "Nightly setup cap")
+                .Contains("60, split 40 long and 20 short", StringComparison.Ordinal),
+            NightlyCap.Total == 60 && NightlyCap.LongAllocation == 40 && NightlyCap.ShortAllocation == 20,
+            "NightlyCap.Total, LongAllocation and ShortAllocation"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Month-mover lookback",
             ParameterCell(architecture, "Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
             ScanEngine.MonthWindow == 20, "ScanEngine.MonthWindow"));
@@ -221,7 +226,7 @@ public sealed class PinnedConstantsCheck
             "Liquidity floor, short", "Market cap floor, short",
             "Listing age floor, short", "Daily range floor", "Pullback shape", "Trigger reachability",
             "Give-up distance cap", "Cluster threshold", "Squeeze test", "Contraction test",
-            "Scan breadth", "Month-mover lookback",
+            "Scan breadth", "Month-mover lookback", "Nightly setup cap",
         ];
         coverage.OutOfScope(
             "rows of the authored parameters table with no code constant yet",
