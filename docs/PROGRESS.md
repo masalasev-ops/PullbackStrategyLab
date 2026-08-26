@@ -1820,3 +1820,64 @@ Carried:    Eleven active signals still await their producer: the ladder grade a
             Asserted on every run in both directions rather than carried as an obligation.
             The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
             values at 2.11, and step 6 of the move.
+
+## 2.4 — 2026-08-26 — phase-2-detection — the ladder grade, and a stage that counted what it did not write
+
+Built:      `TierClassifier`, verb `tiers`. No migration: `ladder_grade` has been on `indicator_daily`
+            since 006 and the re-key at 009 is what makes this stage an inserter rather than an
+            updater. It writes a later observation of the same session carrying the grade and copies
+            the seven computed figures forward, so a reader taking the latest row gets an answer
+            instead of assembling one from two.
+            `StoredIndicators` now declares `IIndicatorFigures`, which it already satisfied member
+            for member. Declared rather than duplicated, so the grading function takes the interface
+            and the stored row and the freshly computed values go through one signature.
+            `ladder_grade` moves from `AwaitingCheckpoint` to `Frozen` in the vectorizer, which the
+            partition test forced rather than reminded.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 253 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 465 expectations, 170 `DERIVED`; coverage examined 1,594 with 0
+            unexamined; 38 expectations changed since the last commit.
+            The grades over the fixture: 7,202 members, 30 graded, 7,172 with no indicator row for
+            the session. **9 rising, 16 mixed, 5 falling.**
+            All 30 grades derived independently by `tools/derive-indicators.py --ladder`, which
+            recomputes the three averages over the engine's warm-up rather than reading the stored
+            row: 0 disagreements, and the 9/16/5 split reproduced.
+
+Verified:   The partition swept rather than sampled. Every arrangement of four values drawn from a
+            set of four, 256 in all, produces exactly one of the three grades, and all three appear.
+            A sweep that only ever returned "mixed" would satisfy "produces one of the three", so
+            the count of distinct grades is asserted alongside the count of arrangements.
+            Equality grades mixed. Two averages exactly equal is a real state on a flat series and
+            is neither a rise nor a fall, so the comparisons are strict on purpose.
+            The later-observation write end to end: two rows for the session, the latest carrying the
+            grade, the engine's figures unchanged in both.
+
+Findings:   Finding. **The stage counted thirty grades and wrote no rows, and reported success.**
+            `indicator_daily` is keyed (ticker, as_of, computed_at) and the insert says
+            `ON CONFLICT DO NOTHING`. The stage took its instant from `RunScope.StartedAt`, the
+            replay's clock is fixed, so every stage in a replay run shares one instant: the grade
+            row collided with the engine's own row and vanished. The grade counters had already been
+            incremented before the insert, so the run printed 9 rising, 16 mixed, 5 falling over
+            `graded 0`, and every ladder figure read `ungraded`.
+            Reading: the fixed clock made this certain and a real clock makes it merely unlikely,
+            which is the worse of the two. In production the wall clock happens to move between
+            stages, so this would have sat undiscovered until the first night two stages ran inside
+            the same millisecond, and it would have failed the same silent way. The repair is not a
+            fixture workaround: a later observation must carry a later instant, so the stage now
+            writes at `max(run start, the observation it copies + 1ms)`. The counters moved after the
+            insert and a refused row is counted and reported rather than absorbed.
+            Worth separating: the replay found this because a fixed clock is a harsher environment
+            than production, not a laxer one. That is the second time in this phase that the fixture
+            has been the harsher case.
+
+            Observation. `signals.frozen` has now changed twice, 16 to 22 to 23, and both changes are
+            recorded on the row. It is a count of the library's covered half and it rises each time a
+            checkpoint gives a signal a store to read. Reading: this expectation is a progress
+            indicator rather than a property, and it will move again at 2.5 and 2.6. That is fine and
+            it is worth naming, because an expectation that changes at most checkpoints is one a
+            reader should not treat as a regression signal.
+
+Carried:    Ten active signals still await their producer: the market mood at 2.5, and the pullback
+            geometry, sector, industry and cluster count at 2.6.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.

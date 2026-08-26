@@ -116,7 +116,7 @@ public sealed record StoredIndicators(
     decimal AverageDailyRange,
     decimal DollarVolumeMedian,
     decimal RangeAverage,
-    string? LadderGrade)
+    string? LadderGrade) : IIndicatorFigures
 {
     /// <summary>True when the two computations produced the same figures, whatever their computed_at says.</summary>
     public bool SameFigures(IIndicatorFigures other)

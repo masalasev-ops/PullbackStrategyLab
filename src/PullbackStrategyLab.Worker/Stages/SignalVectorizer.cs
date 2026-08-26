@@ -53,7 +53,6 @@ public sealed class SignalVectorizer
     public static IReadOnlyDictionary<string, string> AwaitingCheckpoint { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["ladder_grade"] = "2.4",
             ["pullback_bars"] = "2.6",
             ["pullback_extreme"] = "2.6",
             ["retrace_depth"] = "2.6",
@@ -85,6 +84,7 @@ public sealed class SignalVectorizer
         "trigger_distance_ranges",
         "dollar_volume_median_20",
         "listing_age_sessions",
+        "ladder_grade",
         "thrust_scan",
         "thrust_rank",
         "thrust_session",
@@ -224,6 +224,11 @@ public sealed class SignalVectorizer
         StoredIndicators? indicators = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf);
         if (indicators is not null)
         {
+            if (indicators.LadderGrade is not null)
+            {
+                values["ladder_grade"] = indicators.LadderGrade;
+            }
+
             values["adr_20"] = StoreText.RatioToStorageText(indicators.AverageDailyRange);
             values["atr_14"] = StoreText.PriceToStorageText(indicators.AverageTrueRange);
             values["range_avg_20"] = StoreText.PriceToStorageText(indicators.RangeAverage);

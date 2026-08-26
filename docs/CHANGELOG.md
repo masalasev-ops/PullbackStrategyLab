@@ -435,3 +435,13 @@ Why:  A hit count is the same number whatever the scan ranked on and whichever w
 Was:  | 18:10 | scans, ladder grade | 0 |
 Now:  | 18:10 | `scans`, then the ladder grade | 0 |
 Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. Zero calls is unchanged: the scans are a function of stored bars.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.4 | TierClassifier | Ladder grade on every universe member per night |
+Now:  The same row naming the later-observation write and the ladder grade moving to frozen, with the partition swept rather than sampled and a refused grade counted rather than absorbed.
+Why:  "A grade on every member" is satisfied by a stage that grades nothing and says it graded everything, which is exactly what happened on the first run: the write collided with the engine's own row on the primary key, the insert said DO NOTHING, and the stage reported thirty grades over zero rows. The two conditions added are the ones the original could not carry.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:10 | `scans`, then the ladder grade | 0 |
+Now:  | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types.

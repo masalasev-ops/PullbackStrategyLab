@@ -65,6 +65,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --universe <captured-dir> <as-of>
         python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
+        python tools/derive-indicators.py --ladder  <store.db> <as-of>
 """
 
 import datetime
@@ -731,7 +732,64 @@ def signals_main(argv):
     return 0
 
 
+def ladder_main(argv):
+    """The ladder grade for every universe member, from the close and the three averages.
+
+    Restated from the definition rather than read from the stage: rising is price above the 9-day,
+    9 above 21, 21 above 50; falling is every one of those reversed; mixed is anything else. The
+    comparisons are strict, so two averages exactly equal grades mixed, which is a real state on a
+    flat series and is neither a rise nor a fall.
+
+    The averages are recomputed over the engine's own warm-up rather than read from the stored row.
+    Reading the row would check the grading and skip the thing most likely to be wrong, which is
+    whether the grade was taken against the right numbers.
+    """
+    if len(argv) < 2:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+
+    members = [
+        row[0] for row in connection.execute(
+            "SELECT ticker FROM universe_snapshot WHERE as_of = ? ORDER BY ticker", (as_of,)).fetchall()
+    ]
+
+    counts = {"rising": 0, "mixed": 0, "falling": 0}
+    graded = []
+
+    for ticker in members:
+        bars = window(connection, ticker, as_of, WARMUP)
+        if len(bars) < WARMUP or bars[-1]["date"] != as_of:
+            continue
+
+        closes = [b["close"] for b in adjusted(bars)]
+        close = closes[-1]
+        short, medium, long_ = (ema(closes, p) for p in EMA_PERIODS)
+
+        if close > short > medium > long_:
+            grade = "rising"
+        elif close < short < medium < long_:
+            grade = "falling"
+        else:
+            grade = "mixed"
+
+        counts[grade] += 1
+        graded.append((ticker, grade))
+
+    print("\nladder  as of %s, %d member(s), %d graded" % (as_of, len(members), len(graded)))
+    print("  rising %d, mixed %d, falling %d" % (counts["rising"], counts["mixed"], counts["falling"]))
+    for ticker, grade in graded:
+        print("  ladder.%-8s %s" % (ticker, grade))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--ladder":
+        return ladder_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--scans":
         return scans_main(argv[2:])
 

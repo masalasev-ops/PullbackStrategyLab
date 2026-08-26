@@ -2663,10 +2663,10 @@
     {
       "id": "signals.frozen",
       "tier": "FROZEN",
-      "value": "22",
+      "value": "23",
       "checkpoint": "2.2",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Changed at 2.3 from 16. the vectorizer freezes 22 signals as of 2.3, not 16: the six thrust signals moved out of AwaitingCheckpoint when ScanEngine gave them a store to read."
+      "note": "Changed at 2.4 from 22, and at 2.3 from 16. The vectorizer freezes one more signal each time a checkpoint gives one a store to read: the six thrust signals at 2.3 when ScanEngine landed, and ladder_grade at 2.4 when TierClassifier did. The figure is a count of the library's covered half and it rises as the phase closes the rest."
     },
     {
       "id": "signals.absent",
@@ -3077,6 +3077,267 @@
       "tier": "FROZEN",
       "value": "1.1133",
       "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "ladder.AAPL",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.AMD",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.AMZN",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.BAC",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.CCL",
+      "tier": "DERIVED",
+      "value": "falling",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.COIN",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.CSCO",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.F",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.GOOGL",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.HOOD",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.IESC",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.INTC",
+      "tier": "DERIVED",
+      "value": "falling",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.JNJ",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.JPM",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.KO",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.LITE",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.META",
+      "tier": "DERIVED",
+      "value": "falling",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.MSFT",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.NCLH",
+      "tier": "DERIVED",
+      "value": "falling",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.NVDA",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.PAYO",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.PFE",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.PG",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.PLTR",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.RIVN",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.SOFI",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.T",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.TSLA",
+      "tier": "DERIVED",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.WMT",
+      "tier": "DERIVED",
+      "value": "falling",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "ladder.XOM",
+      "tier": "DERIVED",
+      "value": "rising",
+      "checkpoint": "2.4",
+      "producedBy": "an independent grading over the fixture's own bars, outside the solution, by tools/derive-indicators.py --ladder"
+    },
+    {
+      "id": "signal.IESC-long.ladder_grade",
+      "tier": "FROZEN",
+      "value": "mixed",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "tiers.falling",
+      "tier": "FROZEN",
+      "value": "5",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "tiers.graded",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Thirty, and it read zero on the first run while the three grade counts still totalled thirty. The stage wrote at the instant the engine wrote, the key is (ticker, as_of, computed_at), and the insert says DO NOTHING on conflict. The grade is a later observation and its instant is now strictly later."
+    },
+    {
+      "id": "tiers.members",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "tiers.mixed",
+      "tier": "FROZEN",
+      "value": "16",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Sixteen of thirty, which is the shape mixed is meant to have: it is a grade rather than a leftover bucket and it is the commonest of the three."
+    },
+    {
+      "id": "tiers.noIndicators",
+      "tier": "FROZEN",
+      "value": "7172",
+      "checkpoint": "2.4",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "tiers.rising",
+      "tier": "FROZEN",
+      "value": "9",
+      "checkpoint": "2.4",
       "producedBy": "the replay itself, recorded to detect change"
     }
   ],

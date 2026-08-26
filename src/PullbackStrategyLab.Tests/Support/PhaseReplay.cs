@@ -226,7 +226,19 @@ public sealed class PhaseReplay : IDisposable
         Record("scans.hits", scans.Hits);
         Record("scans.inserted", scans.Inserted);
 
-        // 9. The signal freeze, over one authored setup.
+        // 9. The ladder grade, which writes a later observation of the same session rather than
+        //    updating the row the engine wrote.
+        TierResult tiers = new TierClassifier(_connections, Logger(), _clock, _options).Classify(AsOf);
+
+        stages.Add(new StageRun(TierClassifier.Name, 0, tiers.RowsWritten, tiers.Outcome.ToStorageText()));
+        Record("tiers.members", tiers.Members);
+        Record("tiers.graded", tiers.Graded);
+        Record("tiers.rising", tiers.Rising);
+        Record("tiers.mixed", tiers.Mixed);
+        Record("tiers.falling", tiers.Falling);
+        Record("tiers.noIndicators", tiers.NoIndicators);
+
+        // 10. The signal freeze, over one authored setup.
         //
         //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
         //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said
@@ -455,6 +467,7 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement($"indicators.{ticker}.adr20", Figure(stored.AverageDailyRange)));
             figures.Add(new Measurement($"indicators.{ticker}.medianDollarVolume", Figure(stored.DollarVolumeMedian)));
             figures.Add(new Measurement($"indicators.{ticker}.rangeAverage", Figure(stored.RangeAverage)));
+            figures.Add(new Measurement($"ladder.{ticker}", stored.LadderGrade ?? "ungraded"));
         }
 
         return figures;

@@ -39,6 +39,7 @@ public static class Program
         builder.Services.AddSingleton<IndexIngestor>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
+        builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
 
@@ -68,6 +69,7 @@ public static class Program
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
                 SignalVectorizer.Name => host.Services.GetRequiredService<SignalVectorizer>().Run(rest),
                 ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
+                TierClassifier.Name => host.Services.GetRequiredService<TierClassifier>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -112,6 +114,7 @@ public static class Program
         IndexIngestor.Name,
         IndicatorEngine.Name,
         ScanEngine.Name,
+        TierClassifier.Name,
         SignalVectorizer.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,
