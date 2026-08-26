@@ -208,6 +208,12 @@ Three rules learned the hard way:
 
 One more, from this corpus's own history: **a mechanical sweep that satisfies a grep can destroy the meaning it was carrying.** Replacing a code with a generic phrase clears the pattern and leaves a citation pointing at nothing. If a sweep replaces identifiers, it maps each one to its replacement rather than to a placeholder, and the result is checked by resolving every citation afterwards.
 
+**An assertion must fail when the thing it guards is removed, and the proof of that is permanent.** A source scan that finds a pattern is not evidence the behaviour exists; a behavioural test that exercises the path is. Where both are cheap, write both and let the scan report coverage while the test carries the claim.
+
+**This is the fourth instance, which is why it is a rule and not another pass.** The failure table's "Detector errors on one stock" claim was asserted by looking for the insert statement and the partial outcome in each detector, and it passed with the catch clause deleted: the private method issuing the insert was still in the file with nothing calling it. Before it, `path-casing` compared no paths and passed, `bar-append-only` held one bar table of three and passed, and `MarkdownTable` dropped a malformed obligation row and reported nothing missing. Each time the subject was gone and the assertion said what it always said.
+
+**So each check names, per source-scan assertion, whether a behavioural test backs it.** `Backing.Test` names a test method, and the name has to resolve to one that exists, on the same grounds `decision-resolves` demands an exact name: a backing that has gone stale is worse than none, because it reads as covered. `Backing.Runner` names a job in the workflow, for the properties a runner exercises and no test can. `Backing.None` says nothing exercises it, and the three are counted separately so the third growing is visible rather than absorbed. A check that declares neither a scan nor `NoSourceScan` fails, so the declaration cannot be forgotten by a check that is added later. **An unbacked scan is reported and does not fail the run**, because the fix is a behavioural test per scan and that is scheduled work rather than a condition on the next commit; `coverage-reported` also lists any file in the suite that reads the shipped source and left no such record, which is how a scan written outside a check gets seen.
+
 ## Definition of done for a checkpoint
 
 All seven, or it is not done:

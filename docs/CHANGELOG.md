@@ -556,3 +556,14 @@ Why:  The check exists as of 2.10 and runs as a named CI step, so a checkpoint r
 Was:  | 2.10 | Point-in-time test | A deliberately future-dated column causes a loud failure. The test is permanent, not a manual break-and-revert |
 Now:  The same row naming the check and its three halves, with the done condition stating where the loud failure happens, the two named exemption lists, and the two-sided read.
 Why:  "A loud failure" left unsaid where. Append-only point-in-time storage does not throw on a future-dated row; it declines to see it, silently and correctly. The failure that has to be loud is in CI, and saying so is what stops a later session looking for a runtime exception that was never going to arrive.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Verification ended at the paragraph on a mechanical sweep destroying the meaning it was carrying.
+Now:  Three further paragraphs: that an assertion must fail when the thing it guards is removed and the proof of that is permanent, that this is the fourth instance and therefore a rule, and how it is held, with the three shapes a backing can take and the rule that an unbacked scan is reported rather than failing the run.
+Why:  The failure table's detector-error claim passed with the catch clause deleted, because the private method issuing the insert was still in the file with nothing calling it. Three earlier instances had the same shape and each was closed one at a time; a fourth is the signal to write the property down and hold it mechanically rather than to close it again.
+
+### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
+Was:  Update LabSetups (`agreement`, `agreement_note`)
+      And: **The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever ... The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose.
+Now:  The declaration names the reason beside the columns, and the paragraph states the property first: a person's judgement is captured on the page that asks for it, and the Worker never writes those two columns because it has no judgement to record. The mechanical half is separated into its own paragraph.
+Why:  "The read surface writes these two columns and nothing else, ever" is right about the columns and reads as a general licence for the Api to write where writing is convenient. The property says why those two and not others, which is the half a later session citing this needs, and it is the half a writer declaration naming only the writer cannot carry.

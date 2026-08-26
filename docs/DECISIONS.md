@@ -277,6 +277,15 @@ Two properties have to hold or the choice quietly breaks things. The file is reg
 **The store contains no absolute paths**
 What keeps it a directory that can be copied to another machine. Easy to preserve from the start, tedious to retrofit once chart exports or log paths have been persisted.
 
+**A reader's signature does not establish point-in-time; the query does**
+Every public read on every reader in `PullbackStrategyLab.Data` takes an as-of date and there is no overload that omits it. That has been true since 1.4 and the corpus treated it as the property. It is necessary and it is not sufficient: a hand-written statement beside a reader is not bound by the reader's shape, and when `point-in-time` was first run at 2.10 four of them were in the shipped source. Two joined `security` for `industry` and `market_cap` with no bound on `sector_resolved_at`; two enumerated calibration sessions from `daily_bar` with no bound on `observed_at`.
+
+The worst of the four is worth keeping in the entry rather than in a progress note, because it says why the distinction matters rather than that it exists. `SignalVectorizer` freezes what was knowable on the night into `setup_signal`, and that is the one row in the lab nothing ever recomputes. Everything else can be rebuilt from bars; a frozen signal is the record. It was freezing two attributes resolved afterwards, which is a permanent wrong value that no later run corrects and no later read can distinguish from a right one.
+
+So the property is asserted over queries and not over signatures. `point-in-time` reads every statement in the shipped source, matches it against the tables that carry an observation stamp, and requires the stamp to be bounded or the file to be exempt by name with its reason. The signature half stays, because it is what stops the next reader being written without a date; it is the first of three halves rather than the property itself.
+
+Note what a fixture would not have caught. The four figures did not move when the reads were bounded, because in the replay the sector lookup runs before the vectorizer on the same session, so every expectation held either way. A test over the golden fixture would have passed on all four.
+
 **The vendor is EODHD, and the endpoint mix is what the call budget is built on**
 Three decisions already say "the vendor" without naming it, and the backfill order in `RUNBOOK.md` depends on this vendor's specific split between two differently priced endpoints. A later session choosing endpoints freely would blow the 5,000 call ceiling invisibly, so the vendor and the endpoints the budget assumes are named here rather than left to be inferred.
 
@@ -296,7 +305,9 @@ The three rules around it left nowhere else to put it, and that is worth spellin
 
 What makes this the right exception rather than the first crack in the rule is that it is not the same kind of write. Every other write in the lab is the evening's job producing evidence on a schedule; this is a person saying what they thought of one row, at a keyboard, on their own time. It touches two columns that no computation reads, it can never conflict with the nightly job over a row that job is writing, and under WAL a single short update from a second connection is what the busy timeout exists for.
 
-The scope is the whole of the guarantee: the read surface writes those two columns of that one table and nothing else. A second write appearing there is a defect rather than a precedent, and SCHEMA declares the writer by the type that issues the statement so `writer-ownership` can hold it.
+**Stated as the property rather than as a permission, because the permission is the part that would be cited for something else.** "The read surface writes these two columns and nothing else, ever" is right about the columns and reads as a general licence for the Api to write where writing is convenient. The property is narrower and it is what a later session needs: a person's judgement is captured on the page that asks for it, and the Worker never writes these two columns because the Worker has no judgement to record. That is not a division of labour that could have gone the other way. There is no run in which the nightly job could produce an `agreement` value at all, which is why these two columns are the only ones in the store the Worker cannot own.
+
+Nothing rests on the sentence holding. The Api writes no other column because `writer-ownership` reads every write in the shipped source and attributes it to a declared writer, and SCHEMA declares this one by the type that issues the statement rather than by the screen that asks for it. A second write appearing in the read surface fails the check by name, which is what makes this an exception with a boundary rather than the first crack in the rule.
 
 **The Web project reads through the Api and never opens the store**
 One read path, so a page cannot acquire a second connection to a file the Worker is writing. The store's own rule is one writer and one connection, and a page opening the file directly is the easiest way to lose that quietly. It also keeps the isolation check meaningful: Web talks to Api over HTTP with the base address in configuration, and no page holds a store connection to inspect.
