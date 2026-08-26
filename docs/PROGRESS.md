@@ -1734,3 +1734,89 @@ Carried:    Seventeen active signals await their producer, each named against a 
             The three obligations from 2.1 are unchanged and none was attempted: the `CONFIRMED`
             values at 2.11, and step 6 of the move. The out-of-scope naming rule, raised at 1.12 and
             due here, is discharged and removed from the table.
+
+## 2.3 — 2026-08-26 — phase-2-detection — six scans, and the basis trap found where it actually sits
+
+Built:      Migration 012 creates `scan_hit`, keyed on ticker + date + scan, with `magnitude` beside
+            `rank`. The magnitude is stored rather than recomputed: it is what the thrust signals
+            freeze, and deriving it later would put the same arithmetic in two places in the one
+            situation where a disagreement is invisible, because a wrong magnitude still produces a
+            plausible ranked list.
+
+            `ScanEngine`, verb `scans`, six scans of fifty names each. `ScanMagnitudes` in Core, so
+            the stage and the vectorizer share one implementation on the same terms as the averages.
+            `ScanHitReader` in Data with the two reads the lab actually makes: one scan on one night
+            in rank order, and one ticker across a window, which is the shape the thrust check wants.
+
+            `UniverseSnapshotReader` in Data, and `IndicatorEngine` now calls it rather than holding
+            a private copy. Two methods, named apart: `Members` reads the nightly snapshot and every
+            nightly stage uses it; `CurrentMembers` reads membership as it stands today and exists
+            for the calibration run at 2.11 and nothing else. Named rather than offered as a
+            fallback, because a stage that silently fell back to current membership on a night with
+            no snapshot would produce a reconstructed answer that looks exactly like a real one.
+
+            The six thrust signals move from `AwaitingCheckpoint` to `Frozen`, which the partition
+            test at 2.2 forced rather than reminded. `SignalVectorizer.Counts` declares which signals
+            are counts rather than measurements.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 243 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 428 expectations, 140 `DERIVED`; coverage examined 1,540 with 0
+            unexamined; 55 expectations changed since the last commit, being the 53 added here and
+            the two amended below.
+            The scans over the fixture: 7,202 members, 30 measured, 7,172 short of the
+            twenty-two-session window, 180 hits across six scans. The 7,172 hold the one captured
+            market day and nothing else, so they cannot be measured on a month magnitude at all.
+            Ranks one to three of every scan, and their magnitudes, derived independently by
+            `tools/derive-indicators.py --scans`: 24 figures, 0 disagreements. The derivation writes
+            its own bar query, because the gap magnitude needs the open and the shared window helper
+            does not select it.
+
+            **IESC's twenty-session magnitude: +0.0746 on the adjusted basis, −0.4627 on the raw
+            one.** Measured from the two rows the scan reads. Adjusted it sits tenth among the
+            leaders; raw it would top the laggard scan ahead of NCLH at −0.1403.
+
+Verified:   The basis property as a permanent test rather than as a fixture coincidence.
+            `A_split_inside_the_month_window_does_not_make_a_riser_the_biggest_laggard` seeds two
+            authored names, one rising seven percent through a two-for-one split and one genuinely
+            falling fourteen percent, with the split written the way a vendor publishes one: the
+            adjusted close behind the ex-date halved and the raw close left alone. The riser has to
+            appear among the leaders with a positive magnitude and the faller has to top the
+            laggards.
+            The tiebreak, the six directions, the breadth as a count rather than a threshold, and a
+            name short of the window measured on nothing.
+
+Findings:   Finding. **The basis trap does not sit where the decision written at 2.1 said it did,
+            and a guard placed there would have found nothing.** That entry said a two-for-one split
+            reads raw as a fifty percent decline that would top the **decliner** scan on the day it
+            happens. Measured: on IESC's split date the raw and adjusted one-day changes are both
+            −0.0537, identical, because the vendor adjusts the history **behind** a split and leaves
+            the sessions after it alone. The daily and gap scans cannot tell the two bases apart on
+            the session the split occurs. It is the twenty-session scans that span the adjustment,
+            where the same two rows give +7.46 percent and −46.27 percent.
+            Reading: the decision stands and its reasoning was wrong in a way that decided where a
+            test would go. Corrected in place in `DECISIONS.md`, on the precedent the holdout-window
+            entry already set, and in `ARCHITECTURE.html` as a clean edit. The permanent test asserts
+            the month window rather than the day, and the fixture expectation carrying the pair of
+            figures is noted at `scan.leader.rank3` and `scan.laggard.rank1`.
+            Worth separating: this was found by running the code and reading what came back, not by
+            re-reading the decision. Three sessions had read that sentence and none had noticed.
+
+            Observation. Two expectations from 2.2 changed and both are recorded on the row.
+            `signals.frozen` 16 to 22, because the six thrust signals gained a store to read.
+            `signal.IESC-long.listing_age_sessions` 1.0000 to 1: the figure is unchanged and its
+            rendering is corrected, because the replay rounded every numeric signal to four places
+            and a count is not a figure taken to four places. Which signals are counts is declared on
+            the vectorizer rather than inferred from whether a value happens to be whole, since
+            inference would read a price of 355.00 as a count.
+
+            Observation. `scans.measured` is 30 of 7,202. Only the fixture's own tickers carry seeded
+            histories. Reading: the scans are exercised over thirty names rather than over a market,
+            and the counts say so. What the whole-market half would add is a ranking over seven
+            thousand rather than thirty, and it closes on the same twenty-bulk-day purchase the
+            liquidity floor's exemption is already priced at.
+
+Carried:    Eleven active signals still await their producer: the ladder grade at 2.4, the market
+            mood at 2.5, and the pullback geometry, sector, industry and cluster count at 2.6.
+            Asserted on every run in both directions rather than carried as an obligation.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.

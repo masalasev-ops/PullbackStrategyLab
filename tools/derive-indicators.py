@@ -64,6 +64,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --index <captured-dir> <as-of> <symbol> [<symbol> ...]
         python tools/derive-indicators.py --universe <captured-dir> <as-of>
         python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
+        python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
 """
 
 import datetime
@@ -533,6 +534,114 @@ def universe_main(argv):
 
 
 GAP_WINDOW = 20
+SCAN_BREADTH = 50
+MONTH_WINDOW = 20
+
+# Which magnitude each scan ranks on, and which way. Restated from the library rather than read
+# from the stage: the whole point is that a sign flipped in one place shows up as a disagreement
+# rather than as a plausible ranked list.
+SCANS = {
+    "gainer":   ("daily", True),
+    "gapper":   ("gap",   True),
+    "leader":   ("month", True),
+    "decliner": ("daily", False),
+    "gapdown":  ("gap",   False),
+    "laggard":  ("month", False),
+}
+
+
+def scan_magnitudes(connection, ticker, as_of):
+    """The three magnitudes for one name, on the adjusted basis.
+
+    The adjusted basis is the whole of why this is worth deriving. Read raw, a two-for-one split
+    is a fifty percent decline and tops the decliner scan every time one happens, which is a
+    plausible ranked list rather than an error. The fixture has exactly that case: IESC split on
+    the captured session.
+
+    The open has no stored adjusted counterpart, so it goes onto the adjusted basis through its own
+    bar's adj_close/close factor. Using the previous bar's factor instead would be wrong on exactly
+    the session a distribution goes ex, which is the session the gap scan exists to notice.
+    """
+    # Its own query rather than the shared window above, because the gap magnitude needs the open
+    # and nothing else here does. Written out for the same reason the window is: a derivation that
+    # borrows the selection it is checking is checking less than it looks.
+    bound = as_of + "T23:59:59.999Z"
+    rows = connection.execute(
+        """
+        SELECT bar_date, open, close, adj_close
+          FROM daily_bar b
+         WHERE b.ticker = ?
+           AND b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.bar_date DESC
+         LIMIT ?
+        """,
+        (ticker, as_of, bound, bound, MONTH_WINDOW + 2),
+    ).fetchall()
+
+    rows.reverse()
+    bars = [
+        {"date": r[0], "open": Decimal(r[1]), "close": Decimal(r[2]), "adj_close": Decimal(r[3])}
+        for r in rows
+    ]
+
+    if len(bars) < MONTH_WINDOW + 2 or bars[-1]["date"] != as_of:
+        return None
+
+    today, yesterday, month_ago = bars[-1], bars[-2], bars[-(MONTH_WINDOW + 1)]
+
+    def ratio(a, b):
+        return Decimal(0) if a == 0 else (b - a) / a
+
+    factor = Decimal(1) if today["close"] == 0 else today["adj_close"] / today["close"]
+
+    return {
+        "daily": ratio(yesterday["adj_close"], today["adj_close"]),
+        "gap": ratio(yesterday["adj_close"], today["open"] * factor),
+        "month": ratio(month_ago["adj_close"], today["adj_close"]),
+    }
+
+
+def scans_main(argv):
+    if len(argv) < 2:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, as_of, ranks = argv[0], argv[1], int(argv[2]) if len(argv) > 2 else 3
+    connection = sqlite3.connect(store)
+
+    members = [
+        row[0] for row in connection.execute(
+            "SELECT ticker FROM universe_snapshot WHERE as_of = ? ORDER BY ticker", (as_of,)).fetchall()
+    ]
+
+    measured = {}
+    for ticker in members:
+        magnitudes = scan_magnitudes(connection, ticker, as_of)
+        if magnitudes is not None:
+            measured[ticker] = magnitudes
+
+    print("\nscans  as of %s, %d member(s), %d measured" % (as_of, len(members), len(measured)))
+
+    for scan in ("gainer", "gapper", "leader", "decliner", "gapdown", "laggard"):
+        key, descending = SCANS[scan]
+        # Ticker as the tiebreak, so the boundary of the top N does not depend on the order the
+        # store happened to return rows in.
+        ordered = sorted(measured.items(), key=lambda kv: (-kv[1][key] if descending else kv[1][key], kv[0]))
+        top = ordered[:SCAN_BREADTH]
+
+        print("  scan.%s.hits %d" % (scan, len(top)))
+        for rank in range(1, ranks + 1):
+            if rank > len(top):
+                print("  scan.%s.rank%d no hit" % (scan, rank))
+                continue
+            ticker, magnitudes = top[rank - 1]
+            print("  scan.%s.rank%-2d %-6s %s" % (scan, rank, ticker, magnitudes[key].quantize(PLACES)))
+
+    return 0
 
 
 def derive_signals(bars, trigger):
@@ -623,6 +732,9 @@ def signals_main(argv):
 
 
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--scans":
+        return scans_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--signals":
         return signals_main(argv[2:])
 

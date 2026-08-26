@@ -216,7 +216,17 @@ public sealed class PhaseReplay : IDisposable
         measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
-        // 8. The signal freeze, over one authored setup.
+        // 8. The six mover scans, which the thrust signals read.
+        ScanResult scans = new ScanEngine(_connections, Logger(), _clock, _options).Scan(AsOf);
+
+        stages.Add(new StageRun(ScanEngine.Name, 0, scans.RowsWritten, scans.Outcome.ToStorageText()));
+        Record("scans.members", scans.Members);
+        Record("scans.measured", scans.Measured);
+        Record("scans.shortOfHistory", scans.ShortOfHistory);
+        Record("scans.hits", scans.Hits);
+        Record("scans.inserted", scans.Inserted);
+
+        // 9. The signal freeze, over one authored setup.
         //
         //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
         //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said
@@ -234,6 +244,7 @@ public sealed class PhaseReplay : IDisposable
         Record("signals.absent", vectorized.Absent);
 
         measurements.AddRange(IndexFigures());
+        measurements.AddRange(ScanFigures());
         measurements.AddRange(SignalFigures());
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(LiquidityFloorFigures());
@@ -312,6 +323,40 @@ public sealed class PhaseReplay : IDisposable
     /// place to stop: a fifteenth decimal of a decimal average is a fact about the order of
     /// operations rather than about the price.
     /// </summary>
+    /// <summary>How many ranks of each scan the fixture records, since thirty names cannot fill fifty.</summary>
+    public const int ScanRanksRecorded = 3;
+
+    private IReadOnlyList<Measurement> ScanFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (string scan in ScanEngine.Scans)
+        {
+            IReadOnlyList<StoredScanHit> hits = ScanHitReader.Read(connection, AsOf, scan);
+            figures.Add(new Measurement($"scan.{scan}.hits", hits.Count.ToString(CultureInfo.InvariantCulture)));
+
+            // The top few by name and by the magnitude they were ranked on, rather than a count.
+            // A count says the scan ran; the ordering says it ranked on the right number in the
+            // right direction, which is the half a wrong sign or a raw basis would leave looking
+            // perfectly reasonable.
+            for (int rank = 1; rank <= ScanRanksRecorded; rank++)
+            {
+                StoredScanHit? hit = hits.FirstOrDefault(h => h.Rank == rank);
+
+                figures.Add(new Measurement(
+                    $"scan.{scan}.rank{rank}",
+                    hit is null ? "no hit" : hit.Ticker));
+
+                figures.Add(new Measurement(
+                    $"scan.{scan}.rank{rank}.magnitude",
+                    hit is null ? "no hit" : Figure(hit.Magnitude)));
+            }
+        }
+
+        return figures;
+    }
+
     /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
     public const string AuthoredSetupTicker = "IESC";
 
@@ -356,13 +401,17 @@ public sealed class PhaseReplay : IDisposable
             // rounding it would be discarding what the night knew; the measurement rounds, because
             // a diff that turns on the twenty-eighth decimal place is a diff that fails on a
             // platform rather than on a defect. A signal whose value is a word passes through.
-            string value = decimal.TryParse(
-                signal.Value,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out decimal number)
-                ? Figure(number)
-                : signal.Value;
+            // Counts stay whole and measurements round to four places. A rank of ten rendered as
+            // 10.0000 reads as a figure taken to four places, which says something about precision
+            // that is not true. Which signals are counts is declared on the vectorizer rather than
+            // inferred from the value, because inference would read a price of 355.00 as a count.
+            bool numeric = decimal.TryParse(
+                signal.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal number);
+
+            string value = !numeric ? signal.Value
+                : SignalVectorizer.Counts.Contains(signal.SignalName)
+                    ? decimal.Truncate(number).ToString(CultureInfo.InvariantCulture)
+                    : Figure(number);
 
             figures.Add(new Measurement($"signal.{signal.SetupId}.{signal.SignalName}", value));
         }

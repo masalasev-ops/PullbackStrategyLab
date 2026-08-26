@@ -54,12 +54,6 @@ public sealed class SignalVectorizer
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["ladder_grade"] = "2.4",
-            ["thrust_scan"] = "2.3",
-            ["thrust_rank"] = "2.3",
-            ["thrust_session"] = "2.3",
-            ["days_since_thrust"] = "2.3",
-            ["thrust_magnitude"] = "2.3",
-            ["thrust_size_in_ranges"] = "2.3",
             ["pullback_bars"] = "2.6",
             ["pullback_extreme"] = "2.6",
             ["retrace_depth"] = "2.6",
@@ -91,7 +85,33 @@ public sealed class SignalVectorizer
         "trigger_distance_ranges",
         "dollar_volume_median_20",
         "listing_age_sessions",
+        "thrust_scan",
+        "thrust_rank",
+        "thrust_session",
+        "days_since_thrust",
+        "thrust_magnitude",
+        "thrust_size_in_ranges",
     ];
+
+    /// <summary>
+    /// The signals whose value is a count rather than a measurement.
+    ///
+    /// Named rather than inferred from the value. Inferring would read a price of 355.00 as a count
+    /// because it happens to be whole, and would start rounding it differently the day it is not.
+    /// A count is a fact about the signal, so it is declared beside the signal.
+    /// </summary>
+    public static IReadOnlySet<string> Counts { get; } = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "thrust_rank",
+        "days_since_thrust",
+        "listing_age_sessions",
+    };
+
+    /// <summary>
+    /// How far back the thrust check looks, in sessions. The check is "appeared on a mover scan
+    /// within the last ten days", and the signals freeze which hit that was.
+    /// </summary>
+    public const int ThrustWindowSessions = 10;
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -253,7 +273,71 @@ public sealed class SignalVectorizer
             values["listing_age_sessions"] = age;
         }
 
+        Thrust(connection, setup, asOf, bars, indicators, values);
+
         return values;
+    }
+
+    /// <summary>
+    /// The thrust: which mover scan put this name in play, when, and how big the move was.
+    ///
+    /// The most recent qualifying hit inside the window, and "qualifying" means on the side the
+    /// setup is taken from. A long setup whose only recent hit was on the decliner scan has not had
+    /// a thrust in the sense the check means, and freezing that hit would describe the opposite
+    /// event. The window is measured in sessions from the stored bars rather than in calendar days,
+    /// because ten calendar days back is eight sessions after a long weekend and the check is
+    /// stated in sessions.
+    ///
+    /// The magnitude is read back from the row rather than recomputed. ScanEngine already did this
+    /// arithmetic and storing it is what makes the rank auditable; recomputing here would put the
+    /// same formula in two places in the one situation where a disagreement is invisible.
+    /// </summary>
+    private static void Thrust(
+        SqliteConnection connection,
+        StoredSetup setup,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        StoredIndicators? indicators,
+        Dictionary<string, string> values)
+    {
+        // The window's near edge, taken from the bars so it is sessions rather than days.
+        DateOnly from = bars.Count >= ThrustWindowSessions
+            ? bars[^ThrustWindowSessions].BarDate
+            : bars[0].BarDate;
+
+        string[] side = string.Equals(setup.Direction, "long", StringComparison.Ordinal)
+            ? ["gainer", "gapper", "leader"]
+            : ["decliner", "gapdown", "laggard"];
+
+        StoredScanHit? thrust = ScanHitReader.ForTicker(connection, setup.Ticker, asOf, from)
+            .Where(hit => side.Contains(hit.Scan, StringComparer.Ordinal))
+            .OrderByDescending(hit => hit.AsOf)
+            .ThenBy(hit => hit.Rank)
+            .FirstOrDefault();
+
+        if (thrust is null)
+        {
+            // No qualifying hit. Absent rather than a placeholder: the thrust check will fail for
+            // this setup and the signals say the same thing by not being there.
+            return;
+        }
+
+        values["thrust_scan"] = thrust.Scan;
+        values["thrust_rank"] = thrust.Rank.ToString(CultureInfo.InvariantCulture);
+        values["thrust_session"] = StoreText.DateToStorageText(thrust.AsOf);
+        values["thrust_magnitude"] = StoreText.RatioToStorageText(thrust.Magnitude);
+
+        int sessions = bars.Count(bar => bar.BarDate > thrust.AsOf && bar.BarDate <= asOf);
+        values["days_since_thrust"] = sessions.ToString(CultureInfo.InvariantCulture);
+
+        if (indicators is not null && indicators.AverageDailyRange != 0m)
+        {
+            // The lever the computed ceiling moves on: a nineteen percent jump means something
+            // different for a stock that travels seven percent a day than for one that travels
+            // three.
+            values["thrust_size_in_ranges"] =
+                StoreText.RatioToStorageText(thrust.Magnitude / indicators.AverageDailyRange);
+        }
     }
 
     private static void Distance(Dictionary<string, string> values, string name, decimal close, decimal average)

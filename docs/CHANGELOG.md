@@ -415,3 +415,23 @@ Why:  The stage now exists and the nightly order names entrypoints by the verb a
 Was:  The carried obligations table held a row raised at 1.12 for the out-of-scope coverage naming rule, due at 2.2.
 Now:  Removed.
 Why:  Discharged at 2.2. The discharge is recorded in `PROGRESS.md` with what was built and how it was falsified; this table carries what is still open. Two rows remain: the `CONFIRMED` values at 2.11 and step 6 of the move.
+
+### 2026-08-26 — SCHEMA.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  `scan_hit` declared `ticker`, `as_of`, `scan`, `rank` and `cluster_count`, with `rank` unannotated and `cluster_count` noted as same-sector hits.
+Now:  A `magnitude` column is added, `rank` states the breadth and cites the decision, `cluster_count` reads same-industry, the primary key is declared, and two notes are added.
+Why:  The magnitude the rank was taken on is what the thrust signals freeze. Deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible, since a wrong magnitude still produces a plausible ranked list; storing it also makes the ordering auditable against the number it was taken on. `cluster_count` said sector where both cluster checks and the authored parameter say industry, which the 2.1 spec pass settled everywhere else and missed here.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Every scan magnitude is computed on the adjusted basis
+Was:  "Read raw, a two-for-one split reads as a 50% decline and tops the decliner list every time it happens."
+Now:  The same point without naming the wrong scan, plus: the vendor adjusts the history behind a split and leaves the sessions after it alone, so the one-day and gap magnitudes agree on both bases on the split date itself and only the month magnitudes span the adjustment.
+Why:  Measured at 2.3 and the original was wrong about where the trap sits. On IESC's split date the raw and adjusted one-day changes are both -0.0537, because the adjustment lands on the prior history. The twenty-session magnitude is +0.0746 adjusted and -0.4627 raw. A guard placed on the daily scan would have found nothing.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  | 2.3 | ScanEngine, six scans, three per direction | Hit counts per scan per night recorded |
+Now:  The same row naming migration 012, the shared magnitudes, the thrust signals moving to frozen, and three properties the hit count does not state.
+Why:  A hit count is the same number whatever the scan ranked on and whichever way it ordered. The three conditions added are the ones a count cannot carry: the breadth is a count rather than a threshold, the tiebreak is stated so the boundary does not depend on row order, and the basis is adjusted.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:10 | scans, ladder grade | 0 |
+Now:  | 18:10 | `scans`, then the ladder grade | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. Zero calls is unchanged: the scans are a function of stored bars.

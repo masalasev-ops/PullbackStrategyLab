@@ -98,7 +98,7 @@ public sealed class IndicatorEngine
 
         DateTimeOffset computedAt = run.StartedAt;
 
-        IReadOnlyList<string> members = ReadUniverse(connection, asOf);
+        IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
         ILookup<string, RebuildDemand> openDemands = IndicatorRebuildReader.Open(connection, asOf)
             .ToLookup(d => d.Ticker, StringComparer.Ordinal);
 
@@ -330,27 +330,6 @@ public sealed class IndicatorEngine
     /// <summary>The last instant of a session, in the form observed_at is stored in.</summary>
     private static DateTimeOffset EndOf(DateOnly session) =>
         new(session.Year, session.Month, session.Day, 23, 59, 59, 999, TimeSpan.Zero);
-
-    private static IReadOnlyList<string> ReadUniverse(SqliteConnection connection, DateOnly asOf)
-    {
-        using SqliteCommand command = connection.CreateCommand();
-
-        // The snapshot rather than current membership, because that is what makes a replay free
-        // of survivorship bias: a name delisted since is simply absent from today's list.
-        command.CommandText = """
-            SELECT ticker FROM universe_snapshot WHERE as_of = @as_of ORDER BY ticker;
-            """;
-        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-
-        var tickers = new List<string>();
-        using SqliteDataReader reader = command.ExecuteReader();
-        while (reader.Read())
-        {
-            tickers.Add(reader.GetString(0));
-        }
-
-        return tickers;
-    }
 
     private static int Insert(
         SqliteConnection connection,

@@ -2663,9 +2663,10 @@
     {
       "id": "signals.frozen",
       "tier": "FROZEN",
-      "value": "16",
+      "value": "22",
       "checkpoint": "2.2",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Changed at 2.3 from 16. the vectorizer freezes 22 signals as of 2.3, not 16: the six thrust signals moved out of AwaitingCheckpoint when ScanEngine gave them a store to read."
     },
     {
       "id": "signals.absent",
@@ -2698,10 +2699,385 @@
     {
       "id": "signal.IESC-long.listing_age_sessions",
       "tier": "FROZEN",
-      "value": "1.0000",
+      "value": "1",
       "checkpoint": "2.2",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "One, and a fact about the fixture rather than about IESC. first_seen is the date a ticker first appears in the symbol list, the replay runs universe-build once on the as-of date, so every fixture name is one session old. A live store gives the real figure and this one only detects the count changing shape."
+      "note": "Changed at 2.3 from 1.0000. the figure is unchanged at one session and its rendering is corrected. It read 1.0000, because the replay rounded every numeric signal to four places; a count is not a measurement taken to four places, and which signals are counts is now declared on the vectorizer rather than inferred from whether a value happens to be whole."
+    },
+    {
+      "id": "scan.gainer.rank1",
+      "tier": "DERIVED",
+      "value": "WMT",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gainer.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0269",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gainer.rank2",
+      "tier": "DERIVED",
+      "value": "META",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gainer.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0166",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gainer.rank3",
+      "tier": "DERIVED",
+      "value": "T",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gainer.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0158",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank1",
+      "tier": "DERIVED",
+      "value": "NCLH",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0136",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank2",
+      "tier": "DERIVED",
+      "value": "CCL",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0120",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank3",
+      "tier": "DERIVED",
+      "value": "COIN",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapper.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "0.0119",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.leader.rank1",
+      "tier": "DERIVED",
+      "value": "PLTR",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.leader.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "0.3373",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.leader.rank2",
+      "tier": "DERIVED",
+      "value": "MSFT",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.leader.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "0.2548",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.leader.rank3",
+      "tier": "DERIVED",
+      "value": "LITE",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans",
+      "note": "IESC sits at rank 10 on this scan with a magnitude of +0.0746, and that is the fixture's basis case. Its twenty-session move read on the raw basis is -0.4627, because the vendor adjusts the history behind a split rather than the sessions after it. Raw, IESC would top the laggard scan ahead of NCLH at -0.1403 instead of sitting tenth among the leaders."
+    },
+    {
+      "id": "scan.leader.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "0.1660",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank1",
+      "tier": "DERIVED",
+      "value": "IESC",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0537",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank2",
+      "tier": "DERIVED",
+      "value": "LITE",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0422",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank3",
+      "tier": "DERIVED",
+      "value": "HOOD",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.decliner.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0417",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank1",
+      "tier": "DERIVED",
+      "value": "LITE",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0516",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank2",
+      "tier": "DERIVED",
+      "value": "INTC",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0154",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank3",
+      "tier": "DERIVED",
+      "value": "PLTR",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.gapdown.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0138",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.laggard.rank1",
+      "tier": "DERIVED",
+      "value": "NCLH",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans",
+      "note": "NCLH at -0.1403. On the raw basis IESC would take this rank at -0.4627, which is the single figure that separates a scan reading the adjusted basis from one that does not."
+    },
+    {
+      "id": "scan.laggard.rank1.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.1403",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.laggard.rank2",
+      "tier": "DERIVED",
+      "value": "AAPL",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.laggard.rank2.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0781",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.laggard.rank3",
+      "tier": "DERIVED",
+      "value": "AMD",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "scan.laggard.rank3.magnitude",
+      "tier": "DERIVED",
+      "value": "-0.0772",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "signal.IESC-long.thrust_scan",
+      "tier": "DERIVED",
+      "value": "leader",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "signal.IESC-long.thrust_rank",
+      "tier": "DERIVED",
+      "value": "10",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans"
+    },
+    {
+      "id": "signal.IESC-long.thrust_magnitude",
+      "tier": "DERIVED",
+      "value": "0.0746",
+      "checkpoint": "2.3",
+      "producedBy": "an independent ranking over the fixture's own bars, outside the solution, by tools/derive-indicators.py --scans",
+      "note": "+0.0746, the leader-scan magnitude read back from the scan_hit row rather than recomputed. Raw it would be -0.4627 and the thrust would be a collapse rather than a run."
+    },
+    {
+      "id": "scan.gainer.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scan.gapper.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scan.leader.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scan.decliner.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scan.gapdown.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scan.laggard.hits",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scans.members",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scans.measured",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Thirty of 7,202 members. Only the fixture's own tickers carry seeded histories; the rest hold the one captured market day, which is short of the twenty-two sessions the month magnitude needs. A name measured on a shorter window would rank at the top of the month movers every time, because a stock with three sessions has moved a long way in all of them."
+    },
+    {
+      "id": "scans.shortOfHistory",
+      "tier": "FROZEN",
+      "value": "7172",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scans.hits",
+      "tier": "FROZEN",
+      "value": "180",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "scans.inserted",
+      "tier": "FROZEN",
+      "value": "180",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.thrust_session",
+      "tier": "FROZEN",
+      "value": "2026-08-24",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.days_since_thrust",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "signal.IESC-long.thrust_size_in_ranges",
+      "tier": "FROZEN",
+      "value": "1.1133",
+      "checkpoint": "2.3",
+      "producedBy": "the replay itself, recorded to detect change"
     }
   ],
   "frozenOnly": []

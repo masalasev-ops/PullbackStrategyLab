@@ -181,10 +181,15 @@ Grain: ticker + date + scan.
 | Column | Type | Note |
 |---|---|---|
 | `ticker`, `as_of`, `scan` | TEXT | `gainer`, `gapper`, `leader`, `decliner`, `gapdown`, `laggard` |
-| `rank` | INTEGER | |
-| `cluster_count` | INTEGER | same-sector hits that night. Written by ThemeClusterer |
+| `rank` | INTEGER | 1 to 50, by that scan's own magnitude (see: The scans select a fixed count by rank, not a threshold on the move) |
+| `magnitude` | TEXT | the ratio the rank was taken on, a fraction, on the adjusted basis |
+| `cluster_count` | INTEGER | same-industry hits that night. Written by ThemeClusterer |
 
-Insert ScanEngine · Update ThemeClusterer (`cluster_count` only)
+Insert ScanEngine · Update ThemeClusterer (`cluster_count` only) · PK (`ticker`, `as_of`, `scan`)
+
+**`magnitude` is stored rather than recomputed.** It is what the thrust signals freeze, and deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible: a wrong magnitude still produces a plausible ranked list. Storing it also makes the rank auditable, since the ordering can be checked against the number it was taken on.
+
+*Note on `cluster_count`.* Null until ThemeClusterer runs, and same-**industry** rather than same-sector: sector and industry are different columns giving different answers on the same night, and both cluster checks read industry (see: The cluster grouping key is industry, not sector).
 
 ### `regime_daily`
 Grain: date.
