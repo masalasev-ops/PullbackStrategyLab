@@ -176,6 +176,27 @@ public sealed partial class FixtureReplayCheck
             + "1,900 calls and about 130 MB. The per-ticker half of the same floor is measured, not deferred: see the "
             + "liquidity.* expectations");
 
+        // The floor's rejecting side, which nothing in the fixture exercises.
+        //
+        // All thirty measured names clear the liquidity floor and the price floor, the closest at
+        // 1.7 times the liquidity floor, so every expectation on the comparison is an expectation
+        // on it passing. A screen tested only where it admits is a screen whose rejection could
+        // stop working without a single figure moving.
+        //
+        // The three trackers are the obvious candidate and are the wrong one. They are the only
+        // captured names the universe excludes, and the symbol list types them ETF, so they are
+        // excluded before either floor is reached; they clear both by two to three orders of
+        // magnitude. They pin the type filter instead, which is worth having and is not this.
+        //
+        // Unlike the whole-market screen this is cheap to close, and the price is worth stating so
+        // the two are not carried as though they cost the same: one per-ticker history call for a
+        // name chosen to fail, at the next capture. It is out of scope because no captured name
+        // fails today, not because closing it is expensive.
+        coverage.OutOfScope("the liquidity floor's rejecting side", 1,
+            "all 30 measured names clear both floors, the closest at 1.7 times the liquidity floor, and the three "
+            + "trackers are excluded by security type rather than by a floor. Ends when the capture holds one name "
+            + "that fails a floor, which is one per-ticker call at the next capture");
+
         if (result.AskedOnAnUncoveredEndpoint.Count > 0)
         {
             coverage.NotExamined("requests on an endpoint with no captured response", result.AskedOnAnUncoveredEndpoint.Count,

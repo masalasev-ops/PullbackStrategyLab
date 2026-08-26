@@ -2345,6 +2345,83 @@
       "checkpoint": "1.12",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "Names the fixture holds fewer than twenty sessions for. Zero today, and a number above zero means the capture has narrowed."
+    },
+    {
+      "id": "tracker.IWM.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "5408259360.5000",
+      "checkpoint": "1.12",
+      "producedBy": "an independent median over the captured vendor history, computed outside the solution"
+    },
+    {
+      "id": "tracker.IWM.clearsBothFloors",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The tracker clears the price floor and the liquidity floor. Recorded so the reason it is not a universe member cannot later be read as a floor rejection."
+    },
+    {
+      "id": "tracker.IWM.isAUniverseMember",
+      "tier": "FROZEN",
+      "value": "no",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "No, and the floors are not why. The symbol list types it ETF and the screen takes common stock only, so it is excluded before either floor is reached. This is the strongest case the type filter has: a name that passes every floor and is still not admitted."
+    },
+    {
+      "id": "tracker.QQQ.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "23907112602.0000",
+      "checkpoint": "1.12",
+      "producedBy": "an independent median over the captured vendor history, computed outside the solution"
+    },
+    {
+      "id": "tracker.QQQ.clearsBothFloors",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The tracker clears the price floor and the liquidity floor. Recorded so the reason it is not a universe member cannot later be read as a floor rejection."
+    },
+    {
+      "id": "tracker.QQQ.isAUniverseMember",
+      "tier": "FROZEN",
+      "value": "no",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "No, and the floors are not why. The symbol list types it ETF and the screen takes common stock only, so it is excluded before either floor is reached. This is the strongest case the type filter has: a name that passes every floor and is still not admitted."
+    },
+    {
+      "id": "tracker.SPY.medianDollarVolume20",
+      "tier": "DERIVED",
+      "value": "32350637349.0000",
+      "checkpoint": "1.12",
+      "producedBy": "an independent median over the captured vendor history, computed outside the solution"
+    },
+    {
+      "id": "tracker.SPY.clearsBothFloors",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "The tracker clears the price floor and the liquidity floor. Recorded so the reason it is not a universe member cannot later be read as a floor rejection."
+    },
+    {
+      "id": "tracker.SPY.isAUniverseMember",
+      "tier": "FROZEN",
+      "value": "no",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "No, and the floors are not why. The symbol list types it ETF and the screen takes common stock only, so it is excluded before either floor is reached. This is the strongest case the type filter has: a name that passes every floor and is still not admitted."
+    },
+    {
+      "id": "tracker.clearingBothFloors",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "1.12",
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "All three. They are the only captured names the universe excludes and none of them is a floor rejection, which is why the floor's rejecting side is recorded out of scope rather than claimed against them."
     }
   ]
 }

@@ -952,3 +952,109 @@ Carried:    **The `CONFIRMED` values, still owed, and now the only obligation le
             the same name, and that row is then recorded void rather than as agreement.
             Each value is written into `fixtures/expectations.json` with a `CONFIRMED` tier and a
             producer reading "read from PLATFORM on YYYY-MM-DD", which the check now requires.
+
+## Phase 1 review — 2026-08-26 — phase-1-ingest-and-charts — corrects the attribution of the basis hypothesis above
+
+Not a checkpoint entry. A correction to the entry above it, which recorded the basis investigation
+without saying where the hypothesis came from, and to this session's own report of it, which framed
+it as an instinct that turned out right. Both readings would mislead a later session, in opposite
+directions.
+
+Findings:   **Attribution, stated first because this will be read as history.** The hypothesis that
+            IESC's averages sat on the raw basis was **this review's**, not the operator's. It was
+            built on two figures, a raw close of 353.97 and an adjusted close of 176.985, taken
+            from an earlier build report rather than from the repository, and it asserted a defect
+            in shipped code without opening the captured history that would have settled it in one
+            read. It is not recorded as the operator suspecting something, and it is not recorded
+            as an instinct that turned out right. It was a claim made without reading the source,
+            in a corpus whose first rule about verification is to read before asserting. The
+            reasoning offered with it was internally sound and rested on a premise nobody checked,
+            which is the failure mode worth naming: a chain of correct arithmetic over a number
+            that is not in the store reads exactly like a finding.
+
+            Observation. Neither figure appears anywhere in the repository. The live store,
+            `fixtures/captured/history-IESC.json` and `fixtures/captured/bulk-end-of-day.json` all
+            give IESC's 2026-08-24 close as 324.12 with the adjusted close equal to it. The split
+            lands between 2026-08-19 and 2026-08-20, where the raw close falls from 697.38 to
+            341.635, so the doubling is on the bars before it: raw near 700 against adjusted near
+            350, with the two columns equal from 08-20 onward.
+            Observation. Both implementations read `adj_close`, asserted by reading both sources
+            rather than inferred from their output. `IndicatorEngine.Calculate` fills its price
+            array from `bar.AdjustedClose`; `tools/derive-indicators.py` selects `adj_close`. Each
+            puts high and low on the same basis through the bar's own `adj_close/close` factor.
+            Observation. Recomputed from the live store after the rebuild had landed: identical to
+            the figures recorded at 1.6, 0 disagreements at 4 decimal places across all three
+            tickers. The same window on the raw close gives ema_9 542.6366, ema_21 623.0237 and
+            ema_50 648.7660, which the stored figures are nowhere near.
+
+            Reading, kept separate from the above. **The suite could not have settled it either
+            way, and that gap was real even though the defect was not.** Every arithmetic test in
+            `IndicatorEngineTests` builds its own bars and sets both price columns from one number,
+            or sets the factor itself, so every one of them passes unchanged against an engine
+            reading the raw close. A test that supplies both sides of a comparison cannot say which
+            side the code took. That is why the basis was arguable from a progress entry at all,
+            and it is the part of the episode that was worth acting on.
+
+Built:      `A_split_inside_the_window_leaves_the_averages_on_the_vendors_adjusted_basis`, asserted
+            against the vendor's own `adjusted_close` in the committed capture rather than against
+            anything this lab stored, on the one fixture ticker whose window contains a split. It
+            asserts both directions: equal to the adjusted recursion written out locally, and at
+            least 1.4 times below the raw one, so it cannot decay into a comparison between two
+            numbers that happen to sit near each other. Proved by pointing the engine at `close`,
+            watching it fail, and restoring it.
+
+            **Recorded explicitly, because the fix outlives the reason for it.** A later session
+            reading only the test will find a case added for a defect that never existed and may
+            conclude it can be removed. It cannot. The test was not written because the engine was
+            wrong; it was written because nothing could show that the engine was right, and that
+            is still true of every other test in the file. Removing it restores the position where
+            a raw-column engine passes the whole suite.
+
+## Phase 1 review — 2026-08-26 — phase-1-ingest-and-charts — the floor comparison, and the side nothing exercises
+
+Not a checkpoint entry. Closes the second half of a gap the entry above opened: the liquidity floor
+is now measured over the window it is defined on, and every expectation on it is an expectation on
+it passing.
+
+Findings:   Observation. All 30 measured fixture names clear both floors. The closest to either is
+            PAYO, at 34,889,899.64 against a liquidity floor of 20,000,000, a margin of 1.7 times,
+            and at 7.11 against a price floor of 5. No captured name fails either floor.
+            Reading: the screen's rejecting path carries no expectation anywhere, so it could stop
+            rejecting without a single figure in the diff moving. A screen tested only where it
+            admits is half a test, and the half that is missing is the half that keeps names out.
+
+            Observation. The three index trackers are the only captured names the universe
+            excludes, and they are not floor rejections. `exchange-symbol-list.json` types SPY,
+            QQQ and IWM as `ETF`, so the screen drops them on security type before either floor is
+            reached, and their twenty-session medians are 32,350,637,349, 23,907,112,602 and
+            5,408,259,360 against a floor of 20,000,000, clearing it by between 270 and 1,600
+            times. Each is far above the price floor too.
+            Reading: they were the obvious candidate for the rejecting case and they are the wrong
+            one. Recording them as floor rejections would file a type rejection under the wrong
+            heading, leave the floor's rejecting side untested while the diff showed both sides
+            covered, and that is worse than leaving it open and saying so.
+
+Built:      The trackers measured against both floors and recorded under `tracker.*`, deliberately
+            apart from the universe names. Ten expectations: three medians, independently derived
+            outside the solution from the captured vendor histories and matching to four decimal
+            places; three saying each clears both floors; three saying each is still not a universe
+            member; and the count.
+            What that pins is the security-type filter, against the strongest case it has: a name
+            that passes every floor and is not admitted anyway. That is worth having on its own and
+            it is not the floor's rejecting side.
+
+Measured:   30 universe names measured, 0 short of the window, 30 clearing the floor, 0 below it.
+            3 trackers measured, 3 clearing both floors, 0 admitted to the universe.
+            `tools/verify-phase` green: 338 expectations, 69 DERIVED, 269 FROZEN, 0 unexamined.
+
+Decided:    **The floor's rejecting side is out of scope, with the reason and the condition
+            recorded in `fixture-replay` beside the whole-market screen.** No captured name fails
+            either floor, and none of the 33 can be made to without capturing a different name.
+            The condition that ends it is one per-ticker history call for a name chosen to fail, at
+            the next capture.
+            The price is stated because the two out-of-scope items in that check now cost very
+            different things and would otherwise read as equivalent. The whole-market screen needs
+            twenty bulk days, 1,900 calls and about 130 MB committed for ever. This one needs one
+            call. It rests out of scope because nothing in the fixture fails a floor today, not
+            because closing it is expensive, and a session that has a low-liquidity name to hand at
+            the next capture should simply close it.

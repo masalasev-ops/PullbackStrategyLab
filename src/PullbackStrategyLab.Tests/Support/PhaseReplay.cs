@@ -328,6 +328,48 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement($"liquidity.{ticker}.clearsTheFloor", clears ? "yes" : "no"));
         }
 
+        // The trackers, measured against the same two floors and deliberately kept apart from the
+        // names above.
+        //
+        // They are the only captured names that are not universe members, so they are the obvious
+        // candidate for the floor's rejecting case, and they are the wrong one: they are excluded
+        // because the symbol list types them ETF, and they clear both floors by between two and
+        // three orders of magnitude. Recording them as floor rejections would file a type
+        // rejection under the wrong heading and leave the floor's rejecting path still untested
+        // while looking tested, which is worse than leaving it open.
+        //
+        // What they do pin is the filter that actually excludes them, against the strongest
+        // possible case: a name that passes every floor and is still not admitted.
+        int trackersClearingBothFloors = 0;
+
+        foreach (string tracker in _options.Value.IndexSymbols.Order(StringComparer.Ordinal))
+        {
+            IReadOnlyList<StoredDailyBar> window =
+                IndexBarReader.Read(connection, tracker, AsOf, floors.LiquidityWindowSessions);
+
+            if (window.Count < floors.LiquidityWindowSessions)
+            {
+                figures.Add(new Measurement($"tracker.{tracker}", "short of the window"));
+                continue;
+            }
+
+            decimal median = UniverseBuilder.Median([.. window.Select(b => b.Close * b.Volume)]);
+            bool clearsBoth = median >= floors.LiquidityFloorLong && window[^1].Close >= floors.PriceFloor;
+
+            if (clearsBoth)
+            {
+                trackersClearingBothFloors++;
+            }
+
+            figures.Add(new Measurement($"tracker.{tracker}.medianDollarVolume20", Figure(median)));
+            figures.Add(new Measurement($"tracker.{tracker}.clearsBothFloors", clearsBoth ? "yes" : "no"));
+            figures.Add(new Measurement($"tracker.{tracker}.isAUniverseMember",
+                UniverseMembers().Contains(tracker, StringComparer.Ordinal) ? "yes" : "no"));
+        }
+
+        figures.Add(new Measurement("tracker.clearingBothFloors",
+            trackersClearingBothFloors.ToString(CultureInfo.InvariantCulture)));
+
         figures.Add(new Measurement("liquidity.sessionsInTheWindow",
             floors.LiquidityWindowSessions.ToString(CultureInfo.InvariantCulture)));
         figures.Add(new Measurement("liquidity.tickersMeasured", measured.ToString(CultureInfo.InvariantCulture)));
