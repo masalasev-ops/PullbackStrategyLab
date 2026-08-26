@@ -2044,3 +2044,134 @@ Carried:    **The one-sidedness decision, held for a human.** Eight of ten check
             materially larger fixture. Due before 2.12.
             The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
             values at 2.11, and step 6 of the move.
+
+## 2.7 — 2026-08-26 — phase-2-detection — the short detector, and a lookup that ran after its readers
+
+Built:      `ShortPullbackRules` in Core and `ShortSetupDetector` in Worker, verb `detect-short`, with
+            `--calibrate from to` on the long side's terms. The mirror is a parameter: what is a sign
+            flip is read out of the shared geometry with `isLong: false`, and what is not lives here.
+            `tradable-shortable` carries four floors where the long side has two, `averages-squeezing`
+            has no long-side counterpart, `reached-ceiling` asks whether a bounce arrived at a level
+            rather than whether a dip held one, and `no-reclaim` reads the 50-day average where
+            `held-floor` reads the 21-day. The recording floor is the premise rather than the first
+            four rows of the list, because `averages-squeezing` sits fourth and belongs to the pattern
+            test the way `contraction` does on the long side.
+
+            **`reached-ceiling` runs two of its three clauses and the record says which.** The third
+            compares the price against the average price anchored to the last swing high, which is a
+            volume-weighted average over minute bars and is what VwapEngine computes at 4.4. It is out
+            of scope naming that checkpoint, recorded through `check-completeness` rather than in this
+            entry alone, and every one of the check's verdicts carries the note. Not approximated from
+            daily bars: a stand-in would put a number that looks like the real thing inside the check
+            deciding whether a bounce reached its ceiling.
+
+            **Forty authored boundary cases**, in `fixtures/gate-cases.json`, two per gate on both
+            lists, one just inside its threshold and one just outside. Evaluated through the shipped
+            rules over a baseline built to clear everything, so the difference between the two sides
+            is the one field the case moved. `tools/derive-indicators.py --gates` restates all twenty
+            gates from ARCHITECTURE's own wording and decides the same forty independently.
+
+            **The degeneracy proof, over the gate list rather than per gate.** A gate handed an
+            absent quantity fails; a gate whose own quantity is absent fails while the rest of the
+            evidence stands, with the mapping from gate to quantity derived from the boundary cases
+            rather than written down a second time. A gate with no boundary case fails the proof, so a
+            check admitted in phase 6 inherits both properties without anyone remembering to.
+
+            `AverageGap` in Core, the 21-to-50 distance session by session, shared by the squeeze
+            check and the signal that freezes it. `DailyBarReader.SessionsStored`, shared by the
+            listing-age floor and the signal that freezes it. `SecurityReader`, which reads the
+            resolved attributes bounded on `sector_resolved_at`.
+
+            `NightlyOrderTests`, which asserts the replay's stage order against RUNBOOK's nightly
+            table rather than leaving the two to be kept in step by hand.
+
+            Migration `014` creates `detector_error`, and both detectors catch per name: a stock a
+            detector cannot read gets a row of its own and the run is recorded `partial`. Written
+            because the phase report went red the moment this checkpoint landed, which is what the
+            failure table's placement at 2.7 was for.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 283 tests. `tools/verify-phase` GREEN: 115
+            claims, **55 passed**, 0 unexamined, 60 out of scope; 677 expectations, **259 `DERIVED`**;
+            coverage examined 2,161 with 0 unexamined; inputs 67 `CAPTURED` and 88 `AUTHORED`, the
+            second being 48 synthetic vendor responses and the 40 gate cases now counted beside them.
+            Over the fixture: 7,202 members examined, 7,201 below the recording floor, **1 short setup
+            recorded**, INTC, and 0 passing every gating check. All ten of its verdicts derived
+            independently by `tools/derive-indicators.py --checks --short`: **0 disagreements**. All
+            forty boundary cases derived by `--gates`: **0 disagreements**.
+            **`check.long.oneSided` and `check.short.oneSided` both read `none`.**
+            Thirteen more authored parameters pinned, so every threshold marked "phase 2 count check"
+            is now held against the code before 2.11 is allowed to move one.
+
+Verified:   The degeneracy proof was falsified twice and reverted both times. An eleventh gate added
+            to `SetupChecks.Long` with no boundary cases turned three assertions red, naming it. The
+            `exit-tight` regression that shipped at 2.6, restored by hand, was named by three:
+            "long exit-tight passed with stopDistanceRanges absent", "these long gates still passed:
+            exit-tight", and the geometry case.
+            The order test was falsified by putting `sectors` back at 19:00, which reported that the
+            replay runs `clusters` after it and RUNBOOK schedules it before.
+
+Findings:   Finding. **The sector lookup ran after the three stages that read what it writes.**
+            RUNBOOK scheduled `sectors` at 19:00 while `clusters` at 18:15 counts same-industry names
+            and both detectors at 18:20 read the market capitalisation. Observation: on a live night a
+            name newly surfaced by a scan has no industry when its cluster is counted and no cap when
+            `tradable-shortable` decides. Reading: neither consumer errors on a missing sector. The
+            cluster count reads nought and the short check fails for want of a figure, so the night
+            looks quiet rather than wrong, and the first name of a new theme is exactly the one this
+            loses. The stage moves to 18:12. What let it survive 2.6 is that this replay ran the
+            lookup first, against its own comment saying the sequence is itself under test, so the
+            fixture could never have shown it; the order is now asserted against RUNBOOK.
+
+            Finding. **`listing_age_sessions` measured the age of the lab's record rather than of the
+            name.** Observation: it counted sessions since `security.first_seen`, which is when the
+            universe build first saw a ticker, and read **1** for every name on the fixture's only
+            night while `tradable-shortable` had cleared a floor of ninety. Reading: the check that
+            decides and the signal that freezes the decision were two different numbers, which is the
+            thing the frozen row exists to prevent. On a live lab it would have read 1 on the first
+            night for all 2,070 names and climbed by one a night, so the floor would have rejected
+            every short until the lab had been running ninety sessions, had anything read it. Both now
+            count stored sessions through `DailyBarReader.SessionsStored`.
+
+            Finding. **The squeeze test compared signed gaps.** Observation: the frozen signal is
+            `(ema21 − ema50) / ema50`, and on the one side this check runs the 21-day sits below the
+            50-day, so both today's gap and its average are negative. Reading: compared signed,
+            "narrower" reads as "further below", which is the opposite rule. A squeeze would fail and
+            a widening decline would pass, and every verdict would look reasonable in the record. The
+            series stays signed, because a proposal may want to know which way round they sat, and the
+            check takes absolutes and says so.
+
+            Finding. **A detector that could not read a stock skipped it silently.** Observation: the
+            failure table has said since before the code existed that an error row is written for that
+            stock and date, and the corpus placed the claim at 2.7; the phase report turned it from
+            out of scope to unexamined the moment this checkpoint landed, and neither detector wrote
+            anything. Reading: every count downstream is over the setups that were recorded, so a lost
+            name is simply absent. The night looks lighter, the counts stay plausible, and the first
+            name of a new theme is exactly the kind this loses. `detector_error` now takes a row per
+            stock per night per direction and the run is `partial` rather than `clean`.
+
+            Finding, in the thing built to catch the last one. **The first assertion of that behaviour
+            passed with the behaviour deleted.** Observation: it scanned both detectors for the insert
+            statement and for the partial outcome. With the catch removed from the short detector, the
+            private method issuing the insert was still in the file with nothing calling it, and the
+            claim read `pass`. Reading: a scan for text present is not a scan for a property held,
+            which is the fourth time this corpus has met that shape from a new direction. The property
+            is now held by a behavioural test that damages one name and runs **both** detectors over
+            it, and the scan asks for the call site inside the catch rather than for the statement.
+            Falsified in that order: the tightened scan was written after the test caught what it did
+            not.
+
+            Observation. The short detector's `tradable-shortable` cannot pass until SectorResolver
+            has seen the name, and `SecurityReader` bounds the read on `sector_resolved_at`, so a
+            reconstructed historical session sees no cap at all. Reading: the calibration run at 2.11
+            will record no short rows unless something changes, which is a question about what a
+            reconstructed run is entitled to read rather than a defect here. Carried to 2.11, which is
+            the checkpoint that needs the answer.
+
+Carried:    **The market capitalisation a calibration run may read.** Due at 2.11. See above.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+            **Retired at this checkpoint:** the one-sidedness raised at 2.6 and due at 2.12. Closed by
+            the authored boundary suite rather than by a purchase, and the reason the purchase was
+            rejected is recorded with it: the remedy priced at 2.6 was a second as-of date at 33
+            per-ticker calls, and it would have left those eight gates with three results each instead
+            of two. Both directions now report no check one-sided, and the cases are marked `AUTHORED`
+            and written nowhere near `setup`, so nothing reads them as evidence about the market.

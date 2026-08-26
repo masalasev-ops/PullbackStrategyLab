@@ -510,3 +510,13 @@ Why:  Three stages read what it writes and all three ran before it. `clusters` a
 Was:  | 17:30 | bulk daily bars | 100 |
 Now:  | 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
 Why:  The row described the work and not the verb an operator types at 17:30, which is the same gap the short detector's row had. Found by the check that asserts the replay's stage order against this table: a row naming no verb is a row the schedule cannot be read from.
+
+### 2026-08-26 — SCHEMA.md — cites Failed checks are recorded rather than discarded
+Was:  No `detector_error` section. `setup`, `calibration_setup` and `setup_signal` ran straight on to the trading stores.
+Now:  A `detector_error` section between `calibration_setup` and `setup_signal`, grain date plus ticker plus direction, with both detectors declared as writers disjoint by direction and a note on why each issues its own insert.
+Why:  ARCHITECTURE's failure table has said since before any code existed that a detector erroring on one stock writes an error row for that stock and date, and the corpus placed the claim at 2.7. Nothing wrote one. A silent skip shrinks the recorded universe without anyone noticing: every count downstream is over the setups that were recorded, so a name the detector could not read is simply absent and the night looks lighter rather than wrong.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Failed checks are recorded rather than discarded
+Was:  2.7's done condition ended at "No setup row carries a direction its detector does not own."
+Now:  The same, plus a name a detector cannot read getting an error row and the run being recorded partial rather than skipped into a night that merely looks lighter.
+Why:  The behaviour is owed at this checkpoint by ARCHITECTURE's failure table, and a done condition that does not state it leaves the phase report to be the only thing that noticed.

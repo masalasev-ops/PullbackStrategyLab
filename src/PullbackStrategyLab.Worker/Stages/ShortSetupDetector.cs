@@ -107,6 +107,7 @@ public sealed class ShortSetupDetector
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Members} member(s), {result.Examined} examined");
         Console.WriteLine($"{Name}: {result.Recorded} recorded, {result.PassedAll} passing every gating check, {result.BelowFloor} below the recording floor");
+        Console.WriteLine($"{Name}: {result.Errored} name(s) could not be decided and have an error row");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
@@ -124,11 +125,14 @@ public sealed class ShortSetupDetector
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
         Tally tally = Walk(connection, members, asOf, SetupReader.SetupTable);
 
-        RunSummary summary = run.Complete(RunOutcome.Clean);
+        // A night that could not read a name did not do everything it set out to do, and saying so
+        // is what stops the loss reading as a quiet night.
+        RunOutcome outcome = tally.Errored == 0 ? RunOutcome.Clean : RunOutcome.Partial;
+        RunSummary summary = run.Complete(outcome);
 
         return new DetectResult(
             asOf, members.Count, tally.Examined, tally.Recorded, tally.PassedAll, tally.BelowFloor,
-            summary.RowsWritten, RunOutcome.Clean);
+            tally.Errored, summary.RowsWritten, outcome);
     }
 
     /// <summary>A range of past sessions, into the calibration store, against today's membership.</summary>
@@ -142,18 +146,22 @@ public sealed class ShortSetupDetector
 
         int recorded = 0;
         int passedAll = 0;
+        int errored = 0;
 
         foreach (DateOnly session in sessions)
         {
             Tally tally = Walk(connection, members, session, SetupReader.CalibrationTable);
             recorded += tally.Recorded;
             passedAll += tally.PassedAll;
+            errored += tally.Errored;
         }
 
-        RunSummary summary = run.Complete(RunOutcome.Clean);
+        RunOutcome outcome = errored == 0 ? RunOutcome.Clean : RunOutcome.Partial;
+        RunSummary summary = run.Complete(outcome);
 
         return new CalibrationResult(
-            from, to, sessions.Count, members.Count, recorded, passedAll, summary.RowsWritten, RunOutcome.Clean);
+            from, to, sessions.Count, members.Count, recorded, passedAll, errored,
+            summary.RowsWritten, outcome);
     }
 
     private Tally Walk(SqliteConnection connection, IReadOnlyList<string> members, DateOnly asOf, string table)
@@ -162,12 +170,27 @@ public sealed class ShortSetupDetector
         int recorded = 0;
         int passedAll = 0;
         int belowFloor = 0;
+        int errored = 0;
 
         using SqliteTransaction transaction = connection.BeginTransaction();
 
         foreach (string ticker in members)
         {
-            ShortPullbackRules.ShortEvidence? evidence = Evidence(connection, ticker, asOf);
+            ShortPullbackRules.ShortEvidence? evidence;
+
+            try
+            {
+                evidence = Evidence(connection, ticker, asOf);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // An error row rather than a skip, for the reason DetectorErrorReader states: a
+                // name the detector could not read is simply absent downstream, and the night looks
+                // lighter rather than wrong.
+                errored += RecordError(connection, transaction, asOf, ticker, e, _clock.UtcNow);
+                continue;
+            }
+
             if (evidence is null)
             {
                 continue;
@@ -192,7 +215,7 @@ public sealed class ShortSetupDetector
         }
 
         transaction.Commit();
-        return new Tally(examined, recorded, passedAll, belowFloor);
+        return new Tally(examined, recorded, passedAll, belowFloor, errored);
     }
 
     /// <summary>Whether the premise checks all passed, which is what decides a name is worth recording.</summary>
@@ -401,6 +424,44 @@ public sealed class ShortSetupDetector
         command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(evidence.Bounce?.Trigger ?? 0m));
         command.Parameters.AddWithValue("@stop_price", StoreText.PriceToStorageText(evidence.Bounce?.Stop ?? 0m));
         command.Parameters.AddWithValue("@stop_distance_ranges", StoreText.RatioToStorageText(evidence.StopDistanceRanges ?? 0m));
+
+        return command.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// The row this detector writes for a stock it could not decide.
+    ///
+    /// Written out here rather than shared with the other detector, and the duplication is the same
+    /// price the setup insert pays: `writer-ownership` reads the shipped source for write statements
+    /// and attributes each to the type that issues it, so a shared helper would make both detectors
+    /// declare an insert neither one issues. SCHEMA declares the two as writers of this table,
+    /// disjoint by direction, exactly as it does for `setup`.
+    ///
+    /// A rerun of the same night collides on the key and writes nothing, so the first record of a
+    /// failure is the one kept, and a later rerun that succeeds leaves the row behind as history.
+    /// That is the honest state: the night did lose the name once.
+    /// </summary>
+    private static int RecordError(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        DateOnly asOf,
+        string ticker,
+        Exception error,
+        DateTimeOffset observedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO detector_error (as_of, ticker, direction, message, observed_at)
+            VALUES (@as_of, @ticker, @direction, @message, @observed_at)
+            ON CONFLICT (as_of, ticker, direction) DO NOTHING
+            """;
+
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@direction", Direction);
+        command.Parameters.AddWithValue("@message", DetectorErrorReader.Describe(error));
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
 
         return command.ExecuteNonQuery();
     }

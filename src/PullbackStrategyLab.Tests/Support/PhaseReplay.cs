@@ -88,6 +88,23 @@ public sealed class PhaseReplay : IDisposable
     /// <summary>A read-only connection to the store this replay built, for a caller that wants rows.</summary>
     public SqliteConnection OpenStore() => _connections.OpenReadOnly();
 
+    /// <summary>
+    /// A writing connection to the same store, for a test that has to damage it.
+    ///
+    /// Narrow on purpose. What it is for is authoring a failure the captured data cannot produce, on
+    /// the same terms as the synthetic split: a stored figure no reader can parse, so the detector's
+    /// error path is exercised by the store rather than by a fault injected into the detector.
+    /// </summary>
+    public SqliteConnection OpenWrite() => _connections.OpenWrite();
+
+    /// <summary>The long detector again over the store this replay built, for the same session.</summary>
+    public DetectResult DetectLong() =>
+        new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+    /// <summary>The short detector, likewise.</summary>
+    public DetectResult DetectShort() =>
+        new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
     public void Dispose()
     {
         _http.Dispose();

@@ -237,6 +237,23 @@ Same shape as `setup`, in a separate table that no downstream component reads. R
 
 Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
 
+### `detector_error`
+Grain: date + ticker + direction. What a detector could not decide, rather than what it skipped.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | the night |
+| `ticker` | TEXT | |
+| `direction` | TEXT | `long` or `short` |
+| `message` | TEXT | what went wrong, so the same failure is recognisable across nights |
+| `observed_at` | TEXT | |
+
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Read by nobody
+
+*Each detector issues its own insert rather than calling a shared helper, which is what lets `writer-ownership` attribute the write to the component that made it. The same price the `setup` insert pays, and for the same reason.*
+
+*A silent skip shrinks the recorded universe without anyone noticing. Every count downstream is over the setups that were recorded, so a name the detector could not read is simply absent: the night looks lighter, the counts stay plausible, and nothing says a name was lost. The run that lost one is recorded `partial` rather than `clean`.*
+
 ### `setup_signal`
 Grain: setup + signal. The frozen point-in-time evidence.
 

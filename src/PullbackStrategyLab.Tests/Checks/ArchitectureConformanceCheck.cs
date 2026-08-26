@@ -595,6 +595,12 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
                 : Claim.Failed("Failure behaviour", condition, "IndicatorEngine no longer refuses on an open demand"),
 
+            "Detector errors on one stock" => BothDetectorsRecordAnErrorRow()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "both detectors catch per name, insert a detector_error row of their own and record the run partial")
+                : Claim.Failed("Failure behaviour", condition,
+                    "a detector no longer records the name it could not decide, so a lost name reads as a quiet night"),
+
             "Daily API ceiling reached" => runScope.Contains("CallsRemaining", StringComparison.Ordinal)
                 ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
                 : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
@@ -603,6 +609,30 @@ public sealed partial class ArchitectureConformanceCheck
                 "the checkpoint that builds it has landed and no assertion reads this row"),
         };
     }
+
+    /// <summary>
+    /// Both detectors, both ways: they catch per name and they say the run was partial.
+    ///
+    /// The behavioural half lives in <c>DetectorErrorTests</c>, which makes one name unreadable and
+    /// runs both detectors over it. That half is the one that holds the property; this one says the
+    /// shape is still there in both files, which the test alone would not if a detector stopped
+    /// being covered by it.
+    ///
+    /// <b>It asks for the call site, not only the statement.</b> The first version of this looked
+    /// for the insert and for the partial outcome, and passed with the catch deleted from one
+    /// detector: the private method that issues the insert was still in the file with nothing
+    /// calling it. A scan for text present is not a scan for a property held, which is the shape
+    /// this corpus keeps arriving at from a new direction.
+    /// </summary>
+    private static bool BothDetectorsRecordAnErrorRow() =>
+        new[] { "LongSetupDetector.cs", "ShortSetupDetector.cs" }
+            .Select(name => RepositoryLayout.Read(
+                Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", name)))
+            .All(source =>
+                source.Contains("INSERT INTO detector_error", StringComparison.Ordinal)
+                && source.Contains("errored += RecordError(", StringComparison.Ordinal)
+                && source.Contains("catch (Exception e) when (e is not OperationCanceledException)", StringComparison.Ordinal)
+                && source.Contains("tally.Errored == 0 ? RunOutcome.Clean : RunOutcome.Partial", StringComparison.Ordinal));
 
     private static HashSet<string> DeclaredTypes()
     {
