@@ -32,6 +32,16 @@
         "source files scanned"
       ]
     },
+    "carried-obligations": {
+      "scopes": {
+        "due points the obligations table declares": 4,
+        "due points named inside a Carried block": 52
+      },
+      "context": [
+        "of those in the live tail, which is what is reconciled",
+        "Carried blocks in PROGRESS"
+      ]
+    },
     "check-completeness": {
       "scopes": {
         "gates in the long check list": 10,

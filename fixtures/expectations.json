@@ -50,7 +50,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "backfill.rebuild.selected",
@@ -500,63 +500,63 @@
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.high",
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -564,28 +564,45 @@
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.sessions",
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
+    },
+    {
+      "id": "check.long.cluster.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.cluster.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.cluster.failed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.cluster.passed",
@@ -593,6 +610,22 @@
       "value": "0",
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.long.contraction.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.contraction.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.contraction.failed",
@@ -604,16 +637,34 @@
     {
       "id": "check.long.contraction.passed",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "0",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 1. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
+    },
+    {
+      "id": "check.long.dip-shape.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.dip-shape.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.dip-shape.failed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.dip-shape.passed",
@@ -623,11 +674,28 @@
       "producedBy": "the replay itself, recorded to detect change"
     },
     {
+      "id": "check.long.exit-tight.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.exit-tight.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.long.exit-tight.failed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.exit-tight.passed",
@@ -637,12 +705,28 @@
       "producedBy": "the replay itself, recorded to detect change"
     },
     {
-      "id": "check.long.held-floor.failed",
+      "id": "check.long.held-floor.authoredRowFailed",
       "tier": "FROZEN",
       "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.held-floor.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.held-floor.failed",
+      "tier": "FROZEN",
+      "value": "0",
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held. Was 1. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.held-floor.passed",
@@ -651,6 +735,22 @@
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "Was 2. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
+    },
+    {
+      "id": "check.long.moves-enough.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.moves-enough.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.moves-enough.failed",
@@ -662,9 +762,10 @@
     {
       "id": "check.long.moves-enough.passed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.oneSided",
@@ -673,6 +774,22 @@
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "Was the eight one-sided gates measured at 2.6. Sidedness now reads the authored boundary cases as well as the detector's rows, because the question it asks is whether anything has exercised both branches of a gate. The detector counts beside it are unchanged."
+    },
+    {
+      "id": "check.long.thrust.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.thrust.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.thrust.failed",
@@ -684,9 +801,26 @@
     {
       "id": "check.long.thrust.passed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
+    },
+    {
+      "id": "check.long.tradable.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.tradable.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.tradable.failed",
@@ -698,17 +832,34 @@
     {
       "id": "check.long.tradable.passed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
+    },
+    {
+      "id": "check.long.trigger-near.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.trigger-near.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.long.trigger-near.failed",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "0",
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Was 2. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
+      "note": "Was 2. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held. Was 1. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.trigger-near.passed",
@@ -719,11 +870,28 @@
       "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
-      "id": "check.long.uptrend.failed",
+      "id": "check.long.uptrend.authoredRowFailed",
       "tier": "FROZEN",
       "value": "1",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.uptrend.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.long.uptrend.failed",
+      "tier": "FROZEN",
+      "value": "0",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 1. Moved at 3.0(e), which took the harness's own authored setup row out of the detectors' counters. The row arrives through the store like any other and was counted beside two rows a detector wrote, so every long count carried it. The gate cases were already kept out and said so; this row was not, which is the same rule with one of its subjects missing. The figure now counts detector-written rows only, and the authored row is reported beside it under authoredRow."
     },
     {
       "id": "check.long.uptrend.passed",
@@ -731,6 +899,22 @@
       "value": "1",
       "checkpoint": "2.6",
       "producedBy": "the replay itself, recorded to detect change"
+    },
+    {
+      "id": "check.short.averages-squeezing.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.averages-squeezing.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.short.averages-squeezing.failed",
@@ -747,6 +931,22 @@
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
     },
     {
+      "id": "check.short.bounce-shape.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.bounce-shape.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.short.bounce-shape.failed",
       "tier": "FROZEN",
       "value": "1",
@@ -759,6 +959,22 @@
       "value": "0",
       "checkpoint": "2.7",
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
+    },
+    {
+      "id": "check.short.cluster.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.cluster.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.short.cluster.failed",
@@ -775,6 +991,22 @@
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
     },
     {
+      "id": "check.short.downtrend.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.downtrend.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.short.downtrend.failed",
       "tier": "FROZEN",
       "value": "0",
@@ -787,6 +1019,22 @@
       "value": "1",
       "checkpoint": "2.7",
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
+    },
+    {
+      "id": "check.short.exit-tight.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.exit-tight.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.short.exit-tight.failed",
@@ -803,6 +1051,22 @@
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
     },
     {
+      "id": "check.short.moves-enough.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.moves-enough.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.short.moves-enough.failed",
       "tier": "FROZEN",
       "value": "0",
@@ -815,6 +1079,22 @@
       "value": "1",
       "checkpoint": "2.7",
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
+    },
+    {
+      "id": "check.short.no-reclaim.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.no-reclaim.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.short.no-reclaim.failed",
@@ -838,6 +1118,22 @@
       "note": "Read over both populations, because the question is whether anything has exercised both branches. The counts above stay detector-only, so a gate the market never passed is still visible as one."
     },
     {
+      "id": "check.short.reached-ceiling.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.reached-ceiling.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.short.reached-ceiling.failed",
       "tier": "FROZEN",
       "value": "1",
@@ -852,6 +1148,22 @@
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
     },
     {
+      "id": "check.short.thrust.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.thrust.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
       "id": "check.short.thrust.failed",
       "tier": "FROZEN",
       "value": "0",
@@ -864,6 +1176,22 @@
       "value": "1",
       "checkpoint": "2.7",
       "note": "Detector rows only. The authored cases are counted nowhere near this figure."
+    },
+    {
+      "id": "check.short.tradable-shortable.authoredRowFailed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+    },
+    {
+      "id": "check.short.tradable-shortable.authoredRowPassed",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "the replay's own counters, split by tier at 3.0(e)",
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
     },
     {
       "id": "check.short.tradable-shortable.failed",
@@ -2949,49 +3277,49 @@
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema9",
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.INTC.adr20",
@@ -3194,49 +3522,49 @@
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema9",
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.META.adr20",
@@ -3439,49 +3767,49 @@
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema9",
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PFE.adr20",
@@ -3930,7 +4258,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.computed",

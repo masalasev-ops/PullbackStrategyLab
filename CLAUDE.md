@@ -134,6 +134,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `two-platform` | the matrix | The suite passes on both windows and macos runners |
 | `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |
 | `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |
+| `carried-obligations` | every CI run | Every due point a PROGRESS `Carried` block names is one BUILD_PLAN's obligations table also has. The set of due points rather than the sentences, because prose against prose false-alarms and a suppressed guard is a dead one |
 | `stated-counts` | every CI run | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
 | `fixture-inputs` | every CI run | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
 | `fixture-replay` | every CI run | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one, and every checkpoint in the fixture carries an independently produced expectation or names an open obligation |

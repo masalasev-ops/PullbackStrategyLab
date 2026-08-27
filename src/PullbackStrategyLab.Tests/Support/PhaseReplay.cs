@@ -458,26 +458,51 @@ public sealed class PhaseReplay : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT direction, check_results FROM setup";
+        command.CommandText = "SELECT setup_id, direction, check_results FROM setup";
 
-        // Keyed by direction and name rather than by name, because five of the twenty gate ids
-        // appear on both lists and a dictionary keyed on the id alone would add a long `exit-tight`
-        // pass to a short `exit-tight` fail and report the pair as two-sided. That is the pooling
-        // rule arriving in the one place it is easiest to break by accident.
+        // Keyed by direction and name rather than by name, because four of the twenty gate ids
+        // appear on both lists, being `cluster`, `exit-tight`, `moves-enough` and `thrust`. A
+        // dictionary keyed on the id alone would add a long `exit-tight` pass to a short
+        // `exit-tight` fail and report the pair as two-sided. That is the pooling rule arriving in
+        // the one place it is easiest to break by accident.
         // see: Long and short are never pooled into one figure
         var passes = new Dictionary<(string Direction, string Name), int>();
         var fails = new Dictionary<(string Direction, string Name), int>();
+
+        // And the same two counters over the authored row, kept apart rather than added in.
+        //
+        // The row this harness inserts to give the vectorizer a subject arrives through the store
+        // like any other, so until 3.0(e) it was counted into the figures beside two rows a detector
+        // wrote. It bypasses the recording floor, which is why it carries `uptrend` failed on a
+        // grade of `mixed`, and `uptrend` and `contraction` were the only two long gates the report
+        // called two-sided: both were two-sided only because this row disagreed with a detector row.
+        // Over detector-written rows alone every one of the twenty gate slots is one-sided.
+        //
+        // The gate cases were already kept out of these counters and said so. The authored setup row
+        // was not, which is the same rule with one of its subjects missing.
+        // see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+        var authoredPasses = new Dictionary<(string Direction, string Name), int>();
+        var authoredFails = new Dictionary<(string Direction, string Name), int>();
 
         using (SqliteDataReader reader = command.ExecuteReader())
         {
             while (reader.Read())
             {
-                string direction = reader.GetString(0);
+                string setupId = reader.GetString(0);
+                string direction = reader.GetString(1);
+                bool isAuthoredRow = string.Equals(setupId, AuthoredSetupId, StringComparison.Ordinal);
 
                 foreach (CheckResult result in
-                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), CheckJson) ?? [])
+                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(2), CheckJson) ?? [])
                 {
-                    Dictionary<(string, string), int> side = result.Passed ? passes : fails;
+                    Dictionary<(string, string), int> side = (isAuthoredRow, result.Passed) switch
+                    {
+                        (true, true) => authoredPasses,
+                        (true, false) => authoredFails,
+                        (false, true) => passes,
+                        _ => fails,
+                    };
+
                     side[(direction, result.Name)] = side.GetValueOrDefault((direction, result.Name)) + 1;
                 }
             }
@@ -522,8 +547,23 @@ public sealed class PhaseReplay : IDisposable
 
         foreach (GateCases.GateCase gateCase in GateCases.All)
         {
-            CheckResult verdict = GateCases.Evaluate(gateCase)
-                .Single(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
+            // First rather than Single, and the difference is the whole of a 2.12 finding. Removing
+            // a gate's implementation at that sign-off failed `check-completeness`, which is the
+            // property holding. It failed on "Sequence contains no matching element" and a stack
+            // trace from this line, because the replay the check reads died before the comparison
+            // that has a reconciliation message written for exactly this case. A crash and a named
+            // failure are not the same artefact: one tells a later session which gate went missing,
+            // the other tells it that something threw.
+            CheckResult? verdict = GateCases.Evaluate(gateCase)
+                .FirstOrDefault(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
+
+            if (verdict is null)
+            {
+                // Recorded as a value rather than thrown, so the run reaches `check-completeness`
+                // and that check reconciles the gate lists by name and says which one is absent.
+                figures.Add(new Measurement(gateCase.Id, "no result of that name"));
+                continue;
+            }
 
             figures.Add(new Measurement(gateCase.Id, verdict.Passed ? "pass" : "fail"));
 
@@ -543,16 +583,30 @@ public sealed class PhaseReplay : IDisposable
                 int failed = fails.GetValueOrDefault((direction, name));
                 (bool authoredPass, bool authoredFail) = authored.GetValueOrDefault((direction, name));
 
+                int authoredRowPassed = authoredPasses.GetValueOrDefault((direction, name));
+                int authoredRowFailed = authoredFails.GetValueOrDefault((direction, name));
+
                 figures.Add(new Measurement(
                     $"check.{direction}.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
                 figures.Add(new Measurement(
                     $"check.{direction}.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
 
-                // Sidedness asks whether anything has ever exercised both branches, so it reads both
-                // populations. The two counts above stay separate, so a reader can still see that a
-                // gate the market never passed was passed by a case built to pass it.
-                bool everPassed = passed > 0 || authoredPass;
-                bool everFailed = failed > 0 || authoredFail;
+                // The authored row's own verdicts, beside the detector's and never added to them.
+                // Reported rather than dropped, because the row is a real thing the replay inserts
+                // and a reader who cannot see it would wonder where a third setup went.
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.authoredRowPassed",
+                    authoredRowPassed.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.authoredRowFailed",
+                    authoredRowFailed.ToString(CultureInfo.InvariantCulture)));
+
+                // Sidedness asks whether anything has ever exercised both branches, so it reads
+                // every population. The counts above stay separate, so a reader can still see that a
+                // gate the market never passed was passed by a case built to pass it, and that a
+                // gate the detectors never split was split by the row this harness inserted.
+                bool everPassed = passed > 0 || authoredPass || authoredRowPassed > 0;
+                bool everFailed = failed > 0 || authoredFail || authoredRowFailed > 0;
 
                 if (!everPassed || !everFailed)
                 {
@@ -783,6 +837,14 @@ public sealed class PhaseReplay : IDisposable
     /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
     public const string AuthoredSetupTicker = "IESC";
 
+    /// <summary>
+    /// The authored setup's id, which is how the sidedness counters tell it from a detector's row.
+    ///
+    /// No date prefix, unlike <c>LongSetupDetector.SetupId</c>, which is what makes it recognisable
+    /// in a diff as well as here.
+    /// </summary>
+    public static string AuthoredSetupId => $"{AuthoredSetupTicker}-long";
+
     /// <summary>The trigger and the stop the authored setup carries, as raw prices.</summary>
     public const string AuthoredTrigger = "355.00";
 
@@ -825,7 +887,7 @@ public sealed class PhaseReplay : IDisposable
                     : (object)DBNull.Value);
             setup.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckJson));
             setup.Parameters.AddWithValue("@passed_all", SetupChecks.PassedAll(results) ? 1 : 0);
-            setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");
+            setup.Parameters.AddWithValue("@setup_id", AuthoredSetupId);
             setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
             setup.Parameters.AddWithValue("@ticker", AuthoredSetupTicker);
             setup.Parameters.AddWithValue("@trigger", AuthoredTrigger);

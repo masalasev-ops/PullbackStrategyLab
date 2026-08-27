@@ -3403,3 +3403,85 @@ Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests.
 Carried:    **One new, due at 3.7**: an instrument that reads a rendered surface. Scoped to the
             sentences this sweep produced rather than to UI testing in general, and due at the phase
             sign-off because the pages phase 3 adds are the ones it would first cover.
+
+## 3.0(e) — 2026-08-27 — phase-3-measurement — the hygiene obligations, and a sweep that found nothing new
+
+The fifth part of 3.0. Seven obligations and a documentation defect, none of which interacts with
+the prediction, which is why they wait until after it.
+
+Built:      **The sidedness counters split by tier.** `PhaseReplay.CheckSidednessFigures` counted
+            the harness's own authored row beside two rows a detector wrote. It now counts detector
+            rows only and reports the authored row separately under `authoredRow`. The true figure
+            is what 2.12 said it would be: over detector-written rows alone, **every one of the
+            twenty gate slots is one-sided**, not eight of ten long. `uptrend` and `contraction`
+            were two-sided only because the authored row disagreed with a detector row.
+
+            **The crash closed.** The same method used `Single` where the authored case for a
+            removed gate finds no result of its name, so `check-completeness` failed on "Sequence
+            contains no matching element" and a stack trace instead of its own reconciliation
+            message. It records "no result of that name" and lets the check speak.
+
+            **The stated count corrected.** The comment said five of the twenty gate ids appear on
+            both lists. There are four: `cluster`, `exit-tight`, `moves-enough`, `thrust`.
+
+            **Migration 016**, `screened_over_sessions` and `screen_carried` on
+            `universe_snapshot`, answering the question raised at 1.3. A night that cannot screen
+            carries the standing membership and records that it carried, so nothing downstream reads
+            a carried night as freshly screened.
+
+            **`carried-obligations`**, CI step 18 in both scripts, twenty-second row of the roster.
+            Every due point a live `Carried` block names is one the obligations table has.
+
+            **`ComponentReachabilityTests`**, backing `architecture-conformance`'s catalogue scan.
+            Unbacked scans fall from three to two.
+
+            `ARCHITECTURE.html`'s Figure 8 relabelled from `ForwardReturnFiller` to
+            `ProposalRegistry`.
+
+Findings:   **The `Carried`-block reconciliation had to be narrowed twice before it was honest, and
+            both narrowings are the objection that kept it open for a phase.** Run against every
+            block, it reported 45 due points with no obligation row: phase 1 blocks naming 1.7, which
+            1.7 discharged and the table then dropped. Narrowed to due points that have not landed,
+            11 remained, all of them entries like 2.11 naming 3.1 before 3.0 repointed it. Both are
+            correct history, and correcting either would mean editing a dated entry.
+
+            What it reconciles is the **live tail**: blocks written since the last landed checkpoint,
+            excluding that checkpoint's own entry. That guards the commit being made rather than the
+            archive, which is where the failure actually happens. It cannot catch a block naming a
+            due point some other row happens to share, and that limit is written into the check
+            rather than left to be discovered.
+
+            Finding, on the scope floors. The live-tail count is recorded as **context** and not
+            floored, because it resets to nothing the moment a checkpoint lands. A floor on it would
+            go red on the next PROGRESS entry rather than on a defect, which is a false alarm and a
+            suppressed guard arrived at in one step. The scope carrying the property is the total
+            count of due points named in any block, 52, which grows with an append-only record and
+            falls only if the parser breaks.
+
+            **The figure-population sweep found nothing new, and the reason is worth stating.** Run
+            over every entry from 2.1 onward, 16 figures had no population word in their own
+            sentence, and reading them showed all 16 were either already corrected by the 2.11
+            correction entry at 2.12 or had their population stated in the neighbouring sentence.
+            Over phase 1, 79 flagged and every one is a migration number, a call budget, a test count
+            or a file mode: figures whose subject is named in the same breath.
+
+            The reading: **the rule bites on distributional figures, and phase 1 has almost none.**
+            A median or a rate over a filtered subset can be computed over four different
+            populations under one phrase; a count of calls made or tests run cannot. Distributions
+            start at 2.11, which is exactly where 2.12 found the three. So the sweep's output is a
+            recorded absence rather than a set of corrections, and the absence is the useful part: a
+            later session need not run it again over phase 1.
+
+Verified:   `tools/ci.ps1` green on Windows, **25 steps**, up from 24, and **366 tests**, up from 363.
+
+            Proved by removal. The `cap` arm deleted from the worker's dispatch: the reachability
+            test fails naming `cap`, which is the direction the catalogue scan could not see, since
+            `cap` stays in the stage table and in every registration the scan reads. Restored.
+
+Carried:    **One repointed rather than discharged.** The three unbacked source scans are down to
+            two: `writer-ownership`'s attribution of every write to its declared writer, whose
+            behavioural form is `order-provenance` and starts at 4.6 by the obligation's own text,
+            and `coverage-reported`'s scan for its own trait, which rests on the phase report's
+            coverage requirement rather than on a test. Neither is work this checkpoint can finish,
+            so the obligation moves to 4.6 where the first of the two closes. Moved once, with the
+            reason, rather than left to move at every sign-off.

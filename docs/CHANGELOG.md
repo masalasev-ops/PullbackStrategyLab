@@ -702,3 +702,18 @@ Why:  Same reason as the ARCHITECTURE edit above. A decision stating a property 
 Was:  The carried obligations table had no row for an instrument that reads a rendered surface.
 Now:  A row raised at 3.0 and due at 3.7, scoped to the sentences the 3.0(d) sweep produced rather than to UI testing in general.
 Why:  The sweep named the surface behind every claim of visibility and said whether it holds today. It could not assert one, because no check in this corpus reads a rendered page. The eight claims found true today are true because a person looked, and because two of them happen to be covered by tests written for another reason. Due at 3.7 rather than inside 3.0, because building the instrument in the pass that found the gap is how a sweep turns into a checkpoint, and the pages phase 3 adds are the ones it would first cover.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The checks roster had twenty-one rows and no row for reconciling `Carried` blocks against the obligations table.
+Now:  Twenty-two rows, with `carried-obligations` running on every CI run.
+Why:  The narrow form the 2.12 obligation argued for. It compares the set of due points rather than the sentences, because prose against prose false-alarms on every rewording and a suppressed guard is a dead one. Four obligations have now been written into a `Carried` block and never into the table.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `universe_snapshot` carried `as_of` and `ticker` and nothing else.
+Now:  Two more columns, `screened_over_sessions` and `screen_carried`, with a paragraph on why a night that cannot screen carries rather than skips.
+Why:  The question was raised at 1.3, recorded only in that entry's `Carried` block, and read by nothing until 3.0. The count distribution answers it: a night flags a median of 44 long names and 13 short out of 2,016 while membership drifts by a handful a month, so carrying misstates a night by far less than skipping removes from it. What it may not do is look like a screened night, which is why this is a migration rather than a document edit.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  Figure 8 labelled the "Signal request" box `ForwardReturnFiller`.
+Now:  `ProposalRegistry`.
+Why:  ForwardReturnFiller fills forward returns and has nothing to do with signal requests. A proposal asking for a new signal is ProposalRegistry's, which is what the two-kinds-of-proposal decision says. Found while reading for the surfaces sweep rather than by any check, because the conformance check reads the catalogue table and not the figures.

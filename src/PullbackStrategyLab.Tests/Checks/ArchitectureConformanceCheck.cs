@@ -314,11 +314,12 @@ public sealed partial class ArchitectureConformanceCheck
                     "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
                     + "The scan asks only that the run scope still exposes what is left"))
             .Scan("the catalogue's components exist and are registered, found by scanning declarations and registrations",
-                CheckCoverage.Backing.None(
-                    "nothing builds the host and asks the container to resolve every catalogue component. A "
-                    + "component registered in a line the registration pattern does not match would be reported "
-                    + "as unregistered, which fails loudly; one whose registration is present and unreachable "
-                    + "would not, and that is the direction with no test under it"));
+                CheckCoverage.Backing.Test(
+                    "ComponentReachabilityTests.Every_stage_the_entry_point_advertises_has_an_arm_in_the_dispatch",
+                    "the direction this scan cannot see is a registration that is present and unreachable: a "
+                    + "line the pattern does not match fails loudly, and a stage in the table with no arm in "
+                    + "the dispatch passes. The test resolves each advertised name against the dispatch, which "
+                    + "is exactly the gap between registered and reachable"));
 
         foreach (IGrouping<string, Claim> table in claims.GroupBy(c => c.Table, StringComparer.Ordinal))
         {

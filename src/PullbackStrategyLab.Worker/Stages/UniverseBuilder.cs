@@ -204,7 +204,7 @@ public sealed class UniverseBuilder
 
             added = AddMembers(connection, transaction, survivors, asOf);
             removed = RemoveDepartedMembers(connection, transaction, survivors, asOf);
-            WriteSnapshot(connection, transaction, survivors, asOf);
+            WriteSnapshot(connection, transaction, survivors, asOf, sessionsScreened);
 
             transaction.Commit();
         }
@@ -239,12 +239,19 @@ public sealed class UniverseBuilder
         {
             using SqliteCommand command = connection.CreateCommand();
             command.Transaction = transaction;
+            // Carried, and recorded as carried. A night that cannot screen writes the membership
+            // that stands rather than writing nothing, because membership drifts by a handful a
+            // month while a skipped night removes a whole session from the series. What it must
+            // not do is look like a screened night: `screen_carried` is the column that stops a
+            // later count reading this as fresh, and `screened_over_sessions` says how little the
+            // screen could actually see.
             command.CommandText = """
-                INSERT INTO universe_snapshot (as_of, ticker)
-                SELECT @as_of, ticker FROM universe_member WHERE removed_on IS NULL
+                INSERT INTO universe_snapshot (as_of, ticker, screened_over_sessions, screen_carried)
+                SELECT @as_of, ticker, @sessions, 1 FROM universe_member WHERE removed_on IS NULL
                 ON CONFLICT (as_of, ticker) DO NOTHING;
                 """;
             command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            command.Parameters.AddWithValue("@sessions", sessions);
             command.ExecuteNonQuery();
             transaction.Commit();
         }
@@ -324,7 +331,9 @@ public sealed class UniverseBuilder
         return command.ExecuteNonQuery();
     }
 
-    private static void WriteSnapshot(SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<string> survivors, DateOnly asOf)
+    private static void WriteSnapshot(
+        SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<string> survivors,
+        DateOnly asOf, int sessions)
     {
         foreach (string ticker in survivors)
         {
@@ -334,12 +343,13 @@ public sealed class UniverseBuilder
             // Append-only, and idempotent for its date: rerunning a night rewrites the same
             // rows rather than doubling them or failing.
             command.CommandText = """
-                INSERT INTO universe_snapshot (as_of, ticker)
-                VALUES (@as_of, @ticker)
+                INSERT INTO universe_snapshot (as_of, ticker, screened_over_sessions, screen_carried)
+                VALUES (@as_of, @ticker, @sessions, 0)
                 ON CONFLICT (as_of, ticker) DO NOTHING;
                 """;
             command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
             command.Parameters.AddWithValue("@ticker", ticker);
+            command.Parameters.AddWithValue("@sessions", sessions);
             command.ExecuteNonQuery();
         }
     }

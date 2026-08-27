@@ -41,12 +41,16 @@ Insert UniverseBuilder · Update UniverseBuilder
 ### `universe_snapshot`
 Who was listed on a given night. Grain: date + ticker. Append-only. This is what makes replay free of survivorship bias, so it is written every night without exception.
 
-| Column | Type |
-|---|---|
-| `as_of` | TEXT |
-| `ticker` | TEXT |
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | |
+| `ticker` | TEXT | |
+| `screened_over_sessions` | INTEGER NULL | how many sessions the screen could see. The liquidity floor is a median over twenty |
+| `screen_carried` | INTEGER NULL | 1 where the membership was carried from the last complete screen rather than screened fresh |
 
 Insert UniverseBuilder · PK (`as_of`, `ticker`)
+
+*A night that can see fewer than five sessions cannot screen, and it carries the membership that stands rather than writing nothing: membership drifts by a handful a month while a skipped night removes a whole session from the series, and phase 3 is where a missing night starts costing a sample. **What it may not do is look like a screened night.** `screen_carried` is what stops a later count reading a carried membership as fresh, which would be a survivorship claim the store cannot support. Both columns are null on every snapshot written before 3.0, because inventing a value for a night that did not record one is worse than admitting it is absent, and a null is a different fact from a night that screened over nought sessions.*
 
 ---
 
