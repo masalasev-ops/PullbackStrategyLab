@@ -777,3 +777,8 @@ Why:  Ruled by the operator at phase 3, against a standing draft PR carrying 3.0
 Was:  The checks roster had twenty-two rows and no row for asserting a claim of visibility against the page that carries it.
 Now:  Twenty-three rows, with `surface-claims` running on every CI run.
 Why:  It is the only check in this corpus that reads a rendered surface. Every other one asserts over source, the store, or a document, which is exactly why the gallery defect survived every check the suite had: the note was in the store, check-completeness confirmed it, and the screen dropped it.
+
+### 2026-08-27 — CLAUDE.md — cites Decisions are named, not numbered
+Was:  "Conventions" said nothing about commit subjects. The form `Phase {phase} / {checkpoint} — {what changed}` existed only in sixty commits of history.
+Now:  The form is stated, with the rule that the checkpoint is never omitted even on a commit that builds nothing, and the note that this was broken once by a session inferring it from the log.
+Why:  A convention that exists only in what previous sessions happened to do is a convention the next session will break, and this one was: a ruling commit dropped the checkpoint field on the reasoning that a ruling is not a checkpoint. `Phase 2 / 2.12 — the ruling the sign-off owed` is the counter-example that was already in the log. Not made a check, because the failure is loud and costs one amend; if it breaks twice more that reasoning is wrong and the check is owed, which is said in the text so a later session can hold it to that.
