@@ -101,6 +101,14 @@ else
                                 <li class="@(check.Passed ? "pass" : "fail")">
                                     <span class="name">@check.Name</span>
                                     <span class="reading">@check.Reading</span>
+                                    @if (check.Against is string against)
+                                    {
+                                        <span class="against">@against</span>
+                                    }
+                                    @if (check.Caveat is string caveat)
+                                    {
+                                        <span class="caveat">@caveat</span>
+                                    }
                                 </li>
                             }
                         </ul>

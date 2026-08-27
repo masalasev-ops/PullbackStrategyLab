@@ -3079,3 +3079,70 @@ Carried:    New, due at 3.1: whether a mechanism should reconcile `PROGRESS.md`'
             indicator values outstanding at the operator. Nothing found here bears on it. The ruling
             was owed at the sign-off and is given at the sign-off, one day later and in the same
             branch.
+
+## 2.9 — 2026-08-27 — gallery-check-readings — the gallery review's first finding, and a caveat the screen was swallowing
+
+The first output of the 2.9 gallery review, which falls due at the operator and is not discharged by
+this entry. A person opened one night, looked at one card, and asked what a number was. Two defects
+came out of that question, neither of which any check in this corpus could have found.
+
+Built:      `CheckReading` in Core. Per gate, what its recorded number is in words and the threshold
+            it was tested against, with **every threshold formatted from the rule constant the gate
+            compares against** rather than restated. A second copy of 50,000,000 in a display helper
+            is the defect this corpus greps for, one layer out from where it usually looks: the
+            screen would keep agreeing with itself while the rule moved.
+
+            The gallery card now shows three lines per check where it showed one: the quantity said
+            in words, the threshold under it, and the result's own note under that.
+
+Findings:   Finding. **A card showed `tradable-shortable 9849921234` and nothing else.** Observation:
+            the gallery rendered `CheckResult.Value` through `"0.####"` and stopped. That figure is
+            INTC's median daily turnover, $9.85bn, tested against a $50m floor, and none of the three
+            facts in that sentence was recoverable from the digits. Reading: every test passed,
+            `check-completeness` agreed all twenty gates recorded a result, `tools/verify-phase` was
+            GREEN, and the phase signed off, because nothing in the suite asks what a number means to
+            the person reading it. The gallery is specified as the transfer of the strategy into
+            code, and a reader who cannot check the arithmetic can only take the verdict.
+
+            Finding, and the sharper of the two. **A check carrying both a value and a note showed
+            the value and swallowed the note.** Observation: `SetupCheckRowView.Reading` fell back to
+            `Note` only when `Value` was null, so a check with both lost the note entirely. The two
+            notes that matter most both carry a value. `reached-ceiling` records the distance to the
+            nearer average and a note saying it ran two of its three clauses because the anchored one
+            arrives at 4.4. A calibration `tradable-shortable` records turnover and a note saying the
+            market-cap clause was exempt. Reading: `ARCHITECTURE.html` says of the first that the
+            check "runs its two average clauses and is narrower than this line describes, which the
+            setup record says outright rather than leaving to be inferred from a passing verdict".
+            The record did say it. The one screen where a person reads it did not, so the caveat was
+            written down and never stated to anybody. On the calibration side the effect is worse:
+            every one of the 16,917 short rows carries the exemption note, and a reader paging them
+            would have seen a four-clause verdict.
+
+            Observation, carried rather than fixed. `CheckResult` holds one `Value`, so a four-clause
+            gate records one number and the screen can say which clause the number came from but not
+            which clause **failed** when the gate fails. `tradable-shortable` failing tells a reader
+            nothing about which of four floors it missed. Fixing that changes the shape of the JSON
+            in `check_results` and moves expectations at 2.6, 2.7 and 2.11, which is a checkpoint's
+            work rather than a defect fix, so it is an obligation due at 3.1.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, **359 tests**, up from 324. `tools/verify-phase`
+            GREEN with 0 unexamined.
+
+            Both fixes proved by removal, per the rule that an assertion must fail when the thing it
+            guards is taken away. `Caveat` reverted to always null: the page test fails, naming the
+            missing anchored-clause note. The `tradable-shortable` arm deleted from `CheckReading`:
+            five tests fail, two of them naming the gate and saying the gallery would show the digits
+            alone. Both restored and the suite is green.
+
+            The gate-list tests are written over `SetupChecks` rather than over a list of their own,
+            on the same grounds as `GateBoundaryTests`, so a gate added later inherits them: a gate
+            recording a number with no reading fails, and a gate stating a quantity with no threshold
+            fails. `uptrend` and `downtrend` are exempt by name with the reason, being the two that
+            compare a word rather than a number, and the exemption is asserted rather than assumed.
+
+Carried:    New, due at 3.1: which clause of a multi-clause gate failed, which needs `CheckResult` to
+            carry more than one value and therefore moves the frozen check-result shape.
+
+            **The gallery review itself is not discharged.** One night, one card, one question. It
+            stays due at the operator, and this entry is evidence the review earns its place rather
+            than evidence it is finished.

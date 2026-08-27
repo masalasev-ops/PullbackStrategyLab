@@ -1,4 +1,5 @@
 using System.Globalization;
+using PullbackStrategyLab.Core.Detection;
 
 namespace PullbackStrategyLab.Web.Shell;
 
@@ -75,7 +76,28 @@ public sealed record SetupCheckRowView(string Name, bool Passed, decimal? Value,
     /// person is deciding whether they agree with the verdict.
     /// see: A gate handed an absent or degenerate quantity fails rather than passing
     /// </summary>
-    public string Reading => Value is decimal value
-        ? value.ToString("0.####", CultureInfo.InvariantCulture)
-        : Note ?? "no value";
+    public string Reading => CheckReading.Of(Name, Value) is CheckReading.Reading reading
+        ? reading.Quantity
+        : Value is decimal bare
+            ? bare.ToString("0.####", CultureInfo.InvariantCulture)
+            : Note ?? "no value";
+
+    /// <summary>
+    /// The threshold the number was tested against, so the reader can check the verdict rather than
+    /// take it. Null where the check compares a word rather than a number.
+    /// </summary>
+    public string? Against => CheckReading.Of(Name, Value)?.Against;
+
+    /// <summary>
+    /// The result's own note, shown whenever there is one.
+    ///
+    /// <b>It used to be shown only when there was no value, and that dropped the notes that matter
+    /// most.</b> `reached-ceiling` records the distance to the nearer average and a note saying it
+    /// ran two of its three clauses because the anchored one arrives at 4.4; a calibration row's
+    /// `tradable-shortable` records turnover and a note saying the market-cap clause was exempt.
+    /// Both have a value, so both notes vanished from the one screen a person reads them on, while
+    /// ARCHITECTURE says the setup record states the narrowing outright rather than leaving it to be
+    /// inferred from a passing verdict. A caveat that is only in the store is not stated to anybody.
+    /// </summary>
+    public string? Caveat => Value is null ? null : Note;
 }
