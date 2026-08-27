@@ -3255,3 +3255,92 @@ Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 835 expectatio
             94 of them at 3.0.
 
 Carried:    Nothing new. Five parts of 3.0 outstanding.
+
+## 3.0(c) — 2026-08-27 — phase-3-measurement — the thrust window corrected, and a prediction half right
+
+The third part of 3.0, and the only commit in it that changes what the strategy computes. Nothing
+else is in this commit.
+
+Built:      `ScanSpans` in Core: one session for `gainer`, `gapper`, `decliner` and `gapdown`, twenty
+            for `leader` and `laggard`, throwing on a scan it does not know rather than defaulting to
+            one. `ScanEngine.MonthWindow` is now that constant rather than a second twenty.
+
+            `PullbackGeometry.Of` takes the span as a parameter. The thrust runs over the last span
+            sessions ending at the flag; the origin is the close before the span, clamped at the
+            window's start; the extreme is searched from the span's start rather than from the flag.
+            Both detectors and the vectorizer pass the span of the scan that produced their hit.
+
+            **24 more `DERIVED` expectations**, being three geometry cases with a span of twenty.
+            The eleven existing cases carry a span of one, which is exactly what `Of` did before, so
+            all 88 of their figures are unmoved and the correction is visible as new cases rather
+            than as numbers that quietly became different. `long-month-scan-thrust` is the same
+            window and index as `long-retrace-past-the-whole-thrust` read over twenty sessions: one
+            input differs and everything that moves, moves because of it.
+
+Measured:   Both calibrations re-run over the live store after clearing `calibration_setup`, which
+            the insert's `ON CONFLICT DO NOTHING` would otherwise have turned into a run that wrote
+            nothing and reported success. 32,533 long rows and 16,917 short, identical counts to the
+            run before the correction, because the recording floor does not read the geometry.
+
+            **Every figure below is over calibration rows clearing the recording floor, 2024-04-01 to
+            2026-08-24, 602 long sessions and 601 short. Reconstructed against today's membership and
+            therefore not evidence about the market.**
+
+            The retrace, over dips and bounces of **2 to 7 bars**, which is the population the 2.11
+            figures were taken over and the window the gate itself tests:
+
+            | | before | after | day span | month span |
+            |---|---|---|---|---|
+            | long, n=9,451 | 1.060 | **0.5208** | 0.9303 | 0.3511 |
+            | short, n=5,424 | 1.006 | **0.4568** | 0.8866 | 0.2823 |
+
+            Clearing the 0.40 cap: long 34.18% overall, 4.78% on day spans and **63.33% on month
+            spans**. Short 43.81% overall, 6.58% and **79.21%**.
+
+            Nightly candidates, per side, over the same rows: long median **0.0** a night, highest 3,
+            **30 in total** over 602 sessions, up from 7. Short median **0.0**, highest 0, **nought in
+            total** over 601 sessions, unchanged.
+
+Findings:   **The prediction was written before the attempt so that it could fail, and it half did.**
+            As written: the median retrace falls below 1.0 and the nightly count moves into single or
+            low double digits, with no threshold moved.
+
+            **The first clause holds, on both sides and on the population the original figures were
+            taken over.** 1.060 to 0.5208 long, 1.006 to 0.4568 short. The scan-family split says the
+            correction did what it was aimed at and nothing more: month-span rows now clear the shape
+            cap at 63.33% and 79.21%, day-span rows at 4.78% and 6.58%, and the day spans are the ones
+            that were already being measured correctly.
+
+            **The second clause fails, on both sides.** A median of nought candidates a night is not
+            single or low double digits. The total moved from 7 to 30 long over 602 sessions and
+            stayed at nought short.
+
+            What the same recount shows about where the count is blocked, stated because it is in the
+            figures already taken rather than sought: `exit-tight` is now the binding gate on both
+            sides, passing 1.29% long and 1.37% short, with medians of 1.3127 and 1.4278 against a cap
+            of 0.5, being 2.63 and 2.86 times it. The correction does not touch it, and should not:
+            the give-up distance is measured over the pullback bars alone and the span change moves
+            where the thrust starts, not where the pullback ends. With both shape gates and
+            `exit-tight` forced to pass, the remaining conjunction gives a median of **12 a night
+            long**, up from 7, and **nought short**, unchanged.
+
+            **The once-only threshold adjustment is not spent, and this entry does not diagnose
+            further.** Both readings are on the record: the geometry was one fault and it is
+            corrected, and something else holds the count down. Finding what is work for a session
+            that has not just spent a night on this, and the once cannot be re-spent.
+
+            Observation. The fixture's rows are no longer degenerate. Before this commit every
+            captured row returned `pullback_bars` 0 and `retrace_depth` 0.0000; HOOD now carries 1 bar
+            at 0.4673 and IESC 8 bars at 0.7934, because both carry a `leader` thrust. INTC-short
+            carries a `gapdown` and is unchanged, which is the control on the change.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 859 expectations, 405 independent.
+
+            **15 expectations moved, each with its reason recorded on the expectation.** Four
+            `check.long.*` counts, two gate verdicts and nine frozen signal values, all of them HOOD
+            or IESC and all of them consequences of the span. The two `DERIVED` ones were re-derived
+            through `tools/derive-indicators.py --checks` rather than accepted from the run, and the
+            restatement agreed: HOOD `trigger-near` pass, IESC `held-floor` fail.
+
+Carried:    Nothing new. The threshold obligation stays open and unspent, now carrying the corrected
+            figures. Four parts of 3.0 outstanding.

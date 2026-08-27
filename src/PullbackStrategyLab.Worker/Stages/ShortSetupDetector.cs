@@ -336,7 +336,8 @@ public sealed class ShortSetupDetector
 
             if (thrustIndex >= 0)
             {
-                bounce = PullbackGeometry.Of(shaped, thrustIndex, isLong: false);
+                bounce = PullbackGeometry.Of(
+                    shaped, thrustIndex, ScanSpans.SessionsFor(thrust.Scan), isLong: false);
 
                 if (bounce is not null && figures is not null)
                 {

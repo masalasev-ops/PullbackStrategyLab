@@ -342,7 +342,8 @@ public sealed class LongSetupDetector
 
             if (thrustIndex >= 0)
             {
-                pullback = PullbackGeometry.Of(shaped, thrustIndex, isLong: true);
+                pullback = PullbackGeometry.Of(
+                    shaped, thrustIndex, ScanSpans.SessionsFor(thrust.Scan), isLong: true);
 
                 if (pullback is not null && figures is not null)
                 {

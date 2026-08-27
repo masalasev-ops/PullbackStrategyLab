@@ -974,14 +974,20 @@ def checks_main(argv):
             verdicts[name] = False
     else:
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
-        extreme_index = max(range(thrust_index, len(adj)), key=lambda i: adj[i]["high"])
+        # The span the scan flags: one session for the day scans, twenty for the month ones. A
+        # `leader` hit flags a move that began nineteen sessions before the session it is flagged
+        # on, so measuring it from the flag puts one session of a twenty-session run in the
+        # denominator and finds the extreme at the flag whenever the real high sits before it.
+        span = MONTH_WINDOW if hit[1] in ("leader", "laggard") else 1
+        thrust_start = max(0, thrust_index - span + 1)
+        extreme_index = max(range(thrust_start, len(adj)), key=lambda i: adj[i]["high"])
         extreme = adj[extreme_index]["high"]
         # The close before the thrust. With the thrust on the first bar of the window there is
         # none, and the thrust's own open is the nearest thing to where the move began. Its close
         # is not: the close sits inside the move being measured, so using it reports a shorter
         # thrust than happened. This read the close until the geometry cases at 3.0 reached the
         # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["open"]
+        origin = adj[thrust_start - 1]["close"] if thrust_start > 0 else adj[thrust_start]["open"]
         pullback_bars = len(adj) - 1 - extreme_index
 
         if pullback_bars == 0:
@@ -1158,14 +1164,17 @@ def short_checks(connection, as_of, ticker):
             verdicts[name] = False
     else:
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
-        extreme_index = min(range(thrust_index, len(adj)), key=lambda i: adj[i]["low"])
+        # The span the scan flags. `laggard` is the short side's twenty-session scan.
+        span = MONTH_WINDOW if hit[1] in ("leader", "laggard") else 1
+        thrust_start = max(0, thrust_index - span + 1)
+        extreme_index = min(range(thrust_start, len(adj)), key=lambda i: adj[i]["low"])
         extreme = adj[extreme_index]["low"]
         # The close before the thrust. With the thrust on the first bar of the window there is
         # none, and the thrust's own open is the nearest thing to where the move began. Its close
         # is not: the close sits inside the move being measured, so using it reports a shorter
         # thrust than happened. This read the close until the geometry cases at 3.0 reached the
         # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["open"]
+        origin = adj[thrust_start - 1]["close"] if thrust_start > 0 else adj[thrust_start]["open"]
         bounce_bars = len(adj) - 1 - extreme_index
 
         high = extreme if bounce_bars == 0 else max(
@@ -1610,7 +1619,7 @@ def geometry_window(connection, ticker, as_of, sessions):
     return out
 
 
-def pullback_shape(bars, thrust_index, is_long):
+def pullback_shape(bars, thrust_index, is_long, span=1):
     """The shape of one pullback, restated from what the quantity is rather than from the code.
 
     The move is measured from the close before the thrust to the furthest the move reached after
@@ -1632,16 +1641,22 @@ def pullback_shape(bars, thrust_index, is_long):
     if not bars or thrust_index < 0 or thrust_index >= len(bars):
         return None
 
-    if thrust_index > 0:
-        origin = bars[thrust_index - 1]["close"]
+    # Where the flagged move began. A one-session scan starts where it is flagged; a
+    # twenty-session scan started nineteen sessions earlier. Clamped at the window's own start,
+    # because a window holding part of the move still holds a real shape and refusing it would
+    # drop exactly the names whose run began before the history the detector reads.
+    thrust_start = max(0, thrust_index - span + 1)
+
+    if thrust_start > 0:
+        origin = bars[thrust_start - 1]["close"]
     else:
-        origin = bars[thrust_index]["open"]
+        origin = bars[thrust_start]["open"]
 
     if is_long:
-        extreme_index = max(range(thrust_index, len(bars)), key=lambda i: bars[i]["high"])
+        extreme_index = max(range(thrust_start, len(bars)), key=lambda i: bars[i]["high"])
         extreme = bars[extreme_index]["high"]
     else:
-        extreme_index = min(range(thrust_index, len(bars)), key=lambda i: bars[i]["low"])
+        extreme_index = min(range(thrust_start, len(bars)), key=lambda i: bars[i]["low"])
         extreme = bars[extreme_index]["low"]
 
     after = range(extreme_index + 1, len(bars))
@@ -1709,7 +1724,8 @@ def geometry_main(argv):
 
     for case in spec["cases"]:
         bars = geometry_window(connection, case["ticker"], as_of, sessions)
-        shape = pullback_shape(bars, case["thrustIndex"], case["direction"] == "long")
+        shape = pullback_shape(
+            bars, case["thrustIndex"], case["direction"] == "long", case.get("thrustSpanSessions", 1))
         name = case["name"]
 
         if shape is None:
@@ -1717,8 +1733,9 @@ def geometry_main(argv):
             continue
 
         print()
-        print("  %s  (%s index %d, %s, %d bar(s) read)"
-              % (name, case["ticker"], case["thrustIndex"], case["direction"], len(bars)))
+        print("  %s  (%s index %d, span %d, %s, %d bar(s) read)"
+              % (name, case["ticker"], case["thrustIndex"], case.get("thrustSpanSessions", 1),
+                 case["direction"], len(bars)))
 
         for key in ("extremeIndex", "pullbackBars"):
             print("    geometry.%s.%-16s %d" % (name, key, shape[key]))

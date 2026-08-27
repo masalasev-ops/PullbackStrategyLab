@@ -35,8 +35,14 @@ public sealed class ScanEngine
     /// <summary>How many names each scan keeps. Authored, and marked "phase 2 count check".</summary>
     public const int Breadth = 50;
 
-    /// <summary>The month-mover window, in sessions. One trading month.</summary>
-    public const int MonthWindow = 20;
+    /// <summary>
+    /// The month-mover window, in sessions. One trading month.
+    ///
+    /// The Core constant rather than a second twenty, because the geometry reads the same span
+    /// to measure a month scan's thrust and two copies is how the two start disagreeing about
+    /// which scans are month scans.
+    /// </summary>
+    public const int MonthWindow = ScanSpans.MonthSessions;
 
     /// <summary>
     /// Sessions of history read per name: the month window, the session before it to measure the

@@ -50,7 +50,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃ¢â‚¬â„¢s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "backfill.rebuild.selected",
@@ -500,63 +500,63 @@
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.high",
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -564,21 +564,21 @@
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.sessions",
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "check.long.cluster.failed",
@@ -639,16 +639,18 @@
     {
       "id": "check.long.held-floor.failed",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "check.long.held-floor.passed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "check.long.moves-enough.failed",
@@ -703,16 +705,18 @@
     {
       "id": "check.long.trigger-near.failed",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 2. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "check.long.trigger-near.passed",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "check.long.uptrend.failed",
@@ -1518,6 +1522,134 @@
       "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
     },
     {
+      "id": "geometry.long-month-scan-span-past-the-window-start.extremeIndex",
+      "tier": "DERIVED",
+      "value": "56",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.pullbackBars",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.2926",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.stop",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "28.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "25.7397",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-span-past-the-window-start.trigger",
+      "tier": "DERIVED",
+      "value": "28.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "a twenty-session span starting before the window does, so it is clamped at bar zero and the origin falls back to that bar's adjusted open. The branch a month scan reaches whenever its run began before the history the detector reads. AUTHORED input: PFE index 5 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.extremeIndex",
+      "tier": "DERIVED",
+      "value": "54",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.pullbackBars",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "61.5200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.4422",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.stop",
+      "tier": "DERIVED",
+      "value": "61.5200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "65.2300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "56.8400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.long-month-scan-thrust.trigger",
+      "tier": "DERIVED",
+      "value": "64.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the same window and index as long-retrace-past-the-whole-thrust read over the twenty sessions a `leader` hit actually flags, so the pair differs in one input and nothing else. The retrace falls from 1.0192 to 0.4422 because the origin moves back nineteen sessions. AUTHORED input: BAC index 32 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
       "id": "geometry.long-no-pullback-yet.extremeIndex",
       "tier": "DERIVED",
       "value": "59",
@@ -1900,6 +2032,70 @@
       "checkpoint": "3.0",
       "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
       "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.extremeIndex",
+      "tier": "DERIVED",
+      "value": "39",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.pullbackBars",
+      "tier": "DERIVED",
+      "value": "20",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "28.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.retraceDepth",
+      "tier": "DERIVED",
+      "value": "28.5714",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.stop",
+      "tier": "DERIVED",
+      "value": "28.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "24.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "24.5800",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
+    },
+    {
+      "id": "geometry.short-month-scan-thrust.trigger",
+      "tier": "DERIVED",
+      "value": "24.5500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror against short-retrace-past-the-whole-thrust. The extreme moves from index 57 to index 39, which is the half of the defect that has nothing to do with the denominator: the real low sat before the flag and the old span could not see it. AUTHORED input: PFE index 57 over a span of 20 session(s), in the 60 sessions to 2026-08-24."
     },
     {
       "id": "geometry.short-retrace-past-the-whole-thrust.extremeIndex",
@@ -2753,49 +2949,49 @@
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema9",
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.INTC.adr20",
@@ -2998,49 +3194,49 @@
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema9",
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.META.adr20",
@@ -3243,49 +3439,49 @@
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema9",
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s own bars"
     },
     {
       "id": "indicators.PFE.adr20",
@@ -3734,7 +3930,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃ¢â‚¬â„¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.computed",
@@ -5022,9 +5218,10 @@
     {
       "id": "setup.2026-08-24-HOOD-long.trigger-near",
       "tier": "DERIVED",
-      "value": "fail",
+      "value": "pass",
       "checkpoint": "2.6",
-      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks",
+      "note": "Was fail. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "setup.2026-08-24-HOOD-long.uptrend",
@@ -5150,9 +5347,10 @@
     {
       "id": "setup.IESC-long.held-floor",
       "tier": "DERIVED",
-      "value": "pass",
+      "value": "fail",
       "checkpoint": "2.6",
-      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks",
+      "note": "Was pass. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "setup.IESC-long.moves-enough",
@@ -5322,16 +5520,18 @@
     {
       "id": "signal.2026-08-24-HOOD-long.pullback_bars",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "1",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.2026-08-24-HOOD-long.pullback_extreme",
       "tier": "FROZEN",
-      "value": "109.1250",
+      "value": "103.1400",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 109.1250. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.2026-08-24-HOOD-long.range_avg_20",
@@ -5371,23 +5571,26 @@
     {
       "id": "signal.2026-08-24-HOOD-long.retrace_depth",
       "tier": "FROZEN",
-      "value": "0.0000",
+      "value": "0.4673",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0.0000. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.2026-08-24-HOOD-long.stop_distance_ranges",
       "tier": "FROZEN",
-      "value": "0.0000",
+      "value": "1.1049",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0.0000. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.2026-08-24-HOOD-long.stop_price",
       "tier": "FROZEN",
-      "value": "109.1250",
+      "value": "103.1400",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 109.1250. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.2026-08-24-HOOD-long.thrust_magnitude",
@@ -5661,9 +5864,10 @@
     {
       "id": "signal.IESC-long.closes_beyond_floor",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "4",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.IESC-long.cluster_count",
@@ -5754,16 +5958,18 @@
     {
       "id": "signal.IESC-long.pullback_bars",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "8",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.IESC-long.pullback_extreme",
       "tier": "FROZEN",
-      "value": "341.7984",
+      "value": "323.6500",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 341.7984. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.IESC-long.range_avg_20",
@@ -5803,9 +6009,10 @@
     {
       "id": "signal.IESC-long.retrace_depth",
       "tier": "FROZEN",
-      "value": "0.0000",
+      "value": "0.7934",
       "checkpoint": "2.6",
-      "producedBy": "the replay itself, recorded to detect change"
+      "producedBy": "the replay itself, recorded to detect change",
+      "note": "Was 0.0000. Moved at 3.0(c) by the thrust-window correction, which is a fixture change with a recorded reason rather than a number that quietly became different. Both HOOD and IESC carry a `leader` thrust, so their span goes from one session to twenty: the extreme moves back to where the run actually peaked and a real pullback appears where the row previously had none. INTC-short carries a `gapdown`, a day scan, and is unchanged, which is the control on the change. Before the correction every captured fixture row returned the degenerate shape, so these are the first non-degenerate geometry figures the fixture has ever held."
     },
     {
       "id": "signal.IESC-long.stop_distance_ranges",

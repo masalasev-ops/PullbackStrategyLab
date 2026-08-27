@@ -38,7 +38,8 @@ public static class GeometryCases
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>One window and one thrust index, with the branch it was chosen to reach.</summary>
-    public sealed record GeometryCase(string Name, string Ticker, int ThrustIndex, string Direction, string Why)
+    public sealed record GeometryCase(
+        string Name, string Ticker, int ThrustIndex, int ThrustSpanSessions, string Direction, string Why)
     {
         /// <summary>Whether this case reads the geometry upward. The mirror is a parameter, not a second class.</summary>
         public bool IsLong => string.Equals(Direction, "long", StringComparison.Ordinal);
@@ -94,7 +95,8 @@ public static class GeometryCases
         }
 
         PullbackGeometry.Bar[] shaped = [.. bars.Select(Shape)];
-        return PullbackGeometry.Of(shaped, geometryCase.ThrustIndex, geometryCase.IsLong);
+        return PullbackGeometry.Of(
+            shaped, geometryCase.ThrustIndex, geometryCase.ThrustSpanSessions, geometryCase.IsLong);
     }
 
     /// <summary>

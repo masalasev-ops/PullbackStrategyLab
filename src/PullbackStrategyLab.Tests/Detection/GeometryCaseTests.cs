@@ -58,7 +58,7 @@ public sealed class GeometryCaseTests
 
         // Stated in advance, because a case file that quietly shrinks is the failure here and a
         // count asserted after the fact is a count that agrees with whatever it found.
-        Assert.Equal(11, GeometryCases.All.Count);
+        Assert.Equal(14, GeometryCases.All.Count);
 
         foreach (GeometryCases.GeometryCase geometryCase in GeometryCases.All)
         {
