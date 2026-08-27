@@ -124,6 +124,14 @@
       "surface": "/scoreboard",
       "mustCarry": "a shortage of sessions rather than of evidence",
       "why": "Only one thing withholds a figure: the block bootstrap needs twenty sessions. The minimum sample is a separate statement about information, and the two can contradict each other, because a fortnight of very wide nights reaches the minimum before it reaches twenty sessions. Without this the page could say the minimum was reached beside a figure it was refusing to show, and a reader could not tell which was blocking or what would unblock it."
+    },
+    {
+      "name": "a-withheld-panel-names-a-control-shortage-when-that-is-the-cause",
+      "sentence": "Where a side still has none, the band 1 panel is withheld and says a shortage of control outcomes is the cause rather than a shortage of time",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/scoreboard",
+      "mustCarry": "a shortage of control outcomes rather than of time",
+      "why": "ForwardReturnFiller wrote no control outcome for the whole of phase 3, so band 1 was withheld on every night with an effective count of nought, and 3.6 fires on that count. The panel said no session had closed a 10-session horizon while the store held thirty nights of closed horizons. The wrong cause is worse than no cause: it sends a reader to wait for something that has already happened. The stage's own words are held by the fixture at accumulation.starved.withheldBecause; this holds that the page renders them."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

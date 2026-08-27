@@ -94,8 +94,26 @@ public static class ForwardOutcome
     }
 
     /// <summary>
-    /// One measured outcome. <paramref name="MaximumAdverseExcursion"/> is negative or zero by
-    /// construction, because the worst the path went is never in the subject's favour.
+    /// One measured outcome.
+    ///
+    /// <b><paramref name="MaximumAdverseExcursion"/> is the least favourable point the path reached,
+    /// and it is positive whenever the path never went against the subject.</b> It used to be
+    /// described here as negative or zero by construction, on the reasoning that the worst the path
+    /// went is never in the subject's favour. That is false: a long whose every subsequent low sat
+    /// above its entry has a least favourable point above the entry, and the figure is the distance
+    /// it stayed ahead by. The fixture has held a counterexample since 3.2, at
+    /// `forward.long-ten-sessions.h1.maeAtr` of 0.3258.
+    ///
+    /// The value is left signed rather than floored at nought here, because the distance a path
+    /// stayed ahead by is worth keeping and a proposal about stop placement will want it. What must
+    /// never happen is reading it as a size: <see cref="WinRateCeiling.Survived"/> is where the
+    /// conversion to an adverse excursion happens and it floors there, in one place, named.
+    ///
+    /// <b><paramref name="MaximumFavourableExcursion"/> carries the same hazard mirrored, and it has
+    /// no consumer yet.</b> It is the most favourable point the path reached, so it is negative for a
+    /// long that only ever fell below its entry. Nothing reads it today; the first thing that does
+    /// must floor it at nought the way the ceiling floors its twin, rather than take an absolute
+    /// value, or a subject that never once traded in its favour will be credited with having done so.
     /// </summary>
     public sealed record Outcome(
         DateOnly ActualDate,

@@ -415,6 +415,7 @@ public sealed class PhaseReplay : IDisposable
             measurements.Add(figure);
         }
 
+        measurements.AddRange(AccumulationFigures());
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(ForwardOutcomeFigures());
         measurements.AddRange(ControlFigures());
@@ -1698,6 +1699,104 @@ public sealed class PhaseReplay : IDisposable
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// A run of nights whose horizon has closed, driven through the real fill and the real
+    /// scoreboard build, in a store of its own.
+    ///
+    /// <b>The half of phase 3 the captured fixture cannot reach.</b> One market day closes no
+    /// ten-session horizon, so over the captured store `forward.written` is nought, every band 1
+    /// panel is withheld, and everything past the flag is exercised by nothing. That is how a fill
+    /// binding its subject kind to a literal survived twelve checkpoints: the query that came back
+    /// empty was never run against a store that had anything to put in it.
+    ///
+    /// <b>Its own store, its own namespace, and nothing added to a captured figure.</b> The captured
+    /// counts stay what they were and stay true of a one-night fixture. A figure over the two
+    /// populations together would be a figure over neither.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    /// <summary>
+    /// Computed once for the whole test process, because it is a pure function of authored inputs
+    /// and the shipped stages.
+    ///
+    /// <b>Not an optimisation for its own sake.</b> Eight test files build a replay, and the
+    /// population writes about twelve and a half thousand outcome rows through the real fill.
+    /// Recomputing it per replay took the suite from 1m27 to 2m56 for figures that cannot differ
+    /// between runs, and a suite that takes twice as long is a suite that gets run half as often.
+    /// The measurements are immutable records, so sharing them across collections is safe, and
+    /// <see cref="Lazy{T}"/> is thread-safe by default.
+    /// </summary>
+    private static readonly Lazy<IReadOnlyList<Measurement>> Accumulation = new(BuildAccumulationFigures);
+
+    private static IReadOnlyList<Measurement> AccumulationFigures() => Accumulation.Value;
+
+    private static IReadOnlyList<Measurement> BuildAccumulationFigures()
+    {
+        using var population = new AccumulationPopulation();
+
+        FillResult filled = population.Fill();
+        ScoreboardResult built = population.Build();
+
+        var figures = new List<Measurement>
+        {
+            new("accumulation.nights", AccumulationPopulation.Nights.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.setups", filled.Subjects.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.controls", filled.ControlSubjects.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.setupsWritten", filled.Written.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.controlsWritten", filled.ControlsWritten.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.setupOutcomeRows",
+                population.Outcomes("setup").ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.controlOutcomeRows",
+                population.Outcomes("control").ToString(CultureInfo.InvariantCulture)),
+            // Counted over band 1 alone rather than taken from ScoreboardResult.WithInterval, which
+            // is over every panel the build wrote. The two agree today, because no other band carries
+            // an interval, and an id that says band 1 over a figure computed across the page is the
+            // fifth defect shape whether or not the number happens to match.
+            new("accumulation.band1.panelsWithAnInterval",
+                Band1WithAnInterval(population).ToString(CultureInfo.InvariantCulture)),
+        };
+
+        foreach (string direction in new[] { "long", "short" })
+        {
+            foreach (string set in new[] { "loose", "tight" })
+            {
+                AccumulationPopulation.Panel? panel = population.Band1(direction, set);
+                string id = $"accumulation.band1.{direction}.{set}";
+
+                if (panel is null)
+                {
+                    figures.Add(new Measurement(id, "no panel"));
+                    continue;
+                }
+
+                figures.Add(new Measurement($"{id}.figure", panel.Figure));
+                figures.Add(new Measurement($"{id}.low", panel.Low ?? "none"));
+                figures.Add(new Measurement($"{id}.high", panel.High ?? "none"));
+                figures.Add(new Measurement(
+                    $"{id}.rows", panel.Rows.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"{id}.effective",
+                    panel.Effective?.ToString(CultureInfo.InvariantCulture) ?? "none"));
+            }
+        }
+
+        static int Band1WithAnInterval(AccumulationPopulation population) =>
+            (from direction in new[] { "long", "short" }
+             from set in new[] { "loose", "tight" }
+             let panel = population.Band1(direction, set)
+             where panel?.Low is not null
+             select panel).Count();
+
+        // The state the defect produced, read back from the producer. Every setup outcome closed and
+        // no control outcome exists, which is the exact shape band 1 was in for the whole of phase 3
+        // while the panel said the horizons had not closed. Frozen as the words rather than as a
+        // count, because the words are what a person had to diagnose it from.
+        figures.Add(new Measurement(
+            "accumulation.starved.long.loose.withheldBecause",
+            population.WithheldReasonWithNoControlOutcomes("long", "loose") ?? "no panel"));
+
+        return figures;
     }
 
     /// <summary>A session, written the way the store and the vendor both write one.</summary>

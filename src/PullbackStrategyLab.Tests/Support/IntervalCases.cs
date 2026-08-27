@@ -15,7 +15,7 @@ namespace PullbackStrategyLab.Tests.Support;
 /// produce a wrong number, it produces a confident one: band 1 clears zero before it should and says
 /// the pattern is real. A stage that never computes an interval can be neither too narrow nor too
 /// wide, so "green" over the fixture says nothing at all about the property.
-/// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+/// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
 /// </summary>
 public static class IntervalCases
 {

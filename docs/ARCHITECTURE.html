@@ -757,7 +757,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="warn"><b class="lab">None of it means anything without a control population</b>
 <p>Flagged setups returning 2% over ten days is not a result. The whole market may have returned 2% that fortnight. Every panel below is a <i>comparison</i>, which is why <b>ControlSampler</b> exists.</p>
-<p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged and records their forward returns identically. Two sets, both free because they come from daily bars already stored:</p>
+<p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged. What is then recorded for them is stated in <a href="#failure-behaviour">Failure behaviour</a> rather than here, because a claim only in prose is a claim no table enumerates and no verdict covers. Two sets, both free because they come from daily bars already stored:</p>
 <p><b>Loose controls</b> match on liquidity and daily-range decile only. Comparing against these measures the whole funnel, thrust scan included.<br>
 <b>Tight controls</b> also match on the trend ladder and market mood. Comparing against these isolates the pullback checks, and answers the sharper question: is this pattern worth anything beyond simply owning stocks in uptrends?</p>
 <p>The second comparison is the one that can embarrass the project, which is why it belongs on the page.</p></div>
@@ -818,7 +818,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. Writes nothing, because a component enforcing immutability by writing would be the second writer of the thing it protects</td></tr>
 <tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
 <tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
-<tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>
+<tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not, and on every control drawn against one</td></tr>
 <tr><td><b>LossClassifier</b></td><td>Nightly 21:35</td><td>Classifies every loss into one of four causes</td></tr>
 <tr><td><b>CeilingCalculator</b></td><td>Weekly</td><td>Computes the win-rate ceiling from the outcome distribution, per direction and from the path rather than the terminal return, so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach</td></tr>
 <tr><td><b>VariantScorer</b></td><td>Nightly 21:40</td><td>Differences each version against the baseline, night by night</td></tr>
@@ -871,6 +871,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Proposal cites the planted null signal</td><td>That pack version is failed immediately and no proposal from it is admitted.</td></tr>
 <tr><td>Variant sample never accumulates</td><td>Stays open, ledger shows its age. No timeout that quietly accepts or rejects, because a timeout is a decision made by the calendar rather than by evidence.</td></tr>
 <tr><td>Follow-up date is a holiday</td><td>The next trading day is used and the actual date stored alongside the intended horizon.</td></tr>
+<tr><td>A comparison has no control outcomes</td><td>ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the flagging setup's session, signed by that setup's direction and expressed in the control's own range. Where a side still has none, the band 1 panel is withheld and says a shortage of control outcomes is the cause rather than a shortage of time. It bound the subject kind to a literal for the whole of phase 3, so no control outcome was ever written, band 1 was withheld on every night with an effective count of nought, and the panel named a horizon that had already closed (see: Matched control populations are drawn nightly, loose and tight).</td></tr>
 <tr><td>Someone edits the baseline</td><td>Not permitted while variants run. Doing so closes every open variant as unresolved and starts a new generation, because they were being compared against a rule that no longer exists.</td></tr>
 </table>
 

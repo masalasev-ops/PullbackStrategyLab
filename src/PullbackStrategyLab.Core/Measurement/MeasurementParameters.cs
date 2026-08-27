@@ -34,7 +34,7 @@ public static class MeasurementParameters
     /// A ten-session forward return means adjacent nights share most of their window, so consecutive
     /// observations are serially correlated by construction. A block at least as long as the horizon
     /// is what carries that correlation into the resampling instead of assuming it away.
-    /// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+    /// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
     /// </summary>
     public const int BootstrapBlockSessions = 10;
 
@@ -44,7 +44,7 @@ public static class MeasurementParameters
     /// Enough that the percentile bounds are stable to the two decimals the scoreboard shows, which
     /// is the only property that matters here: the figure is reported to a person, not consumed by
     /// another calculation.
-    /// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+    /// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
     /// </summary>
     public const int BootstrapDraws = 10_000;
 

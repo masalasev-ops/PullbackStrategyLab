@@ -832,3 +832,28 @@ Why:  The corpus's own rule is that an obligation goes into this table in the co
 Was:  The nightly table began "| 17:20 | `actions`, splits bulk" and carried no `universe-build` row and no nightly snapshot row. Its total read "**~798 against a 5,000 ceiling**". There was no section describing an installed schedule.
 Now:  A `universe-build` row at 17:15 and a `snapshot-db` row at 22:00, a total of ~803, a paragraph on why the universe row is the one that cannot be recovered, and a section describing the seventeen registered tasks and the logged-on limitation.
 Why:  `UniverseBuilder` says the snapshot "is written every night without exception" and "cannot be reconstructed later", and `UniverseSnapshotReader.Members` matches the snapshot date exactly with no fallback, deliberately, so that a missing snapshot cannot be silently papered over with current membership. The stage was absent from the nightly table, so an operator following the RUNBOOK literally would have built a lab that flags nothing and reports every night clean. Found while scheduling the job.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  <p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged and records their forward returns identically. Two sets, both free because they come from daily bars already stored:</p>
+Now:  The same sentence with the control-recording half moved into the Failure behaviour table, as a row conditioned on "A comparison has no control outcomes", and the prose repointed at it.
+Why:  This was the only sentence in the corpus claiming control forward returns are recorded, and it sat in prose. `architecture-conformance` enumerates claims from tables, so it never saw it, never gave it a verdict, and reported zero unexamined while the claim was false: ForwardReturnFiller bound its subject kind to the literal `setup` and no control outcome was ever written. A claim only in prose is a claim nothing can fail on.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  A Failure behaviour table with fifteen rows and no row for a comparison with no controls.
+Now:  A sixteenth row, `A comparison has no control outcomes`, stating that ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the flagging setup's session, signed by that setup's direction and expressed in the control's own range, and that a side with none is withheld naming a shortage of control outcomes rather than of time.
+Why:  The claim needs a table to live in so it carries a verdict. It is asserted at 3.2 rather than deferred, because ForwardReturnFiller exists and a claim deferred to a landed checkpoint is a claim that checkpoint shipped without coming back to.
+
+### 2026-08-27 — SCHEMA.md — cites The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
+Was:  ...the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).
+Now:  The same sentence citing **The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**.
+Why:  The decision it cited was superseded. The effective-sample half it is about did not change; the citation is repointed so it does not resolve to an entry under "Previously decided".
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  <tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>
+Now:  The same row ending "traded or not, and on every control drawn against one".
+Why:  The catalogue's description was true of what the stage did and not of what it was for. Nothing asserts this cell, because the catalogue producer reads only the component name, so it is corrected for the reader rather than for a check.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Matched control populations are drawn nightly, loose and tight
+Was:  A phase 3 section whose 3.5 row and following notes said nothing about the checkpoint having been reopened, and a carried-obligations table of ten rows.
+Now:  A paragraph under the phase 3 table naming the three defects that reopened 3.5 on 2026-08-27, and twelve further obligation rows.
+Why:  A checkpoint reopened after its PROGRESS entry is recorded is invisible in the plan otherwise, and the corpus's pointer to which checkpoint the build is on reads the plan and the record together. Eleven of the twelve rows are the sign-off review's non-blocking findings plus four raised while fixing the blocking ones; the twelfth is the nightly runner having only a Windows half.

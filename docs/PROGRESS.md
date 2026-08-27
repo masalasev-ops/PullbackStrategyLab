@@ -4626,3 +4626,218 @@ administrative coat.
 
 Nothing else has been added to the shipped source since the handover. The reviewer's list is that
 entry plus this one file.
+
+## 3.5 — 2026-08-27 — phase-3-measurement — reopened: three defects, and the three guards each of them got past
+
+The sign-off review of phase 3 declined to sign, on three findings. **3.5 is reopened rather than a
+new checkpoint being opened**, because none of the three adds a deliverable: each is a behaviour 3.2,
+3.4 or 3.5 already states and the code did not have. The session that found them did not fix them,
+and this session, having committed code, cannot sign them off. Both halves are the fresh-session
+rule.
+
+**The nightly job was not started before this landed**, which the review asked for. Everything band 1
+would have accumulated in the meantime was half a comparison and the nights are not recoverable.
+
+### The first: nothing ever wrote a control forward return
+
+`ForwardReturnFiller` bound `subject_kind` to the literal `setup` and its subject query read only the
+`setup` table. `ScoreboardBuilder.Series` joins outcomes on `subject_kind = 'control'`. So the
+control-mean subquery matched nothing, band 1's difference series was empty for every direction, every
+control set and every night, and the panel was withheld with `n_effective` pinned at nought.
+**Checkpoint 3.6 fires on that count**, so the decision point the whole phase exists to reach could
+never arrive.
+
+Measured on a seeded store of 30 long-side nights, 240 setups and 2,400 control draws, with every
+ten-session horizon closed. Before: 960 setup outcomes, **nought control outcomes**, all four band 1
+panels withheld with an effective count of nought, every one of them saying no horizon had closed.
+After: 9,600 control outcomes beside the 960, the two long panels answering, and the two short panels
+withheld saying no setup has been flagged on that side, which is true of that store and is the point.
+
+**Three guards each had a different reason for missing it, and that is the part worth keeping.** The
+golden fixture holds one market day, so no horizon closes in it and `forward.written` is legitimately
+nought. The interval cases hand authored nightly means straight to `PairedInterval`, so they never
+reach the query that was empty. And the one sentence in the corpus claiming control returns are
+recorded sat in prose rather than in a table, so `architecture-conformance` never enumerated it as a
+claim and reported zero unexamined while the claim was false. Each guard was working; none of them was
+pointed here.
+
+**The diagnostic pointed away from the defect, which is worse than none.** `WithheldBecause` branched
+on the length of the difference series alone, so an empty series always printed "no session has a
+closed 10-session horizon yet". With thirty nights of closed horizons in the store it still said the
+horizons had not closed, sending a reader to wait for something that had already happened. The
+shortage is now measured rather than inferred and the panel names which of four it is.
+
+### The second: PairedInterval was not a bootstrap
+
+Block starts were `(draw * 7919 + block * 104729) mod N`. Every start in draw `d` is the corresponding
+start in draw 0 shifted by the same `d * 7919`, so **every draw was one fixed lattice rotated**. At
+most `N` distinct resample means existed however many draws were asked for, and ten thousand draws was
+bit-identical to `N` draws on all five committed series.
+
+**This is the third route to the failure the class exists to prevent.** The first was walking the
+offsets in order, which gives an interval of no width; the second was assuming independence; this one
+wore the shape of a fix for the first.
+
+**The independent restatement could not see it, because it restated the same thing.**
+`tools/derive-indicators.py` hard-coded the same two strides, so what the two implementations agreed
+about was the transcription of an algorithm and never that the algorithm was the one the decision
+names. Fifteen `DERIVED` expectations agreed with each other for the whole of phase 3.
+
+**Independent block starts alone were not enough, and the measurement is why.** Over 300 authored
+null series per row, all three schemes seeing the same series, against a nominal 5%:
+
+| nights | carry-over | shipped rotation | independent, percentile | independent, studentised |
+|---|---|---|---|---|
+| 20 | 0.0 | 48.3% | 20.3% | 4.7% |
+| 20 | 0.7 | 78.7% | 37.3% | 6.0% |
+| 40 | 0.0 | 46.0% | 12.3% | 5.0% |
+| 40 | 0.7 | 71.3% | 24.0% | 6.7% |
+| 100 | 0.0 | 24.7% | 8.7% | 5.0% |
+| 100 | 0.7 | 45.0% | 14.7% | 7.7% |
+
+Studentising is the only one of the three that holds the confidence it prints, so the bounds are
+studentised rather than percentile. That is a change to a named decision and is written as one.
+
+**The rotation's rate is erratic as well as high, which is a second argument against it.** It reads
+8.7% at thirty independent nights and 46.0% at forty, because what it returns depends on how the
+lattice happens to land on the series length. A confidence that is a function of how many nights have
+accumulated is not a confidence.
+
+### The third: a positive adverse excursion was read as its own size
+
+`ForwardOutcome` computes the least favourable point on the path, which is **positive** whenever the
+path never went against the subject. Two doc-comments asserted it was negative or zero by
+construction, and the committed fixture has held a counterexample since 3.2 at
+`forward.long-ten-sessions.h1.maeAtr` of 0.3258. `WinRateCeiling.Survived` took its absolute value, so
+a long that rose without ever trading below its entry came back as having gone that far against it.
+
+Measured: a seeded long whose every subsequent low sat five points above its entry, returning 17% with
+no drawdown, was recorded at 3.0 ATR adverse against a give-up of 1.0 in price and **judged stopped
+out**. The bias falls hardest on subjects that rose cleanly, which is exactly what the ceiling's
+perfect forecaster selects, so it pushed both the bound and the achieved rate down and distorted the
+gap between them, which is the whole figure.
+
+**Every subject in `ceiling-cases.json` carried a negative excursion**, so the authored fixture was
+written to the false invariant and could not reach the path. `derive-indicators.py --ceiling` carried
+the same `abs()`, for the same reason the interval restatement did: the premise was shared, so the
+second implementation reproduced it.
+
+Built:      **`ForwardReturnFiller`** reads `control_setup` as well as `setup` and binds each row's
+            own subject kind. A control's outcome is over its own bars, from the flagging setup's
+            session, **signed by that setup's direction** and expressed in **its own** range. The two
+            populations are counted apart on `FillResult`, because a single pair of totals would have
+            read as healthy on every night of phase 3.
+
+            **`ScoreboardBuilder.WithheldBecause`** measures the shortage instead of inferring it, and
+            names which of four is blocking: nothing flagged, no setup outcome closed, no control
+            outcome closed, or too few sessions carrying a pair.
+
+            **`PairedInterval`** replaced with a studentised moving-block bootstrap taking independent
+            block starts per draw from splitmix64 at a published seed, and returning nothing where the
+            series cannot disperse. `DistinctResampleMeans` is exposed so the property can be held
+            rather than reasoned about.
+
+            **`WinRateCeiling.Survived`** floors the excursion at nought rather than taking its
+            absolute value, in one place, named. Both doc-comments corrected.
+
+            **`AccumulationPopulation`**, an authored run of 24 nights whose horizon has closed, driven
+            through the real fill and the real build **in a store of its own**. It is not rows in the
+            replay's store: authored setup rows there would move `calibration.setupRowsOutsideTheForwardNight`,
+            which is frozen at nought and stands for the evidence rule, and would pool authored rows
+            into `controls.*`, `cap.*`, `journal.*`, `gallery.*` and every `check.*` sidedness figure.
+            Its figures are namespaced `accumulation.` and **none of them is added to a captured one**.
+
+            **New assertions.** `ForwardReturnFillerTests`, five, on the control path, its sign, its
+            range, its immutability and its unclosed horizons. `PairedIntervalTests`, seven, on the
+            properties rather than the values. A `Failure behaviour` row and its arm in
+            `architecture-conformance`, backed by a named test. A `surface-claims` claim that a
+            withheld panel names a control shortage when that is the cause.
+
+            **Documents.** A superseding decision, with the old entry moved to "Previously decided"
+            with its reasoning. Three `CHANGELOG` entries. Eight obligations raised in `BUILD_PLAN`.
+
+Measured:   **The proof that the new assertions hold their subjects, done by removal.** Restoring the
+            rotation scheme turns 4 of the 7 interval tests red, reporting 40 distinct resample means
+            at ten thousand draws, an interval identical at two draw counts, and 33.5% and 59.0%
+            false clearance. Removing the control subject query turns all 5 filler tests red; restoring
+            the literal subject kind turns 3 of them red.
+
+            **Two independent implementations now agree about the right algorithm.** The C# and the
+            rewritten python restatement match to four places on all fifteen interval figures and on
+            the eight accumulation counts.
+
+Findings:   **The interval expectations all moved, and one verdict flipped.** Every low and high over
+            the five series changed, and `many-names-a-night-moving-together` went from clearing zero
+            to not clearing it. That case's stated purpose is the effective-sample measurement and its
+            `clearsZero` was incidental, but the direction is the finding: a series whose nightly means
+            vary three times wider than independence allows was **clearing zero confidently** under the
+            old interval. The new one says it does not, which is the answer that case's own note
+            implies.
+
+            **Writing repository files through a text-mode handle turned ten of them CRLF**, against a
+            corpus normalised to LF. Nothing failed to compile and the suite stayed green; what caught
+            it was a scope floor, `decision-resolves` reporting 0 decision names against a floor of 66.
+            A check that states its scope in numbers found a corruption three checks could not see, and
+            it is the third time in this corpus a floor has earned itself.
+
+            **A defect fixed in code is not fixed in the restatement.** Both `abs()` and both stride
+            constants lived in `tools/derive-indicators.py` as well, so both had to move in the same
+            commit or the `DERIVED` tier would have gone on reporting agreement about the wrong thing.
+            An independent restatement is independent about arithmetic and never about a shared premise.
+
+
+            **The fixes were reviewed before they were committed, and the review found four things
+            worth having.** Two were defects in this work: the superseded interval decision was
+            written in above `## Previously decided` rather than under it, so it parsed as a live
+            decision and nothing could have failed on it, and the surface stub drifted from the
+            producer within an hour of the reconciliation gap being raised as an obligation. One was
+            a real inconsistency in the new interval, below. One was the minimum-sample mismatch, now
+            carried.
+
+            **The observed standard error was estimated from a prefix of the series, and the obvious
+            fix was worse.** A resample is scored by the sample error of the block means it drew, so
+            the matching estimate on the observed series is the sample error of a whole number of
+            non-overlapping block means, and any such tiling leaves `n mod 10` nights out of the scale
+            while they still enter the estimate and every resample. Estimating over all `n` wrapping
+            blocks instead uses every night and was measured: it comes back conservative rather than
+            calibrated, clearing zero 0.0% to 2.3% of the time under a true null at twenty to forty
+            nights against a nominal 5%, because overlapping block means spread wider than the draws
+            do. The tiling stands and is now anchored at the recent end, so the nights left out of the
+            scale are the oldest rather than the newest.
+
+            **And the envelope is stated rather than the best cell in it.** Studentising holds 3.7% to
+            7.7% over independent nights and an AR(1) up to 0.7. Against the process a ten-session
+            overlapping label actually creates, a moving average of order nine whose correlation cuts
+            off inside the block length, it reads 3.0% to 11.7%. Against an AR(1) of 0.9 it reads 7.0%
+            to 24.0%, and that is a limit of the block length rather than of the method. The first
+            draft of this entry quoted the good cells and called it "every length and carry-over
+            tried", which was true and read as more than it said.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 405 tests. `tools/verify-phase` GREEN,
+            117 claims, 67 passed, 0 failed, 50 out of scope, **0 unexamined**. 1167
+            expectations, 638 independent.
+
+Carried:    **Thirteen raised, none discharged.** Seven are the sign-off review's non-blocking
+            findings, due at 4.1 and 4.6: the `band0.degradedRuns` panel's three populations and its
+            unrendered red, excursions stored as nought where they are undefined, `intended_date`
+            being a calendar step, ratios read through the price crossing, `CeilingCalculator`'s
+            insert comment, and `SetupJournalTests` claiming four assertions and holding two. One is
+            `tools/nightly.ps1` having only a Windows half, at the move.
+
+            **Five were raised while doing this work and four of those came out of reviewing it.**
+            Nothing reconciles the `surface-claims` stub against the text its producer emits, which
+            bit within the hour: the stub kept wording `ScoreboardBuilder` no longer emits and the
+            check stayed green. The fill re-walks every subject ever recorded on every night, so its
+            cost grows with the square of the accumulation. A subject whose horizon can never close is
+            counted as not yet elapsed for ever and drops out of the control mean without saying so.
+            `ControlSampler` can draw a name that did not trade on the night it is drawn for, which
+            the fill now refuses and counts rather than mis-measuring, leaving a set thinner than five
+            with nothing saying which name went missing.
+            And **the minimum sample of 262 was sized for a normal-theory test while the test actually
+            run is a studentised bootstrap**, so reaching it does not deliver the ratified 90% power.
+            That last one is at the operator, because the two inputs it turns on are judgements this
+            corpus says belong to a person, and the direction is under-power, which is the side
+            CLAUDE.md's own argument for 90% over 80% says has no downstream.
+
+**This is not the sign-off.** A fresh session takes 3.7, and what it must review is everything named
+under Built above.

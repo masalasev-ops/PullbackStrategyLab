@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Core.Measurement;
 /// the <c>n - 1</c> denominator makes the estimate unbiased. That is the same cancellation the paired
 /// difference buys on the scoreboard, which is why this measures the right quantity rather than a
 /// near neighbour of it.
-/// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+/// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
 ///
 /// <b>Statistics are double here, deliberately.</b> CLAUDE.md's rule is that prices are decimal and
 /// statistics are double, and these are neither prices nor money: they are variances of ratios, and

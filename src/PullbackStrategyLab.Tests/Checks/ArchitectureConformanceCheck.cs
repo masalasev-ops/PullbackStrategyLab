@@ -93,6 +93,7 @@ public sealed partial class ArchitectureConformanceCheck
         ["Proposal cites the planted null signal"] = "6.4",
         ["Variant sample never accumulates"] = "6.7",
         ["Follow-up date is a holiday"] = "3.2",
+        ["A comparison has no control outcomes"] = "3.2",
         ["Someone edits the baseline"] = "5.1",
     };
 
@@ -313,6 +314,12 @@ public sealed partial class ArchitectureConformanceCheck
                     "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning",
                     "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
                     + "The scan asks only that the run scope still exposes what is left"))
+            .Scan("Failure behaviour: A comparison has no control outcomes",
+                CheckCoverage.Backing.Test(
+                    "ForwardReturnFillerTests.A_control_draw_produces_forward_returns_of_kind_control",
+                    "a control draw is seeded and the rows are read back by subject kind, which is the "
+                    + "behaviour the scan's two source shapes stand for. The scan alone would have passed "
+                    + "for the whole of phase 3 had the query been present and unreachable"))
             .Scan("the catalogue's components exist and are registered, found by scanning declarations and registrations",
                 CheckCoverage.Backing.Test(
                     "ComponentReachabilityTests.Every_stage_the_entry_point_advertises_has_an_arm_in_the_dispatch",
@@ -664,6 +671,12 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "the fill no longer records the intended date beside the session actually used, so a follow-up that crossed a holiday reads as though it had not"),
 
+            "A comparison has no control outcomes" => TheFillRecordsBothSubjectKinds()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "ForwardReturnFiller reads control_setup as well as setup, binds each row's own subject kind rather than a literal, and the fixture carries a closed-horizon population whose control outcomes exist")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the fill no longer records an outcome for a control, so band 1's difference series is empty on every night and the panel is withheld for a cause that is not the one it names"),
+
             _ => Claim.NotExamined("Failure behaviour", condition,
                 "the checkpoint that builds it has landed and no assertion reads this row"),
         };
@@ -705,6 +718,52 @@ public sealed partial class ArchitectureConformanceCheck
             && typeof(CapResult).GetProperty(nameof(CapResult.LongCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.ShortCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.CappedOut)) is not null;
+    }
+
+    /// <summary>
+    /// The fill records an outcome for both subject kinds, asked of the source and of the fixture.
+    ///
+    /// <b>Source alone would not hold this and the corpus has the scars to prove it.</b> The
+    /// statement that wrote control rows was absent for the whole of phase 3 while every instrument
+    /// stayed green, so what is asked here is the shape in the file <i>and</i> that the committed
+    /// fixture carries a population whose control outcomes actually exist. The behavioural half
+    /// lives in <c>ForwardReturnFillerTests</c>, which seeds a draw and reads the rows back.
+    /// </summary>
+    private static bool TheFillRecordsBothSubjectKinds()
+    {
+        string filler = RepositoryLayout.Read(System.IO.Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "ForwardReturnFiller.cs"));
+
+        // The subject query has to exist and the insert has to take each subject's own kind. A
+        // literal here is exactly what shipped, and it read as deliberate.
+        if (!filler.Contains("FROM control_setup", StringComparison.Ordinal)
+            || !filler.Contains(
+                "AddWithValue(\"@subject_kind\", subject.Kind)", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string expectations = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Root, "fixtures", "expectations.json"));
+
+        using JsonDocument document = JsonDocument.Parse(expectations);
+
+        foreach (JsonElement expectation in document.RootElement.GetProperty("expectations").EnumerateArray())
+        {
+            if (!string.Equals(
+                    expectation.GetProperty("id").GetString(),
+                    "accumulation.forward.controlsWritten",
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            // A committed figure of nought is the state the defect produced, so the expectation
+            // existing is not enough on its own.
+            return int.TryParse(expectation.GetProperty("value").GetString(), out int written) && written > 0;
+        }
+
+        return false;
     }
 
     /// <summary>

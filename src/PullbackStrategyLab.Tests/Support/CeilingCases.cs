@@ -14,7 +14,7 @@ namespace PullbackStrategyLab.Tests.Support;
 /// the cap scenarios are, because the quantity under test is a rule over numbers.
 /// see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
 ///
-/// <b>The five scenarios are chosen to separate readings that a single win rate cannot.</b> An
+/// <b>The scenarios are chosen to separate readings that a single win rate cannot.</b> An
 /// achieved rate well under the bound and an achieved rate almost at it lead to opposite
 /// conclusions, and telling them apart is the entire purpose of computing a bound rather than
 /// assuming one.

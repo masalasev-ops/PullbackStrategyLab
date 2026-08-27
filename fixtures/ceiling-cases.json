@@ -47,6 +47,15 @@
       ]
     },
     {
+      "name": "never-traded-against-the-entry",
+      "why": "A subject whose path never once went below its entry. Its least favourable point is above the entry, so its recorded excursion is positive, and the adverse excursion a stop could have been hit by is nought. Read through an absolute value it becomes 3.0 ATR against the subject, three times its own give-up distance, and a name that returned 17% without ever drawing down is judged stopped out and dropped from what foresight could have kept. The bias falls hardest on subjects that rose cleanly, which is exactly what a perfect forecaster selects. Under the absolute value this case reads bound 0.5000 achieved 0.3333; read correctly it is bound 1.0000 achieved 0.6667, so it separates the two outright rather than by a rounding. Every other subject in this file carries a negative excursion, so the fixture was authored to the false invariant and could not reach the path.",
+      "subjects": [
+        { "return": "0.17", "maeAtr": "3.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.04", "maeAtr": "-0.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.03", "maeAtr": "-2.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
       "name": "no-range-cannot-be-judged",
       "why": "A subject with no range at all is treated as not having survived rather than as having survived. A bound that counted unmeasurable rows as available would be optimistic exactly where the data is worst, which is the direction an error must never take.",
       "subjects": [

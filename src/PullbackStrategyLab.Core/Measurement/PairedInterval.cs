@@ -12,26 +12,68 @@ namespace PullbackStrategyLab.Core.Measurement;
 /// Either alone makes an interval assuming independence too narrow. Together, band 1 clears zero
 /// before it should, and band 1 is the project's central question. A too-narrow interval does not
 /// produce a wrong number; it produces a confident one.
-/// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+/// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
 ///
 /// <b>The statistic is the paired difference</b>, a setup's return minus the mean of its own matched
 /// controls, which removes the shared market factor inside a night by construction rather than by
 /// adjustment. The remaining serial overlap is carried by a moving-block bootstrap with a block at
 /// least as long as the scoring horizon.
 ///
-/// <b>Deterministic, with no seed anywhere.</b> The block offsets are mixed by two coprime strides
-/// rather than drawn at random, so the same series gives the same interval on every machine and the
-/// phase report can diff it. A seeded bootstrap would be a figure nobody could reproduce from the
-/// store alone.
+/// <b>Deterministic, from a fixed published seed rather than from a scheme with no seed at all.</b>
+/// The block starts are drawn from splitmix64 started at <see cref="Seed"/>, so the same series
+/// gives the same interval on every machine and the phase report can diff it. Every operation is
+/// IEEE-754 double addition, division and square root, all correctly rounded, so the two platforms
+/// agree bit for bit. <b>An independent restatement in another language agrees to every place
+/// printed rather than bit for bit</b>, and the difference is worth naming: CPython's built-in
+/// <c>sum</c> has been compensated since 3.12, so the restatement in `tools/derive-indicators.py`
+/// accumulates a slightly different rounding error. Four places is where the two are compared and
+/// the gap sits far below it, but "agrees exactly" would be a claim neither side holds.
 ///
-/// <b>Mixed rather than walked, and the difference is the whole thing.</b> Walking the offsets in
-/// order makes every resample the same series rotated, a rotation preserves the mean, and the
-/// interval comes back with zero width. An interval of no width clears zero always, which is the
-/// failure this class exists to prevent arrived at from the opposite direction. It shipped that way
-/// for one run at 3.5 and was caught because four authored series all returned low equal to high.
+/// <b>The scheme this replaces was not a bootstrap and the way it failed is worth keeping.</b> It
+/// mixed the block offsets by two coprime strides, which reads as spreading the draws across the
+/// series and is not. Every start in draw <c>d</c> was the corresponding start in draw 0 shifted by
+/// the same <c>d * 7919</c>, so **every draw was one fixed lattice rotated**, at most <c>N</c>
+/// distinct resample means existed however many draws were asked for, and ten thousand draws was
+/// bit-identical to <c>N</c> draws. On the five committed scenarios long enough to produce an
+/// interval, of six in the fixture, the intervals came back two to three point seven times narrower
+/// than a real moving-block bootstrap, worst on the AR(1) series written to exercise exactly the
+/// serial overlap it got most wrong. **This is the third route to
+/// the failure this class exists to prevent**: the first was walking the offsets in order, which
+/// gave an interval of no width, the second was assuming independence, and this one wore the shape
+/// of a fix for the first.
+///
+/// <b>Studentised rather than percentile, because independent block starts alone do not get there.</b>
+/// Over 300 authored null series per row, all three schemes seeing the same series, at a nominal 5%:
+/// the scheme this replaces clears zero 48.3% of the time at twenty independent nights and 46.0% at
+/// forty; a percentile interval over correctly drawn blocks clears it 20.3% and 12.3%; studentising
+/// each resampled mean by its own block-to-block standard error clears it 4.7% and 5.0%. With an
+/// AR(1) of 0.7 the three read 78.7%, 37.3% and 6.0% at twenty nights. The quantity band 1 turns on
+/// is whether a bound clears zero, so an interval that clears it four times too often is not a
+/// narrower version of the right answer.
+///
+/// <b>Where it holds and where it does not, because the envelope is the honest part.</b> Studentising
+/// clears zero 3.7% to 7.7% of the time over independent nights and an AR(1) up to 0.7, from twenty
+/// to a hundred nights. Against the process a ten-session overlapping label actually creates, being a
+/// moving average of order nine whose correlation cuts off inside the block length, it reads 3.0% to
+/// 11.7% from twenty to two hundred and forty nights. Against an AR(1) of 0.9 it reads 7.0% to 24.0%,
+/// and that is a limit of the block length rather than of the method: correlation at 0.9 runs well
+/// past ten sessions and no block of ten absorbs it. If the realised series turns out to carry
+/// dependence beyond the horizon, the block length is what has to move.
+/// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
 /// </summary>
 public static class PairedInterval
 {
+    /// <summary>
+    /// The seed the block draws start from, fixed and written down.
+    ///
+    /// A published constant rather than no seed at all. The scheme this replaces avoided a seed by
+    /// making the draws a deterministic function of their own index, and that is what collapsed the
+    /// resample space to one rotated lattice. Reproducibility is what a seed has to buy, and a
+    /// constant in the source buys it: any reader can restate the interval from the store and this
+    /// number, on any machine, in any language.
+    /// </summary>
+    public const ulong Seed = 0x5EED1F7UL;
+
     /// <summary>
     /// One night's mean paired difference, how many pairs it was taken over, and how far apart those
     /// pairs were.
@@ -59,11 +101,17 @@ public static class PairedInterval
     /// Null rather than a wide interval, because a panel that prints an interval from three nights
     /// invites a reading, and the failure mode this whole system exists to avoid is reading a
     /// pattern in forty observations.
+    ///
+    /// <b>Null also where the series cannot disperse.</b> A series whose blocks all carry the same
+    /// mean has no standard error to studentise by, and the interval it would produce has no width.
+    /// An interval of no width clears zero always, so it is withheld rather than shown, which is the
+    /// one thing this class must never do quietly.
     /// </summary>
     public static Estimate? Of(IReadOnlyList<Night> series, int blockSessions, int draws)
     {
         ArgumentNullException.ThrowIfNull(series);
         ArgumentOutOfRangeException.ThrowIfLessThan(blockSessions, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(draws, 1);
 
         if (series.Count < blockSessions * 2)
         {
@@ -71,54 +119,74 @@ public static class PairedInterval
         }
 
         List<Night> ordered = [.. series.OrderBy(n => n.Date)];
+        int nights = ordered.Count;
+        int blocks = nights / blockSessions;
+
+        // Statistics are double, on the same grounds ForwardDispersion states: these are variances
+        // of ratios rather than prices or money, the arithmetic needs a square root, and forcing
+        // them through decimal would cost the ability to restate the figure in another tool. The
+        // crossing happens here and at the return, and nowhere in between.
+        double[] values = [.. ordered.Select(n => (double)n.MeanDifference)];
+
         decimal mean = ordered.Average(n => n.MeanDifference);
         int rows = ordered.Sum(n => n.Pairs);
 
-        // Blocks chosen with replacement, deterministically.
-        //
-        // <b>The obvious deterministic scheme is wrong and it fails silently.</b> The first version
-        // here walked the block offsets in order, wrapping, so every resample was the same series
-        // rotated. A rotation preserves the mean, so every draw returned the same number, the
-        // percentiles collapsed onto it, and the interval came back with **zero width**. That is not
-        // a small error: an interval of no width clears zero always, which is exactly the failure
-        // this whole decision exists to prevent, reached from the opposite direction.
-        //
-        // So the offsets are mixed rather than walked. Two large coprime strides spread the draw and
-        // block indices across the series, which samples with replacement, reproduces exactly on any
-        // machine, and needs no seed to be carried anywhere.
-        const int DrawStride = 7919;
-        const int BlockStride = 104729;
+        double observed = Mean(values);
 
-        int blocks = ordered.Count / blockSessions;
-        var means = new List<decimal>();
-
-        for (int draw = 0; draw < draws; draw++)
+        // The standard error of the observed mean, estimated the same way each resample's own is,
+        // which is what makes the studentised ratio a ratio of like quantities.
+        //
+        // <b>A whole number of non-overlapping blocks, anchored at the recent end.</b> A resample's
+        // error is the sample error of `blocks` block means drawn independently, so the matching
+        // estimate on the observed series is the sample error of `blocks` non-overlapping block
+        // means. Any such tiling leaves `n mod blockSessions` nights out of the scale estimate, and
+        // that is a property of the estimator rather than an oversight: those nights still enter the
+        // point estimate, the effective sample and every resample.
+        //
+        // Anchored at the end so the nights left out are the oldest. Taking the tiling from the
+        // start instead was measured and calibrates identically, but it excludes the newest evidence,
+        // which is the half a reader is watching.
+        //
+        // The obvious alternative, estimating over all `n` wrapping blocks, was measured and is
+        // worse: overlapping block means spread wider than the draws do, so the interval comes back
+        // conservative rather than calibrated, clearing zero 0.0% to 2.3% of the time under a true
+        // null at twenty to forty nights against a nominal 5%.
+        if (ObservedStandardError(values, blockSessions, blocks) is not double error || error <= 0d)
         {
-            decimal total = 0m;
-            int taken = 0;
-
-            for (int block = 0; block < blocks; block++)
-            {
-                int start = (int)((((long)draw * DrawStride) + ((long)block * BlockStride)) % ordered.Count);
-
-                for (int i = 0; i < blockSessions; i++)
-                {
-                    total += ordered[(start + i) % ordered.Count].MeanDifference;
-                    taken++;
-                }
-            }
-
-            means.Add(total / taken);
+            return null;
         }
 
-        means.Sort();
+        var ratios = new List<double>(draws);
+
+        foreach ((double resampled, double? resampledError) in Resamples(values, blockSessions, blocks, draws))
+        {
+            if (resampledError is double scale && scale > 0d)
+            {
+                ratios.Add((resampled - observed) / scale);
+            }
+        }
+
+        if (ratios.Count == 0)
+        {
+            // Every resample was internally flat, so nothing can be studentised. Withheld for the
+            // same reason a zero-width interval is.
+            return null;
+        }
+
+        ratios.Sort();
+
+        // The tails swap: the upper quantile of the ratio gives the lower bound. Writing it the
+        // other way produces an interval that looks ordinary and is reflected about the estimate,
+        // which is the kind of error nothing downstream would catch.
+        double low = observed - (Percentile(ratios, 0.975d) * error);
+        double high = observed - (Percentile(ratios, 0.025d) * error);
 
         return new Estimate(
             mean,
-            Percentile(means, 0.025m),
-            Percentile(means, 0.975m),
+            (decimal)low,
+            (decimal)high,
             rows,
-            ordered.Count,
+            nights,
             EffectiveObservations(ordered));
     }
 
@@ -252,14 +320,180 @@ public static class PairedInterval
         return Math.Max(1m, observedVariance / expected);
     }
 
+    /// <summary>
+    /// How many distinct resample means the scheme actually produces over a series.
+    ///
+    /// <b>Here because a class whose defect is invisible to itself is how the last one survived.</b>
+    /// The scheme this replaces asked for ten thousand draws and produced at most one per night,
+    /// every one of them the same lattice rotated, and nothing anywhere could say so: the intervals
+    /// it returned were ordinary-looking numbers and the count that would have given it away was
+    /// never computed. This is that count, exposed so a test can hold it rather than a reader having
+    /// to reason about strides.
+    ///
+    /// A real bootstrap answers with a number that grows with the draws asked for. The rotation
+    /// answered with the night count whatever it was asked, which is the assertion that would have
+    /// failed on the day it shipped.
+    /// </summary>
+    public static int DistinctResampleMeans(IReadOnlyList<Night> series, int blockSessions, int draws)
+    {
+        ArgumentNullException.ThrowIfNull(series);
+        ArgumentOutOfRangeException.ThrowIfLessThan(blockSessions, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(draws, 1);
+
+        if (series.Count < blockSessions * 2)
+        {
+            return 0;
+        }
+
+        double[] values = [.. series.OrderBy(n => n.Date).Select(n => (double)n.MeanDifference)];
+        int blocks = values.Length / blockSessions;
+
+        var seen = new HashSet<double>();
+
+        foreach ((double resampled, double? _) in Resamples(values, blockSessions, blocks, draws))
+        {
+            seen.Add(resampled);
+        }
+
+        return seen.Count;
+    }
+
+    /// <summary>
+    /// The resampled means and their own standard errors, one per draw.
+    ///
+    /// <b>Independent starts, one draw of the generator per block.</b> This is the whole correction.
+    /// The starts within a draw are unrelated to each other and to the starts of every other draw,
+    /// which is what makes the collection of resamples a sample of the resample space rather than
+    /// one point in it seen from N angles. The scheme this replaces derived every start from the
+    /// draw index by a fixed stride, so the space it sampled had N points in it however many draws
+    /// it took.
+    /// </summary>
+    private static IEnumerable<(double Mean, double? Error)> Resamples(
+        double[] values, int blockSessions, int blocks, int draws)
+    {
+        int nights = values.Length;
+        ulong state = Seed;
+        double[] blockMeans = new double[blocks];
+
+        for (int draw = 0; draw < draws; draw++)
+        {
+            for (int block = 0; block < blocks; block++)
+            {
+                state = Next(state, out ulong drawn);
+                int start = (int)(drawn % (ulong)nights);
+                double total = 0d;
+
+                for (int i = 0; i < blockSessions; i++)
+                {
+                    total += values[(start + i) % nights];
+                }
+
+                blockMeans[block] = total / blockSessions;
+            }
+
+            yield return (Mean(blockMeans), StandardError(blockMeans));
+        }
+    }
+
+    /// <summary>
+    /// One step of splitmix64, which is the whole generator.
+    ///
+    /// Chosen because it is four lines, has no state beyond one 64-bit word, and is restated
+    /// identically in any language with 64-bit unsigned arithmetic. A generator a reader cannot
+    /// reimplement in ten minutes would make the interval reproducible in principle and not in
+    /// practice.
+    /// </summary>
+    private static ulong Next(ulong state, out ulong value)
+    {
+        state += 0x9E3779B97F4A7C15UL;
+
+        ulong z = state;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        value = z ^ (z >> 31);
+
+        return state;
+    }
+
+    /// <summary>
+    /// The standard error of the observed mean, over a whole number of non-overlapping blocks taken
+    /// from the recent end of the series.
+    ///
+    /// The direct analogue of what each resample is scored by: <see cref="StandardError"/> over the
+    /// <c>blocks</c> means a resample drew, and this over <c>blocks</c> means the series itself
+    /// gives. The nights beyond the last whole block are the oldest ones and are excluded from this
+    /// figure alone.
+    /// </summary>
+    private static double? ObservedStandardError(double[] values, int blockSessions, int blocks)
+    {
+        if (blocks < 2)
+        {
+            return null;
+        }
+
+        int offset = values.Length - (blocks * blockSessions);
+        double[] means = new double[blocks];
+
+        for (int block = 0; block < blocks; block++)
+        {
+            double total = 0d;
+
+            for (int i = 0; i < blockSessions; i++)
+            {
+                total += values[offset + (block * blockSessions) + i];
+            }
+
+            means[block] = total / blockSessions;
+        }
+
+        return StandardError(means);
+    }
+
+    /// <summary>
+    /// The standard error of a mean of block means, or null where there are too few to say.
+    ///
+    /// The sample form over the blocks, divided by their count, because the statistic being
+    /// studentised is their mean rather than one of them.
+    /// </summary>
+    private static double? StandardError(double[] blockMeans)
+    {
+        if (blockMeans.Length < 2)
+        {
+            return null;
+        }
+
+        double mean = Mean(blockMeans);
+        double sumSquares = 0d;
+
+        foreach (double value in blockMeans)
+        {
+            double centred = value - mean;
+            sumSquares += centred * centred;
+        }
+
+        return Math.Sqrt(sumSquares / (blockMeans.Length - 1) / blockMeans.Length);
+    }
+
+    private static double Mean(double[] values)
+    {
+        double total = 0d;
+
+        foreach (double value in values)
+        {
+            total += value;
+        }
+
+        return total / values.Length;
+    }
+
     private static int Clamp(decimal value, int rows) =>
         Math.Max(1, Math.Min(rows, (int)Math.Round(value, MidpointRounding.AwayFromZero)));
 
-    private static decimal Percentile(IReadOnlyList<decimal> sorted, decimal fraction)
+    private static double Percentile(IReadOnlyList<double> sorted, double fraction)
     {
         if (sorted.Count == 0)
         {
-            return 0m;
+            return 0d;
         }
 
         int index = (int)Math.Floor(fraction * (sorted.Count - 1));

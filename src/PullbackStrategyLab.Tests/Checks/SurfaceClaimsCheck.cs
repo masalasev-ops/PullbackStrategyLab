@@ -233,14 +233,26 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     /// one of them would carry the string the population claim looks for while still being unable to
     /// tell a reader that the panel below it counted something else.
     ///
-    /// And both sides of the minimum appear, one panel below it and one above. A page rendering only
+    /// And both sides of the minimum appear, with panels below it and above. A page rendering only
     /// the reached case would carry the words a claim about the trigger looks for while being unable
     /// to tell a reader that the panel beside it is not an answer yet, which is the state the panel
     /// will be in for every night of the wait.
     ///
-    /// The withheld panel names a shortage of sessions rather than of evidence, because that is the
-    /// distinction the page could not previously draw: withholding is settled by the session axis
-    /// and the minimum by how much information the rows carry, and the two can disagree outright.
+    /// The withheld panels name which shortage is blocking them. The first names a shortage of
+    /// sessions rather than of evidence, because that is a distinction the page could not previously
+    /// draw: withholding is settled by the session axis and the minimum by how much information the
+    /// rows carry, and the two can disagree outright.
+    ///
+    /// The second names a shortage of control outcomes, which is the reason the panel could not give
+    /// for the whole of phase 3. ForwardReturnFiller wrote no control outcome at all, so band 1 was
+    /// empty on every night, and the panel said no horizon had closed while the store held thirty
+    /// nights of closed horizons. A diagnostic that points away from the defect sends a reader to
+    /// wait for something that has already happened, which is worse than one that says nothing.
+    ///
+    /// <b>This claim holds that the page renders the words, and nothing more than that.</b> That the
+    /// stage produces them is held by the fixture, at `accumulation.starved.withheldBecause`, over a
+    /// population with every control outcome deleted. Neither substitutes for the other: the sixth
+    /// defect shape is exactly the gap between a producer that is right and a surface that drops it.
     /// </summary>
     private const string Panels = """
         {
@@ -259,9 +271,13 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
             { "name": "band1.vsLoose", "direction": "long", "figure": "withheld",
               "low": null, "high": null, "rows": 240, "effective": 31,
               "population": "every flagged setup", "minimum": 262,
-              "withheldBecause": "only 14 session(s) recorded and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence" }
+              "withheldBecause": "only 14 session(s) carry a pair and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence" }
           ],
           "short": [
+            { "name": "band1.vsLoose", "direction": "short", "figure": "withheld",
+              "low": null, "high": null, "rows": 0, "effective": 0,
+              "population": "every flagged setup", "minimum": 262,
+              "withheldBecause": "144 setup outcome(s) have closed and no control outcome has, so no pair exists. That is a shortage of control outcomes rather than of time, and waiting does not fix it" },
             { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
               "low": null, "high": null, "rows": 1120, "effective": null,
               "population": "capped candidates only", "minimum": null,

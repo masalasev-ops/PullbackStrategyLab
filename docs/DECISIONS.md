@@ -59,20 +59,34 @@ That reads three stored figures together, `return_signed`, `mae_atr` and `stop_d
 
 Per direction, never pooled. Recomputed weekly over the population that has closed its tenth session, and a later week's bound is a new dated row rather than a revision of the old one.
 
-**The interval is a block bootstrap over paired differences, and the effective sample is measured**
+**The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**
+Supersedes **The interval is a block bootstrap over paired differences, and the effective sample is measured**, which named the right method and specified percentile bounds. The shipped code implemented neither, and correcting only the resampling would not have been enough.
+
 This is not the textbook case, and the textbook interval is wrong here in the direction that matters.
 
 **Ten-day labels overlap.** A ten-session horizon means adjacent nights share most of their window, so consecutive observations are serially correlated by construction. **Same-night setups share a market factor.** Forty names flagged on one night rise and fall together with the market over that fortnight.
 
 Either alone makes an interval assuming independent observations too narrow. Together, band 1 clears zero before it should, and band 1 is the project's central question. A too-narrow interval does not produce a wrong number, it produces a confident one, which is the failure this whole system exists to avoid.
 
-So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws, percentile bounds, deterministic ordering so the figure is reproducible and diffable.
+So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws.
+
+**Each draw takes its block starts independently.** Stated because the decision it supersedes did not, and the code read as though it had: block starts were mixed by two coprime strides, which reads as spreading the draws and is not. Every start in draw `d` was the corresponding start in draw 0 shifted by the same `d * 7919`, so every draw was one fixed lattice rotated, at most one distinct resample mean existed per night however many draws were asked for, and ten thousand draws was bit-identical to N draws. On the five committed scenarios long enough to produce an interval, of six in `fixtures/interval-cases.json`, the intervals came back two to three point seven times narrower than a real moving-block bootstrap, worst on the AR(1) series written to exercise exactly the overlap it got most wrong.
+
+**Deterministic from a fixed published seed, rather than from having no seed at all.** The superseded decision asked for deterministic ordering and the code met it by making each draw a function of its own index, which is what collapsed the resample space. Reproducibility is the property that was wanted, a published constant buys it, and `PairedInterval.Seed` is that constant.
+
+**Studentised rather than percentile bounds, and this is the substantive change.** Independent block starts alone do not reach the confidence the panel prints. Measured over three hundred authored null series per row, all three schemes seeing the same series, against a nominal 5%: the superseded scheme clears zero 48.3% of the time at twenty independent nights and 46.0% at forty; a percentile interval over correctly drawn blocks clears it 20.3% and 12.3%; scoring each resampled mean against its own block-to-block standard error clears it 4.7% and 5.0%. With an AR(1) of 0.7 the three read 78.7%, 37.3% and 6.0% at twenty nights. Studentising holds 3.7% to 7.7% over independent nights and an AR(1) up to 0.7, from twenty to a hundred nights, and neither of the others does.
+
+**Where it stops holding is stated rather than left to be discovered.** Against the process a ten-session overlapping label actually creates, a moving average of order nine whose correlation cuts off inside the block length, it clears zero 3.0% to 11.7% of the time from twenty to two hundred and forty nights. Against an AR(1) of 0.9 it reads 7.0% to 24.0%. That is a limit of the **block length** rather than of the method: correlation at 0.9 runs well past ten sessions and no block of ten absorbs it. The block length is set to the scoring horizon because the overlap the label creates cuts off there; if the realised series turns out to carry dependence past it, the block length is the thing that moves, and that is a decision rather than a tuning. Band 1 turns on whether a bound clears zero, so an interval that clears it four times too often is not a narrower version of the right answer.
+
+**A series that cannot disperse is withheld rather than given an interval of no width.** An interval of no width clears zero always. That is the first route to this failure and it shipped for one run at 3.5; it is now a state the method returns nothing from.
 
 A Newey-West style adjustment with the lag set from the horizon was the alternative and would have cost less to compute. It was not taken because it corrects the variance of a mean and this scoreboard also shows decile curves and win rates, and one resampling scheme that serves every panel is worth more than a closed form that serves one.
 
-**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval.
+**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval. This half is unchanged and its arithmetic did not move.
 
 **Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. The figure itself is settled by the decision below.
+
+**What a later session should take from this.** Two independent implementations agreeing proves transcription and nothing else. `tools/derive-indicators.py` restated this interval and hard-coded the same two strides, so the DERIVED tier reported agreement about the wrong algorithm for the whole of phase 3. Where a method is named rather than tabulated, assert the property the name implies: more draws must buy more resamples, and an interval must not clear zero far more often than its own confidence claims.
 
 **The minimum sample is 262 effective observations, ratified at two points and 90% power**
 A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. Two of those are judgements and belong to a person. The third is a fact about the market, and until the decision this supersedes nothing in the corpus had measured it.
@@ -474,6 +488,22 @@ The protection being bought is that a session does not review its own code. The 
 ## Previously decided
 
 A superseded decision moves here under its original name, gains one line naming what replaced it, and keeps its reasoning. A superseded decision that loses its reasoning is worse than one never written down, because the next session will re-derive the same wrong answer.
+
+**The interval is a block bootstrap over paired differences, and the effective sample is measured**
+Superseded by **The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**, which keeps the block length, the draw count and the effective-sample arithmetic, and changes two things: each draw now takes its block starts independently, and the bounds are studentised rather than percentile. The method named here was the right one; what shipped under it was one fixed lattice rotated, and a percentile bound over correctly drawn blocks still under-covers at the sample sizes band 1 will have.
+This is not the textbook case, and the textbook interval is wrong here in the direction that matters.
+
+**Ten-day labels overlap.** A ten-session horizon means adjacent nights share most of their window, so consecutive observations are serially correlated by construction. **Same-night setups share a market factor.** Forty names flagged on one night rise and fall together with the market over that fortnight.
+
+Either alone makes an interval assuming independent observations too narrow. Together, band 1 clears zero before it should, and band 1 is the project's central question. A too-narrow interval does not produce a wrong number, it produces a confident one, which is the failure this whole system exists to avoid.
+
+So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws, percentile bounds, deterministic ordering so the figure is reproducible and diffable.
+
+A Newey-West style adjustment with the lag set from the horizon was the alternative and would have cost less to compute. It was not taken because it corrects the variance of a mean and this scoreboard also shows decile curves and win rates, and one resampling scheme that serves every panel is worth more than a closed form that serves one.
+
+**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval.
+
+**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. The figure itself is settled by the decision below.
 
 **A split records a rebuild demand that is stamped rather than cleared**
 A split rescales every adjusted close before it. The stored ones were adjusted as of the night each was observed, so the evening after a four-for-one everything already in the store is on the old scale and everything arriving is on the new one, and an average taken across that boundary is arithmetic on two different units. It is wrong by a factor and it looks entirely reasonable, which is why the architecture's answer is that calculations refuse to run for that stock rather than that they carry on.

@@ -28,9 +28,16 @@ public static class WinRateCeiling
     /// <summary>
     /// One closed subject, as the bound reads it.
     ///
-    /// <paramref name="MaximumAdverseExcursionAtr"/> is negative or zero by construction, being how
-    /// far the path went against the subject. <paramref name="AverageTrueRange"/> and
-    /// <paramref name="DailyRange"/> are both prices, and they are what the conversion needs.
+    /// <paramref name="MaximumAdverseExcursionAtr"/> is the least favourable point the path reached,
+    /// in ATR, and <b>it is not negative by construction</b>. A long whose every subsequent low sat
+    /// above its entry never traded against the subject at all, so its least favourable point is
+    /// above the entry and the figure is positive. That is a real and common state, the fixture
+    /// already holds one at `forward.long-ten-sessions.h1.maeAtr` of 0.3258, and reading it as an
+    /// excursion of that size against the subject is the error <see cref="Survived"/> is written to
+    /// make impossible.
+    ///
+    /// <paramref name="AverageTrueRange"/> and <paramref name="DailyRange"/> are both prices, and
+    /// they are what the conversion needs.
     /// </summary>
     public sealed record Subject(
         string SubjectId,
@@ -57,6 +64,19 @@ public static class WinRateCeiling
     /// A subject with no range at all cannot be judged, and is treated as not having survived rather
     /// than as having survived: a bound that counted unmeasurable rows as available would be
     /// optimistic exactly where the data is worst.
+    ///
+    /// <b>The sign, which is the second trap and was live until 3.5 was reopened.</b> The excursion
+    /// is the least favourable point on the path, so it is positive whenever the path never went
+    /// against the subject at all. Taken through an absolute value, a long that rose without ever
+    /// trading below its entry came back as having gone that far <i>against</i> it: a subject that
+    /// returned 17% with no drawdown was recorded at 3.0 ATR adverse, judged stopped out, and
+    /// dropped from `kept`. The bias falls hardest on subjects that rose cleanly, which is precisely
+    /// what a perfect forecaster selects, so it pushed both the bound and the achieved rate down and
+    /// distorted the gap between them, which is the whole figure.
+    ///
+    /// So a favourable minimum is nought adverse rather than its own size. Only the part of the
+    /// excursion below the entry is an excursion the stop could have been hit by.
+    /// see: The ceiling is computed from the path, not from the terminal return
     /// </summary>
     public static bool Survived(Subject subject)
     {
@@ -67,7 +87,12 @@ public static class WinRateCeiling
             return false;
         }
 
-        decimal excursionInPrice = Math.Abs(subject.MaximumAdverseExcursionAtr) * subject.AverageTrueRange;
+        // Nought where the path never went against the subject, its own size where it did. Written
+        // as a floor at nought rather than as an absolute value, because the two agree on every
+        // negative input and differ on exactly the rows this bound is most sensitive to.
+        decimal adverse = Math.Min(0m, subject.MaximumAdverseExcursionAtr);
+
+        decimal excursionInPrice = -adverse * subject.AverageTrueRange;
         decimal giveUpInPrice = subject.StopDistanceRanges * subject.DailyRange;
 
         return excursionInPrice < giveUpInPrice;

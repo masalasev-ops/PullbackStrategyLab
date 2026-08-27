@@ -12,7 +12,7 @@
 -- series rather than of the design. A minimum sample stated against this figure is counted in the
 -- second column. Storing only the first is how a target reading "160 observations" gets satisfied
 -- by 160 rows carrying far less than 160 observations' worth of information.
--- see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+-- see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
 --
 -- **`direction` is nullable and that is deliberate rather than lax.** Band 0 is account-wide: nights
 -- recorded, degraded runs, calls against the ceiling. Those are not per direction and inventing a

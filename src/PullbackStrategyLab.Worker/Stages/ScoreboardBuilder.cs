@@ -157,7 +157,7 @@ public sealed class ScoreboardBuilder
     /// than being adjusted for. The nightly means are then resampled in blocks, because a ten-day
     /// label overlaps its neighbours and an interval that ignored that would be too narrow exactly
     /// where confidence matters most.
-    /// see: The interval is a block bootstrap over paired differences, and the effective sample is measured
+    /// see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
     /// </summary>
     private static IReadOnlyList<Panel> AgainstControls(
         SqliteConnection connection, string direction, DateOnly asOf, DateTimeOffset computedAt)
@@ -187,7 +187,9 @@ public sealed class ScoreboardBuilder
                     PairedInterval.EffectiveObservations(series),
                     Flagged,
                     MeasurementParameters.MinimumEffectiveObservations,
-                    WithheldBecause(series.Count)));
+                    WithheldBecause(
+                        Shortage.Measure(connection, direction, set, asOf, computedAt),
+                        series.Count)));
                 continue;
             }
 
@@ -209,15 +211,24 @@ public sealed class ScoreboardBuilder
     /// <summary>
     /// Why a band 1 panel is showing no figure, in words, on the panel.
     ///
-    /// <b>Only one thing withholds a figure and it is not the sample size.</b> The block bootstrap
-    /// needs twice its block length of sessions, so below twenty sessions there is no interval at
-    /// any number of rows. The minimum sample is a separate statement shown beside the counts, and
-    /// the two are settled by completely different things: one by the session axis, the other by how
-    /// much information the rows carry.
+    /// <b>It named the wrong cause for the whole of phase 3, and that is worse than naming none.</b>
+    /// It branched on the length of the difference series alone, so an empty series always printed
+    /// "no session has a closed horizon yet". The series was empty because nothing ever wrote a
+    /// control outcome, so with thirty nights of closed horizons in the store the panel still said
+    /// the horizons had not closed. <b>A diagnostic that points away from the defect sends a reader
+    /// to wait for something that has already happened.</b> The shortage is now measured rather than
+    /// inferred, and the panel names which of the four it is.
     ///
-    /// <b>They can contradict each other, which is why this exists.</b> A fortnight of very wide
-    /// nights reaches the minimum before it reaches twenty sessions, and the page would then have
-    /// said the minimum was reached and the panel readable, beside a figure it was refusing to show.
+    /// <b>The four are settled by different things and they arrive in order.</b> Nothing flagged, so
+    /// there is no subject. Flagged but no setup outcome closed, which is the ten sessions everybody
+    /// expects to wait. Setup outcomes closed but no control outcome, which is a defect rather than a
+    /// wait and now says so in those words. And pairs on too few sessions, which is the bootstrap's
+    /// own floor and the only one the old text ever got right.
+    ///
+    /// <b>The minimum sample is not one of the four.</b> The bootstrap needs twice its block length
+    /// of sessions whatever the rows carry; the minimum is a separate statement shown beside the
+    /// counts. They can contradict each other, which is why both are on the panel: a fortnight of
+    /// very wide nights reaches the minimum before it reaches twenty sessions.
     ///
     /// <b>The population is not one of the reasons and cannot be.</b> Band 1 reads `setup`; a
     /// historical detector run writes to `calibration_setup`, which nothing downstream reads. That is
@@ -225,13 +236,126 @@ public sealed class ScoreboardBuilder
     /// panel should not be left wondering whether it is the cause.
     /// see: The evidence store holds only setups flagged forward, never setups reconstructed from history
     /// </summary>
-    private static string WithheldBecause(int sessions)
+    private static string WithheldBecause(Shortage shortage, int sessions)
     {
         int needed = MeasurementParameters.BootstrapBlockSessions * 2;
+        int horizon = MeasurementParameters.ScoringHorizonSessions;
 
-        return sessions == 0
-            ? $"no session has a closed {MeasurementParameters.ScoringHorizonSessions}-session horizon yet, so there is no series to take an interval over"
-            : $"only {sessions.ToString("N0", CultureInfo.InvariantCulture)} session(s) recorded and a block bootstrap needs {needed}, which is a shortage of sessions rather than of evidence";
+        if (shortage.Setups == 0)
+        {
+            return "no setup has been flagged on this side yet, so there is nothing to compare";
+        }
+
+        if (shortage.ClosedSetupOutcomes == 0)
+        {
+            return $"{Count(shortage.Setups)} setup(s) flagged and none has closed its {horizon}-session horizon yet, so there is no series to take an interval over";
+        }
+
+        if (shortage.ClosedControlOutcomes == 0)
+        {
+            return $"{Count(shortage.ClosedSetupOutcomes)} setup outcome(s) have closed and no control outcome has, so no pair exists. That is a shortage of control outcomes rather than of time, and waiting does not fix it";
+        }
+
+        if (sessions == 0)
+        {
+            return $"{Count(shortage.ClosedSetupOutcomes)} setup and {Count(shortage.ClosedControlOutcomes)} control outcome(s) have closed but none pair up on the same session, so there is no series to take an interval over";
+        }
+
+        if (sessions < needed)
+        {
+            return $"only {Count(sessions)} session(s) carry a pair and a block bootstrap needs {needed}, which is a shortage of sessions rather than of evidence";
+        }
+
+        return $"{Count(sessions)} session(s) carry a pair and the blocks they form do not differ, so the interval would have no width. An interval of no width clears zero always and is withheld instead";
+    }
+
+    private static string Count(int value) => value.ToString("N0", CultureInfo.InvariantCulture);
+
+    private static string Capitalise(string set) =>
+        string.Concat(char.ToUpperInvariant(set[0]), set[1..]);
+
+    private static void Insert(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        DateOnly asOf,
+        Panel panel,
+        DateTimeOffset computedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+
+        command.CommandText = """
+            INSERT INTO scoreboard
+                (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
+                 n_minimum, withheld_because, computed_at)
+            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
+                    @population, @n_minimum, @withheld_because, @computed_at)
+            ON CONFLICT (as_of, panel, direction) DO NOTHING
+            """;
+
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@panel", panel.Name);
+        command.Parameters.AddWithValue("@direction", (object?)panel.Direction ?? DBNull.Value);
+        command.Parameters.AddWithValue("@figure", panel.Figure);
+        command.Parameters.AddWithValue("@low", (object?)panel.Low ?? DBNull.Value);
+        command.Parameters.AddWithValue("@high", (object?)panel.High ?? DBNull.Value);
+        command.Parameters.AddWithValue("@n_rows", panel.Rows);
+        command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
+        command.Parameters.AddWithValue("@population", panel.Population);
+        command.Parameters.AddWithValue("@n_minimum", (object?)panel.Minimum ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@withheld_because", (object?)panel.WithheldBecause ?? DBNull.Value);
+        command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
+
+        command.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// What the store actually holds behind a withheld panel, so the reason can name the shortage
+    /// rather than assume it.
+    ///
+    /// Three counts on the same bound as the panel itself. Measured per direction and per control
+    /// set, because one side or one set can be short of controls while the other is not, and a
+    /// single number covering both would send a reader to look at the wrong half.
+    /// </summary>
+    private sealed record Shortage(int Setups, int ClosedSetupOutcomes, int ClosedControlOutcomes)
+    {
+        public static Shortage Measure(
+            SqliteConnection connection,
+            string direction,
+            string set,
+            DateOnly asOf,
+            DateTimeOffset computedAt)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT
+                  (SELECT COUNT(*) FROM setup s
+                    WHERE s.direction = @direction AND s.as_of <= @as_of),
+                  (SELECT COUNT(*) FROM setup s
+                     JOIN forward_return f
+                       ON f.subject_id = s.setup_id AND f.subject_kind = 'setup'
+                      AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
+                    WHERE s.direction = @direction AND s.as_of <= @as_of),
+                  (SELECT COUNT(*) FROM setup s
+                     JOIN control_setup c ON c.setup_id = s.setup_id AND c.control_set = @set
+                     JOIN forward_return f
+                       ON f.subject_id = c.control_id AND f.subject_kind = 'control'
+                      AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
+                    WHERE s.direction = @direction AND s.as_of <= @as_of)
+                """;
+            command.Parameters.AddWithValue("@direction", direction);
+            command.Parameters.AddWithValue("@set", set);
+            command.Parameters.AddWithValue("@horizon", MeasurementParameters.ScoringHorizonSessions);
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
+
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            return reader.Read()
+                ? new Shortage(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2))
+                : new Shortage(0, 0, 0);
+        }
     }
 
     /// <summary>
@@ -406,45 +530,6 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue("@end_of_day", $"{asOf:yyyy-MM-dd}T23:59:59.999Z");
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
-    }
-
-    private static string Capitalise(string set) =>
-        string.Concat(char.ToUpperInvariant(set[0]), set[1..]);
-
-    private static void Insert(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        DateOnly asOf,
-        Panel panel,
-        DateTimeOffset computedAt)
-    {
-        using SqliteCommand command = connection.CreateCommand();
-        command.Transaction = transaction;
-
-        command.CommandText = """
-            INSERT INTO scoreboard
-                (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
-                 n_minimum, withheld_because, computed_at)
-            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
-                    @population, @n_minimum, @withheld_because, @computed_at)
-            ON CONFLICT (as_of, panel, direction) DO NOTHING
-            """;
-
-        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@panel", panel.Name);
-        command.Parameters.AddWithValue("@direction", (object?)panel.Direction ?? DBNull.Value);
-        command.Parameters.AddWithValue("@figure", panel.Figure);
-        command.Parameters.AddWithValue("@low", (object?)panel.Low ?? DBNull.Value);
-        command.Parameters.AddWithValue("@high", (object?)panel.High ?? DBNull.Value);
-        command.Parameters.AddWithValue("@n_rows", panel.Rows);
-        command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
-        command.Parameters.AddWithValue("@population", panel.Population);
-        command.Parameters.AddWithValue("@n_minimum", (object?)panel.Minimum ?? DBNull.Value);
-        command.Parameters.AddWithValue(
-            "@withheld_because", (object?)panel.WithheldBecause ?? DBNull.Value);
-        command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
-
-        command.ExecuteNonQuery();
     }
 
     /// <summary>

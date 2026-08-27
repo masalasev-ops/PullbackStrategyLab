@@ -2088,7 +2088,14 @@ def ceiling_main(argv):
             daily = Decimal(s["dailyRange"])
             if atr <= 0 or daily <= 0:
                 return False
-            return abs(Decimal(s["maeAtr"])) * atr < Decimal(s["stopRanges"]) * daily
+            # The excursion is the least favourable point on the path, so it is POSITIVE whenever
+            # the path never went against the subject at all. Floored at nought rather than taken
+            # through abs(): the two agree on every negative input and differ on exactly the rows
+            # the bound is most sensitive to, being the ones that rose without drawing down. This
+            # restatement carried the same abs() as the shipped code until 3.5 was reopened, which
+            # is what an independent restatement of a shared false premise buys.
+            adverse = min(Decimal(0), Decimal(s["maeAtr"]))
+            return -adverse * atr < Decimal(s["stopRanges"]) * daily
 
         ahead = [s for s in subjects if Decimal(s["return"]) > 0]
         kept = [s for s in ahead if survived(s)]
@@ -2105,12 +2112,74 @@ def ceiling_main(argv):
     return 0
 
 
+def accumulation_main(argv):
+    """The closed-horizon population's own counts, restated from its stated shape.
+
+    The population is authored: a stated number of nights, a stated number of setups a night on each
+    side, and a stated number of controls per set per setup. Every count below follows from those
+    three and from the four horizons, so none of it is read back from the run it is checked against.
+
+    Why it is owed at all. The captured fixture holds one market day, so no horizon closes in it and
+    the whole measurement path past the flag was exercised by nothing. That is how ForwardReturnFiller
+    binding its subject kind to the literal "setup" survived twelve checkpoints: nothing anywhere ran
+    the query that came back empty against a store with something to put in it.
+    """
+    nights = 24
+    setups_per_night_per_direction = 6
+    directions = 2
+    sets = 2
+    controls_per_set = 5
+    horizons = 4
+
+    setups = nights * setups_per_night_per_direction * directions
+    controls = setups * sets * controls_per_set
+
+    print("\naccumulation, over the authored closed-horizon population")
+    print()
+    print("  accumulation.%-38s %d" % ("nights", nights))
+    print("  accumulation.%-38s %d" % ("setups", setups))
+    print("  accumulation.%-38s %d" % ("controls", controls))
+    print("  accumulation.%-38s %d" % ("forward.setupsWritten", setups * horizons))
+    print("  accumulation.%-38s %d" % ("forward.controlsWritten", controls * horizons))
+    print("  accumulation.%-38s %d" % ("forward.setupOutcomeRows", setups * horizons))
+    print("  accumulation.%-38s %d" % ("forward.controlOutcomeRows", controls * horizons))
+
+    # One panel per direction per control set, and every one of them has to carry an interval once
+    # the control outcomes exist. Nought here is the state the defect produced.
+    print("  accumulation.band1.%-32s %d" % ("panelsWithAnInterval", directions * sets))
+
+    return 0
+
+
+def splitmix64(state):
+    """One step of splitmix64, the generator the interval's block starts are drawn from.
+
+    Four lines, one 64-bit word of state, and restated identically in any language with 64-bit
+    unsigned arithmetic. The shipped implementation is PairedInterval.Next; this is the same
+    arithmetic, and the seed is the same published constant.
+    """
+    mask = (1 << 64) - 1
+    state = (state + 0x9E3779B97F4A7C15) & mask
+    z = state
+    z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & mask
+    z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & mask
+    return state, z ^ (z >> 31)
+
+
 def interval_main(argv):
     """The interval and the effective sample, restated from what each quantity is.
 
-    The interval is a moving-block bootstrap: blocks of the scoring horizon's length, taken with
-    replacement, block offsets mixed by two coprime strides so the resampling is reproducible
-    without a seed. The percentile bounds are the 2.5th and 97.5th of the resampled means.
+    The interval is a studentised moving-block bootstrap: blocks of the scoring horizon's length,
+    each draw taking its block starts INDEPENDENTLY from splitmix64 at a fixed published seed, and
+    each resampled mean scored against its own block-to-block standard error before the 2.5th and
+    97.5th percentiles of that ratio are read back onto the observed estimate.
+
+    This restatement is the reason the defect it replaces survived. It hard-coded the same two
+    coprime strides the shipped code used, so what the two agreed about was the transcription of an
+    algorithm and never that the algorithm was a bootstrap at all. Every start in draw d was the
+    corresponding start in draw 0 shifted by the same d * 7919, so the resample space had one point
+    per night in it however many draws were asked for, and ten thousand draws was bit-identical to N
+    draws. A second implementation of the wrong thing agrees with the first.
 
     The effective sample starts from rows rather than nights, because the paired difference has
     already removed the market factor the names in a night would otherwise share. Two discounts are
@@ -2126,9 +2195,11 @@ def interval_main(argv):
     series says anything about clustering and a night counts as one observation. That is the
     pessimistic corner rather than the assumption, and it is what the first four scenarios exercise.
 
-    The trap this restatement exists to catch: walking the block offsets in order rather than mixing
-    them makes every resample the same series rotated, a rotation preserves the mean, and the
-    interval comes back with no width at all. An interval of no width clears zero always.
+    The trap this restatement exists to catch: any scheme whose draws are one fixed selection
+    rotated. Walking the offsets in order is the loud version, where a rotation preserves the mean
+    and the interval comes back with no width at all. Mixing them by strides is the quiet version,
+    where the interval has a width and is two to three point seven times too narrow. Both clear zero
+    far more often than 95% confidence claims, and band 1 turns on whether a bound clears zero.
     """
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = argv[0] if argv and argv[0].endswith(".json") else os.path.join(
@@ -2143,8 +2214,7 @@ def interval_main(argv):
 
     block = 10
     draws = 10000
-    draw_stride = 7919
-    block_stride = 104729
+    seed = 0x5EED1F7
 
     print("\npaired interval, over %s" % os.path.basename(path))
 
@@ -2163,20 +2233,73 @@ def interval_main(argv):
         rows = count * pairs
         blocks = count // block
 
-        means = []
-        for draw in range(draws):
-            total = Decimal(0)
-            taken = 0
-            for b in range(blocks):
-                start = (draw * draw_stride + b * block_stride) % count
-                for i in range(block):
-                    total += nights[(start + i) % count]
-                    taken += 1
-            means.append(total / taken)
+        # The bootstrap runs in IEEE-754 double, matching the shipped code exactly: these are
+        # variances of ratios rather than prices, the arithmetic needs a square root, and both
+        # sides do the same operations in the same order so the two agree to every place printed.
+        # The effective-sample arithmetic below stays in Decimal, which is what the shipped code
+        # uses for it.
+        series = [float(x) for x in nights]
 
-        means.sort()
-        low = means[int((Decimal("0.025") * (len(means) - 1)))]
-        high = means[int((Decimal("0.975") * (len(means) - 1)))]
+        def block_standard_error(block_means):
+            """The standard error of a mean of block means, or None where there are too few."""
+            if len(block_means) < 2:
+                return None
+            centre = sum(block_means) / len(block_means)
+            squares = sum((x - centre) * (x - centre) for x in block_means)
+            return math.sqrt(squares / (len(block_means) - 1) / len(block_means))
+
+        def observed_standard_error():
+            """The error of the observed mean, over a whole number of non-overlapping blocks.
+
+            The direct analogue of what each resample is scored by. A resample's error is the sample
+            error of `blocks` block means drawn independently, so the matching estimate on the
+            observed series is the sample error of `blocks` non-overlapping block means. Any such
+            tiling leaves count mod block nights out of the scale estimate; they still enter the
+            point estimate, the effective sample and every resample. Anchored at the recent end so
+            the nights left out are the oldest.
+            """
+            if blocks < 2:
+                return None
+            offset = count - blocks * block
+            means = [sum(series[offset + b * block + i] for i in range(block)) / block
+                     for b in range(blocks)]
+            return block_standard_error(means)
+
+        observed_mean = sum(series) / count
+        error = observed_standard_error()
+
+        if not error or error <= 0:
+            # A series whose blocks all carry the same mean has no standard error to studentise
+            # by, and the interval it would produce has no width. Withheld, never shown.
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        state = seed
+        ratios = []
+        for _draw in range(draws):
+            block_means = []
+            for _b in range(blocks):
+                state, value = splitmix64(state)
+                start = value % count
+                block_means.append(
+                    sum(series[(start + i) % count] for i in range(block)) / block)
+            resampled_error = block_standard_error(block_means)
+            if resampled_error and resampled_error > 0:
+                resampled = sum(block_means) / len(block_means)
+                ratios.append((resampled - observed_mean) / resampled_error)
+
+        if not ratios:
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        ratios.sort()
+
+        def ratio_at(fraction):
+            return ratios[int(fraction * (len(ratios) - 1))]
+
+        # The tails swap: the upper quantile of the ratio gives the lower bound.
+        low = Decimal(repr(observed_mean - ratio_at(0.975) * error))
+        high = Decimal(repr(observed_mean - ratio_at(0.025) * error))
         mean = sum(nights) / count
 
         centred = [x - mean for x in nights]
@@ -2335,6 +2458,9 @@ def dispersion_main(argv):
 def main(argv):
     if len(argv) > 1 and argv[1] == "--dispersion":
         return dispersion_main(argv[2:] or [''])
+
+    if len(argv) > 1 and argv[1] == "--accumulation":
+        return accumulation_main(argv[2:] or [''])
 
     if len(argv) > 1 and argv[1] == "--interval":
         return interval_main(argv[2:] or [''])

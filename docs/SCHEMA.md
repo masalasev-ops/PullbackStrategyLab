@@ -365,7 +365,7 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 
 Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
 
-*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).*
+*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured).*
 
 *`n_effective` starts from rows rather than from nights, and that is what the control draw bought. Same-night setups share a market factor, which is why an unpaired figure over forty names is worth about one observation; the paired difference removes it by construction, so what is left inside a night is each name's own move against its own controls. Two discounts are then measured from the series: the label overlap across nights, and whatever common movement the matching failed to remove. A night that cannot say how its own pairs dispersed counts as one, which makes the pessimistic reading the limiting case rather than the assumption.*
 
