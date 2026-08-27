@@ -196,11 +196,18 @@ h2 { font-size: 15px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1p
 .setup .plan dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 .setup .checks { list-style: none; padding: 0; margin: 0 0 8px; font-size: 12px; }
-.setup .checks li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0;
-                    border-bottom: 1px solid var(--rule); }
+.setup .checks li { display: flex; flex-wrap: wrap; justify-content: space-between;
+                    gap: 1px 8px; padding: 2px 0; border-bottom: 1px solid var(--rule); }
 .setup .checks li:last-child { border-bottom: none; }
-.setup .checks .reading { color: var(--ink3); font-variant-numeric: tabular-nums;
-                          text-align: right; max-width: 60%; }
+.setup .checks .name { flex: 0 0 auto; }
+.setup .checks .reading { flex: 1 1 auto; color: var(--ink3); font-variant-numeric: tabular-nums;
+                          text-align: right; }
+/* The threshold and the caveat sit under the number, right-aligned, quieter than it. A caveat
+   naming clauses that did not run has to be legible without competing with the reading. */
+.setup .checks .against,
+.setup .checks .caveat { flex: 1 1 100%; text-align: right; font-size: 11px; line-height: 1.35;
+                         color: var(--ink3); opacity: 0.72; }
+.setup .checks .caveat { font-style: italic; }
 .setup .checks .pass .name { color: var(--long); }
 .setup .checks .fail .name { color: var(--short); }
 

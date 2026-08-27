@@ -53,14 +53,17 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
               "agreement": "disagree", "agreementNote": "the bounce has not stalled",
               "checks": [
                 { "name": "downtrend", "passed": true, "value": null, "note": "falling" },
-                { "name": "averages-squeezing", "passed": false, "value": 1.2276, "note": null }
+                { "name": "averages-squeezing", "passed": false, "value": 1.2276, "note": null },
+                { "name": "reached-ceiling", "passed": false, "value": 2.0193,
+                  "note": "21-day and 50-day only; the anchored clause arrives at 4.4" },
+                { "name": "tradable-shortable", "passed": true, "value": 9849921234.0, "note": null }
               ],
               "candles": [
                 { "date": "2026-08-21", "open": 90.0, "high": 91.0, "low": 86.0, "close": 87.0 },
                 { "date": "2026-08-24", "open": 87.0, "high": 88.0, "low": 85.14, "close": 87.26 }
               ] }
           ],
-          "checkNames": ["averages-squeezing", "downtrend", "exit-tight", "tradable"],
+          "checkNames": ["averages-squeezing", "downtrend", "exit-tight", "reached-ceiling", "tradable", "tradable-shortable"],
           "nothing": null
         }
         """;
@@ -157,6 +160,40 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
         // An unranked setup says so. A blank cell reads as a zero, which is the top of the ranking.
         Assert.Contains("rank unranked", html, StringComparison.Ordinal);
         Assert.Contains("rank 1", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_check_that_has_both_a_number_and_a_caveat_shows_both()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        // The regression this closes. `Reading` fell back to the note only when there was no value,
+        // so a check carrying both showed the number and swallowed the caveat. The two notes that
+        // matter most both carry a value: `reached-ceiling` runs two of its three clauses until 4.4,
+        // and a calibration `tradable-shortable` runs three of its four. ARCHITECTURE says the setup
+        // record states that narrowing outright rather than leaving it to be inferred from a passing
+        // verdict, and the screen is where it is read.
+        Assert.Contains("21-day and 50-day only; the anchored clause arrives at 4.4", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"caveat\"", html, StringComparison.Ordinal);
+
+        // And the number still shows beside it rather than being replaced by it.
+        Assert.Contains("2.02 daily range(s) to the nearer average", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_number_on_a_card_says_what_it_is_and_what_it_was_tested_against()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        // The defect the gallery review found: the card read `tradable-shortable 9849921234`, which
+        // is a median daily turnover in dollars tested against a fifty million dollar floor, and none
+        // of that was recoverable from the digits.
+        Assert.DoesNotContain(">9849921234<", html, StringComparison.Ordinal);
+        Assert.Contains("$9.85bn median daily turnover", html, StringComparison.Ordinal);
+        Assert.Contains("floor $50m", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"against\"", html, StringComparison.Ordinal);
     }
 
     [Fact]
