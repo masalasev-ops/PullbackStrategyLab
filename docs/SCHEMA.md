@@ -360,12 +360,15 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 | `low`, `high` | TEXT NULL | the interval bounds, null on a panel that carries no interval |
 | `n_rows` | INTEGER | the rows the figure was computed over |
 | `n_effective` | INTEGER NULL | the effective observations, which is not the same number and is what a minimum sample is counted in |
+| `population` | TEXT NULL | which rows the figure was computed over, said on the panel |
 
 Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
 
 *`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap and same-night setups share a market factor, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).*
 
 *Every panel stores its own count, because a number without one is not shown at all.*
+
+*And its population, because two panels on one page do not share one. Band 1 is over every flagged setup, which is what ARCHITECTURE means by the word: its worked night is twenty-two flagged of which fourteen pass every check, and all twenty-two are followed up. Band 2's rank-decile curve is over the capped candidates, because a decile is a position in an ordering and only a candidate carries a rank. At the calibrated thresholds the two differ by three orders of magnitude, so a stored panel that could not say which rows it used would be a figure a later reader compares against the wrong one (see: The subject is the flagged setup population, not the trade log).*
 
 ---
 

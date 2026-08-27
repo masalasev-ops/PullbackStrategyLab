@@ -35,7 +35,8 @@ public sealed record PanelView(
     string? Low,
     string? High,
     int Rows,
-    int? Effective)
+    int? Effective,
+    string Population)
 {
     /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
     public string Title => Name switch
@@ -87,6 +88,21 @@ public sealed record PanelView(
     /// </summary>
     public bool? ClearsZero =>
         Low is null ? null : decimal.Parse(Low, CultureInfo.InvariantCulture) > 0m;
+
+    /// <summary>
+    /// Which rows the figure was computed over, shown on every panel without exception.
+    ///
+    /// <b>Two panels on this page use different populations.</b> Band 1 is over every flagged setup;
+    /// band 2's decile curve is over the capped candidates, because a decile needs a rank and only a
+    /// candidate carries one. At the calibrated thresholds those differ by three orders of magnitude,
+    /// so a reader comparing the two without knowing which rows each used is comparing numbers whose
+    /// samples have nothing to do with each other.
+    ///
+    /// Shown rather than left to a legend, on the same grounds the count is: a legend is read once
+    /// and a caption is read every time.
+    /// see: The subject is the flagged setup population, not the trade log
+    /// </summary>
+    public string Over => $"over {Population}";
 
     /// <summary>
     /// The count, said so the two numbers cannot be confused.

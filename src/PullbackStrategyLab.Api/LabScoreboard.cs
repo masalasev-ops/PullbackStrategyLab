@@ -41,7 +41,7 @@ public static class LabScoreboard
         // nothing would read as "the lab has measured nothing" instead of "no panels were built
         // today".
         command.CommandText = """
-            SELECT panel, direction, figure, low, high, n_rows, n_effective
+            SELECT panel, direction, figure, low, high, n_rows, n_effective, population
               FROM scoreboard
              WHERE as_of = (SELECT MAX(as_of) FROM scoreboard WHERE as_of <= @as_of)
              ORDER BY panel, direction
@@ -59,7 +59,8 @@ public static class LabScoreboard
                 reader.IsDBNull(3) ? null : reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
                 reader.GetInt32(5),
-                reader.IsDBNull(6) ? null : reader.GetInt32(6));
+                reader.IsDBNull(6) ? null : reader.GetInt32(6),
+                reader.IsDBNull(7) ? "population not recorded" : reader.GetString(7));
 
             if (panel.Direction is null)
             {
@@ -107,4 +108,5 @@ public sealed record PanelResponse(
     string? Low,
     string? High,
     int Rows,
-    int? Effective);
+    int? Effective,
+    string Population);

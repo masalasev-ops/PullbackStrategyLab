@@ -1,0 +1,22 @@
+-- 021  scoreboard.population
+--
+-- Which rows each panel was computed over, said on the panel.
+--
+-- Band 1 is computed over every flagged setup and band 2's rank-decile curve over the capped
+-- candidates, because a decile needs a rank and only a candidate carries one. Those are different
+-- populations sitting on one page, and at 3.5 nothing said so.
+--
+-- **The two are not close.** ARCHITECTURE's own worked night is twenty-two flagged of which fourteen
+-- pass every check; the calibrated figures are about eighty-two flagged a night against 0.05
+-- candidates. A reader comparing the two panels without knowing which rows each used is comparing
+-- numbers three orders of magnitude apart in sample.
+--
+-- This is the fifth defect shape and it is why the column exists rather than the page carrying a
+-- footnote: the arithmetic is right, the check is live, the subject is present, and the sentence
+-- beside the figure is false. A figure states the population it was computed over, in the same
+-- breath, and a stored panel that cannot say its population cannot state it on any surface either.
+--
+-- Nullable, because the rows written before this migration did not record one and inventing a value
+-- for them would be worse than admitting it is absent.
+
+ALTER TABLE scoreboard ADD COLUMN population TEXT NULL;

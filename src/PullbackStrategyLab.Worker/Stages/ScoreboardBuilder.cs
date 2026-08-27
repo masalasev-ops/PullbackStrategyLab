@@ -30,6 +30,26 @@ public sealed class ScoreboardBuilder
     /// <summary>How many rank deciles band 2 reports. Ten, because it is a decile curve.</summary>
     public const int Deciles = 10;
 
+    /// <summary>
+    /// The two populations this page computes over, named so a panel can say which it used.
+    ///
+    /// <b>Flagged is every setup the detectors recorded</b>, which is what ARCHITECTURE means by the
+    /// word: its worked night is twenty-two flagged, of which fourteen pass every check, and all
+    /// twenty-two are followed up. The evidence store's whole purpose is that a stock nobody bought
+    /// is worth as much as one that filled.
+    ///
+    /// <b>Candidates are the subset that passed every gating check and carry a rank</b>, which a
+    /// decile curve needs because a decile is a position in an ordering.
+    ///
+    /// They differ by three orders of magnitude at the calibrated thresholds, so a panel that cannot
+    /// say which it used is a panel a reader will compare against the wrong one.
+    /// see: The subject is the flagged setup population, not the trade log
+    /// </summary>
+    public const string Flagged = "every flagged setup";
+
+    /// <summary>The ranked subset, which is what a decile curve can be computed over.</summary>
+    public const string Candidates = "capped candidates only";
+
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
     private readonly IClock _clock;
@@ -122,9 +142,9 @@ public sealed class ScoreboardBuilder
 
         return
         [
-            new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null),
-            new Panel("band0.degradedRuns", null, degraded.ToString(CultureInfo.InvariantCulture), null, null, nights, null),
-            new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null),
+            new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null, Flagged),
+            new Panel("band0.degradedRuns", null, degraded.ToString(CultureInfo.InvariantCulture), null, null, nights, null, "runs recorded"),
+            new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
         ];
     }
 
@@ -157,7 +177,7 @@ public sealed class ScoreboardBuilder
                 // nights invites a reading, and the count beside it is not enough to stop that.
                 panels.Add(new Panel(
                     $"band1.vs{Capitalise(set)}", direction, "withheld", null, null,
-                    series.Sum(n => n.Pairs), null));
+                    series.Sum(n => n.Pairs), null, Flagged));
                 continue;
             }
 
@@ -168,7 +188,8 @@ public sealed class ScoreboardBuilder
                 PairedInterval.Figure(estimate.Low),
                 PairedInterval.Figure(estimate.High),
                 estimate.Rows,
-                estimate.EffectiveObservations));
+                estimate.EffectiveObservations,
+                Flagged));
         }
 
         return panels;
@@ -226,7 +247,8 @@ public sealed class ScoreboardBuilder
                 null,
                 null,
                 d.Value.Count,
-                null)),
+                null,
+                Candidates)),
         ];
     }
 
@@ -255,7 +277,7 @@ public sealed class ScoreboardBuilder
         {
             // No bound yet. Withheld rather than a gap of nought, which would read as "selection has
             // no room" when it means "nobody has measured anything".
-            return [new Panel("band2.ceilingGap", direction, "withheld", null, null, 0, null)];
+            return [new Panel("band2.ceilingGap", direction, "withheld", null, null, 0, null, Flagged)];
         }
 
         decimal bound = StoreText.StorageTextToPrice(reader.GetString(0));
@@ -264,7 +286,7 @@ public sealed class ScoreboardBuilder
         return
         [
             new Panel("band2.ceilingGap", direction, PairedInterval.Figure(bound - achieved),
-                null, null, reader.GetInt32(2), null),
+                null, null, reader.GetInt32(2), null, Flagged),
         ];
     }
 
@@ -347,8 +369,8 @@ public sealed class ScoreboardBuilder
 
         command.CommandText = """
             INSERT INTO scoreboard
-                (as_of, panel, direction, figure, low, high, n_rows, n_effective, computed_at)
-            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective, @computed_at)
+                (as_of, panel, direction, figure, low, high, n_rows, n_effective, population, computed_at)
+            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective, @population, @computed_at)
             ON CONFLICT (as_of, panel, direction) DO NOTHING
             """;
 
@@ -360,13 +382,20 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue("@high", (object?)panel.High ?? DBNull.Value);
         command.Parameters.AddWithValue("@n_rows", panel.Rows);
         command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
+        command.Parameters.AddWithValue("@population", panel.Population);
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
 
         command.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// One panel. <c>Population</c> is which rows the figure was computed over, and it is not
+    /// optional: two panels on this page use different populations and a figure that cannot say
+    /// which is a figure a reader will compare with the wrong one.
+    /// </summary>
     private sealed record Panel(
-        string Name, string? Direction, string Figure, string? Low, string? High, int Rows, int? Effective);
+        string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
+        int? Effective, string Population);
 }
 
 /// <summary>What one day's build produced.</summary>

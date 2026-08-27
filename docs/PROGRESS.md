@@ -4065,3 +4065,52 @@ Carried:    **One new, at the operator**: which population band 1 is computed ov
             form was chosen for and the reason it is not a general prose matcher. The rule it implies
             is small and worth stating: a discharged obligation is described without naming a due
             point, because in a `Carried` block a due point is a claim about live work.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the population a panel is computed over, and a question the corpus already answered
+
+Corrects the entry above, which raised the band 1 population as an obligation at the operator. It is
+not the operator's: `ARCHITECTURE.html` answers it, and the session that raised it had not read
+closely enough.
+
+Findings:   **The corpus defines the word.** "Every night it writes down every stock that matched the
+            pattern, whether or not it will be traded, then over the following ten sessions records
+            what each of those stocks actually did." And the worked night: **"Twenty-two stocks are
+            flagged and all twenty-two are followed up. Fourteen pass every check and get a plan.
+            Five trade through their trigger. Two survive the concurrency and risk caps."** Then:
+            "the same night yields twenty-two observations and two trades, and the twenty are not a
+            consolation prize."
+
+            So **flagged is the recorded population and passing every check is a strict subset of
+            it.** Band 1 measures the flagged population, which is what `ScoreboardBuilder` already
+            did. The implementation was right and the obligation was a misreading.
+
+            **What was actually wrong is narrower and is now fixed.** Band 1 is over every flagged
+            setup and band 2's rank-decile curve is over the capped candidates, because a decile is a
+            position in an ordering and only a candidate carries a rank. Two populations on one page,
+            three orders of magnitude apart at the calibrated thresholds, and **nothing said which
+            rows either used**. That is the fifth defect shape sitting on the surface the sixth is
+            about: the arithmetic right, the check live, the subject present, the sentence false.
+
+            **This changes what blocks 3.6, and it is the useful part.** The threshold ruling was on
+            the critical path only while it was unclear which population band 1 measured. It is the
+            flagged one, so band 1 fills from about eighty-two setups a night whatever the thresholds
+            do. What the thresholds decide is whether anything is ever traded, which band 2 reports
+            and phase 4 acts on. **So accumulation is worth starting now**, and the ruling can be
+            taken against three months of real outcomes rather than against a reconstruction.
+
+Built:      Migration **021**, `scoreboard.population`, carried through the read surface, the view
+            and the page. Every panel says which rows it was computed over, on the same terms it says
+            its count: shown rather than left to a legend, because a legend is read once and a
+            caption is read every time.
+
+            A twelfth surface claim, so the fix is held by an assertion rather than by having
+            happened. `surface-claims` renders `/scoreboard` and requires the page to carry "over
+            every flagged setup"; the stub it renders against carries a panel of each population,
+            because a page rendering only one would satisfy the claim while still being unable to
+            tell a reader that the panel below counted something else.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 371 tests.
+
+Carried:    **One discharged**, and by reading rather than by ruling: which population band 1 is
+            computed over. The pre-3.6 sequence in `BUILD_PLAN.md` is corrected with it, and is now
+            four steps of which two are the operator's.

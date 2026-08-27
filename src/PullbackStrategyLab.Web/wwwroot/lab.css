@@ -309,3 +309,14 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
 .panel.withheld {
     border-style: dashed;
 }
+
+/*
+    Which rows a panel was computed over. On every panel without exception, because two panels on
+    this page use different populations and at the calibrated thresholds they differ by three orders
+    of magnitude.
+*/
+.panel .over {
+    font-size: 11px;
+    color: var(--ink3);
+    font-variant-numeric: tabular-nums;
+}

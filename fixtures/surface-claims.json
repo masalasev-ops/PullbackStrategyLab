@@ -38,6 +38,14 @@
       "why": "The failure this whole system exists to avoid is reading a pattern in forty observations, and a panel printing a figure with no denominator is the most efficient way to commit it."
     },
     {
+      "name": "every-panel-states-its-population",
+      "sentence": "a figure states the population it was computed over, in the same breath, and a figure over a mixed population is not stated at all",
+      "statedIn": "CLAUDE.md",
+      "surface": "/scoreboard",
+      "mustCarry": "over every flagged setup",
+      "why": "Band 1 is over every flagged setup and band 2's decile curve is over the capped candidates, and at the calibrated thresholds those differ by three orders of magnitude. Until 3.7 the page showed both without saying which rows either used, which is the fifth defect shape sitting on the surface the sixth is about."
+    },
+    {
       "name": "each-panel-carries-the-condition-it-reads-badly-under",
       "sentence": "Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration",
       "statedIn": "docs/ARCHITECTURE.html",

@@ -237,8 +237,8 @@
     },
     "surface-claims": {
       "scopes": {
-        "claims of visibility declared in the corpus": 11,
-        "of those whose surface exists and was rendered and read": 6
+        "claims of visibility declared in the corpus": 12,
+        "of those whose surface exists and was rendered and read": 7
       },
       "context": [
         "surfaces rendered"

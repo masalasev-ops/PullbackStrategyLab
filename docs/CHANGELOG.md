@@ -782,3 +782,13 @@ Why:  It is the only check in this corpus that reads a rendered surface. Every o
 Was:  "Conventions" said nothing about commit subjects. The form `Phase {phase} / {checkpoint} — {what changed}` existed only in sixty commits of history.
 Now:  The form is stated, with the rule that the checkpoint is never omitted even on a commit that builds nothing, and the note that this was broken once by a session inferring it from the log.
 Why:  A convention that exists only in what previous sessions happened to do is a convention the next session will break, and this one was: a ruling commit dropped the checkpoint field on the reasoning that a ruling is not a checkpoint. `Phase 2 / 2.12 — the ruling the sign-off owed` is the counter-example that was already in the log. Not made a check, because the failure is loud and costs one amend; if it breaks twice more that reasoning is wrong and the check is owed, which is said in the text so a later session can hold it to that.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `scoreboard` ended at `n_effective`.
+Now:  It carries `population`, with a paragraph on why two panels on one page do not share one.
+Why:  Band 1 is over every flagged setup and band 2 rank-decile curve is over the capped candidates, and at the calibrated thresholds those differ by three orders of magnitude. A stored panel that could not say which rows it used is a figure a later reader compares against the wrong one, which is the fifth defect shape.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The pre-3.6 sequence had six steps, the first being to settle what band 1 measures and the second to rule on the thresholds before accumulating.
+Now:  Four steps, neither of those among them, with a paragraph saying why the threshold ruling is not on the path.
+Why:  ARCHITECTURE settles what band 1 measures: its worked night is twenty-two flagged, fourteen passing every check, all twenty-two followed up. The evidence population is the flagged one, so band 1 fills whatever the thresholds do, and the ruling can be taken against three months of real outcomes instead of gating them.

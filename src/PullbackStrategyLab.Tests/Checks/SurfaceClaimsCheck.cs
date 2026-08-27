@@ -222,26 +222,34 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
         """;
 
     /// <summary>
-    /// A scoreboard with one panel of each shape: an interval that does not clear zero, and a count.
+    /// A scoreboard with one panel of each shape: an interval that does not clear zero, a plain
+    /// count, and a decile over the other population.
     ///
     /// The interval matters most. A page that only ever rendered a clearing interval would satisfy a
     /// claim about showing results and say nothing about showing non-results, and the claim is that
     /// each panel carries the condition under which it reads badly.
+    ///
+    /// The two populations matter nearly as much. Both appear here, because a page rendering only
+    /// one of them would carry the string the population claim looks for while still being unable to
+    /// tell a reader that the panel below it counted something else.
     /// </summary>
     private const string Panels = """
         {
           "asOf": "2026-08-24", "absent": null,
           "health": [
             { "name": "band0.nightsRecorded", "direction": null, "figure": "214",
-              "low": null, "high": null, "rows": 214, "effective": null }
+              "low": null, "high": null, "rows": 214, "effective": null,
+              "population": "every flagged setup" }
           ],
           "long": [
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
-              "low": "-0.0030", "high": "0.0250", "rows": 3180, "effective": 412 }
+              "low": "-0.0030", "high": "0.0250", "rows": 3180, "effective": 412,
+              "population": "every flagged setup" }
           ],
           "short": [
-            { "name": "band1.vsLoose", "direction": "short", "figure": "0.0290",
-              "low": "0.0140", "high": "0.0440", "rows": 1120, "effective": 168 }
+            { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
+              "low": null, "high": null, "rows": 1120, "effective": null,
+              "population": "capped candidates only" }
           ]
         }
         """;

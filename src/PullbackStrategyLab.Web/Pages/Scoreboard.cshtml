@@ -40,6 +40,7 @@ else
                     <dd>
                         <span class="figure">@panel.Figure</span>
                         <span class="count">@panel.Count</span>
+                        <span class="over">@panel.Over</span>
                         @if (panel.ReadsBadlyWhen is string warns)
                         {
                             <span class="warns">@warns</span>
@@ -78,6 +79,7 @@ else
                                     *@
                                     <span class="figure muted">withheld</span>
                                     <span class="count">@panel.Count, too few to say anything</span>
+                                    <span class="over">@panel.Over</span>
                                 }
                                 else
                                 {
@@ -92,6 +94,7 @@ else
                                     }
 
                                     <span class="count">@panel.Count</span>
+                                    <span class="over">@panel.Over</span>
                                 }
 
                                 @if (panel.ReadsBadlyWhen is string warns)
