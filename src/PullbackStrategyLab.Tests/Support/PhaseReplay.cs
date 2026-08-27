@@ -390,6 +390,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(ForwardOutcomeFigures());
         measurements.AddRange(ControlFigures());
+        measurements.AddRange(CeilingFigures());
         measurements.AddRange(CapFigures());
         measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
@@ -937,6 +938,40 @@ public sealed class PhaseReplay : IDisposable
                 $"controls.{setup}.{set}", string.Join(" ", drawn[(setup, set)])));
             figures.Add(new Measurement(
                 $"controls.{setup}.{set}.nearest", nearest[(setup, set)]));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The win-rate bound over authored outcome populations, which the fixture cannot supply.
+    ///
+    /// The captured night has no closed horizon, so the weekly bound over it is computed from
+    /// nothing and correctly writes no row. The arithmetic still has to be exercised, and what it
+    /// needs is populations rather than bars: a set of terminal returns and adverse excursions with
+    /// a stop beside each. Those are authored the way the cap scenarios are, because the quantity
+    /// under test is a rule over numbers rather than anything about the market.
+    /// see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+    /// </summary>
+    private static IReadOnlyList<Measurement> CeilingFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (CeilingCases.Scenario scenario in CeilingCases.All)
+        {
+            WinRateCeiling.Bound? bound = WinRateCeiling.Of(CeilingCases.Subjects(scenario));
+
+            if (bound is null)
+            {
+                figures.Add(new Measurement($"ceiling.{scenario.Name}", "no bound"));
+                continue;
+            }
+
+            figures.Add(new Measurement(
+                $"ceiling.{scenario.Name}.subjects", bound.Subjects.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.bound", Figure(bound.Ceiling)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.achieved", Figure(bound.Achieved)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.gap", Figure(bound.Ceiling - bound.Achieved)));
         }
 
         return figures;

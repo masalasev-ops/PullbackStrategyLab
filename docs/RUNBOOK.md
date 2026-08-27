@@ -79,6 +79,12 @@ Open the watchlist. Check the status band: run clean, calls within budget, posit
 
 ### Every week
 
+Run `ceiling`, which recomputes the win-rate bound per direction over every setup whose tenth
+session has closed. Weekly rather than nightly on purpose: the bound moves with the population
+rather than with a session, and a figure recomputed every night over one more row than yesterday
+invites reading noise as movement. It makes no vendor call and a week recomputed leaves earlier
+weeks standing, because the gap narrowing over time is the thing worth looking at.
+
 Open the scoreboard. Band 1 is the one that matters. If the tight-control comparison has been flat for a quarter, that is the project's answer and it is worth taking seriously rather than waiting for it to improve.
 
 ---

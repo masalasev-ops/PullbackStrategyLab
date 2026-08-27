@@ -3845,3 +3845,64 @@ Carried:    **One new, due at 3.5**: whether the tight set may draw from neighbo
             is what would make the market mood a dimension that excludes anything. Due where the
             scoreboard first reports the tight comparison, because that is the panel whose meaning
             the answer changes.
+
+## 3.4 — 2026-08-27 — phase-3-measurement — the ceiling, and two denominators that are the whole figure
+
+The bound computed from the actual outcome distribution, per direction, recomputed weekly.
+
+Built:      Migration **019**, `ceiling_bound`, grain date and direction. `WinRateCeiling` in Core.
+            `CeilingCalculator`, verb `ceiling`, scheduled under RUNBOOK's **Every week** rather than
+            in the nightly table, and exempted by name from the nightly-order test with that reason.
+
+            `fixtures/ceiling-cases.json`, five authored populations, **20 `DERIVED` expectations**
+            through `--ceiling`. Authored rather than captured because what this arithmetic needs is
+            not bars: it is terminal returns and adverse excursions with a give-up beside each.
+
+            **Weekly rather than nightly on purpose.** The bound moves with the population rather
+            than with a session, and a figure recomputed every night over one more row than yesterday
+            invites reading noise as movement.
+
+Findings:   Finding, caught while writing it rather than by a check. **The first version computed
+            the bound and the achieved rate with the same expression**, so the gap was nought by
+            construction and the figure could only ever say selection has no room.
+
+            The correction is that the two have **different denominators, and that is the whole
+            figure**. The bound is over the subjects that ended ahead, which is what foresight would
+            have picked; the achieved rate is over everything the lab flagged. A bound over the whole
+            population is the achieved rate again under another name.
+
+            What foresight is granted is the outcome and nothing else. It still has to survive the
+            path: a name that finished 15% up having first traded through its give-up point was not
+            available to any rule, however well chosen, because the position was already closed.
+            Dropping that half produces a bound nothing could reach, which is worse than no bound,
+            because it says selection has room when it has none.
+
+            **The units trap has a case of its own, and it is the sharpest one here.** The excursion
+            is recorded in ATR and the give-up distance in daily ranges: two different units on two
+            different bases, both small, both looking like volatility.
+            `stopped-only-in-the-wrong-units` states subjects whose excursion is -0.9 ATR against a
+            give-up of 0.5 daily ranges. Read as bare multiples, 0.9 exceeds 0.5 and nothing
+            survives, so the bound reads 0.0000. Converted to prices the excursion is 0.9 against a
+            give-up of 5.0, everything survives, and the bound is 1.0000. A ceiling comparing the two
+            multiples raw would report the first and be confidently, plausibly wrong.
+
+            The five scenarios separate the two readings a single win rate cannot.
+            `half-the-room-unused` gives a bound of 0.5000 against 0.2500 achieved, a gap of 0.2500,
+            which says better selection has somewhere to go. `the-stop-is-the-constraint` gives
+            0.2500 against 0.2000, a gap of 0.0500, from a similar achieved rate, and says the stop
+            is binding and no selection change can help. **Telling those two apart is the entire
+            reason the bound is computed rather than assumed.**
+
+            Observation. A subject with no range at all is treated as not having survived rather than
+            as having survived. A bound that counted unmeasurable rows as available would be
+            optimistic exactly where the data is worst, which is the direction an error here must
+            never take.
+
+            Observation. Over the fixture the stage writes no row, because no horizon has closed.
+            **No row rather than a row of noughts**: a ceiling of nought reads on a scoreboard as
+            "selection has no room", and what it would mean is "nobody has measured anything yet".
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. 1,087 expectations, 584
+            independent.
+
+Carried:    Nothing new.

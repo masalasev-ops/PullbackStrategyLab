@@ -747,3 +747,13 @@ Why:  The count, the method and the position in the night are all things a later
 Was:  The 18:26 row read "control sampling".
 Now:  "`controls`, loose and tight per flagged setup, before the cap".
 Why:  The nightly order test reads backticked verbs, and the position relative to the cap is the half of the schedule that carries meaning rather than convenience.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said CeilingCalculator "Computes the win-rate ceiling from the outcome distribution".
+Now:  The same, plus per direction and from the path rather than the terminal return, so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach.
+Why:  "From the outcome distribution" admits the reading that produced the first draft of this stage, in which the bound and the achieved rate were the same expression and the gap was nought by construction. The path is what makes the two differ, and per direction is what stops a pooled bound inheriting the short side borrow assumption.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Every week" said only to open the scoreboard.
+Now:  It runs `ceiling` first, with why it is weekly rather than nightly.
+Why:  The stage had no scheduled home. Weekly is deliberate: the bound moves with the population rather than with a session, and recomputing it nightly over one more row than yesterday invites reading noise as movement.

@@ -2045,7 +2045,69 @@ def controls_main(argv):
     return 0
 
 
+def ceiling_main(argv):
+    """The win-rate bound over the authored populations, restated from what the quantity is.
+
+    Perfect foresight takes the subjects that ended ahead, which is the only thing foresight is
+    granted. Of those, it keeps the ones the stop let it keep: a name that finished 15% up having
+    first traded through its give-up point was not available to any rule, because the position was
+    already closed. The bound is kept over ahead; the achieved rate is kept over everything flagged.
+
+    Two denominators, and their difference is the figure. A bound over the whole population is the
+    achieved rate again and the gap is nought by construction, which is a ceiling that can only ever
+    say selection has no room.
+
+    The conversion is the trap. The excursion is in ATR and the give-up is in daily ranges, so both
+    are turned into prices before they are compared. Read as bare multiples the two are different
+    units on different bases, both small, both looking like volatility.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --ceiling [cases.json]", file=sys.stderr)
+        return 2
+
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[0] if argv and argv[0].endswith(".json") else os.path.join(
+        here, "fixtures", "ceiling-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    print("\nwin-rate ceiling, over %s" % os.path.basename(path))
+
+    for scenario in spec["scenarios"]:
+        name = scenario["name"]
+        subjects = scenario["subjects"]
+
+        def survived(s):
+            atr = Decimal(s["atr"])
+            daily = Decimal(s["dailyRange"])
+            if atr <= 0 or daily <= 0:
+                return False
+            return abs(Decimal(s["maeAtr"])) * atr < Decimal(s["stopRanges"]) * daily
+
+        ahead = [s for s in subjects if Decimal(s["return"]) > 0]
+        kept = [s for s in ahead if survived(s)]
+
+        bound = Decimal(0) if not ahead else Decimal(len(kept)) / Decimal(len(ahead))
+        achieved = Decimal(len(kept)) / Decimal(len(subjects))
+
+        print()
+        print("  ceiling.%s.%-10s %d" % (name, "subjects", len(subjects)))
+        print("  ceiling.%s.%-10s %s" % (name, "bound", q(bound)))
+        print("  ceiling.%s.%-10s %s" % (name, "achieved", q(achieved)))
+        print("  ceiling.%s.%-10s %s" % (name, "gap", q(bound - achieved)))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--ceiling":
+        return ceiling_main(argv[2:] or [''])
+
     if len(argv) > 1 and argv[1] == "--controls":
         return controls_main(argv[2:])
 
