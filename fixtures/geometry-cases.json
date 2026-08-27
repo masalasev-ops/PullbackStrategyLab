@@ -1,0 +1,92 @@
+{
+  "tier": "AUTHORED",
+  "what": "Eleven windows out of the fixture's own bars, each with a thrust index chosen so that PullbackGeometry.Of returns a shape rather than the degenerate one. The bars are the captured fixture's; what is authored is which window and which index, and nothing else.",
+  "whatItCannotSay": "Nothing about the market, and nothing about how often any of these shapes occurs. A thrust index here is picked to reach a branch, not because a scan flagged that session. What the cases say is what the method computes over bars it is handed.",
+  "whyItIsOwed": "Over the captured fixture every name sits inside every scan on every session, so the thrust is always the last bar and Of returns PullbackBars 0 and RetraceDepth 0 on every row. The authored gate cases build a Pullback by hand from a retrace depth and a bar count and never call Of at all. So until this file existed, the method whose output four gates read was exercised on no non-degenerate input anywhere, and its own comment says why that matters: every figure it returns is a small plausible number whichever way it was computed.",
+  "whyThisCostsNothing": "Of takes the thrust index as a parameter and the fixture already holds 250 sessions for each of thirty names. A non-degenerate case is a thrust index inside the stored window rather than at its end. No capture, no vendor call, no committed megabyte.",
+  "bothBasesArePinnedOnPurpose": "The shape quantities are on the adjusted basis and the trigger and the stop are raw, because they are what trades tomorrow. Reading one where the other was meant is the error the method carries a warning about, and it is silent because both numbers look reasonable. Nine of the eleven cases sit on names whose adjusted basis differs from their raw one, and long-across-a-split sits on the fixture's 2-for-1 split where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. A basis swapped there moves an expectation by a factor of two rather than by a rounding.",
+  "window": {
+    "asOf": "2026-08-24",
+    "sessions": 60,
+    "why": "The fixture's last session, and a window long enough to hold a thrust, an extreme and a pullback with room either side. Sixty rather than the detector's 170 so a reader can count the index by hand against the store."
+  },
+  "cases": [
+    {
+      "name": "long-dip-the-gate-passes",
+      "ticker": "PFE",
+      "thrustIndex": 2,
+      "direction": "long",
+      "why": "Three pullback bars and a retrace of 0.2430, inside both the 2-to-7 window and the 0.40 cap, so this is the shape dip-shape is written to pass on. The only case here whose quantities clear the gate."
+    },
+    {
+      "name": "long-retrace-past-the-whole-thrust",
+      "ticker": "BAC",
+      "thrustIndex": 32,
+      "direction": "long",
+      "why": "Five pullback bars and a retrace of 1.0192: the drift gives back the entire thrust it is measured against. This is the shape the live calibration found typical, a median of 1.060 long over dips of 2 to 7 bars, so the instrument covers the population the 3.0 prediction is about rather than only the shapes the gate likes."
+    },
+    {
+      "name": "long-thrust-of-the-wrong-sign",
+      "ticker": "PG",
+      "thrustIndex": 41,
+      "direction": "long",
+      "why": "The extreme sits below the origin, so the move is negative and the retrace comes back -16.7368. A thrust that went the wrong way is not a shape, and the method returns a number for it anyway. Pinned because a large negative retrace is the one output here that could not be mistaken for a plausible small number, and nothing currently asserts it exists."
+    },
+    {
+      "name": "long-no-pullback-yet",
+      "ticker": "PFE",
+      "thrustIndex": 59,
+      "direction": "long",
+      "why": "The extreme is the last bar, so there are no pullback bars, the trigger and the stop are the same price, and the retrace reads 0.0000 rather than absent. This is the degenerate shape the whole captured fixture returns today, kept deliberately so the correction cannot move it without the diff saying so. It is also the vacuous-pass case: a give-up distance of zero clears every threshold expressed as a maximum, which is why the detectors record the gate as absent rather than passed."
+    },
+    {
+      "name": "long-thrust-at-the-window-start",
+      "ticker": "PFE",
+      "thrustIndex": 0,
+      "direction": "long",
+      "why": "There is no bar before the thrust, so the origin falls back to the thrust's own adjusted open, 25.7397, rather than to a close. The branch is documented in the method and is reached by nothing in the fixture, in the gate cases or in the live calibration, which is exactly the kind of branch this file exists to reach."
+    },
+    {
+      "name": "long-thrust-of-no-size",
+      "ticker": "PAYO",
+      "thrustIndex": 54,
+      "direction": "long",
+      "why": "The extreme equals the origin, so the move is zero and the retrace is undefined rather than infinite. Five pullback bars, so the null is the move's doing and not the pullback's, which is what separates this from long-no-pullback-yet."
+    },
+    {
+      "name": "long-across-a-split",
+      "ticker": "IESC",
+      "thrustIndex": 52,
+      "direction": "long",
+      "why": "The fixture's one name carrying a real 2-for-1 split in the window. The adjusted extreme is 400.4995 and the raw trigger is 770.9300, so the two bases are nearly a factor of two apart on the same rows. Every other case would still pass with the bases swapped or with the adjustment silently dropped; this one would not."
+    },
+    {
+      "name": "short-bounce-the-gate-passes",
+      "ticker": "CCL",
+      "thrustIndex": 47,
+      "direction": "short",
+      "why": "The mirror of long-dip-the-gate-passes: two bounce bars and a recovery of 0.2844, inside the window and the cap. The short side is a sign flip in this method by design, and a mirror asserted on one side only is a mirror nobody has checked."
+    },
+    {
+      "name": "short-retrace-past-the-whole-thrust",
+      "ticker": "PFE",
+      "thrustIndex": 57,
+      "direction": "short",
+      "why": "Two bounce bars and a recovery of 1.3220, against the live calibration's short median of 1.006 over bounces of 2 to 7 bars."
+    },
+    {
+      "name": "short-thrust-at-the-window-start",
+      "ticker": "IESC",
+      "thrustIndex": 0,
+      "direction": "short",
+      "why": "The origin fallback on the short side, and across the split at the same time: origin 347.4550 adjusted, stop 816.5100 raw. Two branches in one case because they are independent, and a case that reaches both costs no more than a case that reaches one."
+    },
+    {
+      "name": "short-thrust-of-no-size",
+      "ticker": "PAYO",
+      "thrustIndex": 15,
+      "direction": "short",
+      "why": "The mirror of long-thrust-of-no-size. Forty-four bounce bars after it, so again the null retrace is the move's doing rather than the pullback's."
+    }
+  ]
+}

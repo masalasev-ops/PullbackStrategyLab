@@ -3146,3 +3146,71 @@ Carried:    New, due at 3.1: which clause of a multi-clause gate failed, which n
             **The gallery review itself is not discharged.** One night, one card, one question. It
             stays due at the operator, and this entry is evidence the review earns its place rather
             than evidence it is finished.
+
+## 3.0(a) — 2026-08-27 — phase-3-measurement — the instrument, before the thing it measures
+
+The first part of 3.0, which is a new checkpoint created by this commit. Twelve obligations fell due
+at 3.1 and 3.1's deliverable is SetupJournal, so every one of them named a checkpoint whose
+deliverable was not its work. All twelve are repointed here, in the commit that creates the row.
+
+**Why this entry is headed 3.0(a) rather than 3.0.** The landed-checkpoint pattern is `^## \d+\.\d+ `
+with a trailing space, so this header does not register 3.0 as landed and `LastLanded` stays 2.9.
+That is the honest reading while six parts are outstanding, and it is what keeps the twelve
+deferrals valid: an obligation due at a checkpoint PROGRESS already records is a checkpoint that
+shipped without coming back to it. A `## 3.0` entry closes the checkpoint when the last part lands.
+
+Built:      `fixtures/geometry-cases.json`, tier `AUTHORED`, eleven windows over the fixture's own
+            bars with a thrust index chosen to reach a branch. `GeometryCases` in the suite, reading
+            the window through `DailyBarReader` rather than through a statement of its own, so a
+            case sees the session a detector would have seen. `PhaseReplay.GeometryFigures`, eight
+            quantities per case. `tools/derive-indicators.py --geometry`, an independent restatement.
+            `GeometryCaseTests`, four tests that the case set still reaches its branches.
+
+            **88 `DERIVED` expectations at checkpoint 3.0**, being 11 cases by 8 quantities. Every
+            quantity of the record rather than the two the gates read, because the method returns
+            one shape and a caller reading half of it correctly can still be handed a wrong origin.
+
+Findings:   Finding, and the instrument found it on its first run. **The two implementations
+            disagreed on the origin fallback, by 0.0098.** Where the thrust is the first bar of the
+            window there is no close before it. `PullbackGeometry.Of` falls back to the thrust's own
+            adjusted open and says why in its comment; `derive-indicators.py` fell back to the
+            adjusted close, in both the long and the short restatements, undocumented. Over the
+            `long-thrust-at-the-window-start` case that is 25.7397 against 25.7299.
+
+            Reading: the shipped method is right. The close sits inside the move being measured, so
+            using it reports a shorter thrust than happened, and the open is the nearest thing to
+            where the move began. The aid is corrected, and the correction carries the reasoning
+            rather than only the new expression.
+
+            **The branch was reached by nothing.** Not by the captured fixture, where every name is
+            inside every scan on every session so the thrust is always the last bar; not by the
+            authored gate cases, which build a `Pullback` by hand and never call `Of`; not by the
+            live calibration, whose 170-session window always has bars before the hit. Two
+            implementations had disagreed for as long as both existed and no run could have said so.
+
+            Verified against the population it could have moved: all 30 committed `setup.*`
+            expectations, long and short, recomputed after the fix and unchanged, because the
+            fixture's thrust index is always the last bar rather than nought. The fix moves nothing,
+            which is a measurement here rather than an expectation.
+
+            Observation, on what this part deliberately does not assert. The prediction 3.0(c) is
+            judged against is a claim about 2,016 names over 631 sessions. Thirty fixture names
+            cannot produce it and nothing here encodes it. What CI holds is the geometry over named
+            fixture cases; what settles the prediction is the calibration re-run, once.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests, up from 359.
+
+            Proved by removal, per the rule that an assertion must fail when its subject is taken
+            away. Both thrust indices of 0 moved to the end of their window: the branch test fails
+            naming the origin fallback. One case's ticker moved off the split name: `fixture-replay`
+            fails with eight named figures, each carrying its tier and checkpoint. Both restored.
+
+            The first removal attempt passed and the test was right: moving one of the two
+            window-start cases leaves the other, so the branch was still reached. Recorded because a
+            removal proof that passes is evidence about the removal until it is evidence about the
+            test.
+
+Carried:    Nothing new. Twelve obligations repointed from 3.1 to 3.0, unchanged in every other
+            respect. Six parts of 3.0 outstanding: the thrust scan on the setup row, the correction
+            and its prediction, the surfaces sweep, the remaining hygiene obligations, the spec
+            pass, and the value per clause.

@@ -78,7 +78,7 @@ import json
 import os
 import sqlite3
 import sys
-from decimal import Decimal, getcontext
+from decimal import Decimal, ROUND_HALF_UP, getcontext
 
 getcontext().prec = 40
 
@@ -99,7 +99,7 @@ def window(connection, ticker, as_of, sessions):
     bound = as_of + "T23:59:59.999Z"
     rows = connection.execute(
         """
-        SELECT bar_date, high, low, close, adj_close, volume
+        SELECT bar_date, high, low, close, adj_close, volume, open
           FROM daily_bar b
          WHERE b.ticker = ?
            AND b.bar_date <= ?
@@ -122,18 +122,20 @@ def window(connection, ticker, as_of, sessions):
             "close": Decimal(r[3]),
             "adj_close": Decimal(r[4]),
             "volume": Decimal(r[5]),
+            "open": Decimal(r[6]),
         }
         for r in rows
     ]
 
 
 def adjusted(bars):
-    """High, low and close on one basis, through each bar's own adj_close/close factor."""
+    """Open, high, low and close on one basis, through each bar's own adj_close/close factor."""
     out = []
     for b in bars:
         factor = Decimal(1) if b["close"] == 0 else b["adj_close"] / b["close"]
         out.append(
             {
+                "open": b["open"] * factor,
                 "high": b["high"] * factor,
                 "low": b["low"] * factor,
                 "close": b["adj_close"],
@@ -974,7 +976,12 @@ def checks_main(argv):
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
         extreme_index = max(range(thrust_index, len(adj)), key=lambda i: adj[i]["high"])
         extreme = adj[extreme_index]["high"]
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        # The close before the thrust. With the thrust on the first bar of the window there is
+        # none, and the thrust's own open is the nearest thing to where the move began. Its close
+        # is not: the close sits inside the move being measured, so using it reports a shorter
+        # thrust than happened. This read the close until the geometry cases at 3.0 reached the
+        # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
+        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["open"]
         pullback_bars = len(adj) - 1 - extreme_index
 
         if pullback_bars == 0:
@@ -1153,7 +1160,12 @@ def short_checks(connection, as_of, ticker):
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
         extreme_index = min(range(thrust_index, len(adj)), key=lambda i: adj[i]["low"])
         extreme = adj[extreme_index]["low"]
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        # The close before the thrust. With the thrust on the first bar of the window there is
+        # none, and the thrust's own open is the nearest thing to where the move began. Its close
+        # is not: the close sits inside the move being measured, so using it reports a shorter
+        # thrust than happened. This read the close until the geometry cases at 3.0 reached the
+        # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
+        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["open"]
         bounce_bars = len(adj) - 1 - extreme_index
 
         high = extreme if bounce_bars == 0 else max(
@@ -1536,7 +1548,198 @@ def calibration_main(argv):
     return 0
 
 
+def q(value):
+    """Four places, rounding halves away from zero, which is what the replay prints.
+
+    Stated here rather than left to `.quantize(PLACES)` as the rest of this file does, because
+    the default is banker's rounding and the replay rounds away from zero. On the values below
+    the two agree, and a disagreement on a tie would arrive later as a one-digit difference in a
+    figure nobody would think to suspect. The point of a second implementation is to disagree
+    about the arithmetic, not about the printing.
+    """
+    return str(Decimal(value).quantize(PLACES, rounding=ROUND_HALF_UP))
+
+
+def geometry_window(connection, ticker, as_of, sessions):
+    """The last `sessions` bars up to `as_of`, oldest first, point in time, carrying the open.
+
+    A second window rather than a parameter on the first, for the reason the first one gives:
+    the window is as much a part of the answer as the arithmetic is, and a derivation that
+    borrows the selection it is checking is checking less than it looks. The open is here and
+    not there because only the pullback shape needs it, to stand in for a close that does not
+    exist when the thrust is the first bar of the window.
+    """
+    bound = as_of + "T23:59:59.999Z"
+    rows = connection.execute(
+        """
+        SELECT bar_date, open, high, low, close, adj_close
+          FROM daily_bar b
+         WHERE b.ticker = ?
+           AND b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.bar_date DESC
+         LIMIT ?
+        """,
+        (ticker, as_of, bound, bound, sessions),
+    ).fetchall()
+
+    rows.reverse()
+
+    out = []
+    for date, o, h, l, c, ac in rows:
+        o, h, l, c, ac = (Decimal(x) for x in (o, h, l, c, ac))
+        factor = Decimal(1) if c == 0 else ac / c
+        out.append(
+            {
+                "date": date,
+                # Adjusted, for the shape. A split read raw is a 50% decline.
+                "open": o * factor,
+                "high": h * factor,
+                "low": l * factor,
+                "close": ac,
+                # Raw, for the two prices that trade tomorrow. Kept on the same record rather
+                # than in a parallel list, because the whole class of error here is reading one
+                # where the other was meant.
+                "raw_high": h,
+                "raw_low": l,
+            }
+        )
+    return out
+
+
+def pullback_shape(bars, thrust_index, is_long):
+    """The shape of one pullback, restated from what the quantity is rather than from the code.
+
+    The move is measured from the close before the thrust to the furthest the move reached after
+    it; the pullback is everything after that extreme, and the retrace is the fraction of the move
+    given back. Signed so both directions read the same way: zero is no give-back and one is the
+    whole move.
+
+    Two edges, and both are places where a wrong answer would still look like a right one:
+
+      With the thrust on the first bar of the window there is no close before it. The move has to
+      be measured from somewhere, and the thrust's own open is the nearest thing to where it began.
+      Its close is not, because the close is inside the move being measured and using it would
+      report a shorter thrust than actually happened.
+
+      A thrust of no size cannot be retraced by a fraction of itself, so the depth is undefined
+      rather than zero or infinite. Zero would read as a pullback that gave nothing back, which is
+      a different fact about a different shape.
+    """
+    if not bars or thrust_index < 0 or thrust_index >= len(bars):
+        return None
+
+    if thrust_index > 0:
+        origin = bars[thrust_index - 1]["close"]
+    else:
+        origin = bars[thrust_index]["open"]
+
+    if is_long:
+        extreme_index = max(range(thrust_index, len(bars)), key=lambda i: bars[i]["high"])
+        extreme = bars[extreme_index]["high"]
+    else:
+        extreme_index = min(range(thrust_index, len(bars)), key=lambda i: bars[i]["low"])
+        extreme = bars[extreme_index]["low"]
+
+    after = range(extreme_index + 1, len(bars))
+    pullback_bars = len(bars) - 1 - extreme_index
+
+    if pullback_bars == 0:
+        # No drift yet, so the extreme is its own answer and there is no level to enter or
+        # abandon against. A real state rather than a missing one.
+        pullback_extreme = extreme
+        trigger = bars[extreme_index]["raw_high"] if is_long else bars[extreme_index]["raw_low"]
+        stop = trigger
+    elif is_long:
+        pullback_extreme = min(bars[i]["low"] for i in after)
+        trigger = max(bars[i]["raw_high"] for i in after)
+        stop = min(bars[i]["raw_low"] for i in after)
+    else:
+        pullback_extreme = max(bars[i]["high"] for i in after)
+        trigger = min(bars[i]["raw_low"] for i in after)
+        stop = max(bars[i]["raw_high"] for i in after)
+
+    move = (extreme - origin) if is_long else (origin - extreme)
+    given_back = (extreme - pullback_extreme) if is_long else (pullback_extreme - extreme)
+    retrace = None if move == 0 else given_back / move
+
+    return {
+        "extremeIndex": extreme_index,
+        "pullbackBars": pullback_bars,
+        "thrustOrigin": origin,
+        "thrustExtreme": extreme,
+        "pullbackExtreme": pullback_extreme,
+        "retraceDepth": retrace,
+        "trigger": trigger,
+        "stop": stop,
+    }
+
+
+def geometry_main(argv):
+    """The authored geometry windows, restated independently of PullbackGeometry.
+
+    The captured fixture puts every name inside every scan on every session, so the thrust is
+    always the last bar and the shipped method returns nought bars and nought depth on every row.
+    fixtures/geometry-cases.json names windows and thrust indices that reach the other branches,
+    over the fixture's own bars. This mode says what each one should compute.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --geometry <store> [cases.json]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[1] if len(argv) > 1 else os.path.join(here, "fixtures", "geometry-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    connection = sqlite3.connect(store)
+    as_of = spec["window"]["asOf"]
+    sessions = spec["window"]["sessions"]
+
+    print("\ngeometry, over %s, %d session(s) to %s" % (store, sessions, as_of))
+
+    for case in spec["cases"]:
+        bars = geometry_window(connection, case["ticker"], as_of, sessions)
+        shape = pullback_shape(bars, case["thrustIndex"], case["direction"] == "long")
+        name = case["name"]
+
+        if shape is None:
+            print("  geometry.%-38s %s" % (name, "no shape"))
+            continue
+
+        print()
+        print("  %s  (%s index %d, %s, %d bar(s) read)"
+              % (name, case["ticker"], case["thrustIndex"], case["direction"], len(bars)))
+
+        for key in ("extremeIndex", "pullbackBars"):
+            print("    geometry.%s.%-16s %d" % (name, key, shape[key]))
+
+        for key in ("thrustOrigin", "thrustExtreme", "pullbackExtreme"):
+            print("    geometry.%s.%-16s %s" % (name, key, q(shape[key])))
+
+        depth = shape["retraceDepth"]
+        print("    geometry.%s.%-16s %s"
+              % (name, "retraceDepth", "undefined" if depth is None else q(depth)))
+
+        for key in ("trigger", "stop"):
+            print("    geometry.%s.%-16s %s" % (name, key, q(shape[key])))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--geometry":
+        return geometry_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--calibration":
         return calibration_main(argv[2:])
 

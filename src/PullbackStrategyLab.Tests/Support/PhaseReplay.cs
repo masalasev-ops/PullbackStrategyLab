@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Web.Pages;
@@ -353,6 +354,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(CapFigures());
+        measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
         measurements.AddRange(ScanFigures());
         measurements.AddRange(CheckSidednessFigures());
@@ -675,6 +677,57 @@ public sealed class PhaseReplay : IDisposable
                 string.Join(
                     " ",
                     placements.Where(p => p.Direction == direction).OrderBy(p => p.Rank).Select(p => p.SetupId))));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// What <see cref="PullbackGeometry.Of"/> computes over windows the captured fixture cannot
+    /// reach on its own.
+    ///
+    /// Every quantity of the record rather than the two the gates happen to read, because the
+    /// method returns one shape and a caller reading half of it correctly can still be handed a
+    /// wrong origin. The two prices are raw and the rest are adjusted, and both are pinned: reading
+    /// one basis where the other was meant is the error this method carries a warning about, and it
+    /// is silent because both numbers look reasonable.
+    /// </summary>
+    private IReadOnlyList<Measurement> GeometryFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (GeometryCases.GeometryCase geometryCase in GeometryCases.All)
+        {
+            PullbackGeometry.Pullback? shape = GeometryCases.Evaluate(connection, geometryCase);
+
+            if (shape is null)
+            {
+                // A window that cannot support a shape is a real answer and is recorded as one. It
+                // is not the same as a shape of no bars, which is what long-no-pullback-yet holds.
+                figures.Add(new Measurement(geometryCase.Id, "no shape"));
+                continue;
+            }
+
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.extremeIndex",
+                shape.ExtremeIndex.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.pullbackBars",
+                shape.PullbackBars.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"{geometryCase.Id}.thrustOrigin", Figure(shape.ThrustOrigin)));
+            figures.Add(new Measurement($"{geometryCase.Id}.thrustExtreme", Figure(shape.ThrustExtreme)));
+            figures.Add(new Measurement($"{geometryCase.Id}.pullbackExtreme", Figure(shape.PullbackExtreme)));
+
+            // Undefined rather than infinite, and recorded as a word so it cannot be read as a
+            // number that happened to be small. A thrust of no size cannot be retraced by a
+            // fraction of itself.
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.retraceDepth",
+                shape.RetraceDepth is decimal retrace ? Figure(retrace) : "undefined"));
+
+            figures.Add(new Measurement($"{geometryCase.Id}.trigger", Figure(shape.Trigger)));
+            figures.Add(new Measurement($"{geometryCase.Id}.stop", Figure(shape.Stop)));
         }
 
         return figures;

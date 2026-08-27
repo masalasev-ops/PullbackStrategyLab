@@ -50,7 +50,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendor’s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorâ€™s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "backfill.rebuild.selected",
@@ -115,6 +115,197 @@
       "checkpoint": "1.4",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "Thirty. The fixture tickers already hold this session from their histories, so the bulk ingest finds them stored unchanged. Idempotence stated as a number."
+    },
+    {
+      "id": "calibration.from",
+      "tier": "DERIVED",
+      "value": "2026-03-30",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.long.candidateHighest",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the same"
+    },
+    {
+      "id": "calibration.long.candidateMedian",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night counts of names passing every gating check"
+    },
+    {
+      "id": "calibration.long.emptyNights",
+      "tier": "FROZEN",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "how many of the run's nights produced no candidate at all",
+      "note": "Every night, for the reason `passedAll` records."
+    },
+    {
+      "id": "calibration.long.errored",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought. A name the detector could not decide would have a row of its own here."
+    },
+    {
+      "id": "calibration.long.passedAll",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
+    },
+    {
+      "id": "calibration.long.recorded",
+      "tier": "FROZEN",
+      "value": "237",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories"
+    },
+    {
+      "id": "calibration.long.recordedHighest",
+      "tier": "FROZEN",
+      "value": "6",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.long.recordedMedian",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.membersListed",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "2.11",
+      "producedBy": "the members the screen admitted, which is what the run would have walked without the history rule",
+      "note": "Seven thousand two hundred admitted against thirty with a warm-up behind them. The nightly bulk ingest stores the whole market's closes for the evening it runs, so almost every member has one bar and no history at all."
+    },
+    {
+      "id": "calibration.membersWithHistory",
+      "tier": "DERIVED",
+      "value": "30",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.rowsInCalibrationSetup",
+      "tier": "FROZEN",
+      "value": "325",
+      "checkpoint": "2.11",
+      "producedBy": "the rows the two calibration runs wrote, counted from the replay store afterwards"
+    },
+    {
+      "id": "calibration.scanBreadth",
+      "tier": "FROZEN",
+      "value": "50",
+      "checkpoint": "2.11",
+      "producedBy": "the scan breadth the run ranked against, recorded beside the candidate count it is compared to"
+    },
+    {
+      "id": "calibration.sessions",
+      "tier": "DERIVED",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.setupRowsOutsideTheForwardNight",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the evidence rows the calibration run left behind, counted from the replay store afterwards",
+      "note": "Nought, and it is the property the checkpoint turns on. A run over history writes to `calibration_setup` and the evidence store keeps only what was flagged forward."
+    },
+    {
+      "id": "calibration.short.candidateHighest",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the same"
+    },
+    {
+      "id": "calibration.short.candidateMedian",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night counts of names passing every gating check"
+    },
+    {
+      "id": "calibration.short.emptyNights",
+      "tier": "FROZEN",
+      "value": "102",
+      "checkpoint": "2.11",
+      "producedBy": "how many of the run's nights produced no candidate at all",
+      "note": "Every night, for the reason `passedAll` records."
+    },
+    {
+      "id": "calibration.short.errored",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought. A name the detector could not decide would have a row of its own here."
+    },
+    {
+      "id": "calibration.short.passedAll",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories",
+      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
+    },
+    {
+      "id": "calibration.short.recorded",
+      "tier": "FROZEN",
+      "value": "88",
+      "checkpoint": "2.11",
+      "producedBy": "the calibration run over the fixture's own seeded histories"
+    },
+    {
+      "id": "calibration.short.recordedHighest",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "2.11",
+      "producedBy": "the highest of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.short.recordedMedian",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "2.11",
+      "producedBy": "the median of the run's per-night recorded counts"
+    },
+    {
+      "id": "calibration.storedSessions",
+      "tier": "DERIVED",
+      "value": "251",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.to",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "2.11",
+      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
+    },
+    {
+      "id": "calibration.warmupSessions",
+      "tier": "FROZEN",
+      "value": "10",
+      "checkpoint": "2.11",
+      "producedBy": "the ranking warm-up the run reported, which is the thrust window in sessions",
+      "note": "Ten rather than twenty: the thrust window is ten sessions, and the ranking runs that far ahead of the detection so the first session decided has ranks behind it."
     },
     {
       "id": "cap.both-overflow.long",
@@ -309,63 +500,63 @@
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.high",
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -373,21 +564,21 @@
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.sessions",
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
     },
     {
       "id": "check.long.cluster.failed",
@@ -1199,6 +1390,710 @@
       "note": "89 sessions, one short of it, with every other floor cleared. AUTHORED input: constructed, and evidence about no market."
     },
     {
+      "id": "geometry.long-across-a-split.extremeIndex",
+      "tier": "DERIVED",
+      "value": "54",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.pullbackBars",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "323.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.retraceDepth",
+      "tier": "DERIVED",
+      "value": "4.4333",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.stop",
+      "tier": "DERIVED",
+      "value": "323.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "400.4995",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "383.1650",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-across-a-split.trigger",
+      "tier": "DERIVED",
+      "value": "770.9300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the fixture's 2-for-1 split, where the adjusted extreme is 400.4995 and the raw trigger is 770.9300. The one case a swapped basis moves by a factor rather than a rounding. AUTHORED input: IESC index 52 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.extremeIndex",
+      "tier": "DERIVED",
+      "value": "56",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.pullbackBars",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.2430",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.stop",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "28.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "25.1893",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-dip-the-gate-passes.trigger",
+      "tier": "DERIVED",
+      "value": "28.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the one case whose quantities clear dip-shape: 3 bars of drift giving back 0.2430 of the thrust. AUTHORED input: PFE index 2 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.extremeIndex",
+      "tier": "DERIVED",
+      "value": "59",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.pullbackBars",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "28.1561",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.0000",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.stop",
+      "tier": "DERIVED",
+      "value": "28.1561",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "28.1561",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "28.0700",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-no-pullback-yet.trigger",
+      "tier": "DERIVED",
+      "value": "28.1561",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme is the last bar, so there are no pullback bars, the trigger and the stop are one price and the depth reads 0.0000 rather than absent. The shape every captured fixture row returns today. AUTHORED input: PFE index 59 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.extremeIndex",
+      "tier": "DERIVED",
+      "value": "54",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.pullbackBars",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "61.5200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.retraceDepth",
+      "tier": "DERIVED",
+      "value": "1.0192",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.stop",
+      "tier": "DERIVED",
+      "value": "61.5200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "65.2300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "61.5900",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-retrace-past-the-whole-thrust.trigger",
+      "tier": "DERIVED",
+      "value": "64.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the drift gives back the whole thrust, which the live calibration found typical at a median of 1.060 long over dips of 2 to 7 bars. AUTHORED input: BAC index 32 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.extremeIndex",
+      "tier": "DERIVED",
+      "value": "56",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.pullbackBars",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.2926",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.stop",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "28.4400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "25.7397",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-at-the-window-start.trigger",
+      "tier": "DERIVED",
+      "value": "28.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "no bar before the thrust, so the origin falls back to the thrust's own adjusted open. Reached by nothing in the fixture, the gate cases or the live calibration until this file existed. AUTHORED input: PFE index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.extremeIndex",
+      "tier": "DERIVED",
+      "value": "54",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.pullbackBars",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "7.0900",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.retraceDepth",
+      "tier": "DERIVED",
+      "value": "undefined",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.stop",
+      "tier": "DERIVED",
+      "value": "7.0900",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "7.1300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "7.1300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-no-size.trigger",
+      "tier": "DERIVED",
+      "value": "7.1300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme equals the origin, so the depth is undefined rather than infinite, with 5 pullback bars after it so the null is the move's doing and not the pullback's. AUTHORED input: PAYO index 54 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.extremeIndex",
+      "tier": "DERIVED",
+      "value": "47",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.pullbackBars",
+      "tier": "DERIVED",
+      "value": "12",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "142.1400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.retraceDepth",
+      "tier": "DERIVED",
+      "value": "-16.7368",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.stop",
+      "tier": "DERIVED",
+      "value": "142.1400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "148.5000",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "148.8800",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.long-thrust-of-the-wrong-sign.trigger",
+      "tier": "DERIVED",
+      "value": "146.7960",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the extreme sits below the origin, so the move is negative and the depth comes back large and negative rather than absent. AUTHORED input: PG index 41 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.extremeIndex",
+      "tier": "DERIVED",
+      "value": "57",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.pullbackBars",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "26.4200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.retraceDepth",
+      "tier": "DERIVED",
+      "value": "0.2844",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.stop",
+      "tier": "DERIVED",
+      "value": "26.4200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "25.1900",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "29.5154",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-bounce-the-gate-passes.trigger",
+      "tier": "DERIVED",
+      "value": "25.4600",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-dip-the-gate-passes: 2 bars of bounce recovering 0.2844. AUTHORED input: CCL index 47 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.extremeIndex",
+      "tier": "DERIVED",
+      "value": "57",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.pullbackBars",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "28.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.retraceDepth",
+      "tier": "DERIVED",
+      "value": "1.3220",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.stop",
+      "tier": "DERIVED",
+      "value": "28.4300",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "27.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "28.2400",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-retrace-past-the-whole-thrust.trigger",
+      "tier": "DERIVED",
+      "value": "27.6600",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the short mirror, against the live calibration's median of 1.006 short over bounces of 2 to 7 bars. AUTHORED input: PFE index 57 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.extremeIndex",
+      "tier": "DERIVED",
+      "value": "41",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.pullbackBars",
+      "tier": "DERIVED",
+      "value": "18",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "408.2550",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.retraceDepth",
+      "tier": "DERIVED",
+      "value": "1.6025",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.stop",
+      "tier": "DERIVED",
+      "value": "816.5100",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "246.5500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "347.4550",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-at-the-window-start.trigger",
+      "tier": "DERIVED",
+      "value": "323.6500",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the origin fallback on the short side and across the split at once: origin 347.4550 adjusted against a stop of 816.5100 raw. AUTHORED input: IESC index 0 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.extremeIndex",
+      "tier": "DERIVED",
+      "value": "15",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.pullbackBars",
+      "tier": "DERIVED",
+      "value": "44",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.pullbackExtreme",
+      "tier": "DERIVED",
+      "value": "7.1800",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.retraceDepth",
+      "tier": "DERIVED",
+      "value": "undefined",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.stop",
+      "tier": "DERIVED",
+      "value": "7.1800",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.thrustExtreme",
+      "tier": "DERIVED",
+      "value": "7.0200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.thrustOrigin",
+      "tier": "DERIVED",
+      "value": "7.0200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
+      "id": "geometry.short-thrust-of-no-size.trigger",
+      "tier": "DERIVED",
+      "value": "7.0200",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the pullback geometry over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --geometry",
+      "note": "the mirror of long-thrust-of-no-size, with 44 bounce bars after it. AUTHORED input: PAYO index 15 over the 60 sessions to 2026-08-24, a thrust index the fixture's own scans never produce."
+    },
+    {
       "id": "index.IWM.bars",
       "tier": "DERIVED",
       "value": "251",
@@ -1858,49 +2753,49 @@
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.ema9",
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.INTC.adr20",
@@ -2103,49 +2998,49 @@
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.ema9",
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.META.adr20",
@@ -2348,49 +3243,49 @@
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.ema9",
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixture’s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
     },
     {
       "id": "indicators.PFE.adr20",
@@ -2839,7 +3734,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOK’s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKâ€™s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.computed",
@@ -5116,197 +6011,6 @@
       "value": "2002",
       "checkpoint": "1.3",
       "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
-    },
-    {
-      "id": "calibration.storedSessions",
-      "tier": "DERIVED",
-      "value": "251",
-      "checkpoint": "2.11",
-      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
-    },
-    {
-      "id": "calibration.from",
-      "tier": "DERIVED",
-      "value": "2026-03-30",
-      "checkpoint": "2.11",
-      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
-    },
-    {
-      "id": "calibration.to",
-      "tier": "DERIVED",
-      "value": "2026-08-24",
-      "checkpoint": "2.11",
-      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
-    },
-    {
-      "id": "calibration.sessions",
-      "tier": "DERIVED",
-      "value": "102",
-      "checkpoint": "2.11",
-      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
-    },
-    {
-      "id": "calibration.membersWithHistory",
-      "tier": "DERIVED",
-      "value": "30",
-      "checkpoint": "2.11",
-      "producedBy": "an independent count over the captured histories, restating the security-type filter and the warm-up rule, computed outside the solution by tools/derive-indicators.py --calibration"
-    },
-    {
-      "id": "calibration.warmupSessions",
-      "tier": "FROZEN",
-      "value": "10",
-      "checkpoint": "2.11",
-      "producedBy": "the ranking warm-up the run reported, which is the thrust window in sessions",
-      "note": "Ten rather than twenty: the thrust window is ten sessions, and the ranking runs that far ahead of the detection so the first session decided has ranks behind it."
-    },
-    {
-      "id": "calibration.membersListed",
-      "tier": "FROZEN",
-      "value": "7202",
-      "checkpoint": "2.11",
-      "producedBy": "the members the screen admitted, which is what the run would have walked without the history rule",
-      "note": "Seven thousand two hundred admitted against thirty with a warm-up behind them. The nightly bulk ingest stores the whole market's closes for the evening it runs, so almost every member has one bar and no history at all."
-    },
-    {
-      "id": "calibration.scanBreadth",
-      "tier": "FROZEN",
-      "value": "50",
-      "checkpoint": "2.11",
-      "producedBy": "the scan breadth the run ranked against, recorded beside the candidate count it is compared to"
-    },
-    {
-      "id": "calibration.long.recorded",
-      "tier": "FROZEN",
-      "value": "237",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories"
-    },
-    {
-      "id": "calibration.long.passedAll",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories",
-      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
-    },
-    {
-      "id": "calibration.long.errored",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories",
-      "note": "Nought. A name the detector could not decide would have a row of its own here."
-    },
-    {
-      "id": "calibration.long.recordedMedian",
-      "tier": "FROZEN",
-      "value": "2",
-      "checkpoint": "2.11",
-      "producedBy": "the median of the run's per-night recorded counts"
-    },
-    {
-      "id": "calibration.long.recordedHighest",
-      "tier": "FROZEN",
-      "value": "6",
-      "checkpoint": "2.11",
-      "producedBy": "the highest of the run's per-night recorded counts"
-    },
-    {
-      "id": "calibration.long.candidateMedian",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the median of the run's per-night counts of names passing every gating check"
-    },
-    {
-      "id": "calibration.long.candidateHighest",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the highest of the same"
-    },
-    {
-      "id": "calibration.long.emptyNights",
-      "tier": "FROZEN",
-      "value": "102",
-      "checkpoint": "2.11",
-      "producedBy": "how many of the run's nights produced no candidate at all",
-      "note": "Every night, for the reason `passedAll` records."
-    },
-    {
-      "id": "calibration.short.recorded",
-      "tier": "FROZEN",
-      "value": "88",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories"
-    },
-    {
-      "id": "calibration.short.passedAll",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories",
-      "note": "Nought on every night of both directions, and it is a fact about the fixture rather than about the gates. Thirty candidates against a scan breadth of fifty puts every name inside every scan on every session, so the most recent thrust is always the session itself and no pullback has any bars. The distribution a threshold was set against came from the live universe and is recorded in PROGRESS."
-    },
-    {
-      "id": "calibration.short.errored",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the calibration run over the fixture's own seeded histories",
-      "note": "Nought. A name the detector could not decide would have a row of its own here."
-    },
-    {
-      "id": "calibration.short.recordedMedian",
-      "tier": "FROZEN",
-      "value": "1",
-      "checkpoint": "2.11",
-      "producedBy": "the median of the run's per-night recorded counts"
-    },
-    {
-      "id": "calibration.short.recordedHighest",
-      "tier": "FROZEN",
-      "value": "3",
-      "checkpoint": "2.11",
-      "producedBy": "the highest of the run's per-night recorded counts"
-    },
-    {
-      "id": "calibration.short.candidateMedian",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the median of the run's per-night counts of names passing every gating check"
-    },
-    {
-      "id": "calibration.short.candidateHighest",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the highest of the same"
-    },
-    {
-      "id": "calibration.short.emptyNights",
-      "tier": "FROZEN",
-      "value": "102",
-      "checkpoint": "2.11",
-      "producedBy": "how many of the run's nights produced no candidate at all",
-      "note": "Every night, for the reason `passedAll` records."
-    },
-    {
-      "id": "calibration.rowsInCalibrationSetup",
-      "tier": "FROZEN",
-      "value": "325",
-      "checkpoint": "2.11",
-      "producedBy": "the rows the two calibration runs wrote, counted from the replay store afterwards"
-    },
-    {
-      "id": "calibration.setupRowsOutsideTheForwardNight",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.11",
-      "producedBy": "the evidence rows the calibration run left behind, counted from the replay store afterwards",
-      "note": "Nought, and it is the property the checkpoint turns on. A run over history writes to `calibration_setup` and the evidence store keeps only what was flagged forward."
     }
   ],
   "frozenOnly": []
