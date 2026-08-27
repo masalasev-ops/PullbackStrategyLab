@@ -37,6 +37,15 @@ public static class Program
         builder.Services.AddSingleton<ActionIngestor>();
         builder.Services.AddSingleton<IndicatorEngine>();
         builder.Services.AddSingleton<IndexIngestor>();
+        builder.Services.AddSingleton<SignalVectorizer>();
+        builder.Services.AddSingleton<ScanEngine>();
+        builder.Services.AddSingleton<TierClassifier>();
+        builder.Services.AddSingleton<RegimeLabeler>();
+        builder.Services.AddSingleton<SectorResolver>();
+        builder.Services.AddSingleton<ThemeClusterer>();
+        builder.Services.AddSingleton<LongSetupDetector>();
+        builder.Services.AddSingleton<ShortSetupDetector>();
+        builder.Services.AddSingleton<SetupCapper>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
 
@@ -64,6 +73,15 @@ public static class Program
                 IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
+                SignalVectorizer.Name => host.Services.GetRequiredService<SignalVectorizer>().Run(rest),
+                ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
+                TierClassifier.Name => host.Services.GetRequiredService<TierClassifier>().Run(rest),
+                RegimeLabeler.Name => host.Services.GetRequiredService<RegimeLabeler>().Run(rest),
+                SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
+                ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
+                LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
+                ShortSetupDetector.Name => host.Services.GetRequiredService<ShortSetupDetector>().Run(rest),
+                SetupCapper.Name => host.Services.GetRequiredService<SetupCapper>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
                 _ => UnknownStage(stage),
@@ -107,6 +125,15 @@ public static class Program
         DailyBarIngestor.BackfillName,
         IndexIngestor.Name,
         IndicatorEngine.Name,
+        ScanEngine.Name,
+        TierClassifier.Name,
+        SectorResolver.Name,
+        ThemeClusterer.Name,
+        RegimeLabeler.Name,
+        LongSetupDetector.Name,
+        ShortSetupDetector.Name,
+        SignalVectorizer.Name,
+        SetupCapper.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,
     ];

@@ -49,13 +49,20 @@ public sealed class BarAppendOnlyCheck
         coverage
             .Examined("bar tables named by the check", BarTables.Count)
             .Examined("bar tables a migration has created", created.Length)
-            .Examined("source files scanned", SourceWrites.ProductionFilesRead)
-            .Examined("writes found against a bar table", inserts.Length + mutations.Length);
+            .Context("source files scanned", SourceWrites.ProductionFilesRead)
+            .Examined("writes found against a bar table", inserts.Length + mutations.Length)
+            .Scan("no delete or update against a bar table exists in the shipped source",
+                CheckCoverage.Backing.Test(
+                    "DailyBarIngestorTests.A_vendor_correction_arrives_as_a_new_row_and_the_original_stays",
+                    "the ingestor is handed a corrected figure for a session it already stored, and the test "
+                    + "asserts both rows are present afterwards. That is the property; this scan is the half "
+                    + "that says no other component in the shipped source can undo it"));
 
         if (created.Length < BarTables.Count)
         {
             coverage.OutOfScope("bar tables no migration has created yet", BarTables.Count - created.Length,
-                "the table arrives with the checkpoint that ingests it, and nothing can write one that does not exist");
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2",
+                    "intraday_bar arrives with IntradayFetcher, and nothing can write a table that does not exist"));
         }
 
         coverage.Report();

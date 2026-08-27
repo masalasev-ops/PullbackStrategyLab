@@ -186,6 +186,142 @@ public sealed class LabApiClient
         }
     }
 
+    /// <summary>
+    /// A night's setups, both directions. Answers with a reason rather than throwing, on the same
+    /// terms as every other read here: a night with nothing flagged is an ordinary state.
+    /// </summary>
+    public async Task<SetupsView> ReadSetupsAsync(
+        DateOnly asOf,
+        string? failedCheck,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string filter = string.IsNullOrWhiteSpace(failedCheck)
+            ? string.Empty
+            : "?failed=" + Uri.EscapeDataString(failedCheck);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/setups/{session}{filter}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return SetupsView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            SetupsPayload? payload = await JsonSerializer
+                .DeserializeAsync<SetupsPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return SetupsView.Empty(session, "the read surface answered with nothing");
+            }
+
+            if (payload.Nothing is not null)
+            {
+                return SetupsView.Empty(payload.AsOf ?? session, payload.Nothing);
+            }
+
+            // The lists are read defensively, because a read surface answering with a different
+            // shape is a thing that happens and a page that threw on it would take the whole
+            // screen down rather than saying what it got.
+            return new SetupsView(
+                payload.AsOf ?? session,
+                payload.FailedCheck,
+                payload.Flagged,
+                [.. (payload.Long ?? []).Select(Card)],
+                [.. (payload.Short ?? []).Select(Card)],
+                payload.CheckNames ?? [],
+                null);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException or FormatException)
+        {
+            return SetupsView.Empty(session, $"the read surface at {BaseAddress} did not answer");
+        }
+    }
+
+    /// <summary>
+    /// What a person thought of one setup, on its way to the one column pair the read surface writes.
+    ///
+    /// Returns the reason rather than throwing, because the page that called it is mid-render of a
+    /// night the person is working through and an exception would lose the rest of it.
+    /// see: The agreement a person records is written through the read surface, and it is the only write it makes
+    /// </summary>
+    public async Task<string?> RecordAgreementAsync(
+        string setupId,
+        string? agreement,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(setupId);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .PostAsJsonAsync(
+                    $"/setups/{Uri.EscapeDataString(setupId)}/agreement",
+                    new { agreement, note },
+                    Json,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return response.IsSuccessStatusCode
+                ? null
+                : $"the read surface answered {(int)response.StatusCode}";
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return $"the read surface at {BaseAddress} did not answer";
+        }
+    }
+
+    private static SetupCardView Card(SetupPayload s) => new(
+        s.SetupId,
+        s.Ticker,
+        s.Direction,
+        s.Rank,
+        s.CappedOut,
+        s.PassedAll,
+        s.TriggerPrice,
+        s.StopPrice,
+        s.StopDistanceRanges,
+        s.Agreement,
+        s.AgreementNote,
+        [.. s.Checks.Select(c => new SetupCheckRowView(c.Name, c.Passed, c.Value, c.Note))],
+        [.. s.Candles.Select(c => new Candle(
+            DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            c.Open, c.High, c.Low, c.Close))]);
+
+    private sealed record SetupsPayload(
+        string? AsOf,
+        string? FailedCheck,
+        int Flagged,
+        IReadOnlyList<SetupPayload>? Long,
+        IReadOnlyList<SetupPayload>? Short,
+        IReadOnlyList<string>? CheckNames,
+        string? Nothing);
+
+    private sealed record SetupPayload(
+        string SetupId,
+        string Ticker,
+        string Direction,
+        int? Rank,
+        bool? CappedOut,
+        bool PassedAll,
+        decimal TriggerPrice,
+        decimal StopPrice,
+        decimal StopDistanceRanges,
+        string? Agreement,
+        string? AgreementNote,
+        IReadOnlyList<SetupCheckPayload> Checks,
+        IReadOnlyList<SetupCandlePayload> Candles);
+
+    private sealed record SetupCheckPayload(string Name, bool Passed, decimal? Value, string? Note);
+
+    private sealed record SetupCandlePayload(string Date, decimal Open, decimal High, decimal Low, decimal Close);
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private sealed record ChartPayload(

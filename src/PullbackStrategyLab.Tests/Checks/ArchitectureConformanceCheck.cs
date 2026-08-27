@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
+using PullbackStrategyLab.Worker.Stages;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -284,6 +285,41 @@ public sealed partial class ArchitectureConformanceCheck
                     claims),
                 Json));
 
+        // The failure table is where this check reads source text to conclude something about
+        // behaviour, and it is where the fourth instance of an assertion outliving its subject
+        // shipped: the detector-error claim passed with the catch clause deleted, because the
+        // private method issuing the insert was still in the file with nothing calling it. Each
+        // of the four names what exercises it, so a claim resting on text alone is visible.
+        coverage
+            .Scan("Failure behaviour: Detector errors on one stock",
+                CheckCoverage.Backing.Test(
+                    "DetectorErrorTests.A_name_the_detector_cannot_read_gets_an_error_row_and_the_run_goes_partial",
+                    "both detectors are run over a store with one name made unreadable, and the row and the "
+                    + "partial outcome are read back. Added when the scan alone was found to pass with the catch "
+                    + "clause removed"))
+            .Scan("Failure behaviour: Nightly setup cap reached",
+                CheckCoverage.Backing.Test(
+                    "NightlyCapTests.The_release_rule_holds_over_every_arrangement_of_the_two_counts",
+                    "the arithmetic the cap applies is swept over every arrangement of the two counts, so the "
+                    + "scan is left holding only that the stage still reads the night whole and reports what it "
+                    + "truncated"))
+            .Scan("Failure behaviour: Unprocessed corporate action",
+                CheckCoverage.Backing.Test(
+                    "IndicatorEngineTests.A_ticker_with_an_open_demand_is_refused_and_the_others_are_not",
+                    "a ticker with an open rebuild demand gets no row and the rest of the night does, which is "
+                    + "the behaviour the blocked counter in the scan stands for"))
+            .Scan("Failure behaviour: Daily API ceiling reached",
+                CheckCoverage.Backing.Test(
+                    "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning",
+                    "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
+                    + "The scan asks only that the run scope still exposes what is left"))
+            .Scan("the catalogue's components exist and are registered, found by scanning declarations and registrations",
+                CheckCoverage.Backing.None(
+                    "nothing builds the host and asks the container to resolve every catalogue component. A "
+                    + "component registered in a line the registration pattern does not match would be reported "
+                    + "as unregistered, which fails loudly; one whose registration is present and unreachable "
+                    + "would not, and that is the direction with no test under it"));
+
         foreach (IGrouping<string, Claim> table in claims.GroupBy(c => c.Table, StringComparer.Ordinal))
         {
             coverage.Examined($"claims in {table.Key}", table.Count(c => c.Verdict is Pass or Fail));
@@ -291,9 +327,17 @@ public sealed partial class ArchitectureConformanceCheck
             Claim[] deferred = [.. table.Where(c => c.Verdict == Deferred)];
             if (deferred.Length > 0)
             {
-                coverage.OutOfScope($"claims in {table.Key}", deferred.Length,
-                    "closed by " + string.Join(", ",
-                        deferred.Select(c => c.Closes).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
+                foreach (IGrouping<string, Claim> byCheckpoint in deferred
+                             .GroupBy(c => c.Closes ?? "unplaced", StringComparer.Ordinal)
+                             .OrderBy(g => g.Key, StringComparer.Ordinal))
+                {
+                    coverage.OutOfScope(
+                        $"claims in {table.Key} closed by {byCheckpoint.Key}",
+                        byCheckpoint.Count(),
+                        CheckCoverage.OutOfScopeReason.UntilCheckpoint(byCheckpoint.Key,
+                            "placed at that checkpoint by BUILD_PLAN: "
+                            + string.Join(", ", byCheckpoint.Select(c => c.Subject).Take(4))));
+                }
             }
 
             Claim[] unexamined = [.. table.Where(c => c.Verdict == Unexamined)];
@@ -317,7 +361,17 @@ public sealed partial class ArchitectureConformanceCheck
             + string.Join("\n  ", unclosed));
 
         // Stated so the parser stopping cannot pass as a document that got smaller.
-        Assert.True(catalogue.Count == 52, $"The component catalogue parsed {catalogue.Count} rows and states 52.");
+        //
+        // A floor rather than an equality, and the distinction is the one the coverage baseline
+        // already makes. What this guards is that the parser still finds rows; how many rows the
+        // catalogue holds is a fact about the corpus that grows every time a component is added, and
+        // an equality here would be a third copy of that number going red on an ordinary addition.
+        // The exact count is held where it belongs: `stated-counts` compares the parsed rows against
+        // the number the document states about itself, in both directions.
+        Assert.True(catalogue.Count >= 52,
+            $"The component catalogue parsed {catalogue.Count} rows. It held 52 before any of this phase's "
+            + "components were added, so a number below that means the parser stopped matching rather than that the "
+            + "document got smaller.");
         Assert.True(failures.Count == FailureBehaviourCheckpoints.Count,
             $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourCheckpoints.Count} are placed at a checkpoint.");
     }
@@ -587,6 +641,18 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
                 : Claim.Failed("Failure behaviour", condition, "IndicatorEngine no longer refuses on an open demand"),
 
+            "Nightly setup cap reached" => TheCapTruncatesTheSharedListAndRecordsIt()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "SetupCapper reads a night by date alone, ranks within a direction, updates rank and capped_out only, and reports the pre-cap counts beside the kept ones")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the cap no longer reads the whole night, or no longer reports what it truncated"),
+
+            "Detector errors on one stock" => BothDetectorsRecordAnErrorRow()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "both detectors catch per name, insert a detector_error row of their own and record the run partial")
+                : Claim.Failed("Failure behaviour", condition,
+                    "a detector no longer records the name it could not decide, so a lost name reads as a quiet night"),
+
             "Daily API ceiling reached" => runScope.Contains("CallsRemaining", StringComparison.Ordinal)
                 ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
                 : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
@@ -595,6 +661,54 @@ public sealed partial class ArchitectureConformanceCheck
                 "the checkpoint that builds it has landed and no assertion reads this row"),
         };
     }
+
+    /// <summary>
+    /// Both detectors, both ways: they catch per name and they say the run was partial.
+    ///
+    /// The behavioural half lives in <c>DetectorErrorTests</c>, which makes one name unreadable and
+    /// runs both detectors over it. That half is the one that holds the property; this one says the
+    /// shape is still there in both files, which the test alone would not if a detector stopped
+    /// being covered by it.
+    ///
+    /// <b>It asks for the call site, not only the statement.</b> The first version of this looked
+    /// for the insert and for the partial outcome, and passed with the catch deleted from one
+    /// detector: the private method that issues the insert was still in the file with nothing
+    /// calling it. A scan for text present is not a scan for a property held, which is the shape
+    /// this corpus keeps arriving at from a new direction.
+    /// </summary>
+    /// <summary>
+    /// Three things the cap claim rests on: the read, the write, and what is reported.
+    ///
+    /// The read has to be the night, whole, or the cap is being applied to something narrower than
+    /// the shared candidate list. The write has to be rank and capped_out and nothing else, or the
+    /// cap is deciding more than the corpus says it decides. And the pre-cap counts have to be
+    /// reported, or "the truncation is recorded" is satisfied by a run that says how many it kept,
+    /// which is the half that cannot answer whether the cap bound.
+    ///
+    /// The behavioural halves live in <c>NightlyCapTests</c>, which sweeps the release rule, and in
+    /// <c>SharedCandidateListTests</c>, which asserts the schema has nowhere to put a version.
+    /// </summary>
+    private static bool TheCapTruncatesTheSharedListAndRecordsIt()
+    {
+        string source = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "SetupCapper.cs"));
+
+        return source.Contains("SetupReader.Read(connection, asOf)", StringComparison.Ordinal)
+            && source.Contains("UPDATE setup SET rank = @rank, capped_out = @capped_out", StringComparison.Ordinal)
+            && typeof(CapResult).GetProperty(nameof(CapResult.LongCandidates)) is not null
+            && typeof(CapResult).GetProperty(nameof(CapResult.ShortCandidates)) is not null
+            && typeof(CapResult).GetProperty(nameof(CapResult.CappedOut)) is not null;
+    }
+
+    private static bool BothDetectorsRecordAnErrorRow() =>
+        new[] { "LongSetupDetector.cs", "ShortSetupDetector.cs" }
+            .Select(name => RepositoryLayout.Read(
+                Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", name)))
+            .All(source =>
+                source.Contains("INSERT INTO detector_error", StringComparison.Ordinal)
+                && source.Contains("errored += RecordError(", StringComparison.Ordinal)
+                && source.Contains("catch (Exception e) when (e is not OperationCanceledException)", StringComparison.Ordinal)
+                && source.Contains("tally.Errored == 0 ? RunOutcome.Clean : RunOutcome.Partial", StringComparison.Ordinal));
 
     private static HashSet<string> DeclaredTypes()
     {
@@ -693,12 +807,15 @@ public sealed partial class ArchitectureConformanceCheck
             // something already found gets closed. Read separately from the phase sections above,
             // because this table is keyed by the checkpoint that raised each item rather than by
             // the one that does the work.
+            // Every row, with no width guard. There was one, `if (row.Count >= 3)`, and it read a
+            // malformed row as an absent one: BUILD_PLAN's own row for the per-scope floor carried
+            // two cells where the rest carry three, so the obligation driving checkpoint 2.1 sat
+            // outside this list entirely and no permit could resolve against it. The width is now
+            // asserted by MarkdownTable against the table's own header, which fails loudly, so
+            // indexing here is safe and a skip would only hide the same class of fault again.
             foreach (IReadOnlyList<string> row in MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations"))
             {
-                if (row.Count >= 3)
-                {
-                    schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
-                }
+                schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
             }
 
             MatchCollection landed = LandedEntry().Matches(progress);

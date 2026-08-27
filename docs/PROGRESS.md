@@ -1498,3 +1498,1584 @@ Stopping:    The scope narrowed each pass and this one, scoped to five named thi
              finding in the same family as the two before it. Under the terms this pass was given that
              is a rule in `CLAUDE.md` rather than a fifth pass, and the rule is written. Phase 2 starts
              at 2.1, whose first work is the obligation above.
+
+## 2.1 — 2026-08-26 — phase-2-detection — the signal library, the floor per scope, and two obligations closed
+
+The first checkpoint of phase 2, and the only one with no strategy in it. Four commits in a stated
+order, because the spec pass authors what the code is written against and a session editing a spec
+beside the code consuming it is the weakest review position available.
+
+Built:      **(a) The malformed obligation row, and the parser that dropped it.**
+            `docs/BUILD_PLAN.md`'s carried-obligations row for the per-scope floor carried two
+            pipe-delimited cells where every other row carries three, its due point written into the
+            obligation prose rather than into the `Due at` column. `Schedule.Read()` guarded with
+            `if (row.Count >= 3)` and dropped it silently.
+            `MarkdownTable` now asserts every body row against its own table's header width and
+            throws naming the table, the row and both widths; the guard at the call site is gone.
+            `FixtureReplayCheck` no longer resolves a permit's obligation with `FirstOrDefault` over
+            `Raised`. Two rows raised at one checkpoint is legitimate, because the table is keyed by
+            who raised an obligation rather than by the obligation; a permit naming such a checkpoint
+            is not, because it uses `Raised` as a key. `MatchingObligations` returns every match and
+            the caller reports none and more-than-one separately. `PermitReason` re-asks `hasLanded`
+            rather than resolving the obligation and stopping there.
+
+            **(b) The spec pass.** `docs/SCHEMA.md` gains a `## Signals` section: every signal with
+            its formula, its source columns and a status of `active` or `candidate`, grouped by axis.
+            Five decisions in `docs/DECISIONS.md`: the scans select a fixed count by rank rather than
+            a threshold on the move; every scan magnitude is computed on the adjusted basis; the
+            cluster grouping key is industry; a released cap slot goes to the side that still has
+            candidates; a calibration run reconstructs against current membership and computes its
+            indicators in memory.
+            `mixed` defined as a grade rather than a gap, the squeeze test pinned to 20 sessions
+            where the contraction test beside it already was, ThemeClusterer restated to count over
+            scan hits so its stated clock and its stated dependency agree, SectorResolver added to a
+            build-order phase for the first time, and two authored-parameter rows added for scan
+            breadth and the month-mover lookback.
+
+            **(c) The examined floor, per scope rather than per check.** A scope whose size is a fact
+            about the corpus is recorded through `CheckCoverage.Context` rather than `Examined`: it
+            is reported, carries no floor, and is never summed with the scope holding the property.
+            `fixtures/checks-baseline.json` holds a floor per scope and the names of the context
+            scopes. Four directions are asserted, not one: below its floor, no floor at all,
+            reclassified from property to context without the baseline agreeing, and a floor naming a
+            scope the run did not produce.
+            `TotalUnexamined` counts admissions rather than their sizes.
+
+            **(d) The four frozen-only checkpoints closed.** `tools/derive-indicators.py --universe`,
+            on the pattern `--index` established at 1.12: it reads `fixtures/captured` and nothing
+            else, restates the security-type filter and both floors from their own statements, and
+            joins the captured bulk day and the captured actions against the surviving list. No
+            vendor call. Fourteen expectations flip to `DERIVED` and all four permits are deleted.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 223 tests. `tools/verify-phase` GREEN: 115
+            claims, 46 passed, 0 failed, 69 out of scope, 0 unexamined; 356 expectations, 101
+            `DERIVED`, 255 `FROZEN`, 0 differed, 0 missing; inputs 37 `CAPTURED`, 48 `AUTHORED`; 14
+            expectations changed since the last commit, which are the fourteen retiered here.
+            Coverage examined 1,331 with 0 unexamined. That figure is not comparable to the 193,691
+            recorded at the phase 1 sign-off, and the difference is the point: the old total summed
+            every scope, so it was `store-portability`'s 189,726 stored values plus noise. It is now
+            the property scopes only, with the corpus scopes reported beside it.
+            The universe screen, derived outside the solution from the captured responses: 17,996
+            common stock listed, 11,983 of them with a row on the captured bulk day, 7,202 clearing
+            the $5 price floor, 2,002 clearing $20M of turnover as well, 5,200 rejected by the
+            liquidity floor. 44,530 bars published, 15 splits, 248 dividends, 57 actions in the
+            universe. 33 seeded histories, 3 of them trackers excluded by security type, 30 in the
+            universe, 0 outside it, and IESC the only one acted on.
+            Every figure equals what the replay records, and none was copied from it.
+
+Verified:   Falsified rather than argued, five times, each reverted and the tree left clean.
+            The obligation row put back to two cells turned `architecture-conformance` red, naming
+            the table, row 4 and both widths.
+            `BarAppendOnlyCheck.BarTables` cut from three bar tables to one **with five ordinary new
+            files added to the Worker** failed, naming three narrowed scopes with the corpus shown
+            beside them at 52. That exact case passed at the phase 1 sign-off, at examined 55 against
+            a floor of 54, with the phase report GREEN and the total higher than the committed run.
+            `PathCasingCheck` gutted so it compared no paths **with forty ordinary new literals
+            added** failed at examined 0 against a floor of 26, corpus 2,578. That case also passed
+            at the sign-off, at examined 2,479 against a floor of 2,468.
+            Two string literals removed from one test file no longer turns `path-casing` red. That
+            case failed at the sign-off, for a reason that has nothing to do with path casing.
+            The `--universe` derivation over a mutated copy of the captured responses, with 500
+            common stock reclassified as ETF and one split row dropped: ten figures move and six do
+            not. `listedCommonStock` falls by exactly 500; `screened`, `survivors`, both liquidity
+            figures, `bars.inUniverse`, `splitsPublished`, `actions.inUniverse` and
+            `tickersInUniverse` all move; AAPL appears among the excluded trackers.
+            `sessionsScreened`, `bars.published`, `dividendsPublished`, `seededHistories`,
+            `tickersOutsideUniverse` and `actionsObserved` hold.
+
+Findings:   Finding. **A floor on `FROZEN expectations diffed` fails on an improvement.** Committed
+            in (c) and found by (d) an hour later, when flipping fourteen expectations to `DERIVED`
+            took `FROZEN` from 269 to 255 and turned the check red for having improved the fixture. A
+            falling `FROZEN` count is ambiguous in a way a floor cannot resolve: it falls when an
+            expectation is deleted, which is a defect, and equally when one is promoted, which is the
+            direction this corpus wants. Reading: flooring it makes every future tier promotion a
+            false alarm, and a guard that cries wolf gets suppressed. `FROZEN` is now context; the
+            property is held by a new total, which a deletion moves and a promotion does not, and by
+            the independent tiers, which only rise. Worth separating: this is the per-scope repair
+            catching a mistake in its own first commit, which is what the mechanism is for.
+
+            Finding. **An admission that covers nothing counted as silence.** `PathCasingCheck`
+            records its no-work branch as `NotExamined(..., 0, ...)`, and `TotalUnexamined` summed
+            the counts, so the record carried an unexamined line while the report read "unexamined 0"
+            on the same page. Raised as an Observation at the phase 1 sign-off and closed here by
+            counting admissions rather than their sizes.
+            That immediately made one admission visible and forced it to be classified honestly:
+            `stated-counts` exempting prose counts nobody registered is an exemption by name with a
+            stated reason, which is CLAUDE.md's definition of out of scope rather than of unexamined,
+            and it is the same shape as `no-superseded-citation` exempting citations inside a record.
+            Its count stays 0 and now says what that 0 is: the check does not scan prose for numbers,
+            so it is the number of exempted items the check can name, not a measurement of the hole.
+
+            Finding. **`earnings_in_window` traces to no stored column.** The architecture lists it
+            among the missing measurements, and 2.1's done condition says a signal that does not
+            trace to named columns is a finding rather than an assumption. Nothing stored carries an
+            earnings date: `corporate_action` holds splits and dividends and neither implies one, and
+            the vendor's calendar endpoint is not among those the call budget is built on. Recorded
+            in the `## Signals` section as a finding with what closing it would cost, rather than as
+            a candidate with blank source columns, because a candidate with no source reads as work
+            scheduled and is a purchase nobody has priced.
+
+            Observation. `MarkdownTable` has eight call sites and seven of them index cells directly,
+            so a ragged row would have thrown there rather than been dropped. The silent skip existed
+            at exactly one. Reading: the blast radius of this defect was the permit mechanism, not
+            every out-of-scope placement in the phase report. Checkpoint rows are read by a regex
+            rather than by this parser, which an earlier reading of the defect had wrong.
+
+            Observation. The plan for 2.1 called for asserting that `Raised` is unique across the
+            obligations table. That would have failed on landing, because two rows are legitimately
+            raised at 1.12 once the malformed row is restored. The property that holds is narrower
+            and is what shipped: an obligation a permit names must resolve to exactly one row.
+
+Carried:    Three obligations. Both of 2.1's are discharged and removed from `BUILD_PLAN.md`'s table.
+            The `CONFIRMED` values, raised at 1.6, due at 2.11.
+            The out-of-scope coverage naming rule, raised at 1.12, moved from 2.6 to 2.2, because 2.2
+            creates `setup` with three of its four declared writers unbuilt and that is what makes
+            `writer-ownership` record a run of out-of-scope items carrying free prose.
+            Step 6 of the move, raised at 1.11, due at the move.
+
+## 2.2 — 2026-08-26 — phase-2-detection — the frozen signal row, and out of scope made structured
+
+Built:      Migration 011: `setup`, `calibration_setup` and `setup_signal`. `setup` constrains
+            `direction` and carries a unique index on (as_of, ticker, direction), because two
+            detectors writing one table makes a duplicate a real possibility rather than a
+            theoretical one and a duplicated setup would be counted twice by everything downstream.
+            `calibration_setup` has no foreign key to `security` where `setup` does, deliberately: a
+            calibration run walks years of history and can reach a ticker listed then and absent
+            now, and refusing that row would silently shrink the count the run exists to produce.
+            `setup_signal` is keyed (setup_id, signal_name), which is what makes "written once"
+            enforceable rather than intended.
+
+            `SignalVectorizer`, verb `vectorize`, freezing sixteen of the library's thirty-three
+            active signals. `SetupReader` and `SetupSignalReader` in Data, every overload taking an
+            as-of with none that omits it, and `SetupReader.ReadCalibration` named separately rather
+            than offered as a default so a caller has to say which store it means.
+
+            **The library is larger than what can be frozen today, and the gap is declared rather
+            than left.** A signal can only be frozen once something stores what it reads, and phase
+            2 builds those producers over several checkpoints. `SignalVectorizer.AwaitingCheckpoint`
+            names seventeen signals against the checkpoint that supplies each: the scans at 2.3, the
+            ladder grade at 2.4, the market mood at 2.5, and the pullback geometry, the sector and
+            the cluster count at 2.6. A test asserts the partition covers the library exactly in
+            both directions, and a second asserts every awaiting checkpoint exists and has not
+            landed.
+
+            **The out-of-scope coverage naming rule**, the obligation raised at 1.12 and moved here
+            from 2.6. `CheckCoverage.OutOfScope` takes a structured reason in one of three shapes
+            rather than prose, and `DeferralProblems` asserts the checkpoint half exactly as an
+            out-of-scope architecture claim is asserted. Twelve call sites converted across nine
+            checks.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 236 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 375 expectations, 113 `DERIVED`; coverage examined 1,435 with 0
+            unexamined; 19 expectations changed since the last commit, which are the nineteen added
+            here.
+            Deferral shapes across every check, counted after the conversion: 87 name a checkpoint,
+            5 carry a price, 3 are permanent by design. Before it, one named a checkpoint.
+            The two priced ones are the pair the obligation cited: the whole-market screen under the
+            twenty-session liquidity floor at 1,900 vendor calls and about 130 MB, and the liquidity
+            floor's rejecting side at one per-ticker call at the next capture.
+            The signal freeze over the fixture: 1 setup, 16 signals frozen, 0 absent.
+
+Verified:   The write-once property four ways, because no one of them reaches what the others do.
+            A second run over the same night writes nothing and reports every signal already frozen.
+            A bar restated underneath a frozen value leaves it alone: that is the only case that
+            distinguishes write-once from a rerun recomputing the same numbers, because the value a
+            rerun would produce is genuinely different. The store's own key refuses a second write,
+            so a mistake in the stage's own check is a failure rather than a duplicate row. And no
+            `UPDATE` against `setup_signal` exists anywhere in the shipped source, which is the
+            direction a behavioural test cannot reach: a future stage could add one and every test
+            above would still pass, because none of them runs it.
+
+            Twelve of the nineteen new expectations are `DERIVED`, computed by
+            `tools/derive-indicators.py --signals` over the fixture's own bars outside the solution.
+            All three exponential distances are derived rather than one, because a sign error there
+            is the invisible case: a stock below its average and one above it both produce a
+            plausible small number.
+
+            The deferral rule falsified rather than argued: `bar-append-only`'s deferral pointed at
+            1.3, a checkpoint PROGRESS records, and the check failed naming the item, the checkpoint
+            and the reason. Reverted.
+
+Findings:   Finding. **The signal-library parser lost two rows to an escaped pipe and would have
+            passed.** `SignalLibrary` read a table cell as "anything but a pipe", and two
+            trade-geometry formulas write absolute value as `\|trigger − stop\|`. Both rows were
+            dropped. Reading: the partition test caught it only because the vectorizer names those
+            two signals, so they showed up as invented rather than as missing; had the vectorizer
+            not named them, an empty-handed parser would have satisfied every assertion made against
+            it, because a smaller library makes the partition easier to hold. This is the same shape
+            as `MarkdownTable` dropping a short row at 2.1, one checkpoint later and in new code.
+            `SignalLibrary` now states a floor of thirty in advance and throws below it.
+
+            Finding. **The independent derivation disagreed with the engine on `atr_14`, and the
+            derivation was wrong.** 24.1363 against 24.1364. The gap average needs the warm-up plus
+            the gap window, so the derivation read 169 sessions and computed every figure over all
+            of them; Wilder's smoothing is recursive and the seed is part of the answer. Reading:
+            this is exactly what the chart page found at 1.10, where a fifty-day line drawn over 210
+            sessions differed from the same average seeded at 150 and both looked like a moving
+            average. The window is now chosen per figure rather than once, and the disagreement is
+            recorded as a note on the expectation rather than only fixed.
+
+            Observation. `signal.IESC-long.listing_age_sessions` is 1 for every fixture name.
+            `first_seen` is the date a ticker first appears in the symbol list and the replay runs
+            `universe-build` once on the as-of date, so listing age in the fixture is a fact about
+            the fixture rather than about the security. Recorded as a note on the expectation: it
+            detects the figure changing shape and says nothing about any stock.
+
+            Observation. A third out-of-scope shape exists that the obligation did not name. It
+            described a checkpoint and a purchase; three real exemptions are neither, and nothing
+            could close them. Reading: `ByDesign` is added rather than forced, and the risk it
+            carries is stated where it is declared. If everything drifts into it the naming rule is
+            decoration, so the three counts are reported separately and by-design growing is visible.
+
+Carried:    Seventeen active signals await their producer, each named against a checkpoint that
+            exists and has not landed. Not an obligation in the table: it is asserted on every run
+            in both directions, so it cannot be forgotten and it closes itself as the checkpoints
+            land.
+            The three obligations from 2.1 are unchanged and none was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move. The out-of-scope naming rule, raised at 1.12 and
+            due here, is discharged and removed from the table.
+
+## 2.3 — 2026-08-26 — phase-2-detection — six scans, and the basis trap found where it actually sits
+
+Built:      Migration 012 creates `scan_hit`, keyed on ticker + date + scan, with `magnitude` beside
+            `rank`. The magnitude is stored rather than recomputed: it is what the thrust signals
+            freeze, and deriving it later would put the same arithmetic in two places in the one
+            situation where a disagreement is invisible, because a wrong magnitude still produces a
+            plausible ranked list.
+
+            `ScanEngine`, verb `scans`, six scans of fifty names each. `ScanMagnitudes` in Core, so
+            the stage and the vectorizer share one implementation on the same terms as the averages.
+            `ScanHitReader` in Data with the two reads the lab actually makes: one scan on one night
+            in rank order, and one ticker across a window, which is the shape the thrust check wants.
+
+            `UniverseSnapshotReader` in Data, and `IndicatorEngine` now calls it rather than holding
+            a private copy. Two methods, named apart: `Members` reads the nightly snapshot and every
+            nightly stage uses it; `CurrentMembers` reads membership as it stands today and exists
+            for the calibration run at 2.11 and nothing else. Named rather than offered as a
+            fallback, because a stage that silently fell back to current membership on a night with
+            no snapshot would produce a reconstructed answer that looks exactly like a real one.
+
+            The six thrust signals move from `AwaitingCheckpoint` to `Frozen`, which the partition
+            test at 2.2 forced rather than reminded. `SignalVectorizer.Counts` declares which signals
+            are counts rather than measurements.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 243 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 428 expectations, 140 `DERIVED`; coverage examined 1,540 with 0
+            unexamined; 55 expectations changed since the last commit, being the 53 added here and
+            the two amended below.
+            The scans over the fixture: 7,202 members, 30 measured, 7,172 short of the
+            twenty-two-session window, 180 hits across six scans. The 7,172 hold the one captured
+            market day and nothing else, so they cannot be measured on a month magnitude at all.
+            Ranks one to three of every scan, and their magnitudes, derived independently by
+            `tools/derive-indicators.py --scans`: 24 figures, 0 disagreements. The derivation writes
+            its own bar query, because the gap magnitude needs the open and the shared window helper
+            does not select it.
+
+            **IESC's twenty-session magnitude: +0.0746 on the adjusted basis, −0.4627 on the raw
+            one.** Measured from the two rows the scan reads. Adjusted it sits tenth among the
+            leaders; raw it would top the laggard scan ahead of NCLH at −0.1403.
+
+Verified:   The basis property as a permanent test rather than as a fixture coincidence.
+            `A_split_inside_the_month_window_does_not_make_a_riser_the_biggest_laggard` seeds two
+            authored names, one rising seven percent through a two-for-one split and one genuinely
+            falling fourteen percent, with the split written the way a vendor publishes one: the
+            adjusted close behind the ex-date halved and the raw close left alone. The riser has to
+            appear among the leaders with a positive magnitude and the faller has to top the
+            laggards.
+            The tiebreak, the six directions, the breadth as a count rather than a threshold, and a
+            name short of the window measured on nothing.
+
+Findings:   Finding. **The basis trap does not sit where the decision written at 2.1 said it did,
+            and a guard placed there would have found nothing.** That entry said a two-for-one split
+            reads raw as a fifty percent decline that would top the **decliner** scan on the day it
+            happens. Measured: on IESC's split date the raw and adjusted one-day changes are both
+            −0.0537, identical, because the vendor adjusts the history **behind** a split and leaves
+            the sessions after it alone. The daily and gap scans cannot tell the two bases apart on
+            the session the split occurs. It is the twenty-session scans that span the adjustment,
+            where the same two rows give +7.46 percent and −46.27 percent.
+            Reading: the decision stands and its reasoning was wrong in a way that decided where a
+            test would go. Corrected in place in `DECISIONS.md`, on the precedent the holdout-window
+            entry already set, and in `ARCHITECTURE.html` as a clean edit. The permanent test asserts
+            the month window rather than the day, and the fixture expectation carrying the pair of
+            figures is noted at `scan.leader.rank3` and `scan.laggard.rank1`.
+            Worth separating: this was found by running the code and reading what came back, not by
+            re-reading the decision. Three sessions had read that sentence and none had noticed.
+
+            Observation. Two expectations from 2.2 changed and both are recorded on the row.
+            `signals.frozen` 16 to 22, because the six thrust signals gained a store to read.
+            `signal.IESC-long.listing_age_sessions` 1.0000 to 1: the figure is unchanged and its
+            rendering is corrected, because the replay rounded every numeric signal to four places
+            and a count is not a figure taken to four places. Which signals are counts is declared on
+            the vectorizer rather than inferred from whether a value happens to be whole, since
+            inference would read a price of 355.00 as a count.
+
+            Observation. `scans.measured` is 30 of 7,202. Only the fixture's own tickers carry seeded
+            histories. Reading: the scans are exercised over thirty names rather than over a market,
+            and the counts say so. What the whole-market half would add is a ranking over seven
+            thousand rather than thirty, and it closes on the same twenty-bulk-day purchase the
+            liquidity floor's exemption is already priced at.
+
+Carried:    Eleven active signals still await their producer: the ladder grade at 2.4, the market
+            mood at 2.5, and the pullback geometry, sector, industry and cluster count at 2.6.
+            Asserted on every run in both directions rather than carried as an obligation.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+
+## 2.4 — 2026-08-26 — phase-2-detection — the ladder grade, and a stage that counted what it did not write
+
+Built:      `TierClassifier`, verb `tiers`. No migration: `ladder_grade` has been on `indicator_daily`
+            since 006 and the re-key at 009 is what makes this stage an inserter rather than an
+            updater. It writes a later observation of the same session carrying the grade and copies
+            the seven computed figures forward, so a reader taking the latest row gets an answer
+            instead of assembling one from two.
+            `StoredIndicators` now declares `IIndicatorFigures`, which it already satisfied member
+            for member. Declared rather than duplicated, so the grading function takes the interface
+            and the stored row and the freshly computed values go through one signature.
+            `ladder_grade` moves from `AwaitingCheckpoint` to `Frozen` in the vectorizer, which the
+            partition test forced rather than reminded.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 253 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 465 expectations, 170 `DERIVED`; coverage examined 1,594 with 0
+            unexamined; 38 expectations changed since the last commit.
+            The grades over the fixture: 7,202 members, 30 graded, 7,172 with no indicator row for
+            the session. **9 rising, 16 mixed, 5 falling.**
+            All 30 grades derived independently by `tools/derive-indicators.py --ladder`, which
+            recomputes the three averages over the engine's warm-up rather than reading the stored
+            row: 0 disagreements, and the 9/16/5 split reproduced.
+
+Verified:   The partition swept rather than sampled. Every arrangement of four values drawn from a
+            set of four, 256 in all, produces exactly one of the three grades, and all three appear.
+            A sweep that only ever returned "mixed" would satisfy "produces one of the three", so
+            the count of distinct grades is asserted alongside the count of arrangements.
+            Equality grades mixed. Two averages exactly equal is a real state on a flat series and
+            is neither a rise nor a fall, so the comparisons are strict on purpose.
+            The later-observation write end to end: two rows for the session, the latest carrying the
+            grade, the engine's figures unchanged in both.
+
+Findings:   Finding. **The stage counted thirty grades and wrote no rows, and reported success.**
+            `indicator_daily` is keyed (ticker, as_of, computed_at) and the insert says
+            `ON CONFLICT DO NOTHING`. The stage took its instant from `RunScope.StartedAt`, the
+            replay's clock is fixed, so every stage in a replay run shares one instant: the grade
+            row collided with the engine's own row and vanished. The grade counters had already been
+            incremented before the insert, so the run printed 9 rising, 16 mixed, 5 falling over
+            `graded 0`, and every ladder figure read `ungraded`.
+            Reading: the fixed clock made this certain and a real clock makes it merely unlikely,
+            which is the worse of the two. In production the wall clock happens to move between
+            stages, so this would have sat undiscovered until the first night two stages ran inside
+            the same millisecond, and it would have failed the same silent way. The repair is not a
+            fixture workaround: a later observation must carry a later instant, so the stage now
+            writes at `max(run start, the observation it copies + 1ms)`. The counters moved after the
+            insert and a refused row is counted and reported rather than absorbed.
+            Worth separating: the replay found this because a fixed clock is a harsher environment
+            than production, not a laxer one. That is the second time in this phase that the fixture
+            has been the harsher case.
+
+            Observation. `signals.frozen` has now changed twice, 16 to 22 to 23, and both changes are
+            recorded on the row. It is a count of the library's covered half and it rises each time a
+            checkpoint gives a signal a store to read. Reading: this expectation is a progress
+            indicator rather than a property, and it will move again at 2.5 and 2.6. That is fine and
+            it is worth naming, because an expectation that changes at most checkpoints is one a
+            reader should not treat as a regression signal.
+
+Carried:    Ten active signals still await their producer: the market mood at 2.5, and the pullback
+            geometry, sector, industry and cluster count at 2.6.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+
+## 2.5 — 2026-08-26 — phase-2-detection — the market mood, and the label that filters nothing
+
+Built:      Migration 013 creates `regime_daily`, one row a night. Both raw scores beside the label
+            and both raw ladder counts beside them, plus how many trackers were above their average,
+            so a later proposal wanting the continuous form does not have to recompute it from bars
+            that may since have been restated.
+            `RegimeLabeler`, verb `regime`. `RegimeReader` in Data. The three mood signals move from
+            `AwaitingCheckpoint` to `Frozen`, which the partition test forced.
+            The tracker averages are computed over the engine's warm-up rather than over 21
+            sessions, through the shared `Averages` in Core. An average seeded 21 sessions back is
+            not the one seeded 150 sessions back and both look like an average, which the chart page
+            found at 1.10 and the signals derivation found again at 2.2.
+
+Measured:   `tools/ci.ps1` green on Windows, 22 steps, 266 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 475 expectations, 177 `DERIVED`; coverage examined 1,700 with 0
+            unexamined; 11 expectations changed since the last commit.
+            The mood over the fixture: 3 trackers measured, **1 above its 21-day average**, 9 rising
+            against 5 falling, index score 0, breadth score +1, label **mixed**.
+            All seven figures derived independently by `tools/derive-indicators.py --regime`: 0
+            disagreements.
+            **The closest tracker decides the index score.** SPY closes at 763.47 against a 21-day
+            average of 763.3055, sixteen hundredths above; QQQ and IWM are both below. A seed taken
+            21 sessions back rather than over the warm-up moves an average by more than that, so
+            `regime.indexesAbove` is the figure that would catch it.
+
+Verified:   The label filters nothing, asserted against the shipped source rather than stated. No
+            file outside the labeller, its reader and the vectorizer names either extreme, read with
+            comments stripped so a comment explaining the rule is not read as the code breaking it.
+            The vectorizer is exempt by name because freezing the label onto a setup is recording
+            it, which is what the decision asks for.
+            This is the condition no figure can show. A stage that began branching on the mood would
+            produce identical numbers, and the assumption would be baked into the baseline where the
+            design says it must be a version instead.
+
+            The two boundaries the scores turn on. Neither extreme is reachable without both scores
+            agreeing, swept over every pair. The breadth thresholds are exclusive at both ends, so a
+            ratio of exactly 1.5 scores 0 and 1.55 scores +1; a boundary written with the wrong
+            comparison is the commonest way a threshold is off by one case and never noticed.
+
+Findings:   Observation. Two undefined ratios mean different things and are scored differently. No
+            falling names at all scores +1, because every name that laddered laddered upward, which
+            is the strongest reading the score has. Nothing laddering either way scores 0, because
+            there is no reading. Collapsing them into one guard against dividing by zero would have
+            made an empty market read as a strong one.
+
+            Observation. An unmeasurable tracker is not counted as below. Reading: counting it as
+            below would move the score toward risk-off on exactly the nights the data is thin, which
+            is a bias rather than a missing value, and it would turn a feed outage into a market
+            signal. `IndexScore` therefore takes how many were measured rather than assuming three,
+            and returns 0 when none was.
+
+Carried:    Seven active signals still await their producer, all at 2.6: the pullback geometry, the
+            sector, the industry and the cluster count.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+
+## 2.6 — 2026-08-26 — phase-2-detection — the long detector, and eight of ten checks one-sided
+
+Built:      `PullbackGeometry` and `LongPullbackRules` in Core, pure and shared. The nightly run, the
+            calibration run and a test all evaluate the same rules, because a calibration count
+            produced by a second implementation would be a fact about the calibration code rather
+            than about the thresholds, which is the one thing that run is for.
+            The mirror is a parameter rather than a second class: long and short are the same
+            geometry read in opposite directions, and what is genuinely not a sign flip stays in the
+            detectors where the corpus says the three differences are.
+
+            `LongSetupDetector`, verb `detect-long`, with `--calibrate from to` writing to
+            `calibration_setup` off current membership. Ten checks, every result recorded, nothing
+            short-circuiting. A recording floor of the four cheap filters, so a recorded setup is one
+            where the pattern test had something to say rather than two thousand rows a night of
+            names that moved one percent.
+
+            `SectorResolver`, verb `sectors`, lazy and cached, with `fundamentals` added to the
+            vendor client and to the captured fixture. `ThemeClusterer`, verb `clusters`, counting
+            same-industry names **on the same scan**: two names in one industry, one gaining and one
+            declining, are the industry splitting rather than shifting.
+
+            `check-completeness` as a named CI step, reading ARCHITECTURE's own gate ids and
+            reconciling them against the detectors in both directions.
+
+            `capture-fixture` is now idempotent: a response already in the manifest is reused
+            verbatim, instant and all. Re-running to add one endpoint cost 30 calls rather than 338,
+            and re-stamping a kept response would have said it was captured tonight, which is exactly
+            the provenance the tier records.
+
+            The last seven signals move from `AwaitingCheckpoint` to `Frozen`. **The awaiting list is
+            now empty and all thirty-three active signals have a producer**, which the partition test
+            written at 2.2 has forced one checkpoint at a time.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 267 tests. `tools/verify-phase` GREEN: 115
+            claims, 0 unexamined; 568 expectations, 197 `DERIVED`; coverage examined 1,908 with 0
+            unexamined; inputs **67 `CAPTURED`**, up from 37, being the 30 fundamentals responses.
+            30 fundamentals calls spent live against EODHD, recorded outside the daily ceiling.
+            Over the fixture: 7,202 members examined, 7,201 below the recording floor, **1 setup
+            recorded** and 0 passing every gating check. 180 scan hits, all 30 names resolved to an
+            industry, 114 hits in an industry group of two or more.
+            All twenty check verdicts across the two setups derived independently by
+            `tools/derive-indicators.py --checks`, which restates each gate from ARCHITECTURE's own
+            wording: 0 disagreements.
+
+Verified:   The detector's one real setup, HOOD, is a name whose thrust is the session itself. Its
+            checks read: tradable, moves-enough, uptrend and thrust pass; dip-shape, contraction,
+            trigger-near, exit-tight and cluster fail. IESC, the authored case, fails uptrend because
+            it split on this session and sits below all three averages.
+            The authored setup's check results come from the shipped rules over the evidence the
+            detector would have assembled, not from a literal. What is authored is the trigger and
+            the stop, which is the part a detector cannot supply for a name that has not pulled back.
+
+Findings:   Finding. **Eight of the ten checks are one-sided over the fixture, and the cause is the
+            sample rather than the checks.** Measured rather than observed, which is what this
+            checkpoint added: per check, how many setups passed and how many failed, with the
+            one-sided ones named individually.
+            Only two setups are recorded, so a check with two results is one-sided unless those two
+            happen to disagree. Two do: `uptrend` and `contraction`. The other eight have returned
+            one answer each.
+            Reading, and it matters for the remedy: the priced remedy the plan carried was a second
+            as-of date at 33 per-ticker calls, and it does not fix this. A second session over the
+            same thirty names would record perhaps one or two more setups, and eight checks would
+            still have two or three results each. What would fix it is a fixture with enough
+            sessions or enough names to record tens of setups, which is a different and much larger
+            purchase than the one that was priced.
+            **The decision is held rather than taken.** The instruction under which this phase is
+            being built says more than two one-sided checks are declined with a written paragraph,
+            and more than half is a different case worth waiting on. Eight of ten is more than half,
+            so this is recorded and carried rather than decided here.
+
+            Finding. **The detector counted vacuous passes on a name that had not pulled back.**
+            HOOD's thrust is the session itself, so the extreme is the last bar, the trigger and the
+            stop are the same price, and the give-up distance is zero. `exit-tight` and
+            `trigger-near` both passed: the tightest possible stop, on a trade that does not exist.
+            Reading: a vacuous pass is worse than a fail here, because the research loop reads these
+            results to find which checks carry the strategy and a check that passes on nothing looks
+            like a check that is easy to clear. `exit-tight` is the one the corpus calls the most
+            informative in the system, so a false pass on it is the most expensive one available.
+            Both distances are now absent where there is no pullback, and both checks fail with the
+            reason recorded.
+
+            Finding. **`writer-ownership` could not see the detector's writes at all.** The insert
+            named its table through an interpolated string, because one method serves both `setup`
+            and `calibration_setup`, and the scanner reads literals. It reported the detector as
+            declaring two inserts and issuing none.
+            Reading: a write nothing can attribute is a write nobody owns, and the check was right to
+            refuse it. The statement is now written out twice, once per table, and the duplication is
+            the price of the write being visible to the thing that audits ownership.
+
+            Observation. `check-completeness` first read the store `fixture-replay` leaves behind and
+            failed intermittently on a file lock, because the two run in the same assembly. Reading:
+            a shared artefact between two checks is a coupling neither declares and it fails on
+            timing rather than on the property. It runs its own replay now.
+
+            Observation. The captured fundamentals response returns keys named `General::Sector`
+            rather than a nested object, so the convention-named record deserialized to a row of
+            nulls without erroring. Reading: that would have left every name unresolved and looked
+            exactly like a vendor with nothing on any of them. Found by capturing the real response
+            rather than by reading the vendor's documentation, which is the third time this phase
+            that running the thing found what reading it did not.
+
+Carried:    **The one-sidedness decision, held for a human.** Eight of ten checks one-sided over two
+            recorded setups. The remedy the plan priced does not close it, and what would is a
+            materially larger fixture. Due before 2.12.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+
+## 2.7 — 2026-08-26 — phase-2-detection — the short detector, and a lookup that ran after its readers
+
+Built:      `ShortPullbackRules` in Core and `ShortSetupDetector` in Worker, verb `detect-short`, with
+            `--calibrate from to` on the long side's terms. The mirror is a parameter: what is a sign
+            flip is read out of the shared geometry with `isLong: false`, and what is not lives here.
+            `tradable-shortable` carries four floors where the long side has two, `averages-squeezing`
+            has no long-side counterpart, `reached-ceiling` asks whether a bounce arrived at a level
+            rather than whether a dip held one, and `no-reclaim` reads the 50-day average where
+            `held-floor` reads the 21-day. The recording floor is the premise rather than the first
+            four rows of the list, because `averages-squeezing` sits fourth and belongs to the pattern
+            test the way `contraction` does on the long side.
+
+            **`reached-ceiling` runs two of its three clauses and the record says which.** The third
+            compares the price against the average price anchored to the last swing high, which is a
+            volume-weighted average over minute bars and is what VwapEngine computes at 4.4. It is out
+            of scope naming that checkpoint, recorded through `check-completeness` rather than in this
+            entry alone, and every one of the check's verdicts carries the note. Not approximated from
+            daily bars: a stand-in would put a number that looks like the real thing inside the check
+            deciding whether a bounce reached its ceiling.
+
+            **Forty authored boundary cases**, in `fixtures/gate-cases.json`, two per gate on both
+            lists, one just inside its threshold and one just outside. Evaluated through the shipped
+            rules over a baseline built to clear everything, so the difference between the two sides
+            is the one field the case moved. `tools/derive-indicators.py --gates` restates all twenty
+            gates from ARCHITECTURE's own wording and decides the same forty independently.
+
+            **The degeneracy proof, over the gate list rather than per gate.** A gate handed an
+            absent quantity fails; a gate whose own quantity is absent fails while the rest of the
+            evidence stands, with the mapping from gate to quantity derived from the boundary cases
+            rather than written down a second time. A gate with no boundary case fails the proof, so a
+            check admitted in phase 6 inherits both properties without anyone remembering to.
+
+            `AverageGap` in Core, the 21-to-50 distance session by session, shared by the squeeze
+            check and the signal that freezes it. `DailyBarReader.SessionsStored`, shared by the
+            listing-age floor and the signal that freezes it. `SecurityReader`, which reads the
+            resolved attributes bounded on `sector_resolved_at`.
+
+            `NightlyOrderTests`, which asserts the replay's stage order against RUNBOOK's nightly
+            table rather than leaving the two to be kept in step by hand.
+
+            Migration `014` creates `detector_error`, and both detectors catch per name: a stock a
+            detector cannot read gets a row of its own and the run is recorded `partial`. Written
+            because the phase report went red the moment this checkpoint landed, which is what the
+            failure table's placement at 2.7 was for.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 283 tests. `tools/verify-phase` GREEN: 115
+            claims, **55 passed**, 0 unexamined, 60 out of scope; 677 expectations, **259 `DERIVED`**;
+            coverage examined 2,161 with 0 unexamined; inputs 67 `CAPTURED` and 88 `AUTHORED`, the
+            second being 48 synthetic vendor responses and the 40 gate cases now counted beside them.
+            Over the fixture: 7,202 members examined, 7,201 below the recording floor, **1 short setup
+            recorded**, INTC, and 0 passing every gating check. All ten of its verdicts derived
+            independently by `tools/derive-indicators.py --checks --short`: **0 disagreements**. All
+            forty boundary cases derived by `--gates`: **0 disagreements**.
+            **`check.long.oneSided` and `check.short.oneSided` both read `none`.**
+            Thirteen more authored parameters pinned, so every threshold marked "phase 2 count check"
+            is now held against the code before 2.11 is allowed to move one.
+
+Verified:   The degeneracy proof was falsified twice and reverted both times. An eleventh gate added
+            to `SetupChecks.Long` with no boundary cases turned three assertions red, naming it. The
+            `exit-tight` regression that shipped at 2.6, restored by hand, was named by three:
+            "long exit-tight passed with stopDistanceRanges absent", "these long gates still passed:
+            exit-tight", and the geometry case.
+            The order test was falsified by putting `sectors` back at 19:00, which reported that the
+            replay runs `clusters` after it and RUNBOOK schedules it before.
+
+Findings:   Finding. **The sector lookup ran after the three stages that read what it writes.**
+            RUNBOOK scheduled `sectors` at 19:00 while `clusters` at 18:15 counts same-industry names
+            and both detectors at 18:20 read the market capitalisation. Observation: on a live night a
+            name newly surfaced by a scan has no industry when its cluster is counted and no cap when
+            `tradable-shortable` decides. Reading: neither consumer errors on a missing sector. The
+            cluster count reads nought and the short check fails for want of a figure, so the night
+            looks quiet rather than wrong, and the first name of a new theme is exactly the one this
+            loses. The stage moves to 18:12. What let it survive 2.6 is that this replay ran the
+            lookup first, against its own comment saying the sequence is itself under test, so the
+            fixture could never have shown it; the order is now asserted against RUNBOOK.
+
+            Finding. **`listing_age_sessions` measured the age of the lab's record rather than of the
+            name.** Observation: it counted sessions since `security.first_seen`, which is when the
+            universe build first saw a ticker, and read **1** for every name on the fixture's only
+            night while `tradable-shortable` had cleared a floor of ninety. Reading: the check that
+            decides and the signal that freezes the decision were two different numbers, which is the
+            thing the frozen row exists to prevent. On a live lab it would have read 1 on the first
+            night for all 2,070 names and climbed by one a night, so the floor would have rejected
+            every short until the lab had been running ninety sessions, had anything read it. Both now
+            count stored sessions through `DailyBarReader.SessionsStored`.
+
+            Finding. **The squeeze test compared signed gaps.** Observation: the frozen signal is
+            `(ema21 − ema50) / ema50`, and on the one side this check runs the 21-day sits below the
+            50-day, so both today's gap and its average are negative. Reading: compared signed,
+            "narrower" reads as "further below", which is the opposite rule. A squeeze would fail and
+            a widening decline would pass, and every verdict would look reasonable in the record. The
+            series stays signed, because a proposal may want to know which way round they sat, and the
+            check takes absolutes and says so.
+
+            Finding. **A detector that could not read a stock skipped it silently.** Observation: the
+            failure table has said since before the code existed that an error row is written for that
+            stock and date, and the corpus placed the claim at 2.7; the phase report turned it from
+            out of scope to unexamined the moment this checkpoint landed, and neither detector wrote
+            anything. Reading: every count downstream is over the setups that were recorded, so a lost
+            name is simply absent. The night looks lighter, the counts stay plausible, and the first
+            name of a new theme is exactly the kind this loses. `detector_error` now takes a row per
+            stock per night per direction and the run is `partial` rather than `clean`.
+
+            Finding, in the thing built to catch the last one. **The first assertion of that behaviour
+            passed with the behaviour deleted.** Observation: it scanned both detectors for the insert
+            statement and for the partial outcome. With the catch removed from the short detector, the
+            private method issuing the insert was still in the file with nothing calling it, and the
+            claim read `pass`. Reading: a scan for text present is not a scan for a property held,
+            which is the fourth time this corpus has met that shape from a new direction. The property
+            is now held by a behavioural test that damages one name and runs **both** detectors over
+            it, and the scan asks for the call site inside the catch rather than for the statement.
+            Falsified in that order: the tightened scan was written after the test caught what it did
+            not.
+
+            Observation. The short detector's `tradable-shortable` cannot pass until SectorResolver
+            has seen the name, and `SecurityReader` bounds the read on `sector_resolved_at`, so a
+            reconstructed historical session sees no cap at all. Reading: the calibration run at 2.11
+            will record no short rows unless something changes, which is a question about what a
+            reconstructed run is entitled to read rather than a defect here. Carried to 2.11, which is
+            the checkpoint that needs the answer.
+
+Carried:    **The market capitalisation a calibration run may read.** Due at 2.11. See above.
+            The two obligations from 2.1 are unchanged and neither was attempted: the `CONFIRMED`
+            values at 2.11, and step 6 of the move.
+            **Retired at this checkpoint:** the one-sidedness raised at 2.6 and due at 2.12. Closed by
+            the authored boundary suite rather than by a purchase, and the reason the purchase was
+            rejected is recorded with it: the remedy priced at 2.6 was a second as-of date at 33
+            per-ticker calls, and it would have left those eight gates with three results each instead
+            of two. Both directions now report no check one-sided, and the cases are marked `AUTHORED`
+            and written nowhere near `setup`, so nothing reads them as evidence about the market.
+
+## 2.8 — 2026-08-26 — phase-2-detection — the nightly cap, and a rule with nothing to run on
+
+Built:      `NightlyCap` in Core and `SetupCapper` in Worker, verb `cap`, updating `setup.rank` and
+            `setup.capped_out` and nothing else. Forty long, twenty short, unused slots released.
+            Candidates are the setups that cleared every gating check; a recorded setup that failed
+            one keeps a null rank rather than a rank among names it was never ranked against.
+
+            The arithmetic is in Core so it can be swept rather than sampled. The release rule's
+            whole claim is about every arrangement of the two counts, and a stage-shaped test would
+            have asserted it over whichever arrangements a fixture produced.
+
+            **Truncated candidates keep their rank.** A night that recorded only what it kept could
+            never say whether the cap bound, and how far past sixty a night went is what decides
+            whether sixty is the right number.
+
+            `fixtures/cap-cases.json`, eight authored arrangements and one ordering case, with
+            `tools/derive-indicators.py --cap` restating the release rule and the ranking from the
+            decision's own wording.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 291 tests. `tools/verify-phase` GREEN: 115
+            claims, 55 passed, 0 unexamined; 702 expectations, **277 `DERIVED`**; coverage examined
+            2,233 with 0 unexamined.
+            Over the fixture: 3 setups, **0 candidates**, so the live cap ranked nothing and every one
+            of its figures is nought. The eighteen authored figures carry the rule instead, all
+            derived independently: 0 disagreements.
+            The release rule swept over **3,721 arrangements**, every pair of counts from nought to
+            twice the cap, on four properties: no side takes more than it has, the total never
+            exceeds sixty, a slot goes unused only when neither side has a candidate left for it, and
+            neither side is ever cut below its own allocation to make room for the other.
+
+Verified:   **The absent tiebreak is asserted rather than argued.** The corpus says no priority order
+            is needed when a slot is released, because a side that ran out of candidates is not also
+            asking for more. That is a claim about every arrangement, so the sweep runs the rule twice
+            over each one, offering the spare to the long side first and to the short side first, and
+            compares. They agree on all 3,721.
+
+            The ordering case carries a tie on give-up distance broken by ticker, and both sides start
+            at rank one. A pooled ranking would have the short side start at five, which is what
+            reading the two together looks like when it is wrong.
+
+Findings:   Finding. **The rule the checkpoint exists for had nothing to run on.** Observation: the
+            fixture records three setups and none clears every gating check, so the live cap sees zero
+            candidates and its done condition, "truncation recorded with the pre-cap count", is
+            satisfied by a run that truncated nothing. Reading: an untested release rule that reports
+            a clean run is worse than one that fails, because the report says the checkpoint is
+            covered. The arrangements that matter, both release directions and both sides
+            overflowing, are exactly the ones thirty names on one session cannot reach, which is the
+            same shape as the one-sidedness at 2.6 and gets the same answer: authored cases, on the
+            tier that says what they are. The live figures are kept and expected at nought, because
+            that is what says why the authored ones are needed.
+
+            Observation. `setup` carries no column that could make a rank belong to one version, and
+            that is now asserted rather than intended. Reading: the property is unassertable once
+            versions exist. A cap applied per version leaves two versions' disagreements
+            indistinguishable from names the cap removed, and by the time that shows up the record it
+            destroyed cannot be reconstructed. The assertion is on the schema and on the reader's
+            signature, both of which survive a rewrite of the stage.
+
+            Observation. The nightly row for this stage read "cap" rather than the verb, the third
+            row of RUNBOOK's nightly table this phase to describe the work instead of naming what an
+            operator types. Reading: the check that asserts the replay's stage order against that
+            table found it, which is the second thing that check has caught since it was written
+            yesterday.
+
+Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` values at 2.11; and step 6 of the move.
+
+## 2.9 — 2026-08-26 — phase-2-detection — the gallery, and the one write the read surface makes
+
+Built:      `LabSetups` in the Api: a night's setups, both directions as two lists on the wire, each
+            with every check's verdict and a forty-session window to read it against. `/setups/{as-of}`
+            with an optional failed-check filter, and `/setups/{setup-id}/agreement` for the recording.
+
+            The gallery page at `/setups`. Thumbnails from the one shared candlestick component, whose
+            own documentation named this checkpoint as its second consumer; the plan, the checks and
+            the agreement control on each card; the two sides in two blocks under two headings.
+            Filtering by a failed check is a GET, so a filtered night is a URL a person can keep.
+
+            The recording is a form post with an antiforgery token and works with the script removed.
+            The keyboard paging is a local block that moves the selection and presses a button that
+            already exists, which is what makes it a convenience rather than the mechanism.
+
+            `SetupDirection` in Core. The two direction strings were constants on the detectors and the
+            read surface may not reference the Worker, so a page separating a night by direction would
+            have carried the literals on the other side of that boundary.
+
+Measured:   `tools/ci.ps1` green on Windows, **23 steps**, 300 tests. `tools/verify-phase` GREEN: 116
+            claims, 57 passed, 0 unexamined, 59 out of scope; 712 expectations, **279 `DERIVED`**;
+            coverage examined 2,282 with 0 unexamined.
+            Over the fixture: 3 setups shown, 2 long and 1 short, 16 distinct check names offered by
+            the filter, **0 looked at** and therefore no agreement rate. The thumbnail's geometry
+            derived independently at the gallery's own window and box, forty sessions in 260 by 110:
+            last centre 201.45 against 201.45, forty candles against forty.
+
+Verified:   Every state of the page is a test through the host: a night with both sides, a night with
+            nothing flagged, a filter that hid everything, an agreement recorded, and an agreement the
+            read surface refused. The last one matters most: the page says so above the night and
+            renders the rest, rather than losing a review in progress to an exception.
+
+            The `voidedBecause` fix the plan placed here landed with a proof over hand-written rows: a
+            voided expectation counts toward a checkpoint's total and not toward its independent
+            count, so a checkpoint cannot satisfy done condition seven with a `DERIVED` row that
+            compares nothing. Theoretical until now, which is why the plan put it here: `CONFIRMED` is
+            the tier the void mechanism was written for.
+
+Findings:   Finding. **The agreement column had nowhere to be written from.** Observation: SCHEMA
+            declared "Setup inspector" as its writer; the Web project may not open the store, the
+            Worker has no channel a browser can reach, and one writer per table per operation forbids
+            splitting it. Reading: three rules that are each right left one column unreachable, and
+            the answer is a stated exception rather than a quiet one. The read surface writes those
+            two columns and nothing else, ever. What makes it the right exception is that it is not
+            the same kind of write: a person saying what they thought of one row, on two columns no
+            computation reads, where every other write in the lab is the evening's job producing
+            evidence on a schedule. Named as a decision, with the scope stated as the whole of the
+            guarantee, and the writer declared by the type that issues the statement so
+            `writer-ownership` holds the scope rather than the prose.
+
+            Observation. `LabSetups` had to become a registered instance rather than a static class,
+            which the other two read-surface types are. Reading: a declared writer is resolved against
+            the component catalogue, and a catalogue component has to be something the container can
+            build. That is a real constraint and not an accident: a writer nothing can name is a write
+            nobody owns, which is the same finding the detectors produced at 2.6 arriving from the
+            direction of the catalogue instead of the SQL.
+
+            Observation. The shell test asserting no screen carries a script had to narrow to no
+            screen *fetches* one. Reading: the rule was always about fetching, and the broader
+            assertion was correct only while no page had landed that needed a local block. It gained a
+            counterpart at the same time: a screen whose checkpoint has landed no longer says it is
+            waiting, so an empty state left in place after its checkpoint would fail rather than read
+            as a page nobody built.
+
+            Observation. `architecture-conformance` held the catalogue's row count as an equality
+            against a literal 52. Reading: that is a third copy of a number the document already
+            states about itself and `stated-counts` already checks in both directions, so an ordinary
+            component addition turned it red for a reason that has nothing to do with conformance. It
+            is a floor now, guarding the thing it was for, which is the parser still finding rows.
+
+Carried:    **The `CONFIRMED` gallery expectations.** Due at 2.12, where the gallery review is part of
+            the sign-off. The tier the corpus defines as what the chart page and the setup gallery
+            produce has no entries yet, and a build session cannot make one: it is a person looking at
+            a screen and writing down what they saw. The page is built and every property a session
+            can assert about it is asserted; what is left is the looking.
+            Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` indicator values at 2.11; and step 6 of the move.
+
+## 2.10 — 2026-08-26 — phase-2-detection — point in time, and four reads that were not
+
+Built:      `point-in-time` as a named CI step, the twenty-fourth, and the named check the roster has
+            carried since 1.1. Three halves, and the third is the one a convention could not hold.
+
+            **The readers.** Every public read in `PullbackStrategyLab.Data` takes a date, asserted
+            over the reader types by reflection rather than by reading their source. One exemption,
+            by name and with its reason: `UniverseSnapshotReader.CurrentMembers`, which calibration
+            mode uses to read membership as it stands today on purpose.
+
+            **The statements written by hand.** Every SQL statement in the shipped source outside the
+            readers that selects from a table carrying an observation stamp has to bound that stamp.
+            Two exemptions, by file and with their reasons.
+
+            **The behaviour.** A permanent case, not a break-and-revert: a session observed twice,
+            read from both sides of the second observation's own instant.
+
+Measured:   `tools/ci.ps1` green on Windows, **24 steps**, 306 tests. `tools/verify-phase` GREEN: 116
+            claims, 59 passed, 0 unexamined; 715 expectations, **282 `DERIVED`**; coverage examined
+            2,357 with 0 unexamined.
+            The check examines 28 public reads on the readers, 10 statements selecting from a stamped
+            table across 7 stamped tables, 3 named exemptions and 2 directions of the future-dated
+            case, over a corpus of 23 statements read.
+            Over the fixture: IESC's session reads **324.1200** on the night and **999.0000** from
+            past the correction, over 2 observations of one session, all three derived independently
+            by `tools/derive-indicators.py --point-in-time`.
+
+Verified:   Falsified twice and reverted both times. Replacing the vectorizer's bounded name lookup
+            with a raw `SELECT industry FROM security` named the file, the table and the column.
+            Dropping the observation bound from `DailyBarReader`'s window read reported that a bar
+            observed after the as-of instant was visible to a read as of that date.
+
+Findings:   Finding. **Four hand-written reads were unbounded, and one of them fed a frozen signal.**
+            Observation: `SignalVectorizer` read `industry` and `market_cap` straight from `security`
+            with no bound on `sector_resolved_at`; `ThemeClusterer` joined the same table for the
+            same column; both detectors enumerated calibration sessions from `daily_bar` with no
+            bound on `observed_at`. Reading: the vectorizer's is the serious one. Everything else the
+            lab computes can be recomputed, and a frozen signal is the one row nobody recomputes: it
+            exists to say what was knowable on the night, and it was freezing two attributes resolved
+            afterwards. All four are bounded now, the first two through `SecurityReader`, which
+            already held the bound for the short detector's `tradable-shortable`.
+
+            Reading, on why a convention was never going to hold this. Every reader in
+            `PullbackStrategyLab.Data` has taken a date since 1.4, and the corpus took that as the
+            property. It is not: a reader's signature says nothing about a query written beside it,
+            and all four of these were queries written beside one. That is the difference between a
+            rule and a check, on the property the corpus calls the most important in the system.
+
+            Observation. The fixture's figures did not move when the four were fixed. Reading: in the
+            replay the sector lookup runs before the vectorizer on the same session, so the bound
+            changes nothing there and no expectation shifted. A test over the fixture would have
+            passed on all four, which is exactly why the property needed a check that reads the
+            source rather than a case that runs it.
+
+Carried:    Unchanged: the market capitalisation a calibration run may read, due at 2.11; the
+            `CONFIRMED` indicator values at 2.11; the `CONFIRMED` gallery expectations at 2.12; and
+            step 6 of the move.
+
+## 2.11 — 2026-08-26 — phase-2-detection — the one-time calibration, and a band two checks cannot reach
+
+Built:      Calibration mode, in the shape the decision always described and the plan never had.
+            `ISessionFigures` is where a forward night and a reconstructed one differ and the only
+            place they do: the nightly path reads each figure from the store through the reader that
+            owns it, and `CalibrationFigures` computes the same figures from the bar window the walk
+            is already reading. The rules see one evidence shape either way.
+
+            It is assembly rather than a second implementation. The figures come from
+            `IndicatorEngine.Calculate`, the ladder from `TierClassifier.Grade`, the six rankings
+            from `ScanMagnitudes` and `ScanEngine.Top`. All four are the nightly stages' own and all
+            four were made public at 2.6 so this run would not need copies of them.
+
+            `NightlyCounts` in Core: the quartiles a threshold is read against, with the quantile
+            convention written out rather than borrowed, and the rate-per-name scaling that lets a
+            count over one universe be compared against a band stated for another.
+
+            The market-cap clause of `tradable-shortable` is exempt in calibration mode and every
+            short verdict says which clauses ran.
+
+Measured:   `tools/ci.ps1` green on Windows, 24 steps, **324 tests**. `tools/verify-phase` GREEN:
+            116 claims, 59 passed, 0 unexamined; **741 expectations, 287 independent**; coverage
+            examined 2,444 with 0 unexamined.
+
+            **Over the golden fixture**, which is a diff and not a measurement: 102 sessions from
+            2026-03-30, 30 members with a warm-up behind them out of 7,202 listed, 237 long rows and
+            88 short, **nought passing on either side on every night**. Twenty-six expectations, five
+            of them `DERIVED` by `tools/derive-indicators.py --calibration`, which restates the
+            session count, the range and the member count from the captured responses and agrees
+            exactly on all five.
+
+            **Over the live universe**, 2,016 names with a warm-up behind them, 631 sessions from
+            2024-03-21 to 2026-08-24, no vendor call:
+
+            | | long | short |
+            |---|---|---|
+            | rows recorded | 32,533 | 16,917 |
+            | recorded a night, median | 44.0 | 13.0 |
+            | recorded a night, quartiles | 24.5 to 74.0 | 7.0 to 41.0 |
+            | candidates a night, median | 0 | 0 |
+            | candidates a night, highest | 1 | 0 |
+            | candidates in total | 7 | 0 |
+            | nights with no candidate | 624 of 631 | 631 of 631 |
+
+            Per check, over the rows that cleared the recording floor:
+
+            | long | passes | short | passes |
+            |---|---|---|---|
+            | `tradable` | 100% | `tradable-shortable` | 100% |
+            | `moves-enough` | 100% | `moves-enough` | 100% |
+            | `uptrend` | 100% | `downtrend` | 100% |
+            | `thrust` | 100% | `thrust` | 100% |
+            | `held-floor` | 96.1% | `no-reclaim` | 99.2% |
+            | `contraction` | 46.6% | `averages-squeezing` | 29.1% |
+            | `trigger-near` | 31.2% | | |
+            | `exit-tight` | 1.0% | `exit-tight` | 1.1% |
+            | `dip-shape` | 0.7% | `bounce-shape` | 1.1% |
+            | `cluster` | 0% | `cluster` | 0% |
+
+            The quantities behind the three that bind, as distributions rather than as pass rates:
+            the retrace among moves of the right length has a median of **1.088** long and **1.006**
+            short against a cap of 0.40; the stop distance has a median of **1.157** ranges long and
+            **1.191** short against a cap of 0.5; `reached-ceiling`'s distance has a median of
+            **1.802** ranges against a cap of 0.5. Against those, `trigger-near`'s cap of 1.5 ranges
+            sits above a median of 0.513 and 96.2% of measurable rows clear it.
+
+Verified:   Three behavioural tests, because the fixture's figures cannot carry these. A run over
+            history leaves the evidence store byte for byte as it found it, compared row by row
+            rather than by asking whether `setup` is empty, and a rerun of the same range writes
+            nothing new either. Every short row a calibration run writes carries the clause note. And
+            a forward night still fails a name with no resolved capitalisation, which is the
+            direction a leaked default would be silent in.
+
+            The distribution arithmetic is swept rather than sampled: the median of an even number of
+            nights, a night of no candidates counted rather than dropped, one night as its own every
+            quartile, the quantile convention pinned at five points, both ends of the band inclusive,
+            and a rate scaled back to its own universe returning the count it came from. A
+            distribution over no nights is refused rather than reported as noughts.
+
+Findings:   Finding. **The band is out of the five thresholds' reach, and the adjustment is not
+            made.** Observation: the median is nought candidates a night on both sides against a band
+            of 5 to 60, so the condition fires; the recording floors are healthy at 44 and 13 rows a
+            night; the pattern test then admits 7 long rows in 631 sessions and no short row at all;
+            with the retrace cap and the give-up cap set to pass always, the remaining conjunction
+            yields about 6 a night. Reading: 6 is the bottom of the band, so the band is reachable
+            only by removing two checks from each list, and removing a check is a change to what the
+            strategy is rather than a calibration of it. The once-only adjustment is not spent, and
+            `BUILD_PLAN.md`'s done condition now carries the clause that fires here, because spending
+            it on a threshold set that cannot reach the band spends it for nothing.
+
+            Reading, on which of two things is wrong. The thresholds are wrong, or the quantities
+            they are applied to are, and the second has evidence rather than only a possibility. A
+            stop at the extreme of a two-to-seven bar move spans more than one daily range by
+            construction, so a cap of half a range is asking for a shape the geometry cannot make. A
+            retrace whose median is above 1.0 means the typical give-back exceeds the whole thrust it
+            is measured against, which is not a description of a pullback. Both hold on both sides
+            with the same numbers, which is what rules out a long-side accident. `trigger-near` is
+            the counter-example that rules out "everything is too tight": same population, same
+            geometry, cap well above the median, 96% clearing it.
+
+            Reading, offered as a hypothesis and not as a measurement. `PullbackGeometry` measures
+            the thrust from the close before the session the scan flagged. That is the right origin
+            for `gainer` and `gapper`, which flag a one-day move, and the wrong one for `leader` and
+            `laggard`, which flag a twenty-session move and would have their thrust measured as a
+            single day while the give-back is measured over several. Nothing here proves it: the scan
+            that produced a thrust is not recorded on the setup row, which is itself a gap worth
+            naming, and recording it would move the `thrust` expectations at 2.6 and 2.7 for a change
+            that belongs to whoever decides the question.
+
+            Finding. **`cluster` is unmeasured across the whole calibration record.** Observation: it
+            passes on nought rows of 49,450. Reading: `ThemeClusterer` counts same-industry names
+            among a night's scan hits, industry is resolved lazily on first sighting, and a
+            reconstructed session has the industry the lab learned in 2026 or none at all. The
+            calibration hands the check no cluster count, so it is unknown and fails. It gates
+            nothing, so the counts above are unaffected, but no calibration row says anything about
+            clustering and none can.
+
+            Finding. **A reconstructed session cannot be read on its own observation instant, and
+            both narrower bounds fail silently.** Observation: bounding the calibration's reads on
+            each session's own instant returned no bars at all; bounding them on the end of the range
+            returned no sessions at all. Both produced a run that completed clean over a store of one
+            and a half million bars and reported nought. Reading: a backfill takes a name's whole
+            history in one evening, so every historical bar was observed later than its own session
+            and later than the last session in any range that ends at the last close. The run reads
+            as of now, which is the bound a rebuild uses and is named in `DailyBarReader` for the same
+            reason. It is recorded on `calibration_setup` as one of three reconstructions those rows
+            carry rather than left as a property of a query.
+
+            Finding. **The golden fixture cannot produce a candidate and never could.** Observation:
+            nought passing on every night of both directions over 102 sessions. Reading: a scan takes
+            the top fifty by its own magnitude and the fixture holds thirty names with a history, so
+            every one of them is inside every scan on every session; the most recent thrust is
+            therefore always the session itself, no pullback has any bars, and every geometry check
+            fails. This is why the checkpoint was narrowed to the fixture and then run live anyway:
+            the narrowing rested on the in-memory path costing three checkpoints, it cost one file,
+            and the population it narrowed to was the one that could not answer.
+
+            Observation, on a mechanism the plan named and the code cannot support. Replaying the
+            nightly pipeline session by session was recorded as 2.11's mechanism before the
+            checkpoint began. `IndicatorEngine`, `ScanEngine` and `TierClassifier` all read
+            `UniverseSnapshotReader.Members` for the night they compute, and a night the lab was not
+            running has no snapshot. Giving those three a current-membership mode would write
+            reconstructed `indicator_daily` rows, which the calibration decision forbids in the
+            paragraph directly above the one that would have authorised it.
+
+Carried:    The threshold adjustment, due before 3.1 with the numbers above attached, because phase 3
+            must not start recording against thresholds nothing has calibrated.
+            The `CONFIRMED` indicator values for IESC, LITE and PAYO, still due and still not a build
+            session's to discharge. 2.11 was named as the point they were needed because it is where
+            a threshold is set against them; no threshold was set, so nothing rests on them yet, and
+            the obligation moves to 2.12 where a person is already reading a screen.
+            The source-scan assertions nothing exercises, raised at 2.11 and due at 3.1.
+            Step 6 of the move procedure, due at the move.
+
+## 2.11 — 2026-08-26 — phase-2-detection — correction: two obligations that were never in the table
+
+Corrects:   the 1.3 entry above, and the 1.1 entry through it.
+
+Findings:   Finding. **Two carried obligations were recorded in a progress entry and never written
+            into `BUILD_PLAN.md`'s table, and one of them fell due at a checkpoint that has since
+            landed.** Observation: the 1.3 entry carries "whether a night screened over five sessions
+            should instead write nothing", due at 2.11, and "the daily call budget counts against the
+            UTC date, and the vendor's own reset boundary is still assumed rather than confirmed",
+            raised at 1.1 and carrying no due point at all. Neither appears in the obligations table.
+            Every later entry that lists what is outstanding lists the table's rows, so both dropped
+            out of the record's own summary from 1.4 onward, and 2.11 landed without addressing the
+            one that fell due there.
+
+            Reading. `CLAUDE.md` already says a carried obligation is recorded in `BUILD_PLAN.md`
+            when it is created rather than remembered. The rule was written and nothing reads it, so
+            two obligations were remembered and then forgotten, which is the failure the rule names
+            happening to the rule itself. This is the same shape as the malformed obligation row at
+            2.1 with the mechanism removed rather than broken: there, a row existed and the parser
+            dropped it; here, no row was ever written and nothing looks for one.
+
+            Reading, on why no check was added for it here. Matching a prose obligation in an entry
+            against a prose row in a table is fuzzy, and a guard that raises false alarms is a
+            suppressed guard, which is a dead one arrived at slowly. What would work is the other
+            direction, a fixed form for the sentence that records an obligation, and choosing one at
+            the door of a sign-off widens the phase for a decision that is not urgent. Both rows are
+            in the table now and the question of a mechanism goes to 2.12.
+
+Decided:    The five-session obligation is **answered on its merits and scheduled for the part that
+            needs code.** The count distribution informs it as the 1.3 entry expected: a night flags
+            a median of 44 long names and 13 short out of 2,016, and membership drifts by a handful a
+            month, so a five-session-old membership misstates a night by far less than skipping the
+            night removes from it. Phase 3 measures forward returns over a series of nights and a
+            missing night is a sample nothing recovers. So the behaviour stands: carry the last
+            complete screen's membership. What is owed is that the snapshot say it was carried and
+            over how many sessions, so nothing downstream reads a carried night as a freshly screened
+            one, and that needs a column. Due at 3.1.
+
+Carried:    The two rows above, now in the table. Everything else unchanged from the entry above.
+
+## 2.11 — 2026-08-26 — phase-2-detection — the thrust window as a supported finding, and what the fixture cannot be evidence about
+
+Corrects:   the entry above, which offers the thrust-window reading "as a hypothesis and not as a
+            measurement". The data in hand supports it, and the support is written out here rather
+            than left implied, because 3.1 acts on it and a reading filed as a hypothesis is one a
+            later session is entitled to set aside without arguing with it.
+
+Findings:   Finding. **The two checks that bind are the two whose quantities depend on where the
+            thrust is located, and the one that does not is healthy on the same rows.**
+
+            Observation, three rows over the live calibration run and nothing beyond them:
+
+            | check | its quantity | cap | median | multiple of its cap |
+            |---|---|---|---|---|
+            | `dip-shape` | the retrace | 0.40 | 1.088 long, 1.006 short | 2.72 and 2.52 |
+            | `exit-tight` | the give-up distance | 0.5 ranges | 1.157 long, 1.191 short | 2.31 and 2.38 |
+            | `trigger-near` | the trigger distance | 1.5 ranges | 0.513 long, no short check | 0.34 |
+
+            Reading, and it is one quantity rather than three. The retrace's denominator is the
+            thrust itself, measured from the close before the session the scan flagged, so a median
+            above 1.0 says the median setup gave back more than the whole move it is measured
+            against. That is not a description of a pullback; it is what a one-session denominator
+            inside a twenty-session move produces. The give-up distance is the width of the pullback
+            swing, and the pullback is everything after the extreme, which `PullbackGeometry.Of`
+            searches forward from that same flagged session: a move whose real high sits before the
+            flag has its extreme found at the flag, and the swing is then measured over the whole
+            drift rather than over the dip. Both are readings of one thing, where the thrust is, and
+            both hold on both sides with the same numbers, which is what rules out a long-side
+            accident.
+
+            `trigger-near` is what turns that from a possibility into the supported reading, because
+            it is the same population, the same rows and the same geometry. Its quantity is the
+            distance from the last close to the pullback's own high, anchored at the last session
+            rather than at the thrust, and it is the only one of the three that reads neither the
+            origin nor the width of the drift. It sits at a third of its cap and 96.2% of measurable
+            rows clear it. So "the pattern test is uniformly too tight" does not survive its own
+            evidence: the two checks that read where the thrust is are two and a half times over,
+            and the one that does not is comfortably inside.
+
+            Finding. **The fixture cannot be evidence about `thrust`, and the authored gate cases
+            have carried that check alone.** Observation: the fixture holds thirty names with a
+            history against a scan breadth of fifty, so every one of them is inside every scan on
+            every session and the sessions-since-thrust figure is nought on every fixture row of both
+            directions. The only place the ten-session window is exercised on either side of itself
+            is `fixtures/gate-cases.json`, whose long and short cases sit at ten and eleven. Over the
+            live run the check reads 100%, and that figure is a tautology rather than a measurement:
+            `thrust` is one of the four checks in the recording floor, so every recorded row passed
+            it by definition of having been recorded.
+
+            Reading: three instruments and no overlap on this one property. The captured fixture
+            answers whether the arithmetic still does what it did on a real day and cannot reach this
+            check at all. The live calibration run has the population and cannot fail a floor check
+            by construction. The authored cases carry the threshold and say of themselves that they
+            answer branch coverage and nothing about the market. None of the three is wrong, and the
+            state is invisible from inside any one of them, which is why it is worth a line rather
+            than a fix.
+
+            Reading, on the shape rather than on this check. This is the second time the fixture's
+            composition has silently bounded what a check could show, and the two were found by
+            different accidents. The first was measured at 2.6, when the per-check pass and fail
+            counts were added and eight of ten long gates came back one-sided over two recorded
+            setups; `fixtures/gate-cases.json` records it under `whyNotAWiderFixture` and was built
+            to answer it. The second is this one, found at 2.11 by a run in a different checkpoint
+            over a different population. Neither was found by anything looking for the shape, so how
+            many other checks stand where `thrust` does is unknown rather than nought. That is a
+            reading pass rather than a build step, and it is now a done condition of 2.12.
+
+Decided:    **The correction is written as a prediction before it is attempted, and 3.1 is judged
+            against it.** Take the thrust's span from the scan that produced the hit rather than from
+            the session it landed on: one session for `gainer` and `gapper`, twenty for `leader` and
+            `laggard`, which is the lookback each of those scans already ranks on. The prediction is
+            that the median retrace falls below 1.0 and the nightly count moves into single or low
+            double digits, **with no threshold moved**. If it holds, the once-only adjustment is
+            still unspent and the geometry was the fault. If it does not, the thresholds are the
+            fault and the once is spent then, against the corrected geometry rather than against
+            this one.
+
+            The ordering is the point rather than an aside. 3.1 must not move the geometry and the
+            thresholds in one pass, because then neither result means anything and a once-only
+            adjustment has been spent against a population nothing described. Both rows are in
+            BUILD_PLAN's table and each names the other.
+
+            It is written now because a prediction written after the attempt is a description. What
+            it needs first is the gap the entry above named: the scan that produced a thrust is not
+            recorded on the setup row, so nothing today can tell a one-session hit from a
+            twenty-session one after the fact. Recording it moves the `thrust` expectations at 2.6
+            and 2.7, which belongs to the pass that makes the change rather than to this one.
+
+Carried:    The thrust-span correction and its prediction, now a row of its own, due at 3.1 and
+            worked before the threshold row rather than with it.
+            The reading pass over what the fixture's composition cannot show, due at 2.12 as part of
+            the sign-off.
+            Everything else unchanged from the two entries above.
+
+## 2.11 — 2026-08-26 — phase-2-detection — corrections: three figures and the population each was taken over
+
+Corrects the 2.11 entry "the one-time calibration, and a band two checks cannot reach". Every figure
+below was recounted at the 2.12 sign-off against `calibration_setup` in the live store, 49,450 rows
+over 631 sessions, using the same run the entry reports. Nothing that was measured has changed. What
+changed is which rows three of the figures were taken over.
+
+Measured:   **The long retrace median is 1.060, not 1.088.** The entry gives "the retrace among moves
+            of the right length has a median of 1.088 long and 1.006 short". The gate's own definition
+            of the right length is 2 to 7 bars, being `MinimumPullbackBars` and `MaximumPullbackBars`.
+            Over `dip-shape` values on rows whose note says 2 to 7 bars, n is 5,849 and the median is
+            1.0597. The figure 1.088 is the median over dips of 2 bars or more with no upper bound,
+            n 6,225, which admits 376 dips the gate rejects for length. The quantile convention is not
+            the cause and was checked: the long count is odd, so every convention returns the same
+            value, and the entry's other even-count figures reproduce on the upper of the two middle
+            values, which is the convention the short retrace and the short stop distance both use. The short figure is right as
+            printed: over `bounce-shape` on rows of 2 to 7 bars, n is 3,448 and the median is 1.0064
+            taking the upper of the two middle values. The two sides were therefore taken over two
+            different populations under one phrase, which is what makes the pair not comparable rather
+            than the long figure merely being 0.028 out.
+
+            **The relaxed conjunction is 7 a night long and nought short, not "about 6".** The entry's
+            finding reads "with the retrace cap and the give-up cap set to pass always, the remaining
+            conjunction yields about 6 a night". Recounted per side by forcing `dip-shape` and
+            `exit-tight` to pass on the long list and `bounce-shape` and `exit-tight` on the short, and
+            counting rows where every remaining gating check passed: 5,833 long rows over the range, a
+            median of 7.0 a night and a mean of 9.2; 507 short rows, a median of 0.0 a night and a mean
+            of 0.8. "About 6" is 44 nightly rows multiplied by the long side's own pass rates for
+            `held-floor`, `contraction` and `trigger-near`, which is 6.15 and is the long side alone.
+            The same arithmetic on the short side is 0.19.
+
+            **`reached-ceiling` is missing from the per-check table.** The table under "Per check, over
+            the rows that cleared the recording floor" carries ten long checks and nine short. The
+            absent row is `reached-ceiling`, which passes on 859 of 16,917 short rows, being 5.08%. It
+            is the third most binding gate on the short list, ahead of `averages-squeezing` and behind
+            only `exit-tight` and `bounce-shape`. Its quantity does appear in the entry, as a median
+            distance of 1.802 ranges against a cap of 0.5, so the check is discussed and its pass rate
+            is not printed. The table pairs the two lists by position and `trigger-near` has no short
+            counterpart; `reached-ceiling` has no long one and got no row of its own.
+
+Verified:   Every other figure in the entry reproduced exactly. 32,533 long rows and 16,917 short;
+            medians of 44.0 and 13.0 a night and quartiles of 24.5 to 74.0 and 7.0 to 41.0, under
+            `NightlyCounts.Quantile` over 631 nights with the 29 long and 30 short empty nights counted
+            rather than dropped; 7 long candidates on 7 separate nights and none short, so 624 of 631
+            nights and 631 of 631; 2,016 names with a warm-up; the nineteen printed pass rates; stop
+            distance medians of 1.157 and 1.191, the second on the same upper-middle convention the
+            short retrace uses; `trigger-near` at a median of 0.513 with 10,153 of
+            10,553 measurable rows clearing it, being 96.2%; `reached-ceiling`'s 1.802; and every short
+            row carrying the cap-clause exemption, 16,917 of 16,917. `setup` is empty, which is the
+            done condition.
+
+Findings:   Reading. The three corrections all move the entry's own argument the same way, which is
+            towards the finding it already reached. A long median of 1.060 is still above 1.0, so the
+            typical give-back still exceeds the thrust. A short side of nought a night with both shapes
+            relaxed is further out of the band than "about 6", not nearer it. And a `reached-ceiling`
+            that passes 5.08% of the time is a third binding short gate the entry did not count, which
+            makes the short side's failure structural in one more place. Nothing here reopens the
+            decision not to spend the once-only adjustment.
+
+            Reading, on why these three and not others. All three are correct arithmetic over a
+            population other than the one the sentence names. That shape now has a rule, recorded in
+            `CLAUDE.md` under "Verification" at this sign-off, and a sweep of the record's other stated
+            figures is carried to 3.1.
+
+Carried:    The corrected figures are carried into `BUILD_PLAN.md`'s 2.11 threshold obligation, which
+            repeated two of them and is what 3.1 reads.
+
+## 2.12 — 2026-08-26 — phase-2-detection — the phase signs off, with a fifth defect shape and two acts nobody in this corpus can perform
+
+Fresh session, no commits of code to this repository before or during the pass. Its only commits are
+documents, which the narrowed fresh-session rule permits.
+
+Verified:   Reproduced before reading the record, in this order. `tools/ci.ps1` green on Windows, 24
+            steps, **324 tests**. `tools/verify-phase` **GREEN**: 116 claims, 59 passed, 0 failed, 57
+            out of scope, **0 unexamined**; coverage examined 2,444 with **0 unexamined**; 741
+            expectations of which 287 independent, 287 `DERIVED` and 454 `FROZEN` all matching, 0
+            changed since the last commit; inputs 67 `CAPTURED` and 88 `AUTHORED`. Both runners and
+            the rehearsal job green on the head commit in GitHub Actions, run 33035606747:
+            windows-latest, macos-latest and the case-sensitive rehearsal.
+
+            Run again after this entry and the document edits beside it, so the sign-off is against the
+            state being committed rather than against the state it was reproduced from: `tools/ci.ps1`
+            green, 24 steps, 324 tests, and `tools/verify-phase` GREEN with the same 116 claims, 59
+            passed, 0 failed, 57 out of scope and **0 unexamined**. Coverage examined reads 2,450 rather
+            than 2,444, the six being citations and scopes this entry and the corpus edits added.
+
+            Nothing in the report is out of scope until 2.12, so signing this checkpoint off leaves no
+            claim resting on a checkpoint that has just landed. The 57 out-of-scope claims and the 180
+            out-of-scope coverage items close at 3.1 or later, or are priced, or are exempt by design.
+
+            The 2.11 figures were recounted against `calibration_setup` rather than read from
+            `PROGRESS.md`. Every figure in the entry reproduced exactly except three, which are
+            corrected in the dated entry directly above this one. The three that moved were
+            correct arithmetic over a population other than the one the sentence named.
+
+Broke:      Five things were removed and the run watched, because reading has not been sufficient here.
+
+            **A gate's implementation deleted.** `Contraction` taken out of `LongPullbackRules.Evaluate`
+            and its method deleted. `check-completeness` fails. It does not name the gate: it dies on an
+            unhandled `Single` inside `PhaseReplay.CheckSidednessFigures`, where the authored gate case
+            for `contraction` finds no result of that name. Loud, and not the message the check has
+            written for exactly this. A second break isolated the half that does name it: an extra
+            `made-up` result added to the same list produced "2026-08-24-HOOD-long records a check no
+            gate names: made-up", over two rows, so the per-row reconciliation is live.
+
+            **The gid list emptied.** The `gid` span class renamed throughout `ARCHITECTURE.html`, all
+            twenty. `check-completeness` fails with the count it states in advance: 0 gates under the
+            long check list, not ten. Then, to reach the set comparison rather than the count, one gid
+            renamed from `contraction` to `gone-quiet` so the list stays ten. Both directions fire in
+            the same run: the document defines a gate the detector does not run, and the detector runs
+            a check no gate names.
+
+            **A check narrowed below one scope's floor while ordinary files were added.** `BarTables`
+            cut from three to one, and eight ordinary new files added under
+            `PullbackStrategyLab.Core/Indicators`. `bar-append-only` fails with three named shortfalls,
+            one per scope, while the corpus scope it used to be summed with grew to 82 source files and
+            was reported beside the property rather than added to it. This is the narrowing that passed
+            at the phase 1 sign-off, and it now fails for the reason it should.
+
+            **A backing test removed.** The vendor-correction test named by `bar-append-only` renamed
+            away. The failure lands on `bar-append-only`, the check whose declaration names it, not on
+            `coverage-reported`: "and no test by that name exists. A backing that has gone stale is
+            worse than none, because it reads as covered." The 77 proofs in `CheckProofTests` still
+            pass, which is right, because they prove the mechanism over hand-written inputs.
+
+            **A two-cell row put into the obligations table.** `MarkdownTable` refuses it by position and
+            content, naming a header three cells wide, a body row two cells wide, the row number and
+            the text it begins with. It does not vanish.
+
+            The working tree was restored after each and `git status` is clean.
+
+Measured:   **For each of the twenty gate slots, which instrument exercises both sides.** Asked as the
+            general question rather than as the three known instances. Two-sided means the instrument
+            produced at least one pass and at least one fail for that gate on that side of the list;
+            the two lists are never pooled, and four gate ids appear on both, being `cluster`,
+            `exit-tight`, `moves-enough` and `thrust`, so there are sixteen ids across twenty slots.
+
+            | gate | gate-cases.json | captured fixture | live calibration | second instrument |
+            |---|---|---|---|---|
+            | long `tradable` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `moves-enough` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `uptrend` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `thrust` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `dip-shape` | both | fail only | both, 227 pass | live calibration |
+            | long `held-floor` | both | pass only | both, 31,258 pass | live calibration |
+            | long `contraction` | both | fail only | both, 15,169 pass | live calibration |
+            | long `trigger-near` | both | absent, never scored | both, 10,153 pass | live calibration |
+            | long `exit-tight` | both | absent, never scored | both, 330 pass | live calibration |
+            | long `cluster` | both | fail only | fail only, 0 of 32,533 | none |
+            | short `tradable-shortable` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `moves-enough` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `downtrend` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `averages-squeezing` | both | fail only | both, 4,927 pass | live calibration |
+            | short `thrust` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `bounce-shape` | both | fail only | both, 179 pass | live calibration |
+            | short `reached-ceiling` | both | fail only | both, 859 pass | live calibration |
+            | short `no-reclaim` | both | pass only | both, 16,783 pass | live calibration |
+            | short `exit-tight` | both | absent, never scored | both, 185 pass | live calibration |
+            | short `cluster` | both | pass only | fail only, 0 of 16,917 | none |
+
+            The captured-fixture column is over the rows a detector wrote, being one long and one short.
+            The live-calibration column is over `calibration_setup`, 32,533 long and 16,917 short rows.
+
+Findings:   Finding. **`gate-cases.json` is the only instrument in CI that exercises both sides of any
+            gate, and it carries all twenty alone.** The question asked how many checks it carries
+            alone. The answer is every one of them, and the reason is not that the other instruments
+            are weak but that only one other instrument has ever produced a two-sided result and it is
+            not committed. Over the captured fixture a detector writes one row per direction, so
+            twenty slots have one answer each. The live calibration run does exercise both sides of ten
+            of the twenty, and it lives in `data/live`, which is gitignored, produced by a once-only
+            command, and re-derived by nothing. If that store is deleted, the pass rates in the record
+            become the only trace and the ten become gate-cases-only too.
+
+            That is not a defect. It is what the decision already chose, and it is worth having the
+            number: (see: Gate boundaries are exercised by authored cases and the captured fixture is
+            not asked to do it) is carrying twenty gates by itself, and nobody had counted.
+
+            Finding. **Ten of the twenty are structurally one-sided against any run's rows, and
+            `thrust` is one of ten rather than a special case.** The 2.12 clause names `thrust` as the
+            worked example. The general shape is the recording floor: `RecordingFloor` is `tradable`,
+            `moves-enough`, `uptrend` and `thrust`, and a row exists only if all four passed, so all
+            four are 100% by construction on every side of every run, forever, not only over this
+            fixture. Eight slots. The other two are `cluster` on both lists, which is unmeasured for a
+            different reason already recorded at 2.11: a reconstructed session has no industry to
+            count. So the answer to "which other checks stand where `thrust` does" is: the other three
+            in the recording floor, on both sides, permanently, and `cluster` on both sides for as
+            long as calibration is the only population.
+
+            Finding. **Five gates have their branch covered and the arithmetic behind the number
+            covered by nothing.** `GateCases.Evaluate` builds a `LongEvidence` or `ShortEvidence` and
+            constructs the pullback record by hand from the retrace depth and the bar count in the case
+            file. It never calls `PullbackGeometry.Of`. The gates whose quantity comes from that method
+            are `dip-shape` and `bounce-shape`, and `trigger-near` and `exit-tight`. Over the captured
+            fixture `PullbackGeometry.Of` runs and returns the degenerate shape on every row:
+            `pullback_bars` is 0 and `retrace_depth` is 0.0000 on all three setups, and `trigger-near`
+            and `exit-tight` are not scored at all but recorded absent, because there is no trigger and
+            no stop. So the geometry that the 3.1 thrust-window correction is about has no instrument
+            exercising it on a non-degenerate input, anywhere, except the uncommitted live run. The
+            prediction 3.1 is judged against, that the median retrace falls below 1.0 with no threshold
+            moved, can be evaluated only by re-running that command over the live store.
+
+            Finding, and the fifth defect shape. **The fixture's one-sidedness figures count an
+            `AUTHORED` row into the captured population.** `PhaseReplay.CheckSidednessFigures` counts
+            passes and fails from every row of `setup`. The fixture's `setup` table holds three rows,
+            not two: `2026-08-24-HOOD-long` and `2026-08-24-INTC-short` from the detectors, and
+            `IESC-long` inserted by `VectorizeAuthoredSetup` to give the vectorizer a subject. That row
+            bypasses the recording floor, which is why it carries `uptrend` failed on a grade of
+            `mixed` and is in the store at all. `uptrend` and `contraction` are the only two long gates
+            the report calls two-sided, and each is two-sided only because the authored row disagrees
+            with the detector row. Over detector-written rows every one of the twenty slots is
+            one-sided, so the measured figure behind (see: Gate boundaries are exercised by authored
+            cases and the captured fixture is not asked to do it) is ten of ten long rather than eight
+            of ten. The same function keeps the authored gate cases out of these counters deliberately
+            and says so in its own comment; the authored setup row arrives through the store and is
+            kept out of nothing. The decision's conclusion is unaffected and its evidence is stronger
+            than recorded.
+
+            Reading. That finding and the three corrected figures in the entry above are one shape, and
+            it is not the shape this corpus has four instances of. In all four of those the subject an
+            assertion guarded went away and the assertion kept saying what it always said. In all four
+            of these the counts are correct, the check is live, the subject is present, and the
+            sentence is still false, because the figure was computed over a population other than the
+            one named beside it. Tiers guard which rows may be believed and scope floors guard how many
+            rows were looked at. Nothing guards which rows a stated figure was computed over. Per the
+            stopping rule, a fifth shape is a rule rather than a fourth pass, and it is written into
+            `CLAUDE.md` under "Verification" in this commit with its prior text in `CHANGELOG.md`.
+
+            Observation. Two smaller things, neither of which lets anything through. `check-completeness`
+            fails on a crash rather than on its own message when a gate implementation is removed. And
+            `PhaseReplay.CheckSidednessFigures` says in a comment that five of the twenty gate ids
+            appear on both lists; there are four. Both are carried to 3.1 rather than fixed here,
+            because fixing them is a code commit and a session that commits code cannot sign it off.
+
+            Observation, on the thrust-scan gap 2.11 named. The obligation says the scan that produced
+            a thrust is not recorded on the setup row. `thrust_scan` is a signal and is recorded, with
+            expectations at 2.3, 2.6 and 2.7, but `setup_signal` has a foreign key to `setup` and
+            calibration writes to `calibration_setup`, so no calibration row can carry it and
+            `setup_signal` is empty in the live store. The claim is true of the population the finding
+            is about, and the work at 3.1 is a column or a re-run on the calibration side rather than a
+            new signal, which is worth knowing before the estimate is made.
+
+Carried:    Confirmed present with their due points, none attempted. The threshold adjustment the count
+            distribution calls for, due 3.1, now carrying the corrected figures. Where the thrust is
+            measured from and the prediction it is judged against, due 3.1. The unbacked source scans
+            and the three scans without coverage records, due 3.1, reconfirmed against this run as nine
+            backed by a test, one by the rehearsal job, three by nothing, and fifteen source-reading
+            files of which twelve belong to a check. Whether a night screened over five sessions writes
+            nothing or carries the last membership, due 3.1. Step 6 of the move, due at the move. The
+            vendor's reset boundary, due at the operator.
+
+            Three new, all due 3.1: the sidedness counters split by tier, the sweep of the record's
+            other stated figures for the population each was taken over, and the two verification-quality
+            items above.
+
+            Two moved to the operator rather than to a checkpoint. The `CONFIRMED` indicator values for
+            IESC, LITE and PAYO, and the `CONFIRMED` gallery expectations.
+
+Verdict:    **Phase 2 signs off**, with the gallery review and the three `CONFIRMED` indicator values
+            outstanding, and that is a judgement rather than a default.
+
+            The reason. Everything a session can verify is verified and green, on both runners and on a
+            case-sensitive filesystem, with nothing unexamined and nothing out of scope resting on this
+            checkpoint. What is left is two acts a person performs at a screen, and no session of any
+            kind can perform either. The indicator obligation has already been moved three times, 1.12
+            to 2.11 to 2.12, each move sound on its own terms, and a due point that moves at every
+            sign-off is permanent while reading as pending, which is precisely the fault the
+            checkpoint-naming rule exists to prevent one level up. Holding phase 2 open for them would
+            move them again at 3.7 and buy nothing, because phase 3 does not read them: 2.11 was named
+            as the point a threshold would be set against those figures, no threshold was set, and the
+            gallery review changes the detector's rules rather than any measurement phase 3 records.
+
+            What signing off does not mean. The gallery review clause of 2.12's done condition is not
+            met by this pass and this entry does not claim it. It is stated here rather than left to be
+            inferred from a green report, and the operator can overturn the judgement by doing the
+            review before phase 3 begins, which is the better outcome and is why both rows stay in the
+            table rather than being closed.
+
+            One caution carried into phase 3, not a blocker. Ten of the twenty gates are exercised on
+            both sides by one committed instrument and that instrument is authored. Phase 3 measures
+            outcomes for setups these gates select, and a gate whose only two-sided evidence is a
+            constructed number is a gate whose behaviour on real data is asserted by a store that is
+            gitignored. That is the shape of the 3.1 work already scheduled, and it is worth carrying
+            the sentence rather than the impression.
+
+## Phase 2 sign-off — 2026-08-26 — phase-2-detection — two obligations the gate table earned, added before 3.1 rather than after
+
+Adds to the 2.12 entry above. Nothing measured here that was not measured there; what changes is that
+two things the gate table named as observations are now scheduled work with a due point.
+
+Findings:   Finding, raised from the gate table rather than newly found. **`PullbackGeometry.Of` is
+            exercised on no non-degenerate input anywhere, and 3.1 is the checkpoint that changes what
+            it computes.** The 2.12 table recorded this as the third of its findings and left it as a
+            caution. It is now an obligation, due at 3.1 **before** the correction rather than after.
+
+            The reasoning that moved it. `GateCases` constructs a `PullbackGeometry.Pullback` by hand
+            from `pullback.retraceDepth` and `pullback.pullbackBars`, so the authored cases answer
+            whether each gate's two branches work and never touch the method that produces the numbers
+            those branches compare. Over the captured fixture the method does run, and returns the
+            degenerate shape on every row: `PullbackBars` nought and `RetraceDepth` nought on all
+            three setups, because thirty names against a scan breadth of fifty puts the thrust at the
+            last bar every time. So the quantity the thrust-window correction is about is computed by
+            a method that nothing checks on an input where its answer could be wrong.
+
+            Why before rather than after. The defect the correction addresses produced plausible
+            numbers for 631 sessions and nothing noticed, and that is a property of this method rather
+            than of that defect: every figure it returns is a small plausible number whichever way it
+            was computed, which the method's own comment says. A corrected version is wrong in exactly
+            the same silent way if it is wrong. Judged after the fact, the 3.1 prediction is a median
+            moving in the direction it was predicted to move, and a wrong-but-plausible correction
+            produces that too. Judged against expectations written first, the correction either
+            reproduces figures a second implementation derived or it does not.
+
+            What is owed, stated so the obligation cannot be met narrowly. `DERIVED` expectations over
+            the fixture's own bars for `ThrustOrigin`, for `ExtremeIndex` and `ThrustExtreme`, for
+            `PullbackBars` and `RetraceDepth`, and for the raw-basis `Trigger` and `Stop` that
+            `trigger-near` and `exit-tight` read, restated independently by
+            `tools/derive-indicators.py` rather than by the method itself. Both bases are pinned on
+            purpose: the shape quantities are adjusted, the two prices are raw, and reading one where
+            the other was meant is the error this method carries a warning about.
+
+            It costs nothing to acquire. `Of` takes the thrust index as a parameter and the fixture
+            holds 250 sessions for each of thirty names, so a non-degenerate case is a thrust index
+            inside the stored window rather than at its end. No capture, no vendor call, no committed
+            megabyte. That is the same argument the authored gate cases won at 2.6, applied one layer
+            down to the thing those cases skip over.
+
+            And it has to survive the correction it is written for. The expectations pin what `Of`
+            computes over a given window, and the correction changes which window and which index the
+            caller hands it, so the correction should move inputs and leave the pinned arithmetic
+            where it is. If it moves a pinned expectation anyway, that is a fixture change with a
+            recorded reason rather than a number that quietly became different, which is the whole
+            visibility this buys.
+
+            Finding, raised from an observation in the entry above. **`check-completeness` fails on a
+            crash where it has a named failure written for the same case.** Deleting a gate's
+            implementation at the sign-off failed the check, so the property holds and nothing passed
+            over the absent subject. It failed on an unhandled `Single` inside
+            `PhaseReplay.CheckSidednessFigures`, where the authored gate case for that gate finds no
+            result of its name, and what a reader gets is "Sequence contains no matching element" and
+            a stack trace. The check's own reconciliation message never runs, because the replay it
+            reads dies before the comparison. Reading: a crash and a named failure are not the same
+            artefact. One tells a later session which gate went missing; the other tells it the check
+            threw, and a session that has to work out which of twenty gates is absent from a stack
+            trace is doing the work the check was written to do for it. Recorded as an observation
+            above and raised here on that distinction, which is why it now has a row of its own rather
+            than sharing one.
+
+Carried:    Both due at 3.1, and the second is now separate from the gate-id count in a source comment
+            it was bundled with, which keeps its own row. The obligations table now carries five rows
+            raised at 2.12.
+
+## Phase 2 sign-off — 2026-08-27 — phase-2-detection — the ruling the sign-off owed, found in a file nothing reads
+
+Corrects the entry above, which states that the obligations table carries five rows raised at 2.12.
+It carries six, the sixth being added here.
+
+Findings:   **Two items that fell due at 2.12 were recorded only in the phase's build prompt, and the
+            sign-off closed without seeing either.** Observation: `prompts/2026-08-26-phase-2-plan.md`
+            is a gitignored local file; its 2.12 section asked the sign-off to rule on one thing and
+            noted a second as deliberately open, and neither appears anywhere in the eight documents.
+            They were found the next day, by reading the prompt to check whether it had gone stale,
+            which is not a mechanism.
+
+            Reading. This is the third instance of the same shape. The 1.3 obligation on a night
+            screened over five sessions and the 1.1 obligation on the vendor's reset boundary were
+            each recorded in a `Carried` block and never in the obligations table, so nothing read
+            them and the checkpoints they were due at landed without them; both were found at 2.11.
+            `CLAUDE.md` already says anything issued in conversation that will later be cited lands in
+            the repo when it is issued, and that a prompt is safe as scratch only while that holds.
+            The rule was right and nothing enforced it. What is different here is the direction: those
+            two were in a record and missing from a spec, and these two were in neither, which is
+            worse and is the case the rule was actually written for.
+
+Findings:   **The ruling on 2.11's done-condition clause. The clause stands.** The item, as the prompt
+            put it: BUILD_PLAN's 2.11 done condition gained "unless the run shows the band is out of
+            the five thresholds' reach" in the same checkpoint whose measurement would otherwise have
+            failed the condition as written, and the session that needed the clause wrote it.
+
+            Three grounds, each checkable rather than a matter of taste. **It added work rather than
+            removing it**: the escape is not "record a finding instead", it is the pass rate of every
+            check and the distribution of every threshold's own quantity, which is strictly more
+            evidence than the unamended condition asked for and is why 2.12 had figures to recount at
+            all. **It is falsifiable and was partly falsified without collapsing**: the escape rested
+            on "about 6 a night", the 2.12 recount per side gave 7 long and nought short, and that
+            moves the finding further from the band rather than nearer. A clause written to let a
+            session off would have been embarrassed by its own recount; this one was strengthened by
+            it. **The act it declined is unrecoverable**: the once-only adjustment cannot be re-spent,
+            so spending it on a threshold set the run showed cannot reach the band spends it for
+            nothing, where the clause's cost is a delay bounded by 3.1.
+
+            Reading, on what is actually wrong. Not the clause. The clause and the escape it
+            authorises landed in the same commit from the same session, and nothing outside that
+            session's own prose marked the amendment, so a later reader sees a done condition and a
+            run that met it. That is a mechanism gap rather than a judgement to overturn, and the
+            mechanism is one line: a checkpoint that amends its own done condition says so in its
+            PROGRESS entry, in those words, which is now in `CLAUDE.md` under "Definition of done for
+            a checkpoint" with its prior text in `CHANGELOG.md`. The sign-off then has something to
+            rule on without diffing `BUILD_PLAN.md` against itself, which is what it took here.
+
+Carried:    New, due at 3.1: whether a mechanism should reconcile `PROGRESS.md`'s `Carried` blocks
+            against the obligations table. Carried in the narrow form rather than the one the prompt
+            left open, because the objection recorded there is sound: prose-to-prose matching
+            false-alarms and a suppressed guard is a dead one. A due point is structured in the table
+            and free prose in a `Carried` block, so what a check can reconcile is the set of due
+            points, failing only on a `Carried` block naming a checkpoint no row does. That is the
+            shape that would have caught all three instances.
+
+            The obligations table now carries six rows raised at 2.12, and the verdict recorded above
+            is unchanged: phase 2 signs off, with the gallery review and the three `CONFIRMED`
+            indicator values outstanding at the operator. Nothing found here bears on it. The ruling
+            was owed at the sign-off and is given at the sign-off, one day later and in the same
+            branch.

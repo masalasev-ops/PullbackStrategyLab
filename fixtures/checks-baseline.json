@@ -1,23 +1,238 @@
 {
   "recordedAt": "2026-08-26",
-  "note": "The floor under each check's examined count, recorded on the date above from a full run. A floor rather than an equality: counts differ between platforms and grow with the corpus, and a baseline that went red on a file being added would be suppressed and then dead. At or above passes. Below fails, names the check and prints both figures. Raising a floor is a one-line commit whose message says what the check examines; lowering one carries what changing a fixture expectation carries. Committed because it is a reference the run is measured against, never a result the run produces, which is why it lives here and not under artifacts/.",
+  "note": "A floor under each scope a check names, recorded on the date above from a full run. At or above passes; below fails, naming the check, the scope and both figures. A scope with no floor fails, and a floor naming a scope the run did not produce fails too, because a scope that stops being reported has narrowed to nothing. Scopes listed under \"context\" carry no floor: their size is a fact about the corpus rather than about the property, so a floor on one would be paid by ordinary growth instead of held by the check. Raising a floor is a one-line commit whose message says what the check examines; lowering one carries what changing a fixture expectation carries, being the new figure, how it was produced, and why the old one no longer holds.",
   "checks": {
-    "api-isolation": 12,
-    "architecture-conformance": 46,
-    "bar-append-only": 54,
-    "ci-parity": 44,
-    "clock-usage": 48,
-    "coverage-reported": 72,
-    "decision-resolves": 272,
-    "fixture-inputs": 43,
-    "fixture-replay": 407,
-    "no-superseded-citation": 93,
-    "path-casing": 2468,
-    "pinned-constants": 30,
-    "price-storage-form": 107,
-    "shell-executable": 4,
-    "stated-counts": 20,
-    "store-portability": 189726,
-    "writer-ownership": 245
+    "api-isolation": {
+      "scopes": {
+        "of those belonging to this solution": 3
+      },
+      "context": [
+        "libraries in the compiled dependency file"
+      ]
+    },
+    "architecture-conformance": {
+      "scopes": {
+        "claims in Component catalogue": 7,
+        "claims in Build order": 6,
+        "claims in The limits": 0,
+        "claims in Failure behaviour": 2,
+        "claims in The phase report": 3,
+        "claims in Running on Windows and macOS": 6,
+        "claims in The procedure": 10,
+        "claims in Tables in the document": 12
+      }
+    },
+    "bar-append-only": {
+      "scopes": {
+        "bar tables named by the check": 3,
+        "bar tables a migration has created": 2,
+        "writes found against a bar table": 2
+      },
+      "context": [
+        "source files scanned"
+      ]
+    },
+    "check-completeness": {
+      "scopes": {
+        "gates in the long check list": 10,
+        "gates in the short check list": 10,
+        "checks the detectors declare": 20,
+        "setup rows read back from the replay store": 2,
+        "check results across those rows": 20
+      }
+    },
+    "ci-parity": {
+      "scopes": {
+        "steps declared in tools/ci.ps1": 22,
+        "steps declared in tools/ci.sh": 22
+      }
+    },
+    "clock-usage": {
+      "scopes": {
+        "direct clock reads inside the clock implementation": 1
+      },
+      "context": [
+        "shipped source files scanned"
+      ]
+    },
+    "coverage-reported": {
+      "scopes": {
+        "checks declared in CLAUDE.md's roster": 21,
+        "of those declared to run on every CI run": 17,
+        "checks implemented in the suite": 17,
+        "checks tools/ci.* invokes as a named step": 17,
+        "files in the suite that read the shipped source": 15,
+        "of those belonging to a check, which declares its scans in its own record": 12
+      }
+    },
+    "decision-resolves": {
+      "scopes": {
+        "decision names in DECISIONS.md": 66,
+        "names under Previously decided, which also resolve": 1,
+        "citations resolved": 116
+      },
+      "context": [
+        "files read for citations"
+      ]
+    },
+    "fixture-inputs": {
+      "scopes": {
+        "captured responses in the manifest": 37,
+        "vendor endpoints a live run exercises": 3,
+        "of those with at least one captured input": 3
+      }
+    },
+    "fixture-replay": {
+      "scopes": {
+        "DERIVED expectations diffed": 197,
+        "checkpoints with expectations in the fixture": 14,
+        "expectations diffed": 568,
+        "of those carrying an independently produced expectation": 14
+      },
+      "context": [
+        "FROZEN expectations diffed",
+        "captured responses the replay read"
+      ]
+    },
+    "no-superseded-citation": {
+      "scopes": {
+        "citations checked against the superseded list": 101,
+        "names under Previously decided": 1,
+        "citations inside a record that name a superseded decision": 1
+      }
+    },
+    "path-casing": {
+      "scopes": {
+        "literals naming a path into this repository": 26,
+        "paths compared against the on-disk name": 26
+      },
+      "context": [
+        "string literals read"
+      ]
+    },
+    "pinned-constants": {
+      "scopes": {
+        "ARCHITECTURE.html, authored parameters, Cluster threshold": 1,
+        "ARCHITECTURE.html, authored parameters, Contraction test": 1,
+        "ARCHITECTURE.html, authored parameters, Daily API ceiling": 1,
+        "ARCHITECTURE.html, authored parameters, Daily range floor": 1,
+        "ARCHITECTURE.html, authored parameters, Give-up distance cap": 1,
+        "ARCHITECTURE.html, authored parameters, Liquidity floor, long": 1,
+        "ARCHITECTURE.html, authored parameters, Liquidity floor, short": 1,
+        "ARCHITECTURE.html, authored parameters, Listing age floor, short": 1,
+        "ARCHITECTURE.html, authored parameters, Market cap floor, short": 1,
+        "ARCHITECTURE.html, authored parameters, Month-mover lookback": 1,
+        "ARCHITECTURE.html, authored parameters, Nightly setup cap": 1,
+        "ARCHITECTURE.html, authored parameters, Price floor": 1,
+        "ARCHITECTURE.html, authored parameters, Price floor, the detectors' side": 1,
+        "ARCHITECTURE.html, authored parameters, Pullback shape": 1,
+        "ARCHITECTURE.html, authored parameters, Scan breadth": 1,
+        "ARCHITECTURE.html, authored parameters, Squeeze test": 1,
+        "ARCHITECTURE.html, authored parameters, Trigger reachability": 1,
+        "ARCHITECTURE.html, data budget, dividends, cadence": 1,
+        "ARCHITECTURE.html, data budget, dividends, cost": 1,
+        "ARCHITECTURE.html, data budget, history refetch, cost": 1,
+        "ARCHITECTURE.html, data budget, index bars, calls a night": 1,
+        "ARCHITECTURE.html, data budget, index bars, cost": 1,
+        "ARCHITECTURE.html, data budget, splits, cadence": 1,
+        "ARCHITECTURE.html, data budget, splits, cost": 1,
+        "ARCHITECTURE.html, data budget, the hard ceiling": 1,
+        "ARCHITECTURE.html, data budget, whole-market daily bars, cost": 1,
+        "BUILD_PLAN.md 1.2, the session zone": 1,
+        "BUILD_PLAN.md 1.6, the range and true range windows": 1,
+        "BUILD_PLAN.md 1.6, the three exponential averages": 1,
+        "CLAUDE.md, the daily vendor call ceiling": 1,
+        "DECISIONS.md, the vendor is EODHD": 1,
+        "PullbackStrategyLab.Api/appsettings.json, DailyCallCeiling": 1,
+        "PullbackStrategyLab.Api/appsettings.json, SessionZone": 1,
+        "PullbackStrategyLab.Web/appsettings.json, DailyCallCeiling": 1,
+        "PullbackStrategyLab.Web/appsettings.json, SessionZone": 1,
+        "PullbackStrategyLab.Worker/appsettings.json, DailyCallCeiling": 1,
+        "PullbackStrategyLab.Worker/appsettings.json, SessionZone": 1,
+        "RUNBOOK.md, the backfill warm-up depth": 1,
+        "RUNBOOK.md, the nightly total against the ceiling": 1,
+        "SCHEMA.md, store configuration, busy_timeout": 1,
+        "SCHEMA.md, store configuration, foreign_keys": 1,
+        "SCHEMA.md, store configuration, journal_mode": 1,
+        "SCHEMA.md, store configuration, synchronous": 1,
+        "SCHEMA.md, the three index symbols": 1,
+        "ARCHITECTURE.html, the workable nightly count band": 1,
+        "BUILD_PLAN.md, the same band at the checkpoint that applies it": 1
+      }
+    },
+    "point-in-time": {
+      "scopes": {
+        "public reads on the store's readers": 28,
+        "statements selecting from a stamped table": 10,
+        "stamped tables the check knows about": 7,
+        "exempted files, each with its reason": 2,
+        "directions of the future-dated case": 2,
+        "dateless reads exempted by name, each with its reason": 1
+      },
+      "context": [
+        "SQL statements read across the shipped source"
+      ]
+    },
+    "price-storage-form": {
+      "scopes": {
+        "tables declared across them": 13,
+        "column declarations checked for REAL affinity": 84
+      },
+      "context": [
+        "migration files read"
+      ]
+    },
+    "shell-executable": {
+      "scopes": {
+        "shell entry points checked against their recorded mode": 4
+      }
+    },
+    "stated-counts": {
+      "scopes": {
+        "CLAUDE.md, all seven done conditions": 1,
+        "CLAUDE.md, five specs": 1,
+        "CLAUDE.md, three records": 1,
+        "CLAUDE.md, one artefact": 1,
+        "The corpus is eight documents plus one artefact": 1,
+        "ARCHITECTURE.html, the components listed by layer": 1,
+        "LongSetupDetector, ten checks": 1,
+        "ShortSetupDetector, ten checks": 1,
+        "ARCHITECTURE.html, the first four and the last six": 1,
+        "ARCHITECTURE.html, the rows marked phase 2 count check": 1,
+        "BUILD_PLAN.md, six phases": 1,
+        "BUILD_PLAN.md 1.11, all ten steps": 1,
+        "The move procedure, stated in two documents": 1,
+        "RUNBOOK.md, the nightly call total": 1,
+        "ARCHITECTURE.html, the daily call total": 1,
+        "ARCHITECTURE.html, Whole-market daily bars makes one request a night": 1,
+        "ARCHITECTURE.html, Splits, bulk makes one request a night": 1,
+        "ARCHITECTURE.html, Dividends, bulk makes one request a night": 1,
+        "RUNBOOK.md, the backfill total, fixed term": 1,
+        "RUNBOOK.md, the backfill total, term in N": 1,
+        "ARCHITECTURE.html, the nightly cap splits into its own parts": 1
+      }
+    },
+    "store-portability": {
+      "scopes": {
+        "tables in a populated store": 10,
+        "text columns across them": 60
+      },
+      "context": [
+        "stored text values read"
+      ]
+    },
+    "writer-ownership": {
+      "scopes": {
+        "stores declared in SCHEMA.md": 36,
+        "stores a migration has created": 13,
+        "writes found in the shipped source": 15,
+        "declared writers whose store and component both exist": 13,
+        "operations with more than one writer, where SCHEMA states the disjointness": 1
+      },
+      "context": [
+        "source files read for store writes",
+        "types declared in the shipped source"
+      ]
+    }
   }
 }

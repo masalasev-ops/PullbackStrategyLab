@@ -117,14 +117,20 @@ public sealed partial class PriceStorageFormCheck
         }
 
         coverage
-            .Examined("migration files read", files.Length)
+            .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
-            .Examined("column declarations checked for REAL affinity", columns);
+            .Examined("column declarations checked for REAL affinity", columns)
+            .NoSourceScan(
+                "the migration text is the declaration itself. The store is built by executing exactly these "
+                + "statements, so a column's affinity cannot differ from what the statement says, and removing "
+                + "the declaration removes the column");
 
         if (Exempt.Count > 0)
         {
             coverage.OutOfScope("columns exempted by name", Exempt.Count,
-                string.Join("; ", Exempt.Select(e => $"{e.Key}: {e.Value}")));
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "each is exempt for a stated reason rather than pending anything: "
+                    + string.Join("; ", Exempt.Select(e => $"{e.Key}: {e.Value}"))));
         }
 
         coverage.Report();

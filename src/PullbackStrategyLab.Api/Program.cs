@@ -29,6 +29,7 @@ public static class Program
             ContentRootPath = AppContext.BaseDirectory,
         });
         builder.AddPullbackStrategyLabStore();
+        builder.Services.AddSingleton<LabSetups>();
 
         PullbackStrategyLabOptions options = builder.Configuration
             .GetSection(PullbackStrategyLabOptions.SectionName)
@@ -79,9 +80,36 @@ public static class Program
                 clock.UtcNow));
         });
 
+        // A night's setups, both directions, each with every check's verdict and a window to read it
+        // against. The date is in the path because a night is what the gallery is about; the failed
+        // check is a query because it is a filter over that night rather than a different night.
+        app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, string? failed) =>
+            Results.Ok(setups.Read(
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                clock.UtcNow,
+                string.IsNullOrWhiteSpace(failed) ? null : failed)));
+
+        // The one write this surface makes, and it is a person's opinion of one setup rather than
+        // anything the lab computed. Two columns of one row, named in the route so a reader of this
+        // file can see the whole of what the read surface can change.
+        // see: The agreement a person records is written through the read surface, and it is the only write it makes
+        app.MapPost("/setups/{setupId}/agreement", (string setupId, AgreementRequest request, LabSetups setups) =>
+        {
+            AgreementResult result = setups.RecordAgreement(setupId, request.Agreement, request.Note);
+
+            return result.Recorded ? Results.Ok(result) : Results.BadRequest(result);
+        });
+
         app.Run();
     }
 }
 
 /// <summary>What the status band needs before any store has rows in it.</summary>
 public sealed record HealthResponse(string Store, int SchemaVersion, int DailyCallCeiling);
+
+/// <summary>
+/// What a person recorded about one setup. A null agreement clears it, which is a different fact
+/// from disagreeing: "I have not looked at this one" and "I looked and I disagree" are both worth
+/// being able to say.
+/// </summary>
+public sealed record AgreementRequest(string? Agreement, string? Note);

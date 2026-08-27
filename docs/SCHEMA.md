@@ -181,10 +181,15 @@ Grain: ticker + date + scan.
 | Column | Type | Note |
 |---|---|---|
 | `ticker`, `as_of`, `scan` | TEXT | `gainer`, `gapper`, `leader`, `decliner`, `gapdown`, `laggard` |
-| `rank` | INTEGER | |
-| `cluster_count` | INTEGER | same-sector hits that night. Written by ThemeClusterer |
+| `rank` | INTEGER | 1 to 50, by that scan's own magnitude (see: The scans select a fixed count by rank, not a threshold on the move) |
+| `magnitude` | TEXT | the ratio the rank was taken on, a fraction, on the adjusted basis |
+| `cluster_count` | INTEGER | same-industry hits that night. Written by ThemeClusterer |
 
-Insert ScanEngine · Update ThemeClusterer (`cluster_count` only)
+Insert ScanEngine · Update ThemeClusterer (`cluster_count` only) · PK (`ticker`, `as_of`, `scan`)
+
+**`magnitude` is stored rather than recomputed.** It is what the thrust signals freeze, and deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible: a wrong magnitude still produces a plausible ranked list. Storing it also makes the rank auditable, since the ordering can be checked against the number it was taken on.
+
+*Note on `cluster_count`.* Null until ThemeClusterer runs, and same-**industry** rather than same-sector: sector and industry are different columns giving different answers on the same night, and both cluster checks read industry (see: The cluster grouping key is industry, not sector).
 
 ### `regime_daily`
 Grain: date.
@@ -218,19 +223,42 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `capped_out` | INTEGER | truncated by SetupCapper |
 | `trigger_price`, `stop_price` | TEXT | raw prices |
 | `stop_distance_ranges` | TEXT | the number check nine turns on |
-| `agreement` | TEXT NULL | `agree`, `disagree`, null. Written by Setup inspector from the gallery |
+| `agreement` | TEXT NULL | `agree`, `disagree`, null. What a person thought, recorded from the gallery. Null is "not looked at" and is a different fact from disagreeing |
 | `agreement_note` | TEXT NULL | |
 
-Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update Setup inspector (`agreement`, `agreement_note`)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
+
+*`rank` and `capped_out` are the night's, not a version's, and there is deliberately no column that could make them a version's. The cap is applied to the shared candidate list before any version selects, and a cap applied per version would leave their disagreements unscoreable. A test asserts the absence rather than the intent, because the intent is unassertable once versions exist and the record it would have destroyed cannot be reconstructed.*
+
+*Both are null on a setup that failed a gating check. Such a row is evidence and was never a candidate, so a rank among names it was not ranked against would be a number with no meaning.*
 
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.
 
 Same shape as `setup`, in a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
 
+*Three reconstructions ride on every row, and each is recorded rather than assumed. **Membership** is today's, because a night the lab was not running has no snapshot. **The market-cap clause of `tradable-shortable` is exempt**, because the lookup is bounded on when it was made and a 2024 session has no capitalisation at all; every short verdict here says which clauses ran. And **the bar series is read as the store knows it now**, corrections included, rather than as it stood on the night: a backfill takes a name's whole history in one evening, so every historical bar was observed later than its own session and a read bounded on the session's own instant returns nothing. That third one is not a choice between two readings; it is the only reading that returns anything, which is why it is written down here rather than left as a property of a query.*
+
 Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
+
+### `detector_error`
+Grain: date + ticker + direction. What a detector could not decide, rather than what it skipped.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | the night |
+| `ticker` | TEXT | |
+| `direction` | TEXT | `long` or `short` |
+| `message` | TEXT | what went wrong, so the same failure is recognisable across nights |
+| `observed_at` | TEXT | |
+
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Read by nobody
+
+*Each detector issues its own insert rather than calling a shared helper, which is what lets `writer-ownership` attribute the write to the component that made it. The same price the `setup` insert pays, and for the same reason.*
+
+*A silent skip shrinks the recorded universe without anyone noticing. Every count downstream is over the setups that were recorded, so a name the detector could not read is simply absent: the night looks lighter, the counts stay plausible, and nothing says a name was lost. The run that lost one is recorded `partial` rather than `clean`.*
 
 ### `setup_signal`
 Grain: setup + signal. The frozen point-in-time evidence.
@@ -280,6 +308,164 @@ Grain: (setup or control) + horizon. Signed by direction, so a short that fell i
 | `mfe_atr`, `mae_atr` | TEXT | best and worst reached |
 
 Insert ForwardReturnFiller
+
+---
+
+## Signals
+
+The library. Every quantity the frozen row can carry, its formula, and the stored columns it reads.
+`signal_definition` holds this as data from 6.2, when SignalAdmissionTest exists to write it; until
+then this section is the library, and it is a section here rather than a document of its own (see: The corpus is eight documents plus one artefact, and a ninth requires retiring one).
+
+**Every signal traces to named stored columns, and one does not.** That is the point of writing the
+library down: the source columns are what the point-in-time test is asserted against, and a signal
+whose formula reads something nothing stores cannot be computed, cannot be replayed, and cannot be
+proposed against. The one that does not trace is named at the bottom, as a finding rather than as an
+assumption.
+
+**Status is `active` or `candidate`.** Active means SignalVectorizer freezes it on every setup, and
+the set of active signals is what "copies every number the decision depended on" resolves to.
+Candidate means the formula and the source columns are settled and nothing computes it yet: the raw
+material is stored and append-only, so SignalBackfiller at 6.1 computes a specified formula across
+the whole setup history rather than inventing one at the time. Declaring a candidate costs nothing
+statistically, because the correction threshold scales with signals **screened** rather than signals
+declared (see: The correction threshold scales with signals screened, not signals shown).
+
+**Prices are read on the adjusted basis and ratios are fractions,** on the conventions above. Where a
+formula needs an intraday price on the adjusted basis, it is put there through that bar's own factor
+`adj_close / close`, which is what IndicatorEngine does for high and low. Raw prices appear only in
+the trade geometry, because that is what trades tomorrow.
+
+### Trend and position
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `close_adjusted` | the setup session's adjusted close | `daily_bar.adj_close` | active |
+| `ema_9_distance` | (adjusted close − `ema_9`) / `ema_9` | `daily_bar.adj_close`, `indicator_daily.ema_9` | active |
+| `ema_21_distance` | (adjusted close − `ema_21`) / `ema_21` | `daily_bar.adj_close`, `indicator_daily.ema_21` | active |
+| `ema_50_distance` | (adjusted close − `ema_50`) / `ema_50` | `daily_bar.adj_close`, `indicator_daily.ema_50` | active |
+| `ema_gap_21_50` | (`ema_21` − `ema_50`) / `ema_50` | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ema_gap_21_50_avg_20` | mean of `ema_gap_21_50` over the last 20 sessions | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ladder_grade` | the grade TierClassifier wrote for that session | `indicator_daily.ladder_grade` | active |
+
+*`ema_50_distance` is the extension-from-the-long-average measurement the architecture lists as
+missing. It costs nothing beyond a subtraction over two columns already stored, so it is active
+rather than a candidate.*
+
+### Volatility
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `adr_20` | as stored, a fraction | `indicator_daily.adr_20` | active |
+| `atr_14` | as stored | `indicator_daily.atr_14` | active |
+| `range_avg_20` | as stored | `indicator_daily.range_avg_20` | active |
+| `range_today_over_avg` | (high − low) on the adjusted basis, over `range_avg_20` | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close`, `indicator_daily.range_avg_20` | active |
+
+*`range_today_over_avg` is the number the contraction check turns on, stored as a value rather than
+as a verdict. A check result says whether it was under one; the signal says how far under.*
+
+### The thrust
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `thrust_scan` | which scan the most recent qualifying hit came from | `scan_hit.scan` | active |
+| `thrust_rank` | its rank on that scan | `scan_hit.rank` | active |
+| `thrust_session` | the session of that hit | `scan_hit.as_of` | active |
+| `days_since_thrust` | trading sessions from `thrust_session` to the setup date | `scan_hit.as_of`, `daily_bar.bar_date` | active |
+| `thrust_magnitude` | the scan magnitude that put it on the list, on the adjusted basis | `daily_bar.adj_close`, `daily_bar.open`, `daily_bar.close` | active |
+| `thrust_size_in_ranges` | `thrust_magnitude` / `adr_20` | `daily_bar.adj_close`, `daily_bar.open`, `daily_bar.close`, `indicator_daily.adr_20` | active |
+
+*`days_since_thrust` was bounded by a check and never stored, which the architecture lists as a gap.
+`thrust_size_in_ranges` is the other one it lists, and it is the lever the computed ceiling moves on:
+a 19% jump means something different for a 7% range stock than for a 3% one.*
+
+### The pullback
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `pullback_bars` | sessions from the thrust extreme to the setup date | `daily_bar.bar_date` | active |
+| `pullback_extreme` | lowest adjusted low since the thrust extreme, long; highest adjusted high, short | `daily_bar.low`, `daily_bar.high`, `daily_bar.close`, `daily_bar.adj_close` | active |
+| `retrace_depth` | (thrust extreme − `pullback_extreme`) / (thrust extreme − thrust origin), signed so both directions read the same way | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close` | active |
+| `closes_beyond_floor` | sessions in the pullback closing below `ema_21`, long; above `ema_50`, short | `daily_bar.adj_close`, `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+
+*`closes_beyond_floor` reads a different average per direction, because the checks do: `held-floor`
+is the 21-day and `no-reclaim` is the 50-day. One signal rather than two, because the pair is one
+question asked of whichever average that direction's floor is.*
+
+### The trade geometry
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `trigger_price` | as written, a raw price | `setup.trigger_price` | active |
+| `stop_price` | as written, a raw price | `setup.stop_price` | active |
+| `stop_distance_ranges` | \|trigger − stop\| / (`adr_20` × close) | `setup.stop_distance_ranges` | active |
+| `trigger_distance_ranges` | \|trigger − close\| / (`adr_20` × close) | `daily_bar.close`, `setup.trigger_price`, `indicator_daily.adr_20` | active |
+
+### Liquidity and the name
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `dollar_volume_median_20` | as stored | `indicator_daily.dollar_volume_median_20` | active |
+| `market_cap` | as stored, short side only | `security.market_cap` | active |
+| `listing_age_sessions` | trading sessions since `first_seen` | `security.first_seen`, `daily_bar.bar_date` | active |
+| `industry` | as stored | `security.industry` | active |
+| `cluster_count` | same-industry scan hits that night | `scan_hit.cluster_count` | active |
+
+### The market
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `regime_index_score` | as stored | `regime_daily.index_score` | active |
+| `regime_breadth_score` | as stored | `regime_daily.breadth_score` | active |
+| `regime_label` | as stored | `regime_daily.label` | active |
+
+*Frozen on the setup and filtering nothing, which is what keeps the label available as a clean
+experiment (see: The market-mood label is recorded on every setup and filters nothing in the baseline). Both raw scores sit beside it so a proposal can use the continuous form.*
+
+### Volume, the axis the library does not have
+
+The architecture's own verdict on the library is that it "is almost entirely price path, and volume
+appears nowhere except buried inside a scan definition". That stays true of the active set. The three
+below are declared with their formulas and their source columns and are not frozen, because no phase
+2 decision depends on them and adding them to the frozen row would be widening the library on a
+guess rather than through the admission route.
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `volume_thrust` | raw volume on `thrust_session` | `daily_bar.volume` | candidate |
+| `volume_pullback_mean` | mean raw volume over the pullback bars | `daily_bar.volume` | candidate |
+| `volume_dryup` | `volume_pullback_mean` / `volume_thrust` | `daily_bar.volume` | candidate |
+
+*Raw volume, not adjusted, on the same reasoning `dollar_volume_median_20` uses it: it is what
+changed hands. `daily_bar` is append-only and holds volume from the first ingest, so 6.1 computes
+these across the whole stored history whenever they are admitted.*
+
+### The remaining candidates
+
+| Signal | Formula | Source columns | Status |
+|---|---|---|---|
+| `prior_thrust_outcome` | this security's adjusted move over the ten sessions after each earlier scan hit, averaged | `daily_bar.adj_close`, `scan_hit.as_of` | candidate |
+| `intraday_pullback_shape` | the fraction of each pullback session's range travelled after midday | `intraday_bar` | candidate, owed at 4.2 |
+| `day_of_month` | the calendar day of `as_of`, meaning nothing | `setup.as_of` | candidate, planted at 6.4 |
+
+*`day_of_month` is the planted null control and carries `is_null_control` when the table exists. It
+is declared here rather than at 6.4 so the column it reads is on the record; planting it is
+ContextPacker's job (see: One meaningless signal is planted in the conditional tables).*
+
+### The one that does not trace, recorded as a finding
+
+**`earnings_in_window` has no source column and no budgeted call, so it is not in this library at
+all.** The architecture lists it among the missing measurements, with the reason: "A trade decided by
+an earnings gap is not a test of the pattern, and today the system cannot tell those apart." Nothing
+stored carries an earnings date. `corporate_action` holds splits and dividends and neither implies
+one, and the vendor's calendar endpoint is not among the endpoints the call budget is built on.
+
+Recorded here rather than written as a candidate with an empty source, because a candidate whose
+source columns are blank reads as work scheduled and is actually a purchase nobody has priced. What
+it would cost, so a later session decides rather than rediscovers: one calendar endpoint added to the
+vendor client, and a per-symbol or per-day call whose price against the 5,000 ceiling has not been
+measured. Until that is taken, no rule can refer to whether a setup straddled earnings, and the
+effect sits inside the outcome distribution unlabelled.
 
 ---
 
@@ -337,6 +523,8 @@ Insert RunLogger · Update RunLogger
 
 **`counts_against_ceiling` is how a one-time operation stays out of the nightly budget.** The ceiling guards the evening's job; the history backfill is not the evening's job, and charging the two against each other is what once made the backfill look like a two-day procedure. Its calls are still recorded, because what a run cost is worth knowing about every run. The run says so in the store rather than being recognised by its stage name, which would put the exception in the query rather than in the record.
 
+**Fixture capture is one-time on the same grounds, and this is the scope statement rather than a second exemption.** The two operations are the same shape: each runs when a person decides to run it, each stores what it fetched for good, and neither recurs. A capture that added an endpoint cost 30 calls on 2026-08-26 because responses already in the manifest are reused verbatim rather than refetched; charged against the evening's allowance those 30 would compete with the night's work for no reason. What decides the flag is whether the run is the evening's job, not which stage issued it, and a third one-time operation inherits the answer without a third entry here.
+
 ## Store configuration
 
 SQLite, one file under the configured data root. These are set at open, in one place, by the same shared extension that wires config.
@@ -348,7 +536,11 @@ SQLite, one file under the configured data root. These are set at open, in one p
 | `busy_timeout` | 5000 ms | Brief contention retries rather than throwing. Zero is the default and it is the wrong default here |
 | `foreign_keys` | `ON` | Off by default in SQLite, per connection, and silently so |
 
-**One writer, one connection.** The Worker is the sole writer by design, and SQLite makes that a practical requirement rather than a stylistic one. The Api opens the file read-only. A second writing connection produces intermittent lock failures that look like load problems and are not.
+**One writer, one connection.** The Worker is the sole writer of everything the nightly job produces, and SQLite makes that a practical requirement rather than a stylistic one. A second writing connection working alongside it produces intermittent lock failures that look like load problems and are not.
+
+**The one exception is the agreement a person records, and the reason is the boundary.** A person's judgement is captured on the page that asks for it, and the Worker never writes `setup.agreement` or `setup.agreement_note` because the Worker has no judgement to record. There is no run in which the nightly job could produce a value for either, which is what makes these two columns the only ones in the store it cannot own, and what stops the exception being read as a general licence for the read surface to write where writing is convenient. It is not the same kind of write in any case: a person saying what they thought of one row, at a keyboard, on two columns no computation reads, where every other write in the lab is the evening's job producing evidence on a schedule. It cannot contend for a row that job is writing, and under WAL a single short update is what the busy timeout exists for.
+
+Nothing rests on that paragraph holding. The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` reads every write in the shipped source and fails by name on a second one appearing in the read surface (see: The agreement a person records is written through the read surface, and it is the only write it makes).
 
 ### Expected size
 

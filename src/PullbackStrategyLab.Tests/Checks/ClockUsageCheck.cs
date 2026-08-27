@@ -52,8 +52,14 @@ public sealed class ClockUsageCheck
         }
 
         coverage
-            .Examined("shipped source files scanned", filesScanned)
+            .Context("shipped source files scanned", filesScanned)
             .Examined("direct clock reads inside the clock implementation", allowedReads)
+            .Scan("nothing outside the clock implementation reads the machine clock",
+                CheckCoverage.Backing.Test(
+                    "RunLoggerTests.Calls_are_counted_against_the_utc_date_the_run_started_on",
+                    "the logger runs under a clock fixed to an evening that is not today, and the assertion is "
+                    + "against that evening's date. A stage reading the machine clock would file the calls under "
+                    + "today and the test would fail, which is the behaviour this scan generalises"))
             .Report();
 
         Assert.True(offences.Count == 0,

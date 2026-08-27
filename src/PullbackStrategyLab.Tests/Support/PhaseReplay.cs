@@ -1,10 +1,13 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
+using PullbackStrategyLab.Web.Pages;
 using PullbackStrategyLab.Web.Shell;
 using PullbackStrategyLab.Worker.Vendor;
 
@@ -82,6 +85,34 @@ public sealed class PhaseReplay : IDisposable
     public EodhdClient Vendor { get; }
 
     public FixtureVendorHandler Fixture => _handler;
+
+    /// <summary>A read-only connection to the store this replay built, for a caller that wants rows.</summary>
+    public SqliteConnection OpenStore() => _connections.OpenReadOnly();
+
+    /// <summary>
+    /// A writing connection to the same store, for a test that has to damage it.
+    ///
+    /// Narrow on purpose. What it is for is authoring a failure the captured data cannot produce, on
+    /// the same terms as the synthetic split: a stored figure no reader can parse, so the detector's
+    /// error path is exercised by the store rather than by a fault injected into the detector.
+    /// </summary>
+    public SqliteConnection OpenWrite() => _connections.OpenWrite();
+
+    /// <summary>The long detector again over the store this replay built, for the same session.</summary>
+    public DetectResult DetectLong() =>
+        new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+    /// <summary>The long detector in calibration mode, over the store this replay built.</summary>
+    public CalibrationResult CalibrateLong(DateOnly from, DateOnly to) =>
+        new LongSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
+
+    /// <summary>The short detector in calibration mode, likewise.</summary>
+    public CalibrationResult CalibrateShort(DateOnly from, DateOnly to) =>
+        new ShortSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
+
+    /// <summary>The short detector, likewise.</summary>
+    public DetectResult DetectShort() =>
+        new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
 
     public void Dispose()
     {
@@ -216,11 +247,124 @@ public sealed class PhaseReplay : IDisposable
         measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
             "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
 
+        // 8. The six mover scans, which the thrust signals read.
+        ScanResult scans = new ScanEngine(_connections, Logger(), _clock, _options).Scan(AsOf);
+
+        stages.Add(new StageRun(ScanEngine.Name, 0, scans.RowsWritten, scans.Outcome.ToStorageText()));
+        Record("scans.members", scans.Members);
+        Record("scans.measured", scans.Measured);
+        Record("scans.shortOfHistory", scans.ShortOfHistory);
+        Record("scans.hits", scans.Hits);
+        Record("scans.inserted", scans.Inserted);
+
+        // 9. The ladder grade, which writes a later observation of the same session rather than
+        //    updating the row the engine wrote.
+        TierResult tiers = new TierClassifier(_connections, Logger(), _clock, _options).Classify(AsOf);
+
+        stages.Add(new StageRun(TierClassifier.Name, 0, tiers.RowsWritten, tiers.Outcome.ToStorageText()));
+        Record("tiers.members", tiers.Members);
+        Record("tiers.graded", tiers.Graded);
+        Record("tiers.rising", tiers.Rising);
+        Record("tiers.mixed", tiers.Mixed);
+        Record("tiers.falling", tiers.Falling);
+        Record("tiers.noIndicators", tiers.NoIndicators);
+
+        // 10. The sector lookup, which three later stages read and which used to run after all
+        //     three of them. RUNBOOK scheduled it at 19:00 while `clusters` at 18:15 and both
+        //     detectors at 18:20 read what it writes, so on a live night a name newly surfaced by a
+        //     scan had no industry when the cluster count was taken and no market capitalisation
+        //     when `tradable-shortable` decided. Neither one errors: the cluster reads nought and
+        //     the short check fails for want of a figure. This replay ran it first and so could
+        //     never have shown it, which is the failure the stage order here exists to prevent.
+        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
+            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
+        Record("sectors.unresolved", sectors.Unresolved);
+        Record("sectors.asked", sectors.Asked);
+        Record("sectors.resolved", sectors.Resolved);
+
+        // 11. The cluster count, then the market mood, then the two detectors.
+        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
+
+        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
+        Record("clusters.hits", clusters.Hits);
+        Record("clusters.withIndustry", clusters.WithIndustry);
+        Record("clusters.counted", clusters.Counted);
+        Record("clusters.clustered", clusters.Clustered);
+
+        RegimeResult regime = new RegimeLabeler(_connections, Logger(), _clock, _options).Label(AsOf);
+
+        stages.Add(new StageRun(RegimeLabeler.Name, 0, regime.RowsWritten, regime.Outcome.ToStorageText()));
+        Record("regime.indexesMeasured", regime.IndexesMeasured);
+        Record("regime.indexesAbove", regime.IndexesAbove);
+        Record("regime.longLadderCount", regime.LongLadderCount);
+        Record("regime.shortLadderCount", regime.ShortLadderCount);
+        Record("regime.indexScore", regime.IndexScore);
+        Record("regime.breadthScore", regime.BreadthScore);
+        measurements.Add(new Measurement("regime.label", regime.Label));
+
+        DetectResult detected = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        stages.Add(new StageRun(LongSetupDetector.Name, 0, detected.RowsWritten, detected.Outcome.ToStorageText()));
+        Record("detect.long.members", detected.Members);
+        Record("detect.long.examined", detected.Examined);
+        Record("detect.long.belowFloor", detected.BelowFloor);
+        Record("detect.long.recorded", detected.Recorded);
+        Record("detect.long.passedAll", detected.PassedAll);
+
+        DetectResult shorted = new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        stages.Add(new StageRun(ShortSetupDetector.Name, 0, shorted.RowsWritten, shorted.Outcome.ToStorageText()));
+        Record("detect.short.members", shorted.Members);
+        Record("detect.short.examined", shorted.Examined);
+        Record("detect.short.belowFloor", shorted.BelowFloor);
+        Record("detect.short.recorded", shorted.Recorded);
+        Record("detect.short.passedAll", shorted.PassedAll);
+
+        // 12. The signal freeze, over one authored setup.
+        //
+        //    The detectors arrive at 2.6, so the fixture has no setup a detector produced. The row
+        //    is authored, on the same terms as the synthetic split at 1.5: an AUTHORED input, said
+        //    to be one, exercising a path the captured data cannot reach on its own. What is under
+        //    test is the vectorizer, and it takes a setup as given.
+        //
+        //    IESC rather than any of the thirty, because it is the fixture's only name with a real
+        //    corporate action inside the window. A signal read on the raw basis rather than the
+        //    adjusted one is off by the split factor for that name and by nothing at all for the
+        //    other twenty-nine.
+        VectorizeResult vectorized = VectorizeAuthoredSetup();
+        stages.Add(new StageRun(SignalVectorizer.Name, 0, vectorized.RowsWritten, vectorized.Outcome.ToStorageText()));
+        Record("signals.setups", vectorized.Setups);
+        Record("signals.frozen", vectorized.Written);
+        Record("signals.absent", vectorized.Absent);
+
+        // 13. The nightly cap, over whatever the night's detectors left.
+        CapResult capped = new SetupCapper(_connections, Logger(), _clock, _options).Cap(AsOf);
+
+        stages.Add(new StageRun(SetupCapper.Name, 0, capped.RowsWritten, capped.Outcome.ToStorageText()));
+        Record("cap.setups", capped.Setups);
+        Record("cap.candidates", capped.Candidates);
+        Record("cap.longCandidates", capped.LongCandidates);
+        Record("cap.shortCandidates", capped.ShortCandidates);
+        Record("cap.longKept", capped.LongKept);
+        Record("cap.shortKept", capped.ShortKept);
+        Record("cap.cappedOut", capped.CappedOut);
+
+        measurements.AddRange(CalibrationCounts());
+        measurements.AddRange(CapFigures());
         measurements.AddRange(IndexFigures());
+        measurements.AddRange(ScanFigures());
+        measurements.AddRange(CheckSidednessFigures());
+        measurements.AddRange(SignalFigures());
         measurements.AddRange(IndicatorFigures());
         measurements.AddRange(LiquidityFloorFigures());
         measurements.AddRange(ChartFigures());
         measurements.AddRange(ReadSurfaceFigures());
+        measurements.AddRange(GalleryFigures());
+
+        // Last, because it writes a row into the store on purpose and nothing above it may see one.
+        measurements.AddRange(PointInTimeFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -294,6 +438,370 @@ public sealed class PhaseReplay : IDisposable
     /// place to stop: a fifteenth decimal of a decimal average is a fact about the order of
     /// operations rather than about the price.
     /// </summary>
+    /// <summary>
+    /// How each check came out across the fixture, pass and fail counted separately.
+    ///
+    /// A count of results diffed says the detector ran. It does not say whether a check was ever
+    /// exercised on both sides, and thirty names on one session will fail most of them at the same
+    /// early gate. A check with no passes, or no failures, is <b>one-sided</b>: the branch nobody
+    /// reached is asserted by nothing, and "300 results diffed" reads as full coverage while six of
+    /// the ten have only ever returned one answer.
+    ///
+    /// Named individually rather than counted, because the useful sentence is "held-floor and
+    /// contraction are one-sided" and not "two checks are one-sided".
+    /// </summary>
+    private IReadOnlyList<Measurement> CheckSidednessFigures()
+    {
+        var figures = new List<Measurement>();
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT direction, check_results FROM setup";
+
+        // Keyed by direction and name rather than by name, because five of the twenty gate ids
+        // appear on both lists and a dictionary keyed on the id alone would add a long `exit-tight`
+        // pass to a short `exit-tight` fail and report the pair as two-sided. That is the pooling
+        // rule arriving in the one place it is easiest to break by accident.
+        // see: Long and short are never pooled into one figure
+        var passes = new Dictionary<(string Direction, string Name), int>();
+        var fails = new Dictionary<(string Direction, string Name), int>();
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                string direction = reader.GetString(0);
+
+                foreach (CheckResult result in
+                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), CheckJson) ?? [])
+                {
+                    Dictionary<(string, string), int> side = result.Passed ? passes : fails;
+                    side[(direction, result.Name)] = side.GetValueOrDefault((direction, result.Name)) + 1;
+                }
+            }
+        }
+
+        // Per setup, per check, the verdict. This is what makes a changed gate show up as a named
+        // difference rather than as a count moving: "dip-shape on HOOD went from fail to pass" is
+        // actionable and "one more setup passed" is not.
+        using (SqliteCommand perSetup = connection.CreateCommand())
+        {
+            perSetup.CommandText = "SELECT setup_id, check_results FROM setup ORDER BY setup_id";
+            using SqliteDataReader rows = perSetup.ExecuteReader();
+
+            while (rows.Read())
+            {
+                string setupId = rows.GetString(0);
+                foreach (CheckResult result in
+                         JsonSerializer.Deserialize<CheckResult[]>(rows.GetString(1), CheckJson) ?? [])
+                {
+                    figures.Add(new Measurement(
+                        $"setup.{setupId}.{result.Name}", result.Passed ? "pass" : "fail"));
+                }
+            }
+        }
+
+        // The authored boundary cases, evaluated through the shipped rules and kept in a bucket of
+        // their own. They are what answers whether both branches of a gate work; they say nothing
+        // about the market and are never added to the counts above, which are the detectors' rows.
+        // see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+        var authored = new Dictionary<(string Direction, string Name), (bool Pass, bool Fail)>();
+
+        foreach (GateCases.GateCase gateCase in GateCases.All)
+        {
+            CheckResult verdict = GateCases.Evaluate(gateCase)
+                .Single(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
+
+            figures.Add(new Measurement(gateCase.Id, verdict.Passed ? "pass" : "fail"));
+
+            (bool pass, bool fail) = authored.GetValueOrDefault((gateCase.Direction, gateCase.Gate));
+            authored[(gateCase.Direction, gateCase.Gate)] =
+                (pass || verdict.Passed, fail || !verdict.Passed);
+        }
+
+        foreach ((string direction, IReadOnlyList<string> gates) in
+                 new[] { ("long", SetupChecks.Long), ("short", SetupChecks.Short) })
+        {
+            var oneSided = new List<string>();
+
+            foreach (string name in gates)
+            {
+                int passed = passes.GetValueOrDefault((direction, name));
+                int failed = fails.GetValueOrDefault((direction, name));
+                (bool authoredPass, bool authoredFail) = authored.GetValueOrDefault((direction, name));
+
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
+
+                // Sidedness asks whether anything has ever exercised both branches, so it reads both
+                // populations. The two counts above stay separate, so a reader can still see that a
+                // gate the market never passed was passed by a case built to pass it.
+                bool everPassed = passed > 0 || authoredPass;
+                bool everFailed = failed > 0 || authoredFail;
+
+                if (!everPassed || !everFailed)
+                {
+                    oneSided.Add(name);
+                }
+            }
+
+            figures.Add(new Measurement($"check.{direction}.oneSided",
+                oneSided.Count == 0 ? "none" : string.Join(" ", oneSided.Order(StringComparer.Ordinal))));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The cap over candidate lists the captured day did not produce.
+    ///
+    /// The fixture records two setups and neither clears every gating check, so the live cap above
+    /// caps nothing and its figures are all nought. A release rule that has only ever run on an empty
+    /// list is a rule nothing has tested, and the arrangements that matter, both release directions
+    /// and both sides overflowing, are the ones thirty names on one session cannot reach.
+    ///
+    /// AUTHORED, and about the rule rather than about the market: they say nothing about how many
+    /// candidates a night has, which is what the calibration run measures.
+    /// see: A released cap slot goes to the side that still has candidates
+    /// </summary>
+    /// <summary>
+    /// The one-time calibration, run over the fixture's own seeded histories.
+    ///
+    /// <b>What this is for, stated plainly, because the numbers below are not what the checkpoint
+    /// exists to produce.</b> The fixture holds thirty names and the scan breadth is fifty, so every
+    /// measured name is in the top fifty of all six scans on every session: `thrust` passes on every
+    /// row, its most recent hit is always the session itself, and every geometry check that reads a
+    /// pullback therefore has no bars to read. The population is degenerate by construction and no
+    /// threshold could be read off it. What runs here is the code path, diffed session by session, so
+    /// a change to any gate or to the assembly of a reconstructed session shows up as a named
+    /// difference. The distribution a threshold was actually set against came from the live universe
+    /// and is recorded in PROGRESS.
+    /// </summary>
+    private IReadOnlyList<Measurement> CalibrationCounts()
+    {
+        var figures = new List<Measurement>();
+
+        void Record(string id, object value) =>
+            figures.Add(new Measurement(id, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty));
+
+        DateOnly[] sessions;
+        using (SqliteConnection connection = OpenStore())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT DISTINCT bar_date FROM daily_bar ORDER BY bar_date";
+            var dates = new List<DateOnly>();
+            using SqliteDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                dates.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+            }
+
+            sessions = [.. dates];
+        }
+
+        // The first session with a whole warm-up behind it. Earlier ones have no figures at all and
+        // a range that included them would report sessions the run could never have decided.
+        DateOnly from = sessions[IndicatorEngine.WarmupSessions - 1];
+
+        Record("calibration.storedSessions", sessions.Length);
+        figures.Add(new Measurement("calibration.from", Session(from)));
+        figures.Add(new Measurement("calibration.to", Session(AsOf)));
+
+        CalibrationResult longSide = CalibrateLong(from, AsOf);
+        CalibrationResult shortSide = CalibrateShort(from, AsOf);
+
+        Record("calibration.sessions", longSide.Sessions);
+        Record("calibration.warmupSessions", longSide.WarmupSessions);
+        Record("calibration.membersListed", longSide.Listed);
+        Record("calibration.membersWithHistory", longSide.Members);
+        Record("calibration.scanBreadth", ScanEngine.Breadth);
+
+        foreach ((string direction, CalibrationResult side) in
+                 new[] { (SetupDirection.Long, longSide), (SetupDirection.Short, shortSide) })
+        {
+            NightlyCounts.Distribution recorded = NightlyCounts.Of([.. side.Nights.Select(n => n.Recorded)]);
+            NightlyCounts.Distribution candidates = NightlyCounts.Of([.. side.Nights.Select(n => n.PassedAll)]);
+
+            Record($"calibration.{direction}.recorded", side.Recorded);
+            Record($"calibration.{direction}.passedAll", side.PassedAll);
+            Record($"calibration.{direction}.errored", side.Errored);
+            Record($"calibration.{direction}.recordedMedian", recorded.Median);
+            Record($"calibration.{direction}.recordedHighest", recorded.Highest);
+            Record($"calibration.{direction}.candidateMedian", candidates.Median);
+            Record($"calibration.{direction}.candidateHighest", candidates.Highest);
+            Record($"calibration.{direction}.emptyNights", candidates.EmptyNights);
+        }
+
+        // The property the checkpoint turns on, asserted as a figure rather than left to a test that
+        // could be deleted: the evidence store is untouched by a run over history.
+        using (SqliteConnection connection = OpenStore())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM calibration_setup";
+            Record("calibration.rowsInCalibrationSetup", Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture));
+
+            command.CommandText = "SELECT COUNT(*) FROM setup WHERE as_of <> @as_of";
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            Record("calibration.setupRowsOutsideTheForwardNight",
+                Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture));
+        }
+
+        return figures;
+    }
+
+    private static IReadOnlyList<Measurement> CapFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (CapCases.Scenario scenario in CapCases.Scenarios)
+        {
+            (int takenLong, int takenShort) = NightlyCap.Take(scenario.Long, scenario.Short);
+
+            figures.Add(new Measurement($"cap.{scenario.Name}.long", takenLong.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"cap.{scenario.Name}.short", takenShort.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        // The ordering, as the sequence of setup ids each side comes back in. A sequence rather than
+        // a count, because what a mis-sorted tiebreak moves is which name sits on the boundary and
+        // not how many names there are.
+        IReadOnlyList<NightlyCap.Placement> placements = NightlyCap.Apply(CapCases.OrderingCandidates);
+
+        foreach (string direction in new[] { "long", "short" })
+        {
+            figures.Add(new Measurement(
+                $"cap.ordering.{direction}",
+                string.Join(
+                    " ",
+                    placements.Where(p => p.Direction == direction).OrderBy(p => p.Rank).Select(p => p.SetupId))));
+        }
+
+        return figures;
+    }
+
+    private static readonly JsonSerializerOptions CheckJson = new(JsonSerializerDefaults.Web);
+
+    /// <summary>How many ranks of each scan the fixture records, since thirty names cannot fill fifty.</summary>
+    public const int ScanRanksRecorded = 3;
+
+    private IReadOnlyList<Measurement> ScanFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (string scan in ScanEngine.Scans)
+        {
+            IReadOnlyList<StoredScanHit> hits = ScanHitReader.Read(connection, AsOf, scan);
+            figures.Add(new Measurement($"scan.{scan}.hits", hits.Count.ToString(CultureInfo.InvariantCulture)));
+
+            // The top few by name and by the magnitude they were ranked on, rather than a count.
+            // A count says the scan ran; the ordering says it ranked on the right number in the
+            // right direction, which is the half a wrong sign or a raw basis would leave looking
+            // perfectly reasonable.
+            for (int rank = 1; rank <= ScanRanksRecorded; rank++)
+            {
+                StoredScanHit? hit = hits.FirstOrDefault(h => h.Rank == rank);
+
+                figures.Add(new Measurement(
+                    $"scan.{scan}.rank{rank}",
+                    hit is null ? "no hit" : hit.Ticker));
+
+                figures.Add(new Measurement(
+                    $"scan.{scan}.rank{rank}.magnitude",
+                    hit is null ? "no hit" : Figure(hit.Magnitude)));
+            }
+        }
+
+        return figures;
+    }
+
+    /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
+    public const string AuthoredSetupTicker = "IESC";
+
+    /// <summary>The trigger and the stop the authored setup carries, as raw prices.</summary>
+    public const string AuthoredTrigger = "355.00";
+
+    /// <summary>Stated beside the trigger so the geometry signals have a subject.</summary>
+    public const string AuthoredStop = "348.50";
+
+    private VectorizeResult VectorizeAuthoredSetup()
+    {
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            // The check results come from the shipped rules over the evidence the detector would
+            // have assembled, not from a literal. An authored row carrying an invented verdict
+            // would be a test of the test; what is authored here is the trigger and the stop, which
+            // is the part a detector cannot supply for a name that has not pulled back.
+            LongPullbackRules.LongEvidence? evidence =
+                LongSetupDetector.Evidence(connection, AuthoredSetupTicker, AsOf);
+
+            IReadOnlyList<CheckResult> results = evidence is null
+                ? []
+                : LongPullbackRules.Evaluate(evidence);
+
+            using SqliteCommand setup = connection.CreateCommand();
+            setup.CommandText = """
+                INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
+                                   trigger_price, stop_price, stop_distance_ranges)
+                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700')
+                """;
+            setup.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckJson));
+            setup.Parameters.AddWithValue("@passed_all", SetupChecks.PassedAll(results) ? 1 : 0);
+            setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");
+            setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            setup.Parameters.AddWithValue("@ticker", AuthoredSetupTicker);
+            setup.Parameters.AddWithValue("@trigger", AuthoredTrigger);
+            setup.Parameters.AddWithValue("@stop", AuthoredStop);
+            setup.ExecuteNonQuery();
+        }
+
+        return new SignalVectorizer(_connections, Logger(), _clock, _options).Vectorize(AsOf);
+    }
+
+    private IReadOnlyList<Measurement> SignalFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        IReadOnlyList<StoredSetupSignal> frozen = SetupSignalReader.Read(connection, AsOf);
+
+        foreach (StoredSetupSignal signal in frozen.OrderBy(s => s.SignalName, StringComparer.Ordinal))
+        {
+            // Rounded to four places where the value is a number, on the same terms as every other
+            // figure here. The store keeps the full decimal, because a signal is evidence and
+            // rounding it would be discarding what the night knew; the measurement rounds, because
+            // a diff that turns on the twenty-eighth decimal place is a diff that fails on a
+            // platform rather than on a defect. A signal whose value is a word passes through.
+            // Counts stay whole and measurements round to four places. A rank of ten rendered as
+            // 10.0000 reads as a figure taken to four places, which says something about precision
+            // that is not true. Which signals are counts is declared on the vectorizer rather than
+            // inferred from the value, because inference would read a price of 355.00 as a count.
+            bool numeric = decimal.TryParse(
+                signal.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal number);
+
+            string value = !numeric ? signal.Value
+                : SignalVectorizer.Counts.Contains(signal.SignalName)
+                    ? decimal.Truncate(number).ToString(CultureInfo.InvariantCulture)
+                    : Figure(number);
+
+            figures.Add(new Measurement($"signal.{signal.SetupId}.{signal.SignalName}", value));
+        }
+
+        // Named rather than skipped, on the same terms as a missing indicator row. A signal the
+        // history could not support is a fact about the fixture, and one that quietly stopped being
+        // produced would otherwise leave the diff green over a shrinking subject.
+        foreach (string name in SignalVectorizer.Frozen.Order(StringComparer.Ordinal))
+        {
+            if (!frozen.Any(s => string.Equals(s.SignalName, name, StringComparison.Ordinal)))
+            {
+                figures.Add(new Measurement($"signal.{AuthoredSetupTicker}-long.{name}", "absent"));
+            }
+        }
+
+        return figures;
+    }
+
     private IReadOnlyList<Measurement> IndicatorFigures()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
@@ -319,6 +827,7 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement($"indicators.{ticker}.adr20", Figure(stored.AverageDailyRange)));
             figures.Add(new Measurement($"indicators.{ticker}.medianDollarVolume", Figure(stored.DollarVolumeMedian)));
             figures.Add(new Measurement($"indicators.{ticker}.rangeAverage", Figure(stored.RangeAverage)));
+            figures.Add(new Measurement($"ladder.{ticker}", stored.LadderGrade ?? "ungraded"));
         }
 
         return figures;
@@ -526,6 +1035,128 @@ public sealed class PhaseReplay : IDisposable
             new Measurement($"read.{Ticker}.drawnEma50", Figure(Drawn("ema50"))),
             new Measurement($"read.{Ticker}.drawnAgreesWithStored", agrees ? "yes" : "no"),
         ];
+    }
+
+    /// <summary>
+    /// What the gallery is handed for the night, and the agreement rate on it.
+    ///
+    /// The rate is over the setups a person has looked at, not over the night: "two of three agreed"
+    /// and "two agreed, one disagreed, and nobody has opened the third" are different facts, and the
+    /// second is the one that says whether the review has happened.
+    ///
+    /// The counts stay per direction, because the gallery is the one screen where pooling them would
+    /// be a single careless loop away.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private IReadOnlyList<Measurement> GalleryFigures()
+    {
+        SetupsResponse night = new LabSetups(_connections).Read(AsOf, _clock.UtcNow);
+
+        SetupView[] all = [.. night.Long, .. night.Short];
+        int looked = all.Count(s => s.Agreement is not null);
+        int agreed = all.Count(s => s.Agreement == "agree");
+
+        // A thumbnail's geometry, laid by the component the chart page draws one large with. It is
+        // the same lay over a shorter window, so a second implementation appearing here would show
+        // as these numbers moving while the chart figures did not.
+        SetupView? first = all.OrderBy(s => s.SetupId, StringComparer.Ordinal).FirstOrDefault();
+
+        CandlestickGeometry thumbnail = CandlestickChart.Lay(
+            first is null
+                ? []
+                : [.. first.Candles.Select(c => new Candle(
+                    DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    c.Open, c.High, c.Low, c.Close))],
+            [],
+            SetupsModel.Width,
+            SetupsModel.Height);
+
+        return
+        [
+            new Measurement("gallery.flagged", night.Flagged.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.long", night.Long.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.short", night.Short.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.checkNames", string.Join(" ", night.CheckNames)),
+            new Measurement("gallery.lookedAt", looked.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.agreed", agreed.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.agreementRate", looked == 0
+                ? "nobody has looked"
+                : Figure((decimal)agreed / looked)),
+            new Measurement("gallery.thumbnail", first?.SetupId ?? "no setup"),
+            new Measurement("gallery.thumbnailCandles", thumbnail.Candles.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.thumbnailLastCentre", thumbnail.Candles.Count == 0
+                ? "no candles"
+                : Coordinate(thumbnail.Candles[^1].Centre)),
+        ];
+    }
+
+    /// <summary>The ticker the future-dated correction is authored against, and the close it carries.</summary>
+    public const string CorrectedTicker = "IESC";
+
+    /// <summary>A close no real session produced, so a read returning it is unmistakable.</summary>
+    public const string CorrectedClose = "999.00";
+
+    /// <summary>
+    /// A correction observed after the night, read from both sides of its own observation.
+    ///
+    /// AUTHORED, and it has to be: the captured day holds one evening's responses, so a vendor
+    /// restating a figure the following evening is a case the fixture cannot contain. It is the same
+    /// tier and the same reasoning as the synthetic split at 1.5.
+    ///
+    /// <b>Two figures rather than one verdict.</b> "The night did not see it" is satisfied perfectly
+    /// by a read that returns nothing at all, and by a store that never took the row. Reading the
+    /// same session from both sides of the correction's own instant is what makes the first figure
+    /// mean the bound held rather than the row being missing.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    private IReadOnlyList<Measurement> PointInTimeFigures()
+    {
+        DateTimeOffset afterwards = _clock.UtcNow.AddDays(1);
+
+        using (SqliteConnection write = _connections.OpenWrite())
+        {
+            using SqliteCommand correction = write.CreateCommand();
+            correction.CommandText = """
+                INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+                SELECT ticker, bar_date, open, high, low, @close, @close, volume, @observed_at
+                  FROM daily_bar
+                 WHERE ticker = @ticker AND bar_date = @as_of
+                 LIMIT 1
+                """;
+            correction.Parameters.AddWithValue("@ticker", CorrectedTicker);
+            correction.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            correction.Parameters.AddWithValue("@close", CorrectedClose);
+            correction.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(afterwards));
+            correction.ExecuteNonQuery();
+        }
+
+        using SqliteConnection read = _connections.OpenReadOnly();
+
+        IReadOnlyList<StoredDailyBar> onTheNight = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1);
+        IReadOnlyList<StoredDailyBar> later = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1, afterwards);
+
+        return
+        [
+            new Measurement($"pointInTime.{CorrectedTicker}.onTheNight",
+                onTheNight.Count == 0 ? "no bar" : Figure(onTheNight[^1].AdjustedClose)),
+            new Measurement($"pointInTime.{CorrectedTicker}.afterwards",
+                later.Count == 0 ? "no bar" : Figure(later[^1].AdjustedClose)),
+            new Measurement($"pointInTime.{CorrectedTicker}.observations",
+                Observations(read, CorrectedTicker, AsOf).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    /// <summary>How many observations the store holds of one session, which must be two by now.</summary>
+    private static int Observations(SqliteConnection connection, string ticker, DateOnly asOf)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*) FROM daily_bar WHERE ticker = @ticker AND bar_date = @as_of
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>A session, written the way the store and the vendor both write one.</summary>

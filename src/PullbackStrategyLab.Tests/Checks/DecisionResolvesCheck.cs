@@ -57,7 +57,11 @@ public sealed class DecisionResolvesCheck
             .Examined("decision names in DECISIONS.md", Corpus.DecisionNames.Count)
             .Examined("names under Previously decided, which also resolve", Corpus.SupersededDecisionNames.Count)
             .Examined("citations resolved", Corpus.Citations.Count)
-            .Examined("files read for citations", RepositoryLayout.CorpusFiles.Count + RepositoryLayout.SourceFiles.Count);
+            .Context("files read for citations", RepositoryLayout.CorpusFiles.Count + RepositoryLayout.SourceFiles.Count)
+            .NoSourceScan(
+                "a citation is the subject rather than evidence about a behaviour. It reads source files, but "
+                + "what it asserts about them is that the names they cite resolve, and a citation deleted is the "
+                + "thing itself going away rather than an assertion outliving it");
         coverage.Report();
 
         Assert.True(duplicates.Count == 0,

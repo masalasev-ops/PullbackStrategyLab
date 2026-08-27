@@ -43,8 +43,12 @@ public sealed class ApiIsolationCheck
             .ToArray();
 
         coverage
-            .Examined("libraries in the compiled dependency file", names.Length)
+            .Context("libraries in the compiled dependency file", names.Length)
             .Examined("of those belonging to this solution", labLibraries.Length)
+            .NoSourceScan(
+                "it reads the compiled dependency file rather than the source, so what it asserts is what the "
+                + "build actually produced. A project reference removed from the file and left in the csproj "
+                + "cannot pass this, which is the whole reason it reads the deps file")
             .Report();
 
         Assert.True(offending.Length == 0,

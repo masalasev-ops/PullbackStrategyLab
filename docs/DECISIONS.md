@@ -26,6 +26,13 @@ Historical runs therefore write to a separate calibration table that nothing dow
 **Failed checks are recorded rather than discarded**
 The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
 
+**A gate handed an absent or degenerate quantity fails rather than passing**
+Every gate on both check lists compares a computed quantity against a threshold, and every one of those quantities can genuinely be missing or degenerate: no averages before the warm-up, no thrust without a scan hit, no entry level and no give-up point on a thrust that has not pulled back yet. The gate fails and records what was absent.
+
+The alternative is not a crash, which is what makes this worth deciding rather than assuming. A thrust whose extreme is the current session puts the entry and the give-up point at the same price, so the give-up distance is zero, and zero clears every threshold expressed as a maximum. `exit-tight` passed on that in the first fixture run of the long detector: the tightest possible stop, on a trade that does not exist. A vacuous pass is worse than a fail here, because the loop reads these verdicts to find which checks carry the strategy and a check that passes on nothing is indistinguishable from one that is easy to clear.
+
+Asserted over the gate list rather than per gate, so a check admitted in phase 6 inherits it without anyone remembering to.
+
 **Matched control populations are drawn nightly, loose and tight**
 Flagged setups returning 2% is not a result if everything returned 2%. The loose set matches on liquidity and daily range and measures the whole funnel. The tight set also matches on the trend ladder and market mood, isolating the pullback checks from simply owning stocks in uptrends. The tight comparison is the one that can embarrass the project, which is why it is on the scoreboard.
 
@@ -54,6 +61,13 @@ Two tiers. CAPTURED, stored verbatim from a real vendor response with the date a
 Authored inputs are necessary and they encode their author's beliefs about the vendor, which is precisely what a fixture cannot check, because the person writing the assumption and the person writing the test are the same. Two defects in phase 1 passed their unit tests and failed on live data for that single reason: an ingestor that compared against observations made by the bar date, and a rebuild rule that assumed a refetch restates every bar in a series.
 
 So a path a live run exercises has at least one CAPTURED input. An authored fixture may hold the edge case; it may not be the only evidence for the ordinary case. The phase report breaks inputs down by tier alongside expectations, and a path with no captured input is reported as unexamined however many authored cases pass.
+
+**Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it**
+Two instruments answering two questions. The captured fixture holds a real market day and catches change on real data. An authored case sits either side of one gate's threshold and answers whether that gate's two branches both work. Neither substitutes for the other, and asking the captured fixture for branch coverage is what makes a fixture purchase look like the remedy for a coverage problem.
+
+Measured at 2.6, which is what forced the choice: eight of the ten long checks were one-sided over the fixture, meaning one branch of each had never returned an answer. The cause is arithmetic. Thirty names on one session record two setups, and a gate with two results is one-sided unless those two happen to disagree. The priced remedy was a second as-of date at 33 per-ticker calls; it would have left those eight gates with three results each instead of two, which is a bigger instance of the wrong instrument. What actually closes it is two authored cases per gate, one just inside the threshold and one just outside, at no vendor call and no committed megabyte.
+
+The cases are AUTHORED and are never counted as evidence about the market. They are the same tier as the synthetic split at 1.5 and carry the same limitation: they encode this author's reading of the gate, which is why the expectation over them is produced by a second implementation rather than by the rules themselves.
 
 **A fixture expectation changes only with a recorded reason, and the report counts what changed**
 When a diff fails, regenerating the expectations is the cheapest way to make it pass and it destroys the fixture's only purpose. So a changed expectation carries a reason line, and the report states how many expectations changed since the last commit alongside how many passed.
@@ -93,6 +107,49 @@ The rule that long and short are never pooled governs reporting, not accounting.
 
 **The nightly cap is 60, split forty long and twenty short, unused slots released**
 Applied to the shared candidate list before any version selects. The split is deliberately not proportional: short setups are rarest in a strong market, which is exactly when they are most interesting, and a proportional split would erase them from the record on those nights. Capping per version would leave the disagreements unscoreable, which is the wrong data to lose.
+
+**A released cap slot goes to the side that still has candidates**
+Each side takes the lesser of its candidate count and its allocation. Whatever either leaves unfilled is offered to the other, by rank within that other side.
+
+No priority order is needed and that is worth stating rather than leaving as an omission, because the obvious reading of "unused slots released" is that two sides compete for a freed slot and something has to break the tie. They cannot. A slot is only released by a side that ran out of candidates, and a side that ran out is not also asking for more, so the two conditions are mutually exclusive and one pass is deterministic. A stated tiebreak would be a rule covering a case that cannot arise, which reads to the next session as though it can.
+
+**The scans select a fixed count by rank, not a threshold on the move**
+Each of the six scans takes the top fifty universe names by its own magnitude, ranked one to fifty.
+
+The mechanism is calibration. Phase 2 sets these against nightly counts with no forward return anywhere in the store, and a rank cut is the only form that can be calibrated that way: moving fifty to forty changes the count by construction. A percentage floor cannot, because whether eight percent is too strict is a fact about market volatility over the sample rather than about the corpus, and the same floor produces nothing in a quiet quarter and hundreds in a violent one.
+
+Rank is also what makes the six comparable to each other. A one-day move of eight percent and a twenty-session move of twenty-five percent are not the same strictness, and nothing in the design says what would make them so; rank fifty is the same strictness on all six by construction. It bounds the sector-lookup cost as a side effect, which is a convenience rather than the reason.
+
+**Every scan magnitude is computed on the adjusted basis**
+The one-day change, the gap from the previous close to the open, and the twenty-session change, all on adjusted prices, with the open put on that basis through its own bar's `adj_close / close` factor.
+
+Read raw, a split turns a rise into a collapse. The failure produces a plausible ranked list rather than an error, which is the same shape as the basis trap the averages already closed and which nothing had closed for the scans. Stated as a decision rather than left to the implementation, because a later session could reasonably read "yesterday's biggest movers" as raw and nothing on the screen would look wrong.
+
+*Corrected on 2026-08-26, after the scans were built and measured.* This entry first said a two-for-one split reads raw as a fifty percent decline that would top the **decliner** scan on the day it happens. That is wrong about which scan, and the correction is worth keeping because it changes where the guard has to sit. The vendor adjusts the history **behind** a split and leaves the sessions after it alone, so on the split date itself the one-day change is identical on both bases and the daily and gap scans cannot tell them apart. It is the twenty-session scans that span the adjustment. Measured on the fixture: IESC's month magnitude is **+0.0746 adjusted and −0.4627 raw**, so raw it would top the laggard scan ahead of NCLH at −0.1403 rather than sitting tenth among the leaders. A rise of seven percent and a fall of forty-six, from the same two rows.
+
+**The cluster grouping key is industry, not sector**
+Both cluster checks say "same industry" and the authored parameter says "same industry"; the component catalogue said "same-sector" and the two are different columns giving different answers over the same night. One key, read by ThemeClusterer and by both checks.
+
+Industry rather than sector because the check exists to distinguish an industry shift from one company's news, and sector is too coarse for that: two names in the same sector routinely have nothing to do with each other, so a sector count would report grouped movement on almost every busy night and mean nothing.
+
+**A calibration run reconstructs against current membership and computes its indicators in memory**
+The nightly universe snapshot only starts when the lab does, so a historical detector run has no record of who was listed on those dates and reads membership from `universe_member` as it stands today. That is the survivorship bias the calibration table exists to quarantine, and naming it as the mechanism is what keeps it from being read as an oversight later.
+
+It computes each session's averages through the shared arithmetic in Core and writes no `indicator_daily` row. Writing them would be the reconstruction the evidence rule forbids, arrived at from a different direction: the engine computes for the members of a night's snapshot, and there is no snapshot for a night the lab was not running (see: The evidence store holds only setups flagged forward, never setups reconstructed from history) (see: The averages are one implementation, computed nightly and drawn on demand).
+
+It is the same detector, in a mode, rather than a second one. A separate implementation would make the count it produces a fact about the calibration code rather than about the thresholds, which is the one thing the run is for.
+
+**The market-cap clause of `tradable-shortable` is exempted by name in calibration mode**, on the pattern `reached-ceiling`'s anchored clause already uses. `SecurityReader` bounds the lookup on `sector_resolved_at` like every other point-in-time read, so a reconstructed 2024 session sees no capitalisation at all: it was resolved in 2026 or it was never resolved. Left alone, every short candidate fails the first gate and the short half of the distribution is empty, and a threshold calibrated against an empty distribution is worse than no threshold. Dropping the gate was the other option and it is worse still, because it changes what the short side is without saying so. Exempting one clause by name changes one thing, says which, and leaves the other nine measuring. Every calibration verdict records that the short side was measured against a nine-clause detector, so a later session reading a count knows what produced it.
+
+**Which sessions the run covers is a separate question from how the detector reads them, and the two were confused until 2.11.** The averages are computed in memory, as above. The detectors were not: they read `indicator_daily` and `scan_hit` from the store, and both hold one session. So a run over stored history was not a run of what exists, whatever range it covered.
+
+Replaying the nightly pipeline session by session was considered and does not work, and the reason is worth keeping because it is the same reason this entry gives for the averages. `IndicatorEngine`, `ScanEngine` and `TierClassifier` all read `UniverseSnapshotReader.Members` for the night they are computing, and a night the lab was not running has no snapshot. Giving those three a mode that reads current membership instead would write reconstructed `indicator_daily` rows, which is exactly what the paragraph above forbids, arrived at from a third direction.
+
+**So the detector carries the whole session in memory, and it is assembly rather than a second implementation.** `IndicatorEngine.Calculate` takes a window of bars and returns the figures; `TierClassifier.Grade` takes those figures and returns the ladder; `ScanMagnitudes` and `ScanEngine.Top` rank the six scans over a session's candidates. All four are public and shared, put that way at 2.6 so the nightly run, the calibration run and a test would have one implementation between them, and this is the run that spends it. What calibration mode adds is the assembling: one pass over the members per session, reading each name's window once, computing that name's figures from it, ranking the session's candidates from the same windows, and handing the detector a session it can read. Nothing is computed a second way, and a change to any of the four moves the nightly answer and the calibration count together.
+
+**The run that sets a threshold has to be over the live universe, and that is a property of the scans rather than a preference.** A scan takes the top fifty names by its own magnitude. The golden fixture holds thirty names with a history, so every one of them is inside the top fifty of all six scans on every session: `thrust` passes on every row, the most recent hit is always the session itself, no pullback has any bars, and every geometry check fails. The count is nought by construction and no threshold could be read off it. It was narrowed to the fixture before 2.11 on the belief that a live run needed three stages rebuilt; the belief was wrong, the in-memory session is one file, and the fixture turned out to be the thing that could not answer.
+
+So both run and each has its own job. Over the fixture the run is a diff, session by session, so a change to any gate or to the assembly of a reconstructed session shows up as a named difference rather than a count. Over the live universe it is the measurement, and its figures live in `PROGRESS.md` as a dated event rather than in the fixture, because they are a reading of one store on one date and not a property the pipeline reproduces.
 
 **Plans are resting orders and fills go in time order when the caps bind**
 Every plan that passes its checks is placed, and each is a complete instruction before the open: this price, this stop, this size. Nothing is decided during the session. When more plans trigger than the caps allow, the earliest trigger fills and later ones are blocked with a reason, which is what resting orders actually do.
@@ -232,6 +289,15 @@ Two properties have to hold or the choice quietly breaks things. The file is reg
 **The store contains no absolute paths**
 What keeps it a directory that can be copied to another machine. Easy to preserve from the start, tedious to retrofit once chart exports or log paths have been persisted.
 
+**A reader's signature does not establish point-in-time; the query does**
+Every public read on every reader in `PullbackStrategyLab.Data` takes an as-of date and there is no overload that omits it. That has been true since 1.4 and the corpus treated it as the property. It is necessary and it is not sufficient: a hand-written statement beside a reader is not bound by the reader's shape, and when `point-in-time` was first run at 2.10 four of them were in the shipped source. Two joined `security` for `industry` and `market_cap` with no bound on `sector_resolved_at`; two enumerated calibration sessions from `daily_bar` with no bound on `observed_at`.
+
+The worst of the four is worth keeping in the entry rather than in a progress note, because it says why the distinction matters rather than that it exists. `SignalVectorizer` freezes what was knowable on the night into `setup_signal`, and that is the one row in the lab nothing ever recomputes. Everything else can be rebuilt from bars; a frozen signal is the record. It was freezing two attributes resolved afterwards, which is a permanent wrong value that no later run corrects and no later read can distinguish from a right one.
+
+So the property is asserted over queries and not over signatures. `point-in-time` reads every statement in the shipped source, matches it against the tables that carry an observation stamp, and requires the stamp to be bounded or the file to be exempt by name with its reason. The signature half stays, because it is what stops the next reader being written without a date; it is the first of three halves rather than the property itself.
+
+Note what a fixture would not have caught. The four figures did not move when the reads were bounded, because in the replay the sector lookup runs before the vectorizer on the same session, so every expectation held either way. A test over the golden fixture would have passed on all four.
+
 **The vendor is EODHD, and the endpoint mix is what the call budget is built on**
 Three decisions already say "the vendor" without naming it, and the backfill order in `RUNBOOK.md` depends on this vendor's specific split between two differently priced endpoints. A later session choosing endpoints freely would blow the 5,000 call ceiling invisibly, so the vendor and the endpoints the budget assumes are named here rather than left to be inferred.
 
@@ -243,6 +309,17 @@ The technical endpoint and the screener endpoint are not in the mix, and both ha
 Razor Pages, charts as server-rendered SVG. The property worth protecting is that the lab opens and works with no network, no build step, and nothing fetched at page load. A CDN `<script>` tag breaks it: it works on the machine that added it and fails silently on the other one, or offline, or once the CDN moves.
 
 Written as a property rather than as a ban on JavaScript, because a ban would be wrong within one phase. Checkpoint 2.9 requires paging through a night's setups by keyboard with agreement captured per setup, across hundreds of charts. A blanket ban makes each setup a form post and a full page reload, which is exactly the friction that makes a reviewer stop at thirty and the checkpoint fail at what it exists to do. Script that is local, small, unbundled and confined to keyboard navigation and form submission is permitted; script fetched from anywhere is not.
+
+**The agreement a person records is written through the read surface, and it is the only write it makes**
+Two columns of one table, `setup.agreement` and `setup.agreement_note`, written by the read surface on the gallery's behalf. Everything else it does is a read, and nothing else it ever does may be a write.
+
+The three rules around it left nowhere else to put it, and that is worth spelling out because the obvious readings all fail. The Web project reads through the Api and never opens the store, so the page cannot write. The Worker is the sole writer of everything the nightly job produces, and it has no channel a browser can reach. And one writer per table per operation means the write cannot be split between them.
+
+What makes this the right exception rather than the first crack in the rule is that it is not the same kind of write. Every other write in the lab is the evening's job producing evidence on a schedule; this is a person saying what they thought of one row, at a keyboard, on their own time. It touches two columns that no computation reads, it can never conflict with the nightly job over a row that job is writing, and under WAL a single short update from a second connection is what the busy timeout exists for.
+
+**Stated as the property rather than as a permission, because the permission is the part that would be cited for something else.** "The read surface writes these two columns and nothing else, ever" is right about the columns and reads as a general licence for the Api to write where writing is convenient. The property is narrower and it is what a later session needs: a person's judgement is captured on the page that asks for it, and the Worker never writes these two columns because the Worker has no judgement to record. That is not a division of labour that could have gone the other way. There is no run in which the nightly job could produce an `agreement` value at all, which is why these two columns are the only ones in the store the Worker cannot own.
+
+Nothing rests on the sentence holding. The Api writes no other column because `writer-ownership` reads every write in the shipped source and attributes it to a declared writer, and SCHEMA declares this one by the type that issues the statement rather than by the screen that asks for it. A second write appearing in the read surface fails the check by name, which is what makes this an exception with a boundary rather than the first crack in the rule.
 
 **The Web project reads through the Api and never opens the store**
 One read path, so a page cannot acquire a second connection to a file the Worker is writing. The store's own rule is one writer and one connection, and a page opening the file directly is the easiest way to lose that quietly. It also keeps the isolation check meaningful: Web talks to Api over HTTP with the base address in configuration, and no page holds a store connection to inspect.
@@ -284,6 +361,8 @@ Five specs, three records, one artefact. A corpus of the same shape grew past tw
 
 **Phase 2 thresholds are calibrated once against nightly counts, before phase 3**
 At that moment no forward return exists anywhere in the store, so there is nothing to fit toward. It is a row count and nothing else. Recorded as a dated event with before and after counts. After phase 3 begins those thresholds move only through the normal proposal route.
+
+The once is the part worth defending, and it is why the population matters. The band is stated per side per night for the live universe, so the run it is read from is the one over the live universe; the record names which distribution the adjustment was made against and states the rate per name per session beside the raw count, so a later session reading the figure knows what it was a count of. What the once is not is a second calibration held in reserve: a threshold adjusted twice against two populations is a threshold fitted to whichever gave the answer somebody preferred.
 
 **The fresh-session rule applies to sessions that have committed code, not documents**
 The protection being bought is that a session does not review its own code. The wider wording costs a session per phase and buys nothing.

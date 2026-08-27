@@ -1,0 +1,190 @@
+using System.Globalization;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
+using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Worker.Vendor;
+
+namespace PullbackStrategyLab.Worker.Stages;
+
+/// <summary>
+/// Sector, industry and market capitalisation, resolved on first sighting and cached for ever.
+///
+/// <b>Lazy, and that is what keeps it affordable.</b> Asking for every universe member would be two
+/// thousand calls; asking only for names a scan surfaced, once each, is about fifty a night in the
+/// steady state and falls as the cache fills. The three facts move slowly enough that re-asking
+/// nightly would spend a call a name to learn nothing.
+///
+/// It updates four columns of `security` and nothing else, which is what SCHEMA declares.
+/// UniverseBuilder inserts the row; this stage fills in what the symbol list does not carry.
+///
+/// <b>A name the vendor has nothing on is stamped anyway.</b> Otherwise it would be re-asked every
+/// night for ever, one call a night to learn the same nothing. The stamp records that the question
+/// was asked; the three columns stay null, which is the true answer.
+/// </summary>
+public sealed class SectorResolver
+{
+    public const string Name = "sectors";
+
+    /// <summary>How many names one run will look up, so a first night cannot spend the whole budget.</summary>
+    public const int DefaultLimit = 200;
+
+    private readonly IMarketDataVendor _vendor;
+    private readonly StoreConnectionFactory _connections;
+    private readonly RunLogger _runLogger;
+    private readonly IClock _clock;
+    private readonly PullbackStrategyLabOptions _options;
+
+    public SectorResolver(
+        IMarketDataVendor vendor,
+        StoreConnectionFactory connections,
+        RunLogger runLogger,
+        IClock clock,
+        IOptions<PullbackStrategyLabOptions> options)
+    {
+        _vendor = vendor;
+        _connections = connections;
+        _runLogger = runLogger;
+        _clock = clock;
+        _options = options.Value;
+    }
+
+    public async Task<int> RunAsync(string[] args, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        string? date = args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
+        DateOnly asOf = date is not null
+            ? DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+            : _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
+
+        SectorResult result = await ResolveAsync(asOf, DefaultLimit, cancellationToken).ConfigureAwait(false);
+
+        Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Unresolved} name(s) on a scan with no sector, {result.Asked} asked");
+        Console.WriteLine($"{Name}: {result.Resolved} resolved, {result.VendorHadNothing} the vendor had nothing on, {result.Stamped} stamped");
+        Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
+
+        return result.Outcome == RunOutcome.Failed ? 1 : 0;
+    }
+
+    public async Task<SectorResult> ResolveAsync(
+        DateOnly asOf,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using RunScope run = _runLogger.Begin(connection, Name, "security");
+
+        DateTimeOffset resolvedAt = run.StartedAt;
+        IReadOnlyList<string> unresolved = Unresolved(connection, asOf);
+
+        int asked = 0;
+        int resolved = 0;
+        int nothing = 0;
+        bool stoppedShort = false;
+
+        foreach (string ticker in unresolved.Take(limit))
+        {
+            VendorResult<VendorFundamentals?> answer =
+                await _vendor.GetFundamentalsAsync(ticker, run, cancellationToken).ConfigureAwait(false);
+
+            if (answer.BudgetExhausted)
+            {
+                // The ceiling bound before the list ran out. A partial run, said to be partial: the
+                // names not reached keep their null sector and are asked again tomorrow.
+                stoppedShort = true;
+                break;
+            }
+
+            asked++;
+            VendorFundamentals? found = answer.Value;
+
+            if (found is null)
+            {
+                nothing++;
+            }
+            else
+            {
+                resolved++;
+            }
+
+            Stamp(connection, ticker, found, resolvedAt);
+        }
+
+        RunOutcome outcome = stoppedShort ? RunOutcome.Partial : RunOutcome.Clean;
+        RunSummary summary = run.Complete(outcome);
+
+        return new SectorResult(
+            asOf, unresolved.Count, asked, resolved, nothing, asked,
+            summary.RowsWritten, summary.CallsUsed, outcome);
+    }
+
+    /// <summary>
+    /// Names that appeared on a scan tonight and have never been asked about.
+    ///
+    /// Keyed on `sector_resolved_at` rather than on `sector` being null, because a name the vendor
+    /// has nothing on has a null sector for ever and would otherwise be re-asked every night.
+    /// </summary>
+    private static IReadOnlyList<string> Unresolved(SqliteConnection connection, DateOnly asOf)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT h.ticker
+              FROM scan_hit h
+              JOIN security s ON s.ticker = h.ticker
+             WHERE h.as_of = @as_of AND s.sector_resolved_at IS NULL
+             ORDER BY h.ticker
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        var tickers = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            tickers.Add(reader.GetString(0));
+        }
+
+        return tickers;
+    }
+
+    private static void Stamp(
+        SqliteConnection connection,
+        string ticker,
+        VendorFundamentals? found,
+        DateTimeOffset resolvedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE security
+               SET sector = @sector,
+                   industry = @industry,
+                   market_cap = @market_cap,
+                   sector_resolved_at = @resolved_at
+             WHERE ticker = @ticker
+            """;
+
+        command.Parameters.AddWithValue("@sector", (object?)found?.Sector ?? DBNull.Value);
+        command.Parameters.AddWithValue("@industry", (object?)found?.Industry ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@market_cap",
+            found?.MarketCap is decimal cap ? StoreText.PriceToStorageText(cap) : DBNull.Value);
+        command.Parameters.AddWithValue("@resolved_at", StoreText.TimestampToStorageText(resolvedAt));
+        command.Parameters.AddWithValue("@ticker", ticker);
+
+        command.ExecuteNonQuery();
+    }
+}
+
+/// <summary>What one sector run resolved, and what the vendor had nothing on.</summary>
+public sealed record SectorResult(
+    DateOnly AsOf,
+    int Unresolved,
+    int Asked,
+    int Resolved,
+    int VendorHadNothing,
+    int Stamped,
+    int RowsWritten,
+    int CallsUsed,
+    RunOutcome Outcome);

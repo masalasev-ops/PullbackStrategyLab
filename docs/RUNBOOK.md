@@ -50,19 +50,19 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | during session | spread snapshots, two passes | 120 |
 | 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
 | 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
-| 17:30 | bulk daily bars | 100 |
+| 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
 | 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
 | 17:50 | `index-bars`, one call a tracker | 3 |
 | 18:00 | `indicators` | 0 |
-| 18:10 | scans, ladder grade | 0 |
-| 18:15 | cluster, regime | 0 |
-| 18:20 | detectors, both directions | 0 |
-| 18:25 | signal freeze, journal | 0 |
+| 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
+| 18:12 | `sectors`, resolved once per name and cached. Moved here from 19:00 on 2026-08-26: it ran after the three stages that read what it writes | ~50 |
+| 18:15 | `clusters`, then `regime` | 0 |
+| 18:20 | `detect-long`, then `detect-short` | 0 |
+| 18:25 | `vectorize`, the signal freeze, then journal | 0 |
 | 18:26 | control sampling | 0 |
-| 18:28 | cap | 0 |
+| 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |
 | 18:40 | publish watchlist | 0 |
-| 19:00 | sector resolve for new names | ~50 |
 | 20:30 | minute bars for flagged setups | 300 |
 | 21:00 | session replay, fills, positions | 0 |
 | 21:30 | forward returns | 0 |

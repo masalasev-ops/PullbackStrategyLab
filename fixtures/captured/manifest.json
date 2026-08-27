@@ -20,245 +20,455 @@
     {
       "file": "bulk-splits.json",
       "endpoint": "eod-bulk-last-day/US",
-      "query": "type=splits&date=2026-08-24",
+      "query": "type=splits\u0026date=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 1229
     },
     {
       "file": "bulk-dividends.json",
       "endpoint": "eod-bulk-last-day/US",
-      "query": "type=dividends&date=2026-08-24",
+      "query": "type=dividends\u0026date=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 53978
     },
     {
+      "file": "fundamentals-IESC.json",
+      "endpoint": "fundamentals/IESC.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 129
+    },
+    {
+      "file": "fundamentals-LITE.json",
+      "endpoint": "fundamentals/LITE.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 125
+    },
+    {
+      "file": "fundamentals-PAYO.json",
+      "endpoint": "fundamentals/PAYO.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 126
+    },
+    {
+      "file": "fundamentals-AAPL.json",
+      "endpoint": "fundamentals/AAPL.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 124
+    },
+    {
+      "file": "fundamentals-MSFT.json",
+      "endpoint": "fundamentals/MSFT.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 129
+    },
+    {
+      "file": "fundamentals-NVDA.json",
+      "endpoint": "fundamentals/NVDA.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 118
+    },
+    {
+      "file": "fundamentals-AMZN.json",
+      "endpoint": "fundamentals/AMZN.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 126
+    },
+    {
+      "file": "fundamentals-GOOGL.json",
+      "endpoint": "fundamentals/GOOGL.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 146
+    },
+    {
+      "file": "fundamentals-META.json",
+      "endpoint": "fundamentals/META.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 146
+    },
+    {
+      "file": "fundamentals-TSLA.json",
+      "endpoint": "fundamentals/TSLA.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 129
+    },
+    {
+      "file": "fundamentals-JPM.json",
+      "endpoint": "fundamentals/JPM.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 130
+    },
+    {
+      "file": "fundamentals-XOM.json",
+      "endpoint": "fundamentals/XOM.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 119
+    },
+    {
+      "file": "fundamentals-JNJ.json",
+      "endpoint": "fundamentals/JNJ.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 131
+    },
+    {
+      "file": "fundamentals-WMT.json",
+      "endpoint": "fundamentals/WMT.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 126
+    },
+    {
+      "file": "fundamentals-PG.json",
+      "endpoint": "fundamentals/PG.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 140
+    },
+    {
+      "file": "fundamentals-KO.json",
+      "endpoint": "fundamentals/KO.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 136
+    },
+    {
+      "file": "fundamentals-PFE.json",
+      "endpoint": "fundamentals/PFE.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 131
+    },
+    {
+      "file": "fundamentals-T.json",
+      "endpoint": "fundamentals/T.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 131
+    },
+    {
+      "file": "fundamentals-F.json",
+      "endpoint": "fundamentals/F.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 127
+    },
+    {
+      "file": "fundamentals-BAC.json",
+      "endpoint": "fundamentals/BAC.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 130
+    },
+    {
+      "file": "fundamentals-CSCO.json",
+      "endpoint": "fundamentals/CSCO.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 126
+    },
+    {
+      "file": "fundamentals-INTC.json",
+      "endpoint": "fundamentals/INTC.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 117
+    },
+    {
+      "file": "fundamentals-AMD.json",
+      "endpoint": "fundamentals/AMD.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 117
+    },
+    {
+      "file": "fundamentals-COIN.json",
+      "endpoint": "fundamentals/COIN.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 142
+    },
+    {
+      "file": "fundamentals-PLTR.json",
+      "endpoint": "fundamentals/PLTR.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 128
+    },
+    {
+      "file": "fundamentals-SOFI.json",
+      "endpoint": "fundamentals/SOFI.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 125
+    },
+    {
+      "file": "fundamentals-RIVN.json",
+      "endpoint": "fundamentals/RIVN.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 127
+    },
+    {
+      "file": "fundamentals-CCL.json",
+      "endpoint": "fundamentals/CCL.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 124
+    },
+    {
+      "file": "fundamentals-NCLH.json",
+      "endpoint": "fundamentals/NCLH.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 123
+    },
+    {
+      "file": "fundamentals-HOOD.json",
+      "endpoint": "fundamentals/HOOD.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-26T15:32:29.448Z",
+      "bytes": 126
+    },
+    {
       "file": "history-IESC.json",
       "endpoint": "eod/IESC.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29463
     },
     {
       "file": "history-LITE.json",
       "endpoint": "eod/LITE.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29419
     },
     {
       "file": "history-PAYO.json",
       "endpoint": "eod/PAYO.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 27329
     },
     {
       "file": "history-AAPL.json",
       "endpoint": "eod/AAPL.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30362
     },
     {
       "file": "history-MSFT.json",
       "endpoint": "eod/MSFT.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30349
     },
     {
       "file": "history-NVDA.json",
       "endpoint": "eod/NVDA.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30649
     },
     {
       "file": "history-AMZN.json",
       "endpoint": "eod/AMZN.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29973
     },
     {
       "file": "history-GOOGL.json",
       "endpoint": "eod/GOOGL.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30310
     },
     {
       "file": "history-META.json",
       "endpoint": "eod/META.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30078
     },
     {
       "file": "history-TSLA.json",
       "endpoint": "eod/TSLA.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29855
     },
     {
       "file": "history-JPM.json",
       "endpoint": "eod/JPM.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30094
     },
     {
       "file": "history-XOM.json",
       "endpoint": "eod/XOM.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30428
     },
     {
       "file": "history-JNJ.json",
       "endpoint": "eod/JNJ.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30105
     },
     {
       "file": "history-WMT.json",
       "endpoint": "eod/WMT.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30368
     },
     {
       "file": "history-PG.json",
       "endpoint": "eod/PG.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30202
     },
     {
       "file": "history-KO.json",
       "endpoint": "eod/KO.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29072
     },
     {
       "file": "history-PFE.json",
       "endpoint": "eod/PFE.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29189
     },
     {
       "file": "history-T.json",
       "endpoint": "eod/T.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29175
     },
     {
       "file": "history-F.json",
       "endpoint": "eod/F.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29205
     },
     {
       "file": "history-BAC.json",
       "endpoint": "eod/BAC.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29043
     },
     {
       "file": "history-CSCO.json",
       "endpoint": "eod/CSCO.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29457
     },
     {
       "file": "history-INTC.json",
       "endpoint": "eod/INTC.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29183
     },
     {
       "file": "history-AMD.json",
       "endpoint": "eod/AMD.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29850
     },
     {
       "file": "history-COIN.json",
       "endpoint": "eod/COIN.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29763
     },
     {
       "file": "history-PLTR.json",
       "endpoint": "eod/PLTR.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30065
     },
     {
       "file": "history-SOFI.json",
       "endpoint": "eod/SOFI.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 28819
     },
     {
       "file": "history-RIVN.json",
       "endpoint": "eod/RIVN.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 28868
     },
     {
       "file": "history-CCL.json",
       "endpoint": "eod/CCL.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29168
     },
     {
       "file": "history-NCLH.json",
       "endpoint": "eod/NCLH.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 28680
     },
     {
       "file": "history-HOOD.json",
       "endpoint": "eod/HOOD.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 29426
     },
     {
       "file": "history-SPY.json",
       "endpoint": "eod/SPY.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30414
     },
     {
       "file": "history-QQQ.json",
       "endpoint": "eod/QQQ.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30451
     },
     {
       "file": "history-IWM.json",
       "endpoint": "eod/IWM.US",
-      "query": "period=d&from=2025-08-25&to=2026-08-24",
+      "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30482
     }

@@ -350,3 +350,315 @@ Why:  Raised by the second sign-off pass as one of four things closing the phase
 Was:  The Checks section ran "The floor is a floor and not an equality, and that is the part worth defending" straight into "Unexamined and out of scope are counted separately". The paragraph above it ended: At or above the floor passes; below it fails, names the check and prints both figures.
 Now:  That sentence gains a clause saying what the floor does not close, and two paragraphs are inserted after the floor-not-equality one: "A floor holds a scope, not a total, and on the day it is recorded the two are indistinguishable" and "So a check states a floor under each scope it names, and a run is measured scope by scope".
 Why:  Found at the phase 1 sign-off, run rather than argued. `CheckCoverage.Report` compares one number per check against the baseline, and that number is the sum of every scope the check names. In five of the seventeen checks the sum is dominated by a size-of-corpus figure rather than by the property: `bar-append-only` reads 47 source files to hold 3 bar tables, `path-casing` reads 2,412 string literals to compare 27 paths, and `clock-usage`, `writer-ownership` and `store-portability` have the same shape. Narrowing `bar-append-only` to one bar table and adding five ordinary files left `tools/ci.*` green and the phase report GREEN with the examined total higher than before; gutting `path-casing` so it compared no paths at all and adding forty ordinary literals did the same. The reverse fires more easily still: removing two string literals from one test file turned `path-casing` red. The repair is a floor per scope rather than per check and it is code, so it is carried to 2.1 rather than made here; the rule is written now because the defect is in how these checks get written and phase 2 writes more of them.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 1.12 | **The examined floor is compared per check and the property it guards is per scope.** ... and it is code rather than a document, which is why it is carried here. Due at 2.1, the first checkpoint of phase 2 and the last one before phase 2 code starts growing the corpus |
+Now:  The same row with its due point in the table's own third column: ... which is why it is carried here. The first checkpoint of phase 2 and the last one before phase 2 code starts growing the corpus | 2.1 |
+Why:  The row carried two cells where every other row in the table carries three, with its due point written into the obligation prose rather than into the `Due at` column. `Schedule.Read()` guarded with `if (row.Count >= 3)` and dropped it, so the obligation driving checkpoint 2.1 was absent from `Schedule.Obligations` entirely and no permit could resolve against it. The row is the symptom and the parser is the fix: `MarkdownTable` now asserts every body row against its own table's header width and fails naming the table, the row and both widths, and the guard at the call site is gone. Found by reading the table while planning phase 2, not by any check.
+
+### 2026-08-26 — SCHEMA.md — cites Proposals come in two kinds, rule changes over existing signals and requests for a new signal
+Was:  No signal library anywhere in the corpus. `signal_definition` declared three columns, `signal_name`, `formula` and `source_columns`, and nothing said what went in them.
+Now:  A `## Signals` section between `## Setups` and `## Trading — phase 4`: every signal with its formula, its source columns and a status of `active` or `candidate`, grouped by axis, plus the one signal that traces to nothing recorded as a finding.
+Why:  Checkpoint 2.1's done condition is that every signal traces to named stored columns and any that does not is a finding rather than an assumption. That is unanswerable against a library nobody wrote down. Active means SignalVectorizer freezes it, and is what "copies every number the decision depended on" resolves to; candidate means the formula and the columns are settled and nothing computes it yet, so SignalBackfiller at 6.1 computes a specified formula rather than inventing one. The architecture's verdict that the library "is almost entirely price path, and volume appears nowhere except buried inside a scan definition" stays true of the active set and is stated as such: the three volume signals are candidates, because no phase 2 decision depends on them and freezing them would widen the library on a guess rather than through the admission route. `earnings_in_window` is the one that traces to nothing: no stored column carries an earnings date, `corporate_action` holds splits and dividends and neither implies one, and the vendor's calendar endpoint is not among those the call budget is built on. Recorded as a finding with what it would cost, because a candidate with blank source columns reads as work scheduled and is actually a purchase nobody has priced. It is a section rather than the `SIGNALS.md` the plan named, because the corpus is eight documents and a ninth requires retiring one.
+
+### 2026-08-26 — ARCHITECTURE.html — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  ScanEngine's entry named the six scans and stopped. No selection rule, no threshold, no lookback for "the past month", and no statement of which price basis the magnitudes read.
+Now:  The same six, each taking the top 50 universe names by its own magnitude ranked 1 to 50, with the magnitudes stated as the one-day change, the gap from the previous close to the open, and the change over 20 sessions, all on the adjusted basis with the open put there through its own bar's `adj_close / close` factor.
+Why:  2.3 cannot be built against a name. Rank rather than a percentage because phase 2 calibrates against nightly counts with no forward return in the store, and only a rank cut can be calibrated that way; a percentage floor is a claim about market volatility over the sample. Rank also makes the six comparable, which no percentage does. The basis was the more dangerous half of the gap: read raw, a two-for-one split is a 50% decline and tops the decliner scan every time one happens, then feeds the thrust check as a real event. That is a plausible ranked list rather than an error, and it is the same basis trap the averages closed at 1.12 with nothing closing it for the scans.
+
+### 2026-08-26 — ARCHITECTURE.html — cites A released cap slot goes to the side that still has candidates
+Was:  SetupCapper's entry said unused slots on either side are released to the other, and stated no order in which a freed slot is allocated.
+Now:  The same, plus: each side takes the lesser of its candidate count and its allocation, whatever either leaves unfilled is offered to the other by rank within that other side, and no priority order is needed because a side that released a slot is not also asking for one.
+Why:  The obvious reading of "unused slots released" is that two sides compete for a freed slot and something breaks the tie. They cannot: a slot is released only by a side that ran out of candidates, and that side is not also short. Stating the property is what stops a later session inventing a tiebreak for a case that cannot arise, which would read as though it can.
+
+### 2026-08-26 — ARCHITECTURE.html — cites The cluster grouping key is industry, not sector
+Was:  | ThemeClusterer | Nightly 18:15 | Counts same-sector names flagged together |
+Now:  | ThemeClusterer | Nightly 18:15 | Counts same-industry names among that night's scan hits |
+Why:  Two corrections in one row. The key was "sector" here and "industry" in both cluster checks and in the authored parameter, and the two are different columns giving different answers on the same night. And "flagged together" put ThemeClusterer at 18:15 downstream of detectors that run at 18:20; SCHEMA settles it by putting `cluster_count` on `scan_hit` rather than on `setup`, so the count is over scan hits, which run at 18:10. The stated clock and the stated data dependency now agree.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Headings carry no numbers, and anchors are slugs
+Was:  | The ladder | 9-day above 21-day above 50-day means a steady rise. The reverse order means a steady fall. This lab uses those as its definitions of uptrend and downtrend. | and the squeeze check reading "narrower than its own recent average".
+Now:  The ladder entry names all three grades, defines `mixed` as anything that is neither and states that the three are a partition; the squeeze check reads "narrower than its own average over the last 20 sessions".
+Why:  `mixed` appeared in the catalogue and in Figure 3 as a grade and was defined nowhere, so TierClassifier at 2.4 had two of its three outputs specified. And the squeeze check stated no window at all where the contraction check beside it is pinned to 20 days, which is the difference between a check and a description of one.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Four thresholds are marked "phase 2 count check"." over three rows carrying the marker. The authored-parameters table had no row for scan breadth or the month-mover lookback, and the P2 build-order row did not list SectorResolver.
+Now:  "Five rows of the authored-parameters table are marked "phase 2 count check"", derived from the table and asserted by `stated-counts`, with rows added for scan breadth and the month-mover lookback and a row for the squeeze test's window. SectorResolver added to the P2 build-order row.
+Why:  The stated count was of thresholds and the table is of rows, and the pullback-shape row carries two numbers, so the two units differed and nothing derived either. It is a row count now, on the rule every other count in this corpus obeys: a number a spec states about its own contents is derived and checked, or it is not written. SectorResolver appeared in no phase row at all while phase 2 depends on it for the cluster key and the short side's market-cap floor.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Checks section stated the per-scope floor as a rule and described no implementation, and the paragraph on unexamined and out of scope said nothing about how unexamined is counted.
+Now:  Two paragraphs added: one stating the shape the rule took in `fixtures/checks-baseline.json` and the four directions the comparison runs in, and one stating that unexamined counts admissions rather than the things they cover.
+Why:  The rule was written forward-looking at the phase 1 sign-off and the code landed at 2.1, so the spec now describes what exists rather than what was intended. The second paragraph is a defect the first one exposed: `PathCasingCheck` records its no-work branch with a count of zero, zero adds nothing to a sum, and the report said "unexamined 0" on the same page as the admission. Counting admissions makes an admission visible whatever its size.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+Was:  Five rows in the carried obligations table, two of them falling due at 2.1: the row raised at 1.1 for done condition seven at 1.3, 1.4, 1.5 and 1.7, and the row raised at 1.12 for the examined floor being per check where the property is per scope.
+Now:  Three rows. Both 2.1 rows are removed.
+Why:  Both were discharged at 2.1 and a carried obligation that has been met is a row saying a checkpoint still owes what it has done. The discharges are recorded in `PROGRESS.md` with what was built and how it was verified, which is where a completed obligation belongs; this table carries what is still open. The three that remain are the `CONFIRMED` values at 2.11, the out-of-scope coverage naming rule now at 2.2, and step 6 of the move at the move.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Checks section stated the naming rule for an out-of-scope claim and said nothing about an out-of-scope coverage item.
+Now:  A paragraph naming the three shapes a coverage item may take, and why the third is counted separately.
+Why:  The obligation raised at 1.12 and due at 2.2. A claim has always had to name the checkpoint that ends it; a coverage item carried free prose and nothing read it, and seven checks recorded 149 of them. The rule does not transfer unmodified, which the obligation said and which converting the call sites confirmed twice over. Two of `fixture-replay`'s exemptions close on a purchase rather than a checkpoint and differ by three orders of magnitude in cost, which prose loses. And several close on nothing at all: a citation inside a dated record, a runner set asserted against the workflow, a column exempted by name. Forcing those into a checkpoint would invent one and forcing them into a price would lie about the shape, so there are three and the third is counted separately, because a by-design exemption growing unnoticed is how this rule would be lost.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.2 | SignalVectorizer and the frozen signal row shape, `setup_signal` | Written once, never updated by the vectorizer. Asserted |
+Now:  The same row naming migration 011 and the out-of-scope coverage rule moved here from 2.6, with the four ways the write-once property is asserted and the two conditions on the signal library.
+Why:  "Asserted" named no assertion, and the four that shipped are not interchangeable: a rerun writing nothing does not prove a restated bar leaves a frozen value alone, and neither reaches an `UPDATE` a later stage might add. The obligation moved from 2.6 because 2.2 creates `setup` with three of its four declared writers unbuilt, which is what makes `writer-ownership` record a run of deferred items; 2.6 was already the heaviest checkpoint in the phase and would have met the rule a checkpoint after it was needed.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:25 | signal freeze, journal | 0 |
+Now:  | 18:25 | `vectorize`, the signal freeze, then journal | 0 |
+Why:  The stage now exists and the nightly order names entrypoints by the verb an operator types. Zero calls is unchanged and correct: the vectorizer reads the store and makes no vendor request.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held a row raised at 1.12 for the out-of-scope coverage naming rule, due at 2.2.
+Now:  Removed.
+Why:  Discharged at 2.2. The discharge is recorded in `PROGRESS.md` with what was built and how it was falsified; this table carries what is still open. Two rows remain: the `CONFIRMED` values at 2.11 and step 6 of the move.
+
+### 2026-08-26 — SCHEMA.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  `scan_hit` declared `ticker`, `as_of`, `scan`, `rank` and `cluster_count`, with `rank` unannotated and `cluster_count` noted as same-sector hits.
+Now:  A `magnitude` column is added, `rank` states the breadth and cites the decision, `cluster_count` reads same-industry, the primary key is declared, and two notes are added.
+Why:  The magnitude the rank was taken on is what the thrust signals freeze. Deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible, since a wrong magnitude still produces a plausible ranked list; storing it also makes the ordering auditable against the number it was taken on. `cluster_count` said sector where both cluster checks and the authored parameter say industry, which the 2.1 spec pass settled everywhere else and missed here.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Every scan magnitude is computed on the adjusted basis
+Was:  "Read raw, a two-for-one split reads as a 50% decline and tops the decliner list every time it happens."
+Now:  The same point without naming the wrong scan, plus: the vendor adjusts the history behind a split and leaves the sessions after it alone, so the one-day and gap magnitudes agree on both bases on the split date itself and only the month magnitudes span the adjustment.
+Why:  Measured at 2.3 and the original was wrong about where the trap sits. On IESC's split date the raw and adjusted one-day changes are both -0.0537, because the adjustment lands on the prior history. The twenty-session magnitude is +0.0746 adjusted and -0.4627 raw. A guard placed on the daily scan would have found nothing.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  | 2.3 | ScanEngine, six scans, three per direction | Hit counts per scan per night recorded |
+Now:  The same row naming migration 012, the shared magnitudes, the thrust signals moving to frozen, and three properties the hit count does not state.
+Why:  A hit count is the same number whatever the scan ranked on and whichever way it ordered. The three conditions added are the ones a count cannot carry: the breadth is a count rather than a threshold, the tiebreak is stated so the boundary does not depend on row order, and the basis is adjusted.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:10 | scans, ladder grade | 0 |
+Now:  | 18:10 | `scans`, then the ladder grade | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. Zero calls is unchanged: the scans are a function of stored bars.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.4 | TierClassifier | Ladder grade on every universe member per night |
+Now:  The same row naming the later-observation write and the ladder grade moving to frozen, with the partition swept rather than sampled and a refused grade counted rather than absorbed.
+Why:  "A grade on every member" is satisfied by a stage that grades nothing and says it graded everything, which is exactly what happened on the first run: the write collided with the engine's own row on the primary key, the insert said DO NOTHING, and the stage reported thirty grades over zero rows. The two conditions added are the ones the original could not carry.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:10 | `scans`, then the ladder grade | 0 |
+Now:  | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The market-mood label is recorded on every setup and filters nothing in the baseline
+Was:  | 2.5 | RegimeLabeler, two scores summed | Both raw scores stored alongside the label. Label filters nothing |
+Now:  The same row naming migration 013 and the mood signals moving to frozen, with "filters nothing" asserted against the shipped source and two boundary conditions stated.
+Why:  "Label filters nothing" is the one condition here that no figure can show, and a stage that quietly began branching on it would produce identical numbers. It is now a source scan with comments stripped and three files exempt by name, on the same pattern the clock ban uses. The two conditions added are the boundaries that decide a mood: neither extreme is reachable without both scores agreeing, which is what makes the three states buffer themselves, and an unmeasurable tracker scores zero rather than minus one, because reading a missing feed as a falling market turns an outage into a signal.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  | 18:15 | cluster, regime | 0 |
+Now:  | 18:15 | the cluster count, then `regime` | 0 |
+Why:  The stage exists and the nightly order names entrypoints by the verb an operator types. The cluster count arrives at 2.6 and stays prose until then.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `check-completeness` | 2.6 | Every setup row has a result recorded for every check defined at its date |
+Now:  The same row with `every CI run` in the Runs column, and the reconciliation stated as running in both directions against ARCHITECTURE's own gate lists.
+Why:  The check exists as of 2.6 and runs as a named CI step, so a checkpoint row would now name a checkpoint `PROGRESS.md` records, which `coverage-reported` fails on. Both directions matter and reading one would catch half the divergences: a gate the detector does not run is a rule the document states and the lab does not apply, and a check the detector runs that no gate names is a rule the lab applies and the document does not state.
+
+### 2026-08-26 — SCHEMA.md — cites The scans select a fixed count by rank, not a threshold on the move
+Was:  `scan_hit.cluster_count` noted as "same-sector hits that night".
+Now:  "same-industry hits that night", with a note stating why and citing the decision.
+Why:  Missed by the 2.1 spec pass, which settled the key everywhere else. Sector and industry are different columns giving different answers on the same night.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Failed checks are recorded rather than discarded
+Was:  | 2.6 | LongSetupDetector, ten checks, all results recorded, with SectorResolver and ThemeClusterer behind the cluster check | `check-completeness` passes: every recorded setup has a result for every check |
+Now:  The same row naming the shared Core rules and the last seven signals moving to frozen, with the reconciliation stated in both directions and the one-sidedness measurement added as a condition.
+Why:  "Every recorded setup has a result for every check" is satisfied by a fixture where every check has only ever returned one answer, and 300 results diffed then reads as full coverage while the branch nobody reached is asserted by nothing. The report now names one-sided checks individually, because the useful sentence is which checks rather than how many, and the decision on the remedy sits at this checkpoint rather than at sign-off, where the session that would have to take it cannot.
+
+### 2026-08-26 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  Three nightly rows named their stages in prose: the cluster count, the detectors, and the sector resolve.
+Now:  `clusters`, `detect-long` and `sectors` named by the verb an operator types.
+Why:  The stages exist. The sector row keeps its ~50 calls: the lookup is lazy and cached, so the steady-state cost is names newly surfaced by a scan rather than the universe.
+
+### 2026-08-26 — ARCHITECTURE.html — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  The long check list ran straight into the plain box headed "Why the exit-tight check is the interesting one", with nothing between them.
+Now:  A rule box headed "A gate handed nothing fails, on both lists", stating that a gate whose quantity is absent, zero or undefined fails and records what was missing, and naming the vacuous `exit-tight` pass as the failure it closes.
+Why:  The document defined ten thresholds and never said what a gate does when handed no number at all. The long detector's first fixture run passed `exit-tight` on a name whose thrust was the session itself: entry and give-up point at the same price, distance zero, and zero clears every threshold expressed as a maximum. The answer decides verdicts, so it belongs where the strategy is stated rather than only in the code that happened to get it right.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Two directions are tested, with separate detectors, separate management and separate scoring
+Was:  `reached-ceiling`'s note read: The level is where the bounce is expected to stall. On the long side the equivalent level is where the dip is expected to hold.
+Now:  The same, plus a paragraph saying the third clause does not run until 4.4, that the check is narrower than the line describes until then, and why approximating an anchored average price from daily bars is worse than not running the clause.
+Why:  The clause needs a volume-weighted average anchored at the last swing high, computed from minute bars by VwapEngine at 4.4. A daily-bar approximation would put a number that looks like the real thing inside the check that decides whether a bounce reached its ceiling, which is the shape of the vacuous `exit-tight` pass one gate list up: plausible, wrong and silent. A later session reading a passing `reached-ceiling` needs to know which clauses ran.
+
+### 2026-08-26 — SCHEMA.md — cites The vendor is EODHD, and the endpoint mix is what the call budget is built on
+Was:  The `counts_against_ceiling` note named the history backfill as the one-time operation the flag exists for.
+Now:  The same note, followed by a paragraph naming fixture capture on the same grounds and stating the scope rather than a second exemption: what decides the flag is whether the run is the evening's job, so a third one-time operation inherits the answer without a third entry.
+Why:  Second time the distinction surfaced and it was nowhere in the corpus. Adding an endpoint to the fixture cost 30 live calls on 2026-08-26; charged against the evening's allowance they would have competed with the night's work for no reason. Written as a scope statement because two exemptions listed one after another read as a growing list of special cases rather than as one rule.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+Was:  | 2.7 | ShortSetupDetector, ten checks | Same. Plus: no setup row carries a direction its detector does not own |
+Now:  The same row naming the degeneracy proof and the authored boundary suite, with the done condition stating both, the one-sidedness condition, the `AUTHORED` marking, and `reached-ceiling`'s third clause out of scope naming 4.4.
+Why:  2.7 is the first checkpoint at which all twenty gates exist, so it is the first that can assert anything over the gate list as a list. It is also where the one-sidedness raised at 2.6 is closable: forty authored cases give every gate a pass and a fail at no vendor call, where the remedy priced at 2.6 would have left eight gates with three results each instead of two.
+
+### 2026-08-26 — RUNBOOK.md — cites Two directions are tested, with separate detectors, separate management and separate scoring
+Was:  | 18:20 | `detect-long`, then the short detector | 0 |
+Now:  | 18:20 | `detect-long`, then `detect-short` | 0 |
+Why:  The stage exists and has a verb. An operator following this file at 18:20 needed the name they would type, and "the short detector" was the placeholder standing in until there was one.
+
+### 2026-08-26 — RUNBOOK.md — cites The cluster grouping key is industry, not sector
+Was:  | 19:00 | `sectors`, resolved once per name and cached | ~50 |, sitting between the watchlist at 18:40 and the minute bars at 20:30.
+Now:  The same stage at 18:12, between `tiers` and `clusters`, with a line saying it was moved and why.
+Why:  Three stages read what it writes and all three ran before it. `clusters` at 18:15 counts same-industry names and `tradable-shortable` at 18:20 reads the market capitalisation, so on a live night a name newly surfaced by a scan had neither when they ran. Neither consumer errors on a missing sector: the cluster count reads nought and the short check fails for want of a figure, and both look like an ordinary quiet night. The fixture replay could never have shown it, because the replay ran the lookup first. The stage order there is now asserted against this table rather than kept in step by hand.
+
+### 2026-08-26 — RUNBOOK.md — cites Components are named, not coded
+Was:  | 17:30 | bulk daily bars | 100 |
+Now:  | 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
+Why:  The row described the work and not the verb an operator types at 17:30, which is the same gap the short detector's row had. Found by the check that asserts the replay's stage order against this table: a row naming no verb is a row the schedule cannot be read from.
+
+### 2026-08-26 — SCHEMA.md — cites Failed checks are recorded rather than discarded
+Was:  No `detector_error` section. `setup`, `calibration_setup` and `setup_signal` ran straight on to the trading stores.
+Now:  A `detector_error` section between `calibration_setup` and `setup_signal`, grain date plus ticker plus direction, with both detectors declared as writers disjoint by direction and a note on why each issues its own insert.
+Why:  ARCHITECTURE's failure table has said since before any code existed that a detector erroring on one stock writes an error row for that stock and date, and the corpus placed the claim at 2.7. Nothing wrote one. A silent skip shrinks the recorded universe without anyone noticing: every count downstream is over the setups that were recorded, so a name the detector could not read is simply absent and the night looks lighter rather than wrong.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Failed checks are recorded rather than discarded
+Was:  2.7's done condition ended at "No setup row carries a direction its detector does not own."
+Now:  The same, plus a name a detector cannot read getting an error row and the run being recorded partial rather than skipped into a night that merely looks lighter.
+Why:  The behaviour is owed at this checkpoint by ARCHITECTURE's failure table, and a done condition that does not state it leaves the phase report to be the only thing that noticed.
+
+### 2026-08-26 — RUNBOOK.md — cites The nightly cap is 60, split forty long and twenty short, unused slots released
+Was:  | 18:28 | cap | 0 |
+Now:  | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
+Why:  The stage exists and has a verb. The same gap `daily-bars` and the short detector had: a row describing the work rather than naming what an operator types, which the check asserting the replay's stage order against this table cannot read.
+
+### 2026-08-26 — SCHEMA.md — cites Versions select from one shared nightly candidate list rather than each re-scanning
+Was:  The `setup` section ended at the note on the two detectors writing disjoint rows.
+Now:  Two further notes: that `rank` and `capped_out` are the night's rather than a version's and that there is deliberately no column that could make them a version's, and that both are null on a setup that failed a gating check.
+Why:  A cap applied per version leaves the disagreements between versions unscoreable, and the property is unassertable once versions exist: by then the record it destroyed cannot be reconstructed. The schema is where it can be held now, so the absence is stated and a test reads it.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A released cap slot goes to the side that still has candidates
+Was:  | 2.8 | SetupCapper, 60 a night, 40 long 20 short, unused slots released | Truncation recorded with the pre-cap count |
+Now:  The same row naming the verb and the arithmetic's home in Core, with the done condition stating the sweep over every arrangement of the two counts, the order-independence of the release, the ranking within a direction, and the shared candidate list asserted against the schema.
+Why:  "Truncation recorded with the pre-cap count" is satisfied by a run over an empty candidate list, which is exactly what the fixture produces: two setups, neither clearing every gating check. The release rule's whole claim is about every arrangement of the two counts, so the condition asks for every arrangement.
+
+### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
+Was:  **One writer, one connection.** The Worker is the sole writer by design ... The Api opens the file read-only. A second writing connection produces intermittent lock failures that look like load problems and are not.
+      And: Update Setup inspector (`agreement`, `agreement_note`) on `setup`.
+Now:  The same note narrowed to "the sole writer of everything the nightly job produces", followed by a paragraph naming the one exception and its scope, and the writer declared as `LabSetups`, the type that issues the statement.
+Why:  The three rules around the agreement column left nowhere to put it. The Web project may not open the store, the Worker has no channel a browser can reach, and one writer per table per operation means it cannot be split. What makes this the right exception rather than the first crack in the rule is that it is not the same kind of write: a person saying what they thought of one row, on two columns no computation reads. The writer is declared by type so `writer-ownership` holds the scope rather than the prose.
+
+### 2026-08-26 — BUILD_PLAN.md — cites The Web project reads through the Api and never opens the store
+Was:  | 2.9 | Setup inspector, the gallery page: prev/next, filter by failed check, agreement capture | **Openable.** You page through a night's setups by keyboard and record agree or disagree per setup |
+Now:  The same row naming `LabSetups`, with the done condition stating the two lists, every check on every card, the shared component, the form post working without the script, and a filter that hid everything saying so.
+Why:  "Openable" is a condition only a person can discharge, and everything around it can be held without them. The additions are the properties a build session can assert before that person opens it, so the review they do is a review of a page that already holds them rather than a first pass over whether it renders.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `point-in-time` | 2.10 | No signal definition reads a column whose observed date can exceed the setup date |
+Now:  The same row with `every CI run` in the Runs column and the property stated as its three halves: the readers' signatures, the hand-written statements beside them, and a row observed after the as-of being invisible until the as-of moves past it.
+Why:  The check exists as of 2.10 and runs as a named CI step, so a checkpoint row would now name a checkpoint `PROGRESS.md` records, which `coverage-reported` fails on. The three halves are stated because the first alone is what the corpus had been relying on, and it is the half that proves nothing about a query somebody wrote beside a reader: four such queries were in the shipped source when the check was written.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 2.10 | Point-in-time test | A deliberately future-dated column causes a loud failure. The test is permanent, not a manual break-and-revert |
+Now:  The same row naming the check and its three halves, with the done condition stating where the loud failure happens, the two named exemption lists, and the two-sided read.
+Why:  "A loud failure" left unsaid where. Append-only point-in-time storage does not throw on a future-dated row; it declines to see it, silently and correctly. The failure that has to be loud is in CI, and saying so is what stops a later session looking for a runtime exception that was never going to arrive.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Verification ended at the paragraph on a mechanical sweep destroying the meaning it was carrying.
+Now:  Three further paragraphs: that an assertion must fail when the thing it guards is removed and the proof of that is permanent, that this is the fourth instance and therefore a rule, and how it is held, with the three shapes a backing can take and the rule that an unbacked scan is reported rather than failing the run.
+Why:  The failure table's detector-error claim passed with the catch clause deleted, because the private method issuing the insert was still in the file with nothing calling it. Three earlier instances had the same shape and each was closed one at a time; a fourth is the signal to write the property down and hold it mechanically rather than to close it again.
+
+### 2026-08-26 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads |
+Now:  The same row, plus: every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records.
+Why:  Each check declares its source-scan assertions in its own coverage record and `CheckCoverage.Report` fails a check that declares neither. A scan written in an ordinary test has no coverage record to declare in, so nothing would say whether a behavioural test backs it and the sweep would report a clean list while missing them. Three such scans exist today, and the check names them rather than counting them.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.11 | One-time calibration | Detector run over the full stored history **into `calibration_setup`, never into `setup`** ... Nightly count distribution inspected. If the median falls outside 5 to 60 per side, thresholds adjusted **once**, before phase 3 ... |
+Now:  The run covers the golden fixture's seeded histories, replaying the nightly pipeline session by session into a scratch store so each detector reads the rows the stages that own them wrote. The market-cap clause of `tradable-shortable` is exempted by name. The distribution is recorded per side as a raw count and as a rate per name per session, and the band is applied to the scaled rate with the scaling named as an assumption.
+Why:  The row rested on the plan's premise that calibration mode computes what it needs in memory. It computes the averages that way and not the rest: the detectors read `indicator_daily` and `scan_hit`, and the live store holds one session of each, so a full-history run was three stages of second implementation whose only consumer is a table nothing downstream reads. Over the fixture the same run needs no path that does not exist. What the narrowing costs is population, so the row says how the band survives thirty names instead of pretending it does.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  The 2.7 obligation ended: "Three answers are available and none is obviously right ... The choice belongs at 2.11, where the distribution is what a threshold is set against."
+Now:  The answer taken, with what was rejected and why, and a new row raised at 2.11 carrying the full-history run over the live universe to 3.2 with its price.
+Why:  The choice was taken before 2.11 rather than at it, so the row stating three open answers was no longer true. An obligation that still poses a question somebody has answered reads as open work and gets re-answered.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.11 | One-time calibration, over the golden fixture's seeded histories rather than the live universe. The nightly pipeline replayed session by session into a scratch store, so each detector reads the `indicator_daily` and `scan_hit` rows the stages that own them wrote for that session ... |
+Now:  The row names the mechanism that works: calibration mode carries the session in memory through `IndicatorEngine.Calculate`, `TierClassifier.Grade`, `ScanMagnitudes` and `ScanEngine.Top`. The fixture run becomes the fixture's expectations and the distribution comes from the live universe, with the done condition stating why thirty names cannot answer for a threshold and adding the clause that holds when the band is out of the five thresholds' reach.
+Why:  Replaying the pipeline session by session does not work and could not have: `IndicatorEngine`, `ScanEngine` and `TierClassifier` all read the night's universe snapshot, and a night the lab was not running has none. Giving those three a current-membership mode would write reconstructed `indicator_daily` rows, which the calibration decision forbids. The in-memory session turned out to be assembly rather than a second implementation, because all four pieces of arithmetic were made public at 2.6 for exactly this. And the fixture cannot answer for a threshold at all: thirty names against a scan breadth of fifty puts every name inside every scan on every session.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  | 2.11 | **The calibration run over the full stored history, on the live universe.** ... So the full-history run has a price ... a calibration mode that carries indicators, ladder grades and scan hits in memory, which is a second implementation of three stages ... | 3.2 |
+Now:  The row says the path exists as of 2.11 and what is left is population and running time, with the assumption the scaling rests on named as the thing a live run would replace.
+Why:  The price was wrong by an order of magnitude and the run it was deferring happened at 2.11 instead. An obligation that prices work already done reads as work outstanding.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  | 2.11 | **The calibration run over the live universe, which 2.11 ran over thirty names.** The path exists as of 2.11 and is the same mode: what is left is population and running time ... | 3.2 |
+Now:  removed, and a row raised at 2.11 takes its place: the threshold adjustment the distribution calls for, which the five thresholds cannot deliver, due at 3.1.
+Why:  2.11 ran over the live universe rather than over thirty names, so the obligation was discharged on the day it was written. What the run found instead is that reaching the band needs two checks removed rather than five thresholds moved, and that is a decision rather than a build step.
+
+### 2026-08-26 — BUILD_PLAN.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  | 2.7 | **What market capitalisation a calibration run is entitled to read.** ... What is left is building it, and recording on every calibration verdict that the short distribution was measured against a nine-clause detector | 2.11 |
+Now:  removed.
+Why:  Built at 2.11 and asserted: `CalibrationFigures` reports the clause exempt, `ShortPullbackRules` runs the other three, and a test reads every short row a calibration run wrote and finds the note on each. An obligation whose work has shipped is a row that reads as outstanding.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  The 1.6 obligation fell due at 2.11, because "2.11 is the first thing that reads these figures, since calibration is where a threshold is set against them".
+Now:  The same row, plus the move to 2.12 and its reason, and a due checkpoint of 2.12.
+Why:  The calibration ran and set no threshold, because the distribution showed the band is out of the five thresholds' reach. Nothing yet rests on the three confirmed figures, and 2.12 is where a person is already reading a screen. Left at 2.11 the row would name a checkpoint `PROGRESS.md` records, which is a checkpoint that shipped without coming back to it.
+
+### 2026-08-26 — ARCHITECTURE.html — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  "The one-time calibration, and why it is not tuning" ended at the paragraph on the adjustment being calibration against a population count rather than tuning against results.
+Now:  A further paragraph: the count has to come from a population the scans can discriminate within, which the golden fixture is not, with the arithmetic of why thirty names against a breadth of fifty makes every geometry check fail.
+Why:  Nothing in the document said where the distribution comes from, and the obvious reading is the fixture, because that is where every other figure in this corpus is diffed. Over the fixture the count is nought by construction and a session reading it would take that for a fact about the gates.
+
+### 2026-08-26 — SCHEMA.md — cites A calibration run reconstructs against current membership and computes its indicators in memory
+Was:  The `calibration_setup` section named one reconstruction: membership as it stands today.
+Now:  Three, each recorded rather than assumed: membership, the exempt market-cap clause, and the bar series read as the store knows it now rather than as it stood on the night.
+Why:  The third is not a choice between two readings. A backfill takes a name's whole history in one evening, so every historical bar was observed later than its own session, and a read bounded on the session's own instant returns nothing at all. Both narrower bounds were tried on the way to this and both reported a run of nought sessions over a store of one and a half million bars.
+
+### 2026-08-26 — SCHEMA.md — cites The agreement a person records is written through the read surface, and it is the only write it makes
+Was:  Update LabSetups (`agreement`, `agreement_note`)
+      And: **The one exception is the agreement a person records, and its scope is the whole guarantee.** The read surface opens a writing connection for `setup.agreement` and `setup.agreement_note` and for nothing else, ever ... The writer is declared above by the type that issues the statement rather than by the screen that asks for it, so `writer-ownership` holds the scope rather than the prose.
+Now:  The declaration names the reason beside the columns, and the paragraph states the property first: a person's judgement is captured on the page that asks for it, and the Worker never writes those two columns because it has no judgement to record. The mechanical half is separated into its own paragraph.
+Why:  "The read surface writes these two columns and nothing else, ever" is right about the columns and reads as a general licence for the Api to write where writing is convenient. The property says why those two and not others, which is the half a later session citing this needs, and it is the half a writer declaration naming only the writer cannot carry.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  The 2.11 threshold obligation ended: "The second has a specific candidate, which is that the geometry measures the thrust from the session before the scan hit, the right origin for a one-day scan and the wrong one for a twenty-session scan. Due before 3.1 ..."
+Now:  The same row, plus the candidate now being a row of its own with its prediction, and the ordering: the two are worked in order rather than together, because a pass that moves the geometry and the thresholds at once can say nothing about either.
+Why:  The candidate was a sentence inside the obligation it might dissolve, which reads as an aside rather than as work. Separated, one row carries a once-only adjustment and the other carries a falsifiable correction, and the ordering between them is the thing that makes either result mean anything. The adjustment cannot be spent twice, so a pass that moved both would leave no second attempt to attribute the outcome to.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  | 2.12 | Phase sign-off | Fresh session. The gallery review is part of it, and `tools/verify-phase` green with nothing unexamined |
+Now:  The same row, plus a reading pass over what the fixture's composition cannot be evidence about, with `thrust` as the worked example and the question of which other checks stand where it does.
+Why:  Twice now the fixture's composition has bounded what a check could show, and both times it was found by an accident in a different checkpoint: eight of ten gates one-sided, measured at 2.6 only because that checkpoint added per-check pass and fail counts, and `thrust` unreachable over thirty names, found at 2.11 by a run over a different population. Nothing looks for the shape, so the count of checks in that position is unknown rather than nought, and a sign-off is where a reading pass belongs.
+
+### 2026-08-26 — CLAUDE.md — cites Long and short are never pooled into one figure
+Was:  "Verification" ended with the rule that each check names, per source-scan assertion, whether a behavioural test backs it.
+Now:  Two further paragraphs: a fifth defect shape that is not an absent subject, and the rule it earns, being that a figure states the population it was computed over and a one-side figure says which side.
+Why:  The four instances the section already records are one shape, where the subject an assertion guarded went away and the assertion kept saying what it always said. Every guard the corpus has is pointed at that shape. The 2.12 sign-off found three instances of a different one in a single pass, and in all three the counts were correct, the check was live and the subject was present: an `AUTHORED` setup row counted into the captured population of the fixture's one-sidedness figures, a median taken over dips of two bars or more under a phrase naming the gate's own two to seven, and a long-side rate offered for a reading asserted of both sides. Nothing in the corpus guards which rows a stated figure was computed over, and the stopping rule at the sign-off said a fifth shape earns a rule rather than a fourth pass.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Phase 2 thresholds are calibrated once against nightly counts, before phase 3
+Was:  The 2.11 threshold obligation gave "a median give-back of 1.088 long and 1.006 short among moves of the right length", and "With the two shapes set to pass always the remaining conjunction yields about 6 a night, the bottom of the band, so the band is reachable only by removing two checks."
+Now:  1.060 long over 5,849 dips of 2 to 7 bars beside the unchanged 1.006 short over 3,448 bounces of the same length, each naming its population, and a recount rather than a product: a median of 7 rows a night long and nought short.
+Why:  Reproduced against `calibration_setup` at the 2.12 sign-off. The long median was taken over dips of two bars or more with no upper bound, which is a different population from the one the phrase beside it names and from the one the short figure used, and the two sides were therefore not comparable. "About 6" is the long side's pass rates multiplied out under an independence assumption, and the row asserts the shape of the failure holds on both sides; recounted per side the short figure is nought, which is not about 6. Both corrections make the obligation's own reading stronger rather than weaker, and 3.1 judges a prediction against these numbers, so the numbers have to be the ones the prediction is about.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The obligation for the `CONFIRMED` indicator values fell due at 2.12, and so did the one for the `CONFIRMED` gallery expectations.
+Now:  Both fall due at the operator, and both say at the sign-off that moved them why the due point is no longer a checkpoint.
+Why:  Neither can be discharged by any session. The indicator obligation has now been moved three times, 1.12 to 2.11 to 2.12, each time for a sound local reason, and a due point that moves at every sign-off is permanent while reading as pending, which is the fault the checkpoint-naming rule exists to prevent one level up. The gallery review is the same: a sign-off session cannot page through a gallery either, so leaving it at 2.12 would have moved it to 3.7. Two rows already carry a due point that is an act rather than a checkpoint, step 6 of the move and the vendor's reset boundary, and these are the same shape.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+Was:  The carried obligations table had no row for `PullbackGeometry.Of`.
+Now:  A row raised at 2.12 and due at 3.1, ahead of the thrust-window correction rather than after it: `DERIVED` expectations over the fixture's own bars for the origin, the extreme, the two shape quantities and the two raw prices, restated by `tools/derive-indicators.py` rather than by the method itself.
+Why:  The gate table produced at the 2.12 sign-off named the gap and 3.1 walks into it. The authored gate cases hand-build the pullback record and never call the method, and over the captured fixture the method returns the degenerate shape on every row, so the quantity the correction moves is exercised nowhere on a real input. The original defect produced plausible numbers for 631 sessions with nothing noticing, and that is a property of the method rather than of that defect: every figure it returns is a small plausible number whichever way it was computed. Without the instrument the 3.1 prediction is judged by a median moving in the expected direction, which a wrong-but-plausible correction would also produce.
+
+### 2026-08-26 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  One row raised at 2.12 carrying two verification-quality items, the `check-completeness` crash and the gate-id count in a source comment, described as neither letting anything through.
+Now:  Two rows, the first raised from an observation to a finding on the distinction between a crash and a named failure.
+Why:  The two are not the same size and bundling them priced the first as an aside. `check-completeness` does fail when a gate's implementation is removed, so the property holds; it fails on an unhandled `Single` where it has a reconciliation message written for that exact case, and the message never runs because the replay dies before the comparison. A crash and a named failure are different artefacts: one tells a later session which gate went missing, the other tells it the check threw. That is worth a row of its own in the corpus whose four recorded defects are all about what an assertion says when its subject is gone.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Definition of done for a checkpoint" ended: Done conditions are written against **what the file will say after the edit**, not as statements of intent. A done condition narrower than its clause is the most common defect in this corpus.
+Now:  The same, plus the rule that a checkpoint amending its own done condition says so in its PROGRESS entry in those words.
+Why:  2.11 added the clause that let it decline the once-only threshold adjustment, in the same commit as the measurement that would otherwise have failed the condition as written. The 2.12 sign-off ruled the clause stands, on three checkable grounds, so amending is not the defect. The defect is that nothing outside that session's own prose marked the amendment, and a later reader sees a done condition and a run that met it. The item reached the sign-off only because it had been written into the phase's gitignored build prompt and someone read that file the next day, which is not a mechanism. Naming the amendment costs a line and gives the sign-off something to rule on.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table had no row for reconciling PROGRESS's `Carried` blocks against the table itself.
+Now:  A row raised at 2.12 and due at 3.1, carrying the narrow form: reconcile the set of due points rather than the sentences, failing only on a `Carried` block naming a checkpoint no row does.
+Why:  Three obligations have now been stated in a `Carried` block and never in the table, so nothing read them: the 1.3 screening question, the 1.1 vendor reset boundary, and the question of this reconciliation itself, which lived only in the build prompt. The objection that kept it open is sound, being that prose-to-prose matching false-alarms and a suppressed guard is a dead one, and the narrow form escapes it because a due point is structured on one side and only has to be present on the other.

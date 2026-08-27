@@ -40,10 +40,14 @@ public sealed class NoSupersededCitationCheck
             .Examined("citations checked against the superseded list", inSpecs.Count)
             .Examined("names under Previously decided", superseded.Count)
             .OutOfScope("citations inside a record", inRecords.Count,
-                "a dated entry names what authorised it at the time, and correcting that would rewrite history "
-                + "rather than the corpus")
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "a dated entry names what authorised it at the time, and correcting that would rewrite history "
+                    + "rather than the corpus. Nothing closes it, because a record is meant to say what was true then"))
             .Examined("citations inside a record that name a superseded decision",
-                inRecords.Count(c => superseded.Contains(c.Name)));
+                inRecords.Count(c => superseded.Contains(c.Name)))
+            .NoSourceScan(
+                "the citation is the subject, as it is for decision-resolves. Nothing here concludes anything "
+                + "about what the shipped code does");
 
         if (superseded.Count == 0)
         {

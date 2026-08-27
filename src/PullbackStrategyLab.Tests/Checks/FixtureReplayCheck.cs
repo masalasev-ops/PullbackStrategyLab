@@ -133,12 +133,33 @@ public sealed partial class FixtureReplayCheck
             Path.Combine(RepositoryLayout.Artifacts, "fixture-diff.json"),
             JsonSerializer.Serialize(diff, Json));
 
+        // The total carries the property: an expectation deleted is coverage lost, and that is
+        // what a floor here has to catch.
+        coverage.Examined("expectations diffed", rows.Count);
+
+        // Per tier, and only the independent tiers are floored. A FROZEN count falling is
+        // ambiguous in a way a floor cannot resolve: it falls when an expectation is deleted,
+        // which is a defect, and equally when one is promoted to DERIVED, which is the whole
+        // direction of travel this corpus wants. Flooring it turns every promotion into a red run,
+        // and a guard that cries wolf gets suppressed. Found on the first promotion after the
+        // floors landed, when flipping fourteen 1.3-to-1.7 expectations to DERIVED took FROZEN
+        // from 269 to 255 and failed the check for having improved the fixture.
+        //
+        // So FROZEN is context: its size is a fact about the fixture's composition. The property
+        // is held by the total above, which a deletion moves and a promotion does not, and by the
+        // independent tiers below, which only rise.
         foreach (TierBreakdown tier in byTier)
         {
+            if (string.Equals(tier.Tier, Frozen, StringComparison.Ordinal))
+            {
+                coverage.Context($"{tier.Tier} expectations diffed", tier.Total);
+                continue;
+            }
+
             coverage.Examined($"{tier.Tier} expectations diffed", tier.Total);
         }
 
-        coverage.Examined("captured responses the replay read", result.ResponsesServed);
+        coverage.Context("captured responses the replay read", result.ResponsesServed);
 
         if (unexpected.Length > 0)
         {
@@ -154,7 +175,9 @@ public sealed partial class FixtureReplayCheck
             // rather than a hole in it.
             coverage.OutOfScope("requests answered as the vendor answers a name it has nothing on",
                 result.AskedOutsideTheFixture.Count,
-                "the endpoint has captured evidence and was asked about a name or a market day the fixture does not hold");
+                CheckCoverage.OutOfScopeReason.ByDesign(
+                    "the endpoint has captured evidence and was asked about a name or a market day the fixture does "
+                    + "not hold. That is the fixture's boundary rather than a hole in it, and a fixture has one"));
         }
 
         // The half of the 1.7 obligation the fixture cannot close, stated as one thing rather than
@@ -171,10 +194,11 @@ public sealed partial class FixtureReplayCheck
         // live run closes every night. That is the trade, and it is recorded here so the number is
         // argued with rather than rediscovered.
         coverage.OutOfScope("the whole-market screen under the twenty-session liquidity floor", 1,
-            $"the fixture holds {result.ScreeningSessions} captured market day(s) and the floor is a median over "
-            + $"{new UniverseOptions().LiquidityWindowSessions}. Ends when the capture holds twenty bulk days, which costs "
-            + "1,900 calls and about 130 MB. The per-ticker half of the same floor is measured, not deferred: see the "
-            + "liquidity.* expectations");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "1,900 vendor calls and about 130 MB committed to the repository for ever",
+                $"the fixture holds {result.ScreeningSessions} captured market day(s) and the floor is a median over "
+                + $"{new UniverseOptions().LiquidityWindowSessions}. Ends when the capture holds twenty bulk days. The "
+                + "per-ticker half of the same floor is measured, not deferred: see the liquidity.* expectations"));
 
         // The floor's rejecting side, which nothing in the fixture exercises.
         //
@@ -193,9 +217,11 @@ public sealed partial class FixtureReplayCheck
         // name chosen to fail, at the next capture. It is out of scope because no captured name
         // fails today, not because closing it is expensive.
         coverage.OutOfScope("the liquidity floor's rejecting side", 1,
-            "all 30 measured names clear both floors, the closest at 1.7 times the liquidity floor, and the three "
-            + "trackers are excluded by security type rather than by a floor. Ends when the capture holds one name "
-            + "that fails a floor, which is one per-ticker call at the next capture");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "one per-ticker vendor call at the next capture",
+                "all 30 measured names clear both floors, the closest at 1.7 times the liquidity floor, and the three "
+                + "trackers are excluded by security type rather than by a floor. Ends when the capture holds one "
+                + "name that fails a floor"));
 
         if (result.AskedOnAnUncoveredEndpoint.Count > 0)
         {
@@ -213,6 +239,10 @@ public sealed partial class FixtureReplayCheck
         CheckpointTier[] tiers = [.. ByCheckpoint(expected.Expectations)];
         CheckpointTier[] frozenOnly = [.. tiers.Where(t => t.Independent == 0)];
 
+        coverage.NoSourceScan(
+            "it runs the pipeline over the golden fixture and diffs what the run produced. Every figure it "
+            + "compares was computed by the code rather than read out of it");
+
         coverage.Examined("checkpoints with expectations in the fixture", tiers.Length);
         coverage.Examined("of those carrying an independently produced expectation", tiers.Length - frozenOnly.Length);
 
@@ -221,17 +251,28 @@ public sealed partial class FixtureReplayCheck
             Permit? permit = (expected.FrozenOnly ?? [])
                 .FirstOrDefault(f => string.Equals(f.Checkpoint, checkpoint.Checkpoint, StringComparison.Ordinal));
 
-            ArchitectureConformanceCheck.Obligation? obligation = permit is null
-                ? null
-                : schedule.Obligations.FirstOrDefault(o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
-
             // Out of scope rather than unexamined, and named one checkpoint at a time. A single
             // row saying "five checkpoints are frozen-only" is the shape of report that let this
             // sit unnoticed, because it reads as one item rather than as five.
-            coverage.OutOfScope($"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN", 1,
-                obligation is null
-                    ? "nothing permits it"
-                    : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}");
+            //
+            // The deferral is to the checkpoint the permit's obligation falls due at, which puts a
+            // frozen-only checkpoint under the same rule as everything else here: that checkpoint
+            // has to exist and has to be open. Where the permit resolves to nothing the deferral is
+            // by design and says so, because the assertion above has already failed the run and a
+            // second complaint about the same thing would only crowd the page.
+            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches = permit is null
+                ? []
+                : MatchingObligations(schedule.Obligations, permit.Obligation);
+
+            coverage.OutOfScope(
+                $"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN",
+                1,
+                matches.Count == 1
+                    ? CheckCoverage.OutOfScopeReason.UntilCheckpoint(
+                        matches[0].DueAt,
+                        PermitReason(schedule.Obligations, permit, schedule.HasLanded))
+                    : CheckCoverage.OutOfScopeReason.ByDesign(
+                        PermitReason(schedule.Obligations, permit, schedule.HasLanded)));
         }
 
         coverage.Report();
@@ -345,10 +386,10 @@ public sealed partial class FixtureReplayCheck
                 continue;
             }
 
-            ArchitectureConformanceCheck.Obligation? obligation = obligations.FirstOrDefault(
-                o => string.Equals(o.Raised, permit.Obligation, StringComparison.Ordinal));
+            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
+                MatchingObligations(obligations, permit.Obligation);
 
-            if (obligation is null)
+            if (matches.Count == 0)
             {
                 problems.Add(
                     $"{checkpoint.Checkpoint} is frozen-only and names an obligation raised at {permit.Obligation}, "
@@ -356,6 +397,25 @@ public sealed partial class FixtureReplayCheck
                     + "nothing is the same as no permission.");
                 continue;
             }
+
+            // More than one row raised at the same checkpoint is legitimate: the table is keyed by
+            // who raised an obligation, not by the obligation. What is not legitimate is a permit
+            // naming that checkpoint, because `Raised` is then being used as a key it is not. This
+            // was `FirstOrDefault` until 2.1, unambiguous only because every row happened to carry
+            // a distinct `Raised`; restoring BUILD_PLAN's malformed row put two at 1.12 and made
+            // the lookup silently order-dependent on whatever MarkdownTable returned first.
+            if (matches.Count > 1)
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is frozen-only and names the obligation raised at {permit.Obligation}, "
+                    + $"and BUILD_PLAN's carried obligations table has {matches.Count} rows raised there, falling due "
+                    + $"at {string.Join(" and ", matches.Select(m => m.DueAt))}. The permit resolves to whichever the "
+                    + "parser returns first, so the due point it rests on is not stated. Name the obligations apart, "
+                    + "or discharge this checkpoint rather than permitting it.");
+                continue;
+            }
+
+            ArchitectureConformanceCheck.Obligation obligation = matches[0];
 
             if (hasLanded(obligation.DueAt))
             {
@@ -379,7 +439,80 @@ public sealed partial class FixtureReplayCheck
         return problems;
     }
 
-    /// <summary>Each checkpoint in the fixture, with how many of its expectations verify anything.</summary>
+    /// <summary>
+    /// Every obligation raised at the given checkpoint.
+    ///
+    /// A list rather than a single row, because BUILD_PLAN's carried-obligations table is keyed by
+    /// the checkpoint that raised each item and two obligations can legitimately be raised at one.
+    /// A permit naming such a checkpoint is what is wrong, not the table, and a lookup returning
+    /// the first match would hide exactly that.
+    /// </summary>
+    public static IReadOnlyList<ArchitectureConformanceCheck.Obligation> MatchingObligations(
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        string raised)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentException.ThrowIfNullOrWhiteSpace(raised);
+
+        return [.. obligations.Where(o => string.Equals(o.Raised, raised, StringComparison.Ordinal))];
+    }
+
+    /// <summary>
+    /// Why a frozen-only checkpoint rests out of scope, as the coverage record states it.
+    ///
+    /// Pure, and it re-asks <paramref name="hasLanded"/> rather than resolving the obligation and
+    /// stopping there. Until 2.1 it did stop there, so on a red run the record read "permitted by
+    /// the obligation raised at 1.1, which falls due at 2.1" on the same page as the failure saying
+    /// that permission had expired. The run was red either way; what was wrong was the page.
+    /// </summary>
+    public static string PermitReason(
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        Permit? permit,
+        Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        if (permit is null)
+        {
+            return "nothing permits it";
+        }
+
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
+            MatchingObligations(obligations, permit.Obligation);
+
+        if (matches.Count == 0)
+        {
+            return $"it names an obligation raised at {permit.Obligation} and no row is raised there, so nothing permits it";
+        }
+
+        if (matches.Count > 1)
+        {
+            return $"it names {matches.Count} obligations raised at {permit.Obligation}, so the due point it rests on is not stated";
+        }
+
+        ArchitectureConformanceCheck.Obligation obligation = matches[0];
+
+        return hasLanded(obligation.DueAt)
+            ? $"the obligation raised at {obligation.Raised} fell due at {obligation.DueAt}, which PROGRESS already "
+                + "records, so the permission is spent"
+            : $"permitted by the obligation raised at {obligation.Raised}, which falls due at {obligation.DueAt}";
+    }
+
+    /// <summary>
+    /// Each checkpoint in the fixture, with how many of its expectations verify anything.
+    ///
+    /// <b>A voided row verifies nothing, whatever tier it carries.</b> `voidedBecause` is how an
+    /// expectation says its subject no longer exists or can no longer be compared, and such a row is
+    /// recorded as void rather than as agreement. Counting it as independent would let a checkpoint
+    /// satisfy done condition seven with a `DERIVED` expectation that compares nothing, which is
+    /// exactly the state that condition exists to make visible.
+    ///
+    /// Theoretical until 2.9, and that is the reason to fix it here rather than when it bites:
+    /// `CONFIRMED` is the tier the void mechanism was written for, because a figure a person read off
+    /// a platform is the one kind that can stop being comparable without any code changing.
+    /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+    /// </summary>
     public static IReadOnlyList<CheckpointTier> ByCheckpoint(IReadOnlyList<Expectation> expectations)
     {
         ArgumentNullException.ThrowIfNull(expectations);
@@ -389,7 +522,10 @@ public sealed partial class FixtureReplayCheck
             .. expectations
                 .GroupBy(e => e.Checkpoint, StringComparer.Ordinal)
                 .OrderBy(g => g.Key, StringComparer.Ordinal)
-                .Select(g => new CheckpointTier(g.Key, g.Count(), g.Count(e => e.Tier is Derived or Confirmed)))
+                .Select(g => new CheckpointTier(
+                    g.Key,
+                    g.Count(),
+                    g.Count(e => e.Tier is Derived or Confirmed && e.VoidedBecause is null)))
         ];
     }
 

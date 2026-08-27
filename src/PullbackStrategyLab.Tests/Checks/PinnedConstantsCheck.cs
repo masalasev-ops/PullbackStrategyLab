@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -54,6 +56,19 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("RUNBOOK.md, the nightly total against the ceiling",
             runbook.Contains("against a 5,000 ceiling", StringComparison.Ordinal),
             defaults.DailyCallCeiling == 5000, "the stated ceiling against the configured default"));
+
+        // The workable band, which three documents state and one class holds. A band that drifted
+        // in prose while the code kept the old numbers would be a threshold decision made against a
+        // rule nobody is applying, and it is stated as words rather than as a figure in a table, so
+        // nothing else here would catch it.
+        pins.Add(Pin.Text("ARCHITECTURE.html, the workable nightly count band",
+            architecture.Contains("outside roughly 5 to 60 on either side", StringComparison.Ordinal),
+            NightlyCounts.BandLow == 5 && NightlyCounts.BandHigh == 60,
+            "NightlyCounts.BandLow and NightlyCounts.BandHigh"));
+        pins.Add(Pin.Text("BUILD_PLAN.md, the same band at the checkpoint that applies it",
+            buildPlan.Contains("falls outside 5 to 60 per side", StringComparison.Ordinal),
+            NightlyCounts.BandLow == 5 && NightlyCounts.BandHigh == 60,
+            "NightlyCounts.BandLow and NightlyCounts.BandHigh"));
 
         // The four store pragmas, stated in SCHEMA and set at open in one place.
         string factory = RepositoryLayout.Read(
@@ -152,6 +167,63 @@ public sealed class PinnedConstantsCheck
                 true, "the configured default"));
         }
 
+        // The detection thresholds, both sides. Every one of these is a number the document states
+        // and a constant the detectors decide on, and five of them are marked "phase 2 count check",
+        // which means 2.11 may move them once. A threshold moved in the code and not in the table,
+        // or the other way round, is exactly what that checkpoint is most likely to produce.
+        // The same table row as the universe floor above, pinned a second time against a different
+        // constant. Both are $5 and both are stated by that one row, and the two drifting apart
+        // would mean the screen admits a name the detector will not trade or the reverse.
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Price floor, the detectors' side",
+            ParameterMoney(architecture, "Price floor, both sides"), LongPullbackRules.PriceFloor,
+            "LongPullbackRules.PriceFloor"));
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, short",
+            ParameterMoney(architecture, "Liquidity floor, short"), ShortPullbackRules.LiquidityFloor,
+            "ShortPullbackRules.LiquidityFloor"));
+        pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Market cap floor, short",
+            ParameterMoney(architecture, "Market cap floor, short"), ShortPullbackRules.MarketCapFloor,
+            "ShortPullbackRules.MarketCapFloor"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Listing age floor, short",
+            ParameterCell(architecture, "Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
+            ShortPullbackRules.MinimumSessionsListed == 90, "ShortPullbackRules.MinimumSessionsListed"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Daily range floor",
+            ParameterCell(architecture, "Daily range floor").Contains("5%", StringComparison.Ordinal),
+            LongPullbackRules.DailyRangeFloor == 0.05m, "LongPullbackRules.DailyRangeFloor"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Pullback shape",
+            ParameterCell(architecture, "Pullback shape").Contains("2 to 7 bars, retrace at most 40%", StringComparison.Ordinal),
+            LongPullbackRules.MinimumPullbackBars == 2
+                && LongPullbackRules.MaximumPullbackBars == 7
+                && LongPullbackRules.MaximumRetrace == 0.40m,
+            "LongPullbackRules.MinimumPullbackBars, MaximumPullbackBars and MaximumRetrace"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger reachability",
+            ParameterCell(architecture, "Trigger reachability").Contains("Within 1.5 daily ranges", StringComparison.Ordinal),
+            LongPullbackRules.TriggerReachRanges == 1.5m, "LongPullbackRules.TriggerReachRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Give-up distance cap",
+            ParameterCell(architecture, "Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
+            LongPullbackRules.GiveUpRanges == 0.5m && ShortPullbackRules.GiveUpRanges == 0.5m,
+            "LongPullbackRules.GiveUpRanges and ShortPullbackRules.GiveUpRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Cluster threshold",
+            ParameterCell(architecture, "Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
+            LongPullbackRules.ClusterThreshold == 2, "LongPullbackRules.ClusterThreshold"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Squeeze test",
+            ParameterCell(architecture, "Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
+            ShortPullbackRules.SqueezeWindowSessions == 20 && AverageGap.Window == 20,
+            "ShortPullbackRules.SqueezeWindowSessions and AverageGap.Window"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Contraction test",
+            ParameterCell(architecture, "Contraction test").Contains("Against the 20-day average range", StringComparison.Ordinal),
+            IndicatorEngine.RangeWindow == 20, "IndicatorEngine.RangeWindow"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Scan breadth",
+            ParameterCell(architecture, "Scan breadth").Contains("Top 50 per scan", StringComparison.Ordinal),
+            ScanEngine.Breadth == 50, "ScanEngine.Breadth"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Nightly setup cap",
+            ParameterCell(architecture, "Nightly setup cap")
+                .Contains("60, split 40 long and 20 short", StringComparison.Ordinal),
+            NightlyCap.Total == 60 && NightlyCap.LongAllocation == 40 && NightlyCap.ShortAllocation == 20,
+            "NightlyCap.Total, LongAllocation and ShortAllocation"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Month-mover lookback",
+            ParameterCell(architecture, "Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
+            ScanEngine.MonthWindow == 20, "ScanEngine.MonthWindow"));
+
         IReadOnlyList<IReadOnlyList<string>> parameters = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
 
         foreach (Pin pin in pins)
@@ -159,13 +231,33 @@ public sealed class PinnedConstantsCheck
             coverage.Examined(pin.What, 1);
         }
 
+        // Most pins read the constant from the compiled code, so the value is the value. Four do
+        // not: the store pragmas are matched against the text of the statements in the factory,
+        // which is a claim about what the connection does made by reading how it is opened.
+        coverage.Scan("the four store pragmas, matched against the statements StoreConnectionFactory issues",
+            CheckCoverage.Backing.Test(
+                "StoreTests.The_open_connection_reports_the_four_pragmas_from_schema",
+                "the test opens a connection and asks it what each pragma is set to, which is the only thing "
+                + "that distinguishes a statement issued from a statement present in the file"));
+
         // Named so the number moves when a parameter gains a constant, rather than being a
         // literal somebody has to remember to decrement.
-        string[] pinnedParameters = ["Daily API ceiling", "Price floor", "Liquidity floor, long"];
+        string[] pinnedParameters =
+        [
+            "Daily API ceiling", "Price floor", "Liquidity floor, long",
+            "Liquidity floor, short", "Market cap floor, short",
+            "Listing age floor, short", "Daily range floor", "Pullback shape", "Trigger reachability",
+            "Give-up distance cap", "Cluster threshold", "Squeeze test", "Contraction test",
+            "Scan breadth", "Month-mover lookback", "Nightly setup cap",
+        ];
         coverage.OutOfScope(
             "rows of the authored parameters table with no code constant yet",
             parameters.Count - pinnedParameters.Length,
-            "the parameter arrives with the checkpoint that builds the component it governs");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "mapping each authored parameter to the checkpoint that builds the component it governs",
+                "each closes when its component is built, and which checkpoint that is has never been derived. The "
+                + "mapping is by parameter name rather than by component name, which is why Schedule cannot resolve "
+                + "it the way it resolves a catalogue row"));
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
         string[] pinnedBudgetRows =
@@ -173,8 +265,11 @@ public sealed class PinnedConstantsCheck
         coverage.OutOfScope(
             "rows of the data budget whose request has not been built yet",
             budget.Count - pinnedBudgetRows.Length,
-            "the request arrives with the checkpoint that makes it. No row of this table is unexaminable "
-            + "by design any more: every one states a cost per request and a cadence separately");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "mapping each data-budget row to the checkpoint that makes the request",
+                "the request arrives with the checkpoint that makes it, and that mapping has never been derived. No "
+                + "row of this table is unexaminable by design any more: every one states a cost per request and a "
+                + "cadence separately"));
 
         coverage.Report();
 

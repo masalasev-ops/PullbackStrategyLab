@@ -63,6 +63,9 @@ public sealed class ShellExecutableCheck
         }
 
         coverage.Examined("shell entry points checked against their recorded mode", EntryPoints.Length);
+        coverage.NoSourceScan(
+            "the mode is read from the git index, which is the thing that travels to a runner. It is the state "
+            + "itself rather than a description of it, and Windows cannot see it any other way");
         coverage.Report();
 
         Assert.True(wrong.Count == 0,

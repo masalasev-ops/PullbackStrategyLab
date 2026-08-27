@@ -88,6 +88,22 @@ public sealed partial class StatedCountsCheck
             longChecks.Count,
             "rows of the long check list against the split stated above it"));
 
+        // ARCHITECTURE.html, the rows the one-time calibration at 2.11 revisits. It read "four
+        // thresholds" over three marked rows until the 2.1 spec pass, because the stated count was
+        // of numbers and the table is of rows, and the pullback-shape row carries two numbers.
+        // Nothing derived either figure, so both drifted. Counted over rows now, which is the unit
+        // the table actually has.
+        IReadOnlyList<IReadOnlyList<string>> authored = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
+        Assert.Contains(
+            "Five rows of the authored-parameters table are marked \"phase 2 count check\"",
+            architecture,
+            StringComparison.Ordinal);
+        claims.Add(new Claim(
+            "ARCHITECTURE.html, the rows marked phase 2 count check",
+            5,
+            authored.Count(r => r.Count > 2 && r[2].Equals("Phase 2 count check", StringComparison.OrdinalIgnoreCase)),
+            "rows of the authored parameters table whose review point is the phase 2 count check"));
+
         // BUILD_PLAN.md, six phases.
         Assert.Contains("Six phases.", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim("BUILD_PLAN.md, six phases", 6, PhaseHeading().Matches(buildPlan).Count, "phase headings"));
@@ -163,10 +179,36 @@ public sealed partial class StatedCountsCheck
             coverage.Examined(claim.What, 1);
         }
 
-        coverage.NotExamined(
+        coverage.NoSourceScan(
+            "every claim compares a number a document states about itself against the number derived from that "
+            + "same document. The text is the subject on both sides, and nothing here concludes anything about "
+            + "what the shipped code does");
+
+        // Out of scope rather than unexamined, and reclassified at 2.1 rather than left as it was.
+        //
+        // It was NotExamined with a count of zero, which summed to nothing, so the record carried
+        // the admission and the report read "unexamined 0" on the same page. Counting admissions
+        // rather than their sizes made it visible, and visible it has to be classified honestly.
+        //
+        // CLAUDE.md's own definitions decide it. Unexamined means a claim this phase should have
+        // been able to assert and could not; out of scope means the check exempts something by name
+        // and says why. This is the second: the check is a registry, and it exempts prose counts
+        // nobody registered. It is the same shape as no-superseded-citation exempting citations
+        // inside a record, which is already recorded this way.
+        //
+        // The count stays zero and stays honest about what it is. The check does not scan prose for
+        // numbers, so it cannot say how many it is missing; zero is the number of exempted items it
+        // can name, not a measurement of the hole. Closing it means teaching the check to find every
+        // number in the specs and report which are registered, which is a decision nobody has taken
+        // and which the out-of-scope naming rule at 2.2 will require to be priced.
+        coverage.OutOfScope(
             "numbers stated in prose that this registry does not name",
             0,
-            "the check is a registry, so a stated count nobody adds here is not examined at all");
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "teaching this check to find every number in the five specs and report which are registered",
+                "the check is a registry and exempts counts nobody added to it. The zero is the number of exempted "
+                + "items it can name, not a measurement of the hole: it does not scan prose for numbers, so it cannot "
+                + "say how many it is missing"));
         coverage.Report();
 
         string[] wrong = claims

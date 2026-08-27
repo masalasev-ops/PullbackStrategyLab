@@ -623,30 +623,265 @@ public sealed class CheckProofTests
     // review by hand: BarAppendOnlyCheck.BarTables cut from three tables to one left the suite
     // passing, the phase report GREEN, and one summary number nobody compares eight lower.
 
+    // The scopes bar-append-only actually names, in the shape the defect had: three bar tables
+    // carrying the property, and forty-seven source files whose count is a fact about the corpus.
+    [Fact]
+    public void A_check_that_says_nothing_about_its_source_scans_fails()
+    {
+        // The half that makes the sweep complete. A check added later is asked the question rather
+        // than being assumed to have none, because the four assertions that outlived their subjects
+        // were all in things nobody had thought to ask it of.
+        string missing = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check", [], noSourceScan: null, Backs, Jobs));
+
+        Assert.Contains("declares neither a source-scan assertion nor NoSourceScan", missing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_check_that_declares_both_a_scan_and_no_source_scan_fails()
+    {
+        string both = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion("something read from the source", CheckCoverage.Backing.None("nothing yet"))],
+            noSourceScan: "it reads no source",
+            Backs,
+            Jobs));
+
+        Assert.Contains("also declares NoSourceScan", both, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_backing_naming_a_test_that_does_not_exist_fails()
+    {
+        // The direction that matters. A backing which has gone stale reads as covered, so it is
+        // worse than none: nothing distinguishes it from one that still holds.
+        string stale = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "no delete against a bar table",
+                CheckCoverage.Backing.Test("SomeTests.A_test_that_was_renamed_away", "it used to run this"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+
+        Assert.Contains("no test by that name exists", stale, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_backing_naming_a_job_the_workflow_does_not_have_fails()
+    {
+        string stale = Assert.Single(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "path literals match the on-disk name",
+                CheckCoverage.Backing.Runner("linux", "it used to run there"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+
+        Assert.Contains("the workflow has no job by that name", stale, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_unbacked_scan_is_reported_and_does_not_fail()
+    {
+        // Deliberate, and the part most likely to be read as a hole. The fix for an unbacked scan
+        // is a behavioural test per scan, which is scheduled work; a rule that blocked on it would
+        // be answered by writing Backing.None reasons that say nothing, and the list would still
+        // be empty while nothing exercised anything.
+        Assert.Empty(CheckCoverage.ScanProblems(
+            "a-new-check",
+            [new CheckCoverage.ScanAssertion(
+                "every write belongs to its declared writer",
+                CheckCoverage.Backing.None("nothing runs the pipeline and asks who wrote each row"))],
+            noSourceScan: null,
+            Backs,
+            Jobs));
+    }
+
+    [Fact]
+    public void The_two_name_sets_a_backing_resolves_against_are_populated()
+    {
+        // Stated in advance rather than left self-validating. Both sets are read from outside the
+        // source text, and either one coming back empty would make every backing resolve to
+        // nothing while every check kept passing, which is this mechanism's own failure mode.
+        Assert.True(CheckCoverage.TestNames.Count >= 250,
+            $"the assembly scan found {CheckCoverage.TestNames.Count} tests. It has held at least 250 since 2.10.");
+        Assert.Contains("StoreTests.The_open_connection_reports_the_four_pragmas_from_schema", CheckCoverage.TestNames);
+        Assert.Equal(["rehearsal", "suite"], CheckCoverage.WorkflowJobs.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void The_sweep_finds_the_files_that_read_the_shipped_source()
+    {
+        // Handed an empty map of implemented checks, every scanning file is one nobody records.
+        // That is the detection working; against the real map the same call is what leaves the
+        // three scans written in ordinary tests on the list rather than out of sight.
+        (IReadOnlyList<string> scanning, IReadOnlyList<string> outside) =
+            CoverageReportedCheck.SourceScanningFiles(new Dictionary<string, string>(StringComparer.Ordinal));
+
+        Assert.True(scanning.Count >= 12,
+            $"the sweep found {scanning.Count} files reading the shipped source. It has held at least twelve "
+            + "since 2.11, so the pattern list stopped matching.");
+        Assert.Equal(scanning.Count, outside.Count);
+        Assert.Contains("src/PullbackStrategyLab.Tests/Checks/BarAppendOnlyCheck.cs", outside);
+    }
+
+    private static bool Backs(string test) => CheckCoverage.TestNames.Contains(test);
+
+    private static bool Jobs(string job) => CheckCoverage.WorkflowJobs.Contains(job);
+
+    private static CheckCoverage.Scope Property(string what, int count) => new(what, count, IsContext: false);
+
+    private static CheckCoverage.Scope ContextScope(string what, int count) => new(what, count, IsContext: true);
+
+    private static Dictionary<string, CheckCoverage.CheckFloors> Floors(
+        string check,
+        Dictionary<string, int> scopes,
+        params string[] context) =>
+        new(StringComparer.Ordinal) { [check] = new CheckCoverage.CheckFloors(scopes, context) };
+
     [Fact]
     public void The_examined_floor_catches_a_check_narrowing_below_it()
     {
-        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["bar-append-only"] = 54 };
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 },
+            "source files scanned");
 
-        string? narrowed = CheckCoverage.Shortfall("bar-append-only", 46, recorded);
+        string narrowed = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only",
+            [Property("bar tables named by the check", 1), ContextScope("source files scanned", 47)],
+            recorded));
 
-        Assert.NotNull(narrowed);
-        Assert.Contains("bar-append-only", narrowed, StringComparison.Ordinal);
-        Assert.Contains("46", narrowed, StringComparison.Ordinal);
-        Assert.Contains("54", narrowed, StringComparison.Ordinal);
+        Assert.Contains("bar tables named by the check", narrowed, StringComparison.Ordinal);
+        Assert.Contains("examined 1", narrowed, StringComparison.Ordinal);
+        Assert.Contains("floor of 3", narrowed, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Corpus_growth_no_longer_pays_for_a_narrowing()
+    {
+        // The falsification the phase 1 sign-off ran, as a permanent proof. Under one floor per
+        // check this passed: bar-append-only cut from three bar tables to one, with five ordinary
+        // new files added, examined 55 against a floor of 54, and the phase report went GREEN with
+        // the total higher than the committed run. Per scope the growth cannot reach the property.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 },
+            "source files scanned");
+
+        Assert.NotEmpty(CheckCoverage.Shortfalls(
+            "bar-append-only",
+            [Property("bar tables named by the check", 1), ContextScope("source files scanned", 52)],
+            recorded));
+    }
+
+    [Fact]
+    public void Corpus_shrinkage_no_longer_raises_a_false_alarm()
+    {
+        // The other half, and it fired first in practice: deleting two string literals from one
+        // test file dropped path-casing below its floor and turned it red for a reason that has
+        // nothing to do with path casing. A guard that cries wolf gets suppressed, and a
+        // suppressed guard is a dead one arrived at slowly.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "path-casing",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["paths compared against the on-disk name"] = 27 },
+            "string literals read");
+
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing",
+            [Property("paths compared against the on-disk name", 27), ContextScope("string literals read", 2410)],
+            recorded));
     }
 
     [Fact]
     public void The_examined_floor_is_a_floor_rather_than_an_equality()
     {
         // Counts differ between platforms and grow with the corpus. A baseline demanding equality
-        // would go red on a file being added, and a guard that cries wolf gets suppressed, which
-        // is a slower way of deleting it.
-        var recorded = new Dictionary<string, int>(StringComparer.Ordinal) { ["path-casing"] = 2409 };
+        // would go red on a file being added.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "path-casing",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["paths compared against the on-disk name"] = 27 });
 
-        Assert.Null(CheckCoverage.Shortfall("path-casing", 2409, recorded));
-        Assert.Null(CheckCoverage.Shortfall("path-casing", 2410, recorded));
-        Assert.NotNull(CheckCoverage.Shortfall("path-casing", 2408, recorded));
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 27)], recorded));
+        Assert.Empty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 28)], recorded));
+        Assert.NotEmpty(CheckCoverage.Shortfalls(
+            "path-casing", [Property("paths compared against the on-disk name", 26)], recorded));
+    }
+
+    [Fact]
+    public void A_scope_that_stops_being_reported_is_caught()
+    {
+        // The direction a single total could never see. A scope renamed or dropped takes its
+        // property with it, and the check keeps passing on whatever else it still counts.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["bar tables named by the check"] = 3,
+                ["writes found in the shipped source"] = 0,
+            });
+
+        string gone = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only", [Property("bar tables named by the check", 3)], recorded));
+
+        Assert.Contains("writes found in the shipped source", gone, StringComparison.Ordinal);
+        Assert.Contains("narrowed to nothing", gone, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_scope_reclassified_as_context_is_caught()
+    {
+        // Otherwise the repair defeats itself: moving a scope from Examined to Context would remove
+        // its floor with a one-word diff nobody reads as a guard being deleted.
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only",
+            new Dictionary<string, int>(StringComparer.Ordinal) { ["bar tables named by the check"] = 3 });
+
+        IReadOnlyList<string> problems = CheckCoverage.Shortfalls(
+            "bar-append-only", [ContextScope("bar tables named by the check", 3)], recorded);
+
+        Assert.Contains(problems, p => p.Contains("is recorded as context by the check", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_scope_with_no_floor_fails_rather_than_being_waved_through()
+    {
+        Dictionary<string, CheckCoverage.CheckFloors> recorded = Floors(
+            "bar-append-only", new Dictionary<string, int>(StringComparer.Ordinal));
+
+        string missing = Assert.Single(CheckCoverage.Shortfalls(
+            "bar-append-only", [Property("a scope nobody floored", 4)], recorded));
+
+        Assert.Contains("a scope nobody floored", missing, StringComparison.Ordinal);
+        Assert.Contains("has no floor", missing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_admission_covering_nothing_still_counts_as_an_admission()
+    {
+        // PathCasingCheck records its no-work branch as NotExamined(..., 0, ...). Summing the
+        // counts made that zero, so the record carried an unexamined line and the report said
+        // "unexamined 0" on the same page. An admission that counts as silence is the failure the
+        // split between unexamined and out of scope exists to prevent, reached from inside.
+        var coverage = new CheckCoverage("a-proof", new NullOutput());
+        coverage.NotExamined("paths compared against the on-disk name", 0, "nothing names a repository path yet");
+
+        Assert.Equal(1, coverage.TotalUnexamined);
+    }
+
+    private sealed class NullOutput : Xunit.Abstractions.ITestOutputHelper
+    {
+        public void WriteLine(string message)
+        {
+        }
+
+        public void WriteLine(string format, params object[] args)
+        {
+        }
     }
 
     [Fact]
@@ -655,11 +890,14 @@ public sealed class CheckProofTests
         // The obvious way to lose the whole mechanism is to add a check and no floor for it. That
         // has to fail, or the guard covers whatever was there when it was written and nothing
         // added since, which is the same silent narrowing one level up.
-        string? missing = CheckCoverage.Shortfall("a-new-check", 9, new Dictionary<string, int>(StringComparer.Ordinal));
+        string missing = Assert.Single(CheckCoverage.Shortfalls(
+            "a-new-check",
+            [Property("things it looked at", 9)],
+            new Dictionary<string, CheckCoverage.CheckFloors>(StringComparer.Ordinal)));
 
-        Assert.NotNull(missing);
         Assert.Contains("a-new-check", missing, StringComparison.Ordinal);
         Assert.Contains("fixtures/checks-baseline.json", missing, StringComparison.Ordinal);
+        Assert.Contains("\"things it looked at\": 9", missing, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -706,6 +944,40 @@ public sealed class CheckProofTests
 
     private static FixtureReplayCheck.Expectation Expectation(string id, string tier, string checkpoint) =>
         new(id, tier, "1", checkpoint, "a proof, not a run", null);
+
+    /// <summary>
+    /// A voided expectation verifies nothing, whatever tier it carries.
+    ///
+    /// `voidedBecause` says the subject no longer exists or can no longer be compared, and the run
+    /// records such a row as void rather than as agreement. Counting it as independent would let a
+    /// checkpoint satisfy done condition seven with a DERIVED row that compares nothing, which is the
+    /// state that condition exists to make visible.
+    ///
+    /// Proved by hand rather than by voiding a real expectation, so the proof is permanent and the
+    /// fixture is never broken to produce it.
+    /// </summary>
+    [Fact]
+    public void A_voided_expectation_does_not_count_toward_a_checkpoint_being_independently_covered()
+    {
+        FixtureReplayCheck.Expectation live = Expectation("a.one", FixtureReplayCheck.Derived, "2.9");
+        FixtureReplayCheck.Expectation voided = live with
+        {
+            Id = "a.two",
+            VoidedBecause = "the platform stopped publishing the figure",
+        };
+
+        FixtureReplayCheck.CheckpointTier both = Assert.Single(
+            FixtureReplayCheck.ByCheckpoint([live, voided]));
+
+        Assert.Equal(2, both.Total);
+        Assert.Equal(1, both.Independent);
+
+        FixtureReplayCheck.CheckpointTier alone = Assert.Single(
+            FixtureReplayCheck.ByCheckpoint([voided]));
+
+        Assert.Equal(1, alone.Total);
+        Assert.Equal(0, alone.Independent);
+    }
 
     [Fact]
     public void One_derived_expectation_does_not_satisfy_the_condition_for_another_checkpoint()
@@ -784,5 +1056,201 @@ public sealed class CheckProofTests
             _ => false));
 
         Assert.Contains("the diff never reaches", problem, StringComparison.Ordinal);
+    }
+
+    // ---- a malformed table row, and an ambiguous permit -----------------------------------
+
+    // Both found at 2.1 and both the same shape: a lookup answering a narrower question than the
+    // one it was asked, and reporting success. The first was a parser skipping a row that did not
+    // fit; the second was a first-match lookup over a column that is not a key.
+
+    private const string RaggedTable = """
+        ## A table
+
+        | Raised | Obligation | Due at |
+        |---|---|---|
+        | 1.1 | a row with all three cells | 2.1 |
+        | 1.12 | a row missing its last cell |
+        | 1.11 | another complete row | the move |
+        """;
+
+    private const string RectangularTable = """
+        ## A table
+
+        | Raised | Obligation | Due at |
+        |---|---|---|
+        | 1.1 | a row with all three cells | 2.1 |
+        | 1.11 | another complete row | the move |
+        """;
+
+    [Fact]
+    public void A_body_row_narrower_than_its_header_is_rejected_rather_than_dropped()
+    {
+        // The row that found this was BUILD_PLAN's own, carrying the per-scope floor obligation.
+        // Two cells where the rest carry three, dropped by a `row.Count >= 3` guard, so the
+        // obligation driving checkpoint 2.1 was absent from Schedule.Obligations entirely.
+        InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+            () => MarkdownTable.BodyRowsAfter(RaggedTable, "## A table"));
+
+        Assert.Contains("header 3 cells wide", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains("body row 2 cells wide", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains("1.12", thrown.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_rectangular_table_is_read_whole()
+    {
+        // The other direction, so the rejection above is not simply a parser that stopped working.
+        IReadOnlyList<IReadOnlyList<string>> rows = MarkdownTable.BodyRowsAfter(RectangularTable, "## A table");
+
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, row => Assert.Equal(3, row.Count));
+        Assert.Equal("the move", rows[1][^1]);
+    }
+
+    [Fact]
+    public void A_wider_body_row_is_caught_too()
+    {
+        // Width, not a minimum. A guard written as "at least three" accepts a row that gained a
+        // cell, and the last cell is the one every obligation's due point is read from.
+        string? problem = MarkdownTable.RaggedRowProblem(
+            [["1.1", "what", "2.1"], ["1.6", "what", "extra", "2.11"]], 3, "## A table");
+
+        Assert.NotNull(problem);
+        Assert.Contains("body row 4 cells wide", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_naming_a_checkpoint_that_raised_two_obligations_is_ambiguous()
+    {
+        // Two rows raised at one checkpoint is legitimate: the table is keyed by who raised an
+        // obligation, not by the obligation. The permit is what is wrong, because it uses `Raised`
+        // as a key. BUILD_PLAN carries two rows raised at 1.12 today.
+        ArchitectureConformanceCheck.Obligation[] two =
+        [
+            new("1.12", "2.2", "the out-of-scope naming rule"),
+            new("1.12", "2.1", "the examined floor per scope"),
+        ];
+
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
+            [new FixtureReplayCheck.Permit("1.4", "1.12", "whole-market counts")],
+            two,
+            _ => false));
+
+        Assert.Contains("2 rows raised there", problem, StringComparison.Ordinal);
+        Assert.Contains("not stated", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Two_obligations_raised_at_one_checkpoint_are_fine_when_no_permit_names_it()
+    {
+        // The table is not the defect, so nothing fires when the ambiguity is never consulted.
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [],
+            [new ArchitectureConformanceCheck.Obligation("1.12", "2.2", "one"),
+             new ArchitectureConformanceCheck.Obligation("1.12", "2.1", "another")],
+            _ => false));
+    }
+
+    // ---- an out-of-scope coverage item names what ends it -----------------------------------
+
+    // The obligation raised at 1.12 and due at 2.2. An out-of-scope architecture claim has always
+    // had to name the checkpoint that ends it; a coverage item carried free prose and nothing read
+    // it, so its count read as permanent rather than as one that falls.
+
+    private static CheckCoverage.Deferred Defer(string what, CheckCoverage.OutOfScopeReason reason) =>
+        new(what, 1, reason);
+
+    [Fact]
+    public void A_deferral_to_a_checkpoint_that_has_landed_is_caught()
+    {
+        string problem = Assert.Single(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("1.3", "why"))],
+            _ => true,
+            checkpoint => checkpoint == "1.3"));
+
+        Assert.Contains("already records 1.3", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_deferral_to_a_checkpoint_nobody_scheduled_is_caught()
+    {
+        string problem = Assert.Single(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("9.9", "why"))],
+            _ => false,
+            _ => false));
+
+        Assert.Contains("no such checkpoint", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_deferral_to_an_open_checkpoint_is_fine()
+    {
+        Assert.Empty(CheckCoverage.DeferralProblems(
+            "a-check",
+            [Defer("a table nobody created", CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2", "why"))],
+            _ => true,
+            _ => false));
+    }
+
+    [Fact]
+    public void A_priced_deferral_carries_its_price_and_is_not_asked_for_a_checkpoint()
+    {
+        // The half of the rule that does not transfer from the claim side. Two of fixture-replay's
+        // exemptions close on a purchase rather than on a checkpoint, and read as prose they are
+        // indistinguishable while differing by three orders of magnitude in cost.
+        var expensive = CheckCoverage.OutOfScopeReason.UntilDecided(
+            "1,900 vendor calls and about 130 MB committed for ever", "the whole-market screen");
+        var cheap = CheckCoverage.OutOfScopeReason.UntilDecided(
+            "one per-ticker vendor call at the next capture", "the floor's rejecting side");
+
+        Assert.Empty(CheckCoverage.DeferralProblems("a-check", [Defer("x", expensive), Defer("y", cheap)], _ => false, _ => true));
+
+        Assert.Contains("1,900", expensive.ToString(), StringComparison.Ordinal);
+        Assert.Contains("one per-ticker", cheap.ToString(), StringComparison.Ordinal);
+        Assert.NotEqual(expensive.Price, cheap.Price);
+    }
+
+    [Fact]
+    public void A_by_design_deferral_is_permanent_and_says_so()
+    {
+        var reason = CheckCoverage.OutOfScopeReason.ByDesign("a dated record is meant to say what was true then");
+
+        Assert.True(reason.IsPermanent);
+        Assert.Null(reason.Checkpoint);
+        Assert.Null(reason.Price);
+        Assert.Empty(CheckCoverage.DeferralProblems("a-check", [Defer("x", reason)], _ => false, _ => true));
+    }
+
+    [Fact]
+    public void The_three_shapes_are_told_apart_in_the_record()
+    {
+        // What stops by-design swallowing the rule: the shapes are distinguishable in the record,
+        // so the count of permanent exemptions can be read rather than absorbed into one number.
+        Assert.StartsWith("closed by 4.2",
+            CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.2", "why").ToString(), StringComparison.Ordinal);
+        Assert.StartsWith("rests on a decision nobody has taken",
+            CheckCoverage.OutOfScopeReason.UntilDecided("a price", "why").ToString(), StringComparison.Ordinal);
+        Assert.StartsWith("exempt by design",
+            CheckCoverage.OutOfScopeReason.ByDesign("why").ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_coverage_reason_re_asks_whether_the_obligation_has_fallen_due()
+    {
+        // The run is red either way when a permit has expired. What was wrong was the page: the
+        // record beside the failure still read "permitted by", because the reason resolved the
+        // obligation and stopped rather than asking the question the assertion above it asked.
+        var permit = new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts");
+
+        Assert.Contains("permitted by the obligation raised at 1.1",
+            FixtureReplayCheck.PermitReason([Open], permit, _ => false), StringComparison.Ordinal);
+
+        Assert.Contains("the permission is spent",
+            FixtureReplayCheck.PermitReason([Open], permit, checkpoint => checkpoint == "2.1"), StringComparison.Ordinal);
     }
 }
