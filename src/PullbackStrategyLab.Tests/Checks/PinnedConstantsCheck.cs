@@ -5,6 +5,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Worker.Vendor;
@@ -223,6 +224,28 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Month-mover lookback",
             ParameterCell(architecture, "Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
             ScanEngine.MonthWindow == 20, "ScanEngine.MonthWindow"));
+
+        // The three numbers the 3.0 spec pass authored. Each is stated in a decision, so each is
+        // pinned against the constant rather than left as prose that agrees with the code today.
+        string decisions = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "DECISIONS.md"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the control draw, five per set",
+            decisions.Contains("five per set", StringComparison.OrdinalIgnoreCase),
+            MeasurementParameters.ControlsPerSet == 5, "MeasurementParameters.ControlsPerSet"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the interval, a block length of ten sessions",
+            decisions.Contains("block length of ten sessions", StringComparison.Ordinal),
+            MeasurementParameters.BootstrapBlockSessions == 10,
+            "MeasurementParameters.BootstrapBlockSessions"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the interval, ten thousand draws",
+            decisions.Contains("ten thousand draws", StringComparison.Ordinal),
+            MeasurementParameters.BootstrapDraws == 10_000, "MeasurementParameters.BootstrapDraws"));
+
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Forward horizons",
+            ParameterCell(architecture, "Forward horizons").Contains("10", StringComparison.Ordinal),
+            MeasurementParameters.ScoringHorizonSessions == 10,
+            "MeasurementParameters.ScoringHorizonSessions"));
 
         IReadOnlyList<IReadOnlyList<string>> parameters = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
 

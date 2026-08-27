@@ -39,6 +39,41 @@ Flagged setups returning 2% is not a result if everything returned 2%. The loose
 **The win-rate ceiling is computed from the outcome distribution, never assumed**
 A give-up point at half a daily range sits 0.8 standard deviations away, so a coin flip with that stop wins about 20% of the time and the observed 25% is mostly geometry. What matters is the gap between achieved and the computed bound: a wide gap means selection has room, a narrow one means the stop is the binding constraint and the loop should point at execution instead.
 
+**Controls are drawn by nearest neighbour on the matched dimensions, five per set, with no randomness**
+The sets and what they match on are settled above. What was not settled is how many, how they are chosen, and whether the same night draws the same names twice.
+
+Five per set per flagged setup. One control inherits that single name's idiosyncratic move; fifty reaches so far down the distance ordering that the match stops meaning anything. Five keeps a thin night visibly thin.
+
+**Deterministic nearest neighbour rather than a random draw**, ordered by distance on the matched dimensions with ticker as the tiebreak, exactly as the scans and the cap already break ties. A seeded draw would be a second thing to keep point in time, a value the phase report cannot diff, and a number nobody could reproduce from the store alone. Nearest neighbour also makes the match quality the ranking rather than an afterthought: the fifth control is by construction the worst of the five, and `match_quality` records the distance on each dimension separately so nobody averages them.
+
+Drawn from the same session's universe members that cleared the liquidity floor and were not flagged, at 18:26, **before the cap at 18:28**. Controls answer for the flagged population and not for the sixty that survived truncation, and drawing after the cap would compare the kept setups against controls for a different question.
+
+**What weakening this looks like, written down because it is easy and silent.** A widened decile band, a dropped dimension when a night is thin, a fallback that reaches outside the session, or a draw that quietly takes fewer than five and reports the same figure. Each makes the tight comparison flattering, and the tight comparison is the one that can embarrass the project, which is the only reason it is worth having.
+
+**The ceiling is computed from the path, not from the terminal return**
+The question is what win rate perfect foresight achieves *given that it still has to survive the path*. So a setup counts toward the bound when its ten-session return is positive **and** its worst excursion never reached the give-up point. A setup that ends ahead having first been stopped out is not available to any selection rule, and counting it would produce a bound no system could reach.
+
+That reads three stored figures together, `return_signed`, `mae_atr` and `stop_distance_ranges`, which is why the excursions are columns on `forward_return` rather than derived on read, and why 3.2 lands before 3.4.
+
+**The trap, and it is the reason this is a decision rather than a formula.** The excursion is recorded in ATR and the give-up distance in daily ranges. Those are two different units on two different bases, and comparing them without a stated conversion is exactly the silent plausible number `PullbackGeometry` carries a warning about: both are small, both look like volatility, and a wrong one produces a bound that reads as reasonable. **The excursion is converted into daily ranges before the comparison, through the same `adr_20` the give-up distance is expressed in, and the conversion is named at the point of use.** Storing it twice was the alternative and it is worse: two columns that must agree are two columns that will not.
+
+Per direction, never pooled. Recomputed weekly over the population that has closed its tenth session, and a later week's bound is a new dated row rather than a revision of the old one.
+
+**The interval is a block bootstrap over paired differences, and the effective sample is measured**
+This is not the textbook case, and the textbook interval is wrong here in the direction that matters.
+
+**Ten-day labels overlap.** A ten-session horizon means adjacent nights share most of their window, so consecutive observations are serially correlated by construction. **Same-night setups share a market factor.** Forty names flagged on one night rise and fall together with the market over that fortnight.
+
+Either alone makes an interval assuming independent observations too narrow. Together, band 1 clears zero before it should, and band 1 is the project's central question. A too-narrow interval does not produce a wrong number, it produces a confident one, which is the failure this whole system exists to avoid.
+
+So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws, percentile bounds, deterministic ordering so the figure is reproducible and diffable.
+
+A Newey-West style adjustment with the lag set from the horizon was the alternative and would have cost less to compute. It was not taken because it corrects the variance of a mean and this scoreboard also shows decile curves and win rates, and one resampling scheme that serves every panel is worth more than a closed form that serves one.
+
+**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval.
+
+**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. ARCHITECTURE states 160 paired setup observations as the selection-variant minimum sample, written under the assumption this decision corrects, and phase 5 pre-registers against it where pre-registration is immutable. That figure is not moved here; it is carried as an obligation due before 5.1 with the measured ratio attached.
+
 **Long and short are never pooled into one figure**
 In code, in a report, or on a screen. Short results carry a borrow assumption that long results do not, so a pooled number silently inherits it.
 

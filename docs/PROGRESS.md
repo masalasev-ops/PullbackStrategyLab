@@ -3485,3 +3485,76 @@ Carried:    **One repointed rather than discharged.** The three unbacked source 
             coverage requirement rather than on a test. Neither is work this checkpoint can finish,
             so the obligation moves to 4.6 where the first of the two closes. Moved once, with the
             reason, rather than left to move at every sign-off.
+
+## 3.0(f) — 2026-08-27 — phase-3-measurement — the spec pass, and the figure it would not move
+
+The sixth part of 3.0. Three underspecifications settled as named decisions before the code that
+consumes them is written, on 2.1(b)'s precedent, plus the SCHEMA repairs phase 3's tables need.
+
+**Why before rather than alongside.** Control count and draw method decide what the comparison is
+made of; the ceiling arithmetic decides what "selection has room" means; the interval method decides
+when band 1 is allowed to say anything. All three are the instrument rather than the implementation,
+and a session that authors them while writing their consumer is reviewing its own choices.
+
+Built:      Three decisions. **`Controls are drawn by nearest neighbour on the matched dimensions,
+            five per set, with no randomness`**: deterministic rather than seeded, because a seed is
+            a second thing to keep point in time and a value the phase report cannot diff, and
+            because nearest neighbour makes the match quality the ranking rather than an
+            afterthought. Drawn before the cap, so controls answer for the flagged population and not
+            for the sixty that survived truncation. The entry says what weakening it looks like,
+            because the tight comparison is the one that can embarrass the project and it is easy to
+            soften silently.
+
+            **`The ceiling is computed from the path, not from the terminal return`**: a setup counts
+            toward the bound when its ten-session return is positive **and** its worst excursion
+            never reached the give-up point, because a setup that ends ahead having first been
+            stopped out is not available to any selection rule.
+
+            **`The interval is a block bootstrap over paired differences, and the effective sample is
+            measured`**: paired differences to remove the shared market factor by construction, then
+            a moving-block bootstrap at a block length of ten sessions for the serial overlap.
+
+            `MeasurementParameters` in Core holds the four numbers, and all four are pinned, so a
+            decision stating one and a component reading another fails rather than drifting.
+
+            **SCHEMA repaired.** `control_setup` and `forward_return` had no primary key while every
+            sibling table has one. `control_setup` gains `control_id`, which is what
+            `forward_return.subject_id` points at: the alternative was a composite subject key on
+            every outcome row. `ceiling_bound` and `scoreboard` were declared at store level under
+            "Research, phases 5 and 6" while their writers land at 3.4 and 3.5 and the file's own
+            preamble claims completeness through phase 3; both are now declared in full in the
+            section their writers belong to.
+
+Findings:   **The units trap in the ceiling, named in the decision rather than left to the
+            implementation.** The excursion is stored in ATR and the give-up distance is expressed in
+            daily ranges. Two different units on two different bases, both small, both looking like
+            volatility, and a wrong comparison produces a bound that reads as perfectly reasonable.
+            That is the same shape as the basis trap `PullbackGeometry` carries a warning about, one
+            layer out. The conversion happens at the point of use and is named there; storing the
+            excursion twice was the alternative and is worse, because two columns that must agree are
+            two columns that will not.
+
+            **The interval decision has a consequence the corpus had already written down wrongly,
+            and this pass declines to fix it.** `ARCHITECTURE.html` states 160 paired setup
+            observations as the selection-variant minimum sample. That figure was computed as though
+            observations were independent, and they are not: ten-day labels overlap and same-night
+            setups share a market factor, so 160 rows carry fewer than 160 observations' worth of
+            information and the honest figure is larger.
+
+            It is **not moved here**. It is pinned; moving it on an unmeasured ratio would repeat the
+            same error in the other direction; and nothing reads it until phase 5. Raised as an
+            obligation due before 5.1, which is where `VariantAdmitter` writes a target that
+            `Targets and minimum samples are written at creation and are immutable` then makes
+            unrevisable. What closes it is the measured ratio from the first scoreboard run.
+
+            Observation. `forward_return` gains `filled_at`, and it is the column that keeps this
+            phase's sharpest point-in-time case honest. ForwardReturnFiller is the one stage that
+            reads bars dated after its subject's own date, by design. The resolution is that the
+            fill's as-of is the fill date rather than the setup date, so the row appears when the
+            outcome exists rather than being backdated to the night that flagged it.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 366 tests. Four new constants pinned, each
+            against the decision that states it.
+
+Carried:    **One new, due before 5.1**: the 160-observation minimum sample, restated in effective
+            observations rather than rows.

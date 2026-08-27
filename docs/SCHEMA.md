@@ -297,25 +297,75 @@ Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cos
 
 | Column | Type | Note |
 |---|---|---|
+| `control_id` | TEXT PK | `{setup_id}-{control_set}-{control_ticker}`, so `forward_return` has one column to point at |
 | `setup_id`, `control_ticker` | TEXT | |
 | `control_set` | TEXT | `loose` or `tight` |
-| `match_quality` | TEXT | how close the match was on each matched dimension |
+| `match_quality` | TEXT | the distance on each matched dimension, separately, never as one number |
+| `rank` | INTEGER | 1 to 5 by distance, ticker as the tiebreak. The fifth is by construction the worst of the five |
 
-Insert ControlSampler
+Insert ControlSampler · UNIQUE (`setup_id`, `control_set`, `control_ticker`)
+
+*Five per set per setup, drawn by deterministic nearest neighbour with no randomness, before the cap rather than after it (see: Controls are drawn by nearest neighbour on the matched dimensions, five per set, with no randomness). `match_quality` is per dimension because a single blended distance cannot say which dimension the match was bad on, and that is the thing a later reader needs.*
+
+*`control_id` is a surrogate and it is here for one reason: `forward_return` records outcomes for setups and controls in one table, and a control had no single column to be named by. The alternative was a composite subject key on `forward_return`, which puts three columns in the subject of every outcome row and makes the point-in-time read wider than it needs to be.*
 
 ### `forward_return`
 Grain: (setup or control) + horizon. Signed by direction, so a short that fell is positive.
 
 | Column | Type | Note |
 |---|---|---|
-| `subject_id` | TEXT | a `setup_id` or a control row |
+| `subject_id` | TEXT | a `setup.setup_id` or a `control_setup.control_id` |
 | `subject_kind` | TEXT | `setup` or `control` |
 | `horizon_days` | INTEGER | 1, 3, 5, 10 |
 | `intended_date`, `actual_date` | TEXT | differ across a holiday, and both are stored |
-| `return_signed` | TEXT | |
-| `mfe_atr`, `mae_atr` | TEXT | best and worst reached |
+| `return_signed` | TEXT | signed by direction, so a short that fell is positive |
+| `mfe_atr`, `mae_atr` | TEXT | best and worst reached along the way, in ATR |
+| `filled_at` | TEXT | when the lab could first have known this, which is what bounds the read |
 
-Insert ForwardReturnFiller
+Insert ForwardReturnFiller · PK (`subject_id`, `subject_kind`, `horizon_days`)
+
+*`subject_kind` is part of the key rather than a description, because a setup and a control are two different subjects and a surrogate that happened to collide would silently overwrite one with the other.*
+
+*`mfe_atr` and `mae_atr` are in ATR and the give-up distance the ceiling compares them against is in daily ranges. **The conversion happens at the point of use and is named there**, rather than either figure being stored twice: two columns that must agree are two columns that will not (see: The ceiling is computed from the path, not from the terminal return).*
+
+***This is the one stage that reads bars dated after its subject's own date, and it does so by design.** Point in time is not weakened for it: the fill's as-of is `filled_at`, the date the lab is filling on, and the read is bounded by that rather than by the setup date. A setup flagged on Monday has no ten-session outcome until the following Monday fortnight, and the row appears when it exists rather than being backdated to the night that flagged it.*
+
+### `ceiling_bound`
+Grain: date + direction. The win-rate bound perfect foresight could have reached, recomputed weekly.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | the week the bound was computed on |
+| `direction` | TEXT | `long` or `short`, never pooled |
+| `horizon_days` | INTEGER | 10, the scoring horizon the bound is defined at |
+| `subjects` | INTEGER | how many closed setups the bound was computed over, which is the population |
+| `bound` | TEXT | the fraction a system with perfect foresight could have won |
+| `achieved` | TEXT | the fraction actually won over the same rows |
+
+Insert CeilingCalculator · PK (`as_of`, `direction`)
+
+*Direction is in the grain rather than in a note, because a pooled bound would inherit the short side's borrow assumption and the whole point of the figure is the gap between it and what was achieved (see: Long and short are never pooled into one figure).*
+
+*A later week's bound over a larger population is a new dated row and the old one stays. Recomputed means recomputed, not revised: the gap narrowing over time is itself the thing a reader wants to see.*
+
+### `scoreboard`
+Grain: date + panel. What each band showed on a given day, so a panel can be read back as it stood.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | |
+| `panel` | TEXT | which band and which figure |
+| `direction` | TEXT NULL | `long`, `short`, or null where the panel is not per direction, as band 0 is |
+| `figure` | TEXT | the number shown |
+| `low`, `high` | TEXT NULL | the interval bounds, null on a panel that carries no interval |
+| `n_rows` | INTEGER | the rows the figure was computed over |
+| `n_effective` | INTEGER NULL | the effective observations, which is not the same number and is what a minimum sample is counted in |
+
+Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
+
+*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap and same-night setups share a market factor, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).*
+
+*Every panel stores its own count, because a number without one is not shown at all.*
 
 ---
 
@@ -497,13 +547,11 @@ Declared at store level. Columns owed at their checkpoint.
 |---|---|---|
 | `variant` | variant id | Insert VariantAdmitter (definition, target, min sample, **once**) · Update AcceptanceGate (status and resolution date **only**) (see: Targets and minimum samples are written at creation and are immutable) |
 | `variant_score` | variant + date | Insert VariantScorer |
-| `ceiling_bound` | date | Insert CeilingCalculator |
 | `twin_pair` | pair id | Insert TwinPairFinder |
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness |
 | `holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once) |
-| `scoreboard` | date + panel | Insert ScoreboardBuilder |
 
 
 ---

@@ -126,6 +126,7 @@
         "ARCHITECTURE.html, authored parameters, Contraction test": 1,
         "ARCHITECTURE.html, authored parameters, Daily API ceiling": 1,
         "ARCHITECTURE.html, authored parameters, Daily range floor": 1,
+        "ARCHITECTURE.html, authored parameters, Forward horizons": 1,
         "ARCHITECTURE.html, authored parameters, Give-up distance cap": 1,
         "ARCHITECTURE.html, authored parameters, Liquidity floor, long": 1,
         "ARCHITECTURE.html, authored parameters, Liquidity floor, short": 1,
@@ -148,10 +149,15 @@
         "ARCHITECTURE.html, data budget, splits, cost": 1,
         "ARCHITECTURE.html, data budget, the hard ceiling": 1,
         "ARCHITECTURE.html, data budget, whole-market daily bars, cost": 1,
+        "ARCHITECTURE.html, the workable nightly count band": 1,
         "BUILD_PLAN.md 1.2, the session zone": 1,
         "BUILD_PLAN.md 1.6, the range and true range windows": 1,
         "BUILD_PLAN.md 1.6, the three exponential averages": 1,
+        "BUILD_PLAN.md, the same band at the checkpoint that applies it": 1,
         "CLAUDE.md, the daily vendor call ceiling": 1,
+        "DECISIONS.md, the control draw, five per set": 1,
+        "DECISIONS.md, the interval, a block length of ten sessions": 1,
+        "DECISIONS.md, the interval, ten thousand draws": 1,
         "DECISIONS.md, the vendor is EODHD": 1,
         "PullbackStrategyLab.Api/appsettings.json, DailyCallCeiling": 1,
         "PullbackStrategyLab.Api/appsettings.json, SessionZone": 1,
@@ -165,9 +171,7 @@
         "SCHEMA.md, store configuration, foreign_keys": 1,
         "SCHEMA.md, store configuration, journal_mode": 1,
         "SCHEMA.md, store configuration, synchronous": 1,
-        "SCHEMA.md, the three index symbols": 1,
-        "ARCHITECTURE.html, the workable nightly count band": 1,
-        "BUILD_PLAN.md, the same band at the checkpoint that applies it": 1
+        "SCHEMA.md, the three index symbols": 1
       }
     },
     "point-in-time": {

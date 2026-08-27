@@ -717,3 +717,8 @@ Why:  The question was raised at 1.3, recorded only in that entry's `Carried` bl
 Was:  Figure 8 labelled the "Signal request" box `ForwardReturnFiller`.
 Now:  `ProposalRegistry`.
 Why:  ForwardReturnFiller fills forward returns and has nothing to do with signal requests. A proposal asking for a new signal is ProposalRegistry's, which is what the two-kinds-of-proposal decision says. Found while reading for the surfaces sweep rather than by any check, because the conformance check reads the catalogue table and not the figures.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `control_setup` and `forward_return` declared no primary key, `forward_return.subject_id` was documented as "a `setup_id` or a control row" with no column on `control_setup` for a control row to be, and `ceiling_bound` and `scoreboard` were declared at store level only, under "Research — phases 5 and 6".
+Now:  Both phase-3 tables carry a key, `control_setup` gains `control_id` for `subject_id` to point at and a `rank`, `forward_return` gains `filled_at`, and `ceiling_bound` and `scoreboard` are declared in full in the section their writers land in.
+Why:  Every sibling table declares a key and these two did not, so the grain was implied rather than enforced. The subject of an outcome row had nothing to name a control by, and the alternative to a surrogate was a three-column subject on every row. And the file's own preamble claims completeness for phases 1 to 3 while two phase-3 stores sat in the phases 5 and 6 table, so `writer-ownership` would have resolved them at 3.4 and 3.5 with no columns to check.
