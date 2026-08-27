@@ -247,6 +247,41 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.ScoringHorizonSessions == 10,
             "MeasurementParameters.ScoringHorizonSessions"));
 
+        // The minimum sample, and the four inputs it is derived from. Pinned in both documents that
+        // state it, because the figure it replaced lived in three places and read as derived in all
+        // of them while nothing had measured the one input that is a fact.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Selection variant sample",
+            ParameterCell(architecture, "Selection variant sample")
+                .Contains("196 effective paired setup observations", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 196,
+            "MeasurementParameters.MinimumEffectiveObservations"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, 196 effective observations",
+            decisions.Contains("**196 effective observations**", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 196,
+            "MeasurementParameters.MinimumEffectiveObservations"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, two points of forward return",
+            decisions.Contains("two points of ten-day forward return", StringComparison.Ordinal),
+            MeasurementParameters.DetectableDifference == 0.02d,
+            "MeasurementParameters.DetectableDifference"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the two-sided 95% critical value",
+            decisions.Contains("1.959964", StringComparison.Ordinal),
+            MinimumSample.ZAlphaTwoSided95 == 1.959964d, "MinimumSample.ZAlphaTwoSided95"));
+
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the 80% power critical value",
+            decisions.Contains("0.841621", StringComparison.Ordinal),
+            MinimumSample.ZBetaPower80 == 0.841621d, "MinimumSample.ZBetaPower80"));
+
+        // The measured input, pinned against the fixture expectation rather than against a constant.
+        // It is the one number here that is a fact rather than a judgement, so the thing it has to
+        // agree with is the derivation, not a value typed into the source.
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the measured paired dispersion",
+            decisions.Contains("**0.099811**", StringComparison.Ordinal),
+            MinimumSample.Of(0.099811d) == MeasurementParameters.MinimumEffectiveObservations,
+            "the dispersion DECISIONS states, put through MinimumSample.Of"));
+
         IReadOnlyList<IReadOnlyList<string>> parameters = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
 
         foreach (Pin pin in pins)

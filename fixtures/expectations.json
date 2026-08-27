@@ -1600,6 +1600,46 @@
       "checkpoint": "2.7"
     },
     {
+      "id": "dispersion.idiosyncratic",
+      "tier": "DERIVED",
+      "value": "0.091115",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+    },
+    {
+      "id": "dispersion.names",
+      "tier": "DERIVED",
+      "value": "30",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+    },
+    {
+      "id": "dispersion.observations",
+      "tier": "DERIVED",
+      "value": "7230",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+    },
+    {
+      "id": "dispersion.pairedDifference",
+      "tier": "DERIVED",
+      "value": "0.099811",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+    },
+    {
+      "id": "dispersion.sessions",
+      "tier": "DERIVED",
+      "value": "241",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+    },
+    {
       "id": "fixture.actionsObserved",
       "tier": "DERIVED",
       "value": "IESC",
@@ -6651,6 +6691,14 @@
       "checkpoint": "1.12",
       "producedBy": "the replay itself, recorded to detect change",
       "note": "The fixture names with a full twenty-session window, which is what makes the real floor computable over them."
+    },
+    {
+      "id": "minimumSample.effectiveObservations",
+      "tier": "DERIVED",
+      "value": "196",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
     },
     {
       "id": "pointInTime.IESC.afterwards",

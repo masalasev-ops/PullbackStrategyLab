@@ -402,6 +402,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ControlFigures());
         measurements.AddRange(CeilingFigures());
         measurements.AddRange(IntervalFigures());
+        measurements.AddRange(DispersionFigures());
         measurements.AddRange(CapFigures());
         measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
@@ -1026,6 +1027,119 @@ public sealed class PhaseReplay : IDisposable
         }
 
         return figures;
+    }
+
+    /// <summary>
+    /// The dispersion of ten-session forward returns over the fixture's own bars, and the minimum
+    /// sample that falls out of it.
+    ///
+    /// <b>This is the one number in the minimum-sample arithmetic that is a fact rather than a
+    /// judgement</b>, and until now nothing had measured it. The corpus stated a minimum of paired
+    /// setup observations detecting a two-point difference and read as a derived quantity from the
+    /// day it was written; the dispersion the calculation turns on had never been taken over
+    /// anything.
+    ///
+    /// <b>What it cannot say.</b> Thirty names over one year, hand-picked for liquidity and still
+    /// listed at the end of it. A universe with delistings in it disperses further, so this figure is
+    /// a floor on the real one and the minimum it produces is a floor on the real minimum. It is
+    /// reported with its population attached for exactly that reason.
+    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+    /// </summary>
+    private IReadOnlyList<Measurement> DispersionFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // Point in time on the replay's own as-of, the way every other read here is bounded. The
+        // forward look inside the horizon is the exemption a forward return carries by definition,
+        // and it is bounded by the bars this read returned rather than reaching past them.
+        string bound = $"{AsOf:yyyy-MM-dd}T23:59:59.999Z";
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT b.ticker, b.bar_date, b.adj_close
+              FROM daily_bar b
+             WHERE b.bar_date <= @as_of
+               AND b.observed_at <= @bound
+               AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                     WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                       AND l.observed_at <= @bound)
+             ORDER BY b.ticker, b.bar_date
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+        command.Parameters.AddWithValue("@bound", bound);
+
+        var series = new SortedDictionary<string, List<(DateOnly Date, decimal AdjustedClose)>>(
+            StringComparer.Ordinal);
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                string ticker = reader.GetString(0);
+
+                if (!series.TryGetValue(ticker, out List<(DateOnly, decimal)>? bars))
+                {
+                    bars = [];
+                    series[ticker] = bars;
+                }
+
+                bars.Add((
+                    StoreText.StorageTextToDate(reader.GetString(1)),
+                    StoreText.StorageTextToPrice(reader.GetString(2))));
+            }
+        }
+
+        var bySession = new SortedDictionary<DateOnly, List<double>>();
+        int names = 0;
+
+        foreach (KeyValuePair<string, List<(DateOnly Date, decimal AdjustedClose)>> entry in series)
+        {
+            // A name with no more bars than the horizon has no forward return at all. The universe
+            // rows the fixture carries one bar each for land here and are dropped, which is what
+            // leaves the thirty names with history.
+            if (entry.Value.Count <= MeasurementParameters.ScoringHorizonSessions)
+            {
+                continue;
+            }
+
+            names++;
+
+            foreach ((DateOnly date, double value) in ForwardDispersion.Returns(
+                entry.Value, MeasurementParameters.ScoringHorizonSessions))
+            {
+                if (!bySession.TryGetValue(date, out List<double>? returns))
+                {
+                    returns = [];
+                    bySession[date] = returns;
+                }
+
+                returns.Add(value);
+            }
+        }
+
+        ForwardDispersion.Measured? measured = ForwardDispersion.Of(
+            [.. bySession.Select(s => new ForwardDispersion.Session(s.Key, s.Value))],
+            MeasurementParameters.DispersionMinimumNames,
+            MeasurementParameters.ControlsPerSet,
+            names);
+
+        if (measured is null)
+        {
+            return [new Measurement("dispersion", "no session carries a cross-section")];
+        }
+
+        return
+        [
+            new Measurement("dispersion.names", measured.Names.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("dispersion.sessions", measured.Sessions.ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "dispersion.observations", measured.Observations.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("dispersion.idiosyncratic", MinimumSample.Figure(measured.Idiosyncratic)),
+            new Measurement("dispersion.pairedDifference", MinimumSample.Figure(measured.PairedDifference)),
+            new Measurement(
+                "minimumSample.effectiveObservations",
+                MinimumSample.Of(measured.PairedDifference).ToString(CultureInfo.InvariantCulture)),
+        ];
     }
 
     private static readonly JsonSerializerOptions CheckJson = new(JsonSerializerDefaults.Web);

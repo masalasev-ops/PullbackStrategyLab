@@ -75,6 +75,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
 
 import datetime
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -2188,7 +2189,128 @@ def interval_main(argv):
     return 0
 
 
+def dispersion_main(argv):
+    """The dispersion of ten-session forward returns, and the minimum sample that falls out of it.
+
+    This is the input a minimum sample rests on and the one input to it that is a fact rather than a
+    judgement. The corpus stated 160 paired setup observations "detecting about a two-point
+    difference in ten-day forward return" without ever measuring the dispersion that arithmetic
+    turns on, so the figure read as derived and was not.
+
+    Restated from what the quantities are:
+
+      * A ten-session forward return is next-but-nine's adjusted close over today's, less one.
+      * Within one session every name carries the same market move, so the cross-sectional sample
+        variance of that session's returns estimates the idiosyncratic variance directly: the common
+        term cancels and the n-1 denominator makes it unbiased. That is the same cancellation the
+        paired difference buys on the scoreboard.
+      * Pooling those variances across sessions by their degrees of freedom gives the single-name
+        figure, and a setup's difference against the mean of m controls disperses by sqrt(1 + 1/m)
+        times it, because the control mean carries noise of its own.
+      * n = ((z_alpha + z_beta) * sigma_d / delta)^2, the one-sample form, because pairing has
+        already turned two populations into one series tested against zero.
+
+    Sessions thinner than the minimum name count are dropped: a session whose mean is mostly one of
+    its own names has part of the dispersion removed with the market, and the estimate comes back
+    too small. Too small is the direction that fires a decision early.
+    """
+    if len(argv) < 1 or not argv[0]:
+        print("usage: derive-indicators.py --dispersion <store> [as-of]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    as_of = argv[1] if len(argv) > 1 else "2026-08-24"
+    bound = as_of + "T23:59:59.999Z"
+
+    horizon = 10
+    minimum_names = 20
+    controls = 5
+    delta = 0.02
+    z_alpha = 1.959964
+    z_beta = 0.841621
+
+    connection = sqlite3.connect(store)
+    rows = connection.execute(
+        """
+        SELECT b.ticker, b.bar_date, b.adj_close
+          FROM daily_bar b
+         WHERE b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.ticker, b.bar_date
+        """,
+        (as_of, bound, bound),
+    ).fetchall()
+
+    series = {}
+    for ticker, date, adj_close in rows:
+        series.setdefault(ticker, []).append((date, float(adj_close)))
+
+    by_session = {}
+    names = 0
+    for ticker in sorted(series):
+        bars = series[ticker]
+        if len(bars) <= horizon:
+            continue
+        names += 1
+        for i in range(len(bars) - horizon):
+            basis = bars[i][1]
+            if basis <= 0:
+                continue
+            by_session.setdefault(bars[i][0], []).append(bars[i + horizon][1] / basis - 1.0)
+
+    sum_squares = 0.0
+    degrees = 0
+    sessions = 0
+    observations = 0
+
+    for date in sorted(by_session):
+        returns = by_session[date]
+        count = len(returns)
+        if count < minimum_names:
+            continue
+        mean = sum(returns) / count
+        for value in returns:
+            centred = value - mean
+            sum_squares += centred * centred
+        degrees += count - 1
+        observations += count
+        sessions += 1
+
+    if degrees == 0:
+        print("  no session carries %d names; nothing to measure" % minimum_names)
+        return 1
+
+    idiosyncratic = round(math.sqrt(sum_squares / degrees), 6)
+    paired = round(idiosyncratic * math.sqrt(1.0 + 1.0 / controls), 6)
+    scaled = (z_alpha + z_beta) * paired / delta
+    minimum = int(math.ceil(scaled * scaled))
+
+    print("\nforward dispersion, over %s, %d session(s) to %s" % (store, sessions, as_of))
+    print("  dispersion.%-24s %d" % ("names", names))
+    print("  dispersion.%-24s %d" % ("sessions", sessions))
+    print("  dispersion.%-24s %d" % ("observations", observations))
+    print("  dispersion.%-24s %.6f" % ("idiosyncratic", idiosyncratic))
+    print("  dispersion.%-24s %.6f" % ("pairedDifference", paired))
+    print("  minimumSample.%-21s %d" % ("effectiveObservations", minimum))
+
+    print("\n  what it costs to ask for less, or for more:")
+    for detect in (0.015, 0.02, 0.025, 0.03):
+        s = (z_alpha + z_beta) * paired / detect
+        print("    detecting %.3f needs %4d" % (detect, int(math.ceil(s * s))))
+    for label, zb in (("70%", 0.524401), ("80%", z_beta), ("90%", 1.281552)):
+        s = (z_alpha + zb) * paired / delta
+        print("    at %s power needs %4d" % (label, int(math.ceil(s * s))))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--dispersion":
+        return dispersion_main(argv[2:] or [''])
+
     if len(argv) > 1 and argv[1] == "--interval":
         return interval_main(argv[2:] or [''])
 

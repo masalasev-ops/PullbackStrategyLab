@@ -4114,3 +4114,100 @@ Verified:   `tools/ci.ps1` green on Windows, 26 steps, 371 tests.
 Carried:    **One discharged**, and by reading rather than by ruling: which population band 1 is
             computed over. The pre-3.6 sequence in `BUILD_PLAN.md` is corrected with it, and is now
             four steps of which two are the operator's.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the minimum sample derived, and the one input to it nobody had measured
+
+Not a checkpoint. The obligation raised at 3.0(f) against `ARCHITECTURE.html`'s 160-observation
+minimum, brought forward because it came to gate 3.6 and discharged as far as a build session can
+take it.
+
+Findings:   **The figure was an estimate wearing a derivation's clothes, and it passed every check
+            this corpus has.** 160 was pinned, cited, and stated in three places that agreed with
+            each other. `pinned-constants` proves the documents agree with the code and never that
+            either is right, so all three agreed on a number nothing derived. A sample size has
+            three inputs: the difference worth detecting, the confidence, and the dispersion of the
+            statistic. The first two are judgements. **The third is a fact about the market and
+            nothing had measured it over anything.**
+
+            **A fourth input was missing entirely.** Power, being how often a sample this size finds
+            an effect that is really there, was never stated. A sample sized on confidence alone
+            controls only the false positive, so it can be arbitrarily small and still honest about
+            what it claims while finding a real effect almost never.
+
+Measured:   **The dispersion of ten-session forward returns, over two populations, stated
+            separately.** Within one session every name carries the same market move, so the
+            cross-sectional sample variance of that session's returns estimates the idiosyncratic
+            variance directly: the common term cancels and the `n-1` denominator makes it unbiased.
+            That is the same cancellation the paired difference buys on the scoreboard.
+
+            **Over the captured fixture**, 30 names and 241 sessions carrying 7,230 name-sessions:
+            single-name **0.091115**, paired against five controls **0.099811**. This is the figure
+            the arithmetic uses, and it is `DERIVED`: `tools/derive-indicators.py --dispersion`
+            restates it from what the quantities are and agrees to all six places.
+
+            **Over the calibration store**, 1,671 names clearing the $20M liquidity floor across 742
+            sessions carrying 1,194,580 name-sessions: single-name **0.088371**. Recorded as
+            agreeing rather than as confirming. That store is reconstructed history and carries
+            survivorship bias by construction, which biases a dispersion downward, and it is the
+            lower of the two. The larger is the one used.
+
+            **What the fixture figure cannot say.** Thirty names, hand-picked for liquidity, still
+            listed at the end of one year. A universe with delistings in it disperses further, so
+            0.099811 is a floor on the real figure and 196 is a floor on the real minimum.
+
+Built:      **`ForwardDispersion`** and **`MinimumSample`** in Core, the arithmetic written out with
+            each input named as measurement or judgement. `n = ((z_alpha + z_beta) * sigma_d /
+            delta)^2`, the one-sample form, because pairing has already turned two populations into
+            one series tested against zero.
+
+            At two points of ten-day forward return, two-sided 95% and 80% power, against the
+            measured dispersion: **196 effective observations.** Rounded up because a fractional
+            observation cannot be had and up asks for more evidence. Not rounded to 200, which would
+            be an authored step in a figure whose point is that no step in it is authored.
+
+            **The old figure turns out to be this same arithmetic at about 72% power.** Not a
+            different calculation. This one, with a power nobody chose, and the whole gap between
+            160 and 196 is that choice.
+
+            A new decision, `The minimum sample is derived from a measured dispersion and counted in
+            effective observations`, carrying the arithmetic, the population of each measurement,
+            and the sensitivity: detecting three points needs 87 and one and a half needs 348,
+            because the sample goes as the inverse square of the difference; at two points, 70%
+            power needs 154 and 90% needs 262.
+
+            `ARCHITECTURE.html`'s three statements corrected to 196 effective paired setup
+            observations, prior text in `CHANGELOG.md`. Its KPI line "Which takes about 13 days" is
+            replaced by "until band 1 says so": that was a rows-based calendar claim resting on
+            about twelve setups a night, band 1 as built fills at about eighty-two, and how long it
+            takes is a thing the scoreboard reports rather than a thing a document predicts.
+
+            Six new pins, and one of them is not a constant: the dispersion `DECISIONS.md` states is
+            put through `MinimumSample.Of` and required to give the minimum both documents state.
+            The measured input is a fact rather than a judgement, so what it has to agree with is
+            the derivation, not a value typed into the source.
+
+            Eleven behavioural tests. The arithmetic is asserted as properties rather than at the
+            four points the decision tabulates: halving the difference quadruples the sample, a
+            session-wide move leaves the dispersion where it was, the control mean widens the
+            difference by the stated factor, a session too thin for a cross-section is dropped
+            rather than pooled in, and a dispersion of nought is refused rather than answered with
+            nought observations.
+
+Corrected:  A reproducibility fault caught by its own test rather than by the fixture. The C# rounded
+            the single-name figure at the end and the Python restatement rounded it before pairing,
+            so the two computed the paired figure from different values. They agreed on the fixture
+            and would have agreed on most inputs, which is exactly how that class of fault hides.
+            Both now round before pairing, so the paired figure is a function of the reported
+            single-name figure rather than of an unreported one behind it.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, **382 tests**, up from 371.
+            `tools/verify-phase` GREEN: 116 claims, 66 passed, 0 failed, 50 out of scope, **0
+            unexamined**; coverage examined 3,473; 1,115 expectations of which 609 independent.
+
+Carried:    **Mostly discharged, and what is left is a ratification and only a ratification.** The
+            two judgement inputs, being the two-point difference worth detecting and 80% power, with
+            the sensitivity stated so the choice is a real one rather than a rubber stamp. No build
+            session can take those. The obligation's due point moves from 5.1 to the operator, on
+            the same terms as the other four rows there: it is a ruling rather than work, and a due
+            point that moves to the next checkpoint at every sign-off is permanent while reading as
+            pending.

@@ -72,7 +72,31 @@ A Newey-West style adjustment with the lag set from the horizon was the alternat
 
 **The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval.
 
-**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. ARCHITECTURE states 160 paired setup observations as the selection-variant minimum sample, written under the assumption this decision corrects, and phase 5 pre-registers against it where pre-registration is immutable. That figure is not moved here; it is carried as an obligation due before 5.1 with the measured ratio attached.
+**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. The figure itself is settled by the decision below.
+
+**The minimum sample is derived from a measured dispersion and counted in effective observations**
+A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. The first two are judgements and belong to a person. The third is a fact about the market, and until this decision nothing in the corpus had measured it.
+
+**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it since has treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+
+**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+
+**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+
+**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+
+| Input | Value | Kind |
+|---|---|---|
+| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, and ARCHITECTURE's own |
+| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
+| `z_beta`, 80% power | 0.841621 | judgement, and the input nothing ever stated |
+| `sigma_d`, the paired dispersion | 0.099811 | measured |
+
+Which gives **196 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 200 would be an authored step in a figure whose whole point is that no step in it is authored.
+
+**What the old figure turns out to have been.** 160 is this same arithmetic at about 72% power. It was not a different calculation, it was this one with a power nobody chose, and the gap between 160 and 196 is entirely that choice.
+
+**The two judgements are the operator's and the sensitivity is stated so the choice is a real one.** At the measured dispersion, detecting three points needs 87 and detecting one and a half needs 348, because the sample goes as the inverse square of the difference. At two points, 70% power needs 154 and 90% needs 262. Moving either is a superseding decision, not an adjustment.
 
 **Long and short are never pooled into one figure**
 In code, in a report, or on a screen. Short results carry a borrow assumption that long results do not, so a pooled number silently inherits it.
