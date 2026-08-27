@@ -1736,7 +1736,51 @@ def geometry_main(argv):
     return 0
 
 
+def thrust_main(argv):
+    """Which scan produced each setup's thrust, restated from the rule rather than read back.
+
+    The detector's rule, in words: of the hits on this name at or before the as-of, keep the three
+    scans that move the setup's own way, take the most recent session, and break a tie within a
+    session by rank. That is a different statement from "read the column back", which is what makes
+    this worth writing: the column is new at 3.0(b) and the whole point of it is the 3.0(c) split by
+    scan family, so a column populated from the wrong hit would be a wrong split nobody could see.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --thrust <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+
+    upward = ("gainer", "gapper", "leader")
+    downward = ("decliner", "gapdown", "laggard")
+
+    rows = connection.execute(
+        "SELECT setup_id, ticker, direction FROM setup ORDER BY setup_id").fetchall()
+
+    print("\nthrust scan, over %s, as of %s" % (store, as_of))
+
+    for setup_id, ticker, direction in rows:
+        scans = upward if direction == "long" else downward
+
+        hit = connection.execute(
+            """
+            SELECT as_of, scan FROM scan_hit
+             WHERE ticker = ? AND as_of <= ? AND scan IN (?, ?, ?)
+             ORDER BY as_of DESC, rank
+             LIMIT 1
+            """, (ticker, as_of, *scans)).fetchone()
+
+        print("  setup.%s.%-14s %s" % (setup_id, "thrustScan", "none" if hit is None else hit[1]))
+        print("  setup.%s.%-14s %s" % (setup_id, "thrustSession", "none" if hit is None else hit[0]))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--thrust":
+        return thrust_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--geometry":
         return geometry_main(argv[2:])
 

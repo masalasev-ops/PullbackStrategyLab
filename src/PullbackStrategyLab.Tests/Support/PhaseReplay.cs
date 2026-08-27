@@ -488,7 +488,8 @@ public sealed class PhaseReplay : IDisposable
         // actionable and "one more setup passed" is not.
         using (SqliteCommand perSetup = connection.CreateCommand())
         {
-            perSetup.CommandText = "SELECT setup_id, check_results FROM setup ORDER BY setup_id";
+            perSetup.CommandText =
+                "SELECT setup_id, check_results, thrust_scan, thrust_session FROM setup ORDER BY setup_id";
             using SqliteDataReader rows = perSetup.ExecuteReader();
 
             while (rows.Read())
@@ -500,6 +501,16 @@ public sealed class PhaseReplay : IDisposable
                     figures.Add(new Measurement(
                         $"setup.{setupId}.{result.Name}", result.Passed ? "pass" : "fail"));
                 }
+
+                // Which scan produced the thrust, recorded from 3.0(b). Frozen here because the
+                // correction at 3.0(c) changes what the geometry does with it, and a run that
+                // cannot say which scan flagged a row cannot say whether the correction reached it.
+                figures.Add(new Measurement(
+                    $"setup.{setupId}.thrustScan",
+                    rows.IsDBNull(2) ? "none" : rows.GetString(2)));
+                figures.Add(new Measurement(
+                    $"setup.{setupId}.thrustSession",
+                    rows.IsDBNull(3) ? "none" : rows.GetString(3)));
             }
         }
 
@@ -796,9 +807,22 @@ public sealed class PhaseReplay : IDisposable
             using SqliteCommand setup = connection.CreateCommand();
             setup.CommandText = """
                 INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
-                                   trigger_price, stop_price, stop_distance_ranges)
-                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700')
+                                   trigger_price, stop_price, stop_distance_ranges,
+                                   thrust_scan, thrust_session)
+                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700',
+                        @thrust_scan, @thrust_session)
                 """;
+
+            // From the same evidence the check results come from, for the same reason. Left unset,
+            // this row would read `none` where the detector's own rule resolves a hit, and the one
+            // thing these columns exist for is splitting a population by scan family: a row that
+            // says "no scan" when a scan is there is the split silently losing a row.
+            setup.Parameters.AddWithValue("@thrust_scan", (object?)evidence?.ThrustScan ?? DBNull.Value);
+            setup.Parameters.AddWithValue(
+                "@thrust_session",
+                evidence?.ThrustSession is DateOnly session
+                    ? StoreText.DateToStorageText(session)
+                    : (object)DBNull.Value);
             setup.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckJson));
             setup.Parameters.AddWithValue("@passed_all", SetupChecks.PassedAll(results) ? 1 : 0);
             setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");

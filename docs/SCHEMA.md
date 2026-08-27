@@ -225,6 +225,8 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `stop_distance_ranges` | TEXT | the number check nine turns on |
 | `agreement` | TEXT NULL | `agree`, `disagree`, null. What a person thought, recorded from the gallery. Null is "not looked at" and is a different fact from disagreeing |
 | `agreement_note` | TEXT NULL | |
+| `thrust_scan` | TEXT NULL | which of the six scans produced the thrust this setup was measured against |
+| `thrust_session` | TEXT NULL | the session that scan flagged |
 
 Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record)
 
@@ -233,6 +235,8 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Up
 *`rank` and `capped_out` are the night's, not a version's, and there is deliberately no column that could make them a version's. The cap is applied to the shared candidate list before any version selects, and a cap applied per version would leave their disagreements unscoreable. A test asserts the absence rather than the intent, because the intent is unassertable once versions exist and the record it would have destroyed cannot be reconstructed.*
 
 *Both are null on a setup that failed a gating check. Such a row is evidence and was never a candidate, so a rank among names it was not ranked against would be a number with no meaning.*
+
+*`thrust_scan` and `thrust_session` record what the detector already resolved and used to throw away. Four gates read a quantity computed from the thrust's location, and `gainer` and `gapper` flag a move over one session where `leader` and `laggard` flag one over twenty, so a row that does not say which scan flagged it cannot be told from a row measured over a different span. The same fact is also the `thrust_scan` signal, and that is not enough: `setup_signal` has a foreign key to `setup`, calibration writes to `calibration_setup`, so the population a threshold is counted over is exactly the population the signal cannot reach.*
 
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.

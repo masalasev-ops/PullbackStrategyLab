@@ -50,7 +50,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorâ€™s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃ¢â‚¬â„¢s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "backfill.rebuild.selected",
@@ -500,63 +500,63 @@
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.high",
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -564,21 +564,21 @@
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.sessions",
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "check.long.cluster.failed",
@@ -2753,49 +2753,49 @@
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.ema9",
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.INTC.adr20",
@@ -2998,49 +2998,49 @@
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.ema9",
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.META.adr20",
@@ -3243,49 +3243,49 @@
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema9",
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureâ€™s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃ¢â‚¬â„¢s own bars"
     },
     {
       "id": "indicators.PFE.adr20",
@@ -3734,7 +3734,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKâ€™s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃ¢â‚¬â„¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.computed",
@@ -4997,6 +4997,22 @@
       "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
     },
     {
+      "id": "setup.2026-08-24-HOOD-long.thrustScan",
+      "tier": "DERIVED",
+      "value": "leader",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
+    },
+    {
+      "id": "setup.2026-08-24-HOOD-long.thrustSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
+    },
+    {
       "id": "setup.2026-08-24-HOOD-long.tradable",
       "tier": "DERIVED",
       "value": "pass",
@@ -5081,6 +5097,22 @@
       "producedBy": "an independent restatement of the ten short gates over the fixture's bars, computed outside the solution by tools/derive-indicators.py --checks --short"
     },
     {
+      "id": "setup.2026-08-24-INTC-short.thrustScan",
+      "tier": "DERIVED",
+      "value": "gapdown",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
+    },
+    {
+      "id": "setup.2026-08-24-INTC-short.thrustSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
+    },
+    {
       "id": "setup.2026-08-24-INTC-short.tradable-shortable",
       "tier": "DERIVED",
       "value": "pass",
@@ -5135,6 +5167,22 @@
       "value": "pass",
       "checkpoint": "2.6",
       "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+    },
+    {
+      "id": "setup.IESC-long.thrustScan",
+      "tier": "DERIVED",
+      "value": "leader",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
+    },
+    {
+      "id": "setup.IESC-long.thrustSession",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "3.0",
+      "producedBy": "an independent restatement of the detector's thrust rule over scan_hit, keeping the three scans that move the setup's own way and taking the most recent session with rank as the tiebreak, computed outside the solution by tools/derive-indicators.py --thrust",
+      "note": "the scan that produced this row's thrust, recorded on the setup row at 3.0(b) so a population can be split by scan family. `leader` and `laggard` flag a twenty-session move and `gainer`, `gapper`, `decliner` and `gapdown` a one-session one, which is the distinction the 3.0(c) correction turns on."
     },
     {
       "id": "setup.IESC-long.tradable",

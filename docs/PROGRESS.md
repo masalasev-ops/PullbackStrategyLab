@@ -3214,3 +3214,44 @@ Carried:    Nothing new. Twelve obligations repointed from 3.1 to 3.0, unchanged
             respect. Six parts of 3.0 outstanding: the thrust scan on the setup row, the correction
             and its prediction, the surfaces sweep, the remaining hygiene obligations, the spec
             pass, and the value per clause.
+
+## 3.0(b) — 2026-08-27 — phase-3-measurement — the column the correction is diagnosed through
+
+The second part of 3.0. It computes nothing and moves no geometry, and it lands before the
+correction because re-running 631 sessions to add a column afterwards is the expensive way round.
+
+Built:      Migration **015**, adding `thrust_scan` and `thrust_session` to `setup` and to
+            `calibration_setup`, both nullable, with an index on the calibration side for the read
+            the correction makes. `ThrustScan` and `ThrustSession` on both evidence records, read by
+            no gate: the detector resolves them while assembling evidence and used to throw them
+            away. Both detectors write them. `tools/derive-indicators.py --thrust`.
+
+            **6 `DERIVED` expectations**, so the fixture's three setup rows each say which scan
+            produced their thrust and when. HOOD long is `leader`, INTC short is `gapdown`.
+
+            Nullable rather than NOT NULL, and it is the honest shape. A setup row exists only if it
+            cleared the recording floor and `thrust` is one of the four floor checks, so in practice
+            every row has a hit. But a NOT NULL would make the detector invent a value for the name
+            whose hit could not be resolved, which is the state this column exists to make visible.
+
+Findings:   Finding, from the derivation disagreeing with the run. **The harness's authored setup
+            row carried no scan where the detector's own rule resolves one.** Observation: the
+            replay reported `setup.IESC-long.thrustScan` as `none` and the independent restatement
+            said `leader`. Reading: `VectorizeAuthoredSetup` builds its check results from the
+            shipped rules over real evidence and then writes them through a hand-written insert of
+            its own, which named the columns it knew about. The new ones were not among them, so the
+            row said "no scan" while the evidence it was built from held one.
+
+            It matters more than a null in a fixture row usually would, because the single thing
+            these columns exist for is splitting a population by scan family, and a row that reports
+            no scan when a scan is there is that split quietly losing a row. Fixed at the source:
+            the insert now takes both from the same evidence the check results come from.
+
+            Observation. This is the second disagreement in two parts, and both were found the same
+            way, by a second implementation being asked the same question rather than by a test
+            asserting what the first one already said.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 835 expectations, 381 independent,
+            94 of them at 3.0.
+
+Carried:    Nothing new. Five parts of 3.0 outstanding.

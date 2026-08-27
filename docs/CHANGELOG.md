@@ -682,3 +682,8 @@ Why:  Twelve obligations fell due at 3.1 and 3.1's deliverable is SetupJournal, 
 Was:  Twelve rows of the carried obligations table named 3.1 as their due point.
 Now:  The same twelve rows, unchanged in every other respect, due at 3.0.
 Why:  Repointed in the same commit that creates 3.0, because a row due at a checkpoint that does not yet exist fails the deferral guard exactly as surely as one due at a checkpoint that has landed, and the two edits are one change. The sweep run before the commit found the cost of the alternative: nothing outside BUILD_PLAN, PROGRESS and CHANGELOG references a phase 3 checkpoint by number except four places in the suite, and none of them names 3.6 or 3.7, so insertion is cheap and renumbering would not have been.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `setup`'s column list ended at `agreement_note`, and `calibration_setup` was declared as having the same shape.
+Now:  Both carry `thrust_scan` and `thrust_session`, nullable, with a paragraph saying why the signal of the same name does not cover it.
+Why:  Four gates read a quantity computed from where the thrust is measured from, and `gainer` and `gapper` flag a one-session move where `leader` and `laggard` flag a twenty-session one. A row that does not say which scan flagged it cannot be told from a row measured over a different span, which is the whole of the 3.0(c) correction. `thrust_scan` already exists as a signal and cannot serve: `setup_signal` has a foreign key to `setup`, calibration writes to `calibration_setup`, so the 49,450-row population a threshold is counted over is exactly the population the signal cannot reach.

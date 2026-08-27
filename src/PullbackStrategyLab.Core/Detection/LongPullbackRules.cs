@@ -171,5 +171,18 @@ public static class LongPullbackRules
         public decimal? StopDistanceRanges { get; init; }
 
         public int? ClusterCount { get; init; }
+
+        /// <summary>
+        /// Which scan produced the thrust, and the session it flagged.
+        ///
+        /// Not read by any gate. It is here because the detector resolves it while assembling the
+        /// evidence and nothing downstream can recover it afterwards: a setup row records that a
+        /// thrust was found and not whether it was a one-session move or a twenty-session one, and
+        /// the two are measured from different places.
+        /// </summary>
+        public string? ThrustScan { get; init; }
+
+        public DateOnly? ThrustSession { get; init; }
+
     }
 }

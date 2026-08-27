@@ -380,6 +380,8 @@ public sealed class LongSetupDetector
                 ? null
                 : Math.Abs(pullback!.Trigger - pullback.Stop) / stopRange,
             ClusterCount = thrust?.ClusterCount,
+            ThrustScan = thrust?.Scan,
+            ThrustSession = thrust?.AsOf,
         };
     }
 
@@ -469,17 +471,21 @@ public sealed class LongSetupDetector
             ? """
               INSERT INTO calibration_setup
                   (setup_id, as_of, ticker, direction, check_results, passed_all,
-                   trigger_price, stop_price, stop_distance_ranges)
+                   trigger_price, stop_price, stop_distance_ranges,
+                   thrust_scan, thrust_session)
               VALUES (@setup_id, @as_of, @ticker, @direction, @check_results, @passed_all,
-                      @trigger_price, @stop_price, @stop_distance_ranges)
+                      @trigger_price, @stop_price, @stop_distance_ranges,
+                      @thrust_scan, @thrust_session)
               ON CONFLICT (setup_id) DO NOTHING
               """
             : """
               INSERT INTO setup
                   (setup_id, as_of, ticker, direction, check_results, passed_all,
-                   trigger_price, stop_price, stop_distance_ranges)
+                   trigger_price, stop_price, stop_distance_ranges,
+                   thrust_scan, thrust_session)
               VALUES (@setup_id, @as_of, @ticker, @direction, @check_results, @passed_all,
-                      @trigger_price, @stop_price, @stop_distance_ranges)
+                      @trigger_price, @stop_price, @stop_distance_ranges,
+                      @thrust_scan, @thrust_session)
               ON CONFLICT (setup_id) DO NOTHING
               """;
 
@@ -492,6 +498,16 @@ public sealed class LongSetupDetector
         command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(evidence.Pullback?.Trigger ?? 0m));
         command.Parameters.AddWithValue("@stop_price", StoreText.PriceToStorageText(evidence.Pullback?.Stop ?? 0m));
         command.Parameters.AddWithValue("@stop_distance_ranges", StoreText.RatioToStorageText(evidence.StopDistanceRanges ?? 0m));
+
+        // Null rather than an empty string where the thrust could not be resolved. A name with
+        // no hit is a real state, and a column that says "" for it cannot be told apart from a
+        // scan whose name went missing.
+        command.Parameters.AddWithValue("@thrust_scan", (object?)evidence.ThrustScan ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@thrust_session",
+            evidence.ThrustSession is DateOnly session
+                ? StoreText.DateToStorageText(session)
+                : (object)DBNull.Value);
 
         return command.ExecuteNonQuery();
     }
