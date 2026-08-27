@@ -2572,3 +2572,97 @@ Decided:    The five-session obligation is **answered on its merits and schedule
             one, and that needs a column. Due at 3.1.
 
 Carried:    The two rows above, now in the table. Everything else unchanged from the entry above.
+
+## 2.11 — 2026-08-26 — phase-2-detection — the thrust window as a supported finding, and what the fixture cannot be evidence about
+
+Corrects:   the entry above, which offers the thrust-window reading "as a hypothesis and not as a
+            measurement". The data in hand supports it, and the support is written out here rather
+            than left implied, because 3.1 acts on it and a reading filed as a hypothesis is one a
+            later session is entitled to set aside without arguing with it.
+
+Findings:   Finding. **The two checks that bind are the two whose quantities depend on where the
+            thrust is located, and the one that does not is healthy on the same rows.**
+
+            Observation, three rows over the live calibration run and nothing beyond them:
+
+            | check | its quantity | cap | median | multiple of its cap |
+            |---|---|---|---|---|
+            | `dip-shape` | the retrace | 0.40 | 1.088 long, 1.006 short | 2.72 and 2.52 |
+            | `exit-tight` | the give-up distance | 0.5 ranges | 1.157 long, 1.191 short | 2.31 and 2.38 |
+            | `trigger-near` | the trigger distance | 1.5 ranges | 0.513 long, no short check | 0.34 |
+
+            Reading, and it is one quantity rather than three. The retrace's denominator is the
+            thrust itself, measured from the close before the session the scan flagged, so a median
+            above 1.0 says the median setup gave back more than the whole move it is measured
+            against. That is not a description of a pullback; it is what a one-session denominator
+            inside a twenty-session move produces. The give-up distance is the width of the pullback
+            swing, and the pullback is everything after the extreme, which `PullbackGeometry.Of`
+            searches forward from that same flagged session: a move whose real high sits before the
+            flag has its extreme found at the flag, and the swing is then measured over the whole
+            drift rather than over the dip. Both are readings of one thing, where the thrust is, and
+            both hold on both sides with the same numbers, which is what rules out a long-side
+            accident.
+
+            `trigger-near` is what turns that from a possibility into the supported reading, because
+            it is the same population, the same rows and the same geometry. Its quantity is the
+            distance from the last close to the pullback's own high, anchored at the last session
+            rather than at the thrust, and it is the only one of the three that reads neither the
+            origin nor the width of the drift. It sits at a third of its cap and 96.2% of measurable
+            rows clear it. So "the pattern test is uniformly too tight" does not survive its own
+            evidence: the two checks that read where the thrust is are two and a half times over,
+            and the one that does not is comfortably inside.
+
+            Finding. **The fixture cannot be evidence about `thrust`, and the authored gate cases
+            have carried that check alone.** Observation: the fixture holds thirty names with a
+            history against a scan breadth of fifty, so every one of them is inside every scan on
+            every session and the sessions-since-thrust figure is nought on every fixture row of both
+            directions. The only place the ten-session window is exercised on either side of itself
+            is `fixtures/gate-cases.json`, whose long and short cases sit at ten and eleven. Over the
+            live run the check reads 100%, and that figure is a tautology rather than a measurement:
+            `thrust` is one of the four checks in the recording floor, so every recorded row passed
+            it by definition of having been recorded.
+
+            Reading: three instruments and no overlap on this one property. The captured fixture
+            answers whether the arithmetic still does what it did on a real day and cannot reach this
+            check at all. The live calibration run has the population and cannot fail a floor check
+            by construction. The authored cases carry the threshold and say of themselves that they
+            answer branch coverage and nothing about the market. None of the three is wrong, and the
+            state is invisible from inside any one of them, which is why it is worth a line rather
+            than a fix.
+
+            Reading, on the shape rather than on this check. This is the second time the fixture's
+            composition has silently bounded what a check could show, and the two were found by
+            different accidents. The first was measured at 2.6, when the per-check pass and fail
+            counts were added and eight of ten long gates came back one-sided over two recorded
+            setups; `fixtures/gate-cases.json` records it under `whyNotAWiderFixture` and was built
+            to answer it. The second is this one, found at 2.11 by a run in a different checkpoint
+            over a different population. Neither was found by anything looking for the shape, so how
+            many other checks stand where `thrust` does is unknown rather than nought. That is a
+            reading pass rather than a build step, and it is now a done condition of 2.12.
+
+Decided:    **The correction is written as a prediction before it is attempted, and 3.1 is judged
+            against it.** Take the thrust's span from the scan that produced the hit rather than from
+            the session it landed on: one session for `gainer` and `gapper`, twenty for `leader` and
+            `laggard`, which is the lookback each of those scans already ranks on. The prediction is
+            that the median retrace falls below 1.0 and the nightly count moves into single or low
+            double digits, **with no threshold moved**. If it holds, the once-only adjustment is
+            still unspent and the geometry was the fault. If it does not, the thresholds are the
+            fault and the once is spent then, against the corrected geometry rather than against
+            this one.
+
+            The ordering is the point rather than an aside. 3.1 must not move the geometry and the
+            thresholds in one pass, because then neither result means anything and a once-only
+            adjustment has been spent against a population nothing described. Both rows are in
+            BUILD_PLAN's table and each names the other.
+
+            It is written now because a prediction written after the attempt is a description. What
+            it needs first is the gap the entry above named: the scan that produced a thrust is not
+            recorded on the setup row, so nothing today can tell a one-session hit from a
+            twenty-session one after the fact. Recording it moves the `thrust` expectations at 2.6
+            and 2.7, which belongs to the pass that makes the change rather than to this one.
+
+Carried:    The thrust-span correction and its prediction, now a row of its own, due at 3.1 and
+            worked before the threshold row rather than with it.
+            The reading pass over what the fixture's composition cannot show, due at 2.12 as part of
+            the sign-off.
+            Everything else unchanged from the two entries above.
