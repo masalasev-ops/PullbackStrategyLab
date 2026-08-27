@@ -3985,3 +3985,83 @@ Carried:    Nothing new. The tight-set question raised at 3.3 falls due here and
             panel that reports it rather than deciding it. Repointed once, to the operator, on the
             same terms as the threshold ruling: it is a judgement about what the comparison should
             be, and no build session can take it.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the merge rule ruled on, and the surfaces instrument built
+
+Not a checkpoint. Three things that clear the path to 3.7 without waiting on the calendar, plus a
+ruling recorded where a ruling belongs.
+
+**The merge rule changed, by the operator, and `CLAUDE.md` now says so.** It read "CI green before
+merge. That is the only condition. Sign-off is a separate activity with its own record and does not
+gate the merge." It now reads two conditions, the second being that a phase branch does not merge
+until the whole phase has signed off. The prior text is in `CHANGELOG.md` with what the change buys
+and what it costs.
+
+**The cost is real and is priced rather than discovered.** Phase 3 waits three months for
+accumulation, so its branch is open for a quarter and the nightly job runs from that checkout rather
+than from `main` for the whole of it. That is the trade, taken deliberately.
+
+Built:      **`surface-claims`**, CI step 19, the obligation that fell due at 3.7. Eleven declared
+            claims, six live and asserted against the rendered page, five naming the checkpoint that
+            builds their surface.
+
+            **It is the only check in this corpus that reads a surface.** Every other one asserts
+            over source, over the store, or over a document, which is why the gallery defect
+            survived: `reached-ceiling` recorded that it ran two of its three clauses,
+            `check-completeness` confirmed the result was present, and ARCHITECTURE said the
+            narrowing is stated outright. All true of the store. The screen dropped the note whenever
+            a value sat beside it, and nothing upstream was wrong so nothing upstream could catch it.
+
+            `fixtures/surface-claims.json` states, per claim, the corpus sentence, the document it is
+            stated in, the surface, and the exact text that surface must carry. The bodies the pages
+            are rendered against are authored, because what is under test is whether a page carries a
+            note it was handed, so the note has to be handed to it.
+
+Findings:   Finding, on the check's own out-of-scope wording. Two deferred claims name a **panel**
+            rather than a page: `/scoreboard` is built and both band 2's loss panel and band 3 are on
+            it declaring their checkpoints. Named as pages, the out-of-scope line read "/scoreboard
+            does not exist yet", which is false. A wrong reason inside a passing check is the kind
+            that survives, because nobody reads a green check's detail. The surface is now named as
+            the panel and the line reads "does not carry it yet".
+
+            Observation, recorded as an obligation rather than fixed. **Band 1 does not say which
+            population it is computed over.** `ScoreboardBuilder.Series` joins `setup` to
+            `forward_return` with no `passed_all` filter, so it measures every row clearing the
+            recording floor, about 54 long and 28 short a night. Band 2's rank-decile curve beside it
+            filters on `rank IS NOT NULL`, which only candidates carry, and candidates run at 0.050 a
+            night long and nought short.
+
+            So two panels on one page are computed over populations three orders of magnitude apart
+            and nothing on the page says so. That is the fifth defect shape exactly, and it is mine
+            from the 3.5 commit. Raised at the operator rather than chosen here, because the two
+            readings are not equivalent: the recorded population has the rows but is names that
+            cleared four gates rather than names the strategy selected, and the candidate population
+            is the selection but yields about three rows in three months, which makes 3.6 unreachable
+            at the current thresholds. **It is one decision with the threshold ruling, not two.**
+
+            The sequence before 3.6 is now written into `BUILD_PLAN.md` rather than left in a
+            conversation, because every step of it waits on something a build session cannot do.
+
+Verified:   `tools/ci.ps1` green on Windows, **26 steps**, up from 25, and **371 tests**, up from 369.
+
+            Proved by removal, and this is the one that matters. `SetupCheckRowView.Caveat` reverted
+            to the pre-2.9 behaviour of returning null: `surface-claims` fails naming two claims and
+            quoting the corpus sentence each makes false. **That is the original gallery defect, and
+            this is the first thing in the suite that would have caught it.** Restored.
+
+Carried:    **One new, at the operator**: which population band 1 is computed over. One discharged:
+            the surfaces instrument, which was the last thing 3.7 carried, and its row is removed
+            from the table rather than marked closed.
+
+            Observation, and `carried-obligations` found it on this very entry, twice. The first
+            draft of this block described the discharged obligation in the live phrasing, naming the
+            checkpoint it had been due at, and the check failed saying a `Carried` block names a due
+            point no row has. Reworded, it failed again, because the rewording **quoted the phrase**
+            while explaining it.
+
+            Both are correct and neither can be otherwise. The check matches a phrase, so prose using
+            the phrase and prose about the phrase are the same string to it. That is the price of
+            reconciling a structured due point rather than a sentence, which is the trade the narrow
+            form was chosen for and the reason it is not a general prose matcher. The rule it implies
+            is small and worth stating: a discharged obligation is described without naming a due
+            point, because in a `Carried` block a due point is a claim about live work.

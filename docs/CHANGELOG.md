@@ -767,3 +767,13 @@ Why:  The two counts are different quantities and storing only the first is how 
 Was:  The 21:50 row read "scoreboard".
 Now:  "`scoreboard`, the three bands, every panel with its own count".
 Why:  The nightly order test reads backticked verbs, and the count is the half of the panel that stops a figure being read without its denominator.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge."
+Now:  Two conditions: CI green, and the whole phase signed off before its branch merges. With what the second buys, what it costs, and the note that a checkpoint still lands as its own commit.
+Why:  Ruled by the operator at phase 3, against a standing draft PR carrying 3.0 to 3.5. The old rule was written to stop a sign-off holding finished work hostage; the cost it did not price is that a phase merged in pieces has no commit where the phase is what it says it is, and the sign-off then reviews code already on the default branch, where declining it costs a revert rather than a conversation. The price of the new rule is a branch open for as long as the phase waits on something that is not code, which for phase 3 is a quarter of accumulation with the nightly job running off that checkout. Priced here rather than discovered later.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The checks roster had twenty-two rows and no row for asserting a claim of visibility against the page that carries it.
+Now:  Twenty-three rows, with `surface-claims` running on every CI run.
+Why:  It is the only check in this corpus that reads a rendered surface. Every other one asserts over source, the store, or a document, which is exactly why the gallery defect survived every check the suite had: the note was in the store, check-completeness confirmed it, and the screen dropped it.

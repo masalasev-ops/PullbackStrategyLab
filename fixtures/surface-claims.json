@@ -1,0 +1,98 @@
+{
+  "tier": "AUTHORED",
+  "what": "Every corpus sentence claiming that something is stated, recorded on every row, or shown, with the surface a person reads it on and the text that surface must carry.",
+  "whyItIsOwed": "No check in this corpus reads a rendered page. Every one asserts over source, over the store, or over a document, so a claim about what a person can see is verified against what a machine can read. The gallery review showed what that costs: `reached-ceiling` recorded that it ran two of its three clauses, `check-completeness` confirmed the result was present, ARCHITECTURE said the narrowing is stated outright, and every one of those was true of the store while the screen dropped the note. Nothing upstream was wrong, so nothing upstream could have caught it.",
+  "whatItCannotSay": "Nothing about whether a page is any good, readable, or well laid out. The one question is whether a corpus sentence asserting visibility is true of the thing a person looks at.",
+  "howAClaimIsRetired": "A claim whose surface does not exist yet names the checkpoint that builds it and is counted out of scope, on the same terms an out-of-scope architecture claim is. It is not a permanent exemption: the count falls as checkpoints land.",
+  "claims": [
+    {
+      "name": "reached-ceiling-narrowing",
+      "sentence": "the check runs its two average clauses and is narrower than this line describes, which the setup record says outright rather than leaving to be inferred from a passing verdict",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/setups",
+      "mustCarry": "the anchored clause arrives at 4.4",
+      "why": "The first of the two the gallery review found. The note was in the store and the screen dropped it whenever a value sat beside it, so the caveat was written down and never stated to anybody."
+    },
+    {
+      "name": "calibration-market-cap-exemption",
+      "sentence": "every short verdict here says which clauses ran",
+      "statedIn": "docs/SCHEMA.md",
+      "surface": "/setups",
+      "mustCarry": "market capitalisation",
+      "why": "The second, and worse on the calibration side: every one of the 16,917 short rows carries the exemption note, and a reader paging them would have seen a four-clause verdict."
+    },
+    {
+      "name": "every-check-appears-on-every-card",
+      "sentence": "Every check appears on every card, passed and failed alike, and a check handed nothing shows what was absent rather than a blank",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/setups",
+      "mustCarry": "no stop or no daily range for the session",
+      "why": "A check handed nothing must show what was absent. A blank would read as a check that passed quietly."
+    },
+    {
+      "name": "a-number-without-a-count-is-not-shown",
+      "sentence": "Every panel shows its own count. A number without one is not shown at all",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/scoreboard",
+      "mustCarry": "class=\"count\"",
+      "why": "The failure this whole system exists to avoid is reading a pattern in forty observations, and a panel printing a figure with no denominator is the most efficient way to commit it."
+    },
+    {
+      "name": "each-panel-carries-the-condition-it-reads-badly-under",
+      "sentence": "Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/scoreboard",
+      "mustCarry": "does not clear zero yet",
+      "why": "A band that could only report a result and never a non-result would be a page nobody could be disappointed by, which is the same as a page nobody should believe."
+    },
+    {
+      "name": "long-and-short-are-two-blocks",
+      "sentence": "The two sides are two lists on the wire and two blocks on the screen",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/scoreboard",
+      "mustCarry": "scoreboard-band side",
+      "why": "The pooling rule is easiest to break on a screen, where one table with a direction column looks tidier than two blocks and quietly invites a total."
+    },
+    {
+      "name": "borrow-assumption-on-every-short-trade",
+      "sentence": "Both will be recorded as unmodelled assumptions on every short trade, from 4.7",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "the trade journal",
+      "arrivesAt": "4.11",
+      "why": "The third the obligation names, and the one nobody had looked at. No trade row exists until 4.7 and no journal until 4.11, so the claim rests on a surface nobody has built. It was written in the present tense until 3.0(d)."
+    },
+    {
+      "name": "realised-risk-beside-intended",
+      "sentence": "the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away",
+      "statedIn": "docs/DECISIONS.md",
+      "surface": "the trade journal",
+      "arrivesAt": "4.11",
+      "why": "Same shape as the borrow assumption. Share counts round down and the gap that creates is a real cost, visible only if something shows both numbers."
+    },
+    {
+      "name": "failed-checks-greyed-with-the-failing-check-named",
+      "sentence": "failed checks greyed with the failing check named",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "the watchlist",
+      "arrivesAt": "4.1",
+      "why": "A greyed row that did not say which check failed would tell a reader a name was rejected and nothing about why, which is the state the gallery was in before 2.9."
+    },
+    {
+      "name": "loss-causes-as-a-share",
+      "sentence": "Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/scoreboard, band 2's loss-cause panel",
+      "arrivesAt": "4.10",
+      "why": "Two different wins with the same symptom, and this is the only place that would separate them. The panel is on the page now declaring its checkpoint rather than absent."
+    },
+    {
+      "name": "proposal-hit-rate-by-pack-version",
+      "sentence": "This is the project's stated success criterion made visible, from 6.8",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/scoreboard, band 3",
+      "arrivesAt": "6.8",
+      "why": "The only band that measures the AI, and it measures the evidence rather than the model."
+    }
+  ],
+  "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."
+}

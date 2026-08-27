@@ -235,6 +235,15 @@
         "stored text values read"
       ]
     },
+    "surface-claims": {
+      "scopes": {
+        "claims of visibility declared in the corpus": 11,
+        "of those whose surface exists and was rendered and read": 6
+      },
+      "context": [
+        "surfaces rendered"
+      ]
+    },
     "writer-ownership": {
       "scopes": {
         "stores declared in SCHEMA.md": 36,

@@ -134,6 +134,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `two-platform` | the matrix | The suite passes on both windows and macos runners |
 | `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |
 | `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |
+| `surface-claims` | every CI run | Every corpus sentence claiming something is stated, recorded on every row, or shown is asserted against the rendered page that carries it. The only check here that reads a surface rather than source, the store or a document |
 | `carried-obligations` | every CI run | Every due point a PROGRESS `Carried` block names is one BUILD_PLAN's obligations table also has. The set of due points rather than the sentences, because prose against prose false-alarms and a suppressed guard is a dead one |
 | `stated-counts` | every CI run | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
 | `fixture-inputs` | every CI run | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
@@ -249,7 +250,13 @@ Done conditions are written against **what the file will say after the edit**, n
 
 ## Merge
 
-CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge.
+CI green before merge, **and a phase branch does not merge until the whole phase has signed off.** Two conditions, and the second is the one that costs something.
+
+**It used to be one condition.** This section read "CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge." That decoupling was written to stop a sign-off holding finished work hostage, and it has a real cost the other way: a phase that merges in pieces has no single commit where the phase is what it says it is, and the sign-off then reviews something already on the default branch, where declining it costs a revert rather than a conversation.
+
+**What it buys and what it costs, stated so a later session can weigh the same trade.** It buys a default branch on which every phase is complete and reviewed. It costs a long-lived branch whenever a phase waits on something that is not code: phase 3 waits three months for accumulation, so its branch is open for a quarter and the nightly job runs from that checkout rather than from `main` for the whole of it. That is the price, it is known, and it is paid deliberately.
+
+**A checkpoint still lands as its own commit** and still satisfies all seven done conditions on its own. Nothing here makes a checkpoint bigger; it makes the merge later.
 
 ## Document lifecycle
 
