@@ -58,7 +58,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:12 | `sectors`, resolved once per name and cached. Moved here from 19:00 on 2026-08-26: it ran after the three stages that read what it writes | ~50 |
 | 18:15 | `clusters`, then `regime` | 0 |
 | 18:20 | `detect-long`, then `detect-short` | 0 |
-| 18:25 | `vectorize`, the signal freeze, then journal | 0 |
+| 18:25 | `vectorize`, the signal freeze, then `journal`, which seals the night | 0 |
 | 18:26 | control sampling | 0 |
 | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |

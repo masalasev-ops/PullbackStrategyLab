@@ -340,7 +340,17 @@ public sealed class PhaseReplay : IDisposable
         Record("signals.frozen", vectorized.Written);
         Record("signals.absent", vectorized.Absent);
 
-        // 13. The nightly cap, over whatever the night's detectors left.
+        // 13. The journal, which seals the night between the freeze and the cap. It writes nothing,
+        //     so its stage row carries no rows written; what it produces is a verdict on whether the
+        //     night's rows are complete, frozen, and untouched by anything that runs later.
+        JournalResult sealed_ = new SetupJournal(_connections, Logger(), _clock, _options).Seal(AsOf);
+
+        stages.Add(new StageRun(SetupJournal.Name, 0, sealed_.RowsWritten, sealed_.Outcome.ToStorageText()));
+        Record("journal.setups", sealed_.Setups);
+        Record("journal.withSignals", sealed_.WithSignals);
+        Record("journal.breaches", sealed_.Breaches.Count);
+
+        // 14. The nightly cap, over whatever the night's detectors left.
         CapResult capped = new SetupCapper(_connections, Logger(), _clock, _options).Cap(AsOf);
 
         stages.Add(new StageRun(SetupCapper.Name, 0, capped.RowsWritten, capped.Outcome.ToStorageText()));

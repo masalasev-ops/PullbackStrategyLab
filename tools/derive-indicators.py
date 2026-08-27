@@ -1794,7 +1794,68 @@ def thrust_main(argv):
     return 0
 
 
+def journal_main(argv):
+    """What the journal should find, restated from the invariants rather than read back.
+
+    The stage seals the night between the signal freeze and the cap, so at that moment every setup
+    row of the night must carry a complete check-result set and a frozen signal row, and must carry
+    neither a rank, a cap verdict nor an agreement, because the components that write those run
+    after it or belong to a person. Restated here from that sentence, over the store, so a stage
+    that silently stopped checking one of the four is a difference rather than a quieter pass.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --journal <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+
+    # Every row in the store, on the same terms the stage reads them: the fixture holds one night
+    # and the authored row carries no date prefix in its id, so filtering on as_of would drop it and
+    # report a smaller population than the stage saw.
+    rows = connection.execute(
+        "SELECT setup_id, direction, check_results, rank, capped_out, agreement FROM setup").fetchall()
+
+    long_gates = ["tradable", "moves-enough", "uptrend", "thrust", "dip-shape",
+                  "held-floor", "contraction", "trigger-near", "exit-tight", "cluster"]
+    short_gates = ["tradable-shortable", "moves-enough", "downtrend", "averages-squeezing", "thrust",
+                   "bounce-shape", "reached-ceiling", "no-reclaim", "exit-tight", "cluster"]
+
+    setups = 0
+    with_signals = 0
+    breaches = 0
+
+    for setup_id, direction, blob, rank, capped_out, agreement in rows:
+        setups += 1
+        names = {r["name"] for r in json.loads(blob)}
+        expected = long_gates if direction == "long" else short_gates
+
+        if any(g not in names for g in expected):
+            breaches += 1
+        if rank is not None or capped_out is not None:
+            breaches += 1
+        if agreement is not None:
+            breaches += 1
+
+        signals = connection.execute(
+            "SELECT COUNT(*) FROM setup_signal WHERE setup_id = ?", (setup_id,)).fetchone()[0]
+
+        if signals > 0:
+            with_signals += 1
+        else:
+            breaches += 1
+
+    print("\njournal, over %s, as of %s" % (store, as_of))
+    print("  journal.%-14s %d" % ("setups", setups))
+    print("  journal.%-14s %d" % ("withSignals", with_signals))
+    print("  journal.%-14s %d" % ("breaches", breaches))
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--journal":
+        return journal_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--thrust":
         return thrust_main(argv[2:])
 

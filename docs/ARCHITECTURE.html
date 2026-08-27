@@ -815,7 +815,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>RiskGate</b></td><td>On trigger</td><td>Sizes every position and enforces every cap. The only thing that may open a position</td></tr>
 <tr><td><b>PaperBroker</b></td><td>On order</td><td>Fills at a deliberately pessimistic price</td></tr>
 <tr><td><b>PositionManager</b></td><td>Nightly 21:15</td><td>Trails, trims and exits. Separate rule sets per direction</td></tr>
-<tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Makes the setup row immutable once written</td></tr>
+<tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. Writes nothing, because a component enforcing immutability by writing would be the second writer of the thing it protects</td></tr>
 <tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
 <tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
 <tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>

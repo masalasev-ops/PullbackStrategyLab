@@ -3639,3 +3639,70 @@ Carried:    Nine obligations remain and **none is due at a checkpoint this entry
 
             Nine discharged rows are removed from the table rather than marked closed, which is what
             the table has always done with an obligation that is finished.
+
+## 3.1 — 2026-08-27 — phase-3-measurement — the journal, which seals a night by writing nothing
+
+Setup rows immutable after write, asserted. The first checkpoint of phase 3 proper.
+
+Built:      `SetupJournal`, verb `journal`, at 18:25 between the signal freeze and the cap. **It
+            writes nothing**, and that is the design rather than an omission: every other stage in
+            the worker owns a table, this one owns a property, and a component enforcing
+            immutability by writing would be the second writer of the thing it protects. SCHEMA
+            lists it as the writer of nothing and `writer-ownership` never sees it.
+
+            What it can assert, stated because what it cannot is more interesting. It cannot compare
+            a row against what the detector wrote, because nothing keeps a second copy and keeping
+            one would be a store whose only purpose is to disagree with the first. What it can check
+            is the four invariants that hold at 18:25 and would be false if anything had written
+            where it should not: every row carries a complete check-result set; every row carries
+            frozen signal evidence, because the vectorizer ran before it; no row carries a rank or a
+            cap verdict, because the capper runs after it; no row carries an agreement, because a
+            person reads the gallery tomorrow.
+
+            **The last two are ordering assertions wearing an immutability coat, and they are the
+            useful half.** A rank at 18:25 means the night ran out of order or something wrote a
+            column it does not own. Both are the shape of defect that otherwise surfaces months
+            later as a night that reads oddly.
+
+            Three `DERIVED` expectations through `tools/derive-indicators.py --journal`, which
+            restates the four invariants from the sentence rather than reading the stage's answer
+            back.
+
+Findings:   Finding, and `point-in-time` caught it before the commit did. **The journal's read of
+            `setup_signal` did not bound `computed_at`.** The stage asks whether a row carries frozen
+            evidence and originally asked it of the table as a whole, so a signal written after the
+            seal would have counted toward it.
+
+            On a live run nothing later exists yet, which is exactly why this is the kind of thing
+            that ships: it is correct every night and wrong on every replay, and the replay is what
+            the phase report reads. The read is now bounded on the seal's own instant, so the
+            question is whether the evidence was frozen before the journal ran rather than whether it
+            exists at all.
+
+            Observation. The immutability tests found a false positive of their own on their first
+            run, and it is worth a line because the shape recurs. Both scanned from `UPDATE setup` to
+            the end of the statement, which swallowed the `WHERE setup_id = @setup_id` predicate, so
+            both reported `setup_id` as a column the capper and the read surface write. They do not
+            write it; they match on it. A pattern that reads a predicate as an assignment reports the
+            key of every keyed update as a violation, and the report is confident and specific and
+            wrong. Bounded on `WHERE`, and the reason is in the pattern's own comment.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, **368 tests**, up from 366.
+
+            Immutability asserted four ways, per the pattern 2.2 used for the frozen signal row. Two
+            of the four are new here: no `UPDATE` against a detector-owned column exists in the
+            shipped source, and the set of columns anything updates is exactly the four SCHEMA
+            declares a later writer for. The second is the other direction of the first, and it is
+            what stops the first being defeated without being touched: a new exception would have to
+            be declared rather than merely added.
+
+            The eleven detector-owned columns are listed by name rather than expressed as "everything
+            except the four", so a column added later is not silently covered by an exemption written
+            before it existed.
+
+Carried:    Nothing new. One code deferral moved with its obligation: `CoverageReportedCheck` deferred
+            the three scans written outside a check to 3.1, and 3.0(e) had moved that obligation to
+            4.6 without the literal following it. Landing 3.1 turned it red, naming the checkpoint
+            and saying the checkpoint shipped without coming back to it, which is the guard doing
+            exactly what it was written for. The pre-flight sweep at 3.0 had flagged this as the one
+            code reference that would have to move, so it was expected rather than discovered.

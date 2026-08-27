@@ -722,3 +722,13 @@ Why:  ForwardReturnFiller fills forward returns and has nothing to do with signa
 Was:  `control_setup` and `forward_return` declared no primary key, `forward_return.subject_id` was documented as "a `setup_id` or a control row" with no column on `control_setup` for a control row to be, and `ceiling_bound` and `scoreboard` were declared at store level only, under "Research — phases 5 and 6".
 Now:  Both phase-3 tables carry a key, `control_setup` gains `control_id` for `subject_id` to point at and a `rank`, `forward_return` gains `filled_at`, and `ceiling_bound` and `scoreboard` are declared in full in the section their writers land in.
 Why:  Every sibling table declares a key and these two did not, so the grain was implied rather than enforced. The subject of an outcome row had nothing to name a control by, and the alternative to a surrogate was a three-column subject on every row. And the file's own preamble claims completeness for phases 1 to 3 while two phase-3 stores sat in the phases 5 and 6 table, so `writer-ownership` would have resolved them at 3.4 and 3.5 with no columns to check.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said SetupJournal "Makes the setup row immutable once written".
+Now:  It says what the stage does: seals the night, every row complete, its evidence frozen, no column written that belongs to a later stage or to a person, and writes nothing.
+Why:  The old line described an outcome nothing could perform. A component cannot make a row immutable; it can check the invariants that would be false if something had written where it should not, and it can do that without owning a table. The distinction matters because the first reading invites a component that enforces immutability by writing, which would be the second writer of the thing it protects.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 18:25 row read "`vectorize`, the signal freeze, then journal".
+Now:  "`vectorize`, the signal freeze, then `journal`, which seals the night".
+Why:  The nightly order test reads backticked verbs out of that table and asserts the replay runs them in the same order. Written as prose, the journal was a stage the schedule mentioned and the test could not see.
