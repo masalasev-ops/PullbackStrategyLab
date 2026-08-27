@@ -4611,3 +4611,18 @@ Carried:    **One discharged and one raised in its place, narrower.** Scheduling
             The checkout question raised at the handover stands, narrowed: the job runs from the
             working tree and says which commit it ran from, so the hazard is recorded rather than
             removed.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — one file missing from the handover's review list
+
+Corrects the 2026-08-27 handover entry, whose "What a fresh session must review" list enumerates the
+code this session wrote and was complete when written. **`tools/nightly.ps1` was added after it**,
+in the scheduling commit, and belongs on that list: it is code, this session wrote it, and it is the
+thing that will run unattended every weekday evening.
+
+The scheduling entry below the handover records it under `Built`, so the corpus holds it. What it was
+missing from is the one list a reviewer reads to know what to look at, which is worse than being
+absent from both: a list that reads as complete and is not is the first defect shape wearing an
+administrative coat.
+
+Nothing else has been added to the shipped source since the handover. The reviewer's list is that
+entry plus this one file.
