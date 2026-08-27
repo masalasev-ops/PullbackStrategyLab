@@ -3017,3 +3017,65 @@ Findings:   Finding, raised from the gate table rather than newly found. **`Pull
 Carried:    Both due at 3.1, and the second is now separate from the gate-id count in a source comment
             it was bundled with, which keeps its own row. The obligations table now carries five rows
             raised at 2.12.
+
+## Phase 2 sign-off — 2026-08-27 — phase-2-detection — the ruling the sign-off owed, found in a file nothing reads
+
+Corrects the entry above, which states that the obligations table carries five rows raised at 2.12.
+It carries six, the sixth being added here.
+
+Findings:   **Two items that fell due at 2.12 were recorded only in the phase's build prompt, and the
+            sign-off closed without seeing either.** Observation: `prompts/2026-08-26-phase-2-plan.md`
+            is a gitignored local file; its 2.12 section asked the sign-off to rule on one thing and
+            noted a second as deliberately open, and neither appears anywhere in the eight documents.
+            They were found the next day, by reading the prompt to check whether it had gone stale,
+            which is not a mechanism.
+
+            Reading. This is the third instance of the same shape. The 1.3 obligation on a night
+            screened over five sessions and the 1.1 obligation on the vendor's reset boundary were
+            each recorded in a `Carried` block and never in the obligations table, so nothing read
+            them and the checkpoints they were due at landed without them; both were found at 2.11.
+            `CLAUDE.md` already says anything issued in conversation that will later be cited lands in
+            the repo when it is issued, and that a prompt is safe as scratch only while that holds.
+            The rule was right and nothing enforced it. What is different here is the direction: those
+            two were in a record and missing from a spec, and these two were in neither, which is
+            worse and is the case the rule was actually written for.
+
+Findings:   **The ruling on 2.11's done-condition clause. The clause stands.** The item, as the prompt
+            put it: BUILD_PLAN's 2.11 done condition gained "unless the run shows the band is out of
+            the five thresholds' reach" in the same checkpoint whose measurement would otherwise have
+            failed the condition as written, and the session that needed the clause wrote it.
+
+            Three grounds, each checkable rather than a matter of taste. **It added work rather than
+            removing it**: the escape is not "record a finding instead", it is the pass rate of every
+            check and the distribution of every threshold's own quantity, which is strictly more
+            evidence than the unamended condition asked for and is why 2.12 had figures to recount at
+            all. **It is falsifiable and was partly falsified without collapsing**: the escape rested
+            on "about 6 a night", the 2.12 recount per side gave 7 long and nought short, and that
+            moves the finding further from the band rather than nearer. A clause written to let a
+            session off would have been embarrassed by its own recount; this one was strengthened by
+            it. **The act it declined is unrecoverable**: the once-only adjustment cannot be re-spent,
+            so spending it on a threshold set the run showed cannot reach the band spends it for
+            nothing, where the clause's cost is a delay bounded by 3.1.
+
+            Reading, on what is actually wrong. Not the clause. The clause and the escape it
+            authorises landed in the same commit from the same session, and nothing outside that
+            session's own prose marked the amendment, so a later reader sees a done condition and a
+            run that met it. That is a mechanism gap rather than a judgement to overturn, and the
+            mechanism is one line: a checkpoint that amends its own done condition says so in its
+            PROGRESS entry, in those words, which is now in `CLAUDE.md` under "Definition of done for
+            a checkpoint" with its prior text in `CHANGELOG.md`. The sign-off then has something to
+            rule on without diffing `BUILD_PLAN.md` against itself, which is what it took here.
+
+Carried:    New, due at 3.1: whether a mechanism should reconcile `PROGRESS.md`'s `Carried` blocks
+            against the obligations table. Carried in the narrow form rather than the one the prompt
+            left open, because the objection recorded there is sound: prose-to-prose matching
+            false-alarms and a suppressed guard is a dead one. A due point is structured in the table
+            and free prose in a `Carried` block, so what a check can reconcile is the set of due
+            points, failing only on a `Carried` block naming a checkpoint no row does. That is the
+            shape that would have caught all three instances.
+
+            The obligations table now carries six rows raised at 2.12, and the verdict recorded above
+            is unchanged: phase 2 signs off, with the gallery review and the three `CONFIRMED`
+            indicator values outstanding at the operator. Nothing found here bears on it. The ruling
+            was owed at the sign-off and is given at the sign-off, one day later and in the same
+            branch.

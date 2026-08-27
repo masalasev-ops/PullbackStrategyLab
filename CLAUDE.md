@@ -232,6 +232,8 @@ All seven, or it is not done:
 
 Done conditions are written against **what the file will say after the edit**, not as statements of intent. A done condition narrower than its clause is the most common defect in this corpus.
 
+**And a checkpoint that amends its own done condition says so in its PROGRESS entry, in those words.** Amending one is legitimate and sometimes right: 2.11 added the clause that let it decline the once-only threshold adjustment, the reasoning is on the record, and the sign-off ruled the clause stands. What is not legitimate is that the amendment and the escape it authorises land in the same commit from the same session with nothing outside that session's own prose marking it, because the next reader sees a condition and a run that met it. Naming it costs a line and gives the sign-off something to rule on without diffing `BUILD_PLAN.md` against itself.
+
 ## Stopping rules
 
 **Interrupt a phase only if a finding blocks a checkpoint from being built, or would put a silently wrong result into shipped code.** Everything else becomes a carried obligation and waits for sign-off. A reply that holds this rule is short, carries no fenced block, and ends by saying go build.
