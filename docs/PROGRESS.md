@@ -4407,3 +4407,16 @@ Verified:   **The population boundary asserted behaviourally rather than by read
             which 609 independent.
 
 Carried:    None new.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — a corrected count in the entry above
+
+Corrects the 2026-08-27 entry "the minimum ratified at 262", whose `Carried` block says **"Four
+operator rows remain"**. There are **five**: the `CONFIRMED` indicator values raised at 1.6, the
+threshold adjustment raised at 2.11, the `CONFIRMED` gallery expectations raised at 2.9, the vendor's
+quota reset boundary raised at 1.1, and whether the tight control set may draw from neighbouring
+sessions, raised at 3.3. Nine obligations stand in total: those five, one due at 4.1, one at 4.6, one
+at the move, and none due in phase 3.
+
+A count in a record, which `stated-counts` exempts by design because a record is a dated measurement
+rather than a claim about the corpus. The exemption is why this needed a reader rather than a check,
+and why the correction is a new entry rather than an edit.
