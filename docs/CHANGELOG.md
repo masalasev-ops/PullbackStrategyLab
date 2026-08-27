@@ -807,3 +807,13 @@ Why:  The three months was an estimate written before anything was measured and 
 Was:  `scoreboard` ended at `population`, and the note under it said the effective count falls below the row count because ten-day labels overlap and same-night setups share a market factor.
 Now:  It carries `n_minimum`, and the notes say that `n_effective` starts from rows rather than nights because the paired difference removes the market factor by construction, with both discounts measured from the series.
 Why:  Counting a night as one observation threw away exactly what the control draw was built to buy. The market factor is what makes forty unpaired names worth about one observation, and pairing removes it; what is left inside a night is each name's own move against its own controls. The discounts are now the label overlap and whatever clustering the matching failed to remove, both measured, with a night that cannot say how its own pairs dispersed counting as one so the pessimistic reading is the limiting case rather than the assumption.
+
+### 2026-08-27 — ARCHITECTURE.html — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  196 in all three places, at 80% power. The KPI read `Effective setup observations for the same question 196`; the pre-registration rule read "Selection variants settle at **196 effective paired setup observations** ... at 80% power against the measured dispersion of that return"; the authored-parameters row read `196 effective paired setup observations | Per proposal | Detects about a two-point difference in ten-day forward return, at 80% power against a dispersion measured rather than assumed`.
+Now:  262 in all three, at 90% power.
+Why:  Both judgement inputs were ratified by the operator on 2026-08-27. The dispersion and the arithmetic are unchanged; only the power moved, from a conventional 80% nobody had chosen to a 90% chosen for a stated reason. A false positive on band 1 is caught downstream by the forward paired test and the variant machinery; a false negative is caught by nothing, because band 1 reading flat means the project stops. At about eleven effective observations a night the extra power costs about six sessions.
+
+### 2026-08-27 — BUILD_PLAN.md — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  A carried-obligation row raised at 3.0, due at the operator, holding the ratification of the two judgement inputs behind the minimum sample.
+Now:  Removed.
+Why:  Ratified: two points at 90% power, giving 262. Both judgements are recorded with their reasoning in the decision, and the sensitivity table is asserted by a test so the choice stays visible as a choice rather than settling into a default.

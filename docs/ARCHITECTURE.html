@@ -141,7 +141,7 @@ tr:hover td{background:#f4f2ec}
 <div class="kpi">
   <div><span>Trades to prove it works at all</span><strong>~420</strong></div>
   <div><span>Paired trades to spot a small gain</span><strong>~1,100</strong></div>
-  <div><span>Effective setup observations for the same question</span><strong>196</strong></div>
+  <div><span>Effective setup observations for the same question</span><strong>262</strong></div>
   <div><span>Which takes</span><strong>until band 1 says so</strong></div>
 </div>
 
@@ -525,7 +525,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="rule"><b class="lab">Deciding the answer before seeing it</b>
 <p>At creation, two things are locked: the improvement required, and how many observations must accumulate before anyone may look. A variant that misses its target closes as refuted and stays visible in the record rather than quietly vanishing, on the research ledger from <b>5.5</b>.</p>
-<p><b>Defaults, overridable per proposal with a stated reason.</b> Selection variants settle at <b>196 effective paired setup observations</b>, which detects about a two-point difference in ten-day forward return at 80% power against the measured dispersion of that return. Effective rather than rows, because ten-day labels overlap and rows are worth less than their own number (see: The minimum sample is derived from a measured dispersion and counted in effective observations). Execution variants settle at <b>200 paired trades</b>, which detects about a 0.35R difference. Both numbers are honest about what they cannot see: an improvement smaller than that needs a longer sample pre-registered up front, and asking for one is a legitimate proposal.</p>
+<p><b>Defaults, overridable per proposal with a stated reason.</b> Selection variants settle at <b>262 effective paired setup observations</b>, which detects about a two-point difference in ten-day forward return at 90% power against the measured dispersion of that return. Effective rather than rows, because ten-day labels overlap and rows are worth less than their own number (see: The minimum sample is 262 effective observations, ratified at two points and 90% power). Execution variants settle at <b>200 paired trades</b>, which detects about a 0.35R difference. Both numbers are honest about what they cannot see: an improvement smaller than that needs a longer sample pre-registered up front, and asking for one is a legitimate proposal.</p>
 <p>Without this the loop becomes a machine for false discoveries. Run twenty variants and pick the best and you have picked the luckiest. With twenty genuinely worthless candidates, the chance at least one looks impressive by luck alone is about 64%.</p></div>
 
 <div class="warn"><b class="lab">The trap this loop will walk into if unguarded</b>
@@ -1060,7 +1060,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Nightly setup cap</td><td>60, split 40 long and 20 short, unused slots released</td><td>If the budget changes</td><td>Set by the intraday call budget, not by anything about the strategy. The split is fixed rather than proportional so short coverage survives strong markets</td></tr>
 <tr><td>Screen and cap ranking</td><td>Give-up distance in daily-range units, ascending; ticker alphabetical as tiebreak</td><td>Signal proposal</td><td>R is move divided by stop, and range units normalise the stop against that stock's own noise. The only ranking with a stated mechanism</td></tr>
 <tr><td>Regime label</td><td>Index trend score plus breadth score; risk-on at +2, risk-off at minus 2, mixed otherwise</td><td>Signal proposal</td><td>Both inputs already exist. Three states buffer themselves. Raw scores stored alongside the label</td></tr>
-<tr><td>Selection variant sample</td><td>196 effective paired setup observations</td><td>Per proposal</td><td>Detects about a two-point difference in ten-day forward return, at 80% power against a dispersion measured rather than assumed. Effective, not rows</td></tr>
+<tr><td>Selection variant sample</td><td>262 effective paired setup observations</td><td>Per proposal</td><td>Detects about a two-point difference in ten-day forward return, at 90% power against a dispersion measured rather than assumed. Effective, not rows</td></tr>
 <tr><td>Execution variant sample</td><td>200 paired trades</td><td>Per proposal</td><td>Detects about a 0.35R difference. Smaller effects need a longer sample pre-registered</td></tr>
 <tr><td>Holdout windows</td><td>8, one calendar quarter each, oldest first</td><td>Never</td><td>One spent per pack-version decision, never reused. A designed dead end when exhausted</td></tr>
 <tr><td>Twin-pair threshold</td><td>Distance under 0.5 after z-scoring; outcomes differing by over 15 points</td><td>Phase 6</td><td>Z-scored over the trailing 250 setups, across the signals shown in the pack</td></tr>

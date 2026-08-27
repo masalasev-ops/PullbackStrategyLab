@@ -60,28 +60,33 @@ public static class MeasurementParameters
     /// <summary>
     /// The difference in ten-day forward return the evidence should be able to detect.
     ///
-    /// Two points, which is the figure ARCHITECTURE has always stated beside the minimum sample and
-    /// is the one input to that arithmetic nobody has disputed. It is a judgement about what size of
-    /// edge is worth the machinery, not a measurement, and it is the lever the minimum is most
-    /// sensitive to: the sample goes as the inverse square of it, so three points would need 87
-    /// observations where two needs 196.
-    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+    /// <b>Two points because it is the size of the effect being hunted, not a target chosen for
+    /// roundness.</b> The strategy's claimed expectancy is about 0.55R on a 3% stop, which is about
+    /// 1.7 points of forward return. Detecting less than two points would be detecting something too
+    /// small to trade after costs, so the threshold is what is worth having rather than what is
+    /// claimed.
+    ///
+    /// It is a judgement rather than a measurement, and it is the lever the minimum is most sensitive
+    /// to: the sample goes as the inverse square of it, so at the ratified power three points would
+    /// need 117 observations where two needs 262.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
     public const double DetectableDifference = 0.02d;
 
     /// <summary>
     /// How many effective observations band 1 needs before it is allowed to answer.
     ///
-    /// <b>Derived, not chosen.</b> It falls out of the dispersion measured over the fixture's own
-    /// bars, the two-point difference above, the 95% the interval already uses and 80% power. Every
-    /// digit traces to one of those four, which is what the figure it replaces could not say.
+    /// <b>Derived from two measurements and two ratified judgements.</b> It falls out of the
+    /// dispersion measured over the fixture's own bars, the two-point difference above, the 95% the
+    /// interval already uses and 90% power. Every digit traces to one of those four, which is what
+    /// the figure it replaces could not say.
     ///
     /// <b>Counted in effective observations, and that is the half that was missing.</b> A minimum
     /// satisfied by rows is satisfiable by rows carrying far less than their own number of
     /// observations' worth of information, and nothing on the surface would say so.
-    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
-    public const int MinimumEffectiveObservations = 196;
+    public const int MinimumEffectiveObservations = 262;
 
     /// <summary>
     /// How many names a session needs before its cross-section is used to measure dispersion.

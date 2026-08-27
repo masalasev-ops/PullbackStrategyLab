@@ -18,7 +18,7 @@ namespace PullbackStrategyLab.Core.Measurement;
 /// Naming which is which is the whole point of writing the arithmetic down rather than the number:
 /// a later session can move the two judgements and watch the minimum move with them, and cannot
 /// quietly move the fact.
-/// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
 /// </summary>
 public static class MinimumSample
 {
@@ -32,18 +32,27 @@ public static class MinimumSample
     public const double ZAlphaTwoSided95 = 1.959964d;
 
     /// <summary>
-    /// The critical value for 80% power, which is the input nothing in the corpus ever stated.
+    /// The critical value for 90% power, ratified rather than conventional.
     ///
     /// <b>Power is the question "if the effect is really there, how often does this sample find
     /// it".</b> A sample sized on confidence alone controls only the false positive, so it can be
     /// arbitrarily small and still honest about what it claims, while finding a real effect almost
-    /// never. Eighty percent is the ordinary convention and it is an authored choice, which is why it
-    /// is named here and carried to the operator rather than absorbed into the formula.
+    /// never. Nothing in the corpus stated a power at all until this was ratified.
     ///
-    /// The old 160 corresponds to about 72% power at the measured dispersion, so it was not a
-    /// different arithmetic; it was this arithmetic with a power nobody chose.
+    /// <b>Ninety rather than the conventional eighty, because the costs here are asymmetric in an
+    /// unusual direction.</b> A false positive is caught downstream: the forward paired test and the
+    /// variant machinery both sit after band 1 and a spurious reading does not survive them. A false
+    /// negative is caught by nothing, because band 1 reading flat means the pattern has nothing in it
+    /// and the project stops. There is no downstream from that. At about eleven effective
+    /// observations a night the extra power costs roughly six sessions, against a one-in-ten chance
+    /// of abandoning a working strategy.
+    ///
+    /// <b>Named as ratified so a later session does not read it as a default.</b> Eighty is what
+    /// would otherwise be assumed to have been meant, and the whole reason this constant carries a
+    /// paragraph is that the convention was rejected rather than not considered.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
-    public const double ZBetaPower80 = 0.841621d;
+    public const double ZBetaPower90 = 1.281552d;
 
     /// <summary>
     /// The minimum, in observations, for detecting <paramref name="detectableDifference"/> in the
@@ -70,7 +79,7 @@ public static class MinimumSample
 
     /// <summary>The minimum at the corpus's own inputs, which is what the scoreboard reports against.</summary>
     public static int Of(double pairedDispersion) =>
-        Of(pairedDispersion, MeasurementParameters.DetectableDifference, ZAlphaTwoSided95, ZBetaPower80);
+        Of(pairedDispersion, MeasurementParameters.DetectableDifference, ZAlphaTwoSided95, ZBetaPower90);
 
     /// <summary>Six places, which is the precision the dispersion is measured and reported to.</summary>
     public static string Figure(double value) =>

@@ -11,7 +11,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// measured the dispersion it turns on and nothing had stated the power it was sized for. A pinned
 /// constant proves the documents agree with the code, never that either is right, so what is
 /// asserted here is the arithmetic itself and the properties it has to have.
-/// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
 /// </summary>
 public sealed class MinimumSampleTests
 {
@@ -25,31 +25,56 @@ public sealed class MinimumSampleTests
     [Fact]
     public void The_stated_inputs_give_the_stated_minimum()
     {
-        Assert.Equal(196, MinimumSample.Of(0.099811d));
+        Assert.Equal(262, MinimumSample.Of(0.099811d));
         Assert.Equal(
             MeasurementParameters.MinimumEffectiveObservations, MinimumSample.Of(0.099811d));
     }
 
     /// <summary>
-    /// The old figure was this arithmetic at a power nobody chose, which is worth holding rather
-    /// than asserting once in prose.
+    /// The sensitivity table the decision states, asserted rather than left as prose.
     ///
-    /// At 70% power the same dispersion and the same two points give 154, and at 90% they give 262.
-    /// 160 sits between the first two, which is the whole account of where it came from.
+    /// <b>It exists so the ratified choice stays visible as a choice.</b> Both inputs are judgements
+    /// and a later session will otherwise read them as conventional defaults, which is exactly what
+    /// happened to the figure this replaces: 160 was this arithmetic at a power nobody had chosen,
+    /// and nothing beside it said what moving that power would cost.
+    /// </summary>
+    [Theory]
+    [InlineData(0.524401d, 154)]
+    [InlineData(0.841621d, 196)]
+    [InlineData(MinimumSample.ZBetaPower90, 262)]
+    [InlineData(1.644854d, 324)]
+    public void The_sensitivity_to_power_is_what_the_decision_tabulates(double zBeta, int expected)
+    {
+        Assert.Equal(
+            expected,
+            MinimumSample.Of(
+                0.099811d, MeasurementParameters.DetectableDifference,
+                MinimumSample.ZAlphaTwoSided95, zBeta));
+    }
+
+    /// <summary>
+    /// The ratified sample is powered on what is worth trading, not on what the strategy claims,
+    /// and the difference between those two is recorded rather than left to be derived.
+    ///
+    /// The claimed expectancy is about 0.55R on a 3% stop, or about 1.65 points. The sample detects
+    /// two points at 90%; against 1.65 points the same sample carries about 76% power, and 90% there
+    /// would need 385. That is not an objection to the ratification, which deliberately sizes on the
+    /// smallest effect worth having. It is here so nobody reads "90% power" as 90% of finding the
+    /// strategy's own claimed edge.
     /// </summary>
     [Fact]
-    public void The_figure_it_replaces_sits_between_seventy_and_eighty_percent_power()
+    public void Ninety_percent_power_is_against_two_points_and_not_against_the_claimed_expectancy()
     {
-        int atSeventy = MinimumSample.Of(
-            0.099811d, MeasurementParameters.DetectableDifference,
-            MinimumSample.ZAlphaTwoSided95, 0.524401d);
-        int atNinety = MinimumSample.Of(
-            0.099811d, MeasurementParameters.DetectableDifference,
-            MinimumSample.ZAlphaTwoSided95, 1.281552d);
+        const double Claimed = 0.0165d;
 
-        Assert.Equal(154, atSeventy);
-        Assert.Equal(262, atNinety);
-        Assert.InRange(160, atSeventy, MeasurementParameters.MinimumEffectiveObservations);
+        Assert.Equal(
+            385,
+            MinimumSample.Of(
+                0.099811d, Claimed, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90));
+
+        Assert.True(
+            MeasurementParameters.MinimumEffectiveObservations < 385,
+            "the ratified sample is sized on the two points worth trading, so it must be the smaller");
     }
 
     /// <summary>
@@ -67,8 +92,8 @@ public sealed class MinimumSampleTests
     [InlineData(0.05d, 0.025d)]
     public void Halving_the_difference_worth_detecting_quadruples_the_sample(double wider, double half)
     {
-        int atWider = MinimumSample.Of(0.1d, wider, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower80);
-        int atHalf = MinimumSample.Of(0.1d, half, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower80);
+        int atWider = MinimumSample.Of(0.1d, wider, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90);
+        int atHalf = MinimumSample.Of(0.1d, half, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90);
 
         // Rounding up costs at most one observation on each side, so the ratio is four to within
         // that rather than exactly four.
@@ -84,11 +109,12 @@ public sealed class MinimumSampleTests
     [Fact]
     public void A_fractional_observation_rounds_up_and_never_to_nearest()
     {
-        // 195.48 at the stated inputs, which rounds to nearest at 195 and up at 196.
-        Assert.Equal(196, MinimumSample.Of(0.099811d));
+        // 261.71 at the stated inputs, which rounds to nearest at 262 either way, so the case
+        // that separates the two rules is the one below rather than this one.
+        Assert.Equal(262, MinimumSample.Of(0.099811d));
 
         // And a hair below a whole number still costs the whole observation.
-        Assert.Equal(2, MinimumSample.Of(0.02d / (MinimumSample.ZAlphaTwoSided95 + MinimumSample.ZBetaPower80) * 1.001d));
+        Assert.Equal(2, MinimumSample.Of(0.02d / (MinimumSample.ZAlphaTwoSided95 + MinimumSample.ZBetaPower90) * 1.001d));
     }
 
     /// <summary>
@@ -103,7 +129,7 @@ public sealed class MinimumSampleTests
         Assert.Throws<ArgumentOutOfRangeException>(() => MinimumSample.Of(0d));
         Assert.Throws<ArgumentOutOfRangeException>(() => MinimumSample.Of(-0.01d));
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => MinimumSample.Of(0.1d, 0d, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower80));
+            () => MinimumSample.Of(0.1d, 0d, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90));
     }
 
     /// <summary>

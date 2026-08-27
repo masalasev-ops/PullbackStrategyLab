@@ -6831,10 +6831,10 @@
     {
       "id": "minimumSample.effectiveObservations",
       "tier": "DERIVED",
-      "value": "196",
+      "value": "262",
       "checkpoint": "3.0",
       "producedBy": "an independent restatement of the sample-size arithmetic from what each quantity is, computed outside the solution by tools/derive-indicators.py --dispersion",
-      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum."
+      "note": "Thirty names over 241 sessions of the captured fixture, hand-picked for liquidity and still listed at the end of it. A universe with delistings in it disperses further, so this is a floor on the real figure and the minimum it produces is a floor on the real minimum. Ratified on 2026-08-27 at two points and 90% power, which is what moves this from 196 to 262; the dispersion above is unchanged."
     },
     {
       "id": "pointInTime.IESC.afterwards",

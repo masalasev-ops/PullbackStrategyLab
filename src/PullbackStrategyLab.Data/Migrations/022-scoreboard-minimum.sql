@@ -15,6 +15,6 @@
 --
 -- Nullable, and set on band 1 alone. The other panels answer questions no checkpoint fires on, and
 -- a minimum on every panel would read as a threshold each of them is being held to.
--- see: The minimum sample is derived from a measured dispersion and counted in effective observations
+-- see: The minimum sample is 262 effective observations, ratified at two points and 90% power
 
 ALTER TABLE scoreboard ADD COLUMN n_minimum INTEGER NULL;

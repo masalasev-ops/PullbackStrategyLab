@@ -117,7 +117,7 @@ public sealed record PanelView(
     /// is withheld until an interval means anything; the counts are not, because a number climbing
     /// from nothing tells a reader how far off the answer is and whether the overlap is costing
     /// forty percent or eighty-five. A calendar could say neither.
-    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
     public string Count
     {

@@ -2252,7 +2252,7 @@ def dispersion_main(argv):
     controls = 5
     delta = 0.02
     z_alpha = 1.959964
-    z_beta = 0.841621
+    z_beta = 1.281552
 
     connection = sqlite3.connect(store)
     rows = connection.execute(
@@ -2325,7 +2325,7 @@ def dispersion_main(argv):
     for detect in (0.015, 0.02, 0.025, 0.03):
         s = (z_alpha + z_beta) * paired / detect
         print("    detecting %.3f needs %4d" % (detect, int(math.ceil(s * s))))
-    for label, zb in (("70%", 0.524401), ("80%", z_beta), ("90%", 1.281552)):
+    for label, zb in (("70%", 0.524401), ("80%", 0.841621), ("90%", z_beta), ("95%", 1.644854)):
         s = (z_alpha + zb) * paired / delta
         print("    at %s power needs %4d" % (label, int(math.ceil(s * s))))
 

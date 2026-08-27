@@ -252,13 +252,22 @@ public sealed class PinnedConstantsCheck
         // of them while nothing had measured the one input that is a fact.
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Selection variant sample",
             ParameterCell(architecture, "Selection variant sample")
-                .Contains("196 effective paired setup observations", StringComparison.Ordinal),
-            MeasurementParameters.MinimumEffectiveObservations == 196,
+                .Contains("262 effective paired setup observations", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 262,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
-        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, 196 effective observations",
-            decisions.Contains("**196 effective observations**", StringComparison.Ordinal),
-            MeasurementParameters.MinimumEffectiveObservations == 196,
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, 262 effective observations",
+            decisions.Contains("**262 effective observations**", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 262,
+            "MeasurementParameters.MinimumEffectiveObservations"));
+
+        // The name carries the figure, so the name is pinned too. A decision whose title states a
+        // number and a body that states a different one would resolve, cite and read cleanly.
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the figure in the decision's own name",
+            decisions.Contains(
+                "**The minimum sample is 262 effective observations, ratified at two points and 90% power**",
+                StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 262,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
         pins.Add(Pin.Text("DECISIONS.md, the minimum sample, two points of forward return",
@@ -270,9 +279,9 @@ public sealed class PinnedConstantsCheck
             decisions.Contains("1.959964", StringComparison.Ordinal),
             MinimumSample.ZAlphaTwoSided95 == 1.959964d, "MinimumSample.ZAlphaTwoSided95"));
 
-        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the 80% power critical value",
-            decisions.Contains("0.841621", StringComparison.Ordinal),
-            MinimumSample.ZBetaPower80 == 0.841621d, "MinimumSample.ZBetaPower80"));
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the 90% power critical value",
+            decisions.Contains("1.281552", StringComparison.Ordinal),
+            MinimumSample.ZBetaPower90 == 1.281552d, "MinimumSample.ZBetaPower90"));
 
         // The measured input, pinned against the fixture expectation rather than against a constant.
         // It is the one number here that is a fact rather than a judgement, so the thing it has to

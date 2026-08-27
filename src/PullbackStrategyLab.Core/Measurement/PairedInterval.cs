@@ -154,7 +154,7 @@ public static class PairedInterval
     /// <b>Any minimum sample stated against this is counted here, not in rows.</b> A target reading
     /// "196 observations" is satisfiable by 196 rows carrying far less than 196 observations' worth
     /// of information, and nothing on the surface would say so.
-    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
     public static int EffectiveObservations(IReadOnlyList<Night> series)
     {

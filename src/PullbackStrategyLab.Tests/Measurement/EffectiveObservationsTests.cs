@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// <b>The pessimistic reading is now the limiting case rather than the assumption</b>, and that is
 /// what these assert: a night that cannot say how its own pairs dispersed still counts as one, and a
 /// night whose pairs all move together collapses back to about one however many pairs it holds.
-/// see: The minimum sample is derived from a measured dispersion and counted in effective observations
+/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
 /// </summary>
 public sealed class EffectiveObservationsTests
 {

@@ -4284,3 +4284,62 @@ Verified:   Two authored series the fixture could not otherwise produce, both `D
 
 Carried:    None new. The two judgement inputs behind the minimum stay at the operator, where the
             entry above put them.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the minimum ratified at 262, and both judgements recorded as judgements
+
+Not a checkpoint. The operator's ruling on the two inputs the derivation left open, taken as a
+superseding decision because the figure it moves was pinned and cited.
+
+Ratified:   **Two points, two-sided 95%, 90% power. 262 effective observations.**
+
+            **Two points because it is the size of the effect being hunted rather than a target
+            chosen for roundness.** The strategy's claimed expectancy is about 0.55R on a 3% stop,
+            which is about 1.7 points of forward return. Detecting less than two points would be
+            detecting something too small to trade after costs, so the threshold is set at what is
+            worth having rather than at what is claimed.
+
+            **90% rather than the conventional 80%, because the costs here are asymmetric and in an
+            unusual direction.** A false positive is caught downstream: the forward paired test and
+            the variant machinery both sit after band 1, and a spurious reading does not survive
+            them. **A false negative is caught by nothing**, because band 1 reading flat means the
+            pattern has nothing in it and the project stops. There is no downstream from that. At
+            about eleven effective observations a night, 90% costs roughly six sessions more than
+            80%: six days against a one-in-ten chance of abandoning a working strategy.
+
+            The reasoning is recorded rather than the number alone, because both inputs are
+            judgements and a later session will otherwise read them as conventional defaults. That
+            is exactly what happened to the figure this replaces.
+
+Measured:   **One consequence stated rather than left to be derived.** 262 detects two points at 90%
+            power. Against the 1.65 points the strategy actually claims, the same sample carries
+            about **76% power**, and 90% power at 1.65 points would need **385**. Not an objection to
+            the ratification, which deliberately sizes on what is worth trading rather than on what
+            is claimed; recorded so nobody reads "90% power" as 90% of finding the strategy's own
+            claimed edge.
+
+            The sensitivity, now asserted by a test rather than stated in prose: at two points, 70%
+            power needs 154, 80% needs 196, 90% needs 262, 95% needs 324. At 90% power, detecting
+            three points needs 117 and one and a half needs 466.
+
+Built:      **A superseding decision**, `The minimum sample is 262 effective observations, ratified
+            at two points and 90% power`, carrying the measurement, both populations, the arithmetic
+            and both judgements with their reasoning. The decision it replaces moves to "Previously
+            decided" with its reasoning intact and a line saying what it got right: everything it
+            measured survives unchanged, and what it could not do was settle its own two judgements,
+            which it said outright.
+
+            **The citation sweep was counted in advance and came out where it said.** Seventeen
+            citations, of which three sit in `CHANGELOG.md` and are left alone, because a dated entry
+            names what authorised an edit at the time and correcting that would rewrite history
+            rather than the corpus. One is the decision's own heading. **Thirteen repointed**, in the
+            same commit, and the sweep reported thirteen.
+
+            Three new pins, one of which is the figure in the decision's own name: a decision whose
+            title states a number and whose body states a different one would resolve, cite and read
+            perfectly cleanly.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, **391 tests**, up from 387.
+
+Carried:    **One discharged, the last of the two the derivation left open.** The obligation raised
+            at 3.0 against the 160-observation minimum is closed and its row is removed from
+            `BUILD_PLAN.md`. Four operator rows remain, none of them about this.
