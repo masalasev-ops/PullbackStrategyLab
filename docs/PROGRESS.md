@@ -4420,3 +4420,116 @@ at the move, and none due in phase 3.
 A count in a record, which `stated-counts` exempts by design because a record is a dated measurement
 rather than a claim about the corpus. The exemption is why this needed a reader rather than a check,
 and why the correction is a new entry rather than an edit.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the handover, which is not the sign-off
+
+**This is not the sign-off**, in those words and on 2.12's precedent. The session writing it has
+committed code to this branch and is disqualified by the fresh-session rule from reviewing it. What
+follows is what a fresh session needs in order to take 3.7: what was built, what has already been
+verified and how, what must not be redone, and where this corpus's faults have historically hidden.
+
+### What is finished
+
+**3.0 through 3.5, all seven done conditions, checked rather than asserted.**
+
+| Condition | How it was checked | Result |
+|---|---|---|
+| 1, deliverable exists and runs | The five stages run in the replay and write their rows; the scoreboard page renders under `surface-claims` | holds |
+| 2, `tools/ci.*` green with the test count in PROGRESS | Every checkpoint entry parsed for a recorded test count | 359 at 3.0, rising to 369 at 3.5, none missing |
+| 3, new store writes declared in SCHEMA | CI step 10, `writer-ownership`, both directions | green |
+| 4, constants pinned and decision names resolve | CI steps 5, 6 and 8 | green |
+| 5, the suite passes on both runners | Run 33099188802 at `f8223c9`: `windows-latest` success, `macos-latest` success, and the `rehearsal` job on a case-sensitive filesystem success | green |
+| 6, a PROGRESS entry naming what was built, measured and carried | Twelve checkpoint entries read for those sections | all present. **3.0(d) labels them `Measured` and `Findings` rather than `Built`**, and its content is the repairs it made, so the condition holds in substance and not in form |
+| 7, expectations added with their tier, at least one `DERIVED` or `CONFIRMED` | `fixtures/expectations.json` grouped by checkpoint | 3.0: 124 of 164 derived. 3.1: 3 of 3. 3.2: 144 of 148. 3.3: 12 of 17. 3.4: 20 of 20. 3.5: 36 of 41. **No checkpoint is frozen-only**, and `frozenOnly` is correctly empty |
+
+At the head commit: `tools/ci.ps1` green, 26 steps, 392 tests. `tools/verify-phase` GREEN, 116
+claims, 66 passed, 0 failed, 50 out of scope, **0 unexamined**. 1,134 expectations, 609 independent.
+
+### What was parked, and what parking does not change
+
+**3.6 is parked and 3.7 does not wait on it.** 3.7 signs off that 3.0 through 3.5 hold, which is a
+claim about code, documents and a fixture and is verifiable today. 3.6 decides whether the pattern
+works and needs a sample that does not exist. Phase 1 is the precedent and the argument: it signed
+off with the `CONFIRMED` values outstanding, on the reasoning that a due point moving at every
+sign-off is permanent while reading as pending. Here the same reasoning runs the other way, because
+a checkpoint nobody can reach for months, left as a sign-off condition, makes the sign-off
+permanently pending while every part of it that could be checked already passes.
+
+3.6 still has to happen, its trigger is measured rather than waited out, and the panel is what fires
+it: at least twenty sessions **and** at least 262 effective observations, per direction and control
+set, reported on the page every night.
+
+### What a fresh session must review
+
+**The code this session wrote, which is what disqualifies it.** Core: `ForwardDispersion`,
+`MinimumSample`, `PairedInterval`, `ForwardOutcome`, `ControlMatching`, `WinRateCeiling`,
+`ScanSpans`, `MeasurementParameters`, and the corrected `PullbackGeometry.Of`. Worker:
+`SetupJournal`, `ForwardReturnFiller`, `ControlSampler`, `CeilingCalculator`, `ScoreboardBuilder`.
+Api: `LabScoreboard`. Web: `ScoreboardView`, `Scoreboard.cshtml`. Tests: `SurfaceClaimsCheck`,
+`CarriedObligationsCheck`, `MinimumSampleTests`, `EffectiveObservationsTests`, the `PhaseReplay`
+additions, and migrations 015 through 023.
+
+**What must not be redone.** The threshold ruling, the tight-set question, the `CONFIRMED` values and
+the gallery expectations are the operator's and are listed below; a sign-off session cannot discharge
+them, and moving their due points is what made them permanent before. The prediction at 3.0(c) is
+settled and recorded; it is not re-run. The once-only threshold adjustment is **unspent** and a
+sign-off does not spend it.
+
+### Where to look, because reading will not find it
+
+This corpus has shipped six distinct defect shapes and every one of them passed a green suite.
+
+1. **The subject went away and the assertion kept passing.** `path-casing` compared no paths.
+   `bar-append-only` held one bar table of three. Break the thing and see whether the check notices.
+2. **A check narrowed its own scope silently.** Scope floors in `fixtures/checks-baseline.json` now
+   guard this per scope. Check that the floors sit under the scope carrying the property rather than
+   under a count of files read.
+3. **A stated count went stale.** `stated-counts` covers specs and exempts records.
+4. **A malformed row was dropped and nothing reported missing.** `MarkdownTable`.
+5. **A figure was computed over a population other than the one named beside it.** Every figure
+   should state its rows, its filter and its tier in the same breath.
+6. **The instrument was right and its answer was discarded downstream.** A claim that something is
+   shown is a claim about a surface, and `surface-claims` is the only check that reads one.
+
+The productive move is to break things rather than read them. Three of this phase's own defects were
+found exactly that way: the zero-width interval, the ceiling's two identical denominators, and the
+tight control set that was the loose set.
+
+### Findings
+
+**A count stated in a record went wrong twice in two entries, and nothing was ever going to catch
+it.** The ratification entry says "Four operator rows remain" where there were five; the entry
+correcting it says "Nine obligations stand in total" and then enumerates eight. `stated-counts`
+exempts records by design and rightly so, because a record states what was true on its date and a
+check enforcing today's number would rewrite history.
+
+**The lesson is not a check, it is to stop tallying.** An enumeration is self-checking and a tally is
+not, and both errors were tallies sitting beside correct enumerations. Where a record needs to say
+how many, it lists them.
+
+**The true figures, enumerated.** Ten obligations stand, of which seven are at the operator, one at
+4.1, one at 4.6, one at the move, and **none at a landed checkpoint or anywhere in phase 3**.
+
+### The seven at the operator
+
+1. **1.6** — one `CONFIRMED` indicator value per hand-picked ticker, read off a charting platform.
+2. **2.11** — the threshold adjustment the count distribution calls for. The once is unspent.
+3. **2.9** — the `CONFIRMED` gallery expectations, which are a person opening the gallery.
+4. **1.1** — whether the vendor's quota resets on the UTC date the lab counts against.
+5. **3.3** — whether the tight control set may draw from neighbouring sessions. **Wanted before 3.6
+   rather than after**, because the tight comparison is the number 3.6 turns on.
+6. **3.6** — scheduling the nightly job. Nothing accumulates until it runs, it has the longest lead
+   time in the project, and until this entry it existed only as prose in the pre-3.6 sequence.
+7. **3.6** — whether accumulation runs from the phase branch or from `main`, which parking 3.6 past
+   3.7 turned from implied into a question.
+
+Built:      Nothing. A record pass and two `BUILD_PLAN.md` edits, prior text in `CHANGELOG.md`.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 392 tests. `tools/verify-phase` GREEN, 0
+            unexamined. Both matrix runners and the rehearsal job green at `f8223c9`.
+
+Carried:    **Two new, both at the operator**, and both raised as rows rather than left in prose:
+            scheduling the nightly job, and which checkout it runs from. None discharged.
+
+**PR #4 stays in draft.** CI is green, which is one of the two merge conditions; the other is that
+the phase has signed off, and that is not this session's to do.
