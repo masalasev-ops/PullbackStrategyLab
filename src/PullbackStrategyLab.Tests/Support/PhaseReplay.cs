@@ -351,7 +351,18 @@ public sealed class PhaseReplay : IDisposable
         Record("journal.withSignals", sealed_.WithSignals);
         Record("journal.breaches", sealed_.Breaches.Count);
 
-        // 14. The nightly cap, over whatever the night's detectors left.
+        // 14. The control draw, before the cap, so the controls answer for the flagged population
+        //     rather than for the sixty that survive truncation.
+        ControlResult controls = new ControlSampler(_connections, Logger(), _clock, _options).Draw(AsOf);
+
+        stages.Add(new StageRun(ControlSampler.Name, 0, controls.RowsWritten, controls.Outcome.ToStorageText()));
+        Record("controls.setups", controls.Setups);
+        Record("controls.pool", controls.Pool);
+        Record("controls.loose", controls.Loose);
+        Record("controls.tight", controls.Tight);
+        Record("controls.shortOfFive", controls.ShortOfFive);
+
+        // 15. The nightly cap, over whatever the night's detectors left.
         CapResult capped = new SetupCapper(_connections, Logger(), _clock, _options).Cap(AsOf);
 
         stages.Add(new StageRun(SetupCapper.Name, 0, capped.RowsWritten, capped.Outcome.ToStorageText()));
@@ -363,7 +374,7 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
-        // 15. The forward fill, which is the one stage that reads bars dated after its subject's
+        // 16. The forward fill, which is the one stage that reads bars dated after its subject's
         //     own date. Over the fixture it fills what the single captured night can support: the
         //     as-of is the last session the fixture holds, so no horizon has elapsed and the honest
         //     answer is nought written. Recorded anyway, because "nought outcomes and every horizon
@@ -378,6 +389,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(ForwardOutcomeFigures());
+        measurements.AddRange(ControlFigures());
         measurements.AddRange(CapFigures());
         measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
@@ -868,6 +880,63 @@ public sealed class PhaseReplay : IDisposable
                     $"{id}.maeAtr",
                     outcome.MaximumAdverseExcursion is decimal mae ? Figure(mae) : "undefined"));
             }
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// Which names each setup's controls actually were, in rank order, and how close the nearest was.
+    ///
+    /// A sequence rather than a count, on the same grounds the cap records its ordering: what a
+    /// changed distance metric moves is which names sit in the five, not how many there are. Five
+    /// controls drawn either way is the same number whether the match is good or arbitrary.
+    /// </summary>
+    private IReadOnlyList<Measurement> ControlFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT setup_id, control_set, control_ticker, rank, match_quality
+              FROM control_setup
+             ORDER BY setup_id, control_set, rank
+            """;
+
+        var drawn = new Dictionary<(string Setup, string Set), List<string>>();
+        var nearest = new Dictionary<(string Setup, string Set), string>();
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                var key = (reader.GetString(0), reader.GetString(1));
+
+                if (!drawn.TryGetValue(key, out List<string>? names))
+                {
+                    names = [];
+                    drawn[key] = names;
+                }
+
+                names.Add(reader.GetString(2));
+
+                // The best match's own distances, which is what says whether the pool had anything
+                // close. A set of five drawn from a pool with nothing near it is still five.
+                if (reader.GetInt32(3) == 1)
+                {
+                    nearest[key] = reader.GetString(4);
+                }
+            }
+        }
+
+        foreach ((string setup, string set) in drawn.Keys.OrderBy(k => k.Setup, StringComparer.Ordinal)
+                     .ThenBy(k => k.Set, StringComparer.Ordinal))
+        {
+            figures.Add(new Measurement(
+                $"controls.{setup}.{set}", string.Join(" ", drawn[(setup, set)])));
+            figures.Add(new Measurement(
+                $"controls.{setup}.{set}.nearest", nearest[(setup, set)]));
         }
 
         return figures;

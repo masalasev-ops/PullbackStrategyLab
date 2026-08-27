@@ -1955,7 +1955,100 @@ def forward_main(argv):
     return 0
 
 
+def controls_main(argv):
+    """Which controls each setup should have drawn, restated from the rule rather than read back.
+
+    The rule, in words: from the names that cleared the liquidity floor on the night and were not
+    flagged, take the five nearest on turnover and daily range, measured as a fraction of the
+    subject's own figure, with ticker as the tiebreak. The tight set first drops every candidate
+    whose trend ladder differs from the subject's.
+
+    Two edges, both of which the shipped stage got wrong on its first run:
+
+      The ladder grade is written as a later observation of the same session, so a read bounded on
+      the run instant sees the ungraded row and the tight filter compares nothing to nothing. The
+      bound is the end of the as-of date, which is what every other indicator read uses.
+
+      The distance is relative, not absolute. Fifty million dollars of turnover is a wide gap for a
+      small name and a rounding for a large one, and an absolute distance draws every control from
+      the biggest names in the universe.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --controls <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+    bound = as_of + "T23:59:59.999Z"
+
+    rows = connection.execute(
+        """
+        SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
+          FROM indicator_daily i
+         WHERE i.as_of = ? AND i.computed_at <= ?
+           AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
+                                 WHERE c.ticker = i.ticker AND c.as_of = i.as_of
+                                   AND c.computed_at <= ?)
+         ORDER BY i.ticker
+        """, (as_of, bound, bound)).fetchall()
+
+    figures = {}
+    for ticker, turnover, adr, grade in rows:
+        turnover = Decimal(turnover) if turnover is not None else Decimal(0)
+        if turnover < LIQUIDITY_FLOOR:
+            continue
+        figures[ticker] = {
+            "ticker": ticker,
+            "turnover": turnover,
+            "adr": Decimal(adr) if adr is not None else Decimal(0),
+            "grade": grade,
+        }
+
+    setups = connection.execute(
+        "SELECT setup_id, ticker FROM setup ORDER BY setup_id").fetchall()
+    flagged = {t for _, t in setups}
+
+    def apart(subject, candidate):
+        if subject == 0:
+            return Decimal(10) ** 30
+        return abs(candidate - subject) / abs(subject)
+
+    print("\ncontrols, over %s, as of %s" % (store, as_of))
+
+    for setup_id, ticker in setups:
+        subject = figures.get(ticker)
+        if subject is None:
+            continue
+
+        for name, tight in (("loose", False), ("tight", True)):
+            scored = []
+            for candidate in figures.values():
+                if candidate["ticker"] == ticker or candidate["ticker"] in flagged:
+                    continue
+                if tight and candidate["grade"] != subject["grade"]:
+                    continue
+                liquidity = apart(subject["turnover"], candidate["turnover"])
+                daily = apart(subject["adr"], candidate["adr"])
+                scored.append((liquidity + daily, candidate["ticker"], liquidity, daily))
+
+            scored.sort(key=lambda s: (s[0], s[1]))
+            picked = scored[:5]
+
+            print("  controls.%s.%-6s %s" % (setup_id, name, " ".join(p[1] for p in picked)))
+
+            if picked:
+                best = picked[0]
+                print('  controls.%s.%s.nearest {"liquidity":"%s","dailyRange":"%s","ladderGrade":"%s"}'
+                      % (setup_id, name, q(best[2]), q(best[3]), "same" if tight else (
+                          figures[best[1]]["grade"] or "ungraded")))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--controls":
+        return controls_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--forward":
         return forward_main(argv[2:])
 

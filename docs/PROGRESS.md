@@ -3778,3 +3778,70 @@ Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. **1,050 expect
             a filler that always slipped forward would pass both holiday cases and fail this one.
 
 Carried:    Nothing new.
+
+## 3.3 — 2026-08-27 — phase-3-measurement — the control draw, and a tight set that was the loose set
+
+Loose and tight control sets per flagged setup, drawn from names that cleared the liquidity floor
+and were not flagged, with match quality recorded. Built against the decision authored at 3.0(f),
+which is the point of authoring it first.
+
+Built:      Migration **018**, `control_setup`, keyed on a surrogate `control_id` so
+            `forward_return` has one column to name a control by. `ControlMatching` in Core.
+            `ControlSampler`, verb `controls`, at 18:26 **before the cap at 18:28**, so controls
+            answer for the flagged population rather than for the sixty that survive truncation.
+
+            **17 expectations, 12 of them `DERIVED`** through `--controls`. The names drawn are
+            recorded in rank order rather than counted, on the same grounds the cap records its
+            ordering: what a changed distance metric moves is which names sit in the five, and five
+            drawn either way is the same count whether the match is good or arbitrary.
+
+            No vendor call. Everything it reads is already stored, which is why a comparison this
+            good is free and why there is no excuse for not having one.
+
+Findings:   **The tight set was the loose set, on every setup, and the count could not have shown
+            it.** Observation: the first run drew identical names for `loose` and `tight` across all
+            three fixture setups, at fifteen and fifteen.
+
+            Reading: `TierClassifier` writes the ladder grade as a **later observation** of the same
+            session rather than updating the row `IndicatorEngine` wrote, which is what 2.4 decided.
+            The draw bounded its indicator read on the run instant, and the graded row is stamped one
+            millisecond after it. So every candidate came back ungraded, the tight filter compared
+            null against null, excluded nothing, and produced the loose set under another name.
+
+            The bound is now the end of the as-of date, which is what `IndicatorDailyReader` uses and
+            for exactly this reason. After it, the tight sets differ from the loose ones on all three
+            setups and one comes back with four names rather than five.
+
+            **This is the shape 2.12 named, arriving on schedule.** Two figures agreeing is not
+            something a count notices: fifteen and fifteen is what a working draw produces too. It
+            was visible only because the names were recorded rather than the totals, which is the
+            reason they are recorded. The comparison the entire project turns on would have run for
+            months against a control set that was not tight.
+
+            Observation, and it is a limit rather than a defect. **The market mood is not a matched
+            dimension, because within a night it cannot be one.** The mood is a property of the
+            session, so every candidate drawn on the same night carries the same one and matching on
+            it excludes nothing. `ARCHITECTURE.html` and the decision both name it alongside the
+            ladder. It is left out rather than implemented as a comparison that is true by
+            construction, because a dimension that always matches reads in the record as a dimension
+            that was checked. Whether the tight set should be allowed to draw from neighbouring
+            sessions, which is what would make mood a real dimension, is a question this checkpoint
+            raises and does not answer.
+
+            Observation. One tight set came back with four controls rather than five, because that
+            subject's ladder grade is shared by only four other names in the pool of twenty-seven.
+            Counted and reported as `shortOfFive`, not made up from a wider match: a tight set of
+            four is a thinner comparison than a tight set of five, and the figure beside it should
+            say so rather than the draw quietly relaxing to fill the quota.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. 1,067 expectations, 564
+            independent.
+
+            The draw is deterministic, so the same night drawn twice picks the same names. No seed
+            exists to keep point in time, no value the phase report cannot diff, and the ranking is
+            the match quality rather than an afterthought.
+
+Carried:    **One new, due at 3.5**: whether the tight set may draw from neighbouring sessions, which
+            is what would make the market mood a dimension that excludes anything. Due where the
+            scoreboard first reports the tight comparison, because that is the panel whose meaning
+            the answer changes.

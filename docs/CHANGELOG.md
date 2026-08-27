@@ -737,3 +737,13 @@ Why:  The nightly order test reads backticked verbs out of that table and assert
 Was:  The 21:30 row read "forward returns".
 Now:  "`forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions".
 Why:  The nightly order test reads backticked verbs out of that table. Written as prose the stage was scheduled and invisible to the assertion that the replay runs the night in the order an operator follows.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said ControlSampler "Draws matched control stocks nightly, loose and tight".
+Now:  The same, plus five per set by deterministic nearest neighbour, and before the cap so they answer for the flagged population rather than the kept sixty.
+Why:  The count, the method and the position in the night are all things a later session would otherwise have to read the code to learn, and all three change what a comparison means. The ordering matters most: drawing after the cap would compare the kept setups against controls for a different question.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 18:26 row read "control sampling".
+Now:  "`controls`, loose and tight per flagged setup, before the cap".
+Why:  The nightly order test reads backticked verbs, and the position relative to the cap is the half of the schedule that carries meaning rather than convenience.
