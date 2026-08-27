@@ -2950,3 +2950,70 @@ Verdict:    **Phase 2 signs off**, with the gallery review and the three `CONFIR
             constructed number is a gate whose behaviour on real data is asserted by a store that is
             gitignored. That is the shape of the 3.1 work already scheduled, and it is worth carrying
             the sentence rather than the impression.
+
+## Phase 2 sign-off — 2026-08-26 — phase-2-detection — two obligations the gate table earned, added before 3.1 rather than after
+
+Adds to the 2.12 entry above. Nothing measured here that was not measured there; what changes is that
+two things the gate table named as observations are now scheduled work with a due point.
+
+Findings:   Finding, raised from the gate table rather than newly found. **`PullbackGeometry.Of` is
+            exercised on no non-degenerate input anywhere, and 3.1 is the checkpoint that changes what
+            it computes.** The 2.12 table recorded this as the third of its findings and left it as a
+            caution. It is now an obligation, due at 3.1 **before** the correction rather than after.
+
+            The reasoning that moved it. `GateCases` constructs a `PullbackGeometry.Pullback` by hand
+            from `pullback.retraceDepth` and `pullback.pullbackBars`, so the authored cases answer
+            whether each gate's two branches work and never touch the method that produces the numbers
+            those branches compare. Over the captured fixture the method does run, and returns the
+            degenerate shape on every row: `PullbackBars` nought and `RetraceDepth` nought on all
+            three setups, because thirty names against a scan breadth of fifty puts the thrust at the
+            last bar every time. So the quantity the thrust-window correction is about is computed by
+            a method that nothing checks on an input where its answer could be wrong.
+
+            Why before rather than after. The defect the correction addresses produced plausible
+            numbers for 631 sessions and nothing noticed, and that is a property of this method rather
+            than of that defect: every figure it returns is a small plausible number whichever way it
+            was computed, which the method's own comment says. A corrected version is wrong in exactly
+            the same silent way if it is wrong. Judged after the fact, the 3.1 prediction is a median
+            moving in the direction it was predicted to move, and a wrong-but-plausible correction
+            produces that too. Judged against expectations written first, the correction either
+            reproduces figures a second implementation derived or it does not.
+
+            What is owed, stated so the obligation cannot be met narrowly. `DERIVED` expectations over
+            the fixture's own bars for `ThrustOrigin`, for `ExtremeIndex` and `ThrustExtreme`, for
+            `PullbackBars` and `RetraceDepth`, and for the raw-basis `Trigger` and `Stop` that
+            `trigger-near` and `exit-tight` read, restated independently by
+            `tools/derive-indicators.py` rather than by the method itself. Both bases are pinned on
+            purpose: the shape quantities are adjusted, the two prices are raw, and reading one where
+            the other was meant is the error this method carries a warning about.
+
+            It costs nothing to acquire. `Of` takes the thrust index as a parameter and the fixture
+            holds 250 sessions for each of thirty names, so a non-degenerate case is a thrust index
+            inside the stored window rather than at its end. No capture, no vendor call, no committed
+            megabyte. That is the same argument the authored gate cases won at 2.6, applied one layer
+            down to the thing those cases skip over.
+
+            And it has to survive the correction it is written for. The expectations pin what `Of`
+            computes over a given window, and the correction changes which window and which index the
+            caller hands it, so the correction should move inputs and leave the pinned arithmetic
+            where it is. If it moves a pinned expectation anyway, that is a fixture change with a
+            recorded reason rather than a number that quietly became different, which is the whole
+            visibility this buys.
+
+            Finding, raised from an observation in the entry above. **`check-completeness` fails on a
+            crash where it has a named failure written for the same case.** Deleting a gate's
+            implementation at the sign-off failed the check, so the property holds and nothing passed
+            over the absent subject. It failed on an unhandled `Single` inside
+            `PhaseReplay.CheckSidednessFigures`, where the authored gate case for that gate finds no
+            result of its name, and what a reader gets is "Sequence contains no matching element" and
+            a stack trace. The check's own reconciliation message never runs, because the replay it
+            reads dies before the comparison. Reading: a crash and a named failure are not the same
+            artefact. One tells a later session which gate went missing; the other tells it the check
+            threw, and a session that has to work out which of twenty gates is absent from a stack
+            trace is doing the work the check was written to do for it. Recorded as an observation
+            above and raised here on that distinction, which is why it now has a row of its own rather
+            than sharing one.
+
+Carried:    Both due at 3.1, and the second is now separate from the gate-id count in a source comment
+            it was bundled with, which keeps its own row. The obligations table now carries five rows
+            raised at 2.12.
