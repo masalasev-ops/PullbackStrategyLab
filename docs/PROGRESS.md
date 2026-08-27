@@ -4533,3 +4533,81 @@ Carried:    **Two new, both at the operator**, and both raised as rows rather th
 
 **PR #4 stays in draft.** CI is green, which is one of the two merge conditions; the other is that
 the phase has signed off, and that is not this session's to do.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the nightly job scheduled, and a stage the RUNBOOK never listed
+
+The obligation raised at the handover, discharged by the operator's instruction. The clock starts
+tonight. Two defects were found on the way and both would have been silent.
+
+Findings:   **`universe-build` was not in the RUNBOOK's nightly table, and it is the one stage whose
+            absence cannot be repaired the next day.** `UniverseBuilder` says the snapshot "is
+            written every night without exception" and that unlike everything else it "cannot be
+            reconstructed later, because a delisted name is simply absent from tomorrow's symbol
+            list". `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no
+            fallback, which its own comment defends: a stage that quietly read current membership on
+            a night with no snapshot "would produce a reconstructed answer that looks exactly like a
+            real one".
+
+            **So an operator following the RUNBOOK literally would have built a lab that flags
+            nothing and reports clean, every night, permanently.** The detectors and `ScanEngine`
+            read `Members(connection, asOf)`; with no snapshot for the night that list is empty,
+            every stage after it succeeds over nothing, and the evidence store fills with the zero
+            rows it would also hold if the strategy simply never fired. Nothing downstream could tell
+            those two apart. Fixed in the table with the reason attached, and a `snapshot-db` row
+            added beside it, which was also absent while being named in the recovery section as the
+            only recovery path.
+
+            **The live store was eight migrations behind.** `data/live` sat at `user_version` 15
+            against a code base at 23, so `controls`, `forward-returns`, `ceiling` and `scoreboard`
+            would each have failed on a missing table on the first night they ran. Migrated 15 to 23
+            after a snapshot, which `tools/migrate` takes itself and refuses to run without.
+
+Measured:   **The job could not be run when the instruction was given, and the reason is specific.**
+            It was 14:05 ET on a Thursday. The market closes at 16:00 and the vendor publishes
+            end-of-day after that, so no bar for the session existed. `SystemClock.SessionDate`
+            resolves the instant in the session zone, so every stage would have run as of
+            2026-08-27 against a day with no data.
+
+            **That would not have been a wasted run, it would have been a permanent one.** The
+            `universe_snapshot` insert is `ON CONFLICT (as_of, ticker) DO NOTHING`, so a snapshot
+            written at 14:05 off an incomplete screen is the snapshot for that date for ever and the
+            17:15 run would have written nothing over it. Setup rows are immutable after write by
+            3.1's own deliverable, so any row the detectors produced would have been the first thing
+            the evidence store ever held and computed from a session that had not happened. The
+            store's own state says the same thing from the other side: bars end 2026-08-24, the only
+            snapshot is 2026-08-25, and `setup` holds nought rows, which is exactly what the evidence
+            store should hold on the night before it starts.
+
+Built:      **`tools/nightly.ps1`**, which maps a slot to the verbs RUNBOOK gives that slot and holds
+            no scheduling logic of its own. The store is addressed by absolute path, because
+            `DataRoot` resolves through `Path.GetFullPath` and therefore through the working
+            directory, which is not a property anybody should have to reason about at three in the
+            morning. A slot stops at the first failing verb rather than running the stage that reads
+            what the failed one should have written.
+
+            **It logs the commit it ran from rather than refusing on a branch it does not expect.**
+            The job runs from a working tree, so what it executes changes when the branch does, and
+            that was raised as an obligation at the handover. A guard that refused on a mismatch was
+            written and then removed: it would have stopped accumulation on the day phase 3 merges to
+            `main`, which is the one branch change that is supposed to happen, and nothing would have
+            said why. Logging removes the silence without adding a way to fail.
+
+            **Seventeen Task Scheduler entries**, `PullbackStrategyLab-<slot>`, sixteen weekdays and
+            `ceiling` on Saturday at 08:00. The machine's timezone is Eastern, so the table's ET times
+            are its local times and no conversion is involved. First run tonight at **17:15 ET**.
+
+Verified:   The script run end to end on the one slot that writes no dated evidence: `snapshot-db`
+            against the live store, 20 tables, 1,544,279 rows, counts matched. Every task read back
+            from the scheduler with its next run time, in the order the table states.
+
+            `tools/ci.ps1` green on Windows, 26 steps, 392 tests.
+
+Carried:    **One discharged and one raised in its place, narrower.** Scheduling is done. What is left
+            is that an unelevated shell cannot set an S4U principal or store a password, so the tasks
+            carry an `Interactive` logon type and run only while the user is logged on. A logged-out
+            evening is a lost night, and by the finding above a lost night is a permanent hole rather
+            than a delay. One elevated command closes it and no build session can run it.
+
+            The checkout question raised at the handover stands, narrowed: the job runs from the
+            working tree and says which commit it ran from, so the hazard is recorded rather than
+            removed.

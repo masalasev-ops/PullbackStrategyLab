@@ -48,6 +48,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | Time (ET) | Stage | Calls |
 |---|---|---|
 | during session | spread snapshots, two passes | 120 |
+| 17:15 | `universe-build`, the symbol list and the nightly snapshot of who was listed | ~5 |
 | 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
 | 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
 | 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
@@ -69,9 +70,35 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | `scoreboard`, the three bands, every panel with its own count | 0 |
-| **total** | | **~798 against a 5,000 ceiling** |
+| 22:00 | `snapshot-db`, the night's copy, which is the recovery path | 0 |
+| **total** | | **~803 against a 5,000 ceiling** |
+
+**`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
+
+### The schedule as installed
+
+Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`,
+each running `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday 08:00 for
+`ceiling`. The machine's own timezone is Eastern, so the table's ET times are its local times and no
+conversion is involved; a machine in another zone converts them.
+
+`tools/nightly.ps1` maps a slot to the verbs that slot runs and nothing else. It addresses the store
+by absolute path, because `DataRoot` resolves through the working directory and a scheduled task's
+working directory is not something anybody should have to reason about at three in the morning. It
+logs to `<data root>/logs/nightly-YYYY-MM-DD.log` and records the commit it ran from on every line of
+that log's first entry, since the job runs from a working tree and what it executes changes when the
+branch does.
+
+**They run only while the user is logged on, and that is a real limitation rather than a preference.**
+Registering a task that runs whether or not anybody is logged on needs either an elevated shell, to
+set an S4U principal, or a stored password. Neither was available when these were created, so a
+logged-out evening is a lost night, and a lost night's universe snapshot is the one thing that cannot
+be recovered by rerunning tomorrow. Raised as an obligation.
+
+**To remove or re-create them:** `Get-ScheduledTask -TaskName 'PullbackStrategyLab-*'`, then
+`Unregister-ScheduledTask`. On macOS they become launchd definitions, which is step 7 of the move.
 
 ### Every morning
 
