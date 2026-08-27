@@ -37,7 +37,8 @@ public sealed record PanelView(
     int Rows,
     int? Effective,
     string Population,
-    int? Minimum)
+    int? Minimum,
+    string? WithheldBecause)
 {
     /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
     public string Title => Name switch

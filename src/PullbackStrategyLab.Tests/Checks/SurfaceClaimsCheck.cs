@@ -237,6 +237,10 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     /// the reached case would carry the words a claim about the trigger looks for while being unable
     /// to tell a reader that the panel beside it is not an answer yet, which is the state the panel
     /// will be in for every night of the wait.
+    ///
+    /// The withheld panel names a shortage of sessions rather than of evidence, because that is the
+    /// distinction the page could not previously draw: withholding is settled by the session axis
+    /// and the minimum by how much information the rows carry, and the two can disagree outright.
     /// </summary>
     private const string Panels = """
         {
@@ -244,20 +248,24 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
           "health": [
             { "name": "band0.nightsRecorded", "direction": null, "figure": "214",
               "low": null, "high": null, "rows": 214, "effective": null,
-              "population": "every flagged setup", "minimum": null }
+              "population": "every flagged setup", "minimum": null,
+              "withheldBecause": null }
           ],
           "long": [
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
               "low": "-0.0030", "high": "0.0250", "rows": 3180, "effective": 412,
-              "population": "every flagged setup", "minimum": 196 },
+              "population": "every flagged setup", "minimum": 262,
+              "withheldBecause": null },
             { "name": "band1.vsLoose", "direction": "long", "figure": "withheld",
               "low": null, "high": null, "rows": 240, "effective": 31,
-              "population": "every flagged setup", "minimum": 196 }
+              "population": "every flagged setup", "minimum": 262,
+              "withheldBecause": "only 14 session(s) recorded and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence" }
           ],
           "short": [
             { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
               "low": null, "high": null, "rows": 1120, "effective": null,
-              "population": "capped candidates only", "minimum": null }
+              "population": "capped candidates only", "minimum": null,
+              "withheldBecause": null }
           ]
         }
         """;

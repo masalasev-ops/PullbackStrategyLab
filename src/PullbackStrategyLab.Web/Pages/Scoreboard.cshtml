@@ -78,8 +78,20 @@ else
                                         stop that.
                                     *@
                                     <span class="figure muted">withheld</span>
-                                    <span class="count">@panel.Count, too few to say anything</span>
+                                    <span class="count">@panel.Count</span>
                                     <span class="over">@panel.Over</span>
+
+                                    @*
+                                        Why, in words. Withholding is about sessions and the
+                                        minimum is about evidence, they are settled by
+                                        different things, and they can disagree: a fortnight
+                                        of very wide nights reaches the minimum before it
+                                        reaches twenty sessions.
+                                    *@
+                                    @if (panel.WithheldBecause is string because)
+                                    {
+                                        <span class="withheld-because">@because</span>
+                                    }
                                 }
                                 else
                                 {
@@ -107,7 +119,7 @@ else
                                 {
                                     <span class="minimum @(reached ? "reached" : "waiting")">
                                         @(reached
-                                            ? "the minimum sample is reached and this panel may be read"
+                                            ? "the minimum sample is reached"
                                             : "below the minimum sample, so this panel is not yet an answer")
                                     </span>
                                 }

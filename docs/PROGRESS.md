@@ -4343,3 +4343,67 @@ Verified:   `tools/ci.ps1` green on Windows, 26 steps, **391 tests**, up from 38
 Carried:    **One discharged, the last of the two the derivation left open.** The obligation raised
             at 3.0 against the 160-observation minimum is closed and its row is removed from
             `BUILD_PLAN.md`. Four operator rows remain, none of them about this.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — a withheld panel that could not say which shortage was blocking
+
+Not a checkpoint. A defect found by a question the report could not answer, and a correction to an
+illustration this record carried.
+
+Corrected:  **The entry above states band 1 showing `n 3,180 rows, 412 effective`, and no panel has
+            ever shown that.** It is the mockup figure from `SCREENS.html`, copied into the
+            `surface-claims` stub as a plausible body and then into a summary as an example. The real
+            band 1 panels over the golden fixture read **0 rows, 0 effective of 262 needed**. The
+            arithmetic was never wrong; an authored number was offered where a measured one would be
+            read, which is the fifth defect shape in a record rather than in a figure.
+
+Findings:   **Asked what withholds a panel, the corpus could not answer, and the honest answer is a
+            third thing neither reading proposed.** It is not the sample size and it is not the
+            population. `PairedInterval.Of` returns nothing when the series has fewer than twice the
+            block length of **sessions**, which is twenty. Rows do not enter it, effective
+            observations do not enter it, and no amount of either substitutes for a session.
+
+            **The population cannot be the reason and that is settled by construction.**
+            `ScoreboardBuilder` reads `setup`; a historical detector run writes to
+            `calibration_setup`, which nothing downstream reads. Worth nothing unless something
+            checks it, and nothing did: the existing property asserts a calibration run leaves the
+            evidence store as it found it, which says reconstructed rows never enter `setup` and says
+            nothing about whether the scoreboard goes and reads them where they do live.
+
+            **And the two live conditions could contradict each other outright.** Withholding is
+            settled by the session axis; the minimum sample is settled by how much information the
+            rows carry. A fortnight of very wide nights reaches 262 effective observations before it
+            reaches twenty sessions, and the page would then have read "the minimum sample is reached
+            and this panel may be read" beside a figure it was refusing to show. Reachable, and
+            nothing would have caught it.
+
+Built:      **Migration 023, `scoreboard.withheld_because`**, written by the builder and carried to
+            the page. A withheld panel now says "only 14 session(s) recorded and a block bootstrap
+            needs 20, which is a shortage of sessions rather than of evidence", or, before any
+            horizon closes, that no session has a closed ten-session horizon yet.
+
+            The reached line no longer claims readability. It says the minimum is reached; whether
+            there is a figure to read is the other line's business, and the two never contradict
+            because neither speaks for the other.
+
+            A fifteenth surface claim requiring the page to carry "a shortage of sessions rather than
+            of evidence", and the stub gains a withheld panel that is short of sessions while not
+            being short of evidence, because a stub showing only the ordinary case would let the
+            contradiction back in unseen.
+
+Verified:   **The population boundary asserted behaviourally rather than by reading the SQL.** A test
+            fills the calibration table, deletes the stored panels, rebuilds, and requires every
+            count to be a count of the evidence store. Proved by removal: with `setupsOnFile` changed
+            to add the two tables it fails on the spot, because a band 1 panel computed over 49,450
+            survivorship-biased rows would otherwise look exactly like one that had finally
+            accumulated a sample.
+
+            Two `FROZEN` expectations, `scoreboard.band1.shortOfSessions` and
+            `shortOfEvidence`, both 4 over the fixture. Counted apart rather than as one withheld
+            total, because a single count could never say which shortage was blocking, which is the
+            whole finding.
+
+            `tools/ci.ps1` green on Windows, 26 steps, **392 tests**. `tools/verify-phase` GREEN: 116
+            claims, 66 passed, 0 failed, 50 out of scope, **0 unexamined**; 1,134 expectations of
+            which 609 independent.
+
+Carried:    None new.

@@ -337,3 +337,14 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
 .panel .minimum.waiting {
     color: var(--ink3);
 }
+
+/*
+    Why a panel shows no figure, which is a different question from whether the minimum is reached.
+    The interval needs sessions, the decision needs evidence, and the two can disagree, so they are
+    two lines rather than one.
+*/
+.panel .withheld-because {
+    font-size: 11px;
+    color: var(--ink3);
+    line-height: 1.35;
+}

@@ -112,6 +112,15 @@ public sealed class PhaseReplay : IDisposable
     public CalibrationResult CalibrateShort(DateOnly from, DateOnly to) =>
         new ShortSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
 
+    /// <summary>
+    /// The scoreboard build, over the store this replay holds now rather than as it stood.
+    ///
+    /// Exposed so a test can build the panels after a calibration run has filled the calibration
+    /// table, which is the only way to ask behaviourally whether band 1 can see reconstructed rows.
+    /// </summary>
+    public ScoreboardResult BuildScoreboard() =>
+        new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
+
     /// <summary>The short detector, likewise.</summary>
     public DetectResult DetectShort() =>
         new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
@@ -396,6 +405,15 @@ public sealed class PhaseReplay : IDisposable
         Record("scoreboard.panels", scored.Panels);
         Record("scoreboard.withInterval", scored.WithInterval);
         Record("scoreboard.withheld", scored.Withheld);
+
+        // Which shortage is holding band 1 back, counted rather than described. Withholding is
+        // settled by the session axis and the minimum sample by how much information the rows
+        // carry, so a panel can be short of one and not the other, and the two figures apart are
+        // what say which. Over the fixture every band 1 panel is short of both.
+        foreach (Measurement figure in WithheldReasonFigures())
+        {
+            measurements.Add(figure);
+        }
 
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(ForwardOutcomeFigures());
@@ -1141,6 +1159,44 @@ public sealed class PhaseReplay : IDisposable
             new Measurement(
                 "minimumSample.effectiveObservations",
                 MinimumSample.Of(measured.PairedDifference).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    /// <summary>
+    /// How many band 1 panels are short of sessions, and how many are short of evidence.
+    ///
+    /// <b>Two counts rather than one, because the two shortages are settled by different things.</b>
+    /// The interval needs twenty sessions and no number of rows substitutes for them; the decision
+    /// needs 262 effective observations and no number of sessions substitutes for those. A panel can
+    /// be short of one and not the other, and a single "withheld" count could never say which.
+    ///
+    /// The population is deliberately not a third count. Band 1 reads the evidence store and a
+    /// historical run writes to the calibration table, so it is settled by construction rather than
+    /// by waiting, and it is asserted where that belongs rather than counted here.
+    /// see: The evidence store holds only setups flagged forward, never setups reconstructed from history
+    /// </summary>
+    private IReadOnlyList<Measurement> WithheldReasonFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COALESCE(SUM(CASE WHEN withheld_because IS NOT NULL THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN n_effective < n_minimum THEN 1 ELSE 0 END), 0)
+              FROM scoreboard
+             WHERE panel LIKE 'band1.%'
+            """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        reader.Read();
+
+        return
+        [
+            new Measurement(
+                "scoreboard.band1.shortOfSessions",
+                reader.GetInt32(0).ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "scoreboard.band1.shortOfEvidence",
+                reader.GetInt32(1).ToString(CultureInfo.InvariantCulture)),
         ];
     }
 

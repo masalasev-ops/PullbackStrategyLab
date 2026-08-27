@@ -41,7 +41,8 @@ public static class LabScoreboard
         // nothing would read as "the lab has measured nothing" instead of "no panels were built
         // today".
         command.CommandText = """
-            SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum
+            SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum,
+                   withheld_because
               FROM scoreboard
              WHERE as_of = (SELECT MAX(as_of) FROM scoreboard WHERE as_of <= @as_of)
              ORDER BY panel, direction
@@ -61,7 +62,8 @@ public static class LabScoreboard
                 reader.GetInt32(5),
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
                 reader.IsDBNull(7) ? "population not recorded" : reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetInt32(8));
+                reader.IsDBNull(8) ? null : reader.GetInt32(8),
+                reader.IsDBNull(9) ? null : reader.GetString(9));
 
             if (panel.Direction is null)
             {
@@ -104,6 +106,10 @@ public sealed record ScoreboardResponse(
 /// watching it climb is the point.
 ///
 /// <c>Minimum</c> is what it has to reach, and is null on every panel no checkpoint fires on.
+///
+/// <c>WithheldBecause</c> is why a panel shows no figure, which is a different question from
+/// whether the minimum is reached and is settled by a different thing: the interval needs
+/// sessions, the decision needs evidence, and the two can disagree.
 /// </summary>
 public sealed record PanelResponse(
     string Name,
@@ -114,4 +120,5 @@ public sealed record PanelResponse(
     int Rows,
     int? Effective,
     string Population,
-    int? Minimum);
+    int? Minimum,
+    string? WithheldBecause);

@@ -186,7 +186,8 @@ public sealed class ScoreboardBuilder
                     series.Sum(n => n.Pairs),
                     PairedInterval.EffectiveObservations(series),
                     Flagged,
-                    MeasurementParameters.MinimumEffectiveObservations));
+                    MeasurementParameters.MinimumEffectiveObservations,
+                    WithheldBecause(series.Count)));
                 continue;
             }
 
@@ -203,6 +204,34 @@ public sealed class ScoreboardBuilder
         }
 
         return panels;
+    }
+
+    /// <summary>
+    /// Why a band 1 panel is showing no figure, in words, on the panel.
+    ///
+    /// <b>Only one thing withholds a figure and it is not the sample size.</b> The block bootstrap
+    /// needs twice its block length of sessions, so below twenty sessions there is no interval at
+    /// any number of rows. The minimum sample is a separate statement shown beside the counts, and
+    /// the two are settled by completely different things: one by the session axis, the other by how
+    /// much information the rows carry.
+    ///
+    /// <b>They can contradict each other, which is why this exists.</b> A fortnight of very wide
+    /// nights reaches the minimum before it reaches twenty sessions, and the page would then have
+    /// said the minimum was reached and the panel readable, beside a figure it was refusing to show.
+    ///
+    /// <b>The population is not one of the reasons and cannot be.</b> Band 1 reads `setup`; a
+    /// historical detector run writes to `calibration_setup`, which nothing downstream reads. That is
+    /// settled by construction rather than by waiting, which is exactly why a reader of a withheld
+    /// panel should not be left wondering whether it is the cause.
+    /// see: The evidence store holds only setups flagged forward, never setups reconstructed from history
+    /// </summary>
+    private static string WithheldBecause(int sessions)
+    {
+        int needed = MeasurementParameters.BootstrapBlockSessions * 2;
+
+        return sessions == 0
+            ? $"no session has a closed {MeasurementParameters.ScoringHorizonSessions}-session horizon yet, so there is no series to take an interval over"
+            : $"only {sessions.ToString("N0", CultureInfo.InvariantCulture)} session(s) recorded and a block bootstrap needs {needed}, which is a shortage of sessions rather than of evidence";
     }
 
     /// <summary>
@@ -395,9 +424,9 @@ public sealed class ScoreboardBuilder
         command.CommandText = """
             INSERT INTO scoreboard
                 (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
-                 n_minimum, computed_at)
+                 n_minimum, withheld_because, computed_at)
             VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
-                    @population, @n_minimum, @computed_at)
+                    @population, @n_minimum, @withheld_because, @computed_at)
             ON CONFLICT (as_of, panel, direction) DO NOTHING
             """;
 
@@ -411,6 +440,8 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
         command.Parameters.AddWithValue("@population", panel.Population);
         command.Parameters.AddWithValue("@n_minimum", (object?)panel.Minimum ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@withheld_because", (object?)panel.WithheldBecause ?? DBNull.Value);
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
 
         command.ExecuteNonQuery();
@@ -426,7 +457,7 @@ public sealed class ScoreboardBuilder
     /// </summary>
     private sealed record Panel(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
-        int? Effective, string Population, int? Minimum = null);
+        int? Effective, string Population, int? Minimum = null, string? WithheldBecause = null);
 }
 
 /// <summary>What one day's build produced.</summary>

@@ -7289,6 +7289,22 @@
       "producedBy": "the replay itself, recorded to detect change"
     },
     {
+      "id": "scoreboard.band1.shortOfEvidence",
+      "tier": "FROZEN",
+      "value": "4",
+      "checkpoint": "3.5",
+      "producedBy": "the shipped ScoreboardBuilder over the golden fixture, read back from the store",
+      "note": "Over the fixture one night is recorded and nothing has a closed ten-session horizon, so all four band 1 panels are short of both. The two are counted apart because they are settled by different things: the interval needs twenty sessions and the decision needs 262 effective observations, and neither substitutes for the other."
+    },
+    {
+      "id": "scoreboard.band1.shortOfSessions",
+      "tier": "FROZEN",
+      "value": "4",
+      "checkpoint": "3.5",
+      "producedBy": "the shipped ScoreboardBuilder over the golden fixture, read back from the store",
+      "note": "Over the fixture one night is recorded and nothing has a closed ten-session horizon, so all four band 1 panels are short of both. The two are counted apart because they are settled by different things: the interval needs twenty sessions and the decision needs 262 effective observations, and neither substitutes for the other."
+    },
+    {
       "id": "scoreboard.panels",
       "tier": "FROZEN",
       "value": "9",

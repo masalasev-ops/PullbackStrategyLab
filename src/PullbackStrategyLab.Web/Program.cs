@@ -245,7 +245,7 @@ public sealed class LabApiClient
             ? []
             : [.. panels.Select(p => new PanelView(
                 p.Name, p.Direction, p.Figure, p.Low, p.High, p.Rows, p.Effective,
-                p.Population ?? "population not recorded", p.Minimum))];
+                p.Population ?? "population not recorded", p.Minimum, p.WithheldBecause))];
 
     public async Task<SetupsView> ReadSetupsAsync(
         DateOnly asOf,
@@ -360,7 +360,7 @@ public sealed class LabApiClient
 
     private sealed record PanelPayload(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
-        int? Effective, string? Population, int? Minimum);
+        int? Effective, string? Population, int? Minimum, string? WithheldBecause);
 
     private sealed record SetupsPayload(
         string? AsOf,
