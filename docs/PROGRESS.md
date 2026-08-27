@@ -3906,3 +3906,82 @@ Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. 1,087 expectat
             independent.
 
 Carried:    Nothing new.
+
+## 3.5 — 2026-08-27 — phase-3-measurement — the scoreboard, and an interval that cleared zero always
+
+The Lab scoreboard page and the builder behind it. **Openable.**
+
+**This checkpoint amended its own done condition, and says so in those words.** 3.5 asks for bands
+0, 1 and 2. Band 2 has two panels and the second, loss causes as a share, needs closed trades from
+`LossClassifier` at 4.10; `ARCHITECTURE.html` already defers the `Why each loss happened` table to
+the same checkpoint. What ships is band 2's rank-decile curve and ceiling gap, with the loss panel
+present on the page **declaring the checkpoint that fills it** rather than silently absent. The
+amendment is naming that as an amendment rather than reading the done condition as satisfied.
+
+Built:      Migration **020**, `scoreboard`. `PairedInterval` in Core. `ScoreboardBuilder`, verb
+            `scoreboard`, at 21:50 last in the night because every panel reads what the stages
+            before it wrote. `LabScoreboard` in the Api, `ScoreboardView` and the page.
+
+            **22 expectations, 19 `DERIVED`** through `--interval`.
+
+            The read surface computes nothing. A page that recomputed a bound or an interval would
+            be a second implementation of the arithmetic the phase turns on, and the two would
+            eventually disagree with the page as the last place anybody looked.
+
+            Long and short are two blocks on the screen and two lists on the wire, and every panel
+            carries its own count. Where a panel has an interval it carries the **effective**
+            observations beside the row count, because those are different quantities.
+
+Findings:   **The first interval had zero width, and zero width clears zero always.** Observation:
+            all four authored series came back with `low` equal to `high` equal to the mean.
+
+            Reading: the bootstrap walked the block offsets in order, wrapping, which makes every
+            resample the same series rotated. **A rotation preserves the mean**, so every draw
+            returned the same number and the percentiles collapsed onto it. The scheme was chosen to
+            be deterministic without a seed and it is deterministic, and it is not a bootstrap.
+
+            This is the worst available failure for this particular property. The decision at 3.0(f)
+            exists because an interval assuming independence is **too narrow** and lets band 1 clear
+            zero before it should. An interval of no width is that failure taken to its limit: it
+            clears zero on any positive mean, forever, and the panel would have read green from the
+            first week. Corrected by mixing the offsets with two coprime strides, which samples with
+            replacement, reproduces exactly, and still carries no seed.
+
+            It was caught because four authored series were asked the question. Over the fixture
+            every band 1 panel is withheld, so the run was green with the bootstrap never executing.
+
+            **The effective-sample measurement had the same shape of hole and it was in the case
+            file rather than the code.** `a-series-that-repeats-itself` was built from independent
+            noise with a small wobble, so it had no autocorrelation to measure and came back at 40
+            effective observations from 40 nights. The measurement looked correct while asserting
+            nothing. Rebuilt as an AR(1) series carrying 0.85 of each night into the next, it now
+            reports **4 effective observations from 40 nights**, which is the figure a minimum sample
+            has to be counted in.
+
+            Observation. `straddling-zero` reports `clearsZero` as **no**, which is the case that
+            matters: a mean of 0.0019 against a wobble ten times its size should not be called a
+            result, and an interval that said otherwise is how band 1 announces the pattern is real
+            before it is.
+
+            Observation, on the page rather than the arithmetic. The band 2 and band 3 notices were
+            first written inside the branch that renders when panels exist, so they vanished on a day
+            with no data. That is exactly backwards: they say what the page lacks **structurally**,
+            which is true whether or not today has figures, and a band absent on an empty day is
+            missing precisely when a reader is most likely to conclude the page has shown everything
+            it has. Lifted out of the branch, and a test now asserts a built screen still names the
+            checkpoints that fill what it lacks.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, **369 tests**. 1,109 expectations, 603
+            independent.
+
+            Over the fixture the builder writes 9 panels, none with an interval and 6 withheld. That
+            is the honest answer for one night with no closed horizon: withheld rather than printed
+            wide, because a panel showing an interval built from a handful of nights invites a
+            reading and the count beside it is not enough to stop that.
+
+Carried:    Nothing new. The tight-set question raised at 3.3 falls due here and is **not**
+            discharged: whether the tight set may draw from neighbouring sessions is a change to what
+            the tight number means rather than to how it is computed, and this checkpoint built the
+            panel that reports it rather than deciding it. Repointed once, to the operator, on the
+            same terms as the threshold ruling: it is a judgement about what the comparison should
+            be, and no build session can take it.

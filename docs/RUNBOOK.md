@@ -68,7 +68,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
-| 21:50 | scoreboard | 0 |
+| 21:50 | `scoreboard`, the three bands, every panel with its own count | 0 |
 | **total** | | **~798 against a 5,000 ceiling** |
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.

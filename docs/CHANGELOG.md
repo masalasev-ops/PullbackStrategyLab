@@ -757,3 +757,13 @@ Why:  "From the outcome distribution" admits the reading that produced the first
 Was:  "Every week" said only to open the scoreboard.
 Now:  It runs `ceiling` first, with why it is weekly rather than nightly.
 Why:  The stage had no scheduled home. Weekly is deliberate: the bound moves with the population rather than with a session, and recomputing it nightly over one more row than yesterday invites reading noise as movement.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said ScoreboardBuilder "Computes the scoreboard panels".
+Now:  The same, plus that it stores what each panel showed so it can be read back as it stood, and that every panel carries its row count and, where it has an interval, the effective observations that interval was really built on.
+Why:  The two counts are different quantities and storing only the first is how a minimum sample stated in observations gets satisfied by rows. Saying so in the catalogue is what makes the column list in SCHEMA read as deliberate rather than as belt and braces.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 21:50 row read "scoreboard".
+Now:  "`scoreboard`, the three bands, every panel with its own count".
+Why:  The nightly order test reads backticked verbs, and the count is the half of the panel that stops a figure being read without its denominator.

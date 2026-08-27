@@ -2104,7 +2104,94 @@ def ceiling_main(argv):
     return 0
 
 
+def interval_main(argv):
+    """The interval and the effective sample, restated from what each quantity is.
+
+    The interval is a moving-block bootstrap: blocks of the scoring horizon's length, taken with
+    replacement, block offsets mixed by two coprime strides so the resampling is reproducible
+    without a seed. The percentile bounds are the 2.5th and 97.5th of the resampled means.
+
+    The effective sample is the variance-inflation form over the lag-one autocorrelation:
+    n * (1 - rho) / (1 + rho). It equals the night count when the nights are independent and falls
+    away as the series repeats itself, which is exactly the information an interval assuming
+    independence throws away.
+
+    The trap this restatement exists to catch: walking the block offsets in order rather than mixing
+    them makes every resample the same series rotated, a rotation preserves the mean, and the
+    interval comes back with no width at all. An interval of no width clears zero always.
+    """
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[0] if argv and argv[0].endswith(".json") else os.path.join(
+        here, "fixtures", "interval-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    block = 10
+    draws = 10000
+    draw_stride = 7919
+    block_stride = 104729
+
+    print("\npaired interval, over %s" % os.path.basename(path))
+
+    for scenario in spec["scenarios"]:
+        name = scenario["name"]
+        nights = [Decimal(str(x)) for x in scenario["nightlyMeans"]]
+        key = "interval.%s" % name
+
+        if len(nights) < block * 2:
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        count = len(nights)
+        blocks = count // block
+
+        means = []
+        for draw in range(draws):
+            total = Decimal(0)
+            taken = 0
+            for b in range(blocks):
+                start = (draw * draw_stride + b * block_stride) % count
+                for i in range(block):
+                    total += nights[(start + i) % count]
+                    taken += 1
+            means.append(total / taken)
+
+        means.sort()
+        low = means[int((Decimal("0.025") * (len(means) - 1)))]
+        high = means[int((Decimal("0.975") * (len(means) - 1)))]
+        mean = sum(nights) / count
+
+        centred = [x - mean for x in nights]
+        variance = sum(c * c for c in centred)
+        covariance = sum(centred[i] * centred[i - 1] for i in range(1, count))
+
+        if variance == 0:
+            effective = 1
+        else:
+            rho = covariance / variance
+            inflated = Decimal(count) if rho <= -1 else Decimal(count) * (1 - rho) / (1 + rho)
+            effective = max(1, min(count, int(inflated.quantize(Decimal("1"), rounding=ROUND_HALF_UP))))
+
+        print()
+        print("  %s.%-12s %s" % (key, "mean", q(mean)))
+        print("  %s.%-12s %s" % (key, "low", q(low)))
+        print("  %s.%-12s %s" % (key, "high", q(high)))
+        print("  %s.%-12s %s" % (key, "clearsZero", "yes" if low > 0 else "no"))
+        print("  %s.%-12s %d" % (key, "nights", count))
+        print("  %s.%-12s %d" % (key, "effective", effective))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--interval":
+        return interval_main(argv[2:] or [''])
+
     if len(argv) > 1 and argv[1] == "--ceiling":
         return ceiling_main(argv[2:] or [''])
 

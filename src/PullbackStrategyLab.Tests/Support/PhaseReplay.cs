@@ -387,10 +387,21 @@ public sealed class PhaseReplay : IDisposable
         Record("forward.notYetElapsed", filled.NotYetElapsed);
         Record("forward.acrossAHoliday", filled.AcrossAHoliday);
 
+        // 17. The scoreboard, last, because every panel it builds reads what the stages before it
+        //     wrote. Over the fixture most panels are withheld, which is the honest answer for a
+        //     lab with one night on file and no closed horizon.
+        ScoreboardResult scored = new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
+
+        stages.Add(new StageRun(ScoreboardBuilder.Name, 0, scored.RowsWritten, scored.Outcome.ToStorageText()));
+        Record("scoreboard.panels", scored.Panels);
+        Record("scoreboard.withInterval", scored.WithInterval);
+        Record("scoreboard.withheld", scored.Withheld);
+
         measurements.AddRange(CalibrationCounts());
         measurements.AddRange(ForwardOutcomeFigures());
         measurements.AddRange(ControlFigures());
         measurements.AddRange(CeilingFigures());
+        measurements.AddRange(IntervalFigures());
         measurements.AddRange(CapFigures());
         measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
@@ -972,6 +983,46 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement($"ceiling.{scenario.Name}.bound", Figure(bound.Ceiling)));
             figures.Add(new Measurement($"ceiling.{scenario.Name}.achieved", Figure(bound.Achieved)));
             figures.Add(new Measurement($"ceiling.{scenario.Name}.gap", Figure(bound.Ceiling - bound.Achieved)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The interval over authored nightly series, which the fixture withholds on every panel.
+    ///
+    /// One night with no closed horizon produces no series, so band 1 is withheld everywhere and the
+    /// block bootstrap runs on nothing. The failure this guards against is an interval that is too
+    /// narrow, and a stage that never computes one cannot be.
+    /// </summary>
+    private static IReadOnlyList<Measurement> IntervalFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (IntervalCases.Scenario scenario in IntervalCases.All)
+        {
+            IReadOnlyList<PairedInterval.Night> nights = IntervalCases.Nights(scenario);
+
+            PairedInterval.Estimate? estimate = PairedInterval.Of(
+                nights, MeasurementParameters.BootstrapBlockSessions, MeasurementParameters.BootstrapDraws);
+
+            string id = $"interval.{scenario.Name}";
+
+            if (estimate is null)
+            {
+                figures.Add(new Measurement(id, "withheld"));
+                continue;
+            }
+
+            figures.Add(new Measurement($"{id}.mean", IntervalCases.Figure(estimate.Mean)));
+            figures.Add(new Measurement($"{id}.low", IntervalCases.Figure(estimate.Low)));
+            figures.Add(new Measurement($"{id}.high", IntervalCases.Figure(estimate.High)));
+            figures.Add(new Measurement(
+                $"{id}.clearsZero", estimate.Low > 0m ? "yes" : "no"));
+            figures.Add(new Measurement(
+                $"{id}.nights", estimate.Nights.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
+                $"{id}.effective", estimate.EffectiveObservations.ToString(CultureInfo.InvariantCulture)));
         }
 
         return figures;

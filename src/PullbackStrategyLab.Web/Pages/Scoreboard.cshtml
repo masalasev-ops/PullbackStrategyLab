@@ -2,17 +2,134 @@
 @using PullbackStrategyLab.Web.Shell
 @model ScoreboardModel
 @*
-    The empty state, which is the whole page until 3.5. It names what will fill it and
-    which checkpoint fills it, because an empty page that says so is honest and a page of
-    invented rows is not.
+    The three bands phase 3 fills, none of them denominated in money.
+
+    Two rules govern this page and both are visible in its shape. Long and short are two
+    blocks rather than one table with a direction column, because any figure that would
+    require adding a long result to a short result is not displayed at all. And every panel
+    carries its own count and the condition under which it reads badly, because a number
+    without a denominator is how you read a pattern into forty observations, and a
+    scoreboard that can only show good news is decoration.
 *@
 <h1>@Model.Item.Title</h1>
 <p class="lede">@Model.Item.What.</p>
 
-<div class="empty-state">
-    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
-    <p>The shell, its navigation, the status band and the shared chart component are what
-       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
-       invented data reads as a working screen and is the one thing that cannot be told apart
-       from the real one later.</p>
-</div>
+@if (!Model.Scoreboard.HasPanels)
+{
+    <div class="empty-state">
+        <p><b>Nothing to show yet.</b> @Model.Scoreboard.Absent.</p>
+        <p>The panels fill as outcomes accumulate. Band 1 needs ten sessions to pass after a
+           setup is flagged before that setup has anything to contribute, so an empty
+           scoreboard on a lab that started this week is the correct reading rather than a
+           fault.</p>
+    </div>
+}
+else
+{
+    <p class="muted">As of @Model.Scoreboard.AsOf.</p>
+
+    <section class="scoreboard-band">
+        <h2>Band 0 — health</h2>
+        <p class="muted">Is the record itself sound. Nothing below this line means anything if
+           this band does not.</p>
+        <dl class="panels">
+            @foreach (PanelView panel in Model.Scoreboard.Health)
+            {
+                <div class="panel">
+                    <dt>@panel.Title</dt>
+                    <dd>
+                        <span class="figure">@panel.Figure</span>
+                        <span class="count">@panel.Count</span>
+                        @if (panel.ReadsBadlyWhen is string warns)
+                        {
+                            <span class="warns">@warns</span>
+                        }
+                    </dd>
+                </div>
+            }
+        </dl>
+    </section>
+
+    @foreach ((string side, IReadOnlyList<PanelView> panels) in
+        new[] { ("Long", Model.Scoreboard.Long), ("Short", Model.Scoreboard.Short) })
+    {
+        <section class="scoreboard-band side">
+            <h2>@side</h2>
+
+            @if (panels.Count == 0)
+            {
+                <p class="muted">No panels on this side yet.</p>
+            }
+            else
+            {
+                <dl class="panels">
+                    @foreach (PanelView panel in panels)
+                    {
+                        <div class="panel @(panel.Withheld ? "withheld" : string.Empty)">
+                            <dt>@panel.Title</dt>
+                            <dd>
+                                @if (panel.Withheld)
+                                {
+                                    @*
+                                        Withheld rather than shown wide. A panel printing an
+                                        interval built from a handful of nights invites a
+                                        reading, and the count beside it is not enough to
+                                        stop that.
+                                    *@
+                                    <span class="figure muted">withheld</span>
+                                    <span class="count">@panel.Count, too few to say anything</span>
+                                }
+                                else
+                                {
+                                    <span class="figure">@panel.Figure</span>
+
+                                    @if (panel.Interval is string interval)
+                                    {
+                                        <span class="interval @(panel.ClearsZero == true ? "clears" : "does-not-clear")">
+                                            @interval
+                                            @(panel.ClearsZero == true ? "clears zero" : "does not clear zero yet")
+                                        </span>
+                                    }
+
+                                    <span class="count">@panel.Count</span>
+                                }
+
+                                @if (panel.ReadsBadlyWhen is string warns)
+                                {
+                                    <span class="warns">@warns</span>
+                                }
+                            </dd>
+                        </div>
+                    }
+                </dl>
+            }
+        </section>
+    }
+}
+
+@*
+    These two say what the page lacks structurally rather than what today happens to hold, so
+    they render whether or not any panel was built. A band that appeared only on days with data
+    would be absent exactly when a reader was most likely to conclude the page had shown
+    everything it has.
+*@
+<section class="scoreboard-band">
+    <h2>Band 2 — where the losses come from</h2>
+    <div class="empty-state">
+        <p><b>Arrives at checkpoint 4.10.</b> Loss causes as a share need closed trades, and
+           LossClassifier is what produces them.</p>
+        <p>It is named here rather than left out, because a band that silently showed three
+           panels where the architecture describes four would read as complete. Failed setups
+           shrinking as a share is direct evidence the filter improved; noise stop-outs
+           shrinking is evidence the execution improved. They are different wins and this is
+           the only place that would separate them.</p>
+    </div>
+</section>
+
+<section class="scoreboard-band">
+    <h2>Band 3 — is the loop learning</h2>
+    <div class="empty-state">
+        <p><b>Arrives at checkpoint 6.8.</b> Proposal outcomes by pack version, which needs the
+           research loop to exist.</p>
+    </div>
+</section>
