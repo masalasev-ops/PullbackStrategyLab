@@ -658,6 +658,12 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
                 : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
 
+            "Follow-up date is a holiday" => TheFillStoresBothDates()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "ForwardReturnFiller measures to the session the horizon lands on and stores the calendar date beside it, and the authored subjects assert both branches")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the fill no longer records the intended date beside the session actually used, so a follow-up that crossed a holiday reads as though it had not"),
+
             _ => Claim.NotExamined("Failure behaviour", condition,
                 "the checkpoint that builds it has landed and no assertion reads this row"),
         };
@@ -699,6 +705,53 @@ public sealed partial class ArchitectureConformanceCheck
             && typeof(CapResult).GetProperty(nameof(CapResult.LongCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.ShortCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.CappedOut)) is not null;
+    }
+
+    /// <summary>
+    /// The fill stores the calendar horizon beside the session it actually used, and the authored
+    /// subjects exercise both branches.
+    ///
+    /// Both halves are required, and the second is the one worth stating. A filler that always
+    /// slipped forward would satisfy every holiday case and be wrong on every ordinary week, so the
+    /// claim is not "a slip is recorded" but "a slip and a non-slip are told apart". The case file
+    /// carries a mid-week subject for exactly that, and this reads the committed expectations for
+    /// one of each rather than trusting the file's prose.
+    /// </summary>
+    private static bool TheFillStoresBothDates()
+    {
+        string filler = RepositoryLayout.Read(System.IO.Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "ForwardReturnFiller.cs"));
+
+        if (!filler.Contains("@intended_date", StringComparison.Ordinal)
+            || !filler.Contains("@actual_date", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string expectations = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Root, "fixtures", "expectations.json"));
+
+        using JsonDocument document = JsonDocument.Parse(expectations);
+
+        bool slipped = false;
+        bool held = false;
+
+        foreach (JsonElement expectation in document.RootElement.GetProperty("expectations").EnumerateArray())
+        {
+            string id = expectation.GetProperty("id").GetString() ?? string.Empty;
+
+            if (!id.StartsWith("forward.", StringComparison.Ordinal)
+                || !id.EndsWith(".slipped", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string value = expectation.GetProperty("value").GetString() ?? string.Empty;
+            slipped |= string.Equals(value, "yes", StringComparison.Ordinal);
+            held |= string.Equals(value, "no", StringComparison.Ordinal);
+        }
+
+        return slipped && held;
     }
 
     private static bool BothDetectorsRecordAnErrorRow() =>

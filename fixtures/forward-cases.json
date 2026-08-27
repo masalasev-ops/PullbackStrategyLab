@@ -1,0 +1,61 @@
+{
+  "tier": "AUTHORED",
+  "what": "Subjects placed at sessions inside the fixture's own window, so a horizon has elapsed and there is an outcome to measure. The bars are the captured fixture's; what is authored is which session a subject sits on and which way it was taken.",
+  "whatItCannotSay": "Nothing about whether flagged names outperform. These subjects were not flagged by any detector; they are sessions chosen to reach a branch of the arithmetic. What they say is what ForwardOutcome computes over bars it is handed.",
+  "whyItIsOwed": "The captured fixture holds one night and its as-of is the last session in the window, so no horizon has elapsed and the nightly fill honestly writes nothing. A stage whose only exercise is a run that produces nought rows is a stage nothing has tested. The horizons, the sign convention and the holiday handling all need a subject with sessions after it.",
+  "whyThisCostsNothing": "The fixture already holds 250 sessions for each of thirty names. A subject with an elapsed horizon is a session that is not the last one. No capture, no vendor call.",
+  "theHolidayCaseIsTheDoneCondition": "3.2's done condition is that a follow-up landing on a non-trading day uses the next trading day and stores the actual date beside the intended horizon. Two cases below sit on the session before a real market holiday in the captured window, and one sits mid-week where the two dates agree. Without the third, a bug that always slipped forward would pass every case here.",
+  "cases": [
+    {
+      "name": "long-one-session-mid-week",
+      "ticker": "PFE",
+      "asOf": "2026-06-15",
+      "direction": "long",
+      "why": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this.",
+      "averageTrueRange": "0.5831"
+    },
+    {
+      "name": "long-one-session-across-a-holiday",
+      "ticker": "PFE",
+      "asOf": "2026-01-16",
+      "direction": "long",
+      "why": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names.",
+      "averageTrueRange": "0.5831"
+    },
+    {
+      "name": "short-one-session-across-a-holiday",
+      "ticker": "CCL",
+      "asOf": "2026-07-02",
+      "direction": "short",
+      "why": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive.",
+      "averageTrueRange": "0.9276"
+    },
+    {
+      "name": "long-ten-sessions",
+      "ticker": "BAC",
+      "asOf": "2026-06-15",
+      "direction": "long",
+      "why": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much.",
+      "averageTrueRange": "1.1050"
+    },
+    {
+      "name": "short-ten-sessions",
+      "ticker": "INTC",
+      "asOf": "2026-06-15",
+      "direction": "short",
+      "why": "The short mirror at the scoring horizon.",
+      "averageTrueRange": "6.3889"
+    },
+    {
+      "name": "long-across-a-split",
+      "ticker": "IESC",
+      "asOf": "2026-08-10",
+      "direction": "long",
+      "why": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not.",
+      "averageTrueRange": "24.1364"
+    }
+  ],
+  "theRangeIsAnAuthoredInput": "Each case states the ATR its excursions are expressed in, rather than the case reading one out of the store. The fixture computes indicators for its as-of night only, so a subject placed earlier in the window has no indicator row and the excursions would come back undefined, leaving half the arithmetic unexercised. Stating it isolates what is under test, being the excursion arithmetic, from what is not, being the ATR itself, which is verified by its own DERIVED expectations at 1.6 and 1.7. The values are each name's real ATR from the fixture's own indicator row, rounded to four places, so they are plausible rather than invented.",
+  "observedBefore": "2026-08-24T23:59:59.999Z",
+  "theReadIsBounded": "Both implementations read bars observed at or before the fixture as-of. The fixture plants one observation dated the day after, which is what point-in-time exists to catch, and an unbounded read takes it: over the split case that is a return of 1.6601 where the bounded answer is -0.1369."
+}

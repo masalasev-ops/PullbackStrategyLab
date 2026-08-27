@@ -3706,3 +3706,75 @@ Carried:    Nothing new. One code deferral moved with its obligation: `CoverageR
             and saying the checkpoint shipped without coming back to it, which is the guard doing
             exactly what it was written for. The pre-flight sweep at 3.0 had flagged this as the one
             code reference that would have to move, so it was expected rather than discovered.
+
+## 3.2 — 2026-08-27 — phase-3-measurement — the forward fill, and a future bar two implementations disagreed about
+
+Forward returns at 1, 3, 5 and 10 sessions for every flagged setup, traded or not. **The checkpoint
+with the longest lead time in the project**: phase 3's answers need accumulated outcomes and nothing
+substitutes for elapsed time, so the clock starts when this first runs on a live night.
+
+Built:      Migration **017**, `forward_return`, keyed on subject, kind and horizon. `ForwardOutcome`
+            in Core, so the nightly fill, the replay and a test share one implementation of the sign
+            convention and the excursions. `ForwardReturnFiller`, verb `forward-returns`, at 21:30.
+
+            `fixtures/forward-cases.json`, six authored subjects, and **148 expectations at this
+            checkpoint of which 144 are `DERIVED`** through `tools/derive-indicators.py --forward`.
+
+            **The horizon is trading sessions and the calendar date is stored beside it.** A ten-day
+            return that quietly became fourteen over a holiday is not comparable with one that did
+            not, and the ceiling arithmetic is defined at the scoring horizon. `intended_date` is
+            where a naive calendar step lands and `actual_date` is the session used; where they
+            differ the row says so. That is the failure table's holiday row, answered.
+
+            **The excursions are the half a plain return cannot express.** A name that rose 15%
+            after first dropping 4% is a good spot with a badly placed exit; one that rose 15%
+            smoothly is a good spot with a well placed one. The terminal return cannot tell them
+            apart, and every sensible proposal about stop placement depends on the distinction.
+
+Findings:   **The two implementations disagreed on the split case, and both were wrong.** The
+            shipped reader returned -0.1369 and the independent restatement 1.6601, a factor of more
+            than ten apart on the same subject.
+
+            Observation: IESC's last session carries two observations, `324.12` observed that day and
+            `999.00` observed the day after. That second row is the fixture's deliberately
+            future-dated bar, planted for `point-in-time` to catch. Neither reader bounded
+            `observed_at`. The restatement took the later row. The shipped one returned the right
+            number **by accident of ordering**, because the replay happens to write that row at a
+            later stage than the method runs.
+
+            Reading: a read that is correct only because of when it happens to run is not correct.
+            Both now bound on the fixture's own as-of, declared once in the case file so the two take
+            the same instant rather than each choosing one. `point-in-time` did not catch it because
+            it reads the shipped source and this reader is test support, which is worth knowing: the
+            planted row guards the lab and nothing guards the instruments that read around it.
+
+            **The excursions were undefined on every case until the range became an authored input.**
+            The fixture computes indicator rows for its as-of night only, so a subject placed earlier
+            in the window has no ATR and every excursion came back undefined. That is the arithmetic
+            reporting honestly and it is also half the checkpoint unexercised. Each case now states
+            the range it is expressed in, which isolates what is under test, the excursion, from what
+            is not, the ATR, which has `DERIVED` expectations of its own at 1.6.
+
+            Observation, on what the nightly fill measures over the fixture. Nought. The fixture's
+            as-of is the last session it holds, so no horizon has elapsed and the honest answer is
+            no rows. Recorded as three subjects, nought written and twelve horizons not yet elapsed,
+            because "nought outcomes and every horizon pending" is a different fact from "the stage
+            did not run", and a stage whose only exercise produces no rows is a stage nothing tests.
+            That is what the six authored subjects are for.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. **1,050 expectations, 552
+            independent**, up from 902 and 408.
+
+            **The failure table's holiday row is now asserted rather than deferred.** Landing 3.2
+            brought it into scope and the report went red saying no assertion reads it, which is the
+            harness working: a claim whose checkpoint has landed and which nothing checks is
+            unexamined, and unexamined is not a pass. The assertion requires both halves, that the
+            fill stores both dates and that the committed expectations carry a slipped case and a
+            held one, because a filler that always slipped forward would satisfy every holiday case
+            and be wrong on every ordinary week.
+
+            The holiday handling is asserted on both branches. `long-one-session-mid-week` sits on a
+            Monday where the calendar horizon and the session horizon agree, and it is the control:
+            a filler that always slipped forward would pass both holiday cases and fail this one.
+
+Carried:    Nothing new.

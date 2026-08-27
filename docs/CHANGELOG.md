@@ -732,3 +732,8 @@ Why:  The old line described an outcome nothing could perform. A component canno
 Was:  The 18:25 row read "`vectorize`, the signal freeze, then journal".
 Now:  "`vectorize`, the signal freeze, then `journal`, which seals the night".
 Why:  The nightly order test reads backticked verbs out of that table and asserts the replay runs them in the same order. Written as prose, the journal was a stage the schedule mentioned and the test could not see.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 21:30 row read "forward returns".
+Now:  "`forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions".
+Why:  The nightly order test reads backticked verbs out of that table. Written as prose the stage was scheduled and invisible to the assertion that the replay runs the night in the order an operator follows.

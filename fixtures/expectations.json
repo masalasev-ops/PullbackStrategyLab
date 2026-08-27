@@ -50,7 +50,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s current basis. A refetch that changes nothing still records that the series was looked at."
+      "note": "Zero. Fifty-seven names carried a demand and the fixture holds histories for one of them, whose bars were already stored on the vendorÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s current basis. A refetch that changes nothing still records that the series was looked at."
     },
     {
       "id": "backfill.rebuild.selected",
@@ -500,63 +500,63 @@
       "tier": "DERIVED",
       "value": "6.86",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstCentre",
       "tier": "DERIVED",
       "value": "5.53",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.firstTick",
       "tier": "DERIVED",
       "value": "250.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.high",
       "tier": "DERIVED",
       "value": "408.2550",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastCentre",
       "tier": "DERIVED",
       "value": "658.47",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastHighY",
       "tier": "DERIVED",
       "value": "97.81",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastLowY",
       "tier": "DERIVED",
       "value": "124.52",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.lastTick",
       "tier": "DERIVED",
       "value": "400.0000",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.low",
       "tier": "DERIVED",
       "value": "246.5500",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars",
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars",
       "note": "The chart is laid over the one fixture ticker carrying a real split, on the adjusted basis. The adjusted basis is exactly what a chart can be wrong about while still looking like a chart."
     },
     {
@@ -564,21 +564,21 @@
       "tier": "DERIVED",
       "value": "4",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.sessions",
       "tier": "DERIVED",
       "value": "60",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "chart.IESC.upCandles",
       "tier": "DERIVED",
       "value": "25",
       "checkpoint": "1.8",
-      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py --chart, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "check.long.cluster.authoredRowFailed",
@@ -1333,6 +1333,1190 @@
       "checkpoint": "1.7",
       "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe",
       "note": "None, and it has to stay none. A fixture ticker that falls out of the universe gets no indicator row, and the diff would stay green over a shrinking subject."
+    },
+    {
+      "id": "forward.acrossAHoliday",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.2",
+      "producedBy": "the nightly fill over the fixture, whose single captured night has no elapsed horizon",
+      "note": "outcomes whose session differed from the calendar horizon. Nought here because nothing was written; the holiday case is carried by the authored subjects, which is why they exist"
+    },
+    {
+      "id": "forward.long-across-a-split.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-08-11",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-08-11",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.0974",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.6254",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0385",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h1.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-08-24",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-08-20",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "-2.1501",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.3552",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.1369",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-08-13",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-08-13",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.1278",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.3552",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0035",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h3.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-08-17",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-08-15",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.1278",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.3552",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0571",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-across-a-split.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A horizon that spans the fixture's 2-for-1 split. Read on the raw basis the return would be about minus fifty per cent and would look like an ordinary bad outcome rather than an error. Every other case here would pass with the adjustment dropped; this one would not. AUTHORED input: IESC from 2026-08-10, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-01-20",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-01-17",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.9134",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "-0.0001",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0051",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h1.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-02-02",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-01-26",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.9134",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "2.6573",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0568",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-01-22",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-01-19",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.9134",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.0763",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0175",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h3.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-01-26",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-01-21",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.9134",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.1483",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0259",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-across-a-holiday.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The Friday before the January holiday. The calendar horizon lands on the Saturday and the session actually used is the Tuesday, a three-day slip, which is the case the failure table names. AUTHORED input: PFE from 2026-01-16, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.5057",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.2191",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0015",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h1.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-30",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-25",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "-4.0116",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.4720",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0738",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "-1.7866",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.4720",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0304",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h3.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-23",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-20",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "-2.2080",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.4720",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0492",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-one-session-mid-week.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "A Monday with a Tuesday after it, so the calendar horizon and the session horizon agree and intended equals actual. The control on the holiday cases: a filler that always slipped forward would pass those and fail this. AUTHORED input: PFE from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "0.3258",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.0860",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0174",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h1.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-30",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-25",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "0.1448",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "3.0136",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0199",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "0.1448",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.9095",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0059",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h3.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-23",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-20",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "0.1448",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.9367",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0365",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.long-ten-sessions.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The scoring horizon, which is the one the ceiling arithmetic is defined at and the one band 1 reports. Ten sessions always span at least two weekends, so intended and actual differ by construction and the pair says by how much. AUTHORED input: BAC from 2026-06-15, long, with the range stated in the case."
+    },
+    {
+      "id": "forward.notYetElapsed",
+      "tier": "FROZEN",
+      "value": "12",
+      "checkpoint": "3.2",
+      "producedBy": "the nightly fill over the fixture, whose single captured night has no elapsed horizon",
+      "note": "subject-horizon pairs whose window does not reach the horizon yet. Three subjects at four horizons is twelve"
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-07-06",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-07-03",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.3754",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "0.5576",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0143",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h1.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-07-17",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-07-12",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.3754",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "2.8313",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0537",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-07-08",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-07-05",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.3754",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "2.8313",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0813",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h3.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-07-10",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-07-07",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.3754",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "2.8313",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0387",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-one-session-across-a-holiday.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The session before the July holiday, read the short way. The mirror matters here because the sign convention is the thing a reader is most likely to get backwards, and a short that fell must read positive. AUTHORED input: CCL from 2026-07-02, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-16",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.maeAtr",
+      "tier": "DERIVED",
+      "value": "-0.1315",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.8563",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.returnSigned",
+      "tier": "DERIVED",
+      "value": "0.0845",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h1.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-30",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-25",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.maeAtr",
+      "tier": "DERIVED",
+      "value": "-2.2680",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.8563",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0921",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h10.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-18",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.maeAtr",
+      "tier": "DERIVED",
+      "value": "-1.1927",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.8563",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0479",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h3.slipped",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.actualDate",
+      "tier": "DERIVED",
+      "value": "2026-06-23",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.intendedDate",
+      "tier": "DERIVED",
+      "value": "2026-06-20",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.maeAtr",
+      "tier": "DERIVED",
+      "value": "-2.1271",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.mfeAtr",
+      "tier": "DERIVED",
+      "value": "1.8563",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.returnSigned",
+      "tier": "DERIVED",
+      "value": "-0.0346",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.short-ten-sessions.h5.slipped",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.2",
+      "producedBy": "an independent restatement of the forward outcome over the fixture's own bars, computed outside the solution by tools/derive-indicators.py --forward",
+      "note": "The short mirror at the scoring horizon. AUTHORED input: INTC from 2026-06-15, short, with the range stated in the case."
+    },
+    {
+      "id": "forward.subjects",
+      "tier": "FROZEN",
+      "value": "3",
+      "checkpoint": "3.2",
+      "producedBy": "the nightly fill over the fixture, whose single captured night has no elapsed horizon",
+      "note": "setups the fill considered, being the night's three rows"
+    },
+    {
+      "id": "forward.written",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.2",
+      "producedBy": "the nightly fill over the fixture, whose single captured night has no elapsed horizon",
+      "note": "outcomes written. Nought, and it is the honest answer rather than a failure: the fixture's as-of is the last session it holds, so no horizon has elapsed. Nought written with every horizon not yet elapsed is a different fact from the stage not running, which is why both are recorded"
     },
     {
       "id": "gallery.agreed",
@@ -3277,49 +4461,49 @@
       "tier": "DERIVED",
       "value": "0.0670",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.atr14",
       "tier": "DERIVED",
       "value": "24.1364",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema21",
       "tier": "DERIVED",
       "value": "353.2321",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema50",
       "tier": "DERIVED",
       "value": "343.3746",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.ema9",
       "tier": "DERIVED",
       "value": "352.9966",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.medianDollarVolume",
       "tier": "DERIVED",
       "value": "204580994.6400",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.IESC.rangeAverage",
       "tier": "DERIVED",
       "value": "23.3959",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.INTC.adr20",
@@ -3522,49 +4706,49 @@
       "tier": "DERIVED",
       "value": "0.0923",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.atr14",
       "tier": "DERIVED",
       "value": "81.0755",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema21",
       "tier": "DERIVED",
       "value": "841.9685",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema50",
       "tier": "DERIVED",
       "value": "826.9671",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.ema9",
       "tier": "DERIVED",
       "value": "862.2732",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.medianDollarVolume",
       "tier": "DERIVED",
       "value": "3872506949.0000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.LITE.rangeAverage",
       "tier": "DERIVED",
       "value": "75.4418",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.META.adr20",
@@ -3767,49 +4951,49 @@
       "tier": "DERIVED",
       "value": "0.0054",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.atr14",
       "tier": "DERIVED",
       "value": "0.0432",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema21",
       "tier": "DERIVED",
       "value": "7.0987",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema50",
       "tier": "DERIVED",
       "value": "6.8553",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.ema9",
       "tier": "DERIVED",
       "value": "7.1103",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.medianDollarVolume",
       "tier": "DERIVED",
       "value": "34889899.6000",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PAYO.rangeAverage",
       "tier": "DERIVED",
       "value": "0.0385",
       "checkpoint": "1.6",
-      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
+      "producedBy": "tools/derive-indicators.py, over the fixtureÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s own bars"
     },
     {
       "id": "indicators.PFE.adr20",
@@ -4258,7 +5442,7 @@
       "value": "0",
       "checkpoint": "1.6",
       "producedBy": "the replay itself, recorded to detect change",
-      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
+      "note": "Zero, because the refetch at step five ran before the averages, which is RUNBOOKÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s order. The refusal itself is covered by an authored case in IndicatorEngineTests."
     },
     {
       "id": "indicators.computed",

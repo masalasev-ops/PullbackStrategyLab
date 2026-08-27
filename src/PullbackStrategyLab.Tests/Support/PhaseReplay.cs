@@ -6,6 +6,7 @@ using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Web.Pages;
@@ -362,7 +363,21 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
+        // 15. The forward fill, which is the one stage that reads bars dated after its subject's
+        //     own date. Over the fixture it fills what the single captured night can support: the
+        //     as-of is the last session the fixture holds, so no horizon has elapsed and the honest
+        //     answer is nought written. Recorded anyway, because "nought outcomes and every horizon
+        //     not yet elapsed" is a different fact from "the stage did not run".
+        FillResult filled = new ForwardReturnFiller(_connections, Logger(), _clock, _options).Fill(AsOf);
+
+        stages.Add(new StageRun(ForwardReturnFiller.Name, 0, filled.RowsWritten, filled.Outcome.ToStorageText()));
+        Record("forward.subjects", filled.Subjects);
+        Record("forward.written", filled.Written);
+        Record("forward.notYetElapsed", filled.NotYetElapsed);
+        Record("forward.acrossAHoliday", filled.AcrossAHoliday);
+
         measurements.AddRange(CalibrationCounts());
+        measurements.AddRange(ForwardOutcomeFigures());
         measurements.AddRange(CapFigures());
         measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
@@ -803,6 +818,56 @@ public sealed class PhaseReplay : IDisposable
 
             figures.Add(new Measurement($"{geometryCase.Id}.trigger", Figure(shape.Trigger)));
             figures.Add(new Measurement($"{geometryCase.Id}.stop", Figure(shape.Stop)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// What <see cref="ForwardOutcome.Of"/> computes for subjects the captured night cannot supply.
+    ///
+    /// The fixture's own as-of is the last session it holds, so the nightly fill has no elapsed
+    /// horizon and writes nothing. These sit earlier in the same window, which is what gives the
+    /// sign convention, the horizons and the holiday handling something to be measured on.
+    /// </summary>
+    private IReadOnlyList<Measurement> ForwardOutcomeFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (ForwardCases.ForwardCase forwardCase in ForwardCases.All)
+        {
+            IReadOnlyList<ForwardOutcome.Bar> path = ForwardCases.Path(connection, forwardCase);
+            decimal atr = ForwardCases.AverageTrueRange(forwardCase);
+
+            foreach (int horizon in ForwardOutcome.Horizons)
+            {
+                ForwardOutcome.Outcome? outcome = ForwardOutcome.Of(path, horizon, forwardCase.IsLong, atr);
+                string id = $"{forwardCase.Id}.h{horizon.ToString(CultureInfo.InvariantCulture)}";
+
+                if (outcome is null)
+                {
+                    figures.Add(new Measurement(id, "not yet elapsed"));
+                    continue;
+                }
+
+                // The calendar horizon beside the session actually used. The pair is the done
+                // condition: a follow-up that crossed a holiday says so rather than being silently
+                // later than it claims.
+                DateOnly intended = forwardCase.Date.AddDays(horizon);
+
+                figures.Add(new Measurement($"{id}.intendedDate", Session(intended)));
+                figures.Add(new Measurement($"{id}.actualDate", Session(outcome.ActualDate)));
+                figures.Add(new Measurement(
+                    $"{id}.slipped", intended == outcome.ActualDate ? "no" : "yes"));
+                figures.Add(new Measurement($"{id}.returnSigned", Figure(outcome.ReturnSigned)));
+                figures.Add(new Measurement(
+                    $"{id}.mfeAtr",
+                    outcome.MaximumFavourableExcursion is decimal mfe ? Figure(mfe) : "undefined"));
+                figures.Add(new Measurement(
+                    $"{id}.maeAtr",
+                    outcome.MaximumAdverseExcursion is decimal mae ? Figure(mae) : "undefined"));
+            }
         }
 
         return figures;

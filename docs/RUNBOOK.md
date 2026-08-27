@@ -65,7 +65,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:40 | publish watchlist | 0 |
 | 20:30 | minute bars for flagged setups | 300 |
 | 21:00 | session replay, fills, positions | 0 |
-| 21:30 | forward returns | 0 |
+| 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | scoreboard | 0 |

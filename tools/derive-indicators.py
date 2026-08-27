@@ -1852,7 +1852,113 @@ def journal_main(argv):
     return 0
 
 
+def forward_main(argv):
+    """The forward outcomes, restated from what the quantity is rather than from the code.
+
+    The return is the change in adjusted close from the subject's own session to the session the
+    horizon lands on, signed by direction so a short that fell reads positive. The excursions are
+    the furthest the path ran either way over the sessions after the subject's own, expressed in
+    the subject's ATR on its own date.
+
+    Two edges, both places a wrong answer still looks right:
+
+      The horizon is trading sessions, not calendar days. A ten-day return that quietly became
+      fourteen over a holiday is not comparable with one that did not. The calendar date is
+      recorded beside the session actually used, and where they differ the follow-up says so.
+
+      The subject's own session is excluded from the excursions. The lab flagged the name on that
+      session's close, so what its own high and low did is not something a position could have
+      lived through.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --forward <store> [cases.json]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[1] if len(argv) > 1 else os.path.join(here, "fixtures", "forward-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    connection = sqlite3.connect(store)
+    horizons = (1, 3, 5, 10)
+
+    print("\nforward outcomes, over %s" % store)
+
+    for case in spec["cases"]:
+        ticker, as_of = case["ticker"], case["asOf"]
+        is_long = case["direction"] == "long"
+        name = case["name"]
+
+        # Bounded on the fixture's as-of. The fixture plants one observation dated the day after,
+        # and an unbounded read takes it: over the split case that is a return of 1.6601 where the
+        # bounded answer is -0.1369. This mode had no bound until it disagreed with the shipped
+        # method, which is what a second implementation is for.
+        bound = spec["observedBefore"]
+
+        rows = connection.execute(
+            """
+            SELECT b.bar_date, b.high, b.low, b.close, b.adj_close
+              FROM daily_bar b
+             WHERE b.ticker = ? AND b.bar_date >= ?
+               AND b.observed_at <= ?
+               AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                     WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                       AND l.observed_at <= ?)
+             ORDER BY b.bar_date
+            """, (ticker, as_of, bound, bound)).fetchall()
+
+        bars = []
+        for date, high, low, close, adj in rows:
+            high, low, close, adj = (Decimal(x) for x in (high, low, close, adj))
+            factor = Decimal(1) if close == 0 else adj / close
+            bars.append({"date": date, "high": high * factor, "low": low * factor, "close": adj})
+
+        # From the case rather than the store, on the same grounds the case states it: the fixture
+        # holds indicator rows for its as-of night only, so a subject placed earlier has none.
+        atr = Decimal(case["averageTrueRange"])
+
+        print()
+        print("  %s  (%s from %s, %s, %d bar(s))" % (name, ticker, as_of, case["direction"], len(bars)))
+
+        for horizon in horizons:
+            key = "forward.%s.h%d" % (name, horizon)
+
+            if len(bars) <= horizon or bars[0]["close"] == 0:
+                print("    %-52s %s" % (key, "not yet elapsed"))
+                continue
+
+            start, end = bars[0], bars[horizon]
+            move = (end["close"] - start["close"]) / start["close"]
+            signed = move if is_long else -move
+
+            best = max((b["high"] - start["close"]) if is_long else (start["close"] - b["low"])
+                       for b in bars[1:horizon + 1])
+            worst = min((b["low"] - start["close"]) if is_long else (start["close"] - b["high"])
+                        for b in bars[1:horizon + 1])
+
+            intended = (datetime.date.fromisoformat(as_of)
+                        + datetime.timedelta(days=horizon)).isoformat()
+
+            print("    %s.%-14s %s" % (key, "intendedDate", intended))
+            print("    %s.%-14s %s" % (key, "actualDate", end["date"]))
+            print("    %s.%-14s %s" % (key, "slipped", "no" if intended == end["date"] else "yes"))
+            print("    %s.%-14s %s" % (key, "returnSigned", q(signed)))
+            print("    %s.%-14s %s" % (key, "mfeAtr", "undefined" if atr == 0 else q(best / atr)))
+            print("    %s.%-14s %s" % (key, "maeAtr", "undefined" if atr == 0 else q(worst / atr)))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--forward":
+        return forward_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--journal":
         return journal_main(argv[2:])
 
