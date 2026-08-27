@@ -2532,3 +2532,43 @@ Carried:    The threshold adjustment, due before 3.1 with the numbers above atta
             the obligation moves to 2.12 where a person is already reading a screen.
             The source-scan assertions nothing exercises, raised at 2.11 and due at 3.1.
             Step 6 of the move procedure, due at the move.
+
+## 2.11 — 2026-08-26 — phase-2-detection — correction: two obligations that were never in the table
+
+Corrects:   the 1.3 entry above, and the 1.1 entry through it.
+
+Findings:   Finding. **Two carried obligations were recorded in a progress entry and never written
+            into `BUILD_PLAN.md`'s table, and one of them fell due at a checkpoint that has since
+            landed.** Observation: the 1.3 entry carries "whether a night screened over five sessions
+            should instead write nothing", due at 2.11, and "the daily call budget counts against the
+            UTC date, and the vendor's own reset boundary is still assumed rather than confirmed",
+            raised at 1.1 and carrying no due point at all. Neither appears in the obligations table.
+            Every later entry that lists what is outstanding lists the table's rows, so both dropped
+            out of the record's own summary from 1.4 onward, and 2.11 landed without addressing the
+            one that fell due there.
+
+            Reading. `CLAUDE.md` already says a carried obligation is recorded in `BUILD_PLAN.md`
+            when it is created rather than remembered. The rule was written and nothing reads it, so
+            two obligations were remembered and then forgotten, which is the failure the rule names
+            happening to the rule itself. This is the same shape as the malformed obligation row at
+            2.1 with the mechanism removed rather than broken: there, a row existed and the parser
+            dropped it; here, no row was ever written and nothing looks for one.
+
+            Reading, on why no check was added for it here. Matching a prose obligation in an entry
+            against a prose row in a table is fuzzy, and a guard that raises false alarms is a
+            suppressed guard, which is a dead one arrived at slowly. What would work is the other
+            direction, a fixed form for the sentence that records an obligation, and choosing one at
+            the door of a sign-off widens the phase for a decision that is not urgent. Both rows are
+            in the table now and the question of a mechanism goes to 2.12.
+
+Decided:    The five-session obligation is **answered on its merits and scheduled for the part that
+            needs code.** The count distribution informs it as the 1.3 entry expected: a night flags
+            a median of 44 long names and 13 short out of 2,016, and membership drifts by a handful a
+            month, so a five-session-old membership misstates a night by far less than skipping the
+            night removes from it. Phase 3 measures forward returns over a series of nights and a
+            missing night is a sample nothing recovers. So the behaviour stands: carry the last
+            complete screen's membership. What is owed is that the snapshot say it was carried and
+            over how many sessions, so nothing downstream reads a carried night as a freshly screened
+            one, and that needs a column. Due at 3.1.
+
+Carried:    The two rows above, now in the table. Everything else unchanged from the entry above.
