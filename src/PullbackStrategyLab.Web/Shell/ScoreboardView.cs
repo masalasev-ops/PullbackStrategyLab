@@ -36,7 +36,8 @@ public sealed record PanelView(
     string? High,
     int Rows,
     int? Effective,
-    string Population)
+    string Population,
+    int? Minimum)
 {
     /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
     public string Title => Name switch
@@ -105,13 +106,46 @@ public sealed record PanelView(
     public string Over => $"over {Population}";
 
     /// <summary>
-    /// The count, said so the two numbers cannot be confused.
+    /// The count, said so the three numbers cannot be confused.
     ///
     /// The effective count is shown beside the row count wherever it exists, because they are
-    /// different quantities: ten-day labels overlap and same-night setups share a market factor, so
-    /// the information in a thousand rows is worth fewer than a thousand observations.
+    /// different quantities: ten-day labels overlap, so the information in a thousand rows is worth
+    /// fewer than a thousand observations. Where a minimum exists it is shown beside both, because
+    /// the panel is what a checkpoint fires on and a target nobody can see is a date in disguise.
+    ///
+    /// <b>All three from the first night, not once there is enough to say something.</b> The figure
+    /// is withheld until an interval means anything; the counts are not, because a number climbing
+    /// from nothing tells a reader how far off the answer is and whether the overlap is costing
+    /// forty percent or eighty-five. A calendar could say neither.
+    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
     /// </summary>
-    public string Count => Effective is int effective
-        ? $"n {Rows.ToString("N0", CultureInfo.InvariantCulture)} rows, {effective.ToString("N0", CultureInfo.InvariantCulture)} effective"
-        : $"n {Rows.ToString("N0", CultureInfo.InvariantCulture)}";
+    public string Count
+    {
+        get
+        {
+            string rows = Rows.ToString("N0", CultureInfo.InvariantCulture);
+
+            if (Effective is not int effective)
+            {
+                return $"n {rows}";
+            }
+
+            string counted =
+                $"n {rows} rows, {effective.ToString("N0", CultureInfo.InvariantCulture)} effective";
+
+            return Minimum is int minimum
+                ? $"{counted} of {minimum.ToString("N0", CultureInfo.InvariantCulture)} needed"
+                : counted;
+        }
+    }
+
+    /// <summary>
+    /// Whether the effective count has reached the minimum, which is what 3.6 fires on.
+    ///
+    /// Null where the panel carries no minimum, and null is not false: "this panel answers no
+    /// question a checkpoint waits on" and "it waits and has not arrived" are different sentences.
+    /// </summary>
+    public bool? Reached => Minimum is int minimum && Effective is int effective
+        ? effective >= minimum
+        : null;
 }

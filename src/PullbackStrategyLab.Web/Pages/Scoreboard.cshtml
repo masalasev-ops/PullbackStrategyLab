@@ -97,6 +97,21 @@ else
                                     <span class="over">@panel.Over</span>
                                 }
 
+                                @*
+                                    The trigger, on the panel it fires on. 3.6 used to wait
+                                    three months; it now waits for the effective count to
+                                    reach the minimum, and a trigger nobody can see from the
+                                    first night is a date in disguise.
+                                *@
+                                @if (panel.Reached is bool reached)
+                                {
+                                    <span class="minimum @(reached ? "reached" : "waiting")">
+                                        @(reached
+                                            ? "the minimum sample is reached and this panel may be read"
+                                            : "below the minimum sample, so this panel is not yet an answer")
+                                    </span>
+                                }
+
                                 @if (panel.ReadsBadlyWhen is string warns)
                                 {
                                     <span class="warns">@warns</span>

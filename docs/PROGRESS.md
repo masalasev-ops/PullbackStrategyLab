@@ -4211,3 +4211,76 @@ Carried:    **Mostly discharged, and what is left is a ratification and only a r
             the same terms as the other four rows there: it is a ruling rather than work, and a due
             point that moves to the next checkpoint at every sign-off is permanent while reading as
             pending.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the decision point stops waiting for a date
+
+Not a checkpoint. 3.6's trigger, rewritten from a calendar to a measured sample, and the two
+instrument changes that make the sample mean what it says.
+
+Findings:   **The three months was an estimate and had read as a derivation since the day it was
+            written.** It rested on about twelve setups a night. Band 1 as built fills at about
+            eighty-two, and it is a paired comparison against same-night matched controls, so the
+            market factor that dominates cross-sectional correlation cancels rather than needing to
+            be waited out. What remains to discount is the ten-day label overlap across nights, and
+            how much that costs is a property of the realised series that no estimate could have
+            known in advance. Prior text of all three statements is in `CHANGELOG.md`, and the
+            elapsed-time section now says outright that none of its figures is a trigger, so the
+            calendar is not restored from there later.
+
+            **And the instrument would not have supported the trigger.** `EffectiveObservations`
+            capped its answer at the night count, so eighty flagged setups on one night were worth
+            one observation between them. That is the correct reading of an **unpaired** figure and
+            the wrong one here: the market factor is exactly what makes forty names worth one, and
+            the paired difference removes it by construction. Counting the night as one threw away
+            what the control draw was built to buy, and against a minimum of 196 it would have made
+            three months of accumulation look like sixty observations when it was nearer six
+            thousand. **3.6 would have fired on a number that could not arrive.**
+
+Built:      **`EffectiveObservations` starts from rows and applies two measured discounts.** The
+            label overlap across nights, as the variance-inflation form over the lag-one
+            autocorrelation, capped at one because a negative correlation is noise rather than
+            evidence. And whatever common movement the matching failed to remove, as the ordinary
+            design effect: the realised variance of the nightly means over the variance they would
+            have if a night's pairs were independent, floored at one.
+
+            **The old behaviour is now the limiting case rather than the assumption.** A night that
+            cannot say how its own pairs dispersed counts as one, and a night whose pairs all move
+            together has a design effect of about its own pair count and collapses back to one. An
+            unknown is read the safe way, and the pessimistic corner is reached by arithmetic rather
+            than asserted.
+
+            `PairedInterval.Night` carries the within-night dispersion, computed in `Series` from
+            the sample form so a night of one pair disperses by nought rather than by a number taken
+            from itself.
+
+            **Migration 022, `scoreboard.n_minimum`**, carried through the read surface, the view and
+            the page. Band 1 shows three numbers on every panel every night: `n 3,180 rows, 412
+            effective of 196 needed`, with a line saying whether the panel may be read yet. Set on
+            band 1 alone, because a minimum on every panel would read as a threshold each of them is
+            being held to.
+
+            **The counts are reported from the first night, including on a withheld panel.** The
+            figure is withheld because it would be read; the counts are the thing a reader is
+            supposed to watch. They are meaningless for the first fortnight, which a number climbing
+            from nothing says better than a date does, and it is the only way to see whether the
+            overlap is costing forty percent or eighty-five.
+
+Verified:   Two authored series the fixture could not otherwise produce, both `DERIVED` against
+            `tools/derive-indicators.py --interval`, which was rewritten to the same two discounts
+            independently. `many-names-a-night-moving-apart`: 40 nights of 80 pairs whose nightly
+            means vary by exactly what independence predicts, **3,200 rows and 3,200 effective**.
+            `many-names-a-night-moving-together`: the same rows with nightly means three times wider
+            than independence allows, **3,200 rows and 345 effective**, the row count divided by a
+            design effect of about nine. The existing four scenarios are one pair a night and their
+            values are unchanged, which is the fallback asserting itself.
+
+            **Two new surface claims, both proved by removal.** With the minimum dropped from the
+            count string, `surface-claims` fails naming the claim and quoting the sentence it makes
+            false; with the below-minimum wording dropped, the same. Restored. This is the sixth
+            defect shape's own territory: a trigger that exists in the store and not on the page is
+            a trigger nobody fires on.
+
+            `tools/ci.ps1` green on Windows, 26 steps, **387 tests**, up from 382.
+
+Carried:    None new. The two judgement inputs behind the minimum stay at the operator, where the
+            entry above put them.

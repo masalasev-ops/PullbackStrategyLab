@@ -232,6 +232,11 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     /// The two populations matter nearly as much. Both appear here, because a page rendering only
     /// one of them would carry the string the population claim looks for while still being unable to
     /// tell a reader that the panel below it counted something else.
+    ///
+    /// And both sides of the minimum appear, one panel below it and one above. A page rendering only
+    /// the reached case would carry the words a claim about the trigger looks for while being unable
+    /// to tell a reader that the panel beside it is not an answer yet, which is the state the panel
+    /// will be in for every night of the wait.
     /// </summary>
     private const string Panels = """
         {
@@ -239,17 +244,20 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
           "health": [
             { "name": "band0.nightsRecorded", "direction": null, "figure": "214",
               "low": null, "high": null, "rows": 214, "effective": null,
-              "population": "every flagged setup" }
+              "population": "every flagged setup", "minimum": null }
           ],
           "long": [
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
               "low": "-0.0030", "high": "0.0250", "rows": 3180, "effective": 412,
-              "population": "every flagged setup" }
+              "population": "every flagged setup", "minimum": 196 },
+            { "name": "band1.vsLoose", "direction": "long", "figure": "withheld",
+              "low": null, "high": null, "rows": 240, "effective": 31,
+              "population": "every flagged setup", "minimum": 196 }
           ],
           "short": [
             { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
               "low": null, "high": null, "rows": 1120, "effective": null,
-              "population": "capped candidates only" }
+              "population": "capped candidates only", "minimum": null }
           ]
         }
         """;

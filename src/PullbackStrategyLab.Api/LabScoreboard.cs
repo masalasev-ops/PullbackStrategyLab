@@ -41,7 +41,7 @@ public static class LabScoreboard
         // nothing would read as "the lab has measured nothing" instead of "no panels were built
         // today".
         command.CommandText = """
-            SELECT panel, direction, figure, low, high, n_rows, n_effective, population
+            SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum
               FROM scoreboard
              WHERE as_of = (SELECT MAX(as_of) FROM scoreboard WHERE as_of <= @as_of)
              ORDER BY panel, direction
@@ -60,7 +60,8 @@ public static class LabScoreboard
                 reader.IsDBNull(4) ? null : reader.GetString(4),
                 reader.GetInt32(5),
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                reader.IsDBNull(7) ? "population not recorded" : reader.GetString(7));
+                reader.IsDBNull(7) ? "population not recorded" : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetInt32(8));
 
             if (panel.Direction is null)
             {
@@ -98,8 +99,11 @@ public sealed record ScoreboardResponse(
 }
 
 /// <summary>
-/// One panel. <c>Effective</c> is null where the panel carries no interval, and is a different
-/// number from <c>Rows</c> where it does.
+/// One panel. <c>Effective</c> is a different number from <c>Rows</c>, and is reported from the
+/// first night rather than only once an interval exists: it is the number a checkpoint fires on, so
+/// watching it climb is the point.
+///
+/// <c>Minimum</c> is what it has to reach, and is null on every panel no checkpoint fires on.
 /// </summary>
 public sealed record PanelResponse(
     string Name,
@@ -109,4 +113,5 @@ public sealed record PanelResponse(
     string? High,
     int Rows,
     int? Effective,
-    string Population);
+    string Population,
+    int? Minimum);

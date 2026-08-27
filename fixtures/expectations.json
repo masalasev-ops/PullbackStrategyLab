@@ -5865,6 +5865,14 @@
       "note": "A series where each night carries most of the night before it. The effective sample should fall well below the night count, because nights that repeat each other carry one observation between them however many there are. Without a case of this shape the effective-sample measurement always returns the night count and looks correct. AUTHORED input: mean 0.01, wobble +/-0.02, AR(1) with rho 0.85 so each night carries most of the one before, seed 3, 40 nights."
     },
     {
+      "id": "interval.a-series-that-repeats-itself.rows",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "A series where each night carries most of the night before it. The effective sample should fall well below the night count, because nights that repeat each other carry one observation between them however many there are. Without a case of this shape the effective-sample measurement always returns the night count and looks correct. AUTHORED input: mean 0.01, wobble +/-0.02, AR(1) with rho 0.85 so each night carries most of the one before, seed 3, 40 nights."
+    },
+    {
       "id": "interval.clearly-above-zero.clearsZero",
       "tier": "DERIVED",
       "value": "yes",
@@ -5913,6 +5921,126 @@
       "note": "A series wobbling tightly around a positive mean. The lower bound should clear zero, which is what band 1 reads green on. AUTHORED input: mean 0.02, wobble +/-0.004, independent nights, seed 1, 40 nights."
     },
     {
+      "id": "interval.clearly-above-zero.rows",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "A series wobbling tightly around a positive mean. The lower bound should clear zero, which is what band 1 reads green on. AUTHORED input: mean 0.02, wobble +/-0.004, independent nights, seed 1, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.clearsZero",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.effective",
+      "tier": "DERIVED",
+      "value": "3200",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.high",
+      "tier": "DERIVED",
+      "value": "0.0076",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.low",
+      "tier": "DERIVED",
+      "value": "0.0052",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.mean",
+      "tier": "DERIVED",
+      "value": "0.0066",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.nights",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-apart.rows",
+      "tier": "DERIVED",
+      "value": "3200",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "Eighty pairs a night whose nightly means vary by exactly what within-night independence predicts. The pairing has removed the market factor, so the night is worth its own pairs and the effective sample should be close to the row count rather than to the night count. Without a case of this shape the row count is never credited and the measurement collapses to the pessimistic corner on every series. AUTHORED input: mean 0.004, uniform wobble +/-0.0193649 being exactly within/sqrt(pairs) rescaled for a uniform, 80 pairs a night at a within-night dispersion of 0.1, seed 5, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.clearsZero",
+      "tier": "DERIVED",
+      "value": "yes",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.effective",
+      "tier": "DERIVED",
+      "value": "345",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.high",
+      "tier": "DERIVED",
+      "value": "0.0129",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.low",
+      "tier": "DERIVED",
+      "value": "0.0046",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.mean",
+      "tier": "DERIVED",
+      "value": "0.0094",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.nights",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
+      "id": "interval.many-names-a-night-moving-together.rows",
+      "tier": "DERIVED",
+      "value": "3200",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "The same eighty pairs a night, but the nightly means vary three times wider than independence allows. The excess is common movement the matching failed to remove, so the row count is divided by about nine and the series falls back toward one observation a night. This is the case that stops the row count being a free credit: a night whose pairs all say the same thing is worth one of them. AUTHORED input: mean 0.004, uniform wobble +/-0.0580948 being three times what independence allows, 80 pairs a night at a within-night dispersion of 0.1, seed 6, 40 nights."
+    },
+    {
       "id": "interval.straddling-zero.clearsZero",
       "tier": "DERIVED",
       "value": "no",
@@ -5954,6 +6082,14 @@
     },
     {
       "id": "interval.straddling-zero.nights",
+      "tier": "DERIVED",
+      "value": "40",
+      "checkpoint": "3.5",
+      "producedBy": "an independent restatement of the block bootstrap and the variance-inflation form, computed outside the solution by tools/derive-indicators.py --interval",
+      "note": "A series whose mean is barely positive against a wobble ten times its size. The interval should straddle zero and the panel should read that it does not clear it yet. This is the case a too-narrow interval gets wrong, and getting it wrong is how band 1 says the pattern is real before it is. AUTHORED input: mean 0.001, wobble +/-0.02, independent nights, seed 2, 40 nights."
+    },
+    {
+      "id": "interval.straddling-zero.rows",
       "tier": "DERIVED",
       "value": "40",
       "checkpoint": "3.5",

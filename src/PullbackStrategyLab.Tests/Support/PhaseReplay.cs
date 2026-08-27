@@ -1023,6 +1023,8 @@ public sealed class PhaseReplay : IDisposable
             figures.Add(new Measurement(
                 $"{id}.nights", estimate.Nights.ToString(CultureInfo.InvariantCulture)));
             figures.Add(new Measurement(
+                $"{id}.rows", estimate.Rows.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
                 $"{id}.effective", estimate.EffectiveObservations.ToString(CultureInfo.InvariantCulture)));
         }
 

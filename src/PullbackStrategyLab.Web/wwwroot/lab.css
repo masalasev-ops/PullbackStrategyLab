@@ -320,3 +320,20 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
     color: var(--ink3);
     font-variant-numeric: tabular-nums;
 }
+
+/*
+    Whether the panel has enough evidence to be read yet. On band 1 alone, because band 1 is the
+    panel the decision point fires on, and a trigger a reader cannot see is a date in disguise.
+*/
+.panel .minimum {
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.panel .minimum.reached {
+    color: var(--good, #1a7f37);
+}
+
+.panel .minimum.waiting {
+    color: var(--ink3);
+}

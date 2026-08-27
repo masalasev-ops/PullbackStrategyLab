@@ -2112,10 +2112,19 @@ def interval_main(argv):
     replacement, block offsets mixed by two coprime strides so the resampling is reproducible
     without a seed. The percentile bounds are the 2.5th and 97.5th of the resampled means.
 
-    The effective sample is the variance-inflation form over the lag-one autocorrelation:
-    n * (1 - rho) / (1 + rho). It equals the night count when the nights are independent and falls
-    away as the series repeats itself, which is exactly the information an interval assuming
-    independence throws away.
+    The effective sample starts from rows rather than nights, because the paired difference has
+    already removed the market factor the names in a night would otherwise share. Two discounts are
+    then applied, both measured from the series:
+
+      * the label overlap across nights, as the variance-inflation form over the lag-one
+        autocorrelation of the nightly means, (1 - rho) / (1 + rho), capped at one;
+      * whatever common movement the pairing failed to remove, as the ordinary design effect: the
+        realised variance of the nightly means over the variance they would have if each night's
+        pairs were independent, being within^2 / pairs, floored at one.
+
+    Where no night carries more than one pair, or no night's pairs disperse at all, nothing in the
+    series says anything about clustering and a night counts as one observation. That is the
+    pessimistic corner rather than the assumption, and it is what the first four scenarios exercise.
 
     The trap this restatement exists to catch: walking the block offsets in order rather than mixing
     them makes every resample the same series rotated, a rotation preserves the mean, and the
@@ -2149,6 +2158,9 @@ def interval_main(argv):
             continue
 
         count = len(nights)
+        pairs = int(scenario.get("pairsPerNight", 1))
+        within = Decimal(str(scenario.get("withinNightDispersion", 0)))
+        rows = count * pairs
         blocks = count // block
 
         means = []
@@ -2175,8 +2187,20 @@ def interval_main(argv):
             effective = 1
         else:
             rho = covariance / variance
-            inflated = Decimal(count) if rho <= -1 else Decimal(count) * (1 - rho) / (1 + rho)
-            effective = max(1, min(count, int(inflated.quantize(Decimal("1"), rounding=ROUND_HALF_UP))))
+            serial = Decimal(1) if rho <= -1 else (1 - rho) / (1 + rho)
+            serial = min(Decimal(1), max(Decimal(0), serial))
+
+            if pairs < 2 or within <= 0:
+                # Nothing in the series says how a night's own pairs dispersed, so a night counts
+                # as one observation however many it holds.
+                scaled = Decimal(count) * serial
+            else:
+                observed = variance / (count - 1)
+                expected = within * within / pairs
+                design = max(Decimal(1), observed / expected)
+                scaled = Decimal(rows) / design * serial
+
+            effective = max(1, min(rows, int(scaled.quantize(Decimal("1"), rounding=ROUND_HALF_UP))))
 
         print()
         print("  %s.%-12s %s" % (key, "mean", q(mean)))
@@ -2184,6 +2208,7 @@ def interval_main(argv):
         print("  %s.%-12s %s" % (key, "high", q(high)))
         print("  %s.%-12s %s" % (key, "clearsZero", "yes" if low > 0 else "no"))
         print("  %s.%-12s %d" % (key, "nights", count))
+        print("  %s.%-12s %d" % (key, "rows", rows))
         print("  %s.%-12s %d" % (key, "effective", effective))
 
     return 0

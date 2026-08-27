@@ -32,8 +32,16 @@ namespace PullbackStrategyLab.Core.Measurement;
 /// </summary>
 public static class PairedInterval
 {
-    /// <summary>One night's mean paired difference, and how many pairs it was taken over.</summary>
-    public sealed record Night(DateOnly Date, decimal MeanDifference, int Pairs);
+    /// <summary>
+    /// One night's mean paired difference, how many pairs it was taken over, and how far apart those
+    /// pairs were.
+    ///
+    /// <b>The third figure is what lets a night count as more than one observation.</b> Without it
+    /// there is no way to tell a night whose eighty setups each said something from a night whose
+    /// eighty setups all said the same thing, and the only safe reading of an unknown is the second.
+    /// </summary>
+    public sealed record Night(
+        DateOnly Date, decimal MeanDifference, int Pairs, decimal WithinNightDispersion);
 
     /// <summary>
     /// The interval, the point estimate, and both counts.
@@ -118,58 +126,134 @@ public static class PairedInterval
     /// How many independent observations the series is really worth, measured from the series
     /// rather than assumed.
     ///
-    /// <b>The ratio is a property of the realised autocorrelation, not of the design.</b> A series
-    /// whose nights are independent is worth its own length; one whose nights repeat themselves is
-    /// worth far less, and the difference is exactly what an interval assuming independence throws
-    /// away. Computed from the lag-one autocorrelation through the standard variance-inflation
-    /// form, floored at one because a negative correlation does not buy extra observations that a
-    /// reader should spend.
+    /// <b>It starts from rows and not from nights, and that is what the pairing bought.</b> Forty
+    /// names flagged on one night share a market factor, which is why an unpaired figure over them
+    /// is worth about one observation however many names it has. The paired difference removes that
+    /// factor by construction, so what is left inside a night is each name's own move against its own
+    /// controls, and those are close to independent of each other. Counting a night as one
+    /// observation would throw away exactly the thing the control draw was built to buy.
     ///
-    /// <b>Any minimum sample stated against this is counted here, not in rows.</b> A pre-registered
-    /// target reading "160 observations" is satisfiable by 160 rows carrying far less than 160
-    /// observations' worth of information, and nothing on the surface says so.
+    /// <b>Two discounts are then applied, both measured.</b>
+    ///
+    /// The first is the label overlap across nights. A ten-session horizon means adjacent nights
+    /// share most of their window, so the nightly means repeat each other; the lag-one
+    /// autocorrelation through the standard variance-inflation form is what carries that, capped at
+    /// one because a negative correlation does not buy extra observations a reader should spend.
+    ///
+    /// The second is whatever common movement the pairing failed to remove. If a night's pairs were
+    /// really independent, the variance of that night's mean would be the within-night variance over
+    /// the pair count; where the nightly means vary more than that, the excess is clustering the
+    /// matching left behind, and the row count is divided by it. This is the ordinary design effect,
+    /// and it makes the pessimistic reading the limiting case rather than the assumption: a night
+    /// whose pairs all move together has a design effect of about its own pair count, and the whole
+    /// series collapses back to one observation per night.
+    ///
+    /// <b>Where a night cannot say how its own pairs dispersed, it counts as one.</b> An unknown is
+    /// read the safe way rather than the flattering one.
+    ///
+    /// <b>Any minimum sample stated against this is counted here, not in rows.</b> A target reading
+    /// "196 observations" is satisfiable by 196 rows carrying far less than 196 observations' worth
+    /// of information, and nothing on the surface would say so.
+    /// see: The minimum sample is derived from a measured dispersion and counted in effective observations
     /// </summary>
     public static int EffectiveObservations(IReadOnlyList<Night> series)
     {
         ArgumentNullException.ThrowIfNull(series);
 
-        if (series.Count < 3)
+        int nights = series.Count;
+        int rows = series.Sum(n => n.Pairs);
+
+        if (nights < 3)
         {
-            return series.Count;
+            // Too short for either discount to be measurable. A night counts as one, which is the
+            // reading that cannot overstate. It is meaningless for the first fortnight and says so
+            // by climbing from nothing rather than by being withheld.
+            return Math.Min(rows, nights);
         }
 
         decimal mean = series.Average(n => n.MeanDifference);
-        decimal variance = 0m;
-        decimal covariance = 0m;
+        decimal sumSquares = 0m;
+        decimal sumProducts = 0m;
 
-        for (int i = 0; i < series.Count; i++)
+        for (int i = 0; i < nights; i++)
         {
             decimal centred = series[i].MeanDifference - mean;
-            variance += centred * centred;
+            sumSquares += centred * centred;
 
             if (i > 0)
             {
-                covariance += centred * (series[i - 1].MeanDifference - mean);
+                sumProducts += centred * (series[i - 1].MeanDifference - mean);
             }
         }
 
-        if (variance == 0m)
+        if (sumSquares == 0m)
         {
             // Every night identical. There is one observation here however many nights there are,
             // and saying so is the honest answer rather than the flattering one.
             return 1;
         }
 
-        decimal rho = covariance / variance;
+        decimal rho = sumProducts / sumSquares;
 
-        // The variance-inflation form: n_effective = n * (1 - rho) / (1 + rho). At rho of nought it
-        // is n, and it falls away as the series repeats itself.
-        decimal inflated = rho <= -1m
-            ? series.Count
-            : series.Count * (1m - rho) / (1m + rho);
+        // n_effective scales by (1 - rho) / (1 + rho). At rho of nought it is unchanged, and it
+        // falls away as the series repeats itself. Capped at one: a negative correlation is noise in
+        // the estimate, not extra evidence.
+        decimal serial = rho <= -1m ? 1m : (1m - rho) / (1m + rho);
+        serial = Math.Clamp(serial, 0m, 1m);
 
-        return Math.Max(1, Math.Min(series.Count, (int)Math.Round(inflated, MidpointRounding.AwayFromZero)));
+        if (DesignEffect(series, sumSquares / (nights - 1)) is not decimal design || design <= 0m)
+        {
+            return Clamp(nights * serial, rows);
+        }
+
+        return Clamp(rows / design * serial, rows);
     }
+
+    /// <summary>
+    /// How much of the row count the within-night clustering costs, or null where nothing in the
+    /// series can say.
+    ///
+    /// Compares the realised variance of the nightly means against the variance they would have if
+    /// each night's pairs were independent of each other. Floored at one, because a series varying
+    /// less than independence predicts has not found extra evidence, it has found noise in its own
+    /// estimate.
+    /// </summary>
+    private static decimal? DesignEffect(IReadOnlyList<Night> series, decimal observedVariance)
+    {
+        decimal weighted = 0m;
+        int degreesOfFreedom = 0;
+
+        foreach (Night night in series)
+        {
+            if (night.Pairs < 2)
+            {
+                continue;
+            }
+
+            degreesOfFreedom += night.Pairs - 1;
+            weighted += (night.Pairs - 1) * night.WithinNightDispersion * night.WithinNightDispersion;
+        }
+
+        if (degreesOfFreedom == 0 || weighted <= 0m)
+        {
+            // Either every night carries one pair, or no night's pairs disperse at all. Neither says
+            // anything about clustering, so nothing is claimed and a night counts as one.
+            return null;
+        }
+
+        decimal within = weighted / degreesOfFreedom;
+        decimal expected = series.Average(n => within / n.Pairs);
+
+        if (expected <= 0m)
+        {
+            return null;
+        }
+
+        return Math.Max(1m, observedVariance / expected);
+    }
+
+    private static int Clamp(decimal value, int rows) =>
+        Math.Max(1, Math.Min(rows, (int)Math.Round(value, MidpointRounding.AwayFromZero)));
 
     private static decimal Percentile(IReadOnlyList<decimal> sorted, decimal fraction)
     {

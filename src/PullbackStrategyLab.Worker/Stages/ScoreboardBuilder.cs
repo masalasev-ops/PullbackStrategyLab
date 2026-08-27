@@ -175,9 +175,18 @@ public sealed class ScoreboardBuilder
             {
                 // Withheld rather than printed wide. A panel showing an interval built from three
                 // nights invites a reading, and the count beside it is not enough to stop that.
+                //
+                // <b>The counts are reported anyway, and from the first night.</b> The figure is
+                // withheld because it would be read; the counts are the thing a reader is supposed
+                // to watch, because 3.6 fires on the effective one. They are meaningless for the
+                // first fortnight, which a number climbing from nothing says better than a date on a
+                // calendar does.
                 panels.Add(new Panel(
                     $"band1.vs{Capitalise(set)}", direction, "withheld", null, null,
-                    series.Sum(n => n.Pairs), null, Flagged));
+                    series.Sum(n => n.Pairs),
+                    PairedInterval.EffectiveObservations(series),
+                    Flagged,
+                    MeasurementParameters.MinimumEffectiveObservations));
                 continue;
             }
 
@@ -189,7 +198,8 @@ public sealed class ScoreboardBuilder
                 PairedInterval.Figure(estimate.High),
                 estimate.Rows,
                 estimate.EffectiveObservations,
-                Flagged));
+                Flagged,
+                MeasurementParameters.MinimumEffectiveObservations));
         }
 
         return panels;
@@ -306,7 +316,9 @@ public sealed class ScoreboardBuilder
         command.CommandText = """
             SELECT s.as_of,
                    AVG(sf.return_signed_num - cf.control_mean) AS difference,
-                   COUNT(*) AS pairs
+                   COUNT(*) AS pairs,
+                   AVG((sf.return_signed_num - cf.control_mean)
+                     * (sf.return_signed_num - cf.control_mean)) AS mean_square
               FROM setup s
               JOIN (SELECT subject_id, CAST(return_signed AS REAL) AS return_signed_num
                       FROM forward_return
@@ -335,10 +347,23 @@ public sealed class ScoreboardBuilder
 
         while (reader.Read())
         {
+            double difference = reader.GetDouble(1);
+            int pairs = reader.GetInt32(2);
+
+            // How far this night's own pairs sat apart, which is what lets the night count as more
+            // than one observation. The sample form, so a night of one pair disperses by nought
+            // rather than by a number computed from itself.
+            double spread = pairs < 2
+                ? 0d
+                : Math.Sqrt(Math.Max(
+                    0d,
+                    (reader.GetDouble(3) - (difference * difference)) * pairs / (pairs - 1)));
+
             nights.Add(new PairedInterval.Night(
                 StoreText.StorageTextToDate(reader.GetString(0)),
-                (decimal)reader.GetDouble(1),
-                reader.GetInt32(2)));
+                (decimal)difference,
+                pairs,
+                (decimal)spread));
         }
 
         return nights;
@@ -369,8 +394,10 @@ public sealed class ScoreboardBuilder
 
         command.CommandText = """
             INSERT INTO scoreboard
-                (as_of, panel, direction, figure, low, high, n_rows, n_effective, population, computed_at)
-            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective, @population, @computed_at)
+                (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
+                 n_minimum, computed_at)
+            VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
+                    @population, @n_minimum, @computed_at)
             ON CONFLICT (as_of, panel, direction) DO NOTHING
             """;
 
@@ -383,6 +410,7 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue("@n_rows", panel.Rows);
         command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
         command.Parameters.AddWithValue("@population", panel.Population);
+        command.Parameters.AddWithValue("@n_minimum", (object?)panel.Minimum ?? DBNull.Value);
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
 
         command.ExecuteNonQuery();
@@ -392,10 +420,13 @@ public sealed class ScoreboardBuilder
     /// One panel. <c>Population</c> is which rows the figure was computed over, and it is not
     /// optional: two panels on this page use different populations and a figure that cannot say
     /// which is a figure a reader will compare with the wrong one.
+    ///
+    /// <c>Minimum</c> is what the effective count has to reach before the panel's question may be
+    /// answered, and it is set on band 1 alone because band 1 is the panel a checkpoint fires on.
     /// </summary>
     private sealed record Panel(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
-        int? Effective, string Population);
+        int? Effective, string Population, int? Minimum = null);
 }
 
 /// <summary>What one day's build produced.</summary>

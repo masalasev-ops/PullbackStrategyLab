@@ -70,17 +70,23 @@ Nothing here depends on any open question. Start immediately.
 | 3.3 | ControlSampler: loose and tight control sets per flagged setup | Controls drawn from names that cleared the liquidity floor and were not flagged. Match quality recorded |
 | 3.4 | CeilingCalculator | Bound computed from the actual outcome distribution, recomputed weekly |
 | 3.5 | ScoreboardBuilder and the Lab scoreboard page, bands 0, 1 and 2 | **Openable.** Flagged against both control sets with confidence intervals, rank-decile curve, ceiling gap |
-| 3.6 | **The decision point** | Three months of accumulation, then read the scoreboard and decide whether to continue |
+| 3.6 | **The decision point** | Band 1's effective sample reaches the pre-registered minimum on the tight control set, both directions counted separately, then read the scoreboard and decide whether to continue. The effective count is computed from the realised paired-difference series and shown beside the raw count and the minimum on every band 1 panel, every night, so the approach is watched rather than waited out (see: The minimum sample is derived from a measured dispersion and counted in effective observations) |
 | 3.7 | Phase sign-off | Fresh session, and `tools/verify-phase` green with nothing unexamined |
 
 **What has to happen before 3.6, in order, because none of it is code.** Written here rather than left in a conversation, since the sequence is the answer to "what is blocking phase 3" and every step of it waits on something a build session cannot do.
 
 1. **Schedule the nightly job.** Scheduling lives outside the application, so no checkpoint starts the clock. Until this happens the elapsed time in step 2 has not begun, and it is the only step whose absence stops everything.
-2. **Wait.** Three months, against the branch the phase lives on, because a phase branch does not merge until the phase signs off. Band 1 fills from about eighty-two flagged setups a night, so it has a series within weeks; band 2's decile curve fills from candidates and at the calibrated thresholds it will stay near empty, which is a finding rather than a fault.
-3. **3.6**, which is a person reading the scoreboard and deciding.
+2. **Accumulate, against the branch the phase lives on**, because a phase branch does not merge until the phase signs off. Band 1 fills from about eighty-two flagged setups a night, so it has a series within weeks; band 2's decile curve fills from candidates and at the calibrated thresholds it will stay near empty, which is a finding rather than a fault.
+3. **3.6**, which is a person reading the scoreboard and deciding, once band 1 says there is enough evidence to read.
 4. **3.7**, a fresh session.
 
 Steps 1 and 3 are the operator's, and step 4 needs only a session that has not committed code.
+
+**Step 2 used to say "three months" and no longer does, and the reason is worth keeping.** That figure was written before anything was measured and read as a derived quantity ever since. It was not: it rested on about twelve setups a night, band 1 as built fills at about eighty-two, and it is a paired comparison against same-night matched controls, so the market factor that dominates cross-sectional correlation cancels rather than needing to be waited out. What remains to discount is the ten-day label overlap across nights, and how much that costs is a property of the realised series that no estimate could have known in advance.
+
+**So the trigger is a sample and the sample is visible from the first night.** Band 1 shows its raw count, its effective count and the minimum, on every panel, every night. It will be meaningless for the first fortnight and that is fine: a number climbing from nothing is more informative than a date on a calendar, and it is the only way to see whether the overlap is costing forty percent or eighty-five. **A trigger a reader cannot see is a date in disguise**, which is why the three numbers are a done condition on the panel rather than a figure in the store.
+
+**A calendar is not restored here later.** If the effective count climbs slowly the answer is that the evidence is thin, which is a finding about the strategy rather than a reason to read the scoreboard anyway on a date. If it climbs fast the decision arrives early, which was always the point of measuring instead of estimating.
 
 **The threshold ruling is not on this path and that is deliberate.** It was, while it was unclear which population band 1 measured. `ARCHITECTURE.html` settles that: its worked night is twenty-two flagged, fourteen passing every check, and all twenty-two followed up, so the evidence population is the flagged one and band 1 fills whatever the thresholds do. What the thresholds decide is whether anything is ever *traded*, which band 2 reports and phase 4 acts on. So accumulation is worth starting now, and the ruling can be taken against three months of real outcomes rather than against a reconstruction.
 
@@ -164,4 +170,6 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 
 ## Elapsed time
 
-Roughly 35 to 45 coding sessions. The calendar is set by accumulation, not by code: phase 3 needs about three months of running before phase 5 has anything to score, and phase 5 needs a few months more before proposals settle. Expect the loop to close once around month seven.
+Roughly 35 to 45 coding sessions. The calendar is set by accumulation, not by code: phase 3 runs until band 1 has the evidence to be read, phase 5 needs a few months more before proposals settle, and the loop probably closes once somewhere around month seven.
+
+**Every figure in that sentence is an estimate and none of them is a trigger.** They are here to say roughly how long this takes, which is a fair thing for a plan to guess at. **3.6 fires on a measured sample and nothing else**, and the three months that used to sit in this paragraph is exactly the kind of estimate that got read as a derivation once already.

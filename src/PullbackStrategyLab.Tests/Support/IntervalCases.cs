@@ -23,8 +23,20 @@ public static class IntervalCases
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>One series, with the recipe it was built from and why it is worth having.</summary>
-    public sealed record Scenario(string Name, string Why, string Recipe, IReadOnlyList<decimal> NightlyMeans);
+    /// <summary>
+    /// One series, with the recipe it was built from and why it is worth having.
+    ///
+    /// <c>PairsPerNight</c> and <c>WithinNightDispersion</c> are what let a night count as more than
+    /// one observation. A file holding only the means could exercise nothing but the corner where a
+    /// night cannot say how its own pairs dispersed and therefore counts as one.
+    /// </summary>
+    public sealed record Scenario(
+        string Name,
+        string Why,
+        string Recipe,
+        int PairsPerNight,
+        decimal WithinNightDispersion,
+        IReadOnlyList<decimal> NightlyMeans);
 
     private sealed record CaseFile(string Tier, IReadOnlyList<Scenario> Scenarios);
 
@@ -52,8 +64,8 @@ public static class IntervalCases
 
         return
         [
-            .. scenario.NightlyMeans.Select((mean, i) =>
-                new PairedInterval.Night(start.AddDays(i), mean, 1)),
+            .. scenario.NightlyMeans.Select((mean, i) => new PairedInterval.Night(
+                start.AddDays(i), mean, scenario.PairsPerNight, scenario.WithinNightDispersion)),
         ];
     }
 

@@ -100,6 +100,22 @@
       "surface": "/scoreboard, band 3",
       "arrivesAt": "6.8",
       "why": "The only band that measures the AI, and it measures the evidence rather than the model."
+    },
+    {
+      "name": "band-one-shows-how-far-off-the-answer-is",
+      "sentence": "Band 1 shows its raw count, its effective count and the minimum, every night, and checkpoint 3.6 fires on the third of those rather than on a date",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/scoreboard",
+      "mustCarry": "of 196 needed",
+      "why": "3.6 used to wait three months, a figure written before anything was measured. It now waits for a sample, and a trigger a reader cannot see from the first night is a date in disguise. The store can hold all three numbers and the page is the only place the claim is ever about."
+    },
+    {
+      "name": "a-panel-below-its-minimum-says-it-is-not-an-answer",
+      "sentence": "Below the minimum sample the panel is not yet an answer, and says so rather than leaving it to be inferred from a figure",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/scoreboard",
+      "mustCarry": "not yet an answer",
+      "why": "This is the state the panel is in for every night of the wait, and it is the state a reader is most likely to misread: a mean sitting there with an interval around it looks like a result. The sixth defect shape is exactly a claim about a surface verified against the store, so the words are asserted on the page."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

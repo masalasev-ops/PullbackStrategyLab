@@ -361,10 +361,15 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 | `n_rows` | INTEGER | the rows the figure was computed over |
 | `n_effective` | INTEGER NULL | the effective observations, which is not the same number and is what a minimum sample is counted in |
 | `population` | TEXT NULL | which rows the figure was computed over, said on the panel |
+| `n_minimum` | INTEGER NULL | what `n_effective` must reach before the panel may be read. Band 1 only |
 
 Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
 
-*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap and same-night setups share a market factor, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).*
+*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).*
+
+*`n_effective` starts from rows rather than from nights, and that is what the control draw bought. Same-night setups share a market factor, which is why an unpaired figure over forty names is worth about one observation; the paired difference removes it by construction, so what is left inside a night is each name's own move against its own controls. Two discounts are then measured from the series: the label overlap across nights, and whatever common movement the matching failed to remove. A night that cannot say how its own pairs dispersed counts as one, which makes the pessimistic reading the limiting case rather than the assumption.*
+
+*`n_minimum` is stored rather than looked up on the page, on the same grounds the interval is: the panel is read back as it stood, and a minimum that moved after a night was recorded would silently restate what that night's reading meant. It is set on band 1 alone, because band 1 is the panel checkpoint 3.6 fires on and a minimum on every panel would read as a threshold each of them is held to (see: The minimum sample is derived from a measured dispersion and counted in effective observations).*
 
 *Every panel stores its own count, because a number without one is not shown at all.*
 
