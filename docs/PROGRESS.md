@@ -3344,3 +3344,62 @@ Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 859 expectatio
 
 Carried:    Nothing new. The threshold obligation stays open and unspent, now carrying the corrected
             figures. Four parts of 3.0 outstanding.
+
+## 3.0(d) — 2026-08-27 — phase-3-measurement — the surfaces sweep, and the counts it did not reproduce
+
+The fourth part of 3.0, discharging the obligation raised at 2.9: every claim that something is
+stated, recorded on every row, or shown, checked against the surface a person reads it on.
+
+**Scoped deliberately, and the narrowing is recorded rather than assumed.** The obligation asks for
+the surface to be named **and asserted**. This pass does the naming. Building an instrument that
+renders a page and reads it is a checkpoint's work, so it becomes an obligation of its own with a
+due point rather than being done here badly. That is a narrowing of what 2.9 asked for and it is
+said here in those words rather than left to be noticed.
+
+**One question, and only one: does this sentence describe something that holds now.** Not whether it
+is well phrased, not whether the surface is any good, not whether the claim should be stronger.
+
+Measured:   The sweep read `ARCHITECTURE.html`, `SCHEMA.md`, `CLAUDE.md`, `RUNBOOK.md`,
+            `BUILD_PLAN.md` and `DECISIONS.md` for sentences asserting that something is stated,
+            shown, displayed, recorded on every row, or visible. 144 lines matched a first pass and
+            57 survived a narrower one. Reading those 57, **21 are genuine claims about a surface a
+            person reads**; the rest are properties of the store, of a document, or of the phase
+            report, which is not the same question.
+
+            **13 name a surface that does not exist yet, and now name the checkpoint that builds it.**
+            The borrow assumption in three places, 4.7 for the trade row and 4.11 for the journal.
+            The watchlist's give-up units and its two short-only columns, 4.1. The trade journal's two
+            sections, 4.11. The research ledger's separate scores, a refuted variant staying visible,
+            the difference series and the holdout register, 5.5. The realised risk beside the
+            intended risk, 4.7 and 4.11. The scoreboard's bands, 3.5 for 0 to 2 and 6.8 for band 3.
+
+            **8 are true of a surface that exists**, and were checked by looking rather than
+            asserted: every check appearing on every gallery card and a check handed nothing showing
+            what was absent; the `reached-ceiling` narrowing and the calibration market-cap exemption,
+            both displayed since the 2.9 fix; the chart page drawing from stored prices; a person's
+            judgement captured on the page that asks for it; the phase report showing what was
+            examined and showing out of scope beside unexamined; and long and short never pooled on
+            any built screen.
+
+Findings:   Finding, and it is about this pass rather than about the corpus. **The counts stated in
+            advance were nineteen and eleven. The sweep found thirteen and eight, over twenty-one
+            claims rather than thirty.** Recorded as a difference rather than resolved by widening
+            the scope to match, which is what the rule about stating a count in advance is for. The
+            likely reason is a boundary rather than a miscount: sentences about what the store
+            records and what the phase report prints were counted as visibility claims when the
+            question is narrower, being what a person reads on a rendered page. That boundary is now
+            written down, and the next pass over the same corpus should reproduce twenty-one or say
+            why not.
+
+            Observation, and it is why the deferred half is an obligation rather than a note. The
+            eight claims found true today are true because a person read them. Two of them happen to
+            be covered by `SetupsPageTests` and `CheckReadingTests`, written for another reason at
+            2.9. The other six are asserted by nothing, and a claim that is true today and asserted
+            by nothing is exactly the state the `reached-ceiling` narrowing was in on the morning of
+            the gallery review.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests.
+
+Carried:    **One new, due at 3.7**: an instrument that reads a rendered surface. Scoped to the
+            sentences this sweep produced rather than to UI testing in general, and due at the phase
+            sign-off because the pages phase 3 adds are the ones it would first cover.

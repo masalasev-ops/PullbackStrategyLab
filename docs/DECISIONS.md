@@ -89,7 +89,7 @@ A strategy test whose rules can move after the outcome is visible is not a test 
 Two writers puts the caps in two code paths, which voids every comparison between versions and does so silently.
 
 **The short borrow problem is mitigated by a filter, not solved**
-Market cap above $2 billion, dollar volume above $50 million, ninety sessions since listing. The borrow cost of 1.0% annualised is immaterial, about 0.4% of one R on a four-day hold, so availability rather than cost decides the short side and the filter stands in for information the feed does not carry. Recorded as an unmodelled assumption on every short trade.
+Market cap above $2 billion, dollar volume above $50 million, ninety sessions since listing. The borrow cost of 1.0% annualised is immaterial, about 0.4% of one R on a four-day hold, so availability rather than cost decides the short side and the filter stands in for information the feed does not carry. To be recorded as an unmodelled assumption on every short trade from 4.7, and shown in the trade journal from 4.11. No trade row exists yet, so this is what the assumption is owed rather than where it currently sits.
 
 **Equity is a fixed $100,000 notional that never compounds**
 Every cap in the design is a percentage of equity and nothing stated what equity was, so no share count could be computed.
@@ -98,7 +98,7 @@ The number is set by share rounding rather than by ambition. At 0.75% risk, a th
 
 It does not compound, and that matters more than the level. If equity tracked results, a version that ran well would size larger than one that ran badly, so the two would stop taking the same position on the same setup and the paired comparison would quietly stop being paired. The equity curve is reported as an output; it is never an input to sizing.
 
-Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away.
+Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away. The position row arrives at 4.7 and the journal that shows the pair to a person at 4.11; until then this is what is owed rather than what is displayed.
 
 **One account per version, holding both directions**
 Not one account per direction. The caps are four concurrent positions, three percent total risk at stake, and at most two shorts, and those only mean anything if a short and a long compete for the same budget. That competition is real: in an account, a short ties up risk a long cannot then use.
