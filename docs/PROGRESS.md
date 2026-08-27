@@ -2666,3 +2666,287 @@ Carried:    The thrust-span correction and its prediction, now a row of its own,
             The reading pass over what the fixture's composition cannot show, due at 2.12 as part of
             the sign-off.
             Everything else unchanged from the two entries above.
+
+## 2.11 — 2026-08-26 — phase-2-detection — corrections: three figures and the population each was taken over
+
+Corrects the 2.11 entry "the one-time calibration, and a band two checks cannot reach". Every figure
+below was recounted at the 2.12 sign-off against `calibration_setup` in the live store, 49,450 rows
+over 631 sessions, using the same run the entry reports. Nothing that was measured has changed. What
+changed is which rows three of the figures were taken over.
+
+Measured:   **The long retrace median is 1.060, not 1.088.** The entry gives "the retrace among moves
+            of the right length has a median of 1.088 long and 1.006 short". The gate's own definition
+            of the right length is 2 to 7 bars, being `MinimumPullbackBars` and `MaximumPullbackBars`.
+            Over `dip-shape` values on rows whose note says 2 to 7 bars, n is 5,849 and the median is
+            1.0597. The figure 1.088 is the median over dips of 2 bars or more with no upper bound,
+            n 6,225, which admits 376 dips the gate rejects for length. The quantile convention is not
+            the cause and was checked: the long count is odd, so every convention returns the same
+            value, and the entry's other even-count figures reproduce on the upper of the two middle
+            values, which is the convention the short retrace and the short stop distance both use. The short figure is right as
+            printed: over `bounce-shape` on rows of 2 to 7 bars, n is 3,448 and the median is 1.0064
+            taking the upper of the two middle values. The two sides were therefore taken over two
+            different populations under one phrase, which is what makes the pair not comparable rather
+            than the long figure merely being 0.028 out.
+
+            **The relaxed conjunction is 7 a night long and nought short, not "about 6".** The entry's
+            finding reads "with the retrace cap and the give-up cap set to pass always, the remaining
+            conjunction yields about 6 a night". Recounted per side by forcing `dip-shape` and
+            `exit-tight` to pass on the long list and `bounce-shape` and `exit-tight` on the short, and
+            counting rows where every remaining gating check passed: 5,833 long rows over the range, a
+            median of 7.0 a night and a mean of 9.2; 507 short rows, a median of 0.0 a night and a mean
+            of 0.8. "About 6" is 44 nightly rows multiplied by the long side's own pass rates for
+            `held-floor`, `contraction` and `trigger-near`, which is 6.15 and is the long side alone.
+            The same arithmetic on the short side is 0.19.
+
+            **`reached-ceiling` is missing from the per-check table.** The table under "Per check, over
+            the rows that cleared the recording floor" carries ten long checks and nine short. The
+            absent row is `reached-ceiling`, which passes on 859 of 16,917 short rows, being 5.08%. It
+            is the third most binding gate on the short list, ahead of `averages-squeezing` and behind
+            only `exit-tight` and `bounce-shape`. Its quantity does appear in the entry, as a median
+            distance of 1.802 ranges against a cap of 0.5, so the check is discussed and its pass rate
+            is not printed. The table pairs the two lists by position and `trigger-near` has no short
+            counterpart; `reached-ceiling` has no long one and got no row of its own.
+
+Verified:   Every other figure in the entry reproduced exactly. 32,533 long rows and 16,917 short;
+            medians of 44.0 and 13.0 a night and quartiles of 24.5 to 74.0 and 7.0 to 41.0, under
+            `NightlyCounts.Quantile` over 631 nights with the 29 long and 30 short empty nights counted
+            rather than dropped; 7 long candidates on 7 separate nights and none short, so 624 of 631
+            nights and 631 of 631; 2,016 names with a warm-up; the nineteen printed pass rates; stop
+            distance medians of 1.157 and 1.191, the second on the same upper-middle convention the
+            short retrace uses; `trigger-near` at a median of 0.513 with 10,153 of
+            10,553 measurable rows clearing it, being 96.2%; `reached-ceiling`'s 1.802; and every short
+            row carrying the cap-clause exemption, 16,917 of 16,917. `setup` is empty, which is the
+            done condition.
+
+Findings:   Reading. The three corrections all move the entry's own argument the same way, which is
+            towards the finding it already reached. A long median of 1.060 is still above 1.0, so the
+            typical give-back still exceeds the thrust. A short side of nought a night with both shapes
+            relaxed is further out of the band than "about 6", not nearer it. And a `reached-ceiling`
+            that passes 5.08% of the time is a third binding short gate the entry did not count, which
+            makes the short side's failure structural in one more place. Nothing here reopens the
+            decision not to spend the once-only adjustment.
+
+            Reading, on why these three and not others. All three are correct arithmetic over a
+            population other than the one the sentence names. That shape now has a rule, recorded in
+            `CLAUDE.md` under "Verification" at this sign-off, and a sweep of the record's other stated
+            figures is carried to 3.1.
+
+Carried:    The corrected figures are carried into `BUILD_PLAN.md`'s 2.11 threshold obligation, which
+            repeated two of them and is what 3.1 reads.
+
+## 2.12 — 2026-08-26 — phase-2-detection — the phase signs off, with a fifth defect shape and two acts nobody in this corpus can perform
+
+Fresh session, no commits of code to this repository before or during the pass. Its only commits are
+documents, which the narrowed fresh-session rule permits.
+
+Verified:   Reproduced before reading the record, in this order. `tools/ci.ps1` green on Windows, 24
+            steps, **324 tests**. `tools/verify-phase` **GREEN**: 116 claims, 59 passed, 0 failed, 57
+            out of scope, **0 unexamined**; coverage examined 2,444 with **0 unexamined**; 741
+            expectations of which 287 independent, 287 `DERIVED` and 454 `FROZEN` all matching, 0
+            changed since the last commit; inputs 67 `CAPTURED` and 88 `AUTHORED`. Both runners and
+            the rehearsal job green on the head commit in GitHub Actions, run 33035606747:
+            windows-latest, macos-latest and the case-sensitive rehearsal.
+
+            Run again after this entry and the document edits beside it, so the sign-off is against the
+            state being committed rather than against the state it was reproduced from: `tools/ci.ps1`
+            green, 24 steps, 324 tests, and `tools/verify-phase` GREEN with the same 116 claims, 59
+            passed, 0 failed, 57 out of scope and **0 unexamined**. Coverage examined reads 2,450 rather
+            than 2,444, the six being citations and scopes this entry and the corpus edits added.
+
+            Nothing in the report is out of scope until 2.12, so signing this checkpoint off leaves no
+            claim resting on a checkpoint that has just landed. The 57 out-of-scope claims and the 180
+            out-of-scope coverage items close at 3.1 or later, or are priced, or are exempt by design.
+
+            The 2.11 figures were recounted against `calibration_setup` rather than read from
+            `PROGRESS.md`. Every figure in the entry reproduced exactly except three, which are
+            corrected in the dated entry directly above this one. The three that moved were
+            correct arithmetic over a population other than the one the sentence named.
+
+Broke:      Five things were removed and the run watched, because reading has not been sufficient here.
+
+            **A gate's implementation deleted.** `Contraction` taken out of `LongPullbackRules.Evaluate`
+            and its method deleted. `check-completeness` fails. It does not name the gate: it dies on an
+            unhandled `Single` inside `PhaseReplay.CheckSidednessFigures`, where the authored gate case
+            for `contraction` finds no result of that name. Loud, and not the message the check has
+            written for exactly this. A second break isolated the half that does name it: an extra
+            `made-up` result added to the same list produced "2026-08-24-HOOD-long records a check no
+            gate names: made-up", over two rows, so the per-row reconciliation is live.
+
+            **The gid list emptied.** The `gid` span class renamed throughout `ARCHITECTURE.html`, all
+            twenty. `check-completeness` fails with the count it states in advance: 0 gates under the
+            long check list, not ten. Then, to reach the set comparison rather than the count, one gid
+            renamed from `contraction` to `gone-quiet` so the list stays ten. Both directions fire in
+            the same run: the document defines a gate the detector does not run, and the detector runs
+            a check no gate names.
+
+            **A check narrowed below one scope's floor while ordinary files were added.** `BarTables`
+            cut from three to one, and eight ordinary new files added under
+            `PullbackStrategyLab.Core/Indicators`. `bar-append-only` fails with three named shortfalls,
+            one per scope, while the corpus scope it used to be summed with grew to 82 source files and
+            was reported beside the property rather than added to it. This is the narrowing that passed
+            at the phase 1 sign-off, and it now fails for the reason it should.
+
+            **A backing test removed.** The vendor-correction test named by `bar-append-only` renamed
+            away. The failure lands on `bar-append-only`, the check whose declaration names it, not on
+            `coverage-reported`: "and no test by that name exists. A backing that has gone stale is
+            worse than none, because it reads as covered." The 77 proofs in `CheckProofTests` still
+            pass, which is right, because they prove the mechanism over hand-written inputs.
+
+            **A two-cell row put into the obligations table.** `MarkdownTable` refuses it by position and
+            content, naming a header three cells wide, a body row two cells wide, the row number and
+            the text it begins with. It does not vanish.
+
+            The working tree was restored after each and `git status` is clean.
+
+Measured:   **For each of the twenty gate slots, which instrument exercises both sides.** Asked as the
+            general question rather than as the three known instances. Two-sided means the instrument
+            produced at least one pass and at least one fail for that gate on that side of the list;
+            the two lists are never pooled, and four gate ids appear on both, being `cluster`,
+            `exit-tight`, `moves-enough` and `thrust`, so there are sixteen ids across twenty slots.
+
+            | gate | gate-cases.json | captured fixture | live calibration | second instrument |
+            |---|---|---|---|---|
+            | long `tradable` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `moves-enough` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `uptrend` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `thrust` | both | pass only | pass only, 32,533 of 32,533 | none |
+            | long `dip-shape` | both | fail only | both, 227 pass | live calibration |
+            | long `held-floor` | both | pass only | both, 31,258 pass | live calibration |
+            | long `contraction` | both | fail only | both, 15,169 pass | live calibration |
+            | long `trigger-near` | both | absent, never scored | both, 10,153 pass | live calibration |
+            | long `exit-tight` | both | absent, never scored | both, 330 pass | live calibration |
+            | long `cluster` | both | fail only | fail only, 0 of 32,533 | none |
+            | short `tradable-shortable` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `moves-enough` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `downtrend` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `averages-squeezing` | both | fail only | both, 4,927 pass | live calibration |
+            | short `thrust` | both | pass only | pass only, 16,917 of 16,917 | none |
+            | short `bounce-shape` | both | fail only | both, 179 pass | live calibration |
+            | short `reached-ceiling` | both | fail only | both, 859 pass | live calibration |
+            | short `no-reclaim` | both | pass only | both, 16,783 pass | live calibration |
+            | short `exit-tight` | both | absent, never scored | both, 185 pass | live calibration |
+            | short `cluster` | both | pass only | fail only, 0 of 16,917 | none |
+
+            The captured-fixture column is over the rows a detector wrote, being one long and one short.
+            The live-calibration column is over `calibration_setup`, 32,533 long and 16,917 short rows.
+
+Findings:   Finding. **`gate-cases.json` is the only instrument in CI that exercises both sides of any
+            gate, and it carries all twenty alone.** The question asked how many checks it carries
+            alone. The answer is every one of them, and the reason is not that the other instruments
+            are weak but that only one other instrument has ever produced a two-sided result and it is
+            not committed. Over the captured fixture a detector writes one row per direction, so
+            twenty slots have one answer each. The live calibration run does exercise both sides of ten
+            of the twenty, and it lives in `data/live`, which is gitignored, produced by a once-only
+            command, and re-derived by nothing. If that store is deleted, the pass rates in the record
+            become the only trace and the ten become gate-cases-only too.
+
+            That is not a defect. It is what the decision already chose, and it is worth having the
+            number: (see: Gate boundaries are exercised by authored cases and the captured fixture is
+            not asked to do it) is carrying twenty gates by itself, and nobody had counted.
+
+            Finding. **Ten of the twenty are structurally one-sided against any run's rows, and
+            `thrust` is one of ten rather than a special case.** The 2.12 clause names `thrust` as the
+            worked example. The general shape is the recording floor: `RecordingFloor` is `tradable`,
+            `moves-enough`, `uptrend` and `thrust`, and a row exists only if all four passed, so all
+            four are 100% by construction on every side of every run, forever, not only over this
+            fixture. Eight slots. The other two are `cluster` on both lists, which is unmeasured for a
+            different reason already recorded at 2.11: a reconstructed session has no industry to
+            count. So the answer to "which other checks stand where `thrust` does" is: the other three
+            in the recording floor, on both sides, permanently, and `cluster` on both sides for as
+            long as calibration is the only population.
+
+            Finding. **Five gates have their branch covered and the arithmetic behind the number
+            covered by nothing.** `GateCases.Evaluate` builds a `LongEvidence` or `ShortEvidence` and
+            constructs the pullback record by hand from the retrace depth and the bar count in the case
+            file. It never calls `PullbackGeometry.Of`. The gates whose quantity comes from that method
+            are `dip-shape` and `bounce-shape`, and `trigger-near` and `exit-tight`. Over the captured
+            fixture `PullbackGeometry.Of` runs and returns the degenerate shape on every row:
+            `pullback_bars` is 0 and `retrace_depth` is 0.0000 on all three setups, and `trigger-near`
+            and `exit-tight` are not scored at all but recorded absent, because there is no trigger and
+            no stop. So the geometry that the 3.1 thrust-window correction is about has no instrument
+            exercising it on a non-degenerate input, anywhere, except the uncommitted live run. The
+            prediction 3.1 is judged against, that the median retrace falls below 1.0 with no threshold
+            moved, can be evaluated only by re-running that command over the live store.
+
+            Finding, and the fifth defect shape. **The fixture's one-sidedness figures count an
+            `AUTHORED` row into the captured population.** `PhaseReplay.CheckSidednessFigures` counts
+            passes and fails from every row of `setup`. The fixture's `setup` table holds three rows,
+            not two: `2026-08-24-HOOD-long` and `2026-08-24-INTC-short` from the detectors, and
+            `IESC-long` inserted by `VectorizeAuthoredSetup` to give the vectorizer a subject. That row
+            bypasses the recording floor, which is why it carries `uptrend` failed on a grade of
+            `mixed` and is in the store at all. `uptrend` and `contraction` are the only two long gates
+            the report calls two-sided, and each is two-sided only because the authored row disagrees
+            with the detector row. Over detector-written rows every one of the twenty slots is
+            one-sided, so the measured figure behind (see: Gate boundaries are exercised by authored
+            cases and the captured fixture is not asked to do it) is ten of ten long rather than eight
+            of ten. The same function keeps the authored gate cases out of these counters deliberately
+            and says so in its own comment; the authored setup row arrives through the store and is
+            kept out of nothing. The decision's conclusion is unaffected and its evidence is stronger
+            than recorded.
+
+            Reading. That finding and the three corrected figures in the entry above are one shape, and
+            it is not the shape this corpus has four instances of. In all four of those the subject an
+            assertion guarded went away and the assertion kept saying what it always said. In all four
+            of these the counts are correct, the check is live, the subject is present, and the
+            sentence is still false, because the figure was computed over a population other than the
+            one named beside it. Tiers guard which rows may be believed and scope floors guard how many
+            rows were looked at. Nothing guards which rows a stated figure was computed over. Per the
+            stopping rule, a fifth shape is a rule rather than a fourth pass, and it is written into
+            `CLAUDE.md` under "Verification" in this commit with its prior text in `CHANGELOG.md`.
+
+            Observation. Two smaller things, neither of which lets anything through. `check-completeness`
+            fails on a crash rather than on its own message when a gate implementation is removed. And
+            `PhaseReplay.CheckSidednessFigures` says in a comment that five of the twenty gate ids
+            appear on both lists; there are four. Both are carried to 3.1 rather than fixed here,
+            because fixing them is a code commit and a session that commits code cannot sign it off.
+
+            Observation, on the thrust-scan gap 2.11 named. The obligation says the scan that produced
+            a thrust is not recorded on the setup row. `thrust_scan` is a signal and is recorded, with
+            expectations at 2.3, 2.6 and 2.7, but `setup_signal` has a foreign key to `setup` and
+            calibration writes to `calibration_setup`, so no calibration row can carry it and
+            `setup_signal` is empty in the live store. The claim is true of the population the finding
+            is about, and the work at 3.1 is a column or a re-run on the calibration side rather than a
+            new signal, which is worth knowing before the estimate is made.
+
+Carried:    Confirmed present with their due points, none attempted. The threshold adjustment the count
+            distribution calls for, due 3.1, now carrying the corrected figures. Where the thrust is
+            measured from and the prediction it is judged against, due 3.1. The unbacked source scans
+            and the three scans without coverage records, due 3.1, reconfirmed against this run as nine
+            backed by a test, one by the rehearsal job, three by nothing, and fifteen source-reading
+            files of which twelve belong to a check. Whether a night screened over five sessions writes
+            nothing or carries the last membership, due 3.1. Step 6 of the move, due at the move. The
+            vendor's reset boundary, due at the operator.
+
+            Three new, all due 3.1: the sidedness counters split by tier, the sweep of the record's
+            other stated figures for the population each was taken over, and the two verification-quality
+            items above.
+
+            Two moved to the operator rather than to a checkpoint. The `CONFIRMED` indicator values for
+            IESC, LITE and PAYO, and the `CONFIRMED` gallery expectations.
+
+Verdict:    **Phase 2 signs off**, with the gallery review and the three `CONFIRMED` indicator values
+            outstanding, and that is a judgement rather than a default.
+
+            The reason. Everything a session can verify is verified and green, on both runners and on a
+            case-sensitive filesystem, with nothing unexamined and nothing out of scope resting on this
+            checkpoint. What is left is two acts a person performs at a screen, and no session of any
+            kind can perform either. The indicator obligation has already been moved three times, 1.12
+            to 2.11 to 2.12, each move sound on its own terms, and a due point that moves at every
+            sign-off is permanent while reading as pending, which is precisely the fault the
+            checkpoint-naming rule exists to prevent one level up. Holding phase 2 open for them would
+            move them again at 3.7 and buy nothing, because phase 3 does not read them: 2.11 was named
+            as the point a threshold would be set against those figures, no threshold was set, and the
+            gallery review changes the detector's rules rather than any measurement phase 3 records.
+
+            What signing off does not mean. The gallery review clause of 2.12's done condition is not
+            met by this pass and this entry does not claim it. It is stated here rather than left to be
+            inferred from a green report, and the operator can overturn the judgement by doing the
+            review before phase 3 begins, which is the better outcome and is why both rows stay in the
+            table rather than being closed.
+
+            One caution carried into phase 3, not a blocker. Ten of the twenty gates are exercised on
+            both sides by one committed instrument and that instrument is authored. Phase 3 measures
+            outcomes for setups these gates select, and a gate whose only two-sided evidence is a
+            constructed number is a gate whose behaviour on real data is asserted by a store that is
+            gitignored. That is the shape of the 3.1 work already scheduled, and it is worth carrying
+            the sentence rather than the impression.
