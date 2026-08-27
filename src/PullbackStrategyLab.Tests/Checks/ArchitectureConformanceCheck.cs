@@ -789,11 +789,27 @@ public sealed partial class ArchitectureConformanceCheck
             // BUILD_PLAN is keyed by the checkpoint that raised each obligation, so reading it
             // as a schedule would place a component against the checkpoint that complained
             // about it rather than the one that builds it.
+            // The phase sections stop where the carried-obligations table begins, and that bound is
+            // load-bearing rather than tidy. The table sits after the last phase heading, so without
+            // it the final section runs to the end of the file and every obligation row whose
+            // "Raised" column looks like a checkpoint is read as a checkpoint row. An obligation
+            // raised at 3.0 that mentions VariantAdmitter then places VariantAdmitter at 3.0, and
+            // the claim fails saying a component due in phase 5 does not exist yet. Found at 3.0,
+            // where the first obligation row to name an unbuilt component was written; the comment
+            // below always said this must not happen and nothing stopped it.
+            int obligations = buildPlan.IndexOf("## Carried obligations", StringComparison.Ordinal);
+            int schedules = obligations < 0 ? buildPlan.Length : obligations;
+
             MatchCollection phases = PhaseHeading().Matches(buildPlan);
             for (int i = 0; i < phases.Count; i++)
             {
                 int start = phases[i].Index;
-                int end = i + 1 < phases.Count ? phases[i + 1].Index : buildPlan.Length;
+                int end = i + 1 < phases.Count ? phases[i + 1].Index : schedules;
+
+                if (start >= schedules)
+                {
+                    break;
+                }
 
                 foreach (Match row in CheckpointRow().Matches(buildPlan[start..end]))
                 {

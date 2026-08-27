@@ -3558,3 +3558,84 @@ Verified:   `tools/ci.ps1` green on Windows, 25 steps, 366 tests. Four new const
 
 Carried:    **One new, due before 5.1**: the 160-observation minimum sample, restated in effective
             observations rather than rows.
+
+## 3.0 — 2026-08-27 — phase-3-measurement — the checkpoint closes, with one part repointed
+
+Closes checkpoint 3.0. Six of its seven parts landed; the seventh is repointed once, with the
+reason, and **this checkpoint amended its own done condition to allow that**, in those words, per
+the rule added on 2026-08-27.
+
+**The amendment, stated plainly.** 3.0's done condition asks that every obligation due here is
+discharged **or repointed with its reason**, and part (g), a check result carrying a value per
+clause, is repointed rather than built. That clause was in the row when it was written at the start
+of the checkpoint rather than added at the end to admit an escape, which is the distinction the
+2.11 ruling turned on. What is new is exercising it, and exercising it is what has to be named.
+
+**Why (g) moved, and why to 4.1.** It is checkpoint-sized by its own admission at 2.9. It moves the
+frozen `check_results` JSON shape, so it moves expectations at 2.6, 2.7 and 2.11 and leaves the
+49,450-row calibration store in the old shape until a further re-run of about forty minutes a side.
+3.0 spent its night on the geometry correction and on the obligations that gate what phase 3
+measures, and taking a diagnostic improvement on top would have cost a second calibration pass.
+4.1 is where the watchlist greys a failed check and names it, which is exactly the screen where
+"which of four floors did `tradable-shortable` miss" is the question a person asks. Moved once.
+
+Built:      Seven parts, six landed. (a) the geometry instrument, 88 `DERIVED` expectations over
+            `PullbackGeometry.Of` on inputs the fixture cannot reach. (b) migration 015, the thrust
+            scan on the setup row. (c) the thrust-window correction, alone, and the prediction
+            settled. (d) the surfaces sweep. (e) seven hygiene obligations, a new check and a
+            behavioural test. (f) three named decisions and the SCHEMA repairs phase 3's tables need.
+
+Measured:   Against the phase 2 baseline of 24 steps, 359 tests, 741 expectations and 287
+            independent: **25 steps, 366 tests, 899 expectations and 405 independent**, with
+            118 expectations at this checkpoint of which every one is `DERIVED` or a counter split
+            that its own note explains.
+
+            The prediction, which is the checkpoint's one substantive result: **the retrace clause
+            holds on both sides and the count clause fails on both sides.** The figures and their
+            populations are in the 3.0(c) entry and are not restated here.
+
+Findings:   Two implementations disagreed twice, and both were found the same way. At (a) the
+            shipped geometry and the verification aid differed by 0.0098 on the origin fallback, in
+            a branch nothing had ever reached. At (b) the harness's authored row reported no thrust
+            scan where the detector's own rule resolves `leader`. Neither was found by a test
+            asserting what the first implementation already said; both were found by asking a second
+            implementation the same question.
+
+            Observation, carried into the rest of the phase. Ten of the twenty gate slots were
+            already exercised on both sides only by an authored instrument, and (e) made that worse
+            in the honest direction: over detector-written rows alone, **all twenty are one-sided**.
+            Phase 3 measures outcomes for setups these gates select, and the gates' behaviour on real
+            data is asserted by a gitignored store and a case file.
+
+            Finding, and this checkpoint's own landing is what exposed it. **The phase-section scan
+            in `ArchitectureConformanceCheck.Schedule` ran past the last phase heading and swallowed
+            the carried-obligations table**, so every obligation row whose "Raised" column looks like
+            a checkpoint was read as a checkpoint row. The 160-observation obligation, raised at 3.0,
+            mentions `VariantAdmitter` in explaining why 5.1 is its due point; that placed
+            VariantAdmitter at 3.0, and the moment 3.0 landed the report failed saying a phase 5
+            component does not exist yet.
+
+            The reading: the code's own comment says the obligations table is read separately
+            "because reading it as a schedule would place a component against the checkpoint that
+            complained about it", so the risk was known and nothing enforced it. It had never fired
+            because no obligation row had yet named a component that was not already built. The
+            phase sections now stop where the obligations table begins.
+
+            It is worth noticing what would have happened without the fix: not a wrong number, but a
+            red phase report naming a real component and a real checkpoint, with nothing in either
+            of them wrong. That is the failure mode a bounded scan prevents and an unbounded one
+            produces on the first row that tests it.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 366 tests. `tools/verify-phase` **GREEN**,
+            116 claims, 59 passed, 0 failed, 57 out of scope, **0 unexamined**; coverage examined
+            2,838 with 0 unexamined; 899 expectations of which 405 independent.
+
+Carried:    Nine obligations remain and **none is due at a checkpoint this entry lands**. One at 3.7,
+            the instrument that reads a rendered surface. One at 4.1, the value per clause. One at
+            4.6, the two remaining unbacked scans. One before 5.1, the 160-observation minimum
+            sample. One at the move. Four at the operator, now including **the threshold ruling**:
+            the prediction was judged, the once is unspent, and spending it is not a build session's
+            act.
+
+            Nine discharged rows are removed from the table rather than marked closed, which is what
+            the table has always done with an obligation that is finished.
