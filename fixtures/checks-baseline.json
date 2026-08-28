@@ -54,7 +54,8 @@
     "ci-parity": {
       "scopes": {
         "steps declared in tools/ci.ps1": 27,
-        "steps declared in tools/ci.sh": 27
+        "steps declared in tools/ci.sh": 27,
+        "ci step functions run against a step that fails": 1
       }
     },
     "clock-usage": {

@@ -30,8 +30,15 @@ step() {
     step_number=$((step_number + 1))
     printf '\n== %d %s\n' "$step_number" "$name"
 
-    if ! "$@"; then
-        local code=$?
+    # The status is captured from the command itself rather than from a negation of it.
+    # `if ! "$@"` sets $? to the status of the negated pipeline, which is 0 exactly when the
+    # command failed, so the earlier form printed "failed with exit code 0" and then exited 0.
+    # Every step routes through here, so that made the whole script incapable of reporting a
+    # failure: a failing step aborted the run and the run reported success.
+    local code=0
+    "$@" || code=$?
+
+    if [ "$code" -ne 0 ]; then
         printf "ci: step '%s' failed with exit code %d.\n" "$name" "$code" >&2
         exit "$code"
     fi
