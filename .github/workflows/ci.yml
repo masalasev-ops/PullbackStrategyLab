@@ -132,6 +132,12 @@ jobs:
 
           Write-Output "the stage's message and its stop line are both in the log; the slot exited $code"
 
+          # The step passed, and it has to say so. GitHub appends `exit $LASTEXITCODE` to a pwsh
+          # step, and $LASTEXITCODE is still the 1 the deliberate failure set, so the step would
+          # report the failure it was written to require. Third layer of the same bug in one
+          # checkpoint: a tooling layer carrying the wrong verdict for the thing below it.
+          exit 0
+
   # The migration rehearsal, on a case-sensitive filesystem.
   #
   # 1.11 ran the rehearsal on one machine and was recorded as partial, because the failures it
