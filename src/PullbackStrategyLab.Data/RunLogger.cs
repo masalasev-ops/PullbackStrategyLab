@@ -85,7 +85,13 @@ public sealed class RunLogger
     }
 
     /// <summary>The end entry. Called by the scope, never by a stage.</summary>
-    internal void Complete(SqliteConnection connection, string runId, RunOutcome outcome, int rowsWritten, int callsUsed)
+    internal void Complete(
+        SqliteConnection connection,
+        string runId,
+        RunOutcome outcome,
+        int rowsWritten,
+        int callsUsed,
+        int? skipped = null)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -93,13 +99,15 @@ public sealed class RunLogger
                SET ended_at = @ended_at,
                    outcome = @outcome,
                    rows_written = @rows_written,
-                   calls_used = @calls_used
+                   calls_used = @calls_used,
+                   skipped = @skipped
              WHERE run_id = @run_id;
             """;
         command.Parameters.AddWithValue("@ended_at", StoreText.TimestampToStorageText(_clock.UtcNow));
         command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
         command.Parameters.AddWithValue("@rows_written", rowsWritten);
         command.Parameters.AddWithValue("@calls_used", callsUsed);
+        command.Parameters.AddWithValue("@skipped", (object?)skipped ?? DBNull.Value);
         command.Parameters.AddWithValue("@run_id", runId);
         command.ExecuteNonQuery();
     }

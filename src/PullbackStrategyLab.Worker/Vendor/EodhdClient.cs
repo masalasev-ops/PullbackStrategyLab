@@ -207,8 +207,21 @@ public sealed class EodhdClient : IMarketDataVendor
             query: "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
             cancellationToken).ConfigureAwait(false);
 
+        // An empty string is the vendor's way of saying it holds no sector, and it is not the same
+        // as a field it did not send. Stored as it arrives it would be a resolved sector of "", which
+        // reads as an industry group of its own and would cluster every such name together.
+        string? sector = Blank(row?.Sector);
+        string? industry = Blank(row?.Industry);
+        decimal? cap = row?.MarketCapitalization;
+
+        // All three absent is the vendor having nothing on the name, which is a real answer the
+        // stage already handles: it stamps the name so the question is not asked again and leaves
+        // the three columns null, which is the truth. Returning a row of nulls instead would count
+        // it as resolved and say the opposite.
         return VendorResult<VendorFundamentals?>.Delivered(
-            row is null ? null : new VendorFundamentals(ticker, row.Sector, row.Industry, row.MarketCapitalization));
+            sector is null && industry is null && cap is null
+                ? null
+                : new VendorFundamentals(ticker, sector, industry, cap));
     }
 
     /// <summary>
@@ -224,11 +237,22 @@ public sealed class EodhdClient : IMarketDataVendor
     /// The cap comes back as a JSON number and is read as decimal rather than long, on the same
     /// reasoning volume was at 1.3: a vendor that publishes one value with a fractional part would
     /// otherwise make the whole response unreadable over one field.
+    ///
+    /// <b>And it does not always come back as a number.</b> A name the vendor holds no capitalisation
+    /// for answers 200 with the string <c>"NA"</c> in that field and empty strings in the other two,
+    /// which threw mid-deserialization and took the sector walk down with it on 2026-08-27. The same
+    /// lesson as the property names, learned the same way and one field along: thirty captured
+    /// responses were thirty working examples, and the shape that mattered was the one nothing had
+    /// asked for. <c>fundamentals-MUZ.json</c> is that response, captured.
     /// </summary>
     private sealed record FundamentalsRow(
         [property: JsonPropertyName("General::Sector")] string? Sector,
         [property: JsonPropertyName("General::Industry")] string? Industry,
-        [property: JsonPropertyName("Highlights::MarketCapitalization")] decimal? MarketCapitalization);
+        [property: JsonPropertyName("Highlights::MarketCapitalization")]
+        [property: JsonConverter(typeof(TolerantDecimalConverter))] decimal? MarketCapitalization);
+
+    /// <summary>Whitespace read as absent, because the vendor writes an empty string for a field it does not hold.</summary>
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     private static string Iso(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
@@ -321,6 +345,14 @@ public sealed class EodhdClient : IMarketDataVendor
     ///
     /// The query comes back without the token. It is the one field that must never reach a file
     /// the repository holds.
+    ///
+    /// <b>It records the status rather than throwing on a non-200, and that is deliberate.</b> Every
+    /// other read here refuses a failed response, which is right for a stage and wrong for the one
+    /// path whose purpose is to store what the vendor actually sent. Captured that way the fixture
+    /// held thirty well-formed <c>fundamentals</c> responses and no case where anything could go
+    /// wrong, so the parse was exercised thirty times against nothing. The caller decides what a
+    /// status means: <see cref="FixtureCapture"/> refuses one for an endpoint it is capturing as a
+    /// working example, and takes it for one it is capturing as a failing shape.
     /// see: Fixture inputs record where they came from, and a path a live run exercises needs a captured one
     /// </summary>
     public async Task<VendorResult<CapturedResponse>> GetRawAsync(
@@ -338,8 +370,8 @@ public sealed class EodhdClient : IMarketDataVendor
             return VendorResult<CapturedResponse>.OutOfBudget();
         }
 
-        string body = await GetStringAsync(path, query, cancellationToken).ConfigureAwait(false);
-        return VendorResult<CapturedResponse>.Delivered(new CapturedResponse(path, query ?? string.Empty, body));
+        (int status, string body) = await GetStringAsync(path, query, cancellationToken).ConfigureAwait(false);
+        return VendorResult<CapturedResponse>.Delivered(new CapturedResponse(path, query ?? string.Empty, body, status));
     }
 
     private async Task<T?> GetAsync<T>(string path, string? query, CancellationToken cancellationToken)
@@ -374,8 +406,14 @@ public sealed class EodhdClient : IMarketDataVendor
         return await JsonSerializer.DeserializeAsync<T>(body, Json, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>The same request, returning the body as text. Shares the failure handling above.</summary>
-    private async Task<string> GetStringAsync(string path, string? query, CancellationToken cancellationToken)
+    /// <summary>
+    /// The same request, returning the status and the body as text.
+    ///
+    /// A missing token still throws, because that is a configuration fault rather than something the
+    /// vendor said. A non-200 does not: the status is returned beside the body so the one caller,
+    /// the fixture capture, can store what came back. Every other read refuses a failed response.
+    /// </summary>
+    private async Task<(int Status, string Body)> GetStringAsync(string path, string? query, CancellationToken cancellationToken)
     {
         if (!_options.Vendor.HasApiKey)
         {
@@ -391,13 +429,9 @@ public sealed class EodhdClient : IMarketDataVendor
             .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            // The token is in the URL, so the URL never appears in a message.
-            throw new VendorException($"{path} returned {(int)response.StatusCode} {response.StatusCode}.");
-        }
-
-        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        // The token is in the URL, so neither the URL nor anything derived from it is returned.
+        return ((int)response.StatusCode,
+                await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -485,7 +519,14 @@ public sealed class EodhdClient : IMarketDataVendor
 /// One vendor response held verbatim, with the endpoint and the query it answered. The query
 /// never carries the token.
 /// </summary>
-public sealed record CapturedResponse(string Endpoint, string Query, string Body);
+/// <summary>
+/// One response exactly as the vendor sent it, with the status it came back with.
+///
+/// The status is part of the response rather than a detail of fetching it. A fixture that stored
+/// only the bodies could hold no case where the vendor refused, which is how thirty captured
+/// `fundamentals` responses came to exercise a parse against nothing that could fail.
+/// </summary>
+public sealed record CapturedResponse(string Endpoint, string Query, string Body, int Status);
 
 /// <summary>A request the vendor refused or could not answer. Never carries the URL, which carries the token.</summary>
 public sealed class VendorException : Exception

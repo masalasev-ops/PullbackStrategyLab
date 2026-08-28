@@ -213,7 +213,7 @@ Insert RegimeLabeler
 ## Setups
 
 ### `setup`
-Grain: date + ticker + direction. **Immutable after write.** The spine of the whole system.
+Grain: date + ticker + direction. **Immutable after write, except by a correction that uses no information the night did not have.** The spine of the whole system (see: A setup row is corrected only where the correction uses no information the night did not have).
 
 | Column | Type | Note |
 |---|---|---|
@@ -231,14 +231,18 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `agreement_note` | TEXT NULL | |
 | `thrust_scan` | TEXT NULL | which of the six scans produced the thrust this setup was measured against |
 | `thrust_session` | TEXT NULL | the session that scan flagged |
+| `corrected_at` | TEXT NULL | when a check verdict on this row was recomputed. Null on a row nothing has corrected |
+| `corrected_because` | TEXT NULL | why, naming the check and the stage that failed on the night |
 
-Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record) · Update CheckRecomputer (`check_results`, `corrected_at`, `corrected_because`, and only for a check the baseline records without requiring)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 
 *`rank` and `capped_out` are the night's, not a version's, and there is deliberately no column that could make them a version's. The cap is applied to the shared candidate list before any version selects, and a cap applied per version would leave their disagreements unscoreable. A test asserts the absence rather than the intent, because the intent is unassertable once versions exist and the record it would have destroyed cannot be reconstructed.*
 
 *Both are null on a setup that failed a gating check. Such a row is evidence and was never a candidate, so a rank among names it was not ranked against would be a number with no meaning.*
+
+*`corrected_at` and `corrected_because` are how a corrected row is told from one that was right the first time. The two are not the same evidence and a later reader has to be able to exclude the corrected ones without knowing the correction happened, which is why the mark is a condition of the permission rather than a note beside it. Null on every row until something corrects one, and the pair is written together: a correction with no reason recorded is the shape the rule exists to refuse.*
 
 *`thrust_scan` and `thrust_session` record what the detector already resolved and used to throw away. Four gates read a quantity computed from the thrust's location, and `gainer` and `gapper` flag a move over one session where `leader` and `laggard` flag one over twenty, so a row that does not say which scan flagged it cannot be told from a row measured over a different span. The same fact is also the `thrust_scan` signal, and that is not enough: `setup_signal` has a foreign key to `setup`, calibration writes to `calibration_setup`, so the population a threshold is counted over is exactly the population the signal cannot reach.*
 
@@ -578,12 +582,15 @@ Grain: run id. Every stage writes a start and an end entry here, so it is delive
 | `rows_written` | INTEGER | measured from the store, not self-reported by the stage |
 | `calls_used` | INTEGER | counted as the stage runs |
 | `counts_against_ceiling` | INTEGER | 0 or 1. Whether the daily total sees this run's calls |
+| `skipped` | INTEGER NULL | names the run walked past after a failure it survived. Null where it walked no list |
 
 Insert RunLogger · Update RunLogger
 
 **One writer, not one per stage.** Stages do not write this table. They call `RunLogger`, which owns both operations. Declaring every stage as a writer would put the run-accounting logic in a dozen places and `writer-ownership` could never pass.
 
 **`rows_written` is measured, not reported.** A stage counting its own output will report what it believes it wrote. The nightly halt keys on this number, so it is read back from the store.
+
+**And it distinguishes nothing on a stage that only updates, which is why `skipped` exists.** The measurement is a row-count delta over the tables the stage declares, so `sectors`, which issues `UPDATE` against `security` and never `INSERT`, reports 0 rows whether it resolved every name or died on the first. On 2026-08-27 it recorded outcome `failed`, 149 calls and 0 rows, and 0 rows is exactly what a perfect run would have recorded. `skipped` is reported by the stage rather than measured, which is the opposite of the rule above and is deliberate: a skip is a decision the stage made and nothing in the store records it, so there is no belief here for a measurement to guard against. Null rather than 0 on a run that skipped nothing, so a stage that walks no list is distinguishable from one that walked its list cleanly, and so that the sixty-one runs recorded before the column existed are not asserted to have skipped none.
 
 **`counts_against_ceiling` is how a one-time operation stays out of the nightly budget.** The ceiling guards the evening's job; the history backfill is not the evening's job, and charging the two against each other is what once made the backfill look like a two-day procedure. Its calls are still recorded, because what a run cost is worth knowing about every run. The run says so in the store rather than being recognised by its stage name, which would put the exception in the query rather than in the record.
 

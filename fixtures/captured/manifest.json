@@ -471,6 +471,13 @@
       "query": "period=d\u0026from=2025-08-25\u0026to=2026-08-24",
       "capturedAt": "2026-08-25T19:52:38.559Z",
       "bytes": 30482
+    },
+    {
+      "file": "fundamentals-MUZ.json",
+      "endpoint": "fundamentals/MUZ.US",
+      "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
+      "capturedAt": "2026-08-28T04:12:37.098Z",
+      "bytes": 85
     }
   ]
 }

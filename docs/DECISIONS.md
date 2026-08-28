@@ -23,6 +23,23 @@ The detector is a pure function of stored daily bars, so it can be run over year
 
 Historical runs therefore write to a separate calibration table that nothing downstream reads. The evidence store begins empty on the first forward night and fills one session at a time. This is what the nightly universe snapshot exists to protect, and it is the difference between the replay this project relies on and the backtest it deliberately is not.
 
+**A setup row is corrected only where the correction uses no information the night did not have**
+Setup rows are immutable after write, and that rule was too broad. It exists to stop a plan being improved once its outcome is visible: a trigger nudged, a stop widened, a check re-run until it passes, each of which turns the record into a description of what would have worked. A value missing because an input stage failed is none of those. Nothing about the outcome is known, nothing about the plan changes, and the repair uses only what existed on the night.
+
+Left as written, the rule forbids that repair, and it did: on 2026-08-27 the sector walk died on its 149th name, `clusters` ran three minutes later over a store it had half filled, and fifteen of that night's forty-four setups recorded a cluster verdict of failed with no value. Under immutability as stated those fifteen carry a wrong verdict for ever, and the reason is not that the night was uncertain but that a stage fell over.
+
+**Two conditions, and both are asserted rather than intended.**
+
+**Inputs are bounded to the setup's own date.** A sector resolved today may not be the sector that name carried then, and reading it back into that night is using information the night did not have, however slowly the fact moves. This is the same bound every reader in the lab already applies, and it is the condition that makes the correction a repair rather than a rewrite. A recompute whose inputs are stamped after the setup's date fails and says which value was too late, rather than quietly producing a better-looking number (see: A reader's signature does not establish point-in-time; the query does).
+
+**The row records that it was corrected, with the date and the reason.** A corrected row is not the same evidence as one that was right the first time, and a later reader has to be able to exclude them without knowing this happened. An unmarked correction is indistinguishable from the plan-improvement the rule was written against, which is why the mark is a condition of the permission rather than a courtesy.
+
+**What stays forbidden is unchanged, and it is most of the rule.** A trigger, a stop, a size, or any gating check verdict computed from prices is never rewritten. Those are the plan. What may be corrected is a recorded-not-required verdict whose input a failed stage never delivered, which today is `cluster` and nothing else.
+
+**The narrowness is deliberate and it is what makes the permission safe.** A rule reading "a wrong value may be fixed" would be cited for exactly the thing immutability protects against, because every improvement looks like a correction from the inside. The two conditions are what a later session has to satisfy, and the second one leaves a trail even when the first is satisfied wrongly.
+
+**And it does not reach backwards to the fifteen it was written for.** Their sectors were resolved on 2026-08-28, after the night they are wanted for, so the date bound refuses them and the fifteen keep their null verdict permanently. That was tested rather than assumed and it is the right outcome: a decision whose first act is to exempt its own motivating case is a decision with no conditions on it (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
+
 **Failed checks are recorded rather than discarded**
 The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
 

@@ -52,6 +52,24 @@ public sealed class RunScope : ICallBudget, IDisposable
     public CallCounting Counting { get; }
 
     /// <summary>
+    /// Names this run walked past after a failure it survived, or null where it walked no list.
+    ///
+    /// Reported by the stage rather than measured, which is the opposite of how rows_written works
+    /// and is deliberate: a skip is a decision the stage made and nothing in the store records it.
+    /// The reason rows_written is measured is that a stage counting its own output reports what it
+    /// believes it wrote, and there is no equivalent belief to guard against here.
+    ///
+    /// It exists because rows_written distinguishes nothing on an update-only stage. `sectors`
+    /// issues UPDATE and never INSERT, so the delta is 0 whether it resolved every name or died on
+    /// the first, and on 2026-08-27 it recorded 149 calls against 0 rows, which is what a clean run
+    /// would also have recorded.
+    /// </summary>
+    public int? Skipped { get; private set; }
+
+    /// <summary>Records that the run passed over one name, with the count kept for the end entry.</summary>
+    public void CountSkipped() => Skipped = (Skipped ?? 0) + 1;
+
+    /// <summary>
     /// What is left of the day's ceiling, across every stage that has already run, or no limit
     /// at all for a run outside it. A one-time operation is not the nightly job and is not
     /// charged against the guard the nightly job needs.
@@ -112,9 +130,9 @@ public sealed class RunScope : ICallBudget, IDisposable
             rowsWritten += Math.Max(0, RunLogger.CountRows(_connection, table) - baseline);
         }
 
-        _runLogger.Complete(_connection, RunId, outcome, rowsWritten, CallsUsed);
+        _runLogger.Complete(_connection, RunId, outcome, rowsWritten, CallsUsed, Skipped);
         _completed = true;
-        return new RunSummary(RunId, Stage, outcome, rowsWritten, CallsUsed);
+        return new RunSummary(RunId, Stage, outcome, rowsWritten, CallsUsed, Skipped);
     }
 
     public void Dispose()
@@ -128,7 +146,7 @@ public sealed class RunScope : ICallBudget, IDisposable
     }
 }
 
-public sealed record RunSummary(string RunId, string Stage, RunOutcome Outcome, int RowsWritten, int CallsUsed);
+public sealed record RunSummary(string RunId, string Stage, RunOutcome Outcome, int RowsWritten, int CallsUsed, int? Skipped = null);
 
 /// <summary>
 /// Thrown when a stage asks for a vendor call the day's ceiling cannot cover. The ceiling

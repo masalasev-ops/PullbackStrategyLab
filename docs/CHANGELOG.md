@@ -857,3 +857,13 @@ Why:  The catalogue's description was true of what the stage did and not of what
 Was:  A phase 3 section whose 3.5 row and following notes said nothing about the checkpoint having been reopened, and a carried-obligations table of ten rows.
 Now:  A paragraph under the phase 3 table naming the three defects that reopened 3.5 on 2026-08-27, and twelve further obligation rows.
 Why:  A checkpoint reopened after its PROGRESS entry is recorded is invisible in the plan otherwise, and the corpus's pointer to which checkpoint the build is on reads the plan and the record together. Eleven of the twelve rows are the sign-off review's non-blocking findings plus four raised while fixing the blocking ones; the twelfth is the nightly runner having only a Windows half.
+
+### 2026-08-28 — SCHEMA.md — cites A setup row is corrected only where the correction uses no information the night did not have
+Was:  Grain: date + ticker + direction. **Immutable after write.** The spine of the whole system.
+Now:  Grain: date + ticker + direction. **Immutable after write, except by a correction that uses no information the night did not have.** The spine of the whole system (see: A setup row is corrected only where the correction uses no information the night did not have).
+Why:  The rule as written forbade repairing a value that is wrong because an input stage died, which is not the thing immutability protects against. The writer line and two columns are added in the same edit, because the permission is worthless without the mark that makes a corrected row distinguishable.
+
+### 2026-08-28 — BUILD_PLAN.md — cites A setup row is corrected only where the correction uses no information the night did not have
+Was:  | 3.1 | SetupJournal finalised | Setup rows immutable after write. Asserted |
+Now:  | 3.1 | SetupJournal finalised | Setup rows immutable after write, except by a correction meeting both of the correction rule's conditions, and asserted both ways: nothing rewrites a plan or a gating verdict, and a correction whose input is stamped after the setup's own date fails (see: A setup row is corrected only where the correction uses no information the night did not have) |
+Why:  The done condition was the widest statement of the rule in the corpus and the only one a checkpoint was judged against. Amended rather than left standing beside a decision that contradicts it, and the amendment names the second condition, since a permission asserted in one direction only is the half that gets cited.

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
@@ -22,6 +23,19 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// <b>A name the vendor has nothing on is stamped anyway.</b> Otherwise it would be re-asked every
 /// night for ever, one call a night to learn the same nothing. The stamp records that the question
 /// was asked; the three columns stay null, which is the true answer.
+///
+/// <b>A name that throws costs that name and no other.</b> On 2026-08-27 the walk asked 149 names,
+/// resolved 148, and died on the 149th, whose capitalisation came back as the string "NA". One
+/// ticker took the other 86 with it, and the cost is not the calls: `clusters` runs three minutes
+/// later over whatever `security` holds, so fifteen of that night's forty-four setups recorded a
+/// cluster verdict of failed with no value, and a setup row cannot be improved once its outcome is
+/// visible. A stage that dies mid-walk leaves the stages downstream reading a store it half filled.
+///
+/// So the walk continues and counts. A skipped name keeps its null stamp and is asked again
+/// tomorrow, because a transient refusal must not permanently mark a good name as unknown, and the
+/// bound on re-asking is that the count is on the record where somebody reads it rather than that
+/// the stage gave up. The outcome is `partial`, which is what this stage already says when the
+/// ceiling stops it short: calls spent, list not finished.
 /// </summary>
 public sealed class SectorResolver
 {
@@ -63,6 +77,7 @@ public sealed class SectorResolver
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Unresolved} name(s) on a scan with no sector, {result.Asked} asked");
         Console.WriteLine($"{Name}: {result.Resolved} resolved, {result.VendorHadNothing} the vendor had nothing on, {result.Stamped} stamped");
+        Console.WriteLine($"{Name}: {result.Skipped} skipped and asked again tomorrow");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
@@ -82,12 +97,32 @@ public sealed class SectorResolver
         int asked = 0;
         int resolved = 0;
         int nothing = 0;
+        int skipped = 0;
         bool stoppedShort = false;
 
         foreach (string ticker in unresolved.Take(limit))
         {
-            VendorResult<VendorFundamentals?> answer =
-                await _vendor.GetFundamentalsAsync(ticker, run, cancellationToken).ConfigureAwait(false);
+            VendorResult<VendorFundamentals?> answer;
+
+            try
+            {
+                answer = await _vendor.GetFundamentalsAsync(ticker, run, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e is VendorException or JsonException or HttpRequestException)
+            {
+                // One name the vendor refused, answered unreadably, or could not be reached for.
+                // Counted, named on stdout so the night's log carries it, and left unstamped so it
+                // is asked again tomorrow: a refusal that happens once must not permanently record
+                // a good name as one the vendor has nothing on.
+                //
+                // Narrow on purpose. Anything that is not the vendor answering badly still takes the
+                // stage down, because a store that will not accept a write or a cancellation are not
+                // conditions the next ticker would survive either.
+                skipped++;
+                run.CountSkipped();
+                Console.WriteLine($"{Name}: skipped {ticker}, {e.Message}");
+                continue;
+            }
 
             if (answer.BudgetExhausted)
             {
@@ -112,11 +147,15 @@ public sealed class SectorResolver
             Stamp(connection, ticker, found, resolvedAt);
         }
 
-        RunOutcome outcome = stoppedShort ? RunOutcome.Partial : RunOutcome.Clean;
+        // Partial rather than clean whenever the list was not finished, whether the ceiling stopped
+        // it or a name did. A run that spent calls and left names unresolved is not a clean slot,
+        // and rows_written cannot say so: this stage only issues UPDATE, so the delta is 0 on a
+        // perfect run and 0 on the run that died after 149 calls on 2026-08-27.
+        RunOutcome outcome = stoppedShort || skipped > 0 ? RunOutcome.Partial : RunOutcome.Clean;
         RunSummary summary = run.Complete(outcome);
 
         return new SectorResult(
-            asOf, unresolved.Count, asked, resolved, nothing, asked,
+            asOf, unresolved.Count, asked, resolved, nothing, asked, skipped,
             summary.RowsWritten, summary.CallsUsed, outcome);
     }
 
@@ -185,6 +224,7 @@ public sealed record SectorResult(
     int Resolved,
     int VendorHadNothing,
     int Stamped,
+    int Skipped,
     int RowsWritten,
     int CallsUsed,
     RunOutcome Outcome);
