@@ -78,8 +78,8 @@ public sealed class ControlSampler
 
         IReadOnlyList<StoredSetup> setups = SetupReader.Read(connection, asOf);
         var flagged = new HashSet<string>(setups.Select(s => s.Ticker), StringComparer.Ordinal);
-        IReadOnlyList<ControlMatching.Candidate> pool = Pool(connection, asOf, drawnAt, flagged);
-        var figures = Figures(connection, asOf, drawnAt);
+        IReadOnlyList<ControlMatching.Candidate> pool = Pool(connection, asOf, drawnAt, flagged, _options.SessionZone);
+        var figures = Figures(connection, asOf, drawnAt, _options.SessionZone);
 
         int loose = 0;
         int tight = 0;
@@ -142,8 +142,9 @@ public sealed class ControlSampler
     /// any number a reader could see.
     /// </summary>
     private static IReadOnlyList<ControlMatching.Candidate> Pool(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, IReadOnlySet<string> flagged) =>
-        [.. Figures(connection, asOf, drawnAt).Values.Where(c => !flagged.Contains(c.Ticker))];
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, IReadOnlySet<string> flagged,
+        string sessionZone) =>
+        [.. Figures(connection, asOf, drawnAt, sessionZone).Values.Where(c => !flagged.Contains(c.Ticker))];
 
     /// <summary>
     /// Every name's matched figures on the night, bounded on the end of the as-of date.
@@ -163,7 +164,7 @@ public sealed class ControlSampler
     /// see: A reader's signature does not establish point-in-time; the query does
     /// </summary>
     private static IReadOnlyDictionary<string, ControlMatching.Candidate> Figures(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt)
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, string sessionZone)
     {
         var figures = new Dictionary<string, ControlMatching.Candidate>(StringComparer.Ordinal);
 
@@ -179,7 +180,7 @@ public sealed class ControlSampler
              ORDER BY i.ticker
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@drawn_at", $"{asOf:yyyy-MM-dd}T23:59:59.999Z");
+        command.Parameters.AddWithValue("@drawn_at", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

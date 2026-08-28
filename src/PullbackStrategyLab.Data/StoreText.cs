@@ -1,4 +1,5 @@
 using System.Globalization;
+using PullbackStrategyLab.Core.Time;
 
 namespace PullbackStrategyLab.Data;
 
@@ -58,4 +59,18 @@ public static class StoreText
 
     public static DateOnly StorageTextToDate(string text) =>
         DateOnly.ParseExact(text, DateFormat, CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The last instant of a session date, in the form an observation stamp is stored in.
+    ///
+    /// <b>This is the point-in-time bound, and it is the only correct way to build one.</b> Appending
+    /// <c>T23:59:59.999Z</c> to the date closes an Eastern session at 19:59:59 Eastern through
+    /// daylight time and 18:59:59 through standard time, so every stage running after the close
+    /// writes rows its own session cannot read, and the truncation point moves an hour twice a year.
+    /// The zone is named at every call site rather than defaulted, because a bound whose zone is
+    /// invisible is how the literal survived twelve sites in the first place.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    public static string EndOfSession(DateOnly sessionDate, string ianaZoneId) =>
+        TimestampToStorageText(SessionBoundaries.EndOfSession(sessionDate, ianaZoneId));
 }

@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Core.Configuration;
 
 /// <summary>
@@ -25,7 +27,7 @@ public sealed record PullbackStrategyLabOptions
     /// identifier: <see cref="Time.SystemClock"/> rejects those rather than translating them.
     /// </summary>
     [Required(AllowEmptyStrings = false)]
-    public string SessionZone { get; init; } = "America/New_York";
+    public string SessionZone { get; init; } = SessionBoundaries.UsEquities;
 
     /// <summary>
     /// The hard ceiling on vendor calls in one day. The job counts as it goes and stops

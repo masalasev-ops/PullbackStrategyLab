@@ -87,7 +87,7 @@ public sealed class CeilingCalculator
             foreach (string direction in new[] { "long", "short" })
             {
                 IReadOnlyList<WinRateCeiling.Subject> subjects =
-                    Closed(connection, direction, asOf, computedAt);
+                    Closed(connection, direction, asOf, computedAt, _options.SessionZone);
 
                 WinRateCeiling.Bound? bound = WinRateCeiling.Of(subjects);
 
@@ -121,7 +121,7 @@ public sealed class CeilingCalculator
     /// <see cref="WinRateCeiling.Survived"/>, rather than at each call site.
     /// </summary>
     private static IReadOnlyList<WinRateCeiling.Subject> Closed(
-        SqliteConnection connection, string direction, DateOnly asOf, DateTimeOffset computedAt)
+        SqliteConnection connection, string direction, DateOnly asOf, DateTimeOffset computedAt, string sessionZone)
     {
         var subjects = new List<WinRateCeiling.Subject>();
 
@@ -150,7 +150,7 @@ public sealed class CeilingCalculator
         command.Parameters.AddWithValue("@horizon", MeasurementParameters.ScoringHorizonSessions);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
-        command.Parameters.AddWithValue("@end_of_day", $"{asOf:yyyy-MM-dd}T23:59:59.999Z");
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

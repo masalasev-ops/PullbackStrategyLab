@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Data;
 
 /// <summary>
@@ -233,7 +235,7 @@ public sealed class DailyBarReader
 
     /// <summary>The last instant of a date, in the form observed_at is stored in.</summary>
     private static string EndOf(DateOnly date) =>
-        StoreText.DateToStorageText(date) + "T23:59:59.999Z";
+        StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
 
     private static DateTimeOffset StorageTextToInstant(string text) => StoreText.StorageTextToTimestamp(text);
 }

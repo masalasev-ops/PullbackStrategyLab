@@ -24,10 +24,11 @@ namespace PullbackStrategyLab.Worker.Stages;
 ///
 /// The first is the bound. Every input is read as at the setup's own date, using the same
 /// end-of-day form every reader in the lab uses, so a value the lab learned afterwards is invisible.
-/// A row whose input exists but was stamped too late is <i>refused</i> and named, with both instants
-/// printed, rather than repaired with today's answer. That is not a corner case: it is what happened
-/// to the fifteen this stage was written for, whose sectors were resolved on 2026-08-28, and the
-/// stage declines them.
+/// A row whose input exists but arrived more than the lateness bound after that end of day is
+/// <i>refused</i> and named, with both instants printed, rather than repaired with today's answer.
+/// The fifteen this stage was written for had their sectors resolved at 00:19 Eastern the next
+/// morning, 20 minutes past the session's own end of day and inside the bound, so they were admitted
+/// and marked; a rerun a further day on would have been declined.
 ///
 /// The second is the mark. A corrected row records `corrected_at` and `corrected_because` together,
 /// so a later reader can exclude corrected rows without knowing this happened.
@@ -67,6 +68,21 @@ public sealed class CheckRecomputer
     /// something else corrected rows, or the query no longer means what it meant.
     /// </summary>
     public const string ExpectFlag = "--expect";
+
+    /// <summary>
+    /// Put corrected rows back the way the night wrote them, from what the correction recorded.
+    ///
+    /// <b>It exists because the corpus already claimed it did.</b> `corrected_from` was added so a
+    /// corrected population could be restored, and a test asserted the restore by issuing the
+    /// <c>UPDATE</c> itself; nothing an operator could run offered it. A property asserted by a test
+    /// and absent from every surface is the shape this lab keeps meeting, so the writer of these
+    /// columns owns the reverse operation as well as the forward one.
+    ///
+    /// It is also the only correct way to redo a correction. A repair cannot be applied twice, by
+    /// design, so a correction computed against something that has since been fixed is undone and
+    /// made again rather than overwritten.
+    /// </summary>
+    public const string RestoreFlag = "--restore";
 
     private static readonly JsonSerializerOptions CheckResultsJson = new(JsonSerializerDefaults.Web);
 
@@ -122,11 +138,19 @@ public sealed class CheckRecomputer
             ? given
             : -1;
 
-        RecheckResult result = Recompute(asOf, check, args.Contains(ApplyFlag));
+        bool restoring = args.Contains(RestoreFlag);
 
-        Console.WriteLine($"{Name}: the set is every row of that date whose '{check}' verdict carries no value");
-        Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, check '{check}', {result.Candidates} row(s) with no value");
-        Console.WriteLine($"{Name}: {result.Corrected} corrected, {result.Refused} refused because the input was stamped after the night");
+        RecheckResult result = restoring
+            ? Restore(asOf, check, args.Contains(ApplyFlag))
+            : Recompute(asOf, check, args.Contains(ApplyFlag));
+
+        Console.WriteLine(restoring
+            ? $"{Name}: the set is every row of that date this stage corrected and recorded a prior state for"
+            : $"{Name}: the set is every row of that date whose '{check}' verdict carries no value");
+        Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, check '{check}', {result.Candidates} row(s) in the set");
+        Console.WriteLine(restoring
+            ? $"{Name}: {result.Corrected} restored, {result.Refused} refused because no prior state was recorded"
+            : $"{Name}: {result.Corrected} corrected, {result.Refused} refused because the input was stamped after the night");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {(result.Applied ? "written" : "reported only, rerun with " + ApplyFlag)}");
 
         if (expect >= 0 && expect != result.Candidates)
@@ -154,7 +178,7 @@ public sealed class CheckRecomputer
         // The bound, in the end-of-day form every reader in the lab uses. An input stamped after it
         // is something the night did not have, whatever it is and however slowly it moves.
         // see: A reader's signature does not establish point-in-time; the query does
-        string bound = StoreText.DateToStorageText(asOf) + "T23:59:59.999Z";
+        string bound = StoreText.EndOfSession(asOf, _options.SessionZone);
 
         DateTimeOffset endOfSession = DateTimeOffset.Parse(bound, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
         DateTimeOffset latestAdmissible = endOfSession.AddHours(MeasurementParameters.LatenessBoundHours);
@@ -209,6 +233,83 @@ public sealed class CheckRecomputer
         run.Complete(outcome);
 
         return new RecheckResult(asOf, check, candidates.Count, corrected, refused, apply, outcome);
+    }
+
+    /// <summary>
+    /// Puts every row this stage corrected for one date and check back the way the night wrote it.
+    ///
+    /// The prior text is the whole check-results JSON, so the restore is a column assignment rather
+    /// than a merge, and the four correction columns are cleared in the same statement: a row that
+    /// kept its mark after being restored would report a correction that no longer exists.
+    ///
+    /// A row marked corrected with no prior state recorded is refused rather than guessed at. That
+    /// pair cannot be produced by this stage, which writes both in one statement, so encountering it
+    /// means something else wrote the mark and the restore has nothing to put back.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    public RecheckResult Restore(DateOnly asOf, string check, bool apply)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(check);
+
+        using SqliteConnection connection = _connections.OpenWrite();
+        using RunScope run = _runLogger.Begin(connection, Name, "setup");
+
+        var rows = new List<(string SetupId, string Ticker, string? Prior)>();
+
+        using (SqliteCommand read = connection.CreateCommand())
+        {
+            read.CommandText = """
+                SELECT setup_id, ticker, corrected_from
+                  FROM setup
+                 WHERE as_of = @as_of AND corrected_at IS NOT NULL
+                 ORDER BY ticker, direction
+                """;
+            read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+            using SqliteDataReader reader = read.ExecuteReader();
+            while (reader.Read())
+            {
+                rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
+            }
+        }
+
+        int restored = 0;
+        int refused = 0;
+
+        foreach ((string setupId, string ticker, string? prior) in rows)
+        {
+            if (prior is null)
+            {
+                refused++;
+                run.CountSkipped();
+                Console.WriteLine($"{Name}: refused {ticker}, marked corrected with no prior state recorded");
+                continue;
+            }
+
+            if (apply)
+            {
+                using SqliteCommand command = connection.CreateCommand();
+                command.CommandText = """
+                    UPDATE setup
+                       SET check_results = corrected_from,
+                           corrected_at = NULL,
+                           corrected_because = NULL,
+                           correction_lateness_minutes = NULL,
+                           corrected_from = NULL
+                     WHERE setup_id = @setup_id
+                    """;
+                command.Parameters.AddWithValue("@setup_id", setupId);
+                command.ExecuteNonQuery();
+            }
+
+            restored++;
+            Console.WriteLine($"{Name}: {ticker} restored to the state the night wrote");
+        }
+
+        RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
+        run.Complete(outcome);
+
+        return new RecheckResult(asOf, check, rows.Count, restored, refused, apply, outcome);
     }
 
     /// <summary>

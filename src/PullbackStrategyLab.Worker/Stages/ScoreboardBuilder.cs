@@ -93,13 +93,13 @@ public sealed class ScoreboardBuilder
         DateTimeOffset computedAt = _clock.UtcNow;
         var panels = new List<Panel>();
 
-        panels.AddRange(Health(connection, asOf));
+        panels.AddRange(Health(connection, asOf, _options.SessionZone));
 
         foreach (string direction in new[] { "long", "short" })
         {
             panels.AddRange(AgainstControls(connection, direction, asOf, computedAt));
             panels.AddRange(RankDeciles(connection, direction, asOf, computedAt));
-            panels.AddRange(CeilingGap(connection, direction, asOf));
+            panels.AddRange(CeilingGap(connection, direction, asOf, _options.SessionZone));
         }
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
@@ -141,26 +141,27 @@ public sealed class ScoreboardBuilder
     /// rather than in a column nobody queries.
     /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
-    private static IReadOnlyList<Panel> Health(SqliteConnection connection, DateOnly asOf)
+    private static IReadOnlyList<Panel> Health(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
-        int nights = Count(connection, "SELECT COUNT(DISTINCT as_of) FROM setup WHERE as_of <= @as_of", asOf);
+        int nights = Count(connection, "SELECT COUNT(DISTINCT as_of) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
         int degraded = Count(
             connection,
             "SELECT COUNT(DISTINCT started_at) FROM run_log WHERE outcome <> 'clean' AND started_at <= @end_of_day",
-            asOf);
-        int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf);
+            asOf, sessionZone);
+        int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
 
         int corrected = Count(
             connection,
             "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of AND corrected_at IS NOT NULL",
-            asOf);
+            asOf, sessionZone);
 
         // The worst lateness rather than the mean, because the question a bound invites is how close
         // anything came to it, and a mean over mostly-zero rows answers a different one.
         int worstLateness = Count(
             connection,
             "SELECT COALESCE(MAX(correction_lateness_minutes), 0) FROM setup WHERE as_of <= @as_of",
-            asOf);
+            asOf, sessionZone);
 
         return
         [
@@ -448,7 +449,8 @@ public sealed class ScoreboardBuilder
     /// Read straight off `ceiling_bound` rather than recomputed, because two implementations of a
     /// bound would eventually disagree and the scoreboard would be the last place anyone looked.
     /// </summary>
-    private static IReadOnlyList<Panel> CeilingGap(SqliteConnection connection, string direction, DateOnly asOf)
+    private static IReadOnlyList<Panel> CeilingGap(
+        SqliteConnection connection, string direction, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -463,7 +465,7 @@ public sealed class ScoreboardBuilder
         // The bound is recomputed weekly, so a week can carry more than one row over its life and
         // the panel must read the one that existed on the night it is building. Bounding the as-of
         // alone picks the right week and can still read a bound computed afterwards.
-        command.Parameters.AddWithValue("@computed_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -553,12 +555,12 @@ public sealed class ScoreboardBuilder
         return nights;
     }
 
-    private static int Count(SqliteConnection connection, string sql, DateOnly asOf)
+    private static int Count(SqliteConnection connection, string sql, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@end_of_day", $"{asOf:yyyy-MM-dd}T23:59:59.999Z");
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(asOf, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }

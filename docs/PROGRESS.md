@@ -5403,3 +5403,156 @@ Carried:    **Open obligations: 32 before this pass, 32 after.** One discharged,
             reaches.
 
             **This session committed code and may not sign it off.**
+
+## 3.9(a) — 2026-08-28 — phase-3-corrections — the three questions the repair owed, answered before merge
+
+Three questions put to the repair before it merges. This entry corrects one figure in the entry above
+it and adds two answers that entry did not carry.
+
+Answered:   **The cluster population: the night's whole scan population, not the fifteen.**
+            `CheckRecomputer.ClusterInputs` selects every `scan_hit` row of the date joined to
+            `security` and groups by scan and industry, so the count a repaired row receives is taken
+            over **300 scan hits across 234 distinct names**, of which 44 have a setup and 15 were
+            repaired. Asserted rather than read off the code: a repaired row's cluster now has a test
+            in which the only candidate is one row, one other name has a setup whose verdict already
+            carries a value, and a third has no setup at all, and the answer is three. A second test
+            takes five scan names with one setup and the answer is five, which no reading of "the
+            repaired set" can produce.
+
+            **The two failures at a cluster of one are real.** `RUM` in Internet Content &
+            Information and `TWST` in Diagnostics & Research are alone in their industry on their
+            scan over all 234 names.
+
+            **The lateness origin: the session's own end of day, and the 260 is the right figure.**
+            Lateness is measured from `<date>T23:59:59.999Z`, which is the bound every reader in the
+            lab already applies and is 19:59:59 Eastern. The sectors were stamped
+            `2026-08-28T04:19:33.201Z`, which is 260 minutes past that, and
+            `setup.correction_lateness_minutes` holds 260 on all fifteen.
+
+            **The "six hours" is elapsed time from the failed walk, and it is not lateness.** The
+            walk stamped its first 148 names at `2026-08-27T22:12:03.201Z` and the rerun stamped the
+            remaining 86 at `04:19:33.201Z`, six hours and seven minutes later. Both numbers are
+            arithmetically right and describe the same arrival from two origins, which is why the
+            record carried two. **The entry above states "the information is six hours too late",
+            and that phrasing is corrected here**: as a lateness the figure is 260 minutes, and six
+            hours is the gap between the two passes. Four sites carried the ambiguity and all four
+            were swept in this pass: `RUNBOOK.md` twice, `DECISIONS.md` once, and the test constants,
+            whose `OnTheNight` doc-comment also called `22:12:03.201Z` "the end of the night's own
+            day" when the end of that day is `23:59:59.999Z`.
+
+            **The forty-four: every setup that night's detectors flagged, forty long and four short.**
+            It is the denominator for the fifteen repaired, for the twenty-nine untouched, and for
+            the `passed_all` count that did not move. `passed_all` could not move on any of the
+            forty-four, because `cluster` is recorded and never gating.
+
+Found:      **The repair made that night's `cluster` column a mixed population, and the rows it could
+            not touch are damaged the same way as the fifteen it could.** The recomputer runs after
+            the walk completed, so the fifteen are counted over 234 names while the twenty-nine carry
+            what `clusters` computed at 18:15 over the 148 resolved then. Measured: **all 15 repaired
+            rows match the 234-name count and none matches the 148-name count**; **28 of the 29
+            untouched match the 148-name count**; one, `INFQ`, matches neither, recording 4 against 6
+            and 13, so a third population exists that nothing has explained. Biotechnology on the
+            `gainer` scan is the clean illustration: `SRPT` repaired reads 8, and `ABCL`, `BHVN`,
+            `ERAS` and `INBX` untouched read 6, same night, same scan, same industry.
+
+            **20 of the 29 would move and two would change verdict.** `FOUR` short and `HTFL` long
+            both record a fail at a cluster of 1 and are 2 over the full population, which passes.
+            They are the fifteen's own defect wearing a number instead of a null, and they went
+            unseen precisely because a partial input produced a plausible value rather than an absent
+            one. This is CLAUDE.md's fifth shape: every count is correct, the check is live, the
+            subject is present, and "the cluster distribution for 2026-08-27" is a figure over a
+            population nobody named.
+
+            Raised as an obligation at 4.1 rather than repaired here. Recomputing them means
+            revisiting a verdict that carries a number, which the stage refuses before reading a row
+            and the correction rule does not permit, so it is a ruling and not a build session's.
+
+Corrected:  `RUNBOOK.md`'s Recovery section described the superseded rule in four places, including
+            telling an operator that `recheck` refuses all fifteen and that they keep a null verdict
+            permanently. It is the document somebody reads at 07:00 with a broken night behind them,
+            so it is the worst place in the corpus for a stale instruction. Prior text in
+            `CHANGELOG.md` against the decision that authorised the change, in three entries.
+
+            `CheckRecomputer`'s own class comment said the fifteen "were resolved on 2026-08-28, and
+            the stage declines them", which is what it did before the rule was amended in the same
+            checkpoint.
+
+Verified:   `dotnet test --filter CheckRecomputerTests` green at **15**, up from 13.
+
+## 3.9(c) — 2026-08-28 — phase-3-corrections — the session boundary, closed in Eastern time
+
+The point-in-time bound was being built by appending `T23:59:59.999Z` to the session date. That is
+the end of the session's UTC day, not of its own day, so an Eastern session was closing at 19:59:59
+Eastern through daylight time and 18:59:59 through standard time. This corrects the boundary. It
+does not touch the conflation, which is that a stamp records when the lab asked rather than which
+session the answer belongs to, and that stays open with the count that stopped it.
+
+Counted:    **Before the edit, per table, the rows a corrected bound admits that the old one did
+            not.** A row moves if the UTC date of its stamp differs from its Eastern date. Over the
+            thirteen stamped tables: **scoreboard 9 of 9, indicator_daily 27 of 5,952, and nought
+            in the other eleven** (daily_bar 1,490,188 stamped, index_bar 2,268, corporate_action
+            66, history_refetch 2,117, security 234, setup_signal 1,406, control_setup 440, setup
+            15; forward_return, ceiling_bound and detector_error hold no rows yet).
+
+Found:      **The scoreboard was invisible to its own session, and that is a live wrong result
+            rather than a latent one.** The nine panels for 2026-08-27 were built at 21:50 Eastern
+            and stamped `2026-08-28T01:50:03.248Z`. `LabScoreboard` bounds `computed_at` on the end
+            of the as-of's UTC day, so a read for 2026-08-27 matched **0 panels**; under the
+            corrected bound it matches **9**. Both figures were run against the live store rather
+            than reasoned about. The comment above that query said the two bounds were "latent
+            rather than live until 3.8, because nothing had rebuilt a scoreboard for a past date".
+            The reasoning was sound and the conclusion was wrong for a cause it did not consider:
+            the read did not need a rebuild to be wrong, it needed the clock to pass 20:00 Eastern.
+            The `scoreboard` slot runs at 21:50, so the panels were never visible on their own
+            session date, on any night.
+
+            **Migration 009's backfill put 27 rows in the wrong session, and only the fix exposed
+            it.** It gave pre-existing indicator rows a synthesised `computed_at` of
+            `as_of || 'T00:00:00.000Z'`, described as "the first instant of its own session".
+            Midnight UTC is 20:00 Eastern on the *previous* session. While every bound was also
+            built in UTC the two errors cancelled exactly; corrected, the rows became visible one
+            day before their own session, which is a point-in-time leak. It is the only one the
+            change introduces and it was caught by an existing assertion rather than by inspection:
+            `Migration_009_rebuilds_the_indicator_table_and_loses_no_row` already asserted that a
+            read as of the day before sees nothing, and it had been passing against a stamp in the
+            wrong session because the bound was wrong by the same offset.
+
+Built:      **One function, and every bound calls it.** `SessionBoundaries.At` holds the arithmetic,
+            which was moved out of `SystemClock` rather than copied, so `IClock.SessionBoundary`
+            delegates to it and there is one implementation. `StoreText.EndOfSession(date, zone)` is
+            the text form every query binds. Twelve sites carried the literal, in five store readers,
+            five stages and the API's scoreboard read; all twelve now call it and a claim fails if
+            the literal comes back.
+
+            **The zone is named at each site rather than defaulted**, and where a store reader has no
+            configuration to read it names `SessionBoundaries.UsEquities`, which is also what
+            `PullbackStrategyLabOptions.SessionZone` defaults to rather than restating. A test
+            asserts every `appsettings.json` sets that same value, because that is the only thing
+            standing between the readers and configuration diverging from them. Threading the
+            configured zone into the nine reader methods is the real fix and is carried.
+
+            **Migration 028** moves the 27 synthesised stamps to `as_of || 'T05:00:00.000Z'`.
+            05:00Z rather than 04:00Z because one stored literal has to be inside the session on
+            both sides of the clock change, and nothing here is an observation, so an hour of
+            conservatism costs nothing where a stamp in the wrong session costs a wrong answer.
+
+Measured:   **The fifteen repaired rows were 260 minutes late and are 20.** Nothing about the
+            arrival changed: `2026-08-28T04:19:33.201Z` is 00:19 Eastern, twenty minutes past the
+            session's real end of day, and it read as four hours and twenty because the end of day
+            was being computed in UTC. The 260 was correct against the bound as it then stood, which
+            is precisely why it is corrected in the same pass rather than left to disagree with the
+            column, and `band0` reports the worst lateness on a page.
+
+            The fifteen were restored and repaired again rather than overwritten: the cluster values
+            are identical, `passed_all` is unchanged on all forty-four, and every row carries the
+            mark, the new lateness and its prior state.
+
+            **The restore is now a stage rather than a statement in a test.** `corrected_from` was
+            added so a corrected population could be put back, and the only thing that could do it
+            was an `UPDATE` the test issued itself. `recheck --restore` is the operation, owned by
+            the same writer as the correction it undoes, and it is also the only correct way to redo
+            a correction: a repair cannot be applied twice by design, so one computed against
+            something since found wrong is undone and made again.
+
+Carried:    The sector-timestamp conflation stays open and is untouched by this. Threading the
+            configured session zone into the store readers is new, at 4.1.

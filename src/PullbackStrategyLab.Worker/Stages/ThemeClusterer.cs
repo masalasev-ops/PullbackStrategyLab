@@ -85,7 +85,7 @@ public sealed class ThemeClusterer
              WHERE h.as_of = @as_of
             """;
         read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        read.Parameters.AddWithValue("@resolved_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
+        read.Parameters.AddWithValue("@resolved_before", StoreText.EndOfSession(asOf, _options.SessionZone));
 
         var hits = new List<(string Ticker, string Scan, string? Industry)>();
         using (SqliteDataReader reader = read.ExecuteReader())

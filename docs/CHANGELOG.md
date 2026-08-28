@@ -892,3 +892,28 @@ Why:  The second of the four sites. The done condition was the widest statement 
 Was:  A schedule table and a recovery section that stated the nightly total against the ceiling without saying what unit the ceiling counts.
 Now:  The same, plus a paragraph saying the ceiling's unit is the weighted cost rather than the request count, that the two differ by up to a hundredfold, and that every stage prints both.
 Why:  Fifteen names is either fifteen or fifteen hundred against a 5,000 ceiling depending on the endpoint, and nothing said which. A reader comparing a printed figure to the ceiling had no way to know whether the two were in the same unit.
+
+### 2026-08-28 — RUNBOOK.md — cites A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+Was:  A Recovery section headed "The repair window, which closes at 19:59:59 ET on the session's own date", whose four paragraphs described the superseded rule: a morning read "is invisible to last night's session", the window having one edge, `recheck` refusing "any row whose input was stamped after the setup's own date", and "`recheck` refuses all fifteen and they keep that verdict permanently".
+Now:  The same section headed "The repair window, which has two edges and closes 24 hours after the session's own end of day", stating the point-in-time bound and the lateness bound as separate edges, naming the session's end of day as the origin every lateness figure is measured from, and recording that the fifteen were admitted at 260 minutes and repaired.
+Why:  The rule was superseded and its motivating case reversed, and this section still told an operator that the case had no repair. A runbook is what somebody reads at 07:00 with a broken night behind them, so a stale instruction here costs more than a stale sentence anywhere else in the corpus.
+
+### 2026-08-28 — RUNBOOK.md — cites A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+Was:  "**What the morning read cannot do is repair a stage that died part-way through its list**, and it is worth knowing that here rather than discovering it. A sector resolved this morning is invisible to last night's session, because every reader bounds on when the lookup was made."
+Now:  The same paragraph opening "What the morning read can and cannot repair", saying a sector resolved this morning is late rather than invisible, and naming the two conditions under which it is admitted.
+Why:  The second site in the file carrying the superseded rule, in the section an operator reads first. Swept in the same commit as the one above rather than left to be found later.
+
+### 2026-08-28 — RUNBOOK.md — cites A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+Was:  A `recheck` paragraph that named its refusals and its marks, and said nothing about the population the count it writes is taken over.
+Now:  The same, plus a paragraph stating that the count is taken over the night's whole scan population rather than over the rows being repaired, and that a scan name with no setup row is counted.
+Why:  A count taken over the repaired set would make every figure it produces an artefact of how many rows happened to be broken, and two of the fifteen came back failing at a cluster of one, which is the number that shape would produce. The property was true in the code and stated nowhere a reader would look.
+
+### 2026-08-28 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  "that bound is the session's own end of day: `2026-08-27T23:59:59.999Z` for the session of the 27th, which is 19:59:59 Eastern", and "a failure there leaves about an hour and three quarters before the first edge".
+Now:  "that bound is the last instant of the session's own day **in Eastern time**: `2026-08-28T03:59:59.999Z` for the session of the 27th, which is 23:59:59 Eastern", and "a failure there leaves five hours forty-eight before the first edge and a further day before the second, and those figures no longer move with the clock change".
+Why:  The bound was being built by appending `T23:59:59.999Z` to the session date, which closes an Eastern session at 19:59:59 Eastern in daylight time and 18:59:59 in standard time. The runbook stated the truncated figure as though it were the session's end. Both the instant and the window length change with the fix, and the window stops moving with the clock change.
+
+### 2026-08-28 — RUNBOOK.md — cites A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+Was:  "which is about six hours after the walk died and **260 minutes after that session's own end of day**", and "Had the rerun waited a further twenty hours".
+Now:  "which is 00:19 Eastern: about six hours after the walk died and **20 minutes after that session's own end of day**", and "Had the rerun waited a further day".
+Why:  260 minutes was measured from an end of day computed in UTC. Against the session's real end of day the same arrival is twenty minutes late. The figure was correct against the bound as it then stood and is corrected here in the same pass that corrected the bound, rather than left to disagree with the column.

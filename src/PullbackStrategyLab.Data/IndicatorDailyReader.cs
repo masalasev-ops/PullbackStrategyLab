@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Data;
 
 /// <summary>
@@ -97,7 +99,7 @@ public sealed class IndicatorDailyReader
         StoreText.StorageTextToPrice(reader.GetString(9)),
         reader.IsDBNull(10) ? null : reader.GetString(10));
 
-    private static string EndOf(DateOnly date) => StoreText.DateToStorageText(date) + "T23:59:59.999Z";
+    private static string EndOf(DateOnly date) => StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
 }
 
 /// <summary>

@@ -94,6 +94,7 @@ public sealed partial class ArchitectureConformanceCheck
         ["Variant sample never accumulates"] = "6.7",
         ["Follow-up date is a holiday"] = "3.2",
         ["A comparison has no control outcomes"] = "3.2",
+        ["A stage writes after the UTC date rolls"] = "3.8",
         ["Someone edits the baseline"] = "5.1",
     };
 
@@ -636,6 +637,37 @@ public sealed partial class ArchitectureConformanceCheck
     /// The two failure behaviours phase 1 built, asserted against the code that holds them
     /// rather than against the sentence that describes them.
     /// </summary>
+    /// <summary>
+    /// No shipped source builds a point-in-time bound by appending the UTC literal, and the one
+    /// function that does build one goes through the session zone.
+    ///
+    /// Both halves, because either alone passes over the defect. Finding
+    /// <c>StoreText.EndOfSession</c> proves a correct bound exists somewhere and not that the
+    /// twelve sites use it; finding no literal proves nothing if the helper itself grew one.
+    /// The behavioural half is <c>SessionBoundaryTests</c>, which asserts a row stamped 22:00
+    /// Eastern is inside its own session in January and in July and fails against the old
+    /// expression by construction.
+    /// </summary>
+    private static bool EveryBoundClosesTheSessionInItsOwnZone()
+    {
+        string storeText = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "StoreText.cs"));
+
+        if (!storeText.Contains("SessionBoundaries.EndOfSession(sessionDate, ianaZoneId)", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        // The literal appended to a date, rather than the literal mentioned. Prose about the defect
+        // is how the defect is explained and must not read as the defect, so both patterns include
+        // the concatenation or interpolation that makes it a bound.
+        string[] appended = ["+ \"T23:59:59.999Z\"", "}T23:59:59.999Z\""];
+
+        return !RepositoryLayout.ProductionSourceFiles
+            .Select(RepositoryLayout.Read)
+            .Any(source => appended.Any(p => source.Contains(p, StringComparison.Ordinal)));
+    }
+
     private static Claim AssertFailureBehaviour(string condition)
     {
         string engine = RepositoryLayout.Read(
@@ -676,6 +708,12 @@ public sealed partial class ArchitectureConformanceCheck
                     "ForwardReturnFiller reads control_setup as well as setup, binds each row's own subject kind rather than a literal, and the fixture carries a closed-horizon population whose control outcomes exist")
                 : Claim.Failed("Failure behaviour", condition,
                     "the fill no longer records an outcome for a control, so band 1's difference series is empty on every night and the panel is withheld for a cause that is not the one it names"),
+
+            "A stage writes after the UTC date rolls" => EveryBoundClosesTheSessionInItsOwnZone()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "every point-in-time bound is built by StoreText.EndOfSession through SessionBoundaries, and no shipped source appends the UTC literal")
+                : Claim.Failed("Failure behaviour", condition,
+                    "a bound is being built by appending T23:59:59.999Z to a session date again, which closes an Eastern session at 20:00 Eastern and moves the truncation with the clock change"),
 
             _ => Claim.NotExamined("Failure behaviour", condition,
                 "the checkpoint that builds it has landed and no assertion reads this row"),

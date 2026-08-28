@@ -75,6 +75,12 @@ public sealed partial class SetupJournalTests
 
     private const string CorrectableColumn = "check_results";
 
+    /// <summary>
+    /// How many statements in the correcting stage write that column: the correction and the
+    /// restore. Stated in advance, so a third has to say why it exists.
+    /// </summary>
+    private const int CorrectingStatements = 2;
+
     [Fact]
     public void No_update_against_a_detector_owned_column_exists_in_the_shipped_source()
     {
@@ -127,10 +133,15 @@ public sealed partial class SetupJournalTests
         Assert.True(offenders.Count == 0,
             $"{offenders.Count} update(s) touch a column the detector owns:\n  " + string.Join("\n  ", offenders));
 
-        // And the exemption is exercised, so it is not a permission granted to nothing. An exemption
-        // nobody uses reads as a rule with a hole in it rather than as one with a door, and it would
-        // survive the correcting stage being deleted.
-        Assert.Equal(1, exempted);
+        // And the exemption is exercised exactly as many times as the stage has operations against
+        // the column, so it is not a permission granted to nothing and not one that has quietly
+        // widened. An exemption nobody uses reads as a rule with a hole in it rather than as one
+        // with a door, and it would survive the correcting stage being deleted.
+        //
+        // Two: the correction writes the recomputed verdict, and the restore puts the prior text
+        // back. The restore is the same permission run backwards and belongs to the same writer,
+        // which is why it is counted here rather than exempted separately.
+        Assert.Equal(CorrectingStatements, exempted);
     }
 
     /// <summary>

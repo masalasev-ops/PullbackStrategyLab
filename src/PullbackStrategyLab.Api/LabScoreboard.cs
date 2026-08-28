@@ -1,6 +1,8 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Data;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Api;
 
 /// <summary>
@@ -56,7 +58,7 @@ public static class LabScoreboard
              ORDER BY panel, direction
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@computed_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
