@@ -5117,3 +5117,178 @@ Verdict:    **Phase 3 signs off, 3.0 through 3.5, with 3.6 parked.** Nothing fou
             shapes already recorded, because the fix is mechanical and the survey above names each
             instance, but it is the route by which phase 4's tables, endpoints and surfaces will arrive
             unguarded if nobody runs the second direction.
+
+## 3.8 — 2026-08-28 — phase-3-corrections — a slot script that discarded every stage's message, and a repair its own bound refused
+
+A correction pass taken after the phase signed off and before accumulation runs on. Not a
+reopening of 3.5: nothing here fails a done condition of a landed checkpoint or breaks a check
+that existed. It is a checkpoint of its own because the work has a deliverable, and it is in
+phase 3 because every one of its subjects is phase 3's own output.
+
+Verified:   `tools/ci.ps1` green on Windows, **27 steps, 434 tests**, up from 26 and 405.
+            `tools/verify-phase` **GREEN**: 118 claims, **68 passed, 0 failed, 50 out of scope, 0
+            unexamined**; coverage examined **3,932** with 0 unexamined; **1,288 expectations**, 759
+            `DERIVED` and 529 `FROZEN`, all matching, 0 differing and 0 missing. Inputs 68 `CAPTURED`
+            over **4 endpoints**, up from 3, and 94 `AUTHORED`.
+
+            Run twice, and the second run is the one reported, so the sign-off figures are against
+            the state being committed rather than against the state they were produced from. The
+            first run read 67 passed and 51 out of scope, because `CheckRecomputer`'s catalogue claim
+            was deferred to a checkpoint `PROGRESS.md` did not yet record; adding this entry landed
+            3.8 and the claim resolved to declared and registered. Coverage examined moved 3,931 to
+            3,932, the one being a citation this entry adds.
+
+            **The `fundamentals` endpoint now has a captured input, which closes one of the two live
+            instances the 3.7 sign-off named.** `fixture-inputs` counted three endpoints a live run
+            exercises where the client calls four, and the fourth was captured only by luck. It is
+            now captured deliberately, including the response that fails.
+
+            **121 `DERIVED` expectations added, which is done condition seven.** Every captured
+            `fundamentals` response is read through the real client at the transport, so the field
+            names, the number handling and the vendor's own absence words are exercised rather than
+            described. `tools/derive-indicators.py --fundamentals` restates the parse from the
+            vendor's document in Python, shares no code with the client, and agrees on all 31
+            names, including that `MUZ` is a name the vendor holds nothing on rather than a document
+            that will not parse.
+
+            **The check the slot script got was proved by removal.** With the invocation put back
+            where it was, `slot-diagnostics` reports two invocations of which one is inside the
+            isolating function, and fails. The behavioural half is a runner rather than a test, and
+            declared as one: whether Windows PowerShell wraps a native command's stderr is a property
+            of the interpreter, and no assertion about the text of a script can establish it.
+
+Built:      **(a) `tools/nightly.ps1` kept a failing stage's message and its exit code.** The script
+            set `$ErrorActionPreference = 'Stop'` and piped a native command through `2>&1`. Windows
+            PowerShell wraps each line a native command writes to stderr in a `NativeCommandError`
+            record, and under `Stop` the first one is terminating: the pipeline died before the line
+            that writes to the log ran, the slot unwound with nothing saying it had stopped, and
+            PowerShell's own exit code of 1 replaced the stage's. **Every stage had that property,
+            not one of them.** The application writes its diagnostic correctly, on stderr, and this
+            script was discarding it and then dying quietly.
+
+            The invocation now sits in `Invoke-Stage`, which sets `Continue` in its own scope and
+            nowhere else, and leaves the exit code in a script-scoped variable rather than returning
+            it, because `Write-Line` calls `Write-Output` and a returned value would arrive mixed
+            into the log lines.
+
+            **(b) One vendor call, captured rather than read.** `fundamentals/MUZ.US` answers **200**
+            with `{"General::Sector":"","General::Industry":"","Highlights::MarketCapitalization":"NA"}`.
+            Neither of the two candidates the investigation had left open: not a non-200 and not a
+            change in the vendor's shape. `JsonSerializerDefaults.Web` reads a number from a string,
+            so `"12481812480"` would have been fine and `"NA"` throws mid-deserialization.
+
+            The capture path could not have stored it before tonight, which is why nothing had.
+            `GetRawAsync` went through a read that refused a non-200 and returned no status at all,
+            so the fixture could hold thirty working `fundamentals` responses and no case where
+            anything could go wrong. It now records the status beside the body, the ordinary capture
+            refuses a non-200 for an endpoint captured as a working example, and a new
+            `capture-response` verb takes one response whatever the vendor answers.
+
+            **(c) `SectorResolver` skips a bad name instead of dying on it.** Counted, named on
+            stdout so (a) puts it in the night's log, and left unstamped so tomorrow asks again: a
+            refusal that happens once must not permanently record a good name as one the vendor has
+            nothing on. The catch names what the vendor can do and nothing else, so a failure that
+            is not the vendor still takes the stage down, because a store that will not accept a
+            write is not a condition the next ticker would survive either. The count goes in
+            `run_log.skipped`, migration 024, and a run that did not finish its list is `partial`.
+
+            **(d) The walk run to completion** against the live store for 2026-08-27.
+
+            **(e) A named decision, where there had been none.** A setup row is corrected only where
+            the correction uses no information the night did not have. Two conditions, both
+            asserted: inputs bounded to the setup's own date, and the row recording that it was
+            corrected with the date and the reason.
+
+            **(f) `CheckRecomputer`, verb `recheck`, and migration 025.** Given a date and a check it
+            recomputes from inputs bounded to that date and marks what it touched. It refuses any
+            check outside the recorded-not-required set before it reads a row, refuses a verdict that
+            already carries a number, and carries every other verdict through untouched.
+
+            **(g) The sectors slot runs the stage twice**, which is what makes the repair mostly
+            unnecessary. RUNBOOK carries the window, the deadline and the command.
+
+Measured:   **One sectors run had failed, not two, and 148 of its 149 calls were productive.**
+            `run_log` holds exactly one row before tonight: started `2026-08-27T22:12:03.201Z`, ended
+            23 seconds later, outcome `failed`, 149 calls, 0 rows. Every one of the 148 stamped
+            securities came back with sector, industry and market capitalisation, none null, all
+            stamped at the single instant the run began. **None of them predates the stage.** The
+            149th name was `MUZ`, and the stamped names are a contiguous prefix of the walk order.
+
+            **The stage threw rather than completing and writing nothing.** `outcome = failed` has
+            one source, which is `RunScope.Dispose` completing a scope nobody completed;
+            `ResolveAsync` can return only `Clean` or `Partial`. `RunAsync` prints its three summary
+            lines after `ResolveAsync` returns and printed none.
+
+            **The silence was the slot script and it was reproduced before anything was changed.** A
+            standalone script with the same two lines: the stdout line reached the log, the stderr
+            line became a `NativeCommandError`, the script aborted with no "exited N" line, and the
+            exit code came back **1 rather than 3**. Then against the real worker, on a copy of the
+            tree with no secrets file so `universe-build` throws `VendorException` before it reaches
+            the network: **both lines the defect lost are in the log** and the script exits with the
+            stage's own code.
+
+            **The walk to completion: 86 asked, 85 resolved, 1 the vendor had nothing on, 0 skipped,
+            clean, 86 calls.** Every one of that night's **234 scan names** now carries a sector.
+            Exactly one name in the store has a null sector, which is `MUZ` (`Tidal Trust II`),
+            stamped so it is never asked again, which is the true answer.
+
+            **The failures have nothing in common because there was one.** No universe-level filter
+            is warranted. `MUZ` is a fund trust and five fund-ish names among the first 148 resolved
+            normally, so security type is not the discriminator; what distinguishes it is that the
+            vendor holds no fundamentals for it, which the stage now records natively.
+
+            **The fifteen are not repairable and the reason is this checkpoint's own guard.** 15 of
+            the night's 44 setups carry `cluster` as failed with no value, and they are exactly the
+            15 whose ticker sorts after `MUZ`. Their industries now exist, resolved at
+            `2026-08-28T04:19:33.201Z`. The night's bound is `2026-08-27T23:59:59.999Z`, so the
+            information is **six hours too late**, and `recheck 2026-08-27 --check cluster` refuses
+            all fifteen by name with both instants and exits non-zero. That is the right outcome: a
+            decision whose first act is to exempt its own motivating case has no conditions on it.
+            **Those fifteen rows carry a null cluster verdict permanently.**
+
+            The denominators that matter, stated rather than the one that does not: sector coverage
+            was **148 of 234** of that night's scan names and **29 of 44** of its setups. 148 of
+            2,083 securities is not the population any stage reads, because the lookup is lazy and
+            only ever asks about names a scan surfaced.
+
+Found:      **The run log did record the failure, and the column a reader would look at cannot say
+            so.** The entry says `failed` with 149 calls, and `band0.degradedRuns` counts it. What is
+            uninformative is `rows_written = 0`: `RunScope` measures it as a row-count delta and
+            `sectors` only issues `UPDATE`, so a perfect run records 0 rows and so did the run that
+            died. Raised as an obligation rather than repaired, because the two available fixes each
+            break something stated.
+
+            **The rule this checkpoint amended existed in four places and none of them was a
+            decision.** Setup-row immutability lived in 3.1's done condition, one line of SCHEMA, a
+            migration header and a doc comment. `decision-resolves` could never have caught that,
+            because there was no name to resolve.
+
+            **Five tests failed on the new permission and each was a reconciliation rather than a
+            number to bump.** `ComponentReachabilityTests` matched dispatch arms against a list of
+            two constant names rather than against a shape, so a third was advertised, dispatched two
+            lines away, and read as unreachable. `SetupJournalTests` holds the interesting pair:
+            `check_results` is detector-owned and the correcting stage writes it, so the exemption is
+            by file and by column, both checked, and the test now asserts the exemption was
+            exercised, because an exemption nobody uses is a rule with a hole rather than one with a
+            door. `CheckProofTests` pins the workflow's whole job list by equality, which is what
+            makes a `Backing.Runner` naming a vanished job fail.
+
+            **`tools/ci.ps1` does not have this defect** and the reason is worth recording:
+            it sets the same preference and never merges the streams, so nothing is wrapped. The
+            defect belonged to the one script that merged them, which it did precisely because it
+            wanted both in the log.
+
+Carried:    **Two obligations raised, neither blocking, and both are decisions rather than repairs.**
+
+            `rows_written` measures the wrong thing rather than nothing on three update-only stages,
+            `sectors`, `clusters` and now `CheckRecomputer`. Due **4.1**, with the other band 0 item.
+
+            `security.sector_resolved_at` is when the lab asked and every reader treats it as when
+            the fact became true. That is what makes the fifteen unrepairable and it is the same
+            bound that made a 2024 calibration run see no capitalisation at 2.11, which was met by
+            exempting one clause by name rather than solved. Due at **the operator**: it decides
+            whether a night's evidence may ever be completed after the fact, and the conservative
+            answer, which is what the code does today, is the one in force.
+
+            **This session committed code and may not sign it off.** 3.8 is owed a fresh-session
+            review on the same terms as any other checkpoint.
