@@ -119,6 +119,14 @@ public sealed class CeilingCalculator
     /// ranges, and the two prices that convert between them from `indicator_daily`. Reading all four
     /// together here is what lets the conversion happen once, in
     /// <see cref="WinRateCeiling.Survived"/>, rather than at each call site.
+    ///
+    /// <b>A setup with no give-up distance is not in the population.</b> The column is nullable from
+    /// 031, and a setup whose geometry the detector could not compute has no stop, so there is no
+    /// trade for a ceiling to be a ceiling of. Excluded rather than judged as not having survived,
+    /// which is what `Survived` does with a subject it cannot measure: that treatment is right for a
+    /// subject whose volatility figures are missing and wrong for one that was never a trade, and
+    /// counting it as stopped out would push the bound down for a row that should not be in it.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
     /// </summary>
     private static IReadOnlyList<WinRateCeiling.Subject> Closed(
         SqliteConnection connection, string direction, DateOnly asOf, DateTimeOffset computedAt, string sessionZone)
@@ -144,6 +152,7 @@ public sealed class CeilingCalculator
                                      WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
                                        AND l.observed_at <= @end_of_day)
              WHERE s.direction = @direction AND s.as_of <= @as_of
+               AND s.stop_distance_ranges IS NOT NULL
              ORDER BY s.setup_id
             """;
         command.Parameters.AddWithValue("@direction", direction);
