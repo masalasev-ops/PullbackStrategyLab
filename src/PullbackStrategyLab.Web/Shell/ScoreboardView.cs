@@ -46,6 +46,8 @@ public sealed record PanelView(
         "band0.nightsRecorded" => "Nights recorded",
         "band0.degradedRuns" => "Degraded runs",
         "band0.setupsOnFile" => "Setups on file",
+        "band0.correctedRows" => "Corrected rows",
+        "band0.worstLatenessMinutes" => "Worst lateness, minutes",
         "band1.vsLoose" => "Against loose controls",
         "band1.vsTight" => "Against tight controls",
         "band2.ceilingGap" => "Ceiling gap",
@@ -64,6 +66,10 @@ public sealed record PanelView(
     {
         "band0.degradedRuns" =>
             "Reads red above 5% of the record, because excluded nights are not missing at random",
+        "band0.correctedRows" =>
+            "A correction is a repair the night could not make. Rising means an input stage is failing rather than that the record is improving",
+        "band0.worstLatenessMinutes" =>
+            "Measured from the session's own end of day. Approaching the lateness bound means a repair is close to being refused outright",
         "band1.vsLoose" =>
             "Measures the whole funnel, thrust scan included. Expected to be the larger of the two",
         "band1.vsTight" =>
@@ -88,8 +94,16 @@ public sealed record PanelView(
     /// Null where there is no interval, and null is not false: "no interval yet" and "the interval
     /// does not clear zero" are different sentences and only one of them is a finding.
     /// </summary>
+    /// <remarks>
+    /// TryParse rather than Parse, because Low is a TEXT column value carried through the read
+    /// surface unchanged and this runs during template render, after the response has begun. A
+    /// value this view did not write would have taken the page down mid-render instead of
+    /// degrading to the null path the property already has.
+    /// </remarks>
     public bool? ClearsZero =>
-        Low is null ? null : decimal.Parse(Low, CultureInfo.InvariantCulture) > 0m;
+        Low is not null && decimal.TryParse(Low, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal low)
+            ? low > 0m
+            : null;
 
     /// <summary>
     /// Which rows the figure was computed over, shown on every panel without exception.

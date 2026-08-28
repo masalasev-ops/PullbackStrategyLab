@@ -32,7 +32,14 @@ public sealed record PullbackStrategyLabOptions
     /// <summary>
     /// The hard ceiling on vendor calls in one day. The job counts as it goes and stops
     /// rather than overrunning, writing a partial run entry and marking the affected
-    /// setups degraded. About seven times expected nightly usage.
+    /// setups degraded.
+    ///
+    /// <b>Under twice expected nightly usage, not the seven times this comment claimed.</b>
+    /// A night is 2,803 calls and up to 4,003 when holidays fall inside the universe screen's
+    /// search window, because `universe-build` alone spends 2,005 and RUNBOOK priced it at 5
+    /// until 3.10. The margin is real but it is one bad week rather than a comfortable multiple,
+    /// and `daily-bars` runs after `universe`, so the stage that stops short on a full day is the
+    /// one that stores the night's bars.
     /// </summary>
     [Range(1, int.MaxValue)]
     public int DailyCallCeiling { get; init; } = 5000;

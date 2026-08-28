@@ -144,7 +144,13 @@ public sealed class LabChartTests : IDisposable
         Seed();
         ChartResponse chart = Read("TEST", sessions: 10_000);
 
-        Assert.Equal(LabChart.MaximumSessions, chart.Requested);
+        // What was served is bounded, and what was asked for is reported as it was asked. This used
+        // to assert Requested == MaximumSessions, which pinned in a response that could not say it
+        // had truncated: the page offered a 750-session window, the surface drew 500, and the field
+        // named Requested reported 500 as though that was the ask.
+        Assert.Equal(10_000, chart.Requested);
+        Assert.True(chart.Read <= LabChart.MaximumSessions + LabChart.WarmupSessions);
+        Assert.True(chart.Requested > chart.Read, "the response cannot say the window was cut.");
     }
 
     [Fact]

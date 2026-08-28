@@ -20,8 +20,15 @@ public sealed class ChartModel : ScreenModel
 
     public const int Height = 420;
 
-    /// <summary>The windows the page offers. A quarter, half a year, a year, three years.</summary>
-    public static IReadOnlyList<int> Windows { get; } = [60, 120, 250, 750];
+    /// <summary>
+    /// The windows the page offers. A quarter, half a year, a year, two years.
+    ///
+    /// The largest is what the read surface will serve. It offered 750 until 3.10, and the read
+    /// surface clamps at 500, so selecting three years drew two and nothing on the page or on the
+    /// wire said the window had been cut. A control that offers what the thing behind it refuses
+    /// is a control that lies to whoever uses it.
+    /// </summary>
+    public static IReadOnlyList<int> Windows { get; } = [60, 120, 250, 500];
 
     private readonly LabApiClient _api;
 

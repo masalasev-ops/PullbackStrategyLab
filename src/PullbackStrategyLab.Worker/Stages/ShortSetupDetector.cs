@@ -368,7 +368,14 @@ public sealed class ShortSetupDetector
             SessionsSinceThrust = sessionsSince,
             Bounce = bounce,
             ClosesBeyondFloor = closesBeyond,
-            DistanceToNearestAverageRanges = figures is null || dailyRange is not decimal ceilingRange
+            // The zero guard matches its sibling below and both long-side equivalents. dailyRange
+            // is null only when figures are absent or the average daily range is nought; it is 0m,
+            // not null, when the session's close is 0m, which Factor() already treats as a bar the
+            // vendor can send. Without the guard that bar threw DivideByZeroException on the short
+            // side and recorded a normal setup on the long, which is a mirror break rather than a
+            // stated asymmetry.
+            DistanceToNearestAverageRanges =
+                figures is null || dailyRange is not decimal ceilingRange || ceilingRange == 0m
                 ? null
                 : Math.Min(
                     Math.Abs(last.AdjustedClose - figures.EmaMedium),

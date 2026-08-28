@@ -50,6 +50,13 @@ public static class LabChart
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
 
         ticker = ticker.Trim().ToUpperInvariant();
+
+        // The ask is kept as it arrived and the clamp is applied separately, so the response can
+        // say it truncated. Requested used to be assigned the clamped value, which made a window
+        // of 750 come back as "requested 500, drawn 500" with nothing anywhere recording that the
+        // caller had asked for more. A field named Requested that reports what was served instead
+        // cannot report a truncation, and a test pinned that reading in.
+        int requested = sessions;
         sessions = Math.Clamp(sessions, 1, MaximumSessions);
 
         if (!connections.StoreExists)
@@ -104,7 +111,7 @@ public static class LabChart
         return new ChartResponse(
             ticker,
             asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            sessions,
+            requested,
             window.Count - drawnFrom,
             window.Count,
             [.. bars.Skip(drawnFrom)],

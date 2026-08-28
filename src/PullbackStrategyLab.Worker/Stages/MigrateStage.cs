@@ -32,9 +32,38 @@ public sealed class MigrateStage
         if (_connections.StoreExists)
         {
             SnapshotResult snapshot = _snapshot.Take();
+
+            // All three conditions, not just Taken.
+            //
+            // Taken is set for any completed VACUUM INTO, whatever the copy turned out to hold, so
+            // the guard proved a file had been written and not that it was usable. SnapshotStage's
+            // own Run already exits non-zero on `Complete && Integrity == "ok"` and this did not,
+            // which meant the one operation that can lose a store in a way no later run recovers
+            // from was proceeding on an unverified backup. A short disk or a corrupt page produces
+            // a file, an integrity check that answers something other than ok, and mismatched row
+            // counts, and none of the three stopped the migration.
             if (!snapshot.Taken)
             {
                 Console.Error.WriteLine("migrate: refusing to run without a successful snapshot.");
+                return 1;
+            }
+
+            if (!string.Equals(snapshot.Integrity, "ok", StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine(
+                    $"migrate: refusing to run. The snapshot at {snapshot.SnapshotFile} answered "
+                    + $"PRAGMA integrity_check with \"{snapshot.Integrity}\", so it is not a copy anything "
+                    + "could be restored from.");
+                return 1;
+            }
+
+            if (!snapshot.Complete)
+            {
+                string[] short_ = [.. snapshot.Counts.Where(c => !c.Matches).Select(c => c.ToString())];
+                Console.Error.WriteLine(
+                    $"migrate: refusing to run. The snapshot at {snapshot.SnapshotFile} does not hold every "
+                    + $"row the store does, in {short_.Length} table(s): {string.Join(", ", short_)}. An "
+                    + "integrity check proves the file is not corrupt, not that it is complete.");
                 return 1;
             }
 
