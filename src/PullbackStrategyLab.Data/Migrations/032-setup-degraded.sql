@@ -1,0 +1,34 @@
+-- 032  a setup records the night's incomplete stages
+--
+-- The vendor-ceiling rule has three clauses: "A stage stops rather than overrunning, writes a
+-- partial run entry, and marks the affected setups degraded." The first two hold. The third
+-- had no column anywhere in the store, no entry in SCHEMA, and nothing in the source but a
+-- doc comment on RunOutcome.Partial saying "The affected setups are degraded."
+--
+-- What it costs to leave it out: `sectors` stops at the ceiling with forty names unresolved,
+-- `clusters` runs three minutes later and records a cluster verdict of failed-with-no-value
+-- for every setup on those names, and nothing on those rows says the night was short of an
+-- input. Setup rows are immutable, so they can never be improved, and a later analysis has no
+-- way to exclude them without knowing to go and read the run log for that date.
+--
+-- That is the same need the correction mark was added for at 3.8, and SCHEMA's reason there
+-- applies unchanged: a later reader has to be able to exclude the affected rows without
+-- knowing the failure happened, which is why the mark is a condition of the permission rather
+-- than a note beside it.
+--
+-- <b>Null is not the same as empty.</b> Null means no stage of that session had ended other
+-- than cleanly when the setup was written, which is the ordinary night. A value is the stage
+-- names, comma separated, so a reader sees which input was short rather than only that
+-- something was.
+--
+-- Scoped to the inputs the flagging rested on, which is every run of the setup's own session
+-- that had already ended when the detector wrote the row. A stage that stops short after the
+-- detectors, such as `forward-returns` at 21:30, does not affect what was flagged; it affects
+-- what was measured, and forward_return is its own record with its own stamp.
+--
+-- calibration_setup does not get the column. A calibration run reconstructs against current
+-- membership and its rows go to a table nothing downstream reads, so there is no later reader
+-- to protect.
+-- see: The evidence store holds only setups flagged forward, never setups reconstructed from history
+
+ALTER TABLE setup ADD COLUMN degraded_because TEXT NULL;

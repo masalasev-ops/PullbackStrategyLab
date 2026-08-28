@@ -346,6 +346,7 @@ public sealed class LabApiClient
         s.StopDistanceRanges,
         s.Agreement,
         s.AgreementNote,
+        s.DegradedBecause,
         [.. s.Checks.Select(c => new SetupCheckRowView(c.Name, c.Passed, c.Value, c.Note))],
         [.. s.Candles.Select(c => new Candle(
             DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
@@ -383,6 +384,7 @@ public sealed class LabApiClient
         decimal? StopDistanceRanges,
         string? Agreement,
         string? AgreementNote,
+        string? DegradedBecause,
         IReadOnlyList<SetupCheckPayload> Checks,
         IReadOnlyList<SetupCandlePayload> Candles);
 

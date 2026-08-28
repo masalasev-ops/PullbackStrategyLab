@@ -184,6 +184,7 @@ public sealed class LabSetups
             setup.StopDistanceRanges,
             setup.Agreement,
             setup.AgreementNote,
+            setup.DegradedBecause,
             [.. checks.Select(c => new SetupCheckView(c.Name, c.Passed, c.Value, c.Note))],
             candles);
     }
@@ -221,6 +222,7 @@ public sealed record SetupView(
     decimal? StopDistanceRanges,
     string? Agreement,
     string? AgreementNote,
+    string? DegradedBecause,
     IReadOnlyList<SetupCheckView> Checks,
     IReadOnlyList<SetupCandle> Candles);
 

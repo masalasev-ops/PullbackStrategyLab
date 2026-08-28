@@ -49,11 +49,19 @@ public sealed class SetupReader
         ArgumentNullException.ThrowIfNull(connection);
         SqliteIdentifier.Validate(table);
 
+        // The evidence table carries the night's incomplete inputs and the calibration table does
+        // not, so the column is selected by name for one and as NULL for the other rather than the
+        // two reads being split into two methods that would then drift. The value is a constant
+        // chosen by comparing against a constant, so nothing from outside reaches the statement.
+        string degraded = string.Equals(table, SetupTable, StringComparison.Ordinal)
+            ? "degraded_because"
+            : "NULL";
+
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT setup_id, as_of, ticker, direction, check_results, passed_all,
                    rank, capped_out, trigger_price, stop_price, stop_distance_ranges,
-                   agreement, agreement_note
+                   agreement, agreement_note, {degraded}
               FROM {table}
              WHERE as_of = @as_of
              ORDER BY direction, ticker
@@ -79,7 +87,8 @@ public sealed class SetupReader
                 reader.IsDBNull(9) ? null : StoreText.StorageTextToPrice(reader.GetString(9)),
                 reader.IsDBNull(10) ? null : StoreText.StorageTextToRatio(reader.GetString(10)),
                 reader.IsDBNull(11) ? null : reader.GetString(11),
-                reader.IsDBNull(12) ? null : reader.GetString(12)));
+                reader.IsDBNull(12) ? null : reader.GetString(12),
+                reader.IsDBNull(13) ? null : reader.GetString(13)));
         }
 
         return setups;
@@ -100,4 +109,5 @@ public sealed record StoredSetup(
     decimal? StopPrice,
     decimal? StopDistanceRanges,
     string? Agreement,
-    string? AgreementNote);
+    string? AgreementNote,
+    string? DegradedBecause);

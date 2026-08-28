@@ -234,6 +234,7 @@ Grain: date + ticker + direction. **Rows are immutable after write, except by a 
 | `agreement_note` | TEXT NULL | |
 | `thrust_scan` | TEXT NULL | which of the six scans produced the thrust this setup was measured against |
 | `thrust_session` | TEXT NULL | the session that scan flagged |
+| `degraded_because` | TEXT NULL | which stages of this setup's own session had already ended other than cleanly when the row was written, comma separated. Null on an ordinary night. The third clause of the vendor-ceiling rule, which had no column until migration 032 |
 | `corrected_at` | TEXT NULL | when a check verdict on this row was recomputed. Null on a row nothing has corrected |
 | `corrected_because` | TEXT NULL | why, naming the check and the stage that failed on the night |
 | `correction_lateness_minutes` | INTEGER NULL | how far past the session's own end of day the latest input the correction used arrived. Zero where every input was inside the session's own day |

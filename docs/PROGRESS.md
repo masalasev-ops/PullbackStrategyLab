@@ -6068,3 +6068,91 @@ Carried:    **The seven landed checkpoints that contributed no fixture expectati
             phase 4 planning.
 
             **This session committed code and may not sign it off.**
+
+## 3.11 — 2026-08-28 — phase-3-verification-repair — the findings 3.10 recorded and did not start
+
+3.10 closed the checks and listed seven findings it had not touched. Five are done here, in the
+order the harm runs rather than the order they were found. The two left are named at the end with
+what each is waiting on.
+
+Built:      **The trade geometry, able to say it is absent.** `trigger_price`, `stop_price` and
+            `stop_distance_ranges` were `TEXT NOT NULL`, so a setup whose geometry the detector could
+            not compute had nowhere to record that. The detector wrote nought, `SignalVectorizer`
+            froze the nought into `setup_signal`, which is written once and never updated, and the
+            gallery rendered a trade whose give-up was nothing. Migration 031 rebuilds `setup` and
+            `calibration_setup` with the three columns nullable, the detectors write `DBNull` through
+            one named helper, and the card renders **not set** with the unit suppressed.
+
+            **The third clause of the vendor-ceiling rule.** "A stage stops rather than overrunning,
+            writes a partial run entry, **and marks the affected setups degraded**." The first two
+            held from 1.4. The third had no column anywhere, no entry in SCHEMA and nothing in the
+            source but a doc comment on `RunOutcome.Partial`. Migration 032 adds
+            `setup.degraded_because`, `RunLogger.DegradedBecause` reads the session's own evening in
+            the session zone, both detectors write it at insert, and the gallery states it once above
+            both sides rather than on forty-four cards.
+
+            **The status band reading the night rather than the row.** `LabStatus` ordered `run_log`
+            by `started_at` and took one row, so a `daily-bars` that stopped on the ceiling at 20:10
+            and wrote `partial` was replaced on screen by a `vectorize` that finished clean at 22:40.
+            It now takes the most recent session and, within it, the worst outcome any stage reached.
+
+            **The decile's own denominator.** `ScoreboardBuilder` divided a per-direction rank by the
+            pooled sixty, so long ranks 1 to 40 landed in deciles 1 to 7 and short ranks 1 to 20 in
+            deciles 1 to 4, and `band2.decile5` through `decile10` did not exist on the short side at
+            all. The denominator is the direction's own allocation.
+
+            **`CeilingCalculator`, which had no tests at all.**
+
+Measured:   **The fixture already held the defect and had frozen it as an expectation.**
+            `2026-08-24-INTC-short` records `bounce-shape` failed with "0 bar(s)" and `exit-tight`
+            failed with **value null** and the note "no stop or no daily range for the session". The
+            frozen signal for the same setup on the same night said `stop_distance_ranges = 0.0000`,
+            and `expectations.json` asserted that `0.0000`. The instrument said absent and the
+            immutable evidence said zero, on one row, from one stage, on one night. **One of the
+            fixture's three setups** carries a degenerate geometry.
+
+            **Five defects were found by writing the tests rather than by reading the code.** The
+            first draft of migration 031 dropped `thrust_scan` and `thrust_session`, which the
+            row-survival test now asserts column by column. `CeilingCalculator.Closed` read
+            `stop_distance_ranges` with `GetString`, which throws on the null 031 makes possible, and
+            a setup with no give-up distance has no trade for a ceiling to be a ceiling of, so it is
+            excluded from the population rather than judged as stopped out. `SetupCapper` took the
+            same value unguarded. `point-in-time` reconciled a rebuild's intermediate table under its
+            working name, which three hand-written exemptions had been standing in for and a fourth
+            would have been owed here. And `PhaseReportStage` counted a **voided** expectation as a
+            failing one where `fixture-replay` had always excluded it, so the check went green and
+            the report reading the same file went red.
+
+Verified:   `tools/ci.ps1` green, **27 steps**. `tools/verify-phase` green. **504 tests**, up from
+            487. **1,296 expectations**, one of them now void and reported as void. **125 claims, 75
+            passed, 0 failed, 50 out of scope, 0 unexamined.** Coverage examined **4,318**.
+
+            **Three expectations moved and 3.11 carries two `DERIVED` ones.** The
+            `stop_distance_ranges` expectation is **voided** rather than edited, because its subject
+            is gone rather than changed. `signals.absent` 0 to 1 and `signals.frozen` 99 to 98 are
+            re-derived by hand from the fixture's own three setups and then run.
+
+            **Every repair was proved red before green** by reverting the code it reads: the
+            vectorizer against the flattening, the status band against the old query, the ceiling
+            against the absolute-value sign trap that shipped and was found by reading at 3.5.
+
+Carried:    **Two of the seven are not started, and neither is a defect in the code.**
+
+            `ForwardDispersion` pools the cross-sectional variance of every name with history, and
+            the 262 it produces is the bar for the effective count of **flagged setup** paired
+            differences, which have cleared `moves-enough` at ADR at or above 5%. Since *n* goes as
+            sigma squared, understating the dispersion understates the minimum. The arithmetic
+            reproduces exactly; the input is measured over the wrong rows. Changing it moves the
+            number 3.6 turns on, so it is a ruling rather than a repair.
+
+            `held-floor` and `no-reclaim` compare every pullback bar against the **as-of session's**
+            average rather than each bar's own. ARCHITECTURE says "No daily close below the 21-day
+            average during the dip", the average is a series, and the chart draws it as a line, so a
+            bar above its own session's average and below today's is dropped while the chart shows it
+            above the line. Changing it moves what the detectors flag, which moves every count in
+            phase 3's record.
+
+            Both are recorded as obligations rather than left in a review, and both are due before
+            phase 4 planning.
+
+            **This session committed code and may not sign it off.**

@@ -348,3 +348,19 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
     color: var(--ink3);
     line-height: 1.35;
 }
+
+/*
+  A night short of an input says so above both sides, at the weight of the sentence it is.
+  The caveat that was styled quieter than the reading it qualified is the defect this corpus
+  found at 3.7, so this one is not the smallest thing on the page.
+*/
+.lede + .degraded,
+.degraded {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--warn, #9a6b00);
+    background: var(--panel-2, #f3efe4);
+    color: var(--ink, #1c1a15);
+    font-size: 14px;
+    line-height: 1.5;
+}

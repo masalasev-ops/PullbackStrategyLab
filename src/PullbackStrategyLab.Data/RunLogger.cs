@@ -136,6 +136,68 @@ public sealed class RunLogger
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// The stages of one session that had already ended other than cleanly, in the order they ran.
+    ///
+    /// What a detector writes into <c>setup.degraded_because</c>, which is the third clause of the
+    /// vendor-ceiling rule: a stage stops rather than overrunning, writes a partial run entry, and
+    /// marks the affected setups degraded. The first two held from 1.4 and the third had no column
+    /// anywhere until 032.
+    ///
+    /// Bounded to the session's own day in the session zone, so a night is the night rather than a
+    /// UTC date that splits it. The budget read above is bounded on the UTC date instead, and the
+    /// two are deliberately different: the ceiling is a fact about the vendor's quota day and this
+    /// is a fact about the lab's session.
+    ///
+    /// Only runs that have ended. A stage still running has not failed, and the detector asking is
+    /// itself an unended run, so an unbounded read would have every night report itself degraded.
+    /// see: Averages are computed locally, never through the vendor's technical endpoint
+    /// </summary>
+    public static IReadOnlyList<string> IncompleteStagesOf(
+        SqliteConnection connection, DateOnly session, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionZone);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT stage
+              FROM run_log
+             WHERE ended_at IS NOT NULL
+               AND outcome <> 'clean'
+               AND started_at >= @start_of_day
+               AND started_at <= @end_of_day
+             ORDER BY stage;
+            """;
+
+        command.Parameters.AddWithValue(
+            "@start_of_day", StoreText.TimestampToStorageText(SessionBoundaries.At(session, TimeOnly.MinValue, sessionZone)));
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(session, sessionZone));
+
+        var stages = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            stages.Add(reader.GetString(0));
+        }
+
+        return stages;
+    }
+
+    /// <summary>
+    /// What a setup row records about the night's inputs, or null on an ordinary night.
+    ///
+    /// Null rather than an empty string, because "no stage of this session ended other than
+    /// cleanly" and "this column was never written" would otherwise be the same value.
+    /// </summary>
+    public static string? DegradedBecause(
+        SqliteConnection connection, DateOnly session, string sessionZone)
+    {
+        IReadOnlyList<string> stages = IncompleteStagesOf(connection, session, sessionZone);
+        return stages.Count == 0 ? null : string.Join(", ", stages);
+    }
+
     internal static int CountRows(SqliteConnection connection, string table)
     {
         SqliteIdentifier.Validate(table);

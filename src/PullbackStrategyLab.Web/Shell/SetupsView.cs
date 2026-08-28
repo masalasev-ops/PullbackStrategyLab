@@ -27,6 +27,37 @@ public sealed record SetupsView(
     /// <summary>How many the filter left, both sides added up. A count of cards, not of figures.</summary>
     public int Shown => Long.Count + Short.Count;
 
+    /// <summary>
+    /// Which stages of this night had already ended other than cleanly when its setups were
+    /// written, or null on an ordinary night.
+    ///
+    /// The third clause of the vendor-ceiling rule reaches the screen here. Every setup of a
+    /// session carries the same mark, because the question is about the night rather than about
+    /// the name, so the page states it once above both sides rather than on forty-four cards.
+    ///
+    /// Read from the cards rather than counted, so a night in which some rows carry a mark and
+    /// others do not would show every distinct value rather than the first. That should not
+    /// happen, and a surface that quietly showed one of two answers is how it would stay hidden.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
+    /// </summary>
+    public string? DegradedBecause
+    {
+        get
+        {
+            string[] marks =
+            [
+                .. Long.Concat(Short)
+                    .Select(c => c.DegradedBecause)
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .Select(m => m!)
+                    .Distinct(StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal),
+            ];
+
+            return marks.Length == 0 ? null : string.Join("; ", marks);
+        }
+    }
+
     public bool HasSetups => Shown > 0;
 }
 
@@ -50,6 +81,7 @@ public sealed record SetupCardView(
     decimal? StopDistanceRanges,
     string? Agreement,
     string? AgreementNote,
+    string? DegradedBecause,
     IReadOnlyList<SetupCheckRowView> Checks,
     IReadOnlyList<Candle> Candles)
 {

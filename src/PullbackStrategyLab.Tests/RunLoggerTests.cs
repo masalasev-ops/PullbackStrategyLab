@@ -181,4 +181,58 @@ public sealed class RunLoggerTests : IDisposable
         object? value = command.ExecuteScalar();
         return value is DBNull ? null : value;
     }
+
+    [Fact]
+    public void A_night_with_a_stage_that_stopped_short_names_it_and_an_ordinary_night_names_nothing()
+    {
+        var session = new DateOnly(2026, 8, 27);
+        const string Zone = "America/New_York";
+
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        // Two stages of the session's own evening, one of which stopped short of the ceiling.
+        // 22:10Z is 18:10 Eastern, which is inside the session's own day in its own zone and is
+        // the previous day in UTC, so a read bounded on the UTC date would miss both.
+        Insert(connection, "daily-bars", "2026-08-27T22:10:00.000Z", "2026-08-27T22:12:00.000Z", "partial");
+        Insert(connection, "indicators", "2026-08-27T23:00:00.000Z", "2026-08-27T23:04:00.000Z", "clean");
+
+        Assert.Equal("daily-bars", RunLogger.DegradedBecause(connection, session, Zone));
+
+        // The other direction: a night in which nothing stopped short is null rather than empty,
+        // because "no stage ended other than cleanly" and "this was never written" would otherwise
+        // be the same value on the row.
+        Assert.Null(RunLogger.DegradedBecause(connection, new DateOnly(2026, 8, 26), Zone));
+    }
+
+    [Fact]
+    public void A_stage_still_running_has_not_failed()
+    {
+        var session = new DateOnly(2026, 8, 27);
+        const string Zone = "America/New_York";
+
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        // An unended run. The detector asking this question is itself one, so a read that counted
+        // unended runs would have every night report itself degraded.
+        Insert(connection, "sectors", "2026-08-27T22:10:00.000Z", null, "partial");
+
+        Assert.Null(RunLogger.DegradedBecause(connection, session, Zone));
+    }
+
+    private static void Insert(
+        SqliteConnection connection, string stage, string startedAt, string? endedAt, string outcome)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO run_log (run_id, stage, started_at, ended_at, outcome, calls_used, rows_written, counts_against_ceiling)
+            VALUES (@id, @stage, @started_at, @ended_at, @outcome, 0, 0, 1);
+            """;
+        command.Parameters.AddWithValue("@id", Guid.NewGuid().ToString("n"));
+        command.Parameters.AddWithValue("@stage", stage);
+        command.Parameters.AddWithValue("@started_at", startedAt);
+        command.Parameters.AddWithValue("@ended_at", (object?)endedAt ?? DBNull.Value);
+        command.Parameters.AddWithValue("@outcome", outcome);
+        command.ExecuteNonQuery();
+    }
+
 }

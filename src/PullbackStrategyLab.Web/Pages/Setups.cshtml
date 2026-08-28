@@ -52,6 +52,16 @@ else
         <kbd>A</kbd> agrees with the selected setup and <kbd>D</kbd> disagrees.
     </p>
 
+    @if (Model.Setups.DegradedBecause is not null)
+    {
+        <p class="degraded">
+            <b>This night was short of an input.</b> @Model.Setups.DegradedBecause did not complete
+            cleanly before these setups were written, so their evidence rests on less than a full
+            night. Setup rows are immutable and cannot be improved afterwards, which is why the
+            night says so here rather than leaving it to be found in the run log.
+        </p>
+    }
+
     @foreach (var side in new[]
     {
         ("Long", Model.Setups.Long),

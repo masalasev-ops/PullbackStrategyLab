@@ -59,7 +59,8 @@ public sealed class PhaseReportStage
         File.WriteAllText(Path.Combine(artifacts, "phase-report.json"), JsonSerializer.Serialize(report, Json));
         File.WriteAllText(Path.Combine(artifacts, "phase-report.html"), Html(report));
 
-        Console.WriteLine($"{Name}: phase {report.Phase}, {report.Claims.Total} claim(s), {report.Expectations.Total} expectation(s)");
+        Console.WriteLine($"{Name}: phase {report.Phase}, {report.Claims.Total} claim(s), {report.Expectations.Total} expectation(s)"
+            + (report.Expectations.Voided > 0 ? $", {report.Expectations.Voided} of them void" : string.Empty));
         Console.WriteLine($"{Name}: {report.Claims.Passed} passed, {report.Claims.Failed} failed, {report.Claims.OutOfScope} out of scope, {report.Claims.Unexamined} unexamined");
         Console.WriteLine($"{Name}: coverage examined {report.Coverage.Sum(c => c.Examined)}, unexamined {report.Coverage.Sum(c => c.Unexamined)}");
         Console.WriteLine($"{Name}: inputs {string.Join(", ", (report.Inputs?.Tiers ?? []).Select(t => $"{t.Tier} {t.Count}"))}");
@@ -162,10 +163,17 @@ public sealed class PhaseReportStage
             conformance?.Deferred ?? 0,
             conformance?.Unexamined ?? 0);
 
+        // A voided row is neither matched nor differed, and counting it as differed is what turned
+        // this report red at 3.11 over an expectation whose subject had deliberately been removed.
+        // `fixture-replay` has always excluded void from its failures, so the check was green and
+        // the report that reads the same file was not: two counts of the same rows, disagreeing.
+        // Counted separately rather than folded into matched, because a fixture quietly voiding its
+        // way to green is the failure the tier machinery exists to make visible.
         var expectations = new FixtureSummary(
             fixture?.Rows.Count ?? 0,
             fixture?.Rows.Count(r => r.Verdict == "matched") ?? 0,
-            fixture?.Rows.Count(r => r.Verdict != "matched") ?? 0,
+            fixture?.Rows.Count(r => r.Verdict is not ("matched" or "void")) ?? 0,
+            fixture?.Rows.Count(r => r.Verdict == "void") ?? 0,
             fixture?.ByTier ?? [],
             fixture?.Unexpected ?? []);
 
@@ -658,6 +666,7 @@ public sealed class PhaseReportStage
         int Total,
         int Matched,
         int Differed,
+        int Voided,
         IReadOnlyList<TierBreakdown> ByTier,
         IReadOnlyList<string> Unexpected);
 

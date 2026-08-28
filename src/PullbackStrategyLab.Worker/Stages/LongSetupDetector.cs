@@ -228,6 +228,14 @@ public sealed class LongSetupDetector
         int belowFloor = 0;
         int errored = 0;
 
+        // The night's incomplete inputs, read once for the whole walk. Every setup of a session
+        // carries the same mark, because the question it answers is about the night rather than
+        // about the name. Only for the evidence table: a calibration run reconstructs against
+        // current membership and its rows go where nothing downstream reads them.
+        string? degradedBecause = string.Equals(table, SetupReader.SetupTable, StringComparison.Ordinal)
+            ? RunLogger.DegradedBecause(connection, asOf, _options.SessionZone)
+            : null;
+
         using SqliteTransaction transaction = connection.BeginTransaction();
 
         foreach (string ticker in members)
@@ -267,7 +275,7 @@ public sealed class LongSetupDetector
                 passedAll++;
             }
 
-            recorded += Insert(connection, transaction, table, ticker, asOf, results, all, evidence);
+            recorded += Insert(connection, transaction, table, ticker, asOf, results, all, evidence, degradedBecause);
         }
 
         transaction.Commit();
@@ -458,7 +466,8 @@ public sealed class LongSetupDetector
         DateOnly asOf,
         IReadOnlyList<CheckResult> results,
         bool passedAll,
-        LongPullbackRules.LongEvidence evidence)
+        LongPullbackRules.LongEvidence evidence,
+        string? degradedBecause)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -483,10 +492,10 @@ public sealed class LongSetupDetector
               INSERT INTO setup
                   (setup_id, as_of, ticker, direction, check_results, passed_all,
                    trigger_price, stop_price, stop_distance_ranges,
-                   thrust_scan, thrust_session)
+                   thrust_scan, thrust_session, degraded_because)
               VALUES (@setup_id, @as_of, @ticker, @direction, @check_results, @passed_all,
                       @trigger_price, @stop_price, @stop_distance_ranges,
-                      @thrust_scan, @thrust_session)
+                      @thrust_scan, @thrust_session, @degraded_because)
               ON CONFLICT (setup_id) DO NOTHING
               """;
 
@@ -509,6 +518,11 @@ public sealed class LongSetupDetector
         // Null rather than an empty string where the thrust could not be resolved. A name with
         // no hit is a real state, and a column that says "" for it cannot be told apart from a
         // scan whose name went missing.
+        // The night's incomplete inputs, which is the third clause of the vendor-ceiling rule and
+        // had no column until 032. Null on an ordinary night; the stage names where a stage of this
+        // session had already ended other than cleanly when this row was written.
+        command.Parameters.AddWithValue("@degraded_because", (object?)degradedBecause ?? DBNull.Value);
+
         command.Parameters.AddWithValue("@thrust_scan", (object?)evidence.ThrustScan ?? DBNull.Value);
         command.Parameters.AddWithValue(
             "@thrust_session",
