@@ -213,7 +213,7 @@ Insert RegimeLabeler
 ## Setups
 
 ### `setup`
-Grain: date + ticker + direction. **Immutable after write, except by a correction that uses no information the night did not have.** The spine of the whole system (see: A setup row is corrected only where the correction uses no information the night did not have).
+Grain: date + ticker + direction. **Rows are immutable after write, except by a correction the lateness bound admits.** The spine of the whole system (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound).
 
 | Column | Type | Note |
 |---|---|---|
@@ -233,8 +233,9 @@ Grain: date + ticker + direction. **Immutable after write, except by a correctio
 | `thrust_session` | TEXT NULL | the session that scan flagged |
 | `corrected_at` | TEXT NULL | when a check verdict on this row was recomputed. Null on a row nothing has corrected |
 | `corrected_because` | TEXT NULL | why, naming the check and the stage that failed on the night |
+| `correction_lateness_minutes` | INTEGER NULL | how far past the session's own end of day the latest input the correction used arrived. Zero where every input was inside the session's own day |
 
-Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record) · Update CheckRecomputer (`check_results`, `corrected_at`, `corrected_because`, and only for a check the baseline records without requiring)
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record) · Update CheckRecomputer (`check_results`, `corrected_at`, `corrected_because`, `correction_lateness_minutes`, and only for a check the baseline records without requiring)
 
 *Two detectors write this table on disjoint rows rather than disjoint columns. A test asserts neither ever writes a row of the other's direction.*
 

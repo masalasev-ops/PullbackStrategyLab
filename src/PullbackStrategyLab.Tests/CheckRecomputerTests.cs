@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Tests;
 /// A setup row is corrected only where the correction uses no information the night did not have.
 /// Both halves are asserted here rather than trusted, and the bound is the half that matters: it is
 /// the one a repair is tempted to relax, because relaxing it is exactly what makes the repair work.
-/// see: A setup row is corrected only where the correction uses no information the night did not have
+/// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
 /// </summary>
 public sealed class CheckRecomputerTests : IDisposable
 {

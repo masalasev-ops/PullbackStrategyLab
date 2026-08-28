@@ -2,8 +2,8 @@
 --
 -- The spine of the whole system, and the two tables that sit either side of it.
 --
--- `setup` is immutable after write in the sense that matters: the detector's own columns are
--- never revisited. SCHEMA declares two later updates on columns the detector does not own,
+-- `setup` holds rows immutable after write, except by a correction the lateness bound admits, in the sense that
+-- matters: the detector's own columns are never revisited by anything improving a plan. SCHEMA declares two later updates on columns the detector does not own,
 -- SetupCapper on rank and capped_out and the setup inspector on the two agreement columns, and
 -- those are the only writes any component makes after the row exists.
 --

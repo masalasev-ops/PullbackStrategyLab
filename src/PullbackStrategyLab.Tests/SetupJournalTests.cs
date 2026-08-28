@@ -5,7 +5,7 @@ using Xunit;
 namespace PullbackStrategyLab.Tests;
 
 /// <summary>
-/// A setup row is immutable after write, asserted four ways.
+/// A setup row is immutable after write, except by a correction the lateness bound admits, asserted four ways.
 ///
 /// <b>Four rather than one, because each covers a different way the property dies.</b> The pattern
 /// is 2.2's, for the frozen signal row, and it is repeated here because the subject is the same
@@ -29,7 +29,7 @@ namespace PullbackStrategyLab.Tests;
 /// that: nothing about the outcome is known and the repair uses only what existed on the night. So
 /// the exemption is by file and by column, both checked, and the conditions on the permission
 /// itself are behavioural and live in CheckRecomputerTests.
-/// see: A setup row is corrected only where the correction uses no information the night did not have
+/// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
 /// </summary>
 public sealed partial class SetupJournalTests
 {
@@ -67,7 +67,7 @@ public sealed partial class SetupJournalTests
     /// conditions on that permission are behavioural and are asserted in CheckRecomputerTests. What
     /// is asserted here is the boundary: that no other file has the permission, and that this one
     /// does not reach past `check_results` to a price, a size or `passed_all`.
-    /// see: A setup row is corrected only where the correction uses no information the night did not have
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     private const string CorrectionFile = "src/PullbackStrategyLab.Worker/Stages/CheckRecomputer.cs";
 

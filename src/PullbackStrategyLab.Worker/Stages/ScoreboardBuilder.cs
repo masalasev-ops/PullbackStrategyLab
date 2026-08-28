@@ -125,11 +125,21 @@ public sealed class ScoreboardBuilder
     }
 
     /// <summary>
-    /// Band 0. Account-wide, so no direction: nights recorded, degraded runs, setups on file.
+    /// Band 0. Account-wide, so no direction: nights recorded, degraded runs, setups on file, and
+    /// how much of the population rests on an answer that arrived late.
     ///
     /// <b>It reads red when degraded nights exceed 5% of the record</b>, because excluded nights are
     /// not missing at random: a night the lab lost is more likely to be a night something unusual
     /// happened, and a series with those quietly absent flatters every figure below it.
+    ///
+    /// <b>The corrections panel is the reader the correction mark needed.</b> The superseded rule
+    /// recorded a mark "so a later reader can exclude corrected rows" and shipped with a guard that
+    /// made corrected rows impossible, so the mark had neither a producer nor a consumer: a claim
+    /// about a surface, asserted against a store. This is the surface. A reader who wants to know how
+    /// much of a figure rests on a late answer can see the count and the worst lateness here rather
+    /// than deriving it, and a corpus in which corrections became common would say so on the page
+    /// rather than in a column nobody queries.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     private static IReadOnlyList<Panel> Health(SqliteConnection connection, DateOnly asOf)
     {
@@ -140,11 +150,25 @@ public sealed class ScoreboardBuilder
             asOf);
         int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf);
 
+        int corrected = Count(
+            connection,
+            "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of AND corrected_at IS NOT NULL",
+            asOf);
+
+        // The worst lateness rather than the mean, because the question a bound invites is how close
+        // anything came to it, and a mean over mostly-zero rows answers a different one.
+        int worstLateness = Count(
+            connection,
+            "SELECT COALESCE(MAX(correction_lateness_minutes), 0) FROM setup WHERE as_of <= @as_of",
+            asOf);
+
         return
         [
             new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null, Flagged),
             new Panel("band0.degradedRuns", null, degraded.ToString(CultureInfo.InvariantCulture), null, null, nights, null, "runs recorded"),
             new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
+            new Panel("band0.correctedRows", null, corrected.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
+            new Panel("band0.worstLatenessMinutes", null, worstLateness.ToString(CultureInfo.InvariantCulture), null, null, corrected, null, "corrected rows"),
         ];
     }
 

@@ -31,7 +31,7 @@ namespace PullbackStrategyLab.Worker.Stages;
 ///
 /// The second is the mark. A corrected row records `corrected_at` and `corrected_because` together,
 /// so a later reader can exclude corrected rows without knowing this happened.
-/// see: A setup row is corrected only where the correction uses no information the night did not have
+/// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
 ///
 /// <b>And it will not touch a gating check, whatever it is asked.</b> A trigger, a stop, a size or a
 /// verdict the strategy turns on is the plan, and rewriting one is the thing immutability protects

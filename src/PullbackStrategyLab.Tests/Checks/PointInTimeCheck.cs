@@ -126,7 +126,7 @@ public sealed class PointInTimeCheck
     /// corrected rows, which is a different question from what a night could see. It is also the only
     /// nullable stamp in the list, so the predicate every other one uses would hide every row that
     /// was never corrected, which is all of them but a few.
-    /// see: A setup row is corrected only where the correction uses no information the night did not have
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     public static IReadOnlyDictionary<string, string> NotBounded { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)

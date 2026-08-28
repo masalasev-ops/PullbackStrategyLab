@@ -2,16 +2,16 @@
 --
 -- The mark that makes a corrected row distinguishable from one that was right the first time.
 --
--- 011 says this table is immutable after write "in the sense that matters: the detector's own
--- columns are never revisited", and lists the two later updates on columns the detector does not
--- own. This is the third, and it is the first on a column the detector does own, so it is the one
--- that needs the mark.
+-- 011 says this table holds its rows in the sense that matters, being that the detector's own
+-- columns are never revisited by anything improving a plan, and lists the two later updates on
+-- columns the detector does not own. This is the third, and it is the first on a column the
+-- detector does own, so it is the one that needs the mark.
 --
 -- The permission is narrow and the columns are what enforce the narrow half. A setup row may be
 -- corrected only where the correction uses no information the night did not have, which is two
 -- conditions: the inputs are bounded to the setup's own date, and the row records that it was
 -- corrected. The bound lives in the query CheckRecomputer issues; the record lives here.
--- see: A setup row is corrected only where the correction uses no information the night did not have
+-- see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
 --
 -- Null on every row until something corrects one. Written as a pair, because a correction with no
 -- reason recorded is indistinguishable from the plan-improvement immutability exists to refuse,

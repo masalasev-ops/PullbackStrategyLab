@@ -136,7 +136,7 @@ Snapshots are taken before every migration and nightly. They are the recovery pa
 
 A stage that dies part-way through its list leaves the stages after it reading a store it half filled, and one of those consequences cannot be repaired the next morning.
 
-**Why there is a window at all.** Every reader in the lab bounds a lookup on when it was made, so a sector resolved at 04:19 UTC on the 28th is invisible to the session of the 27th, whose bound is `2026-08-27T23:59:59.999Z`. That is 19:59:59 Eastern. The `sectors` slot runs at 18:12, so a failure there leaves about an hour and three quarters, and the morning read is several hours too late (see: A setup row is corrected only where the correction uses no information the night did not have).
+**Why there is a window at all.** Every reader in the lab bounds a lookup on when it was made, so a sector resolved at 04:19 UTC on the 28th is invisible to the session of the 27th, whose bound is `2026-08-27T23:59:59.999Z`. That is 19:59:59 Eastern. The `sectors` slot runs at 18:12, so a failure there leaves about an hour and three quarters, and the morning read is several hours too late (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound).
 
 **So the first line of defence is not a person.** The `sectors` slot runs the stage twice. A name the vendor refused or answered unreadably is counted and left unstamped, so the second pass asks exactly those and costs one call each; where the first pass finished, the second finds nothing and costs nothing. That happens at 18:12, inside the window, without anybody watching.
 
