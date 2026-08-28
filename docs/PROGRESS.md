@@ -5653,3 +5653,47 @@ Verified:   Five tests. The second build writes nothing and does not report clea
             a new date stays clean while another date has panels; and an account-wide panel is
             written once however many times the date is built, asserted as a count rather than as an
             absence.
+
+## 3.9(f) — 2026-08-28 — phase-3-post-pass — a claim for every behaviour change, and the ones that are not claims
+
+Tests went 434 to 486 across the correction pass and this one, and the claim total had not moved.
+That is the signal to look rather than a null result: a claim total that does not move while the code
+does means the architecture document no longer states what the code is, and the next session reads a
+document that is behind.
+
+Mapped:     One line per behaviour change, with what asserts it. **Six were architecture claims and
+            had none; six are not architecture claims and the reason is given per item.**
+
+            | Change | Asserted by | Claim |
+            |---|---|---|
+            | A name the vendor holds nothing on is read, stamped and counted apart from a resolution | `FundamentalsParseTests`, `FundamentalsShapeTests` | **added**, "The vendor holds nothing on a name" |
+            | One name's vendor failure costs that name, counted, run `partial` | `SectorResolverTests` | **added**, "A vendor refuses one name mid-walk" |
+            | The lateness bound, read from the parameters table, with the lateness and the prior state recorded, and the restore | `CheckRecomputerTests` | **added**, "An input the session asked for arrives after the session" |
+            | The capture refuses a 200 the parse cannot read, keyed on the parse | `FundamentalsShapeTests` | **added**, "The vendor answers 200 with a body the parse cannot read" |
+            | The stamped list reconciled in both directions, fourteen tables | `PointInTimeCheck` | **added**, "A migration adds a column recording when the lab observed something" |
+            | A rebuild that wrote nothing fails, account-wide panels uniquely constrained | `ScoreboardRebuildTests` | **added**, "A rebuild writes no rows" |
+            | Every bound closes the session in its own zone | `SessionBoundaryTests` | added at 3.9(c), "A stage writes after the UTC date rolls" |
+            | `scan_hit` stamped, a null refused by any session but its own | `ScanHitStampTests` | covered by the stamped-list claim, which now names `scan_hit` as one of its fourteen |
+            | The slot script keeps a native command's stderr | `slot-diagnostics`, two runner jobs | **not an architecture claim.** The slot script is scheduling, which the architecture places outside the application by design, so it has no component row to make a claim about. It is on the check roster with a runner backing, which is where a property of the harness belongs |
+            | The inverted CI job, which fails when an assertion is made to fail | the workflow | **not an architecture claim.** A job asserting that another job can go red is a property of the workflow file and nothing else, and `architecture-conformance` reads the document against the code |
+            | The citation scan derives its file set from the git index | `decision-resolves` | **not an architecture claim.** It is a check widening its own scope, and the coverage floor is what holds it |
+            | Six parameters marked OPEN, the completeness claim removed | `AuthoredParametersTests` | **not an architecture claim.** The authored-parameters table is not a claim table: it states values, and the test asserts the document against itself rather than the document against the code |
+            | An out-of-scope ceiling and a reason per deferred claim | the phase report's own section claims | **not an architecture claim.** It is the report constraining itself, which the document already covers under its phase-report section |
+            | 27 backfilled indicator stamps moved into their own session | `MigrationRowSurvivalTests` | **not an architecture claim.** It is a data repair to rows a superseded migration wrote, not a behaviour anything can assert going forward |
+
+Verified:   **The three the clause named are provably red when their code is reverted**, each run and
+            each reverted. Dropping `scan_hit` from the stamped list turns the reconciliation claim
+            red. Replacing `MeasurementParameters.LatenessBoundHours` with the literal 24 turns the
+            lateness claim red. Replacing the capture's guard with a status-only test, which is what
+            it was before 3.8 and which still compiles, turns the capture claim red and names the
+            response that killed the first sector walk.
+
+            The revert of the capture guard had to be written as a status check rather than as a
+            deleted call, because a call to a method that does not exist fails the build and a claim
+            that cannot be evaluated is not a claim proved red.
+
+Carried:    **Two of the seven new claims are out of scope until 3.9 lands**, being the rebuild and
+            the boundary, because `FailureBehaviourCheckpoints` names the checkpoint that builds a
+            behaviour and the report defers a claim until `PROGRESS.md` records it. They are
+            deferred rather than unexamined, they name a checkpoint `BUILD_PLAN.md` has, and they
+            become asserted when this checkpoint's own entry lands.

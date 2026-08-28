@@ -94,7 +94,13 @@ public sealed partial class ArchitectureConformanceCheck
         ["Variant sample never accumulates"] = "6.7",
         ["Follow-up date is a holiday"] = "3.2",
         ["A comparison has no control outcomes"] = "3.2",
-        ["A stage writes after the UTC date rolls"] = "3.8",
+        ["The vendor holds nothing on a name"] = "3.8",
+        ["A vendor refuses one name mid-walk"] = "3.8",
+        ["An input the session asked for arrives after the session"] = "3.8",
+        ["The vendor answers 200 with a body the parse cannot read"] = "3.8",
+        ["A migration adds a column recording when the lab observed something"] = "3.8",
+        ["A rebuild writes no rows"] = "3.9",
+        ["A stage writes after the UTC date rolls"] = "3.9",
         ["Someone edits the baseline"] = "5.1",
     };
 
@@ -668,6 +674,115 @@ public sealed partial class ArchitectureConformanceCheck
             .Any(source => appended.Any(p => source.Contains(p, StringComparison.Ordinal)));
     }
 
+    /// <summary>
+    /// A name the vendor holds nothing on is read, stamped and counted apart from a resolved one.
+    ///
+    /// Two files, because either alone passes over the case. A client that admits the absence while
+    /// the walk files it under `resolved` leaves the figure the record states wrong with nothing
+    /// throwing, which is the direction that costs something.
+    /// </summary>
+    private static bool TheWalkCountsAnAbsenceSeparatelyFromAResolution()
+    {
+        string client = Shipped("PullbackStrategyLab.Worker", "Vendor", "EodhdClient.cs");
+        string number = Shipped("PullbackStrategyLab.Worker", "Vendor", "VendorNumber.cs");
+        string walk = Shipped("PullbackStrategyLab.Worker", "Stages", "SectorResolver.cs");
+
+        // Three files and three separate things: the numeric field admits the vendor's absence
+        // words, the string fields admit a value that is present and blank, and the walk counts the
+        // result apart from a resolution.
+        return number.Contains("[\"NA\", \"N/A\", \"None\", \"null\", \"-\"]", StringComparison.Ordinal)
+            && client.Contains("Blank(", StringComparison.Ordinal)
+            && walk.Contains("VendorHadNothing", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// One name's failure costs that name, and the run says the walk passed over something.
+    ///
+    /// The catch and the count together: a catch with no count swallows failures, and a count with
+    /// no catch is a field nothing sets.
+    /// </summary>
+    private static bool TheWalkSkipsOneNameAndRecordsThatItDid()
+    {
+        string walk = Shipped("PullbackStrategyLab.Worker", "Stages", "SectorResolver.cs");
+
+        return walk.Contains("catch (Exception e) when", StringComparison.Ordinal)
+            && walk.Contains("CountSkipped()", StringComparison.Ordinal)
+            && walk.Contains("RunOutcome.Partial", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The lateness bound is read from the parameters rather than written into the stage, and the
+    /// two things a correction owes the record are both written.
+    ///
+    /// The literal is the point. A bound typed into the stage is a second place the number lives,
+    /// and `pinned-constants` can only compare a document against the constant it names.
+    /// </summary>
+    private static bool TheLatenessBoundIsReadRatherThanWritten()
+    {
+        string stage = Shipped("PullbackStrategyLab.Worker", "Stages", "CheckRecomputer.cs");
+
+        return stage.Contains("MeasurementParameters.LatenessBoundHours", StringComparison.Ordinal)
+            && stage.Contains("correction_lateness_minutes = @lateness", StringComparison.Ordinal)
+            && stage.Contains("corrected_from = @corrected_from", StringComparison.Ordinal)
+            && stage.Contains("public RecheckResult Restore(", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The capture refuses a response on whether the parse can read it, not on the status alone.
+    ///
+    /// Asserted as the predicate reaching a parse rather than as a guard existing, because a guard
+    /// keyed on status would have stored the body that killed the first sector walk: it came back
+    /// 200.
+    /// </summary>
+    private static bool TheCaptureTriggersOnTheParse()
+    {
+        string client = Shipped("PullbackStrategyLab.Worker", "Vendor", "EodhdClient.cs");
+        string capture = Shipped("PullbackStrategyLab.Worker", "Stages", "FixtureCapture.cs");
+
+        return client.Contains("WhyUnreadable", StringComparison.Ordinal)
+            && client.Contains("will not shape", StringComparison.Ordinal)
+            && capture.Contains("WhyUnreadable", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The stamped list is asserted in both directions, which is the half four tables were on the
+    /// wrong side of, one of them since 2.7.
+    /// </summary>
+    private static bool TheStampedListIsReconciledBothWays()
+    {
+        string check = RepositoryLayout.Read(Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Tests", "Checks", "PointInTimeCheck.cs"));
+
+        return PointInTimeCheck.Stamped.Count >= 14
+            && check.Contains(
+                "Every_stamped_column_a_migration_creates_is_named_by_this_check", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A rebuild that wrote nothing fails, and the account-wide panels are constrained by something
+    /// nulls do not escape.
+    ///
+    /// Both, because the second is what the first was hiding: six of eleven panels were the no-op
+    /// and the other five were being inserted again.
+    /// </summary>
+    private static bool ARebuildThatWroteNothingFails()
+    {
+        string builder = Shipped("PullbackStrategyLab.Worker", "Stages", "ScoreboardBuilder.cs");
+
+        string index = RepositoryLayout.Read(Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Data", "Migrations",
+            "030-scoreboard-account-wide-unique.sql"));
+
+        return builder.Contains("skipped == panels.Count", StringComparison.Ordinal)
+            && builder.Contains("RunOutcome.Failed", StringComparison.Ordinal)
+            && index.Contains("CREATE UNIQUE INDEX", StringComparison.Ordinal)
+            && index.Contains("WHERE direction IS NULL", StringComparison.Ordinal);
+    }
+
+    /// <summary>One file under `src`, by its path segments.</summary>
+    private static string Shipped(params string[] segments) =>
+        RepositoryLayout.Read(Path.Combine([RepositoryLayout.Source, .. segments]));
+
     private static Claim AssertFailureBehaviour(string condition)
     {
         string engine = RepositoryLayout.Read(
@@ -708,6 +823,42 @@ public sealed partial class ArchitectureConformanceCheck
                     "ForwardReturnFiller reads control_setup as well as setup, binds each row's own subject kind rather than a literal, and the fixture carries a closed-horizon population whose control outcomes exist")
                 : Claim.Failed("Failure behaviour", condition,
                     "the fill no longer records an outcome for a control, so band 1's difference series is empty on every night and the panel is withheld for a cause that is not the one it names"),
+
+            "The vendor holds nothing on a name" => TheWalkCountsAnAbsenceSeparatelyFromAResolution()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the parse admits the vendor's absence words and a blank field, and SectorResolver counts a name the vendor had nothing on apart from a resolved one and stamps it either way")
+                : Claim.Failed("Failure behaviour", condition,
+                    "an absent value is no longer distinguished from a resolved one, so a name the vendor holds nothing on is either an error or is asked again every night"),
+
+            "A vendor refuses one name mid-walk" => TheWalkSkipsOneNameAndRecordsThatItDid()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "SectorResolver catches per ticker, counts the skip, leaves the name unstamped and records the run partial rather than clean")
+                : Claim.Failed("Failure behaviour", condition,
+                    "one name's failure is no longer bounded to that name, or a walk that passed over names is recorded clean"),
+
+            "An input the session asked for arrives after the session" => TheLatenessBoundIsReadRatherThanWritten()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "CheckRecomputer reads MeasurementParameters.LatenessBoundHours rather than a literal, records the lateness in minutes and the prior state, and owns the restore that puts a corrected row back")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the bound is written into the stage rather than read from the parameters table, or a correction no longer records the lateness or the state it can be put back to"),
+
+            "The vendor answers 200 with a body the parse cannot read" => TheCaptureTriggersOnTheParse()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "EodhdClient.WhyUnreadable decides on whether the body shapes rather than on the status alone, and FixtureCapture refuses on it")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the capture no longer refuses a 200 it cannot parse, so the response that killed the first sector walk would be stored as a working example"),
+
+            "A rebuild writes no rows" => ARebuildThatWroteNothingFails()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "ScoreboardBuilder counts what the insert skipped and fails when every panel was skipped, and a partial unique index constrains the account-wide panels the primary key cannot")
+                : Claim.Failed("Failure behaviour", condition,
+                    "a rebuild that wrote nothing reports clean again, or the account-wide panels are back to being constrained only by a key that nulls escape"),
+
+            "A migration adds a column recording when the lab observed something" => TheStampedListIsReconciledBothWays()
+                ? Claim.Passed("Failure behaviour", condition,
+                    $"PointInTimeCheck.Stamped names {PointInTimeCheck.Stamped.Count} tables and is asserted in both directions, so a migration adding a stamp fails until the list names it")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the reverse reconciliation is gone, so a table gaining an observation stamp joins the corpus without any read being required to bound it"),
 
             "A stage writes after the UTC date rolls" => EveryBoundClosesTheSessionInItsOwnZone()
                 ? Claim.Passed("Failure behaviour", condition,
