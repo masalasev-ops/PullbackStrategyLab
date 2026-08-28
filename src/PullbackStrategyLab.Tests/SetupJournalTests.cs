@@ -55,6 +55,8 @@ public sealed partial class SetupJournalTests
         ["check_results"] = "CheckRecomputer",
         ["corrected_at"] = "CheckRecomputer",
         ["corrected_because"] = "CheckRecomputer",
+        ["correction_lateness_minutes"] = "CheckRecomputer",
+        ["corrected_from"] = "CheckRecomputer",
     };
 
     /// <summary>

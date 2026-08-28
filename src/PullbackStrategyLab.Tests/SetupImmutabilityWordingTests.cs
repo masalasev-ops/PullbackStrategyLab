@@ -46,12 +46,22 @@ public sealed class SetupImmutabilityWordingTests
         "src/PullbackStrategyLab.Tests/SetupJournalTests.cs",
     ];
 
-    /// <summary>Documents that legitimately hold superseded wording, by name and with the reason.</summary>
+    /// <summary>
+    /// Files that carry the wording without stating the rule, by name and with the reason.
+    ///
+    /// The last entry is this file, and it earned its place by failing. The sweep reads the git
+    /// index, so this test was invisible while it was untracked and appeared as a fifth site the
+    /// moment it was committed. That is the index-based scan working: a file cannot hide from the
+    /// walk by being new. It is excluded because it declares the clause rather than states the rule,
+    /// which is the one exemption a comparison against a canonical string must always make.
+    /// </summary>
     private static readonly Dictionary<string, string> Records = new(StringComparer.Ordinal)
     {
         ["docs/PROGRESS.md"] = "an append-only record of what was measured on a date, corrected by a new entry",
         ["docs/CHANGELOG.md"] = "the prior text of every clean spec edit, which is the point of the file",
         ["docs/DECISIONS.md"] = "carries the superseded decision under Previously decided, reasoning intact",
+        ["src/PullbackStrategyLab.Tests/SetupImmutabilityWordingTests.cs"] =
+            "declares the clause the four sites are compared against rather than stating the rule",
     };
 
     [Fact]

@@ -5292,3 +5292,114 @@ Carried:    **Two obligations raised, neither blocking, and both are decisions r
 
             **This session committed code and may not sign it off.** 3.8 is owed a fresh-session
             review on the same terms as any other checkpoint.
+
+## 3.8 — 2026-08-28 — phase-3-corrections — one pass before merge: two one-way doors, a rule narrowed rather than exempted, and the fifteen repaired
+
+A second pass over 3.8, taken before merge. Twelve clauses; eleven were taken and one stopped on its own
+condition. This entry corrects nothing in the entry above it and adds what the pass found.
+
+Verified:   `tools/ci.ps1` green, **27 steps, 466 tests**, up from 434. `tools/verify-phase` **GREEN**:
+            118 claims, **68 passed, 0 failed, 50 out of scope, 0 unexamined**, unchanged on every
+            figure; coverage examined **4,107**, up from 3,932; 1,288 expectations with 0 changed;
+            inputs 68 `CAPTURED` and **97 `AUTHORED`**, up from 94.
+
+            **The claim totals not moving is the result, not a null one.** Six OPEN parameter rows,
+            an out-of-scope ceiling and a coverage item were added and none of them is an
+            architecture claim, so the four numbers that gate the report are the same four. What
+            moved is what they are measured over.
+
+Stopped:    **The bound's basis was counted before any edit and the count stopped it: 43
+            stamp-bounding query sites across 17 shipped-source files.** Moving from an instant to
+            the session date an answer is attributed to is not an edit to the sectors slot; it is
+            every point-in-time read the lab has. And it is not only an edit: most stamped tables
+            carry no session-date column to compare against, and `security` carries none at all,
+            which is the conflation itself. So it needs a migration, a backfill of instants nobody
+            recorded, and a re-derivation of every fixture expectation resting on a bound. A split
+            basis is worse than either basis, so none of it was done.
+
+            **One consequence, and it changes what the ledger below could close.** The clause that
+            closes the sector-timestamp conflation rests on the session date and the instant being
+            separate columns. They are not, because this stopped, so **that obligation stays open**
+            and now records the count that stopped it. The lateness bound reaches the outcome the
+            row was raised for without touching the basis, which is why the fifteen are repaired and
+            the modelling question is still the operator's.
+
+Found:      **The second one-way instance was twenty files, not two.** The 3.7 sign-off recorded
+            "two files carry `see:` citations outside the citation scan" and the sweep found ten
+            migrations, six under the web project and four at the root. The undercount was the same
+            shape as the gap it was describing. The scan now derives its file set from the git
+            index; all **280** citations resolve and nothing was hiding in the twenty.
+
+            **`Stamped` needed six additions, not five.** The reverse reconciliation this pass added
+            found `detector_error.observed_at`, outside since 2.7. Thirteen tables rather than the
+            twelve the brief asked for, and the deviation is deliberate: the property is every
+            observation stamp, and stopping at a number rather than at the property is the failure
+            this corpus keeps meeting from new directions.
+
+            **"Latent until a rebuild" was too generous, and writing the test is what found it.**
+            The scoreboard cannot be rebuilt in place at all: its insert is `ON CONFLICT DO NOTHING`,
+            so a second build for a date that already has panels writes none of them. The eight
+            unbounded reads were still wrong; what reaches a row is a store restored from a snapshot
+            and re-run, or panels deleted and rebuilt.
+
+            **The superseded correction rule contradicted itself.** It recorded a mark "so a later
+            reader can exclude corrected rows" under a guard that made corrected rows impossible, so
+            the mark had neither a producer nor a consumer. That is CLAUDE.md's sixth failure shape
+            written into a decision rather than into code.
+
+            **`scan_hit` carries no observation stamp**, so a hit inserted for a past session is
+            invisible to every bound the lab has. Found while asserting the lateness exception is one
+            column wide: it is, among stamped columns, and `scan_hit` has no stamp to be among them.
+
+            **The coverage floor caught a narrowing that was not one.** Moving `decision-resolves`
+            to every tracked text file made it invisible to a name-based sweep, so "files belonging
+            to a check" fell from 12 to 11 while the check read strictly more. The detector was
+            taught the new name rather than the floor lowered.
+
+            **And the citation sweep caught its own test.** `SetupImmutabilityWordingTests` was
+            invisible while untracked and appeared as a fifth site the moment it was committed, which
+            is the index-based scan doing exactly what it was written for.
+
+Built:      **The rule, narrowed rather than exempted.** "A late answer is attributed to the session
+            it was fetched for, up to a recorded lateness bound" supersedes the old wording, which
+            moves to Previously decided with its reasoning intact. Three conditions, all asserted:
+            the input is one the session itself asked for; the lateness is inside the bound and
+            recorded in a countable column; every other input stays bounded to the session's own
+            date. The cost is carried into the reasoning so a later session does not re-broaden it
+            by feel: fifteen setups is **about 5.7%** of 262 effective observations and more than one
+            session's worth, lost on the first night to a stage falling over.
+
+            The bound is 24 hours, authored, in the parameters table and in
+            `MeasurementParameters.LatenessBoundHours`, read by the recomputer rather than written
+            into it. Four sites state the rule and all four were swept against a count stated first.
+
+            **The mark has two readers**, which the superseded form promised and did not have: the
+            recomputer refuses a row already corrected, and band 0 reports the corrected count and
+            the worst lateness.
+
+Measured:   **The fifteen are repaired.** The set was derived rather than trusted: `recheck --expect
+            15` states that the set is every row of that date whose cluster verdict carries no value,
+            and exits 2 on any other number. The query found fifteen. All admitted at **260 minutes**
+            late against a bound of 24 hours, thirteen passing and two failing at a cluster of one,
+            which is a real verdict rather than an absent one. `passed_all` is unchanged on all
+            forty-four rows, because cluster is recorded and never gating.
+
+            Every repaired row carries the mark, the lateness in minutes, and the check results as
+            they stood before, verbatim. A test restores a row from that state and asserts the
+            verdict the correction never touched came back with it.
+
+Carried:    **Open obligations: 32 before this pass, 32 after.** One discharged, one added, and the
+            arithmetic is not a coincidence worth hiding: the `PointInTimeCheck` stamp gap closed and
+            `scan_hit`'s missing stamp opened. By due point: **16 at 4.1, 3 at 4.6, 9 at the
+            operator, 3 at the move** (the move gained the slot script's Windows PowerShell
+            dependency, whose two interpreter-specific parts are named).
+
+            `rows_written` on the three update-only stages stays open at 4.1, untouched, which is
+            what the scope said.
+
+            **The nine operator obligations are now one table** with what each blocks and what
+            stalls without it. Six of the nine block nothing today. **2.11 is the one that stalls a
+            phase**: at a median of nought candidates a night, phase 4 builds a trading layer nothing
+            reaches.
+
+            **This session committed code and may not sign it off.**
