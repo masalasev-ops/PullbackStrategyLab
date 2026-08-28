@@ -93,6 +93,16 @@ logs to `<data root>/logs/nightly-YYYY-MM-DD.log` and records the commit it ran 
 that log's first entry, since the job runs from a working tree and what it executes changes when the
 branch does.
 
+**The ref the job runs from is `main`, as of 2026-08-28.** It is not configured anywhere: the slot
+script runs whatever the working tree is checked out to, and the tree is on `main` because
+`6f27926` merged the correction pass and the post-pass. Nothing enforces this and nothing should
+pretend to, so the check is the log: the first line of every night's entry names the branch and the
+commit, and a night that ran from something else says so in its own record. Before the merge the job
+ran from `phase-3-corrections`, which is what the merge rule was changed to stop
+(see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch).
+Anyone leaving the tree on a branch overnight is choosing which code runs the night, and the way to
+undo it is `git checkout main` in the repository the tasks point at.
+
 **They run only while the user is logged on, and that is a real limitation rather than a preference.**
 Registering a task that runs whether or not anybody is logged on needs either an elevated shell, to
 set an S4U principal, or a stored password. Neither was available when these were created, so a
