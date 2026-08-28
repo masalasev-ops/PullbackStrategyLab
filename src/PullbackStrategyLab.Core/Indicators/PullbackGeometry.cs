@@ -22,27 +22,46 @@ public static class PullbackGeometry
     /// <summary>
     /// The geometry of one setup, or null where the window cannot support one.
     ///
-    /// <paramref name="thrustIndex"/> is the position of the session the mover scan flagged. The
-    /// extreme is the furthest the move reached between that session and the as-of date, and the
-    /// pullback is everything after it. A thrust whose extreme is the last bar has no pullback yet,
-    /// which is a real state and is returned as zero bars rather than as nothing.
+    /// <paramref name="thrustIndex"/> is the position of the session the mover scan flagged, and
+    /// <paramref name="thrustSpanSessions"/> is how many sessions of move that scan flags, which
+    /// <see cref="ScanSpans.SessionsFor"/> answers. The thrust runs over the last
+    /// <paramref name="thrustSpanSessions"/> sessions ending at the flag; the extreme is the
+    /// furthest the move reached from the start of that span to the as-of date, and the pullback is
+    /// everything after it. A thrust whose extreme is the last bar has no pullback yet, which is a
+    /// real state and is returned as zero bars rather than as nothing.
+    ///
+    /// <b>The span is a parameter because the six scans do not flag the same kind of move.</b> Until
+    /// 3.0(c) this took every thrust as one session. That is right for the four day scans and wrong
+    /// for `leader` and `laggard`, which rank on a twenty-session change: the retrace's denominator
+    /// became one session of a twenty-session run, and the extreme was found at the flag whenever
+    /// the real high sat before it. Both errors push the same way, and each one on its own produces
+    /// a number that reads as an ordinary shallow pullback.
     /// </summary>
-    public static Pullback? Of(IReadOnlyList<Bar> bars, int thrustIndex, bool isLong)
+    public static Pullback? Of(IReadOnlyList<Bar> bars, int thrustIndex, int thrustSpanSessions, bool isLong)
     {
         ArgumentNullException.ThrowIfNull(bars);
+        ArgumentOutOfRangeException.ThrowIfLessThan(thrustSpanSessions, 1);
 
         if (bars.Count == 0 || thrustIndex < 0 || thrustIndex >= bars.Count)
         {
             return null;
         }
 
-        // The origin is the close before the thrust, which is what the move is measured from. With
-        // the thrust on the first bar of the window there is nothing before it, and the thrust's own
-        // open is the nearest honest stand-in.
-        decimal origin = thrustIndex > 0 ? bars[thrustIndex - 1].Close : bars[thrustIndex].Open;
+        // Where the flagged move began. A one-session scan starts where it is flagged; a
+        // twenty-session scan started nineteen sessions earlier. Clamped at the window's own start
+        // rather than returning null, because a window that holds only part of the move still holds
+        // a real shape, and refusing it would drop exactly the names whose run began before the
+        // history the detector reads.
+        int thrustStart = Math.Max(0, thrustIndex - thrustSpanSessions + 1);
 
-        int extremeIndex = thrustIndex;
-        for (int i = thrustIndex; i < bars.Count; i++)
+        // The origin is the close before the move, which is what the move is measured from. With
+        // the move starting on the first bar of the window there is nothing before it, and its own
+        // open is the nearest honest stand-in: the close sits inside the move being measured, so
+        // using it would report a shorter thrust than happened.
+        decimal origin = thrustStart > 0 ? bars[thrustStart - 1].Close : bars[thrustStart].Open;
+
+        int extremeIndex = thrustStart;
+        for (int i = thrustStart; i < bars.Count; i++)
         {
             bool further = isLong
                 ? bars[i].High > bars[extremeIndex].High

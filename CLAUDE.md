@@ -134,6 +134,8 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `two-platform` | the matrix | The suite passes on both windows and macos runners |
 | `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |
 | `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |
+| `surface-claims` | every CI run | Every corpus sentence claiming something is stated, recorded on every row, or shown is asserted against the rendered page that carries it. The only check here that reads a surface rather than source, the store or a document |
+| `carried-obligations` | every CI run | Every due point a PROGRESS `Carried` block names is one BUILD_PLAN's obligations table also has. The set of due points rather than the sentences, because prose against prose false-alarms and a suppressed guard is a dead one |
 | `stated-counts` | every CI run | Every count a spec states about itself matches the derived count. Record entries are dated measurements and are exempt |
 | `fixture-inputs` | every CI run | Every vendor endpoint a live run exercises has at least one `CAPTURED` input, and every captured response carries its endpoint, query and instant and no credential |
 | `fixture-replay` | every CI run | The pipeline over the golden fixture matches every committed expectation, broken down by tier, with every figure it produces named by one, and every checkpoint in the fixture carries an independently produced expectation or names an open obligation |
@@ -194,6 +196,10 @@ A decision is identified by its bold name in `DECISIONS.md`, not by a heading: t
 
 **Headings carry no numbers, and cross-document references cite the heading text.** A misremembered number resolves to the wrong place and nothing notices, and every insertion renumbers everything after it. HTML anchors are slugs of the heading text, with any nested markup excluded, since an id like `s16` is as positional as the number was. `ARCHITECTURE.html` renders labels inside two of its headings, so `The long checks <span class="pill">buy</span>` is cited as "The long checks" and anchored as `the-long-checks`. Checkpoint identifiers are the exception and keep their numbers, because they name work in a sequence where the sequence is the point. (see: Headings carry no numbers, and anchors are slugs)
 
+**A commit subject is `Phase {phase} / {checkpoint} — {what changed}`.** `Phase 3 / 3.2 — the forward fill, and a future bar two implementations disagreed about`. The checkpoint is never omitted, including on a commit that builds nothing: a ruling, a document pass, a correction and a sign-off addendum all belong to a checkpoint, and `Phase 2 / 2.12 — the ruling the sign-off owed` is the pattern for all four. A part of a lettered checkpoint carries its letter, as `3.0(c)` does. Where work is done ahead of the checkpoint that owes it, the subject names that checkpoint rather than the one being worked on now, because what a reader wants from a log is which checkpoint a change belongs to.
+
+This was undocumented until 3.7 and lived only in sixty commits of history, which is exactly how it got broken: a session inferred it from the log, decided a ruling was not a checkpoint's work, and dropped the second field. **A convention that exists only in what previous sessions happened to do is a convention the next session will break.** It is written here rather than made a check because the failure is loud, sits in every `git log`, and costs one amend; the shapes this corpus builds checks for are the silent ones. If it is broken twice more, that reasoning is wrong and the check is owed.
+
 **Anything issued in conversation that will later be cited must land in the repo when it is issued,** not afterwards. A citation to something that lives only in a chat transcript is a hole in the record.
 
 **Prose.** Standard keyboard punctuation, no em dashes. State the mechanism rather than asserting a virtue: write "the plan row is immutable after publication", not "we are honest about not changing plans".
@@ -248,7 +254,13 @@ Done conditions are written against **what the file will say after the edit**, n
 
 ## Merge
 
-CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge.
+CI green before merge, **and a phase branch does not merge until the whole phase has signed off.** Two conditions, and the second is the one that costs something.
+
+**It used to be one condition.** This section read "CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge." That decoupling was written to stop a sign-off holding finished work hostage, and it has a real cost the other way: a phase that merges in pieces has no single commit where the phase is what it says it is, and the sign-off then reviews something already on the default branch, where declining it costs a revert rather than a conversation.
+
+**What it buys and what it costs, stated so a later session can weigh the same trade.** It buys a default branch on which every phase is complete and reviewed. It costs a long-lived branch whenever a phase waits on something that is not code: phase 3 waits three months for accumulation, so its branch is open for a quarter and the nightly job runs from that checkout rather than from `main` for the whole of it. That is the price, it is known, and it is paid deliberately.
+
+**A checkpoint still lands as its own commit** and still satisfies all seven done conditions on its own. Nothing here makes a checkpoint bigger; it makes the merge later.
 
 ## Document lifecycle
 

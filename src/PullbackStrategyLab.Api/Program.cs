@@ -83,6 +83,14 @@ public static class Program
         // A night's setups, both directions, each with every check's verdict and a window to read it
         // against. The date is in the path because a night is what the gallery is about; the failed
         // check is a query because it is a filter over that night rather than a different night.
+        // One day's scoreboard panels, read back as the builder wrote them. Nothing is recomputed
+        // here: a read surface that recomputed a bound or an interval would be a second
+        // implementation of the arithmetic the phase turns on.
+        app.MapGet("/scoreboard/{asOf}", (string asOf, StoreConnectionFactory connections) =>
+            Results.Ok(LabScoreboard.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture))));
+
         app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, string? failed) =>
             Results.Ok(setups.Read(
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),

@@ -39,6 +39,96 @@ Flagged setups returning 2% is not a result if everything returned 2%. The loose
 **The win-rate ceiling is computed from the outcome distribution, never assumed**
 A give-up point at half a daily range sits 0.8 standard deviations away, so a coin flip with that stop wins about 20% of the time and the observed 25% is mostly geometry. What matters is the gap between achieved and the computed bound: a wide gap means selection has room, a narrow one means the stop is the binding constraint and the loop should point at execution instead.
 
+**Controls are drawn by nearest neighbour on the matched dimensions, five per set, with no randomness**
+The sets and what they match on are settled above. What was not settled is how many, how they are chosen, and whether the same night draws the same names twice.
+
+Five per set per flagged setup. One control inherits that single name's idiosyncratic move; fifty reaches so far down the distance ordering that the match stops meaning anything. Five keeps a thin night visibly thin.
+
+**Deterministic nearest neighbour rather than a random draw**, ordered by distance on the matched dimensions with ticker as the tiebreak, exactly as the scans and the cap already break ties. A seeded draw would be a second thing to keep point in time, a value the phase report cannot diff, and a number nobody could reproduce from the store alone. Nearest neighbour also makes the match quality the ranking rather than an afterthought: the fifth control is by construction the worst of the five, and `match_quality` records the distance on each dimension separately so nobody averages them.
+
+Drawn from the same session's universe members that cleared the liquidity floor and were not flagged, at 18:26, **before the cap at 18:28**. Controls answer for the flagged population and not for the sixty that survived truncation, and drawing after the cap would compare the kept setups against controls for a different question.
+
+**What weakening this looks like, written down because it is easy and silent.** A widened decile band, a dropped dimension when a night is thin, a fallback that reaches outside the session, or a draw that quietly takes fewer than five and reports the same figure. Each makes the tight comparison flattering, and the tight comparison is the one that can embarrass the project, which is the only reason it is worth having.
+
+**The ceiling is computed from the path, not from the terminal return**
+The question is what win rate perfect foresight achieves *given that it still has to survive the path*. So a setup counts toward the bound when its ten-session return is positive **and** its worst excursion never reached the give-up point. A setup that ends ahead having first been stopped out is not available to any selection rule, and counting it would produce a bound no system could reach.
+
+That reads three stored figures together, `return_signed`, `mae_atr` and `stop_distance_ranges`, which is why the excursions are columns on `forward_return` rather than derived on read, and why 3.2 lands before 3.4.
+
+**The trap, and it is the reason this is a decision rather than a formula.** The excursion is recorded in ATR and the give-up distance in daily ranges. Those are two different units on two different bases, and comparing them without a stated conversion is exactly the silent plausible number `PullbackGeometry` carries a warning about: both are small, both look like volatility, and a wrong one produces a bound that reads as reasonable. **The excursion is converted into daily ranges before the comparison, through the same `adr_20` the give-up distance is expressed in, and the conversion is named at the point of use.** Storing it twice was the alternative and it is worse: two columns that must agree are two columns that will not.
+
+Per direction, never pooled. Recomputed weekly over the population that has closed its tenth session, and a later week's bound is a new dated row rather than a revision of the old one.
+
+**The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**
+Supersedes **The interval is a block bootstrap over paired differences, and the effective sample is measured**, which named the right method and specified percentile bounds. The shipped code implemented neither, and correcting only the resampling would not have been enough.
+
+This is not the textbook case, and the textbook interval is wrong here in the direction that matters.
+
+**Ten-day labels overlap.** A ten-session horizon means adjacent nights share most of their window, so consecutive observations are serially correlated by construction. **Same-night setups share a market factor.** Forty names flagged on one night rise and fall together with the market over that fortnight.
+
+Either alone makes an interval assuming independent observations too narrow. Together, band 1 clears zero before it should, and band 1 is the project's central question. A too-narrow interval does not produce a wrong number, it produces a confident one, which is the failure this whole system exists to avoid.
+
+So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws.
+
+**Each draw takes its block starts independently.** Stated because the decision it supersedes did not, and the code read as though it had: block starts were mixed by two coprime strides, which reads as spreading the draws and is not. Every start in draw `d` was the corresponding start in draw 0 shifted by the same `d * 7919`, so every draw was one fixed lattice rotated, at most one distinct resample mean existed per night however many draws were asked for, and ten thousand draws was bit-identical to N draws. On the five committed scenarios long enough to produce an interval, of six in `fixtures/interval-cases.json`, the intervals came back two to three point seven times narrower than a real moving-block bootstrap, worst on the AR(1) series written to exercise exactly the overlap it got most wrong.
+
+**Deterministic from a fixed published seed, rather than from having no seed at all.** The superseded decision asked for deterministic ordering and the code met it by making each draw a function of its own index, which is what collapsed the resample space. Reproducibility is the property that was wanted, a published constant buys it, and `PairedInterval.Seed` is that constant.
+
+**Studentised rather than percentile bounds, and this is the substantive change.** Independent block starts alone do not reach the confidence the panel prints. Measured over three hundred authored null series per row, all three schemes seeing the same series, against a nominal 5%: the superseded scheme clears zero 48.3% of the time at twenty independent nights and 46.0% at forty; a percentile interval over correctly drawn blocks clears it 20.3% and 12.3%; scoring each resampled mean against its own block-to-block standard error clears it 4.7% and 5.0%. With an AR(1) of 0.7 the three read 78.7%, 37.3% and 6.0% at twenty nights. Studentising holds 3.7% to 7.7% over independent nights and an AR(1) up to 0.7, from twenty to a hundred nights, and neither of the others does.
+
+**Where it stops holding is stated rather than left to be discovered.** Against the process a ten-session overlapping label actually creates, a moving average of order nine whose correlation cuts off inside the block length, it clears zero 3.0% to 11.7% of the time from twenty to two hundred and forty nights. Against an AR(1) of 0.9 it reads 7.0% to 24.0%. That is a limit of the **block length** rather than of the method: correlation at 0.9 runs well past ten sessions and no block of ten absorbs it. The block length is set to the scoring horizon because the overlap the label creates cuts off there; if the realised series turns out to carry dependence past it, the block length is the thing that moves, and that is a decision rather than a tuning. Band 1 turns on whether a bound clears zero, so an interval that clears it four times too often is not a narrower version of the right answer.
+
+**A series that cannot disperse is withheld rather than given an interval of no width.** An interval of no width clears zero always. That is the first route to this failure and it shipped for one run at 3.5; it is now a state the method returns nothing from.
+
+A Newey-West style adjustment with the lag set from the horizon was the alternative and would have cost less to compute. It was not taken because it corrects the variance of a mean and this scoreboard also shows decile curves and win rates, and one resampling scheme that serves every panel is worth more than a closed form that serves one.
+
+**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval. This half is unchanged and its arithmetic did not move.
+
+**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. The figure itself is settled by the decision below.
+
+**What a later session should take from this.** Two independent implementations agreeing proves transcription and nothing else. `tools/derive-indicators.py` restated this interval and hard-coded the same two strides, so the DERIVED tier reported agreement about the wrong algorithm for the whole of phase 3. Where a method is named rather than tabulated, assert the property the name implies: more draws must buy more resamples, and an interval must not clear zero far more often than its own confidence claims.
+
+**The minimum sample is 262 effective observations, ratified at two points and 90% power**
+A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. Two of those are judgements and belong to a person. The third is a fact about the market, and until the decision this supersedes nothing in the corpus had measured it.
+
+**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+
+**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+
+**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+
+**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+
+| Input | Value | Kind |
+|---|---|---|
+| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, ratified |
+| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
+| `z_beta`, 90% power | 1.281552 | judgement, ratified |
+| `sigma_d`, the paired dispersion | 0.099811 | measured |
+
+Which gives **262 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 250 or 300 would be an authored step in a figure whose whole point is that no step in it is authored.
+
+**Two points, because it is the size of the effect being hunted rather than a target chosen for roundness.** The strategy's claimed expectancy is about 0.55R on a 3% stop, which is about 1.7 points of forward return. Detecting less than two points would be detecting something too small to trade after costs, so the threshold is set at what is worth having rather than at what is claimed.
+
+**One consequence of that, recorded because it is the half a later reader would otherwise have to derive.** 262 detects two points at 90% power. Against the 1.65 points the strategy actually claims, the same sample carries about **76% power**, and 90% power at 1.65 points would need 385. That is not an objection to the ratification, which deliberately sizes on what is worth trading rather than on what is claimed. It is stated so nobody reads "90% power" as 90% of finding the strategy's own claimed edge.
+
+**90% rather than the conventional 80%, because the costs here are asymmetric and in an unusual direction.** A false positive is caught downstream: the forward paired test and the variant machinery both sit after band 1, and a spurious reading does not survive them. **A false negative is caught by nothing**, because band 1 reading flat means the pattern has nothing in it and the project stops. There is no downstream from that.
+
+At about eleven effective observations a night, 90% costs roughly six sessions more than 80%. Six days against a one-in-ten chance of abandoning a working strategy is the cheapest power anyone will buy in this project. **The convention was rejected rather than not considered**, which is why the reasoning is here: 80% is what a later session will otherwise assume was meant.
+
+**The sensitivity, stated so the choice stays visible.** The sample goes as the inverse square of the difference and rises with the power demanded.
+
+| At two points, power | Effective observations |
+|---|---|
+| 70% | 154 |
+| 80% | 196 |
+| **90%, ratified** | **262** |
+| 95% | 324 |
+
+At 90% power, detecting three points needs 117 and detecting one and a half needs 466. Moving either input is a superseding decision, not an adjustment.
+
+Supersedes **The minimum sample is derived from a measured dispersion and counted in effective observations**, which left both judgements open and stood at 196 on an unratified 80%. The measurement, the population statements and the arithmetic are unchanged and are carried here in full; what changed is that the two judgements are now ratified and recorded with their reasoning, so a later session reads a choice rather than a convention.
+
 **Long and short are never pooled into one figure**
 In code, in a report, or on a screen. Short results carry a borrow assumption that long results do not, so a pooled number silently inherits it.
 
@@ -89,7 +179,7 @@ A strategy test whose rules can move after the outcome is visible is not a test 
 Two writers puts the caps in two code paths, which voids every comparison between versions and does so silently.
 
 **The short borrow problem is mitigated by a filter, not solved**
-Market cap above $2 billion, dollar volume above $50 million, ninety sessions since listing. The borrow cost of 1.0% annualised is immaterial, about 0.4% of one R on a four-day hold, so availability rather than cost decides the short side and the filter stands in for information the feed does not carry. Recorded as an unmodelled assumption on every short trade.
+Market cap above $2 billion, dollar volume above $50 million, ninety sessions since listing. The borrow cost of 1.0% annualised is immaterial, about 0.4% of one R on a four-day hold, so availability rather than cost decides the short side and the filter stands in for information the feed does not carry. To be recorded as an unmodelled assumption on every short trade from 4.7, and shown in the trade journal from 4.11. No trade row exists yet, so this is what the assumption is owed rather than where it currently sits.
 
 **Equity is a fixed $100,000 notional that never compounds**
 Every cap in the design is a percentage of equity and nothing stated what equity was, so no share count could be computed.
@@ -98,7 +188,7 @@ The number is set by share rounding rather than by ambition. At 0.75% risk, a th
 
 It does not compound, and that matters more than the level. If equity tracked results, a version that ran well would size larger than one that ran badly, so the two would stop taking the same position on the same setup and the paired comparison would quietly stop being paired. The equity curve is reported as an output; it is never an input to sizing.
 
-Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away.
+Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away. The position row arrives at 4.7 and the journal that shows the pair to a person at 4.11; until then this is what is owed rather than what is displayed.
 
 **One account per version, holding both directions**
 Not one account per direction. The caps are four concurrent positions, three percent total risk at stake, and at most two shorts, and those only mean anything if a short and a long compete for the same budget. That competition is real: in an account, a short ties up risk a long cannot then use.
@@ -249,7 +339,33 @@ The rule was written naming splits because a split is the loud case. The reason 
 
 Magnitude does not enter it. A dividend distorts an average less than a split does, and "less wrong" is not a category this design has.
 
-Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
+Supersedes **The minimum sample is derived from a measured dispersion and counted in effective observations**
+A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. The first two are judgements and belong to a person. The third is a fact about the market, and until this decision nothing in the corpus had measured it.
+
+**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it since has treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+
+**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+
+**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+
+**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+
+| Input | Value | Kind |
+|---|---|---|
+| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, and ARCHITECTURE's own |
+| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
+| `z_beta`, 80% power | 0.841621 | judgement, and the input nothing ever stated |
+| `sigma_d`, the paired dispersion | 0.099811 | measured |
+
+Which gives **196 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 200 would be an authored step in a figure whose whole point is that no step in it is authored.
+
+**What the old figure turns out to have been.** 160 is this same arithmetic at about 72% power. It was not a different calculation, it was this one with a power nobody chose, and the gap between 160 and 196 is entirely that choice.
+
+**The two judgements are the operator's and the sensitivity is stated so the choice is a real one.** At the measured dispersion, detecting three points needs 87 and detecting one and a half needs 348, because the sample goes as the inverse square of the difference. At two points, 70% power needs 154 and 90% needs 262. Moving either is a superseding decision, not an adjustment.
+
+Superseded on 2026-08-27 by **The minimum sample is 262 effective observations, ratified at two points and 90% power**. Everything it measured survives unchanged: the dispersion, the population it was taken over, and the arithmetic. What it could not do was settle its own two judgements, which it said outright and left to a ratification. 196 was that arithmetic at an unratified 80% power, and it was never a figure anybody had chosen.
+
+**A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
 
 **A rebuild is satisfied by a recorded refetch, not by inferring one from what changed**
 The obvious implementation is to infer it. The refetch writes bars, bars carry an `observed_at`, so a window observed after the action must be a window that has been rebuilt. It does not work, and it fails quietly in both directions.
@@ -372,6 +488,22 @@ The protection being bought is that a session does not review its own code. The 
 ## Previously decided
 
 A superseded decision moves here under its original name, gains one line naming what replaced it, and keeps its reasoning. A superseded decision that loses its reasoning is worse than one never written down, because the next session will re-derive the same wrong answer.
+
+**The interval is a block bootstrap over paired differences, and the effective sample is measured**
+Superseded by **The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**, which keeps the block length, the draw count and the effective-sample arithmetic, and changes two things: each draw now takes its block starts independently, and the bounds are studentised rather than percentile. The method named here was the right one; what shipped under it was one fixed lattice rotated, and a percentile bound over correctly drawn blocks still under-covers at the sample sizes band 1 will have.
+This is not the textbook case, and the textbook interval is wrong here in the direction that matters.
+
+**Ten-day labels overlap.** A ten-session horizon means adjacent nights share most of their window, so consecutive observations are serially correlated by construction. **Same-night setups share a market factor.** Forty names flagged on one night rise and fall together with the market over that fortnight.
+
+Either alone makes an interval assuming independent observations too narrow. Together, band 1 clears zero before it should, and band 1 is the project's central question. A too-narrow interval does not produce a wrong number, it produces a confident one, which is the failure this whole system exists to avoid.
+
+So: the statistic is the **paired difference**, a setup's return minus the mean of its own matched controls. That removes the shared market factor inside a night by construction rather than by adjustment, which is why the control draw is a prerequisite of this decision rather than a neighbour of it. The remaining serial overlap is carried by a **moving-block bootstrap over the session axis with a block length of ten sessions**, being the scoring horizon, at ten thousand draws, percentile bounds, deterministic ordering so the figure is reproducible and diffable.
+
+A Newey-West style adjustment with the lag set from the horizon was the alternative and would have cost less to compute. It was not taken because it corrects the variance of a mean and this scoreboard also shows decile curves and win rates, and one resampling scheme that serves every panel is worth more than a closed form that serves one.
+
+**The effective sample is measured from the realised series, never assumed.** The number of rows and the number of independent observations are different quantities here, and the ratio is a property of the realised autocorrelation rather than of the design. It is computed from the series and reported beside every interval.
+
+**Any minimum-sample figure written against this is in effective observations, not rows.** Stated because it is the half that gets dropped: a pre-registered target reading "160 observations" is satisfiable by 160 rows carrying far less than 160 observations' worth of information, and nothing on the surface says so. The figure itself is settled by the decision below.
 
 **A split records a rebuild demand that is stamped rather than cleared**
 A split rescales every adjusted close before it. The stored ones were adjusted as of the night each was observed, so the evening after a four-for-one everything already in the store is on the old scale and everything arriving is on the new one, and an average taken across that boundary is arithmetic on two different units. It is wrong by a factor and it looks entirely reasonable, which is why the architecture's answer is that calculations refuse to run for that stock rather than that they carry on.

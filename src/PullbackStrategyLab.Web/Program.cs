@@ -190,6 +190,63 @@ public sealed class LabApiClient
     /// A night's setups, both directions. Answers with a reason rather than throwing, on the same
     /// terms as every other read here: a night with nothing flagged is an ordinary state.
     /// </summary>
+    /// <summary>
+    /// One day's scoreboard panels.
+    ///
+    /// It never throws, on the same terms as the status band: the Api and the pages are two hosts
+    /// started separately, and a page that would not render without the read surface is a page
+    /// nobody can use to find out the read surface is down.
+    /// </summary>
+    public async Task<ScoreboardView> ReadScoreboardAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/scoreboard/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ScoreboardView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            ScoreboardPayload? payload = await JsonSerializer
+                .DeserializeAsync<ScoreboardPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return ScoreboardView.Empty(session, "the read surface answered with nothing");
+            }
+
+            if (payload.Absent is not null)
+            {
+                return ScoreboardView.Empty(session, payload.Absent);
+            }
+
+            return new ScoreboardView(
+                session,
+                null,
+                Panels(payload.Health),
+                Panels(payload.Long),
+                Panels(payload.Short));
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+        {
+            return ScoreboardView.Empty(session, "the read surface did not answer");
+        }
+    }
+
+    private static IReadOnlyList<PanelView> Panels(IReadOnlyList<PanelPayload>? panels) =>
+        panels is null
+            ? []
+            : [.. panels.Select(p => new PanelView(
+                p.Name, p.Direction, p.Figure, p.Low, p.High, p.Rows, p.Effective,
+                p.Population ?? "population not recorded", p.Minimum, p.WithheldBecause))];
+
     public async Task<SetupsView> ReadSetupsAsync(
         DateOnly asOf,
         string? failedCheck,
@@ -293,6 +350,17 @@ public sealed class LabApiClient
         [.. s.Candles.Select(c => new Candle(
             DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
             c.Open, c.High, c.Low, c.Close))]);
+
+    private sealed record ScoreboardPayload(
+        string AsOf,
+        string? Absent,
+        IReadOnlyList<PanelPayload>? Health,
+        IReadOnlyList<PanelPayload>? Long,
+        IReadOnlyList<PanelPayload>? Short);
+
+    private sealed record PanelPayload(
+        string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
+        int? Effective, string? Population, int? Minimum, string? WithheldBecause);
 
     private sealed record SetupsPayload(
         string? AsOf,

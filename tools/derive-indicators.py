@@ -75,10 +75,11 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
 
 import datetime
 import json
+import math
 import os
 import sqlite3
 import sys
-from decimal import Decimal, getcontext
+from decimal import Decimal, ROUND_HALF_UP, getcontext
 
 getcontext().prec = 40
 
@@ -99,7 +100,7 @@ def window(connection, ticker, as_of, sessions):
     bound = as_of + "T23:59:59.999Z"
     rows = connection.execute(
         """
-        SELECT bar_date, high, low, close, adj_close, volume
+        SELECT bar_date, high, low, close, adj_close, volume, open
           FROM daily_bar b
          WHERE b.ticker = ?
            AND b.bar_date <= ?
@@ -122,18 +123,20 @@ def window(connection, ticker, as_of, sessions):
             "close": Decimal(r[3]),
             "adj_close": Decimal(r[4]),
             "volume": Decimal(r[5]),
+            "open": Decimal(r[6]),
         }
         for r in rows
     ]
 
 
 def adjusted(bars):
-    """High, low and close on one basis, through each bar's own adj_close/close factor."""
+    """Open, high, low and close on one basis, through each bar's own adj_close/close factor."""
     out = []
     for b in bars:
         factor = Decimal(1) if b["close"] == 0 else b["adj_close"] / b["close"]
         out.append(
             {
+                "open": b["open"] * factor,
                 "high": b["high"] * factor,
                 "low": b["low"] * factor,
                 "close": b["adj_close"],
@@ -972,9 +975,20 @@ def checks_main(argv):
             verdicts[name] = False
     else:
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
-        extreme_index = max(range(thrust_index, len(adj)), key=lambda i: adj[i]["high"])
+        # The span the scan flags: one session for the day scans, twenty for the month ones. A
+        # `leader` hit flags a move that began nineteen sessions before the session it is flagged
+        # on, so measuring it from the flag puts one session of a twenty-session run in the
+        # denominator and finds the extreme at the flag whenever the real high sits before it.
+        span = MONTH_WINDOW if hit[1] in ("leader", "laggard") else 1
+        thrust_start = max(0, thrust_index - span + 1)
+        extreme_index = max(range(thrust_start, len(adj)), key=lambda i: adj[i]["high"])
         extreme = adj[extreme_index]["high"]
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        # The close before the thrust. With the thrust on the first bar of the window there is
+        # none, and the thrust's own open is the nearest thing to where the move began. Its close
+        # is not: the close sits inside the move being measured, so using it reports a shorter
+        # thrust than happened. This read the close until the geometry cases at 3.0 reached the
+        # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
+        origin = adj[thrust_start - 1]["close"] if thrust_start > 0 else adj[thrust_start]["open"]
         pullback_bars = len(adj) - 1 - extreme_index
 
         if pullback_bars == 0:
@@ -1151,9 +1165,17 @@ def short_checks(connection, as_of, ticker):
             verdicts[name] = False
     else:
         thrust_index = next(i for i, b in enumerate(bars) if b["date"] == hit[0])
-        extreme_index = min(range(thrust_index, len(adj)), key=lambda i: adj[i]["low"])
+        # The span the scan flags. `laggard` is the short side's twenty-session scan.
+        span = MONTH_WINDOW if hit[1] in ("leader", "laggard") else 1
+        thrust_start = max(0, thrust_index - span + 1)
+        extreme_index = min(range(thrust_start, len(adj)), key=lambda i: adj[i]["low"])
         extreme = adj[extreme_index]["low"]
-        origin = adj[thrust_index - 1]["close"] if thrust_index > 0 else adj[thrust_index]["close"]
+        # The close before the thrust. With the thrust on the first bar of the window there is
+        # none, and the thrust's own open is the nearest thing to where the move began. Its close
+        # is not: the close sits inside the move being measured, so using it reports a shorter
+        # thrust than happened. This read the close until the geometry cases at 3.0 reached the
+        # branch, where the two implementations disagreed by 0.0098 on a case nothing had run.
+        origin = adj[thrust_start - 1]["close"] if thrust_start > 0 else adj[thrust_start]["open"]
         bounce_bars = len(adj) - 1 - extreme_index
 
         high = extreme if bounce_bars == 0 else max(
@@ -1536,7 +1558,931 @@ def calibration_main(argv):
     return 0
 
 
+def q(value):
+    """Four places, rounding halves away from zero, which is what the replay prints.
+
+    Stated here rather than left to `.quantize(PLACES)` as the rest of this file does, because
+    the default is banker's rounding and the replay rounds away from zero. On the values below
+    the two agree, and a disagreement on a tie would arrive later as a one-digit difference in a
+    figure nobody would think to suspect. The point of a second implementation is to disagree
+    about the arithmetic, not about the printing.
+    """
+    return str(Decimal(value).quantize(PLACES, rounding=ROUND_HALF_UP))
+
+
+def geometry_window(connection, ticker, as_of, sessions):
+    """The last `sessions` bars up to `as_of`, oldest first, point in time, carrying the open.
+
+    A second window rather than a parameter on the first, for the reason the first one gives:
+    the window is as much a part of the answer as the arithmetic is, and a derivation that
+    borrows the selection it is checking is checking less than it looks. The open is here and
+    not there because only the pullback shape needs it, to stand in for a close that does not
+    exist when the thrust is the first bar of the window.
+    """
+    bound = as_of + "T23:59:59.999Z"
+    rows = connection.execute(
+        """
+        SELECT bar_date, open, high, low, close, adj_close
+          FROM daily_bar b
+         WHERE b.ticker = ?
+           AND b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.bar_date DESC
+         LIMIT ?
+        """,
+        (ticker, as_of, bound, bound, sessions),
+    ).fetchall()
+
+    rows.reverse()
+
+    out = []
+    for date, o, h, l, c, ac in rows:
+        o, h, l, c, ac = (Decimal(x) for x in (o, h, l, c, ac))
+        factor = Decimal(1) if c == 0 else ac / c
+        out.append(
+            {
+                "date": date,
+                # Adjusted, for the shape. A split read raw is a 50% decline.
+                "open": o * factor,
+                "high": h * factor,
+                "low": l * factor,
+                "close": ac,
+                # Raw, for the two prices that trade tomorrow. Kept on the same record rather
+                # than in a parallel list, because the whole class of error here is reading one
+                # where the other was meant.
+                "raw_high": h,
+                "raw_low": l,
+            }
+        )
+    return out
+
+
+def pullback_shape(bars, thrust_index, is_long, span=1):
+    """The shape of one pullback, restated from what the quantity is rather than from the code.
+
+    The move is measured from the close before the thrust to the furthest the move reached after
+    it; the pullback is everything after that extreme, and the retrace is the fraction of the move
+    given back. Signed so both directions read the same way: zero is no give-back and one is the
+    whole move.
+
+    Two edges, and both are places where a wrong answer would still look like a right one:
+
+      With the thrust on the first bar of the window there is no close before it. The move has to
+      be measured from somewhere, and the thrust's own open is the nearest thing to where it began.
+      Its close is not, because the close is inside the move being measured and using it would
+      report a shorter thrust than actually happened.
+
+      A thrust of no size cannot be retraced by a fraction of itself, so the depth is undefined
+      rather than zero or infinite. Zero would read as a pullback that gave nothing back, which is
+      a different fact about a different shape.
+    """
+    if not bars or thrust_index < 0 or thrust_index >= len(bars):
+        return None
+
+    # Where the flagged move began. A one-session scan starts where it is flagged; a
+    # twenty-session scan started nineteen sessions earlier. Clamped at the window's own start,
+    # because a window holding part of the move still holds a real shape and refusing it would
+    # drop exactly the names whose run began before the history the detector reads.
+    thrust_start = max(0, thrust_index - span + 1)
+
+    if thrust_start > 0:
+        origin = bars[thrust_start - 1]["close"]
+    else:
+        origin = bars[thrust_start]["open"]
+
+    if is_long:
+        extreme_index = max(range(thrust_start, len(bars)), key=lambda i: bars[i]["high"])
+        extreme = bars[extreme_index]["high"]
+    else:
+        extreme_index = min(range(thrust_start, len(bars)), key=lambda i: bars[i]["low"])
+        extreme = bars[extreme_index]["low"]
+
+    after = range(extreme_index + 1, len(bars))
+    pullback_bars = len(bars) - 1 - extreme_index
+
+    if pullback_bars == 0:
+        # No drift yet, so the extreme is its own answer and there is no level to enter or
+        # abandon against. A real state rather than a missing one.
+        pullback_extreme = extreme
+        trigger = bars[extreme_index]["raw_high"] if is_long else bars[extreme_index]["raw_low"]
+        stop = trigger
+    elif is_long:
+        pullback_extreme = min(bars[i]["low"] for i in after)
+        trigger = max(bars[i]["raw_high"] for i in after)
+        stop = min(bars[i]["raw_low"] for i in after)
+    else:
+        pullback_extreme = max(bars[i]["high"] for i in after)
+        trigger = min(bars[i]["raw_low"] for i in after)
+        stop = max(bars[i]["raw_high"] for i in after)
+
+    move = (extreme - origin) if is_long else (origin - extreme)
+    given_back = (extreme - pullback_extreme) if is_long else (pullback_extreme - extreme)
+    retrace = None if move == 0 else given_back / move
+
+    return {
+        "extremeIndex": extreme_index,
+        "pullbackBars": pullback_bars,
+        "thrustOrigin": origin,
+        "thrustExtreme": extreme,
+        "pullbackExtreme": pullback_extreme,
+        "retraceDepth": retrace,
+        "trigger": trigger,
+        "stop": stop,
+    }
+
+
+def geometry_main(argv):
+    """The authored geometry windows, restated independently of PullbackGeometry.
+
+    The captured fixture puts every name inside every scan on every session, so the thrust is
+    always the last bar and the shipped method returns nought bars and nought depth on every row.
+    fixtures/geometry-cases.json names windows and thrust indices that reach the other branches,
+    over the fixture's own bars. This mode says what each one should compute.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --geometry <store> [cases.json]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[1] if len(argv) > 1 else os.path.join(here, "fixtures", "geometry-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    connection = sqlite3.connect(store)
+    as_of = spec["window"]["asOf"]
+    sessions = spec["window"]["sessions"]
+
+    print("\ngeometry, over %s, %d session(s) to %s" % (store, sessions, as_of))
+
+    for case in spec["cases"]:
+        bars = geometry_window(connection, case["ticker"], as_of, sessions)
+        shape = pullback_shape(
+            bars, case["thrustIndex"], case["direction"] == "long", case.get("thrustSpanSessions", 1))
+        name = case["name"]
+
+        if shape is None:
+            print("  geometry.%-38s %s" % (name, "no shape"))
+            continue
+
+        print()
+        print("  %s  (%s index %d, span %d, %s, %d bar(s) read)"
+              % (name, case["ticker"], case["thrustIndex"], case.get("thrustSpanSessions", 1),
+                 case["direction"], len(bars)))
+
+        for key in ("extremeIndex", "pullbackBars"):
+            print("    geometry.%s.%-16s %d" % (name, key, shape[key]))
+
+        for key in ("thrustOrigin", "thrustExtreme", "pullbackExtreme"):
+            print("    geometry.%s.%-16s %s" % (name, key, q(shape[key])))
+
+        depth = shape["retraceDepth"]
+        print("    geometry.%s.%-16s %s"
+              % (name, "retraceDepth", "undefined" if depth is None else q(depth)))
+
+        for key in ("trigger", "stop"):
+            print("    geometry.%s.%-16s %s" % (name, key, q(shape[key])))
+
+    return 0
+
+
+def thrust_main(argv):
+    """Which scan produced each setup's thrust, restated from the rule rather than read back.
+
+    The detector's rule, in words: of the hits on this name at or before the as-of, keep the three
+    scans that move the setup's own way, take the most recent session, and break a tie within a
+    session by rank. That is a different statement from "read the column back", which is what makes
+    this worth writing: the column is new at 3.0(b) and the whole point of it is the 3.0(c) split by
+    scan family, so a column populated from the wrong hit would be a wrong split nobody could see.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --thrust <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+
+    upward = ("gainer", "gapper", "leader")
+    downward = ("decliner", "gapdown", "laggard")
+
+    rows = connection.execute(
+        "SELECT setup_id, ticker, direction FROM setup ORDER BY setup_id").fetchall()
+
+    print("\nthrust scan, over %s, as of %s" % (store, as_of))
+
+    for setup_id, ticker, direction in rows:
+        scans = upward if direction == "long" else downward
+
+        hit = connection.execute(
+            """
+            SELECT as_of, scan FROM scan_hit
+             WHERE ticker = ? AND as_of <= ? AND scan IN (?, ?, ?)
+             ORDER BY as_of DESC, rank
+             LIMIT 1
+            """, (ticker, as_of, *scans)).fetchone()
+
+        print("  setup.%s.%-14s %s" % (setup_id, "thrustScan", "none" if hit is None else hit[1]))
+        print("  setup.%s.%-14s %s" % (setup_id, "thrustSession", "none" if hit is None else hit[0]))
+
+    return 0
+
+
+def journal_main(argv):
+    """What the journal should find, restated from the invariants rather than read back.
+
+    The stage seals the night between the signal freeze and the cap, so at that moment every setup
+    row of the night must carry a complete check-result set and a frozen signal row, and must carry
+    neither a rank, a cap verdict nor an agreement, because the components that write those run
+    after it or belong to a person. Restated here from that sentence, over the store, so a stage
+    that silently stopped checking one of the four is a difference rather than a quieter pass.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --journal <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+
+    # Every row in the store, on the same terms the stage reads them: the fixture holds one night
+    # and the authored row carries no date prefix in its id, so filtering on as_of would drop it and
+    # report a smaller population than the stage saw.
+    rows = connection.execute(
+        "SELECT setup_id, direction, check_results, rank, capped_out, agreement FROM setup").fetchall()
+
+    long_gates = ["tradable", "moves-enough", "uptrend", "thrust", "dip-shape",
+                  "held-floor", "contraction", "trigger-near", "exit-tight", "cluster"]
+    short_gates = ["tradable-shortable", "moves-enough", "downtrend", "averages-squeezing", "thrust",
+                   "bounce-shape", "reached-ceiling", "no-reclaim", "exit-tight", "cluster"]
+
+    setups = 0
+    with_signals = 0
+    breaches = 0
+
+    for setup_id, direction, blob, rank, capped_out, agreement in rows:
+        setups += 1
+        names = {r["name"] for r in json.loads(blob)}
+        expected = long_gates if direction == "long" else short_gates
+
+        if any(g not in names for g in expected):
+            breaches += 1
+        if rank is not None or capped_out is not None:
+            breaches += 1
+        if agreement is not None:
+            breaches += 1
+
+        signals = connection.execute(
+            "SELECT COUNT(*) FROM setup_signal WHERE setup_id = ?", (setup_id,)).fetchone()[0]
+
+        if signals > 0:
+            with_signals += 1
+        else:
+            breaches += 1
+
+    print("\njournal, over %s, as of %s" % (store, as_of))
+    print("  journal.%-14s %d" % ("setups", setups))
+    print("  journal.%-14s %d" % ("withSignals", with_signals))
+    print("  journal.%-14s %d" % ("breaches", breaches))
+    return 0
+
+
+def forward_main(argv):
+    """The forward outcomes, restated from what the quantity is rather than from the code.
+
+    The return is the change in adjusted close from the subject's own session to the session the
+    horizon lands on, signed by direction so a short that fell reads positive. The excursions are
+    the furthest the path ran either way over the sessions after the subject's own, expressed in
+    the subject's ATR on its own date.
+
+    Two edges, both places a wrong answer still looks right:
+
+      The horizon is trading sessions, not calendar days. A ten-day return that quietly became
+      fourteen over a holiday is not comparable with one that did not. The calendar date is
+      recorded beside the session actually used, and where they differ the follow-up says so.
+
+      The subject's own session is excluded from the excursions. The lab flagged the name on that
+      session's close, so what its own high and low did is not something a position could have
+      lived through.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --forward <store> [cases.json]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[1] if len(argv) > 1 else os.path.join(here, "fixtures", "forward-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    connection = sqlite3.connect(store)
+    horizons = (1, 3, 5, 10)
+
+    print("\nforward outcomes, over %s" % store)
+
+    for case in spec["cases"]:
+        ticker, as_of = case["ticker"], case["asOf"]
+        is_long = case["direction"] == "long"
+        name = case["name"]
+
+        # Bounded on the fixture's as-of. The fixture plants one observation dated the day after,
+        # and an unbounded read takes it: over the split case that is a return of 1.6601 where the
+        # bounded answer is -0.1369. This mode had no bound until it disagreed with the shipped
+        # method, which is what a second implementation is for.
+        bound = spec["observedBefore"]
+
+        rows = connection.execute(
+            """
+            SELECT b.bar_date, b.high, b.low, b.close, b.adj_close
+              FROM daily_bar b
+             WHERE b.ticker = ? AND b.bar_date >= ?
+               AND b.observed_at <= ?
+               AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                     WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                       AND l.observed_at <= ?)
+             ORDER BY b.bar_date
+            """, (ticker, as_of, bound, bound)).fetchall()
+
+        bars = []
+        for date, high, low, close, adj in rows:
+            high, low, close, adj = (Decimal(x) for x in (high, low, close, adj))
+            factor = Decimal(1) if close == 0 else adj / close
+            bars.append({"date": date, "high": high * factor, "low": low * factor, "close": adj})
+
+        # From the case rather than the store, on the same grounds the case states it: the fixture
+        # holds indicator rows for its as-of night only, so a subject placed earlier has none.
+        atr = Decimal(case["averageTrueRange"])
+
+        print()
+        print("  %s  (%s from %s, %s, %d bar(s))" % (name, ticker, as_of, case["direction"], len(bars)))
+
+        for horizon in horizons:
+            key = "forward.%s.h%d" % (name, horizon)
+
+            if len(bars) <= horizon or bars[0]["close"] == 0:
+                print("    %-52s %s" % (key, "not yet elapsed"))
+                continue
+
+            start, end = bars[0], bars[horizon]
+            move = (end["close"] - start["close"]) / start["close"]
+            signed = move if is_long else -move
+
+            best = max((b["high"] - start["close"]) if is_long else (start["close"] - b["low"])
+                       for b in bars[1:horizon + 1])
+            worst = min((b["low"] - start["close"]) if is_long else (start["close"] - b["high"])
+                        for b in bars[1:horizon + 1])
+
+            intended = (datetime.date.fromisoformat(as_of)
+                        + datetime.timedelta(days=horizon)).isoformat()
+
+            print("    %s.%-14s %s" % (key, "intendedDate", intended))
+            print("    %s.%-14s %s" % (key, "actualDate", end["date"]))
+            print("    %s.%-14s %s" % (key, "slipped", "no" if intended == end["date"] else "yes"))
+            print("    %s.%-14s %s" % (key, "returnSigned", q(signed)))
+            print("    %s.%-14s %s" % (key, "mfeAtr", "undefined" if atr == 0 else q(best / atr)))
+            print("    %s.%-14s %s" % (key, "maeAtr", "undefined" if atr == 0 else q(worst / atr)))
+
+    return 0
+
+
+def controls_main(argv):
+    """Which controls each setup should have drawn, restated from the rule rather than read back.
+
+    The rule, in words: from the names that cleared the liquidity floor on the night and were not
+    flagged, take the five nearest on turnover and daily range, measured as a fraction of the
+    subject's own figure, with ticker as the tiebreak. The tight set first drops every candidate
+    whose trend ladder differs from the subject's.
+
+    Two edges, both of which the shipped stage got wrong on its first run:
+
+      The ladder grade is written as a later observation of the same session, so a read bounded on
+      the run instant sees the ungraded row and the tight filter compares nothing to nothing. The
+      bound is the end of the as-of date, which is what every other indicator read uses.
+
+      The distance is relative, not absolute. Fifty million dollars of turnover is a wide gap for a
+      small name and a rounding for a large one, and an absolute distance draws every control from
+      the biggest names in the universe.
+    """
+    if len(argv) < 2:
+        print("usage: derive-indicators.py --controls <store> <as-of>", file=sys.stderr)
+        return 2
+
+    store, as_of = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+    bound = as_of + "T23:59:59.999Z"
+
+    rows = connection.execute(
+        """
+        SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
+          FROM indicator_daily i
+         WHERE i.as_of = ? AND i.computed_at <= ?
+           AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
+                                 WHERE c.ticker = i.ticker AND c.as_of = i.as_of
+                                   AND c.computed_at <= ?)
+         ORDER BY i.ticker
+        """, (as_of, bound, bound)).fetchall()
+
+    figures = {}
+    for ticker, turnover, adr, grade in rows:
+        turnover = Decimal(turnover) if turnover is not None else Decimal(0)
+        if turnover < LIQUIDITY_FLOOR:
+            continue
+        figures[ticker] = {
+            "ticker": ticker,
+            "turnover": turnover,
+            "adr": Decimal(adr) if adr is not None else Decimal(0),
+            "grade": grade,
+        }
+
+    setups = connection.execute(
+        "SELECT setup_id, ticker FROM setup ORDER BY setup_id").fetchall()
+    flagged = {t for _, t in setups}
+
+    def apart(subject, candidate):
+        if subject == 0:
+            return Decimal(10) ** 30
+        return abs(candidate - subject) / abs(subject)
+
+    print("\ncontrols, over %s, as of %s" % (store, as_of))
+
+    for setup_id, ticker in setups:
+        subject = figures.get(ticker)
+        if subject is None:
+            continue
+
+        for name, tight in (("loose", False), ("tight", True)):
+            scored = []
+            for candidate in figures.values():
+                if candidate["ticker"] == ticker or candidate["ticker"] in flagged:
+                    continue
+                if tight and candidate["grade"] != subject["grade"]:
+                    continue
+                liquidity = apart(subject["turnover"], candidate["turnover"])
+                daily = apart(subject["adr"], candidate["adr"])
+                scored.append((liquidity + daily, candidate["ticker"], liquidity, daily))
+
+            scored.sort(key=lambda s: (s[0], s[1]))
+            picked = scored[:5]
+
+            print("  controls.%s.%-6s %s" % (setup_id, name, " ".join(p[1] for p in picked)))
+
+            if picked:
+                best = picked[0]
+                print('  controls.%s.%s.nearest {"liquidity":"%s","dailyRange":"%s","ladderGrade":"%s"}'
+                      % (setup_id, name, q(best[2]), q(best[3]), "same" if tight else (
+                          figures[best[1]]["grade"] or "ungraded")))
+
+    return 0
+
+
+def ceiling_main(argv):
+    """The win-rate bound over the authored populations, restated from what the quantity is.
+
+    Perfect foresight takes the subjects that ended ahead, which is the only thing foresight is
+    granted. Of those, it keeps the ones the stop let it keep: a name that finished 15% up having
+    first traded through its give-up point was not available to any rule, because the position was
+    already closed. The bound is kept over ahead; the achieved rate is kept over everything flagged.
+
+    Two denominators, and their difference is the figure. A bound over the whole population is the
+    achieved rate again and the gap is nought by construction, which is a ceiling that can only ever
+    say selection has no room.
+
+    The conversion is the trap. The excursion is in ATR and the give-up is in daily ranges, so both
+    are turned into prices before they are compared. Read as bare multiples the two are different
+    units on different bases, both small, both looking like volatility.
+    """
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --ceiling [cases.json]", file=sys.stderr)
+        return 2
+
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[0] if argv and argv[0].endswith(".json") else os.path.join(
+        here, "fixtures", "ceiling-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    print("\nwin-rate ceiling, over %s" % os.path.basename(path))
+
+    for scenario in spec["scenarios"]:
+        name = scenario["name"]
+        subjects = scenario["subjects"]
+
+        def survived(s):
+            atr = Decimal(s["atr"])
+            daily = Decimal(s["dailyRange"])
+            if atr <= 0 or daily <= 0:
+                return False
+            # The excursion is the least favourable point on the path, so it is POSITIVE whenever
+            # the path never went against the subject at all. Floored at nought rather than taken
+            # through abs(): the two agree on every negative input and differ on exactly the rows
+            # the bound is most sensitive to, being the ones that rose without drawing down. This
+            # restatement carried the same abs() as the shipped code until 3.5 was reopened, which
+            # is what an independent restatement of a shared false premise buys.
+            adverse = min(Decimal(0), Decimal(s["maeAtr"]))
+            return -adverse * atr < Decimal(s["stopRanges"]) * daily
+
+        ahead = [s for s in subjects if Decimal(s["return"]) > 0]
+        kept = [s for s in ahead if survived(s)]
+
+        bound = Decimal(0) if not ahead else Decimal(len(kept)) / Decimal(len(ahead))
+        achieved = Decimal(len(kept)) / Decimal(len(subjects))
+
+        print()
+        print("  ceiling.%s.%-10s %d" % (name, "subjects", len(subjects)))
+        print("  ceiling.%s.%-10s %s" % (name, "bound", q(bound)))
+        print("  ceiling.%s.%-10s %s" % (name, "achieved", q(achieved)))
+        print("  ceiling.%s.%-10s %s" % (name, "gap", q(bound - achieved)))
+
+    return 0
+
+
+def accumulation_main(argv):
+    """The closed-horizon population's own counts, restated from its stated shape.
+
+    The population is authored: a stated number of nights, a stated number of setups a night on each
+    side, and a stated number of controls per set per setup. Every count below follows from those
+    three and from the four horizons, so none of it is read back from the run it is checked against.
+
+    Why it is owed at all. The captured fixture holds one market day, so no horizon closes in it and
+    the whole measurement path past the flag was exercised by nothing. That is how ForwardReturnFiller
+    binding its subject kind to the literal "setup" survived twelve checkpoints: nothing anywhere ran
+    the query that came back empty against a store with something to put in it.
+    """
+    nights = 24
+    setups_per_night_per_direction = 6
+    directions = 2
+    sets = 2
+    controls_per_set = 5
+    horizons = 4
+
+    setups = nights * setups_per_night_per_direction * directions
+    controls = setups * sets * controls_per_set
+
+    print("\naccumulation, over the authored closed-horizon population")
+    print()
+    print("  accumulation.%-38s %d" % ("nights", nights))
+    print("  accumulation.%-38s %d" % ("setups", setups))
+    print("  accumulation.%-38s %d" % ("controls", controls))
+    print("  accumulation.%-38s %d" % ("forward.setupsWritten", setups * horizons))
+    print("  accumulation.%-38s %d" % ("forward.controlsWritten", controls * horizons))
+    print("  accumulation.%-38s %d" % ("forward.setupOutcomeRows", setups * horizons))
+    print("  accumulation.%-38s %d" % ("forward.controlOutcomeRows", controls * horizons))
+
+    # One panel per direction per control set, and every one of them has to carry an interval once
+    # the control outcomes exist. Nought here is the state the defect produced.
+    print("  accumulation.band1.%-32s %d" % ("panelsWithAnInterval", directions * sets))
+
+    return 0
+
+
+def splitmix64(state):
+    """One step of splitmix64, the generator the interval's block starts are drawn from.
+
+    Four lines, one 64-bit word of state, and restated identically in any language with 64-bit
+    unsigned arithmetic. The shipped implementation is PairedInterval.Next; this is the same
+    arithmetic, and the seed is the same published constant.
+    """
+    mask = (1 << 64) - 1
+    state = (state + 0x9E3779B97F4A7C15) & mask
+    z = state
+    z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & mask
+    z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & mask
+    return state, z ^ (z >> 31)
+
+
+def interval_main(argv):
+    """The interval and the effective sample, restated from what each quantity is.
+
+    The interval is a studentised moving-block bootstrap: blocks of the scoring horizon's length,
+    each draw taking its block starts INDEPENDENTLY from splitmix64 at a fixed published seed, and
+    each resampled mean scored against its own block-to-block standard error before the 2.5th and
+    97.5th percentiles of that ratio are read back onto the observed estimate.
+
+    This restatement is the reason the defect it replaces survived. It hard-coded the same two
+    coprime strides the shipped code used, so what the two agreed about was the transcription of an
+    algorithm and never that the algorithm was a bootstrap at all. Every start in draw d was the
+    corresponding start in draw 0 shifted by the same d * 7919, so the resample space had one point
+    per night in it however many draws were asked for, and ten thousand draws was bit-identical to N
+    draws. A second implementation of the wrong thing agrees with the first.
+
+    The effective sample starts from rows rather than nights, because the paired difference has
+    already removed the market factor the names in a night would otherwise share. Two discounts are
+    then applied, both measured from the series:
+
+      * the label overlap across nights, as the variance-inflation form over the lag-one
+        autocorrelation of the nightly means, (1 - rho) / (1 + rho), capped at one;
+      * whatever common movement the pairing failed to remove, as the ordinary design effect: the
+        realised variance of the nightly means over the variance they would have if each night's
+        pairs were independent, being within^2 / pairs, floored at one.
+
+    Where no night carries more than one pair, or no night's pairs disperse at all, nothing in the
+    series says anything about clustering and a night counts as one observation. That is the
+    pessimistic corner rather than the assumption, and it is what the first four scenarios exercise.
+
+    The trap this restatement exists to catch: any scheme whose draws are one fixed selection
+    rotated. Walking the offsets in order is the loud version, where a rotation preserves the mean
+    and the interval comes back with no width at all. Mixing them by strides is the quiet version,
+    where the interval has a width and is two to three point seven times too narrow. Both clear zero
+    far more often than 95% confidence claims, and band 1 turns on whether a bound clears zero.
+    """
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = argv[0] if argv and argv[0].endswith(".json") else os.path.join(
+        here, "fixtures", "interval-cases.json")
+
+    with open(path, encoding="utf-8") as handle:
+        spec = json.load(handle)
+
+    if spec.get("tier") != "AUTHORED":
+        print("%s does not declare itself AUTHORED" % path, file=sys.stderr)
+        return 1
+
+    block = 10
+    draws = 10000
+    seed = 0x5EED1F7
+
+    print("\npaired interval, over %s" % os.path.basename(path))
+
+    for scenario in spec["scenarios"]:
+        name = scenario["name"]
+        nights = [Decimal(str(x)) for x in scenario["nightlyMeans"]]
+        key = "interval.%s" % name
+
+        if len(nights) < block * 2:
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        count = len(nights)
+        pairs = int(scenario.get("pairsPerNight", 1))
+        within = Decimal(str(scenario.get("withinNightDispersion", 0)))
+        rows = count * pairs
+        blocks = count // block
+
+        # The bootstrap runs in IEEE-754 double, matching the shipped code exactly: these are
+        # variances of ratios rather than prices, the arithmetic needs a square root, and both
+        # sides do the same operations in the same order so the two agree to every place printed.
+        # The effective-sample arithmetic below stays in Decimal, which is what the shipped code
+        # uses for it.
+        series = [float(x) for x in nights]
+
+        def block_standard_error(block_means):
+            """The standard error of a mean of block means, or None where there are too few."""
+            if len(block_means) < 2:
+                return None
+            centre = sum(block_means) / len(block_means)
+            squares = sum((x - centre) * (x - centre) for x in block_means)
+            return math.sqrt(squares / (len(block_means) - 1) / len(block_means))
+
+        def observed_standard_error():
+            """The error of the observed mean, over a whole number of non-overlapping blocks.
+
+            The direct analogue of what each resample is scored by. A resample's error is the sample
+            error of `blocks` block means drawn independently, so the matching estimate on the
+            observed series is the sample error of `blocks` non-overlapping block means. Any such
+            tiling leaves count mod block nights out of the scale estimate; they still enter the
+            point estimate, the effective sample and every resample. Anchored at the recent end so
+            the nights left out are the oldest.
+            """
+            if blocks < 2:
+                return None
+            offset = count - blocks * block
+            means = [sum(series[offset + b * block + i] for i in range(block)) / block
+                     for b in range(blocks)]
+            return block_standard_error(means)
+
+        observed_mean = sum(series) / count
+        error = observed_standard_error()
+
+        if not error or error <= 0:
+            # A series whose blocks all carry the same mean has no standard error to studentise
+            # by, and the interval it would produce has no width. Withheld, never shown.
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        state = seed
+        ratios = []
+        for _draw in range(draws):
+            block_means = []
+            for _b in range(blocks):
+                state, value = splitmix64(state)
+                start = value % count
+                block_means.append(
+                    sum(series[(start + i) % count] for i in range(block)) / block)
+            resampled_error = block_standard_error(block_means)
+            if resampled_error and resampled_error > 0:
+                resampled = sum(block_means) / len(block_means)
+                ratios.append((resampled - observed_mean) / resampled_error)
+
+        if not ratios:
+            print("  %-46s %s" % (key, "withheld"))
+            continue
+
+        ratios.sort()
+
+        def ratio_at(fraction):
+            return ratios[int(fraction * (len(ratios) - 1))]
+
+        # The tails swap: the upper quantile of the ratio gives the lower bound.
+        low = Decimal(repr(observed_mean - ratio_at(0.975) * error))
+        high = Decimal(repr(observed_mean - ratio_at(0.025) * error))
+        mean = sum(nights) / count
+
+        centred = [x - mean for x in nights]
+        variance = sum(c * c for c in centred)
+        covariance = sum(centred[i] * centred[i - 1] for i in range(1, count))
+
+        if variance == 0:
+            effective = 1
+        else:
+            rho = covariance / variance
+            serial = Decimal(1) if rho <= -1 else (1 - rho) / (1 + rho)
+            serial = min(Decimal(1), max(Decimal(0), serial))
+
+            if pairs < 2 or within <= 0:
+                # Nothing in the series says how a night's own pairs dispersed, so a night counts
+                # as one observation however many it holds.
+                scaled = Decimal(count) * serial
+            else:
+                observed = variance / (count - 1)
+                expected = within * within / pairs
+                design = max(Decimal(1), observed / expected)
+                scaled = Decimal(rows) / design * serial
+
+            effective = max(1, min(rows, int(scaled.quantize(Decimal("1"), rounding=ROUND_HALF_UP))))
+
+        print()
+        print("  %s.%-12s %s" % (key, "mean", q(mean)))
+        print("  %s.%-12s %s" % (key, "low", q(low)))
+        print("  %s.%-12s %s" % (key, "high", q(high)))
+        print("  %s.%-12s %s" % (key, "clearsZero", "yes" if low > 0 else "no"))
+        print("  %s.%-12s %d" % (key, "nights", count))
+        print("  %s.%-12s %d" % (key, "rows", rows))
+        print("  %s.%-12s %d" % (key, "effective", effective))
+
+    return 0
+
+
+def dispersion_main(argv):
+    """The dispersion of ten-session forward returns, and the minimum sample that falls out of it.
+
+    This is the input a minimum sample rests on and the one input to it that is a fact rather than a
+    judgement. The corpus stated 160 paired setup observations "detecting about a two-point
+    difference in ten-day forward return" without ever measuring the dispersion that arithmetic
+    turns on, so the figure read as derived and was not.
+
+    Restated from what the quantities are:
+
+      * A ten-session forward return is next-but-nine's adjusted close over today's, less one.
+      * Within one session every name carries the same market move, so the cross-sectional sample
+        variance of that session's returns estimates the idiosyncratic variance directly: the common
+        term cancels and the n-1 denominator makes it unbiased. That is the same cancellation the
+        paired difference buys on the scoreboard.
+      * Pooling those variances across sessions by their degrees of freedom gives the single-name
+        figure, and a setup's difference against the mean of m controls disperses by sqrt(1 + 1/m)
+        times it, because the control mean carries noise of its own.
+      * n = ((z_alpha + z_beta) * sigma_d / delta)^2, the one-sample form, because pairing has
+        already turned two populations into one series tested against zero.
+
+    Sessions thinner than the minimum name count are dropped: a session whose mean is mostly one of
+    its own names has part of the dispersion removed with the market, and the estimate comes back
+    too small. Too small is the direction that fires a decision early.
+    """
+    if len(argv) < 1 or not argv[0]:
+        print("usage: derive-indicators.py --dispersion <store> [as-of]", file=sys.stderr)
+        return 2
+
+    store = argv[0]
+    as_of = argv[1] if len(argv) > 1 else "2026-08-24"
+    bound = as_of + "T23:59:59.999Z"
+
+    horizon = 10
+    minimum_names = 20
+    controls = 5
+    delta = 0.02
+    z_alpha = 1.959964
+    z_beta = 1.281552
+
+    connection = sqlite3.connect(store)
+    rows = connection.execute(
+        """
+        SELECT b.ticker, b.bar_date, b.adj_close
+          FROM daily_bar b
+         WHERE b.bar_date <= ?
+           AND b.observed_at <= ?
+           AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                 WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                   AND l.observed_at <= ?)
+         ORDER BY b.ticker, b.bar_date
+        """,
+        (as_of, bound, bound),
+    ).fetchall()
+
+    series = {}
+    for ticker, date, adj_close in rows:
+        series.setdefault(ticker, []).append((date, float(adj_close)))
+
+    by_session = {}
+    names = 0
+    for ticker in sorted(series):
+        bars = series[ticker]
+        if len(bars) <= horizon:
+            continue
+        names += 1
+        for i in range(len(bars) - horizon):
+            basis = bars[i][1]
+            if basis <= 0:
+                continue
+            by_session.setdefault(bars[i][0], []).append(bars[i + horizon][1] / basis - 1.0)
+
+    sum_squares = 0.0
+    degrees = 0
+    sessions = 0
+    observations = 0
+
+    for date in sorted(by_session):
+        returns = by_session[date]
+        count = len(returns)
+        if count < minimum_names:
+            continue
+        mean = sum(returns) / count
+        for value in returns:
+            centred = value - mean
+            sum_squares += centred * centred
+        degrees += count - 1
+        observations += count
+        sessions += 1
+
+    if degrees == 0:
+        print("  no session carries %d names; nothing to measure" % minimum_names)
+        return 1
+
+    idiosyncratic = round(math.sqrt(sum_squares / degrees), 6)
+    paired = round(idiosyncratic * math.sqrt(1.0 + 1.0 / controls), 6)
+    scaled = (z_alpha + z_beta) * paired / delta
+    minimum = int(math.ceil(scaled * scaled))
+
+    print("\nforward dispersion, over %s, %d session(s) to %s" % (store, sessions, as_of))
+    print("  dispersion.%-24s %d" % ("names", names))
+    print("  dispersion.%-24s %d" % ("sessions", sessions))
+    print("  dispersion.%-24s %d" % ("observations", observations))
+    print("  dispersion.%-24s %.6f" % ("idiosyncratic", idiosyncratic))
+    print("  dispersion.%-24s %.6f" % ("pairedDifference", paired))
+    print("  minimumSample.%-21s %d" % ("effectiveObservations", minimum))
+
+    print("\n  what it costs to ask for less, or for more:")
+    for detect in (0.015, 0.02, 0.025, 0.03):
+        s = (z_alpha + z_beta) * paired / detect
+        print("    detecting %.3f needs %4d" % (detect, int(math.ceil(s * s))))
+    for label, zb in (("70%", 0.524401), ("80%", 0.841621), ("90%", z_beta), ("95%", 1.644854)):
+        s = (z_alpha + zb) * paired / delta
+        print("    at %s power needs %4d" % (label, int(math.ceil(s * s))))
+
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--dispersion":
+        return dispersion_main(argv[2:] or [''])
+
+    if len(argv) > 1 and argv[1] == "--accumulation":
+        return accumulation_main(argv[2:] or [''])
+
+    if len(argv) > 1 and argv[1] == "--interval":
+        return interval_main(argv[2:] or [''])
+
+    if len(argv) > 1 and argv[1] == "--ceiling":
+        return ceiling_main(argv[2:] or [''])
+
+    if len(argv) > 1 and argv[1] == "--controls":
+        return controls_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--forward":
+        return forward_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--journal":
+        return journal_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--thrust":
+        return thrust_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--geometry":
+        return geometry_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--calibration":
         return calibration_main(argv[2:])
 

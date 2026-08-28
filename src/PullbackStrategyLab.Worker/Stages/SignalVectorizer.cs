@@ -328,9 +328,18 @@ public sealed class SignalVectorizer
             return;
         }
 
+        // The span the scan flags, from the scan this very method already froze. Read from `values`
+        // rather than resolved again, because the frozen evidence has to describe the decision the
+        // detector made and a second lookup could answer differently.
+        if (!values.TryGetValue("thrust_scan", out string? thrustScan))
+        {
+            return;
+        }
+
         bool isLong = string.Equals(setup.Direction, "long", StringComparison.Ordinal);
         PullbackGeometry.Bar[] shaped = [.. bars.Select(OnBothBases)];
-        PullbackGeometry.Pullback? pullback = PullbackGeometry.Of(shaped, thrustIndex, isLong);
+        PullbackGeometry.Pullback? pullback =
+            PullbackGeometry.Of(shaped, thrustIndex, ScanSpans.SessionsFor(thrustScan), isLong);
 
         if (pullback is null)
         {

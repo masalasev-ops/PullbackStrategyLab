@@ -130,7 +130,7 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// property of the source that anything here can read: an empty state is a perfectly ordinary
     /// page, and the difference is whether a checkpoint says it should still be one.
     /// </summary>
-    private static IReadOnlyList<string> Landed { get; } = ["/setups"];
+    private static IReadOnlyList<string> Landed { get; } = ["/setups", "/scoreboard"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -146,6 +146,24 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         {
             Assert.DoesNotContain(invented, html, StringComparison.Ordinal);
         }
+    }
+
+    /// <summary>
+    /// A screen that is built still names the checkpoint that fills any panel it does not have yet.
+    ///
+    /// The scoreboard is the case this exists for. Three of its four bands are live as of 3.5 and the
+    /// fourth needs closed trades from 4.10, so the page is neither an empty state nor complete. A
+    /// band silently absent would read as a page that had shown everything it has, which is the
+    /// failure the empty-state rule exists to prevent, arrived at from the other side.
+    /// </summary>
+    [Fact]
+    public async Task A_built_screen_still_names_the_checkpoint_that_fills_what_it_lacks()
+    {
+        using HttpClient client = Reading();
+        string html = await client.GetStringAsync("/scoreboard");
+
+        Assert.Contains("checkpoint 4.10", html, StringComparison.Ordinal);
+        Assert.Contains("checkpoint 6.8", html, StringComparison.Ordinal);
     }
 
     [Fact]

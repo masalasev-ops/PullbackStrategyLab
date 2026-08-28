@@ -45,6 +45,11 @@ public static class Program
         builder.Services.AddSingleton<ThemeClusterer>();
         builder.Services.AddSingleton<LongSetupDetector>();
         builder.Services.AddSingleton<ShortSetupDetector>();
+        builder.Services.AddSingleton<ScoreboardBuilder>();
+        builder.Services.AddSingleton<CeilingCalculator>();
+        builder.Services.AddSingleton<ControlSampler>();
+        builder.Services.AddSingleton<ForwardReturnFiller>();
+        builder.Services.AddSingleton<SetupJournal>();
         builder.Services.AddSingleton<SetupCapper>();
         builder.Services.AddSingleton<FixtureCapture>();
         builder.Services.AddSingleton<PhaseReportStage>();
@@ -81,6 +86,11 @@ public static class Program
                 ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
                 LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
                 ShortSetupDetector.Name => host.Services.GetRequiredService<ShortSetupDetector>().Run(rest),
+                SetupJournal.Name => host.Services.GetRequiredService<SetupJournal>().Run(rest),
+                ScoreboardBuilder.Name => host.Services.GetRequiredService<ScoreboardBuilder>().Run(rest),
+                CeilingCalculator.Name => host.Services.GetRequiredService<CeilingCalculator>().Run(rest),
+                ControlSampler.Name => host.Services.GetRequiredService<ControlSampler>().Run(rest),
+                ForwardReturnFiller.Name => host.Services.GetRequiredService<ForwardReturnFiller>().Run(rest),
                 SetupCapper.Name => host.Services.GetRequiredService<SetupCapper>().Run(rest),
                 PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
                 "list-stages" => ListStages(),
@@ -133,6 +143,11 @@ public static class Program
         LongSetupDetector.Name,
         ShortSetupDetector.Name,
         SignalVectorizer.Name,
+        SetupJournal.Name,
+        ScoreboardBuilder.Name,
+        CeilingCalculator.Name,
+        ControlSampler.Name,
+        ForwardReturnFiller.Name,
         SetupCapper.Name,
         FixtureCapture.Name,
         PhaseReportStage.Name,

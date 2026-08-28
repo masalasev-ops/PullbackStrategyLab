@@ -672,3 +672,188 @@ Why:  The first four shapes were a check asserting less than its label and the f
 Was:  The carried obligations table had no row for claims of visibility being checked against the surface that carries them.
 Now:  A row raised at 2.9 and due at 3.1, naming three to start: the `reached-ceiling` narrowing, the calibration market-cap exemption, and the borrow assumption.
 Why:  Every check in this corpus asserts over source, over the store, or over a document, and none reads a rendered page, so a claim about what a person can see is currently verified against what a machine can read. The two found by the gallery review are fixed and held by nothing but the fix having happened. The borrow assumption is the same shape unlooked at: the claim is that a 1.0% annualised cost and the availability caveat are recorded as unmodelled assumptions on every short trade, and no trade row exists until 4.7 nor a journal until 4.11, so it rests on a surface nobody has built. Kept narrow on purpose, because the general form is UI testing and the useful form is one question about one sentence.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Phase 3's table began at 3.1, SetupJournal finalised.
+Now:  The same table with a 3.0 row before it, seven lettered parts in a stated order: the geometry instrument, the thrust scan on the setup row, the correction alone, the surfaces sweep, the remaining hygiene obligations, the spec pass, and a check result carrying a value per clause.
+Why:  Twelve obligations fell due at 3.1 and 3.1's deliverable is SetupJournal, so every one of them named a checkpoint whose deliverable was not its work. That is the shape this corpus has already lost three obligations to. A row of their own gives them a due point that describes them, and inserting it ahead of 3.1 rather than renumbering keeps 3.6 the decision point and 3.7 the sign-off, which 57 out-of-scope claims and every coverage deferral in the suite name by number. Modelled on 2.1, which is the precedent for a lettered multi-part checkpoint whose first part authors what the rest is written against.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Twelve rows of the carried obligations table named 3.1 as their due point.
+Now:  The same twelve rows, unchanged in every other respect, due at 3.0.
+Why:  Repointed in the same commit that creates 3.0, because a row due at a checkpoint that does not yet exist fails the deferral guard exactly as surely as one due at a checkpoint that has landed, and the two edits are one change. The sweep run before the commit found the cost of the alternative: nothing outside BUILD_PLAN, PROGRESS and CHANGELOG references a phase 3 checkpoint by number except four places in the suite, and none of them names 3.6 or 3.7, so insertion is cheap and renumbering would not have been.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `setup`'s column list ended at `agreement_note`, and `calibration_setup` was declared as having the same shape.
+Now:  Both carry `thrust_scan` and `thrust_session`, nullable, with a paragraph saying why the signal of the same name does not cover it.
+Why:  Four gates read a quantity computed from where the thrust is measured from, and `gainer` and `gapper` flag a one-session move where `leader` and `laggard` flag a twenty-session one. A row that does not say which scan flagged it cannot be told from a row measured over a different span, which is the whole of the 3.0(c) correction. `thrust_scan` already exists as a signal and cannot serve: `setup_signal` has a foreign key to `setup`, calibration writes to `calibration_setup`, so the 49,450-row population a threshold is counted over is exactly the population the signal cannot reach.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Ten claims of visibility written in the present tense about surfaces that do not exist: the borrow assumption "recorded as an unmodelled assumption on every short trade" in two places, the watchlist's give-up units and short columns, the trade journal's two sections, the research ledger's separate scores, a refuted variant staying visible, the difference series and the holdout register, and the scoreboard's four bands.
+Now:  Each names the checkpoint that builds its surface: 4.1 for the watchlist, 4.7 for the trade row, 4.11 for the journal, 5.5 for the ledger, 3.5 for scoreboard bands 0 to 2 and 6.8 for band 3.
+Why:  A claim that something is visible is a claim about a surface, and this corpus verifies those claims against the store. Written in the present tense, "recorded on every short trade" reads as a property the lab has when no trade row exists until 4.7 and no journal until 4.11, which is the same shape as the gallery defect one step earlier: nothing upstream is wrong, so nothing upstream can catch it. Naming the checkpoint puts these on the same footing as an out-of-scope claim, which has always had to say what would end it.
+
+### 2026-08-27 — DECISIONS.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  `The short borrow problem is mitigated by a filter, not solved` ended "Recorded as an unmodelled assumption on every short trade", and `Equity is a fixed $100,000 notional that never compounds` said the realised risk is recorded beside the intended risk so the gap is visible.
+Now:  Both say what is owed and from which checkpoint, 4.7 for the row and 4.11 for the surface that shows it.
+Why:  Same reason as the ARCHITECTURE edit above. A decision stating a property in the present tense is the strongest form of the claim in the corpus, and these two rested on rows nobody has built.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table had no row for an instrument that reads a rendered surface.
+Now:  A row raised at 3.0 and due at 3.7, scoped to the sentences the 3.0(d) sweep produced rather than to UI testing in general.
+Why:  The sweep named the surface behind every claim of visibility and said whether it holds today. It could not assert one, because no check in this corpus reads a rendered page. The eight claims found true today are true because a person looked, and because two of them happen to be covered by tests written for another reason. Due at 3.7 rather than inside 3.0, because building the instrument in the pass that found the gap is how a sweep turns into a checkpoint, and the pages phase 3 adds are the ones it would first cover.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The checks roster had twenty-one rows and no row for reconciling `Carried` blocks against the obligations table.
+Now:  Twenty-two rows, with `carried-obligations` running on every CI run.
+Why:  The narrow form the 2.12 obligation argued for. It compares the set of due points rather than the sentences, because prose against prose false-alarms on every rewording and a suppressed guard is a dead one. Four obligations have now been written into a `Carried` block and never into the table.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `universe_snapshot` carried `as_of` and `ticker` and nothing else.
+Now:  Two more columns, `screened_over_sessions` and `screen_carried`, with a paragraph on why a night that cannot screen carries rather than skips.
+Why:  The question was raised at 1.3, recorded only in that entry's `Carried` block, and read by nothing until 3.0. The count distribution answers it: a night flags a median of 44 long names and 13 short out of 2,016 while membership drifts by a handful a month, so carrying misstates a night by far less than skipping removes from it. What it may not do is look like a screened night, which is why this is a migration rather than a document edit.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  Figure 8 labelled the "Signal request" box `ForwardReturnFiller`.
+Now:  `ProposalRegistry`.
+Why:  ForwardReturnFiller fills forward returns and has nothing to do with signal requests. A proposal asking for a new signal is ProposalRegistry's, which is what the two-kinds-of-proposal decision says. Found while reading for the surfaces sweep rather than by any check, because the conformance check reads the catalogue table and not the figures.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `control_setup` and `forward_return` declared no primary key, `forward_return.subject_id` was documented as "a `setup_id` or a control row" with no column on `control_setup` for a control row to be, and `ceiling_bound` and `scoreboard` were declared at store level only, under "Research — phases 5 and 6".
+Now:  Both phase-3 tables carry a key, `control_setup` gains `control_id` for `subject_id` to point at and a `rank`, `forward_return` gains `filled_at`, and `ceiling_bound` and `scoreboard` are declared in full in the section their writers land in.
+Why:  Every sibling table declares a key and these two did not, so the grain was implied rather than enforced. The subject of an outcome row had nothing to name a control by, and the alternative to a surrogate was a three-column subject on every row. And the file's own preamble claims completeness for phases 1 to 3 while two phase-3 stores sat in the phases 5 and 6 table, so `writer-ownership` would have resolved them at 3.4 and 3.5 with no columns to check.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said SetupJournal "Makes the setup row immutable once written".
+Now:  It says what the stage does: seals the night, every row complete, its evidence frozen, no column written that belongs to a later stage or to a person, and writes nothing.
+Why:  The old line described an outcome nothing could perform. A component cannot make a row immutable; it can check the invariants that would be false if something had written where it should not, and it can do that without owning a table. The distinction matters because the first reading invites a component that enforces immutability by writing, which would be the second writer of the thing it protects.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 18:25 row read "`vectorize`, the signal freeze, then journal".
+Now:  "`vectorize`, the signal freeze, then `journal`, which seals the night".
+Why:  The nightly order test reads backticked verbs out of that table and asserts the replay runs them in the same order. Written as prose, the journal was a stage the schedule mentioned and the test could not see.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 21:30 row read "forward returns".
+Now:  "`forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions".
+Why:  The nightly order test reads backticked verbs out of that table. Written as prose the stage was scheduled and invisible to the assertion that the replay runs the night in the order an operator follows.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said ControlSampler "Draws matched control stocks nightly, loose and tight".
+Now:  The same, plus five per set by deterministic nearest neighbour, and before the cap so they answer for the flagged population rather than the kept sixty.
+Why:  The count, the method and the position in the night are all things a later session would otherwise have to read the code to learn, and all three change what a comparison means. The ordering matters most: drawing after the cap would compare the kept setups against controls for a different question.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 18:26 row read "control sampling".
+Now:  "`controls`, loose and tight per flagged setup, before the cap".
+Why:  The nightly order test reads backticked verbs, and the position relative to the cap is the half of the schedule that carries meaning rather than convenience.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said CeilingCalculator "Computes the win-rate ceiling from the outcome distribution".
+Now:  The same, plus per direction and from the path rather than the terminal return, so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach.
+Why:  "From the outcome distribution" admits the reading that produced the first draft of this stage, in which the bound and the achieved rate were the same expression and the gap was nought by construction. The path is what makes the two differ, and per direction is what stops a pooled bound inheriting the short side borrow assumption.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Every week" said only to open the scoreboard.
+Now:  It runs `ceiling` first, with why it is weekly rather than nightly.
+Why:  The stage had no scheduled home. Weekly is deliberate: the bound moves with the population rather than with a session, and recomputing it nightly over one more row than yesterday invites reading noise as movement.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  The catalogue said ScoreboardBuilder "Computes the scoreboard panels".
+Now:  The same, plus that it stores what each panel showed so it can be read back as it stood, and that every panel carries its row count and, where it has an interval, the effective observations that interval was really built on.
+Why:  The two counts are different quantities and storing only the first is how a minimum sample stated in observations gets satisfied by rows. Saying so in the catalogue is what makes the column list in SCHEMA read as deliberate rather than as belt and braces.
+
+### 2026-08-27 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 21:50 row read "scoreboard".
+Now:  "`scoreboard`, the three bands, every panel with its own count".
+Why:  The nightly order test reads backticked verbs, and the count is the half of the panel that stops a figure being read without its denominator.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge."
+Now:  Two conditions: CI green, and the whole phase signed off before its branch merges. With what the second buys, what it costs, and the note that a checkpoint still lands as its own commit.
+Why:  Ruled by the operator at phase 3, against a standing draft PR carrying 3.0 to 3.5. The old rule was written to stop a sign-off holding finished work hostage; the cost it did not price is that a phase merged in pieces has no commit where the phase is what it says it is, and the sign-off then reviews code already on the default branch, where declining it costs a revert rather than a conversation. The price of the new rule is a branch open for as long as the phase waits on something that is not code, which for phase 3 is a quarter of accumulation with the nightly job running off that checkout. Priced here rather than discovered later.
+
+### 2026-08-27 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The checks roster had twenty-two rows and no row for asserting a claim of visibility against the page that carries it.
+Now:  Twenty-three rows, with `surface-claims` running on every CI run.
+Why:  It is the only check in this corpus that reads a rendered surface. Every other one asserts over source, the store, or a document, which is exactly why the gallery defect survived every check the suite had: the note was in the store, check-completeness confirmed it, and the screen dropped it.
+
+### 2026-08-27 — CLAUDE.md — cites Decisions are named, not numbered
+Was:  "Conventions" said nothing about commit subjects. The form `Phase {phase} / {checkpoint} — {what changed}` existed only in sixty commits of history.
+Now:  The form is stated, with the rule that the checkpoint is never omitted even on a commit that builds nothing, and the note that this was broken once by a session inferring it from the log.
+Why:  A convention that exists only in what previous sessions happened to do is a convention the next session will break, and this one was: a ruling commit dropped the checkpoint field on the reasoning that a ruling is not a checkpoint. `Phase 2 / 2.12 — the ruling the sign-off owed` is the counter-example that was already in the log. Not made a check, because the failure is loud and costs one amend; if it breaks twice more that reasoning is wrong and the check is owed, which is said in the text so a later session can hold it to that.
+
+### 2026-08-27 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `scoreboard` ended at `n_effective`.
+Now:  It carries `population`, with a paragraph on why two panels on one page do not share one.
+Why:  Band 1 is over every flagged setup and band 2 rank-decile curve is over the capped candidates, and at the calibrated thresholds those differ by three orders of magnitude. A stored panel that could not say which rows it used is a figure a later reader compares against the wrong one, which is the fifth defect shape.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The pre-3.6 sequence had six steps, the first being to settle what band 1 measures and the second to rule on the thresholds before accumulating.
+Now:  Four steps, neither of those among them, with a paragraph saying why the threshold ruling is not on the path.
+Why:  ARCHITECTURE settles what band 1 measures: its worked night is twenty-two flagged, fourteen passing every check, all twenty-two followed up. The evidence population is the flagged one, so band 1 fills whatever the thresholds do, and the ruling can be taken against three months of real outcomes instead of gating them.
+
+### 2026-08-27 — ARCHITECTURE.html — cites The minimum sample is derived from a measured dispersion and counted in effective observations
+Was:  Three statements of the selection-variant minimum sample. The KPI block read `Setup observations for the same question ~160` beside `Which takes about 13 days`; the pre-registration rule read "Selection variants settle at **160 paired setup observations**, which detects about a two-point difference in ten-day forward return"; the authored-parameters row read `Selection variant sample | 160 paired setup observations | Per proposal | Detects about a two-point difference in ten-day forward return`.
+Now:  196 in all three, said as effective paired setup observations, with the power named and the reason effective is not rows. The KPI's "13 days" is replaced by "until band 1 says so".
+Why:  160 read as a derived quantity and was not one. The dispersion the calculation turns on had never been measured, and the power it was sized for had never been stated. Measured over the fixture's own bars the paired dispersion is 0.099811, and at two points, 95% and 80% power the arithmetic gives 196. The old figure is the same arithmetic at about 72% power. The "13 days" was a rows-based calendar claim resting on about twelve setups a night; band 1 as built fills at about eighty-two, and how long it takes is now a thing the scoreboard reports rather than a thing the document predicts.
+
+### 2026-08-27 — BUILD_PLAN.md — cites The minimum sample is derived from a measured dispersion and counted in effective observations
+Was:  3.6's done condition read "Three months of accumulation, then read the scoreboard and decide whether to continue". Step 2 of the pre-3.6 sequence read "**Wait.** Three months, against the branch the phase lives on". The elapsed-time section read "phase 3 needs about three months of running before phase 5 has anything to score".
+Now:  3.6 fires when band 1's effective sample reaches the pre-registered minimum on the tight control set, both directions counted separately, with the effective count shown beside the raw count and the minimum on every band 1 panel every night. Step 2 is "Accumulate", with a paragraph on why the calendar went. The elapsed-time section keeps its estimates and says outright that none of them is a trigger.
+Why:  The three months was an estimate written before anything was measured and read as a derived quantity ever since. It rested on about twelve setups a night; band 1 as built fills at about eighty-two, and it is a paired comparison against same-night matched controls, so the market factor cancels rather than needing to be waited out. What remains to discount is the ten-day label overlap across nights, and how much that costs is a property of the realised series that no estimate could have known. A trigger a reader cannot see from the first night is a date in disguise, so the three numbers are a done condition on the panel rather than a figure in the store.
+
+### 2026-08-27 — SCHEMA.md — cites The minimum sample is derived from a measured dispersion and counted in effective observations
+Was:  `scoreboard` ended at `population`, and the note under it said the effective count falls below the row count because ten-day labels overlap and same-night setups share a market factor.
+Now:  It carries `n_minimum`, and the notes say that `n_effective` starts from rows rather than nights because the paired difference removes the market factor by construction, with both discounts measured from the series.
+Why:  Counting a night as one observation threw away exactly what the control draw was built to buy. The market factor is what makes forty unpaired names worth about one observation, and pairing removes it; what is left inside a night is each name's own move against its own controls. The discounts are now the label overlap and whatever clustering the matching failed to remove, both measured, with a night that cannot say how its own pairs dispersed counting as one so the pessimistic reading is the limiting case rather than the assumption.
+
+### 2026-08-27 — ARCHITECTURE.html — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  196 in all three places, at 80% power. The KPI read `Effective setup observations for the same question 196`; the pre-registration rule read "Selection variants settle at **196 effective paired setup observations** ... at 80% power against the measured dispersion of that return"; the authored-parameters row read `196 effective paired setup observations | Per proposal | Detects about a two-point difference in ten-day forward return, at 80% power against a dispersion measured rather than assumed`.
+Now:  262 in all three, at 90% power.
+Why:  Both judgement inputs were ratified by the operator on 2026-08-27. The dispersion and the arithmetic are unchanged; only the power moved, from a conventional 80% nobody had chosen to a 90% chosen for a stated reason. A false positive on band 1 is caught downstream by the forward paired test and the variant machinery; a false negative is caught by nothing, because band 1 reading flat means the project stops. At about eleven effective observations a night the extra power costs about six sessions.
+
+### 2026-08-27 — BUILD_PLAN.md — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  A carried-obligation row raised at 3.0, due at the operator, holding the ratification of the two judgement inputs behind the minimum sample.
+Now:  Removed.
+Why:  Ratified: two points at 90% power, giving 262. Both judgements are recorded with their reasoning in the decision, and the sensitivity table is asserted by a test so the choice stays visible as a choice rather than settling into a default.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  3.6 read "**The decision point** | Band 1's effective sample reaches the pre-registered minimum on the tight control set, both directions counted separately, then read the scoreboard and decide whether to continue", and sat in the phase table ahead of 3.7 as though the sign-off waited on it. The block below it was headed "What has to happen before 3.6, in order, because none of it is code", listed four steps ending "**3.7**, a fresh session", and said "Steps 1 and 3 are the operator's, and step 4 needs only a session that has not committed code".
+Now:  3.6 is "**The decision point. Parked, and not a sign-off condition**", with both band 1 conditions named as its trigger and "when the panel reports both" as its due point. 3.7 says it signs off 3.0 through 3.5 and does not wait on 3.6. The block below states what parking does not change, and its step list no longer ends in the sign-off.
+Why:  The two ask different questions and only one is answerable today. 3.7 signs off that 3.0 through 3.5 hold and meet their done conditions, which is a claim about code, documents and a fixture and is exactly what the phase report was built to answer. 3.6 decides whether the pattern works, which needs a sample that does not exist. Phase 1 is the precedent: it signed off with the `CONFIRMED` values outstanding, on the reasoning that an obligation whose due point moves at every sign-off is permanent while reading as pending. The same reasoning applies here from the other side, because a checkpoint nobody can reach for months left as a sign-off condition makes the sign-off permanently pending while every part of it that could be checked already passes.
+
+### 2026-08-27 — BUILD_PLAN.md — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  The carried-obligations table had eight rows, and scheduling the nightly job appeared only as step 1 of the pre-3.6 prose.
+Now:  Ten rows. Scheduling the nightly job is a row due at the operator, and so is whether phase 3's accumulation runs from the branch or from `main`.
+Why:  The corpus's own rule is that an obligation goes into this table in the commit that raises it, with a due point, or it does not exist. Scheduling is the item with the longest lead time in the project and it had never been a row, which is the shape that has already lost this corpus three obligations. The checkout question is new: parking 3.6 past 3.7 means the branch may merge before accumulation starts, so which checkout the nightly job runs from stopped being implied by the ordering.
+
+### 2026-08-27 — RUNBOOK.md — cites The evidence store holds only setups flagged forward, never setups reconstructed from history
+Was:  The nightly table began "| 17:20 | `actions`, splits bulk" and carried no `universe-build` row and no nightly snapshot row. Its total read "**~798 against a 5,000 ceiling**". There was no section describing an installed schedule.
+Now:  A `universe-build` row at 17:15 and a `snapshot-db` row at 22:00, a total of ~803, a paragraph on why the universe row is the one that cannot be recovered, and a section describing the seventeen registered tasks and the logged-on limitation.
+Why:  `UniverseBuilder` says the snapshot "is written every night without exception" and "cannot be reconstructed later", and `UniverseSnapshotReader.Members` matches the snapshot date exactly with no fallback, deliberately, so that a missing snapshot cannot be silently papered over with current membership. The stage was absent from the nightly table, so an operator following the RUNBOOK literally would have built a lab that flags nothing and reports every night clean. Found while scheduling the job.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  <p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged and records their forward returns identically. Two sets, both free because they come from daily bars already stored:</p>
+Now:  The same sentence with the control-recording half moved into the Failure behaviour table, as a row conditioned on "A comparison has no control outcomes", and the prose repointed at it.
+Why:  This was the only sentence in the corpus claiming control forward returns are recorded, and it sat in prose. `architecture-conformance` enumerates claims from tables, so it never saw it, never gave it a verdict, and reported zero unexamined while the claim was false: ForwardReturnFiller bound its subject kind to the literal `setup` and no control outcome was ever written. A claim only in prose is a claim nothing can fail on.
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  A Failure behaviour table with fifteen rows and no row for a comparison with no controls.
+Now:  A sixteenth row, `A comparison has no control outcomes`, stating that ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the flagging setup's session, signed by that setup's direction and expressed in the control's own range, and that a side with none is withheld naming a shortage of control outcomes rather than of time.
+Why:  The claim needs a table to live in so it carries a verdict. It is asserted at 3.2 rather than deferred, because ForwardReturnFiller exists and a claim deferred to a landed checkpoint is a claim that checkpoint shipped without coming back to.
+
+### 2026-08-27 — SCHEMA.md — cites The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
+Was:  ...the ratio is a property of the realised series rather than of the design (see: The interval is a block bootstrap over paired differences, and the effective sample is measured).
+Now:  The same sentence citing **The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured**.
+Why:  The decision it cited was superseded. The effective-sample half it is about did not change; the citation is repointed so it does not resolve to an entry under "Previously decided".
+
+### 2026-08-27 — ARCHITECTURE.html — cites Matched control populations are drawn nightly, loose and tight
+Was:  <tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>
+Now:  The same row ending "traded or not, and on every control drawn against one".
+Why:  The catalogue's description was true of what the stage did and not of what it was for. Nothing asserts this cell, because the catalogue producer reads only the component name, so it is corrected for the reader rather than for a check.
+
+### 2026-08-27 — BUILD_PLAN.md — cites Matched control populations are drawn nightly, loose and tight
+Was:  A phase 3 section whose 3.5 row and following notes said nothing about the checkpoint having been reopened, and a carried-obligations table of ten rows.
+Now:  A paragraph under the phase 3 table naming the three defects that reopened 3.5 on 2026-08-27, and twelve further obligation rows.
+Why:  A checkpoint reopened after its PROGRESS entry is recorded is invisible in the plan otherwise, and the corpus's pointer to which checkpoint the build is on reads the plan and the record together. Eleven of the twelve rows are the sign-off review's non-blocking findings plus four raised while fixing the blocking ones; the twelfth is the nightly runner having only a Windows half.

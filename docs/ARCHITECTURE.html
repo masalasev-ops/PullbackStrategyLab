@@ -141,8 +141,8 @@ tr:hover td{background:#f4f2ec}
 <div class="kpi">
   <div><span>Trades to prove it works at all</span><strong>~420</strong></div>
   <div><span>Paired trades to spot a small gain</span><strong>~1,100</strong></div>
-  <div><span>Setup observations for the same question</span><strong>~160</strong></div>
-  <div><span>Which takes about</span><strong>13 days</strong></div>
+  <div><span>Effective setup observations for the same question</span><strong>262</strong></div>
+  <div><span>Which takes</span><strong>until band 1 says so</strong></div>
 </div>
 
 <p>The AI reads that second record. It never sees money, never places a trade, and never changes anything by itself. It writes a suggestion with its reasoning and the test that would refute it. A person approves or rejects. Approved suggestions run alongside the original rule, on the same stocks on the same nights, so the two can be compared directly.</p>
@@ -366,7 +366,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="warn"><b class="lab">The short side has an honesty problem the long side does not</b>
 <p>Whether a stock could actually be borrowed that morning, and at what cost, is not in the price feed. A short that was impossible to place will be recorded by this lab as though it filled cleanly.</p>
-<p>The design mitigates rather than solves this. The <code>tradable-shortable</code> check excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both are recorded as unmodelled assumptions on every short trade, and long and short results are never pooled into a single headline number.</p>
+<p>The design mitigates rather than solves this. The <code>tradable-shortable</code> check excludes the names most likely to be hard to borrow, and a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar day held. Both <b>will be</b> recorded as unmodelled assumptions on every short trade, from <b>4.7</b>, which is the checkpoint that first writes a trade row; the journal that shows them to a person arrives at <b>4.11</b>. Long and short results are never pooled into a single headline number. Written as a future rather than as a fact because it was written as a fact while no trade row existed, and a claim that something is recorded on every trade is a claim about a surface nobody had built.</p>
 <p><b>Worth knowing how small the cost term is.</b> At 1.0% a year a four-day hold costs about 0.011% of position value, which against a 3% stop is roughly 0.4% of one R. The rate is set several times higher than a general-collateral borrow actually costs and it still rounds to nothing. So borrow <i>cost</i> is not what decides the short side. Borrow <i>availability</i> is, and that is what the tradable-shortable check exists for.</p></div>
 
 <h4>What differs in management</h4>
@@ -524,8 +524,8 @@ tr:hover td{background:#f4f2ec}
 </div>
 
 <div class="rule"><b class="lab">Deciding the answer before seeing it</b>
-<p>At creation, two things are locked: the improvement required, and how many observations must accumulate before anyone may look. A variant that misses its target closes as refuted and stays visible in the record rather than quietly vanishing.</p>
-<p><b>Defaults, overridable per proposal with a stated reason.</b> Selection variants settle at <b>160 paired setup observations</b>, which detects about a two-point difference in ten-day forward return. Execution variants settle at <b>200 paired trades</b>, which detects about a 0.35R difference. Both numbers are honest about what they cannot see: an improvement smaller than that needs a longer sample pre-registered up front, and asking for one is a legitimate proposal.</p>
+<p>At creation, two things are locked: the improvement required, and how many observations must accumulate before anyone may look. A variant that misses its target closes as refuted and stays visible in the record rather than quietly vanishing, on the research ledger from <b>5.5</b>.</p>
+<p><b>Defaults, overridable per proposal with a stated reason.</b> Selection variants settle at <b>262 effective paired setup observations</b>, which detects about a two-point difference in ten-day forward return at 90% power against the measured dispersion of that return. Effective rather than rows, because ten-day labels overlap and rows are worth less than their own number (see: The minimum sample is 262 effective observations, ratified at two points and 90% power). Execution variants settle at <b>200 paired trades</b>, which detects about a 0.35R difference. Both numbers are honest about what they cannot see: an improvement smaller than that needs a longer sample pre-registered up front, and asking for one is a legitimate proposal.</p>
 <p>Without this the loop becomes a machine for false discoveries. Run twenty variants and pick the best and you have picked the luckiest. With twenty genuinely worthless candidates, the chance at least one looks impressive by luck alone is about 64%.</p></div>
 
 <div class="warn"><b class="lab">The trap this loop will walk into if unguarded</b>
@@ -597,7 +597,7 @@ tr:hover td{background:#f4f2ec}
   </div>
   <div class="arr">→</div>
   <div class="col" style="justify-content:center">
-    <div class="box b6" style="min-width:164px"><span class="bid">ForwardReturnFiller</span><span class="bt">Signal request</span><span class="bs">Not a rule change</span></div>
+    <div class="box b6" style="min-width:164px"><span class="bid">ProposalRegistry</span><span class="bt">Signal request</span><span class="bs">Not a rule change</span></div>
     <div class="arrd">↓</div>
     <div class="box b6" style="min-width:164px"><span class="bid">SignalBackfiller–SignalAdmissionTest</span><span class="bt">Backfill and vet</span><span class="bs">Across all stored setups</span></div>
   </div>
@@ -742,13 +742,13 @@ tr:hover td{background:#f4f2ec}
 </div>
 <div class="key">
 <div class="k">Ranked</div><div class="v"><b>By give-up distance in daily-range units, tightest first,</b> with ticker alphabetical as the tiebreak so the order is deterministic. The mechanism: R is the move divided by the stop, and expressing the stop in daily-range units normalises it against that stock's own noise, so a 0.30 setup earns more R per unit of noise risk than a 0.48 one for the same move. It is the only ranking available with a stated mechanism rather than a preference.<br><br>This ranking is load-bearing beyond the screen, because the nightly cap truncates by it. It is an authored choice and an obvious early proposal target once the conditional tables exist. Setups that failed a check still appear, greyed, with the failing check named.</div>
-<div class="k">ADR units</div><div class="v">The give-up distance is shown both as a percentage and as a fraction of the stock's daily range, because the percentage alone does not tell you whether the stop is tight for <i>that</i> stock. This is the number the exit-tight check turns on.</div>
-<div class="k">Short extras</div><div class="v">The short panel carries two columns the long panel does not: the assumed borrow cost being deducted, and whether the name cleared the market-cap borrow proxy. Both are unmodelled assumptions and showing them on the screen keeps that visible rather than buried in the failure table.</div>
+<div class="k">ADR units</div><div class="v">The give-up distance is shown, from <b>4.1</b> when the watchlist page arrives, both as a percentage and as a fraction of the stock's daily range, because the percentage alone does not tell you whether the stop is tight for <i>that</i> stock. This is the number the exit-tight check turns on.</div>
+<div class="k">Short extras</div><div class="v">The short panel, from <b>4.1</b>, carries two columns the long panel does not: the assumed borrow cost being deducted, and whether the name cleared the market-cap borrow proxy. Both are unmodelled assumptions and showing them on the screen keeps that visible rather than buried in the failure table.</div>
 <div class="k">Conflict</div><div class="v">Holding a long in a name that the short detector has just flagged is information worth seeing, not an error to suppress. The banner surfaces it and takes no action.</div>
 </div>
 
 <div class="rule"><b class="lab">The rule carries through every other page</b>
-<p>The trade journal shows two sections, not one list with a direction column. The research ledger reports a variant's long and short scores separately. A variant touching both sides reports two numbers and never an average. Any figure in the interface that would require adding a long result to a short result is not displayed at all.</p>
+<p>The trade journal, from <b>4.11</b>, shows two sections rather than one list with a direction column. The research ledger, from <b>5.5</b>, reports a variant's long and short scores separately. A variant touching both sides reports two numbers and never an average. Any figure in the interface that would require adding a long result to a short result is not displayed at all.</p>
 <p>The reason is the borrow problem in the short checks. Short results carry an assumption that long results do not, so a pooled headline number silently inherits that assumption without showing it.</p></div>
 
 <h3 id="the-lab-scoreboard">The lab scoreboard</h3>
@@ -757,7 +757,7 @@ tr:hover td{background:#f4f2ec}
 
 <div class="warn"><b class="lab">None of it means anything without a control population</b>
 <p>Flagged setups returning 2% over ten days is not a result. The whole market may have returned 2% that fortnight. Every panel below is a <i>comparison</i>, which is why <b>ControlSampler</b> exists.</p>
-<p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged and records their forward returns identically. Two sets, both free because they come from daily bars already stored:</p>
+<p>Each night, for every flagged setup, the sampler draws control stocks that were <b>not</b> flagged. What is then recorded for them is stated in <a href="#failure-behaviour">Failure behaviour</a> rather than here, because a claim only in prose is a claim no table enumerates and no verdict covers. Two sets, both free because they come from daily bars already stored:</p>
 <p><b>Loose controls</b> match on liquidity and daily-range decile only. Comparing against these measures the whole funnel, thrust scan included.<br>
 <b>Tight controls</b> also match on the trend ladder and market mood. Comparing against these isolates the pullback checks, and answers the sharper question: is this pattern worth anything beyond simply owning stocks in uptrends?</p>
 <p>The second comparison is the one that can embarrass the project, which is why it belongs on the page.</p></div>
@@ -772,11 +772,11 @@ tr:hover td{background:#f4f2ec}
 
   <div class="box b2" style="min-width:660px"><span class="bid">band 2 — where the losses come from</span><span class="bt">Loss causes as a share, plotted over time</span><span class="bs">Noise stop-out 38% &nbsp;·&nbsp; failed setup 44% &nbsp;·&nbsp; gap loss 6% &nbsp;·&nbsp; never triggered 12%<br>Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved. They are different wins and this is the only place that separates them</span></div>
 
-  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — is the loop learning?</span><span class="bt">Proposal outcomes by pack version</span><span class="bs">v1: 9 proposals, 2 met target, 1 abstained &nbsp;·&nbsp; v2: 11, 4 met, 2 abstained &nbsp;·&nbsp; v3: 8, 4 met, 3 abstained<br>This is the project's stated success criterion made visible. A rising hit rate across versions is the result. A version that never abstains is a warning, not a triumph</span></div>
+  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — is the loop learning?</span><span class="bt">Proposal outcomes by pack version</span><span class="bs">v1: 9 proposals, 2 met target, 1 abstained &nbsp;·&nbsp; v2: 11, 4 met, 2 abstained &nbsp;·&nbsp; v3: 8, 4 met, 3 abstained<br>This is the project's stated success criterion made visible, from <b>6.8</b>. A rising hit rate across versions is the result. A version that never abstains is a warning, not a triumph</span></div>
 
   <div class="box b6" style="min-width:660px"><span class="bid">band 3 — the signal library</span><span class="bt">Signals held, admitted, rejected, and how many discriminate</span><span class="bs">31 held &nbsp;·&nbsp; 12 admitted since launch &nbsp;·&nbsp; 7 rejected at the correlation limit &nbsp;·&nbsp; 9 separate outcomes beyond the corrected threshold<br>Alongside it, mean outcome spread among twin pairs over time. That number falling as signals are added is the cleanest evidence the library is genuinely improving</span></div>
 </div>
-<p class="figcap"><b>Figure 11.</b> Four bands, none of them denominated in money. Band 1 asks whether the pattern exists. Band 2 asks whether the lab can sort it. Band 3 asks whether the research loop is adding anything. Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration.</p>
+<p class="figcap"><b>Figure 11.</b> Four bands, none of them denominated in money. <b>Bands 0, 1 and 2 arrive at 3.5 and band 3 at 6.8</b>, and the figures shown are illustrative rather than measured: the page renders its empty state until the outcomes accumulate behind it. Band 1 asks whether the pattern exists. Band 2 asks whether the lab can sort it. Band 3 asks whether the research loop is adding anything. Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration.</p>
 </div>
 <div class="key">
 <div class="k">Band 1</div><div class="v">The project's central question, and the one phase 3 answers. If the tight comparison never clears zero across a full year, the pattern has nothing in it beyond owning uptrending stocks, and that is the finding. It arrives long before any conclusion about profit could.</div>
@@ -815,12 +815,12 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>RiskGate</b></td><td>On trigger</td><td>Sizes every position and enforces every cap. The only thing that may open a position</td></tr>
 <tr><td><b>PaperBroker</b></td><td>On order</td><td>Fills at a deliberately pessimistic price</td></tr>
 <tr><td><b>PositionManager</b></td><td>Nightly 21:15</td><td>Trails, trims and exits. Separate rule sets per direction</td></tr>
-<tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Makes the setup row immutable once written</td></tr>
+<tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. Writes nothing, because a component enforcing immutability by writing would be the second writer of the thing it protects</td></tr>
 <tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
 <tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
-<tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not</td></tr>
+<tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not, and on every control drawn against one</td></tr>
 <tr><td><b>LossClassifier</b></td><td>Nightly 21:35</td><td>Classifies every loss into one of four causes</td></tr>
-<tr><td><b>CeilingCalculator</b></td><td>Weekly</td><td>Computes the win-rate ceiling from the outcome distribution</td></tr>
+<tr><td><b>CeilingCalculator</b></td><td>Weekly</td><td>Computes the win-rate ceiling from the outcome distribution, per direction and from the path rather than the terminal return, so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach</td></tr>
 <tr><td><b>VariantScorer</b></td><td>Nightly 21:40</td><td>Differences each version against the baseline, night by night</td></tr>
 <tr><td><b>TwinPairFinder</b></td><td>Weekly</td><td>Finds near-identical setups that behaved differently</td></tr>
 <tr><td><b>ContextPacker</b></td><td>Weekly</td><td>Builds the versioned evidence summary for the researcher</td></tr>
@@ -839,8 +839,8 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Trade journal page</b></td><td>On request</td><td>Closed trades with their loss causes</td></tr>
 <tr><td><b>Research ledger page</b></td><td>On request</td><td>Proposals, samples, targets, holdout register</td></tr>
 <tr><td><b>Pack comparison page</b></td><td>On request</td><td>Proposal hit rate by evidence-pack version</td></tr>
-<tr><td><b>ControlSampler</b></td><td>Nightly 18:26</td><td>Draws matched control stocks nightly, loose and tight</td></tr>
-<tr><td><b>ScoreboardBuilder</b></td><td>Nightly 21:50</td><td>Computes the scoreboard panels</td></tr>
+<tr><td><b>ControlSampler</b></td><td>Nightly 18:26</td><td>Draws matched control stocks nightly, loose and tight, five per set by deterministic nearest neighbour, before the cap so they answer for the flagged population rather than the kept sixty</td></tr>
+<tr><td><b>ScoreboardBuilder</b></td><td>Nightly 21:50</td><td>Computes the scoreboard panels and stores what each showed, so a panel can be read back as it stood. Every panel carries its own row count and, where it has an interval, the effective observations that interval was really built on</td></tr>
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
@@ -859,7 +859,7 @@ tr:hover td{background:#f4f2ec}
 <tr><th style="width:230px">Condition</th><th>Behaviour, and why</th></tr>
 <tr><td>Intraday prices unavailable for a day</td><td>No trades resolved and every setup flagged that night excluded from variant scoring. A variant that could not be tested must not be scored as though it chose to pass.</td></tr>
 <tr><td>Price gaps past the give-up point</td><td>Recorded as a loss larger than planned and tagged. Never rounded back, because the size and frequency of these is a genuine property of the strategy and one of the things you most want to learn.</td></tr>
-<tr><td>A short could not have been borrowed</td><td>Not detectable from the feed. Mitigated by a market-cap floor and a borrow-cost deduction, and recorded as an unmodelled assumption on every short trade. Long and short results are never pooled.</td></tr>
+<tr><td>A short could not have been borrowed</td><td>Not detectable from the feed. Mitigated by a market-cap floor and a borrow-cost deduction, to be recorded as an unmodelled assumption on every short trade from <b>4.7</b> and shown in the journal from <b>4.11</b>. Long and short results are never pooled.</td></tr>
 <tr><td>Unprocessed corporate action</td><td>Calculations refuse to run for that stock and no plan is published. Failing loudly matters: any action that moves the adjusted close corrupts every moving average at once and produces plausible-looking nonsense. A split does it by a factor and a dividend by a smaller one, and magnitude does not enter it (see: An unprocessed corporate action of any kind blocks calculation, not only a split).</td></tr>
 <tr><td>Detector errors on one stock</td><td>An error row is written for that stock and date. Silently skipping shrinks the recorded universe without anyone noticing, which is the kind of defect that survives for months.</td></tr>
 <tr><td>Nightly setup cap reached</td><td>The cap truncates the shared candidate list by rank before any variant selects, and the truncation is recorded. Never applied per variant, or the disagreements go unscoreable.</td></tr>
@@ -871,6 +871,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Proposal cites the planted null signal</td><td>That pack version is failed immediately and no proposal from it is admitted.</td></tr>
 <tr><td>Variant sample never accumulates</td><td>Stays open, ledger shows its age. No timeout that quietly accepts or rejects, because a timeout is a decision made by the calendar rather than by evidence.</td></tr>
 <tr><td>Follow-up date is a holiday</td><td>The next trading day is used and the actual date stored alongside the intended horizon.</td></tr>
+<tr><td>A comparison has no control outcomes</td><td>ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the flagging setup's session, signed by that setup's direction and expressed in the control's own range. Where a side still has none, the band 1 panel is withheld and says a shortage of control outcomes is the cause rather than a shortage of time. It bound the subject kind to a literal for the whole of phase 3, so no control outcome was ever written, band 1 was withheld on every night with an effective count of nought, and the panel named a horizon that had already closed (see: Matched control populations are drawn nightly, loose and tight).</td></tr>
 <tr><td>Someone edits the baseline</td><td>Not permitted while variants run. Doing so closes every open variant as unresolved and starts a new generation, because they were being compared against a rule that no longer exists.</td></tr>
 </table>
 
@@ -915,7 +916,7 @@ tr:hover td{background:#f4f2ec}
 <td>The fixture gains a session of minute bars, so fills, stops, gap losses and the contention case are diffed rather than eyeballed. Order provenance asserted. Realised risk against intended risk reported per position.</td></tr>
 
 <tr><td><b>P5</b></td><td>VariantScorer, VariantAdmitter, ReplayHarness, HoldoutRegistry, research ledger page</td>
-<td>Hand-written versions in both families scoring nightly against the baseline, with the difference series visible and the holdout register showing what has been spent. Still no AI anywhere.</td>
+<td>Hand-written versions in both families scoring nightly against the baseline, with the difference series visible and the holdout register showing what has been spent, both on the research ledger at <b>5.5</b>. Still no AI anywhere.</td>
 <td>The harness re-run of the baseline's own rule must reproduce the baseline's historical selections exactly. If it does not, the harness and the live detector disagree and every replay result is worthless.</td></tr>
 
 <tr><td><b>P6</b></td><td>TwinPairFinder, ContextPacker, ResearcherSeat, ProposalRegistry, SignalBackfiller, SignalAdmissionTest, AcceptanceGate, pack comparison page</td>
@@ -1060,7 +1061,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td>Nightly setup cap</td><td>60, split 40 long and 20 short, unused slots released</td><td>If the budget changes</td><td>Set by the intraday call budget, not by anything about the strategy. The split is fixed rather than proportional so short coverage survives strong markets</td></tr>
 <tr><td>Screen and cap ranking</td><td>Give-up distance in daily-range units, ascending; ticker alphabetical as tiebreak</td><td>Signal proposal</td><td>R is move divided by stop, and range units normalise the stop against that stock's own noise. The only ranking with a stated mechanism</td></tr>
 <tr><td>Regime label</td><td>Index trend score plus breadth score; risk-on at +2, risk-off at minus 2, mixed otherwise</td><td>Signal proposal</td><td>Both inputs already exist. Three states buffer themselves. Raw scores stored alongside the label</td></tr>
-<tr><td>Selection variant sample</td><td>160 paired setup observations</td><td>Per proposal</td><td>Detects about a two-point difference in ten-day forward return</td></tr>
+<tr><td>Selection variant sample</td><td>262 effective paired setup observations</td><td>Per proposal</td><td>Detects about a two-point difference in ten-day forward return, at 90% power against a dispersion measured rather than assumed. Effective, not rows</td></tr>
 <tr><td>Execution variant sample</td><td>200 paired trades</td><td>Per proposal</td><td>Detects about a 0.35R difference. Smaller effects need a longer sample pre-registered</td></tr>
 <tr><td>Holdout windows</td><td>8, one calendar quarter each, oldest first</td><td>Never</td><td>One spent per pack-version decision, never reused. A designed dead end when exhausted</td></tr>
 <tr><td>Twin-pair threshold</td><td>Distance under 0.5 after z-scoring; outcomes differing by over 15 points</td><td>Phase 6</td><td>Z-scored over the trailing 250 setups, across the signals shown in the pack</td></tr>

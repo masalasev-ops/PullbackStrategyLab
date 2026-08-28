@@ -48,6 +48,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | Time (ET) | Stage | Calls |
 |---|---|---|
 | during session | spread snapshots, two passes | 120 |
+| 17:15 | `universe-build`, the symbol list and the nightly snapshot of who was listed | ~5 |
 | 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
 | 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |
 | 17:30 | `daily-bars`, the whole market in one bulk request | 100 |
@@ -58,26 +59,58 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:12 | `sectors`, resolved once per name and cached. Moved here from 19:00 on 2026-08-26: it ran after the three stages that read what it writes | ~50 |
 | 18:15 | `clusters`, then `regime` | 0 |
 | 18:20 | `detect-long`, then `detect-short` | 0 |
-| 18:25 | `vectorize`, the signal freeze, then journal | 0 |
-| 18:26 | control sampling | 0 |
+| 18:25 | `vectorize`, the signal freeze, then `journal`, which seals the night | 0 |
+| 18:26 | `controls`, loose and tight per flagged setup, before the cap | 0 |
 | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |
 | 18:40 | publish watchlist | 0 |
 | 20:30 | minute bars for flagged setups | 300 |
 | 21:00 | session replay, fills, positions | 0 |
-| 21:30 | forward returns | 0 |
+| 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
-| 21:50 | scoreboard | 0 |
-| **total** | | **~798 against a 5,000 ceiling** |
+| 21:50 | `scoreboard`, the three bands, every panel with its own count | 0 |
+| 22:00 | `snapshot-db`, the night's copy, which is the recovery path | 0 |
+| **total** | | **~803 against a 5,000 ceiling** |
+
+**`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
+
+### The schedule as installed
+
+Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`,
+each running `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday 08:00 for
+`ceiling`. The machine's own timezone is Eastern, so the table's ET times are its local times and no
+conversion is involved; a machine in another zone converts them.
+
+`tools/nightly.ps1` maps a slot to the verbs that slot runs and nothing else. It addresses the store
+by absolute path, because `DataRoot` resolves through the working directory and a scheduled task's
+working directory is not something anybody should have to reason about at three in the morning. It
+logs to `<data root>/logs/nightly-YYYY-MM-DD.log` and records the commit it ran from on every line of
+that log's first entry, since the job runs from a working tree and what it executes changes when the
+branch does.
+
+**They run only while the user is logged on, and that is a real limitation rather than a preference.**
+Registering a task that runs whether or not anybody is logged on needs either an elevated shell, to
+set an S4U principal, or a stored password. Neither was available when these were created, so a
+logged-out evening is a lost night, and a lost night's universe snapshot is the one thing that cannot
+be recovered by rerunning tomorrow. Raised as an obligation.
+
+**To remove or re-create them:** `Get-ScheduledTask -TaskName 'PullbackStrategyLab-*'`, then
+`Unregister-ScheduledTask`. On macOS they become launchd definitions, which is step 7 of the move.
 
 ### Every morning
 
 Open the watchlist. Check the status band: run clean, calls within budget, positions and risk within caps. If the run is marked degraded, that night is excluded from variant scoring automatically and nothing needs doing.
 
 ### Every week
+
+Run `ceiling`, which recomputes the win-rate bound per direction over every setup whose tenth
+session has closed. Weekly rather than nightly on purpose: the bound moves with the population
+rather than with a session, and a figure recomputed every night over one more row than yesterday
+invites reading noise as movement. It makes no vendor call and a week recomputed leaves earlier
+weeks standing, because the gap narrowing over time is the thing worth looking at.
 
 Open the scoreboard. Band 1 is the one that matters. If the tight-control comparison has been flat for a quarter, that is the project's answer and it is worth taking seriously rather than waiting for it to improve.
 

@@ -45,6 +45,76 @@ public sealed class CalibrationTests
         Assert.Equal(calibrated, Rows(replay, SetupReader.CalibrationTable));
     }
 
+    /// <summary>
+    /// The read side of the same property, which nothing asserted until it was asked about.
+    ///
+    /// <b>The write side is above: a calibration run leaves the evidence store as it found it.</b>
+    /// That says reconstructed rows never enter `setup`. It does not say the scoreboard cannot go and
+    /// read them where they do live, and a band 1 panel computed over 49,450 survivorship-biased rows
+    /// would look exactly like a band 1 panel that had finally accumulated a sample.
+    ///
+    /// So it is asked behaviourally rather than by reading the SQL: fill the calibration table, then
+    /// build the panels, and require every count to be a count of the evidence store. A builder that
+    /// joined the wrong table would move `setupsOnFile` by four orders of magnitude.
+    ///
+    /// <b>Written because a reader of a withheld panel needs to know this is not why.</b> Three things
+    /// could stop band 1 answering, and two of them are settled by waiting. This one is settled by
+    /// construction, which is worth nothing at all unless something checks it.
+    /// see: The evidence store holds only setups flagged forward, never setups reconstructed from history
+    /// </summary>
+    [Fact]
+    public void The_scoreboard_counts_the_evidence_store_and_never_the_calibration_table()
+    {
+        using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
+        replay.Run();
+
+        DateOnly from = Sessions(replay)[IndicatorEngine.WarmupSessions - 1];
+        replay.CalibrateLong(from, replay.AsOf);
+        replay.CalibrateShort(from, replay.AsOf);
+
+        int flagged = Scalar(replay, $"SELECT COUNT(*) FROM {SetupReader.SetupTable}");
+        int reconstructed = Scalar(replay, $"SELECT COUNT(*) FROM {SetupReader.CalibrationTable}");
+
+        // Without a populated calibration table this test asserts nothing at all, so it says so
+        // rather than passing quietly over an empty one.
+        Assert.True(
+            reconstructed > flagged,
+            $"the calibration table holds {reconstructed} row(s) against the evidence store's {flagged}, "
+            + "so this test cannot tell the two populations apart");
+
+        // The panels as they stood are keyed on the day and will not be overwritten, so the question
+        // is asked of a build that runs with the calibration table already full.
+        Execute(replay, "DELETE FROM scoreboard");
+        replay.BuildScoreboard();
+
+        Assert.Equal(flagged, Scalar(replay,
+            "SELECT n_rows FROM scoreboard WHERE panel = 'band0.setupsOnFile'"));
+
+        int band1Rows = Scalar(replay,
+            "SELECT COALESCE(SUM(n_rows), 0) FROM scoreboard WHERE panel LIKE 'band1.%'");
+
+        Assert.True(
+            band1Rows <= flagged * 2,
+            $"band 1 counted {band1Rows} row(s) across its four panels, which is more than the "
+            + $"{flagged} setup(s) on file can supply to two control sets");
+    }
+
+    private static int Scalar(PhaseReplay replay, string sql)
+    {
+        using SqliteConnection connection = replay.OpenStore();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+        return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static void Execute(PhaseReplay replay, string sql)
+    {
+        using SqliteConnection connection = replay.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
     [Fact]
     public void Every_short_row_a_calibration_run_writes_says_the_cap_was_exempt()
     {

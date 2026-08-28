@@ -41,12 +41,16 @@ Insert UniverseBuilder · Update UniverseBuilder
 ### `universe_snapshot`
 Who was listed on a given night. Grain: date + ticker. Append-only. This is what makes replay free of survivorship bias, so it is written every night without exception.
 
-| Column | Type |
-|---|---|
-| `as_of` | TEXT |
-| `ticker` | TEXT |
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | |
+| `ticker` | TEXT | |
+| `screened_over_sessions` | INTEGER NULL | how many sessions the screen could see. The liquidity floor is a median over twenty |
+| `screen_carried` | INTEGER NULL | 1 where the membership was carried from the last complete screen rather than screened fresh |
 
 Insert UniverseBuilder · PK (`as_of`, `ticker`)
+
+*A night that can see fewer than five sessions cannot screen, and it carries the membership that stands rather than writing nothing: membership drifts by a handful a month while a skipped night removes a whole session from the series, and phase 3 is where a missing night starts costing a sample. **What it may not do is look like a screened night.** `screen_carried` is what stops a later count reading a carried membership as fresh, which would be a survivorship claim the store cannot support. Both columns are null on every snapshot written before 3.0, because inventing a value for a night that did not record one is worse than admitting it is absent, and a null is a different fact from a night that screened over nought sessions.*
 
 ---
 
@@ -225,6 +229,8 @@ Grain: date + ticker + direction. **Immutable after write.** The spine of the wh
 | `stop_distance_ranges` | TEXT | the number check nine turns on |
 | `agreement` | TEXT NULL | `agree`, `disagree`, null. What a person thought, recorded from the gallery. Null is "not looked at" and is a different fact from disagreeing |
 | `agreement_note` | TEXT NULL | |
+| `thrust_scan` | TEXT NULL | which of the six scans produced the thrust this setup was measured against |
+| `thrust_session` | TEXT NULL | the session that scan flagged |
 
 Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record)
 
@@ -233,6 +239,8 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Up
 *`rank` and `capped_out` are the night's, not a version's, and there is deliberately no column that could make them a version's. The cap is applied to the shared candidate list before any version selects, and a cap applied per version would leave their disagreements unscoreable. A test asserts the absence rather than the intent, because the intent is unassertable once versions exist and the record it would have destroyed cannot be reconstructed.*
 
 *Both are null on a setup that failed a gating check. Such a row is evidence and was never a candidate, so a rank among names it was not ranked against would be a number with no meaning.*
+
+*`thrust_scan` and `thrust_session` record what the detector already resolved and used to throw away. Four gates read a quantity computed from the thrust's location, and `gainer` and `gapper` flag a move over one session where `leader` and `laggard` flag one over twenty, so a row that does not say which scan flagged it cannot be told from a row measured over a different span. The same fact is also the `thrust_scan` signal, and that is not enough: `setup_signal` has a foreign key to `setup`, calibration writes to `calibration_setup`, so the population a threshold is counted over is exactly the population the signal cannot reach.*
 
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.
@@ -289,25 +297,83 @@ Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cos
 
 | Column | Type | Note |
 |---|---|---|
+| `control_id` | TEXT PK | `{setup_id}-{control_set}-{control_ticker}`, so `forward_return` has one column to point at |
 | `setup_id`, `control_ticker` | TEXT | |
 | `control_set` | TEXT | `loose` or `tight` |
-| `match_quality` | TEXT | how close the match was on each matched dimension |
+| `match_quality` | TEXT | the distance on each matched dimension, separately, never as one number |
+| `rank` | INTEGER | 1 to 5 by distance, ticker as the tiebreak. The fifth is by construction the worst of the five |
 
-Insert ControlSampler
+Insert ControlSampler · UNIQUE (`setup_id`, `control_set`, `control_ticker`)
+
+*Five per set per setup, drawn by deterministic nearest neighbour with no randomness, before the cap rather than after it (see: Controls are drawn by nearest neighbour on the matched dimensions, five per set, with no randomness). `match_quality` is per dimension because a single blended distance cannot say which dimension the match was bad on, and that is the thing a later reader needs.*
+
+*`control_id` is a surrogate and it is here for one reason: `forward_return` records outcomes for setups and controls in one table, and a control had no single column to be named by. The alternative was a composite subject key on `forward_return`, which puts three columns in the subject of every outcome row and makes the point-in-time read wider than it needs to be.*
 
 ### `forward_return`
 Grain: (setup or control) + horizon. Signed by direction, so a short that fell is positive.
 
 | Column | Type | Note |
 |---|---|---|
-| `subject_id` | TEXT | a `setup_id` or a control row |
+| `subject_id` | TEXT | a `setup.setup_id` or a `control_setup.control_id` |
 | `subject_kind` | TEXT | `setup` or `control` |
 | `horizon_days` | INTEGER | 1, 3, 5, 10 |
 | `intended_date`, `actual_date` | TEXT | differ across a holiday, and both are stored |
-| `return_signed` | TEXT | |
-| `mfe_atr`, `mae_atr` | TEXT | best and worst reached |
+| `return_signed` | TEXT | signed by direction, so a short that fell is positive |
+| `mfe_atr`, `mae_atr` | TEXT | best and worst reached along the way, in ATR |
+| `filled_at` | TEXT | when the lab could first have known this, which is what bounds the read |
 
-Insert ForwardReturnFiller
+Insert ForwardReturnFiller · PK (`subject_id`, `subject_kind`, `horizon_days`)
+
+*`subject_kind` is part of the key rather than a description, because a setup and a control are two different subjects and a surrogate that happened to collide would silently overwrite one with the other.*
+
+*`mfe_atr` and `mae_atr` are in ATR and the give-up distance the ceiling compares them against is in daily ranges. **The conversion happens at the point of use and is named there**, rather than either figure being stored twice: two columns that must agree are two columns that will not (see: The ceiling is computed from the path, not from the terminal return).*
+
+***This is the one stage that reads bars dated after its subject's own date, and it does so by design.** Point in time is not weakened for it: the fill's as-of is `filled_at`, the date the lab is filling on, and the read is bounded by that rather than by the setup date. A setup flagged on Monday has no ten-session outcome until the following Monday fortnight, and the row appears when it exists rather than being backdated to the night that flagged it.*
+
+### `ceiling_bound`
+Grain: date + direction. The win-rate bound perfect foresight could have reached, recomputed weekly.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | the week the bound was computed on |
+| `direction` | TEXT | `long` or `short`, never pooled |
+| `horizon_days` | INTEGER | 10, the scoring horizon the bound is defined at |
+| `subjects` | INTEGER | how many closed setups the bound was computed over, which is the population |
+| `bound` | TEXT | the fraction a system with perfect foresight could have won |
+| `achieved` | TEXT | the fraction actually won over the same rows |
+
+Insert CeilingCalculator · PK (`as_of`, `direction`)
+
+*Direction is in the grain rather than in a note, because a pooled bound would inherit the short side's borrow assumption and the whole point of the figure is the gap between it and what was achieved (see: Long and short are never pooled into one figure).*
+
+*A later week's bound over a larger population is a new dated row and the old one stays. Recomputed means recomputed, not revised: the gap narrowing over time is itself the thing a reader wants to see.*
+
+### `scoreboard`
+Grain: date + panel. What each band showed on a given day, so a panel can be read back as it stood.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | |
+| `panel` | TEXT | which band and which figure |
+| `direction` | TEXT NULL | `long`, `short`, or null where the panel is not per direction, as band 0 is |
+| `figure` | TEXT | the number shown |
+| `low`, `high` | TEXT NULL | the interval bounds, null on a panel that carries no interval |
+| `n_rows` | INTEGER | the rows the figure was computed over |
+| `n_effective` | INTEGER NULL | the effective observations, which is not the same number and is what a minimum sample is counted in |
+| `population` | TEXT NULL | which rows the figure was computed over, said on the panel |
+| `n_minimum` | INTEGER NULL | what `n_effective` must reach before the panel may be read. Band 1 only |
+
+Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
+
+*`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured).*
+
+*`n_effective` starts from rows rather than from nights, and that is what the control draw bought. Same-night setups share a market factor, which is why an unpaired figure over forty names is worth about one observation; the paired difference removes it by construction, so what is left inside a night is each name's own move against its own controls. Two discounts are then measured from the series: the label overlap across nights, and whatever common movement the matching failed to remove. A night that cannot say how its own pairs dispersed counts as one, which makes the pessimistic reading the limiting case rather than the assumption.*
+
+*`n_minimum` is stored rather than looked up on the page, on the same grounds the interval is: the panel is read back as it stood, and a minimum that moved after a night was recorded would silently restate what that night's reading meant. It is set on band 1 alone, because band 1 is the panel checkpoint 3.6 fires on and a minimum on every panel would read as a threshold each of them is held to (see: The minimum sample is 262 effective observations, ratified at two points and 90% power).*
+
+*Every panel stores its own count, because a number without one is not shown at all.*
+
+*And its population, because two panels on one page do not share one. Band 1 is over every flagged setup, which is what ARCHITECTURE means by the word: its worked night is twenty-two flagged of which fourteen pass every check, and all twenty-two are followed up. Band 2's rank-decile curve is over the capped candidates, because a decile is a position in an ordering and only a candidate carries a rank. At the calibrated thresholds the two differ by three orders of magnitude, so a stored panel that could not say which rows it used would be a figure a later reader compares against the wrong one (see: The subject is the flagged setup population, not the trade log).*
 
 ---
 
@@ -489,13 +555,11 @@ Declared at store level. Columns owed at their checkpoint.
 |---|---|---|
 | `variant` | variant id | Insert VariantAdmitter (definition, target, min sample, **once**) · Update AcceptanceGate (status and resolution date **only**) (see: Targets and minimum samples are written at creation and are immutable) |
 | `variant_score` | variant + date | Insert VariantScorer |
-| `ceiling_bound` | date | Insert CeilingCalculator |
 | `twin_pair` | pair id | Insert TwinPairFinder |
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness |
 | `holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once) |
-| `scoreboard` | date + panel | Insert ScoreboardBuilder |
 
 
 ---

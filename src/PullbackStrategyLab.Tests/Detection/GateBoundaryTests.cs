@@ -200,7 +200,7 @@ public sealed class GateBoundaryTests
             new(17m, 22m, 16m, 21m, 22m, 16m),
         ];
 
-        PullbackGeometry.Pullback? pullback = PullbackGeometry.Of(bars, thrustIndex: 1, isLong: true);
+        PullbackGeometry.Pullback? pullback = PullbackGeometry.Of(bars, thrustIndex: 1, thrustSpanSessions: 1, isLong: true);
 
         Assert.NotNull(pullback);
         Assert.Equal(0, pullback.PullbackBars);

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Web.Pages;
@@ -109,6 +111,15 @@ public sealed class PhaseReplay : IDisposable
     /// <summary>The short detector in calibration mode, likewise.</summary>
     public CalibrationResult CalibrateShort(DateOnly from, DateOnly to) =>
         new ShortSetupDetector(_connections, Logger(), _clock, _options).Calibrate(from, to);
+
+    /// <summary>
+    /// The scoreboard build, over the store this replay holds now rather than as it stood.
+    ///
+    /// Exposed so a test can build the panels after a calibration run has filled the calibration
+    /// table, which is the only way to ask behaviourally whether band 1 can see reconstructed rows.
+    /// </summary>
+    public ScoreboardResult BuildScoreboard() =>
+        new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
 
     /// <summary>The short detector, likewise.</summary>
     public DetectResult DetectShort() =>
@@ -339,7 +350,28 @@ public sealed class PhaseReplay : IDisposable
         Record("signals.frozen", vectorized.Written);
         Record("signals.absent", vectorized.Absent);
 
-        // 13. The nightly cap, over whatever the night's detectors left.
+        // 13. The journal, which seals the night between the freeze and the cap. It writes nothing,
+        //     so its stage row carries no rows written; what it produces is a verdict on whether the
+        //     night's rows are complete, frozen, and untouched by anything that runs later.
+        JournalResult sealed_ = new SetupJournal(_connections, Logger(), _clock, _options).Seal(AsOf);
+
+        stages.Add(new StageRun(SetupJournal.Name, 0, sealed_.RowsWritten, sealed_.Outcome.ToStorageText()));
+        Record("journal.setups", sealed_.Setups);
+        Record("journal.withSignals", sealed_.WithSignals);
+        Record("journal.breaches", sealed_.Breaches.Count);
+
+        // 14. The control draw, before the cap, so the controls answer for the flagged population
+        //     rather than for the sixty that survive truncation.
+        ControlResult controls = new ControlSampler(_connections, Logger(), _clock, _options).Draw(AsOf);
+
+        stages.Add(new StageRun(ControlSampler.Name, 0, controls.RowsWritten, controls.Outcome.ToStorageText()));
+        Record("controls.setups", controls.Setups);
+        Record("controls.pool", controls.Pool);
+        Record("controls.loose", controls.Loose);
+        Record("controls.tight", controls.Tight);
+        Record("controls.shortOfFive", controls.ShortOfFive);
+
+        // 15. The nightly cap, over whatever the night's detectors left.
         CapResult capped = new SetupCapper(_connections, Logger(), _clock, _options).Cap(AsOf);
 
         stages.Add(new StageRun(SetupCapper.Name, 0, capped.RowsWritten, capped.Outcome.ToStorageText()));
@@ -351,8 +383,47 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
+        // 16. The forward fill, which is the one stage that reads bars dated after its subject's
+        //     own date. Over the fixture it fills what the single captured night can support: the
+        //     as-of is the last session the fixture holds, so no horizon has elapsed and the honest
+        //     answer is nought written. Recorded anyway, because "nought outcomes and every horizon
+        //     not yet elapsed" is a different fact from "the stage did not run".
+        FillResult filled = new ForwardReturnFiller(_connections, Logger(), _clock, _options).Fill(AsOf);
+
+        stages.Add(new StageRun(ForwardReturnFiller.Name, 0, filled.RowsWritten, filled.Outcome.ToStorageText()));
+        Record("forward.subjects", filled.Subjects);
+        Record("forward.written", filled.Written);
+        Record("forward.notYetElapsed", filled.NotYetElapsed);
+        Record("forward.acrossAHoliday", filled.AcrossAHoliday);
+
+        // 17. The scoreboard, last, because every panel it builds reads what the stages before it
+        //     wrote. Over the fixture most panels are withheld, which is the honest answer for a
+        //     lab with one night on file and no closed horizon.
+        ScoreboardResult scored = new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
+
+        stages.Add(new StageRun(ScoreboardBuilder.Name, 0, scored.RowsWritten, scored.Outcome.ToStorageText()));
+        Record("scoreboard.panels", scored.Panels);
+        Record("scoreboard.withInterval", scored.WithInterval);
+        Record("scoreboard.withheld", scored.Withheld);
+
+        // Which shortage is holding band 1 back, counted rather than described. Withholding is
+        // settled by the session axis and the minimum sample by how much information the rows
+        // carry, so a panel can be short of one and not the other, and the two figures apart are
+        // what say which. Over the fixture every band 1 panel is short of both.
+        foreach (Measurement figure in WithheldReasonFigures())
+        {
+            measurements.Add(figure);
+        }
+
+        measurements.AddRange(AccumulationFigures());
         measurements.AddRange(CalibrationCounts());
+        measurements.AddRange(ForwardOutcomeFigures());
+        measurements.AddRange(ControlFigures());
+        measurements.AddRange(CeilingFigures());
+        measurements.AddRange(IntervalFigures());
+        measurements.AddRange(DispersionFigures());
         measurements.AddRange(CapFigures());
+        measurements.AddRange(GeometryFigures());
         measurements.AddRange(IndexFigures());
         measurements.AddRange(ScanFigures());
         measurements.AddRange(CheckSidednessFigures());
@@ -456,26 +527,51 @@ public sealed class PhaseReplay : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT direction, check_results FROM setup";
+        command.CommandText = "SELECT setup_id, direction, check_results FROM setup";
 
-        // Keyed by direction and name rather than by name, because five of the twenty gate ids
-        // appear on both lists and a dictionary keyed on the id alone would add a long `exit-tight`
-        // pass to a short `exit-tight` fail and report the pair as two-sided. That is the pooling
-        // rule arriving in the one place it is easiest to break by accident.
+        // Keyed by direction and name rather than by name, because four of the twenty gate ids
+        // appear on both lists, being `cluster`, `exit-tight`, `moves-enough` and `thrust`. A
+        // dictionary keyed on the id alone would add a long `exit-tight` pass to a short
+        // `exit-tight` fail and report the pair as two-sided. That is the pooling rule arriving in
+        // the one place it is easiest to break by accident.
         // see: Long and short are never pooled into one figure
         var passes = new Dictionary<(string Direction, string Name), int>();
         var fails = new Dictionary<(string Direction, string Name), int>();
+
+        // And the same two counters over the authored row, kept apart rather than added in.
+        //
+        // The row this harness inserts to give the vectorizer a subject arrives through the store
+        // like any other, so until 3.0(e) it was counted into the figures beside two rows a detector
+        // wrote. It bypasses the recording floor, which is why it carries `uptrend` failed on a
+        // grade of `mixed`, and `uptrend` and `contraction` were the only two long gates the report
+        // called two-sided: both were two-sided only because this row disagreed with a detector row.
+        // Over detector-written rows alone every one of the twenty gate slots is one-sided.
+        //
+        // The gate cases were already kept out of these counters and said so. The authored setup row
+        // was not, which is the same rule with one of its subjects missing.
+        // see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+        var authoredPasses = new Dictionary<(string Direction, string Name), int>();
+        var authoredFails = new Dictionary<(string Direction, string Name), int>();
 
         using (SqliteDataReader reader = command.ExecuteReader())
         {
             while (reader.Read())
             {
-                string direction = reader.GetString(0);
+                string setupId = reader.GetString(0);
+                string direction = reader.GetString(1);
+                bool isAuthoredRow = string.Equals(setupId, AuthoredSetupId, StringComparison.Ordinal);
 
                 foreach (CheckResult result in
-                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), CheckJson) ?? [])
+                         JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(2), CheckJson) ?? [])
                 {
-                    Dictionary<(string, string), int> side = result.Passed ? passes : fails;
+                    Dictionary<(string, string), int> side = (isAuthoredRow, result.Passed) switch
+                    {
+                        (true, true) => authoredPasses,
+                        (true, false) => authoredFails,
+                        (false, true) => passes,
+                        _ => fails,
+                    };
+
                     side[(direction, result.Name)] = side.GetValueOrDefault((direction, result.Name)) + 1;
                 }
             }
@@ -486,7 +582,8 @@ public sealed class PhaseReplay : IDisposable
         // actionable and "one more setup passed" is not.
         using (SqliteCommand perSetup = connection.CreateCommand())
         {
-            perSetup.CommandText = "SELECT setup_id, check_results FROM setup ORDER BY setup_id";
+            perSetup.CommandText =
+                "SELECT setup_id, check_results, thrust_scan, thrust_session FROM setup ORDER BY setup_id";
             using SqliteDataReader rows = perSetup.ExecuteReader();
 
             while (rows.Read())
@@ -498,6 +595,16 @@ public sealed class PhaseReplay : IDisposable
                     figures.Add(new Measurement(
                         $"setup.{setupId}.{result.Name}", result.Passed ? "pass" : "fail"));
                 }
+
+                // Which scan produced the thrust, recorded from 3.0(b). Frozen here because the
+                // correction at 3.0(c) changes what the geometry does with it, and a run that
+                // cannot say which scan flagged a row cannot say whether the correction reached it.
+                figures.Add(new Measurement(
+                    $"setup.{setupId}.thrustScan",
+                    rows.IsDBNull(2) ? "none" : rows.GetString(2)));
+                figures.Add(new Measurement(
+                    $"setup.{setupId}.thrustSession",
+                    rows.IsDBNull(3) ? "none" : rows.GetString(3)));
             }
         }
 
@@ -509,8 +616,23 @@ public sealed class PhaseReplay : IDisposable
 
         foreach (GateCases.GateCase gateCase in GateCases.All)
         {
-            CheckResult verdict = GateCases.Evaluate(gateCase)
-                .Single(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
+            // First rather than Single, and the difference is the whole of a 2.12 finding. Removing
+            // a gate's implementation at that sign-off failed `check-completeness`, which is the
+            // property holding. It failed on "Sequence contains no matching element" and a stack
+            // trace from this line, because the replay the check reads died before the comparison
+            // that has a reconciliation message written for exactly this case. A crash and a named
+            // failure are not the same artefact: one tells a later session which gate went missing,
+            // the other tells it that something threw.
+            CheckResult? verdict = GateCases.Evaluate(gateCase)
+                .FirstOrDefault(r => string.Equals(r.Name, gateCase.Gate, StringComparison.Ordinal));
+
+            if (verdict is null)
+            {
+                // Recorded as a value rather than thrown, so the run reaches `check-completeness`
+                // and that check reconciles the gate lists by name and says which one is absent.
+                figures.Add(new Measurement(gateCase.Id, "no result of that name"));
+                continue;
+            }
 
             figures.Add(new Measurement(gateCase.Id, verdict.Passed ? "pass" : "fail"));
 
@@ -530,16 +652,30 @@ public sealed class PhaseReplay : IDisposable
                 int failed = fails.GetValueOrDefault((direction, name));
                 (bool authoredPass, bool authoredFail) = authored.GetValueOrDefault((direction, name));
 
+                int authoredRowPassed = authoredPasses.GetValueOrDefault((direction, name));
+                int authoredRowFailed = authoredFails.GetValueOrDefault((direction, name));
+
                 figures.Add(new Measurement(
                     $"check.{direction}.{name}.passed", passed.ToString(CultureInfo.InvariantCulture)));
                 figures.Add(new Measurement(
                     $"check.{direction}.{name}.failed", failed.ToString(CultureInfo.InvariantCulture)));
 
-                // Sidedness asks whether anything has ever exercised both branches, so it reads both
-                // populations. The two counts above stay separate, so a reader can still see that a
-                // gate the market never passed was passed by a case built to pass it.
-                bool everPassed = passed > 0 || authoredPass;
-                bool everFailed = failed > 0 || authoredFail;
+                // The authored row's own verdicts, beside the detector's and never added to them.
+                // Reported rather than dropped, because the row is a real thing the replay inserts
+                // and a reader who cannot see it would wonder where a third setup went.
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.authoredRowPassed",
+                    authoredRowPassed.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"check.{direction}.{name}.authoredRowFailed",
+                    authoredRowFailed.ToString(CultureInfo.InvariantCulture)));
+
+                // Sidedness asks whether anything has ever exercised both branches, so it reads
+                // every population. The counts above stay separate, so a reader can still see that a
+                // gate the market never passed was passed by a case built to pass it, and that a
+                // gate the detectors never split was split by the row this harness inserted.
+                bool everPassed = passed > 0 || authoredPass || authoredRowPassed > 0;
+                bool everFailed = failed > 0 || authoredFail || authoredRowFailed > 0;
 
                 if (!everPassed || !everFailed)
                 {
@@ -680,6 +816,391 @@ public sealed class PhaseReplay : IDisposable
         return figures;
     }
 
+    /// <summary>
+    /// What <see cref="PullbackGeometry.Of"/> computes over windows the captured fixture cannot
+    /// reach on its own.
+    ///
+    /// Every quantity of the record rather than the two the gates happen to read, because the
+    /// method returns one shape and a caller reading half of it correctly can still be handed a
+    /// wrong origin. The two prices are raw and the rest are adjusted, and both are pinned: reading
+    /// one basis where the other was meant is the error this method carries a warning about, and it
+    /// is silent because both numbers look reasonable.
+    /// </summary>
+    private IReadOnlyList<Measurement> GeometryFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (GeometryCases.GeometryCase geometryCase in GeometryCases.All)
+        {
+            PullbackGeometry.Pullback? shape = GeometryCases.Evaluate(connection, geometryCase);
+
+            if (shape is null)
+            {
+                // A window that cannot support a shape is a real answer and is recorded as one. It
+                // is not the same as a shape of no bars, which is what long-no-pullback-yet holds.
+                figures.Add(new Measurement(geometryCase.Id, "no shape"));
+                continue;
+            }
+
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.extremeIndex",
+                shape.ExtremeIndex.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.pullbackBars",
+                shape.PullbackBars.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"{geometryCase.Id}.thrustOrigin", Figure(shape.ThrustOrigin)));
+            figures.Add(new Measurement($"{geometryCase.Id}.thrustExtreme", Figure(shape.ThrustExtreme)));
+            figures.Add(new Measurement($"{geometryCase.Id}.pullbackExtreme", Figure(shape.PullbackExtreme)));
+
+            // Undefined rather than infinite, and recorded as a word so it cannot be read as a
+            // number that happened to be small. A thrust of no size cannot be retraced by a
+            // fraction of itself.
+            figures.Add(new Measurement(
+                $"{geometryCase.Id}.retraceDepth",
+                shape.RetraceDepth is decimal retrace ? Figure(retrace) : "undefined"));
+
+            figures.Add(new Measurement($"{geometryCase.Id}.trigger", Figure(shape.Trigger)));
+            figures.Add(new Measurement($"{geometryCase.Id}.stop", Figure(shape.Stop)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// What <see cref="ForwardOutcome.Of"/> computes for subjects the captured night cannot supply.
+    ///
+    /// The fixture's own as-of is the last session it holds, so the nightly fill has no elapsed
+    /// horizon and writes nothing. These sit earlier in the same window, which is what gives the
+    /// sign convention, the horizons and the holiday handling something to be measured on.
+    /// </summary>
+    private IReadOnlyList<Measurement> ForwardOutcomeFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        foreach (ForwardCases.ForwardCase forwardCase in ForwardCases.All)
+        {
+            IReadOnlyList<ForwardOutcome.Bar> path = ForwardCases.Path(connection, forwardCase);
+            decimal atr = ForwardCases.AverageTrueRange(forwardCase);
+
+            foreach (int horizon in ForwardOutcome.Horizons)
+            {
+                ForwardOutcome.Outcome? outcome = ForwardOutcome.Of(path, horizon, forwardCase.IsLong, atr);
+                string id = $"{forwardCase.Id}.h{horizon.ToString(CultureInfo.InvariantCulture)}";
+
+                if (outcome is null)
+                {
+                    figures.Add(new Measurement(id, "not yet elapsed"));
+                    continue;
+                }
+
+                // The calendar horizon beside the session actually used. The pair is the done
+                // condition: a follow-up that crossed a holiday says so rather than being silently
+                // later than it claims.
+                DateOnly intended = forwardCase.Date.AddDays(horizon);
+
+                figures.Add(new Measurement($"{id}.intendedDate", Session(intended)));
+                figures.Add(new Measurement($"{id}.actualDate", Session(outcome.ActualDate)));
+                figures.Add(new Measurement(
+                    $"{id}.slipped", intended == outcome.ActualDate ? "no" : "yes"));
+                figures.Add(new Measurement($"{id}.returnSigned", Figure(outcome.ReturnSigned)));
+                figures.Add(new Measurement(
+                    $"{id}.mfeAtr",
+                    outcome.MaximumFavourableExcursion is decimal mfe ? Figure(mfe) : "undefined"));
+                figures.Add(new Measurement(
+                    $"{id}.maeAtr",
+                    outcome.MaximumAdverseExcursion is decimal mae ? Figure(mae) : "undefined"));
+            }
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// Which names each setup's controls actually were, in rank order, and how close the nearest was.
+    ///
+    /// A sequence rather than a count, on the same grounds the cap records its ordering: what a
+    /// changed distance metric moves is which names sit in the five, not how many there are. Five
+    /// controls drawn either way is the same number whether the match is good or arbitrary.
+    /// </summary>
+    private IReadOnlyList<Measurement> ControlFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        var figures = new List<Measurement>();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT setup_id, control_set, control_ticker, rank, match_quality
+              FROM control_setup
+             ORDER BY setup_id, control_set, rank
+            """;
+
+        var drawn = new Dictionary<(string Setup, string Set), List<string>>();
+        var nearest = new Dictionary<(string Setup, string Set), string>();
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                var key = (reader.GetString(0), reader.GetString(1));
+
+                if (!drawn.TryGetValue(key, out List<string>? names))
+                {
+                    names = [];
+                    drawn[key] = names;
+                }
+
+                names.Add(reader.GetString(2));
+
+                // The best match's own distances, which is what says whether the pool had anything
+                // close. A set of five drawn from a pool with nothing near it is still five.
+                if (reader.GetInt32(3) == 1)
+                {
+                    nearest[key] = reader.GetString(4);
+                }
+            }
+        }
+
+        foreach ((string setup, string set) in drawn.Keys.OrderBy(k => k.Setup, StringComparer.Ordinal)
+                     .ThenBy(k => k.Set, StringComparer.Ordinal))
+        {
+            figures.Add(new Measurement(
+                $"controls.{setup}.{set}", string.Join(" ", drawn[(setup, set)])));
+            figures.Add(new Measurement(
+                $"controls.{setup}.{set}.nearest", nearest[(setup, set)]));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The win-rate bound over authored outcome populations, which the fixture cannot supply.
+    ///
+    /// The captured night has no closed horizon, so the weekly bound over it is computed from
+    /// nothing and correctly writes no row. The arithmetic still has to be exercised, and what it
+    /// needs is populations rather than bars: a set of terminal returns and adverse excursions with
+    /// a stop beside each. Those are authored the way the cap scenarios are, because the quantity
+    /// under test is a rule over numbers rather than anything about the market.
+    /// see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+    /// </summary>
+    private static IReadOnlyList<Measurement> CeilingFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (CeilingCases.Scenario scenario in CeilingCases.All)
+        {
+            WinRateCeiling.Bound? bound = WinRateCeiling.Of(CeilingCases.Subjects(scenario));
+
+            if (bound is null)
+            {
+                figures.Add(new Measurement($"ceiling.{scenario.Name}", "no bound"));
+                continue;
+            }
+
+            figures.Add(new Measurement(
+                $"ceiling.{scenario.Name}.subjects", bound.Subjects.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.bound", Figure(bound.Ceiling)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.achieved", Figure(bound.Achieved)));
+            figures.Add(new Measurement($"ceiling.{scenario.Name}.gap", Figure(bound.Ceiling - bound.Achieved)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The interval over authored nightly series, which the fixture withholds on every panel.
+    ///
+    /// One night with no closed horizon produces no series, so band 1 is withheld everywhere and the
+    /// block bootstrap runs on nothing. The failure this guards against is an interval that is too
+    /// narrow, and a stage that never computes one cannot be.
+    /// </summary>
+    private static IReadOnlyList<Measurement> IntervalFigures()
+    {
+        var figures = new List<Measurement>();
+
+        foreach (IntervalCases.Scenario scenario in IntervalCases.All)
+        {
+            IReadOnlyList<PairedInterval.Night> nights = IntervalCases.Nights(scenario);
+
+            PairedInterval.Estimate? estimate = PairedInterval.Of(
+                nights, MeasurementParameters.BootstrapBlockSessions, MeasurementParameters.BootstrapDraws);
+
+            string id = $"interval.{scenario.Name}";
+
+            if (estimate is null)
+            {
+                figures.Add(new Measurement(id, "withheld"));
+                continue;
+            }
+
+            figures.Add(new Measurement($"{id}.mean", IntervalCases.Figure(estimate.Mean)));
+            figures.Add(new Measurement($"{id}.low", IntervalCases.Figure(estimate.Low)));
+            figures.Add(new Measurement($"{id}.high", IntervalCases.Figure(estimate.High)));
+            figures.Add(new Measurement(
+                $"{id}.clearsZero", estimate.Low > 0m ? "yes" : "no"));
+            figures.Add(new Measurement(
+                $"{id}.nights", estimate.Nights.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
+                $"{id}.rows", estimate.Rows.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement(
+                $"{id}.effective", estimate.EffectiveObservations.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// The dispersion of ten-session forward returns over the fixture's own bars, and the minimum
+    /// sample that falls out of it.
+    ///
+    /// <b>This is the one number in the minimum-sample arithmetic that is a fact rather than a
+    /// judgement</b>, and until now nothing had measured it. The corpus stated a minimum of paired
+    /// setup observations detecting a two-point difference and read as a derived quantity from the
+    /// day it was written; the dispersion the calculation turns on had never been taken over
+    /// anything.
+    ///
+    /// <b>What it cannot say.</b> Thirty names over one year, hand-picked for liquidity and still
+    /// listed at the end of it. A universe with delistings in it disperses further, so this figure is
+    /// a floor on the real one and the minimum it produces is a floor on the real minimum. It is
+    /// reported with its population attached for exactly that reason.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// </summary>
+    private IReadOnlyList<Measurement> DispersionFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // Point in time on the replay's own as-of, the way every other read here is bounded. The
+        // forward look inside the horizon is the exemption a forward return carries by definition,
+        // and it is bounded by the bars this read returned rather than reaching past them.
+        string bound = $"{AsOf:yyyy-MM-dd}T23:59:59.999Z";
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT b.ticker, b.bar_date, b.adj_close
+              FROM daily_bar b
+             WHERE b.bar_date <= @as_of
+               AND b.observed_at <= @bound
+               AND b.observed_at = (SELECT MAX(l.observed_at) FROM daily_bar l
+                                     WHERE l.ticker = b.ticker AND l.bar_date = b.bar_date
+                                       AND l.observed_at <= @bound)
+             ORDER BY b.ticker, b.bar_date
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+        command.Parameters.AddWithValue("@bound", bound);
+
+        var series = new SortedDictionary<string, List<(DateOnly Date, decimal AdjustedClose)>>(
+            StringComparer.Ordinal);
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                string ticker = reader.GetString(0);
+
+                if (!series.TryGetValue(ticker, out List<(DateOnly, decimal)>? bars))
+                {
+                    bars = [];
+                    series[ticker] = bars;
+                }
+
+                bars.Add((
+                    StoreText.StorageTextToDate(reader.GetString(1)),
+                    StoreText.StorageTextToPrice(reader.GetString(2))));
+            }
+        }
+
+        var bySession = new SortedDictionary<DateOnly, List<double>>();
+        int names = 0;
+
+        foreach (KeyValuePair<string, List<(DateOnly Date, decimal AdjustedClose)>> entry in series)
+        {
+            // A name with no more bars than the horizon has no forward return at all. The universe
+            // rows the fixture carries one bar each for land here and are dropped, which is what
+            // leaves the thirty names with history.
+            if (entry.Value.Count <= MeasurementParameters.ScoringHorizonSessions)
+            {
+                continue;
+            }
+
+            names++;
+
+            foreach ((DateOnly date, double value) in ForwardDispersion.Returns(
+                entry.Value, MeasurementParameters.ScoringHorizonSessions))
+            {
+                if (!bySession.TryGetValue(date, out List<double>? returns))
+                {
+                    returns = [];
+                    bySession[date] = returns;
+                }
+
+                returns.Add(value);
+            }
+        }
+
+        ForwardDispersion.Measured? measured = ForwardDispersion.Of(
+            [.. bySession.Select(s => new ForwardDispersion.Session(s.Key, s.Value))],
+            MeasurementParameters.DispersionMinimumNames,
+            MeasurementParameters.ControlsPerSet,
+            names);
+
+        if (measured is null)
+        {
+            return [new Measurement("dispersion", "no session carries a cross-section")];
+        }
+
+        return
+        [
+            new Measurement("dispersion.names", measured.Names.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("dispersion.sessions", measured.Sessions.ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "dispersion.observations", measured.Observations.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("dispersion.idiosyncratic", MinimumSample.Figure(measured.Idiosyncratic)),
+            new Measurement("dispersion.pairedDifference", MinimumSample.Figure(measured.PairedDifference)),
+            new Measurement(
+                "minimumSample.effectiveObservations",
+                MinimumSample.Of(measured.PairedDifference).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    /// <summary>
+    /// How many band 1 panels are short of sessions, and how many are short of evidence.
+    ///
+    /// <b>Two counts rather than one, because the two shortages are settled by different things.</b>
+    /// The interval needs twenty sessions and no number of rows substitutes for them; the decision
+    /// needs 262 effective observations and no number of sessions substitutes for those. A panel can
+    /// be short of one and not the other, and a single "withheld" count could never say which.
+    ///
+    /// The population is deliberately not a third count. Band 1 reads the evidence store and a
+    /// historical run writes to the calibration table, so it is settled by construction rather than
+    /// by waiting, and it is asserted where that belongs rather than counted here.
+    /// see: The evidence store holds only setups flagged forward, never setups reconstructed from history
+    /// </summary>
+    private IReadOnlyList<Measurement> WithheldReasonFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COALESCE(SUM(CASE WHEN withheld_because IS NOT NULL THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN n_effective < n_minimum THEN 1 ELSE 0 END), 0)
+              FROM scoreboard
+             WHERE panel LIKE 'band1.%'
+            """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        reader.Read();
+
+        return
+        [
+            new Measurement(
+                "scoreboard.band1.shortOfSessions",
+                reader.GetInt32(0).ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "scoreboard.band1.shortOfEvidence",
+                reader.GetInt32(1).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
     private static readonly JsonSerializerOptions CheckJson = new(JsonSerializerDefaults.Web);
 
     /// <summary>How many ranks of each scan the fixture records, since thirty names cannot fill fifty.</summary>
@@ -719,6 +1240,14 @@ public sealed class PhaseReplay : IDisposable
     /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
     public const string AuthoredSetupTicker = "IESC";
 
+    /// <summary>
+    /// The authored setup's id, which is how the sidedness counters tell it from a detector's row.
+    ///
+    /// No date prefix, unlike <c>LongSetupDetector.SetupId</c>, which is what makes it recognisable
+    /// in a diff as well as here.
+    /// </summary>
+    public static string AuthoredSetupId => $"{AuthoredSetupTicker}-long";
+
     /// <summary>The trigger and the stop the authored setup carries, as raw prices.</summary>
     public const string AuthoredTrigger = "355.00";
 
@@ -743,12 +1272,25 @@ public sealed class PhaseReplay : IDisposable
             using SqliteCommand setup = connection.CreateCommand();
             setup.CommandText = """
                 INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
-                                   trigger_price, stop_price, stop_distance_ranges)
-                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700')
+                                   trigger_price, stop_price, stop_distance_ranges,
+                                   thrust_scan, thrust_session)
+                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700',
+                        @thrust_scan, @thrust_session)
                 """;
+
+            // From the same evidence the check results come from, for the same reason. Left unset,
+            // this row would read `none` where the detector's own rule resolves a hit, and the one
+            // thing these columns exist for is splitting a population by scan family: a row that
+            // says "no scan" when a scan is there is the split silently losing a row.
+            setup.Parameters.AddWithValue("@thrust_scan", (object?)evidence?.ThrustScan ?? DBNull.Value);
+            setup.Parameters.AddWithValue(
+                "@thrust_session",
+                evidence?.ThrustSession is DateOnly session
+                    ? StoreText.DateToStorageText(session)
+                    : (object)DBNull.Value);
             setup.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckJson));
             setup.Parameters.AddWithValue("@passed_all", SetupChecks.PassedAll(results) ? 1 : 0);
-            setup.Parameters.AddWithValue("@setup_id", $"{AuthoredSetupTicker}-long");
+            setup.Parameters.AddWithValue("@setup_id", AuthoredSetupId);
             setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
             setup.Parameters.AddWithValue("@ticker", AuthoredSetupTicker);
             setup.Parameters.AddWithValue("@trigger", AuthoredTrigger);
@@ -1157,6 +1699,104 @@ public sealed class PhaseReplay : IDisposable
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// A run of nights whose horizon has closed, driven through the real fill and the real
+    /// scoreboard build, in a store of its own.
+    ///
+    /// <b>The half of phase 3 the captured fixture cannot reach.</b> One market day closes no
+    /// ten-session horizon, so over the captured store `forward.written` is nought, every band 1
+    /// panel is withheld, and everything past the flag is exercised by nothing. That is how a fill
+    /// binding its subject kind to a literal survived twelve checkpoints: the query that came back
+    /// empty was never run against a store that had anything to put in it.
+    ///
+    /// <b>Its own store, its own namespace, and nothing added to a captured figure.</b> The captured
+    /// counts stay what they were and stay true of a one-night fixture. A figure over the two
+    /// populations together would be a figure over neither.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    /// <summary>
+    /// Computed once for the whole test process, because it is a pure function of authored inputs
+    /// and the shipped stages.
+    ///
+    /// <b>Not an optimisation for its own sake.</b> Eight test files build a replay, and the
+    /// population writes about twelve and a half thousand outcome rows through the real fill.
+    /// Recomputing it per replay took the suite from 1m27 to 2m56 for figures that cannot differ
+    /// between runs, and a suite that takes twice as long is a suite that gets run half as often.
+    /// The measurements are immutable records, so sharing them across collections is safe, and
+    /// <see cref="Lazy{T}"/> is thread-safe by default.
+    /// </summary>
+    private static readonly Lazy<IReadOnlyList<Measurement>> Accumulation = new(BuildAccumulationFigures);
+
+    private static IReadOnlyList<Measurement> AccumulationFigures() => Accumulation.Value;
+
+    private static IReadOnlyList<Measurement> BuildAccumulationFigures()
+    {
+        using var population = new AccumulationPopulation();
+
+        FillResult filled = population.Fill();
+        ScoreboardResult built = population.Build();
+
+        var figures = new List<Measurement>
+        {
+            new("accumulation.nights", AccumulationPopulation.Nights.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.setups", filled.Subjects.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.controls", filled.ControlSubjects.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.setupsWritten", filled.Written.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.controlsWritten", filled.ControlsWritten.ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.setupOutcomeRows",
+                population.Outcomes("setup").ToString(CultureInfo.InvariantCulture)),
+            new("accumulation.forward.controlOutcomeRows",
+                population.Outcomes("control").ToString(CultureInfo.InvariantCulture)),
+            // Counted over band 1 alone rather than taken from ScoreboardResult.WithInterval, which
+            // is over every panel the build wrote. The two agree today, because no other band carries
+            // an interval, and an id that says band 1 over a figure computed across the page is the
+            // fifth defect shape whether or not the number happens to match.
+            new("accumulation.band1.panelsWithAnInterval",
+                Band1WithAnInterval(population).ToString(CultureInfo.InvariantCulture)),
+        };
+
+        foreach (string direction in new[] { "long", "short" })
+        {
+            foreach (string set in new[] { "loose", "tight" })
+            {
+                AccumulationPopulation.Panel? panel = population.Band1(direction, set);
+                string id = $"accumulation.band1.{direction}.{set}";
+
+                if (panel is null)
+                {
+                    figures.Add(new Measurement(id, "no panel"));
+                    continue;
+                }
+
+                figures.Add(new Measurement($"{id}.figure", panel.Figure));
+                figures.Add(new Measurement($"{id}.low", panel.Low ?? "none"));
+                figures.Add(new Measurement($"{id}.high", panel.High ?? "none"));
+                figures.Add(new Measurement(
+                    $"{id}.rows", panel.Rows.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new Measurement(
+                    $"{id}.effective",
+                    panel.Effective?.ToString(CultureInfo.InvariantCulture) ?? "none"));
+            }
+        }
+
+        static int Band1WithAnInterval(AccumulationPopulation population) =>
+            (from direction in new[] { "long", "short" }
+             from set in new[] { "loose", "tight" }
+             let panel = population.Band1(direction, set)
+             where panel?.Low is not null
+             select panel).Count();
+
+        // The state the defect produced, read back from the producer. Every setup outcome closed and
+        // no control outcome exists, which is the exact shape band 1 was in for the whole of phase 3
+        // while the panel said the horizons had not closed. Frozen as the words rather than as a
+        // count, because the words are what a person had to diagnose it from.
+        figures.Add(new Measurement(
+            "accumulation.starved.long.loose.withheldBecause",
+            population.WithheldReasonWithNoControlOutcomes("long", "loose") ?? "no panel"));
+
+        return figures;
     }
 
     /// <summary>A session, written the way the store and the vendor both write one.</summary>

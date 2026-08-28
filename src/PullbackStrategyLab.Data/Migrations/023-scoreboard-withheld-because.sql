@@ -1,0 +1,27 @@
+-- 023  scoreboard.withheld_because
+--
+-- Why a panel shows no figure, said on the panel rather than inferred from its absence.
+--
+-- Three different things can stop band 1 answering, and until this column they were
+-- indistinguishable on the page:
+--
+--   * too few sessions for the interval. The block bootstrap needs twice its block length, so
+--     under twenty sessions there is no interval to show at any sample size. This is the only
+--     thing that withholds a figure.
+--   * too little evidence. The effective sample is below the minimum, which is a statement about
+--     information rather than about the session axis, and it is shown beside the counts.
+--   * the population being reconstructed rather than forward. This one cannot arise: band 1 reads
+--     `setup`, and a historical detector run writes to `calibration_setup`, which nothing
+--     downstream reads. It is named here because a reader of a withheld panel is entitled to know
+--     it is not the answer, and because the third is settled by construction while the first two
+--     are settled by waiting.
+--
+-- **The first two are settled by completely different things and a reader could not tell which was
+-- blocking.** Worse, they could contradict each other outright: a fortnight of very wide nights
+-- reaches the minimum before it reaches twenty sessions, and the page would then have said the
+-- minimum was reached and the panel readable, beside a figure it was refusing to show.
+--
+-- Nullable, and null is the normal case: a panel carrying a figure is not withholding one.
+-- see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+
+ALTER TABLE scoreboard ADD COLUMN withheld_because TEXT NULL;

@@ -1,0 +1,67 @@
+{
+  "tier": "AUTHORED",
+  "what": "Outcome populations with a stated terminal return, adverse excursion and give-up distance per subject. What is authored is the numbers; the rule applied to them is the shipped one.",
+  "whatItCannotSay": "Nothing about what the real distribution looks like. These say what the bound computes over a population, not what any population is.",
+  "whyItIsOwed": "The captured night has no closed horizon, so the weekly bound over the fixture is computed from nothing and correctly writes no row. The arithmetic needs populations rather than bars, which is the same reason the cap scenarios are authored.",
+  "theUnitsAreTheWholePoint": "Each subject states its excursion in ATR and its give-up distance in daily ranges, with the two prices that convert between them. Those are different units on different bases, both small and both looking like volatility, so a comparison made raw produces a bound that reads as perfectly reasonable and is wrong. `stopped-only-in-the-wrong-units` is the case that catches it: read raw its subjects survive, read correctly they do not, and the bound moves from 1.0000 to 0.0000.",
+  "scenarios": [
+    {
+      "name": "half-the-room-unused",
+      "why": "The shape ARCHITECTURE describes: an achieved rate well under the bound, so better selection has somewhere to go. Four subjects end ahead and two of those survived the path, against eight in the population.",
+      "subjects": [
+        { "return": "0.08", "maeAtr": "-0.4", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.06", "maeAtr": "-0.3", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.05", "maeAtr": "-2.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.04", "maeAtr": "-3.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.02", "maeAtr": "-1.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.03", "maeAtr": "-2.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.04", "maeAtr": "-0.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.05", "maeAtr": "-0.1", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
+      "name": "the-stop-is-the-constraint",
+      "why": "The opposite conclusion from a similar achieved rate. Almost everything that ended ahead was stopped out on the way, so the bound sits barely above what was achieved and no selection change can help. This is the reading that points the loop at the exit rule instead, and telling it apart from the case above is the entire purpose of computing a bound.",
+      "subjects": [
+        { "return": "0.08", "maeAtr": "-2.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.06", "maeAtr": "-2.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.05", "maeAtr": "-3.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.04", "maeAtr": "-0.3", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.02", "maeAtr": "-1.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
+      "name": "nothing-ended-ahead",
+      "why": "A population where no subject finished in front. The bound is nought and it is a real nought rather than a division by zero: no selection over these rows could have won anything.",
+      "subjects": [
+        { "return": "-0.02", "maeAtr": "-0.1", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.05", "maeAtr": "-0.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
+      "name": "stopped-only-in-the-wrong-units",
+      "why": "The units trap made visible. Every subject has an excursion of -0.9 ATR against a give-up of 0.5 daily ranges, and read as bare numbers 0.9 exceeds 0.5 so nothing survives. Converted properly the excursion is 0.9 in price against a give-up of 5.0, so everything survives and the bound is 1.0000. A ceiling that compared the two multiples raw would report 0.0000 here and be confidently wrong.",
+      "subjects": [
+        { "return": "0.03", "maeAtr": "-0.9", "atr": "1.00", "dailyRange": "10.00", "stopRanges": "0.5" },
+        { "return": "0.02", "maeAtr": "-0.9", "atr": "1.00", "dailyRange": "10.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
+      "name": "never-traded-against-the-entry",
+      "why": "A subject whose path never once went below its entry. Its least favourable point is above the entry, so its recorded excursion is positive, and the adverse excursion a stop could have been hit by is nought. Read through an absolute value it becomes 3.0 ATR against the subject, three times its own give-up distance, and a name that returned 17% without ever drawing down is judged stopped out and dropped from what foresight could have kept. The bias falls hardest on subjects that rose cleanly, which is exactly what a perfect forecaster selects. Under the absolute value this case reads bound 0.5000 achieved 0.3333; read correctly it is bound 1.0000 achieved 0.6667, so it separates the two outright rather than by a rounding. Every other subject in this file carries a negative excursion, so the fixture was authored to the false invariant and could not reach the path.",
+      "subjects": [
+        { "return": "0.17", "maeAtr": "3.0", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.04", "maeAtr": "-0.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "-0.03", "maeAtr": "-2.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    },
+    {
+      "name": "no-range-cannot-be-judged",
+      "why": "A subject with no range at all is treated as not having survived rather than as having survived. A bound that counted unmeasurable rows as available would be optimistic exactly where the data is worst, which is the direction an error must never take.",
+      "subjects": [
+        { "return": "0.05", "maeAtr": "-0.1", "atr": "0.00", "dailyRange": "0.00", "stopRanges": "0.5" },
+        { "return": "0.04", "maeAtr": "-0.1", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
+    }
+  ]
+}

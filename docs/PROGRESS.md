@@ -3146,3 +3146,1974 @@ Carried:    New, due at 3.1: which clause of a multi-clause gate failed, which n
             **The gallery review itself is not discharged.** One night, one card, one question. It
             stays due at the operator, and this entry is evidence the review earns its place rather
             than evidence it is finished.
+
+## 3.0(a) — 2026-08-27 — phase-3-measurement — the instrument, before the thing it measures
+
+The first part of 3.0, which is a new checkpoint created by this commit. Twelve obligations fell due
+at 3.1 and 3.1's deliverable is SetupJournal, so every one of them named a checkpoint whose
+deliverable was not its work. All twelve are repointed here, in the commit that creates the row.
+
+**Why this entry is headed 3.0(a) rather than 3.0.** The landed-checkpoint pattern is `^## \d+\.\d+ `
+with a trailing space, so this header does not register 3.0 as landed and `LastLanded` stays 2.9.
+That is the honest reading while six parts are outstanding, and it is what keeps the twelve
+deferrals valid: an obligation due at a checkpoint PROGRESS already records is a checkpoint that
+shipped without coming back to it. A `## 3.0` entry closes the checkpoint when the last part lands.
+
+Built:      `fixtures/geometry-cases.json`, tier `AUTHORED`, eleven windows over the fixture's own
+            bars with a thrust index chosen to reach a branch. `GeometryCases` in the suite, reading
+            the window through `DailyBarReader` rather than through a statement of its own, so a
+            case sees the session a detector would have seen. `PhaseReplay.GeometryFigures`, eight
+            quantities per case. `tools/derive-indicators.py --geometry`, an independent restatement.
+            `GeometryCaseTests`, four tests that the case set still reaches its branches.
+
+            **88 `DERIVED` expectations at checkpoint 3.0**, being 11 cases by 8 quantities. Every
+            quantity of the record rather than the two the gates read, because the method returns
+            one shape and a caller reading half of it correctly can still be handed a wrong origin.
+
+Findings:   Finding, and the instrument found it on its first run. **The two implementations
+            disagreed on the origin fallback, by 0.0098.** Where the thrust is the first bar of the
+            window there is no close before it. `PullbackGeometry.Of` falls back to the thrust's own
+            adjusted open and says why in its comment; `derive-indicators.py` fell back to the
+            adjusted close, in both the long and the short restatements, undocumented. Over the
+            `long-thrust-at-the-window-start` case that is 25.7397 against 25.7299.
+
+            Reading: the shipped method is right. The close sits inside the move being measured, so
+            using it reports a shorter thrust than happened, and the open is the nearest thing to
+            where the move began. The aid is corrected, and the correction carries the reasoning
+            rather than only the new expression.
+
+            **The branch was reached by nothing.** Not by the captured fixture, where every name is
+            inside every scan on every session so the thrust is always the last bar; not by the
+            authored gate cases, which build a `Pullback` by hand and never call `Of`; not by the
+            live calibration, whose 170-session window always has bars before the hit. Two
+            implementations had disagreed for as long as both existed and no run could have said so.
+
+            Verified against the population it could have moved: all 30 committed `setup.*`
+            expectations, long and short, recomputed after the fix and unchanged, because the
+            fixture's thrust index is always the last bar rather than nought. The fix moves nothing,
+            which is a measurement here rather than an expectation.
+
+            Observation, on what this part deliberately does not assert. The prediction 3.0(c) is
+            judged against is a claim about 2,016 names over 631 sessions. Thirty fixture names
+            cannot produce it and nothing here encodes it. What CI holds is the geometry over named
+            fixture cases; what settles the prediction is the calibration re-run, once.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests, up from 359.
+
+            Proved by removal, per the rule that an assertion must fail when its subject is taken
+            away. Both thrust indices of 0 moved to the end of their window: the branch test fails
+            naming the origin fallback. One case's ticker moved off the split name: `fixture-replay`
+            fails with eight named figures, each carrying its tier and checkpoint. Both restored.
+
+            The first removal attempt passed and the test was right: moving one of the two
+            window-start cases leaves the other, so the branch was still reached. Recorded because a
+            removal proof that passes is evidence about the removal until it is evidence about the
+            test.
+
+Carried:    Nothing new. Twelve obligations repointed from 3.1 to 3.0, unchanged in every other
+            respect. Six parts of 3.0 outstanding: the thrust scan on the setup row, the correction
+            and its prediction, the surfaces sweep, the remaining hygiene obligations, the spec
+            pass, and the value per clause.
+
+## 3.0(b) — 2026-08-27 — phase-3-measurement — the column the correction is diagnosed through
+
+The second part of 3.0. It computes nothing and moves no geometry, and it lands before the
+correction because re-running 631 sessions to add a column afterwards is the expensive way round.
+
+Built:      Migration **015**, adding `thrust_scan` and `thrust_session` to `setup` and to
+            `calibration_setup`, both nullable, with an index on the calibration side for the read
+            the correction makes. `ThrustScan` and `ThrustSession` on both evidence records, read by
+            no gate: the detector resolves them while assembling evidence and used to throw them
+            away. Both detectors write them. `tools/derive-indicators.py --thrust`.
+
+            **6 `DERIVED` expectations**, so the fixture's three setup rows each say which scan
+            produced their thrust and when. HOOD long is `leader`, INTC short is `gapdown`.
+
+            Nullable rather than NOT NULL, and it is the honest shape. A setup row exists only if it
+            cleared the recording floor and `thrust` is one of the four floor checks, so in practice
+            every row has a hit. But a NOT NULL would make the detector invent a value for the name
+            whose hit could not be resolved, which is the state this column exists to make visible.
+
+Findings:   Finding, from the derivation disagreeing with the run. **The harness's authored setup
+            row carried no scan where the detector's own rule resolves one.** Observation: the
+            replay reported `setup.IESC-long.thrustScan` as `none` and the independent restatement
+            said `leader`. Reading: `VectorizeAuthoredSetup` builds its check results from the
+            shipped rules over real evidence and then writes them through a hand-written insert of
+            its own, which named the columns it knew about. The new ones were not among them, so the
+            row said "no scan" while the evidence it was built from held one.
+
+            It matters more than a null in a fixture row usually would, because the single thing
+            these columns exist for is splitting a population by scan family, and a row that reports
+            no scan when a scan is there is that split quietly losing a row. Fixed at the source:
+            the insert now takes both from the same evidence the check results come from.
+
+            Observation. This is the second disagreement in two parts, and both were found the same
+            way, by a second implementation being asked the same question rather than by a test
+            asserting what the first one already said.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 835 expectations, 381 independent,
+            94 of them at 3.0.
+
+Carried:    Nothing new. Five parts of 3.0 outstanding.
+
+## 3.0(c) — 2026-08-27 — phase-3-measurement — the thrust window corrected, and a prediction half right
+
+The third part of 3.0, and the only commit in it that changes what the strategy computes. Nothing
+else is in this commit.
+
+Built:      `ScanSpans` in Core: one session for `gainer`, `gapper`, `decliner` and `gapdown`, twenty
+            for `leader` and `laggard`, throwing on a scan it does not know rather than defaulting to
+            one. `ScanEngine.MonthWindow` is now that constant rather than a second twenty.
+
+            `PullbackGeometry.Of` takes the span as a parameter. The thrust runs over the last span
+            sessions ending at the flag; the origin is the close before the span, clamped at the
+            window's start; the extreme is searched from the span's start rather than from the flag.
+            Both detectors and the vectorizer pass the span of the scan that produced their hit.
+
+            **24 more `DERIVED` expectations**, being three geometry cases with a span of twenty.
+            The eleven existing cases carry a span of one, which is exactly what `Of` did before, so
+            all 88 of their figures are unmoved and the correction is visible as new cases rather
+            than as numbers that quietly became different. `long-month-scan-thrust` is the same
+            window and index as `long-retrace-past-the-whole-thrust` read over twenty sessions: one
+            input differs and everything that moves, moves because of it.
+
+Measured:   Both calibrations re-run over the live store after clearing `calibration_setup`, which
+            the insert's `ON CONFLICT DO NOTHING` would otherwise have turned into a run that wrote
+            nothing and reported success. 32,533 long rows and 16,917 short, identical counts to the
+            run before the correction, because the recording floor does not read the geometry.
+
+            **Every figure below is over calibration rows clearing the recording floor, 2024-04-01 to
+            2026-08-24, 602 long sessions and 601 short. Reconstructed against today's membership and
+            therefore not evidence about the market.**
+
+            The retrace, over dips and bounces of **2 to 7 bars**, which is the population the 2.11
+            figures were taken over and the window the gate itself tests:
+
+            | | before | after | day span | month span |
+            |---|---|---|---|---|
+            | long, n=9,451 | 1.060 | **0.5208** | 0.9303 | 0.3511 |
+            | short, n=5,424 | 1.006 | **0.4568** | 0.8866 | 0.2823 |
+
+            Clearing the 0.40 cap: long 34.18% overall, 4.78% on day spans and **63.33% on month
+            spans**. Short 43.81% overall, 6.58% and **79.21%**.
+
+            Nightly candidates, per side, over the same rows: long median **0.0** a night, highest 3,
+            **30 in total** over 602 sessions, up from 7. Short median **0.0**, highest 0, **nought in
+            total** over 601 sessions, unchanged.
+
+Findings:   **The prediction was written before the attempt so that it could fail, and it half did.**
+            As written: the median retrace falls below 1.0 and the nightly count moves into single or
+            low double digits, with no threshold moved.
+
+            **The first clause holds, on both sides and on the population the original figures were
+            taken over.** 1.060 to 0.5208 long, 1.006 to 0.4568 short. The scan-family split says the
+            correction did what it was aimed at and nothing more: month-span rows now clear the shape
+            cap at 63.33% and 79.21%, day-span rows at 4.78% and 6.58%, and the day spans are the ones
+            that were already being measured correctly.
+
+            **The second clause fails, on both sides.** A median of nought candidates a night is not
+            single or low double digits. The total moved from 7 to 30 long over 602 sessions and
+            stayed at nought short.
+
+            What the same recount shows about where the count is blocked, stated because it is in the
+            figures already taken rather than sought: `exit-tight` is now the binding gate on both
+            sides, passing 1.29% long and 1.37% short, with medians of 1.3127 and 1.4278 against a cap
+            of 0.5, being 2.63 and 2.86 times it. The correction does not touch it, and should not:
+            the give-up distance is measured over the pullback bars alone and the span change moves
+            where the thrust starts, not where the pullback ends. With both shape gates and
+            `exit-tight` forced to pass, the remaining conjunction gives a median of **12 a night
+            long**, up from 7, and **nought short**, unchanged.
+
+            **The once-only threshold adjustment is not spent, and this entry does not diagnose
+            further.** Both readings are on the record: the geometry was one fault and it is
+            corrected, and something else holds the count down. Finding what is work for a session
+            that has not just spent a night on this, and the once cannot be re-spent.
+
+            Observation. The fixture's rows are no longer degenerate. Before this commit every
+            captured row returned `pullback_bars` 0 and `retrace_depth` 0.0000; HOOD now carries 1 bar
+            at 0.4673 and IESC 8 bars at 0.7934, because both carry a `leader` thrust. INTC-short
+            carries a `gapdown` and is unchanged, which is the control on the change.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests. 859 expectations, 405 independent.
+
+            **15 expectations moved, each with its reason recorded on the expectation.** Four
+            `check.long.*` counts, two gate verdicts and nine frozen signal values, all of them HOOD
+            or IESC and all of them consequences of the span. The two `DERIVED` ones were re-derived
+            through `tools/derive-indicators.py --checks` rather than accepted from the run, and the
+            restatement agreed: HOOD `trigger-near` pass, IESC `held-floor` fail.
+
+Carried:    Nothing new. The threshold obligation stays open and unspent, now carrying the corrected
+            figures. Four parts of 3.0 outstanding.
+
+## 3.0(d) — 2026-08-27 — phase-3-measurement — the surfaces sweep, and the counts it did not reproduce
+
+The fourth part of 3.0, discharging the obligation raised at 2.9: every claim that something is
+stated, recorded on every row, or shown, checked against the surface a person reads it on.
+
+**Scoped deliberately, and the narrowing is recorded rather than assumed.** The obligation asks for
+the surface to be named **and asserted**. This pass does the naming. Building an instrument that
+renders a page and reads it is a checkpoint's work, so it becomes an obligation of its own with a
+due point rather than being done here badly. That is a narrowing of what 2.9 asked for and it is
+said here in those words rather than left to be noticed.
+
+**One question, and only one: does this sentence describe something that holds now.** Not whether it
+is well phrased, not whether the surface is any good, not whether the claim should be stronger.
+
+Measured:   The sweep read `ARCHITECTURE.html`, `SCHEMA.md`, `CLAUDE.md`, `RUNBOOK.md`,
+            `BUILD_PLAN.md` and `DECISIONS.md` for sentences asserting that something is stated,
+            shown, displayed, recorded on every row, or visible. 144 lines matched a first pass and
+            57 survived a narrower one. Reading those 57, **21 are genuine claims about a surface a
+            person reads**; the rest are properties of the store, of a document, or of the phase
+            report, which is not the same question.
+
+            **13 name a surface that does not exist yet, and now name the checkpoint that builds it.**
+            The borrow assumption in three places, 4.7 for the trade row and 4.11 for the journal.
+            The watchlist's give-up units and its two short-only columns, 4.1. The trade journal's two
+            sections, 4.11. The research ledger's separate scores, a refuted variant staying visible,
+            the difference series and the holdout register, 5.5. The realised risk beside the
+            intended risk, 4.7 and 4.11. The scoreboard's bands, 3.5 for 0 to 2 and 6.8 for band 3.
+
+            **8 are true of a surface that exists**, and were checked by looking rather than
+            asserted: every check appearing on every gallery card and a check handed nothing showing
+            what was absent; the `reached-ceiling` narrowing and the calibration market-cap exemption,
+            both displayed since the 2.9 fix; the chart page drawing from stored prices; a person's
+            judgement captured on the page that asks for it; the phase report showing what was
+            examined and showing out of scope beside unexamined; and long and short never pooled on
+            any built screen.
+
+Findings:   Finding, and it is about this pass rather than about the corpus. **The counts stated in
+            advance were nineteen and eleven. The sweep found thirteen and eight, over twenty-one
+            claims rather than thirty.** Recorded as a difference rather than resolved by widening
+            the scope to match, which is what the rule about stating a count in advance is for. The
+            likely reason is a boundary rather than a miscount: sentences about what the store
+            records and what the phase report prints were counted as visibility claims when the
+            question is narrower, being what a person reads on a rendered page. That boundary is now
+            written down, and the next pass over the same corpus should reproduce twenty-one or say
+            why not.
+
+            Observation, and it is why the deferred half is an obligation rather than a note. The
+            eight claims found true today are true because a person read them. Two of them happen to
+            be covered by `SetupsPageTests` and `CheckReadingTests`, written for another reason at
+            2.9. The other six are asserted by nothing, and a claim that is true today and asserted
+            by nothing is exactly the state the `reached-ceiling` narrowing was in on the morning of
+            the gallery review.
+
+Verified:   `tools/ci.ps1` green on Windows, 24 steps, 363 tests.
+
+Carried:    **One new, due at 3.7**: an instrument that reads a rendered surface. Scoped to the
+            sentences this sweep produced rather than to UI testing in general, and due at the phase
+            sign-off because the pages phase 3 adds are the ones it would first cover.
+
+## 3.0(e) — 2026-08-27 — phase-3-measurement — the hygiene obligations, and a sweep that found nothing new
+
+The fifth part of 3.0. Seven obligations and a documentation defect, none of which interacts with
+the prediction, which is why they wait until after it.
+
+Built:      **The sidedness counters split by tier.** `PhaseReplay.CheckSidednessFigures` counted
+            the harness's own authored row beside two rows a detector wrote. It now counts detector
+            rows only and reports the authored row separately under `authoredRow`. The true figure
+            is what 2.12 said it would be: over detector-written rows alone, **every one of the
+            twenty gate slots is one-sided**, not eight of ten long. `uptrend` and `contraction`
+            were two-sided only because the authored row disagreed with a detector row.
+
+            **The crash closed.** The same method used `Single` where the authored case for a
+            removed gate finds no result of its name, so `check-completeness` failed on "Sequence
+            contains no matching element" and a stack trace instead of its own reconciliation
+            message. It records "no result of that name" and lets the check speak.
+
+            **The stated count corrected.** The comment said five of the twenty gate ids appear on
+            both lists. There are four: `cluster`, `exit-tight`, `moves-enough`, `thrust`.
+
+            **Migration 016**, `screened_over_sessions` and `screen_carried` on
+            `universe_snapshot`, answering the question raised at 1.3. A night that cannot screen
+            carries the standing membership and records that it carried, so nothing downstream reads
+            a carried night as freshly screened.
+
+            **`carried-obligations`**, CI step 18 in both scripts, twenty-second row of the roster.
+            Every due point a live `Carried` block names is one the obligations table has.
+
+            **`ComponentReachabilityTests`**, backing `architecture-conformance`'s catalogue scan.
+            Unbacked scans fall from three to two.
+
+            `ARCHITECTURE.html`'s Figure 8 relabelled from `ForwardReturnFiller` to
+            `ProposalRegistry`.
+
+Findings:   **The `Carried`-block reconciliation had to be narrowed twice before it was honest, and
+            both narrowings are the objection that kept it open for a phase.** Run against every
+            block, it reported 45 due points with no obligation row: phase 1 blocks naming 1.7, which
+            1.7 discharged and the table then dropped. Narrowed to due points that have not landed,
+            11 remained, all of them entries like 2.11 naming 3.1 before 3.0 repointed it. Both are
+            correct history, and correcting either would mean editing a dated entry.
+
+            What it reconciles is the **live tail**: blocks written since the last landed checkpoint,
+            excluding that checkpoint's own entry. That guards the commit being made rather than the
+            archive, which is where the failure actually happens. It cannot catch a block naming a
+            due point some other row happens to share, and that limit is written into the check
+            rather than left to be discovered.
+
+            Finding, on the scope floors. The live-tail count is recorded as **context** and not
+            floored, because it resets to nothing the moment a checkpoint lands. A floor on it would
+            go red on the next PROGRESS entry rather than on a defect, which is a false alarm and a
+            suppressed guard arrived at in one step. The scope carrying the property is the total
+            count of due points named in any block, 52, which grows with an append-only record and
+            falls only if the parser breaks.
+
+            **The figure-population sweep found nothing new, and the reason is worth stating.** Run
+            over every entry from 2.1 onward, 16 figures had no population word in their own
+            sentence, and reading them showed all 16 were either already corrected by the 2.11
+            correction entry at 2.12 or had their population stated in the neighbouring sentence.
+            Over phase 1, 79 flagged and every one is a migration number, a call budget, a test count
+            or a file mode: figures whose subject is named in the same breath.
+
+            The reading: **the rule bites on distributional figures, and phase 1 has almost none.**
+            A median or a rate over a filtered subset can be computed over four different
+            populations under one phrase; a count of calls made or tests run cannot. Distributions
+            start at 2.11, which is exactly where 2.12 found the three. So the sweep's output is a
+            recorded absence rather than a set of corrections, and the absence is the useful part: a
+            later session need not run it again over phase 1.
+
+Verified:   `tools/ci.ps1` green on Windows, **25 steps**, up from 24, and **366 tests**, up from 363.
+
+            Proved by removal. The `cap` arm deleted from the worker's dispatch: the reachability
+            test fails naming `cap`, which is the direction the catalogue scan could not see, since
+            `cap` stays in the stage table and in every registration the scan reads. Restored.
+
+Carried:    **One repointed rather than discharged.** The three unbacked source scans are down to
+            two: `writer-ownership`'s attribution of every write to its declared writer, whose
+            behavioural form is `order-provenance` and starts at 4.6 by the obligation's own text,
+            and `coverage-reported`'s scan for its own trait, which rests on the phase report's
+            coverage requirement rather than on a test. Neither is work this checkpoint can finish,
+            so the obligation moves to 4.6 where the first of the two closes. Moved once, with the
+            reason, rather than left to move at every sign-off.
+
+## 3.0(f) — 2026-08-27 — phase-3-measurement — the spec pass, and the figure it would not move
+
+The sixth part of 3.0. Three underspecifications settled as named decisions before the code that
+consumes them is written, on 2.1(b)'s precedent, plus the SCHEMA repairs phase 3's tables need.
+
+**Why before rather than alongside.** Control count and draw method decide what the comparison is
+made of; the ceiling arithmetic decides what "selection has room" means; the interval method decides
+when band 1 is allowed to say anything. All three are the instrument rather than the implementation,
+and a session that authors them while writing their consumer is reviewing its own choices.
+
+Built:      Three decisions. **`Controls are drawn by nearest neighbour on the matched dimensions,
+            five per set, with no randomness`**: deterministic rather than seeded, because a seed is
+            a second thing to keep point in time and a value the phase report cannot diff, and
+            because nearest neighbour makes the match quality the ranking rather than an
+            afterthought. Drawn before the cap, so controls answer for the flagged population and not
+            for the sixty that survived truncation. The entry says what weakening it looks like,
+            because the tight comparison is the one that can embarrass the project and it is easy to
+            soften silently.
+
+            **`The ceiling is computed from the path, not from the terminal return`**: a setup counts
+            toward the bound when its ten-session return is positive **and** its worst excursion
+            never reached the give-up point, because a setup that ends ahead having first been
+            stopped out is not available to any selection rule.
+
+            **`The interval is a block bootstrap over paired differences, and the effective sample is
+            measured`**: paired differences to remove the shared market factor by construction, then
+            a moving-block bootstrap at a block length of ten sessions for the serial overlap.
+
+            `MeasurementParameters` in Core holds the four numbers, and all four are pinned, so a
+            decision stating one and a component reading another fails rather than drifting.
+
+            **SCHEMA repaired.** `control_setup` and `forward_return` had no primary key while every
+            sibling table has one. `control_setup` gains `control_id`, which is what
+            `forward_return.subject_id` points at: the alternative was a composite subject key on
+            every outcome row. `ceiling_bound` and `scoreboard` were declared at store level under
+            "Research, phases 5 and 6" while their writers land at 3.4 and 3.5 and the file's own
+            preamble claims completeness through phase 3; both are now declared in full in the
+            section their writers belong to.
+
+Findings:   **The units trap in the ceiling, named in the decision rather than left to the
+            implementation.** The excursion is stored in ATR and the give-up distance is expressed in
+            daily ranges. Two different units on two different bases, both small, both looking like
+            volatility, and a wrong comparison produces a bound that reads as perfectly reasonable.
+            That is the same shape as the basis trap `PullbackGeometry` carries a warning about, one
+            layer out. The conversion happens at the point of use and is named there; storing the
+            excursion twice was the alternative and is worse, because two columns that must agree are
+            two columns that will not.
+
+            **The interval decision has a consequence the corpus had already written down wrongly,
+            and this pass declines to fix it.** `ARCHITECTURE.html` states 160 paired setup
+            observations as the selection-variant minimum sample. That figure was computed as though
+            observations were independent, and they are not: ten-day labels overlap and same-night
+            setups share a market factor, so 160 rows carry fewer than 160 observations' worth of
+            information and the honest figure is larger.
+
+            It is **not moved here**. It is pinned; moving it on an unmeasured ratio would repeat the
+            same error in the other direction; and nothing reads it until phase 5. Raised as an
+            obligation due before 5.1, which is where `VariantAdmitter` writes a target that
+            `Targets and minimum samples are written at creation and are immutable` then makes
+            unrevisable. What closes it is the measured ratio from the first scoreboard run.
+
+            Observation. `forward_return` gains `filled_at`, and it is the column that keeps this
+            phase's sharpest point-in-time case honest. ForwardReturnFiller is the one stage that
+            reads bars dated after its subject's own date, by design. The resolution is that the
+            fill's as-of is the fill date rather than the setup date, so the row appears when the
+            outcome exists rather than being backdated to the night that flagged it.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 366 tests. Four new constants pinned, each
+            against the decision that states it.
+
+Carried:    **One new, due before 5.1**: the 160-observation minimum sample, restated in effective
+            observations rather than rows.
+
+## 3.0 — 2026-08-27 — phase-3-measurement — the checkpoint closes, with one part repointed
+
+Closes checkpoint 3.0. Six of its seven parts landed; the seventh is repointed once, with the
+reason, and **this checkpoint amended its own done condition to allow that**, in those words, per
+the rule added on 2026-08-27.
+
+**The amendment, stated plainly.** 3.0's done condition asks that every obligation due here is
+discharged **or repointed with its reason**, and part (g), a check result carrying a value per
+clause, is repointed rather than built. That clause was in the row when it was written at the start
+of the checkpoint rather than added at the end to admit an escape, which is the distinction the
+2.11 ruling turned on. What is new is exercising it, and exercising it is what has to be named.
+
+**Why (g) moved, and why to 4.1.** It is checkpoint-sized by its own admission at 2.9. It moves the
+frozen `check_results` JSON shape, so it moves expectations at 2.6, 2.7 and 2.11 and leaves the
+49,450-row calibration store in the old shape until a further re-run of about forty minutes a side.
+3.0 spent its night on the geometry correction and on the obligations that gate what phase 3
+measures, and taking a diagnostic improvement on top would have cost a second calibration pass.
+4.1 is where the watchlist greys a failed check and names it, which is exactly the screen where
+"which of four floors did `tradable-shortable` miss" is the question a person asks. Moved once.
+
+Built:      Seven parts, six landed. (a) the geometry instrument, 88 `DERIVED` expectations over
+            `PullbackGeometry.Of` on inputs the fixture cannot reach. (b) migration 015, the thrust
+            scan on the setup row. (c) the thrust-window correction, alone, and the prediction
+            settled. (d) the surfaces sweep. (e) seven hygiene obligations, a new check and a
+            behavioural test. (f) three named decisions and the SCHEMA repairs phase 3's tables need.
+
+Measured:   Against the phase 2 baseline of 24 steps, 359 tests, 741 expectations and 287
+            independent: **25 steps, 366 tests, 899 expectations and 405 independent**, with
+            118 expectations at this checkpoint of which every one is `DERIVED` or a counter split
+            that its own note explains.
+
+            The prediction, which is the checkpoint's one substantive result: **the retrace clause
+            holds on both sides and the count clause fails on both sides.** The figures and their
+            populations are in the 3.0(c) entry and are not restated here.
+
+Findings:   Two implementations disagreed twice, and both were found the same way. At (a) the
+            shipped geometry and the verification aid differed by 0.0098 on the origin fallback, in
+            a branch nothing had ever reached. At (b) the harness's authored row reported no thrust
+            scan where the detector's own rule resolves `leader`. Neither was found by a test
+            asserting what the first implementation already said; both were found by asking a second
+            implementation the same question.
+
+            Observation, carried into the rest of the phase. Ten of the twenty gate slots were
+            already exercised on both sides only by an authored instrument, and (e) made that worse
+            in the honest direction: over detector-written rows alone, **all twenty are one-sided**.
+            Phase 3 measures outcomes for setups these gates select, and the gates' behaviour on real
+            data is asserted by a gitignored store and a case file.
+
+            Finding, and this checkpoint's own landing is what exposed it. **The phase-section scan
+            in `ArchitectureConformanceCheck.Schedule` ran past the last phase heading and swallowed
+            the carried-obligations table**, so every obligation row whose "Raised" column looks like
+            a checkpoint was read as a checkpoint row. The 160-observation obligation, raised at 3.0,
+            mentions `VariantAdmitter` in explaining why 5.1 is its due point; that placed
+            VariantAdmitter at 3.0, and the moment 3.0 landed the report failed saying a phase 5
+            component does not exist yet.
+
+            The reading: the code's own comment says the obligations table is read separately
+            "because reading it as a schedule would place a component against the checkpoint that
+            complained about it", so the risk was known and nothing enforced it. It had never fired
+            because no obligation row had yet named a component that was not already built. The
+            phase sections now stop where the obligations table begins.
+
+            It is worth noticing what would have happened without the fix: not a wrong number, but a
+            red phase report naming a real component and a real checkpoint, with nothing in either
+            of them wrong. That is the failure mode a bounded scan prevents and an unbounded one
+            produces on the first row that tests it.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 366 tests. `tools/verify-phase` **GREEN**,
+            116 claims, 59 passed, 0 failed, 57 out of scope, **0 unexamined**; coverage examined
+            2,838 with 0 unexamined; 899 expectations of which 405 independent.
+
+Carried:    Nine obligations remain and **none is due at a checkpoint this entry lands**. One at 3.7,
+            the instrument that reads a rendered surface. One at 4.1, the value per clause. One at
+            4.6, the two remaining unbacked scans. One before 5.1, the 160-observation minimum
+            sample. One at the move. Four at the operator, now including **the threshold ruling**:
+            the prediction was judged, the once is unspent, and spending it is not a build session's
+            act.
+
+            Nine discharged rows are removed from the table rather than marked closed, which is what
+            the table has always done with an obligation that is finished.
+
+## 3.1 — 2026-08-27 — phase-3-measurement — the journal, which seals a night by writing nothing
+
+Setup rows immutable after write, asserted. The first checkpoint of phase 3 proper.
+
+Built:      `SetupJournal`, verb `journal`, at 18:25 between the signal freeze and the cap. **It
+            writes nothing**, and that is the design rather than an omission: every other stage in
+            the worker owns a table, this one owns a property, and a component enforcing
+            immutability by writing would be the second writer of the thing it protects. SCHEMA
+            lists it as the writer of nothing and `writer-ownership` never sees it.
+
+            What it can assert, stated because what it cannot is more interesting. It cannot compare
+            a row against what the detector wrote, because nothing keeps a second copy and keeping
+            one would be a store whose only purpose is to disagree with the first. What it can check
+            is the four invariants that hold at 18:25 and would be false if anything had written
+            where it should not: every row carries a complete check-result set; every row carries
+            frozen signal evidence, because the vectorizer ran before it; no row carries a rank or a
+            cap verdict, because the capper runs after it; no row carries an agreement, because a
+            person reads the gallery tomorrow.
+
+            **The last two are ordering assertions wearing an immutability coat, and they are the
+            useful half.** A rank at 18:25 means the night ran out of order or something wrote a
+            column it does not own. Both are the shape of defect that otherwise surfaces months
+            later as a night that reads oddly.
+
+            Three `DERIVED` expectations through `tools/derive-indicators.py --journal`, which
+            restates the four invariants from the sentence rather than reading the stage's answer
+            back.
+
+Findings:   Finding, and `point-in-time` caught it before the commit did. **The journal's read of
+            `setup_signal` did not bound `computed_at`.** The stage asks whether a row carries frozen
+            evidence and originally asked it of the table as a whole, so a signal written after the
+            seal would have counted toward it.
+
+            On a live run nothing later exists yet, which is exactly why this is the kind of thing
+            that ships: it is correct every night and wrong on every replay, and the replay is what
+            the phase report reads. The read is now bounded on the seal's own instant, so the
+            question is whether the evidence was frozen before the journal ran rather than whether it
+            exists at all.
+
+            Observation. The immutability tests found a false positive of their own on their first
+            run, and it is worth a line because the shape recurs. Both scanned from `UPDATE setup` to
+            the end of the statement, which swallowed the `WHERE setup_id = @setup_id` predicate, so
+            both reported `setup_id` as a column the capper and the read surface write. They do not
+            write it; they match on it. A pattern that reads a predicate as an assignment reports the
+            key of every keyed update as a violation, and the report is confident and specific and
+            wrong. Bounded on `WHERE`, and the reason is in the pattern's own comment.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, **368 tests**, up from 366.
+
+            Immutability asserted four ways, per the pattern 2.2 used for the frozen signal row. Two
+            of the four are new here: no `UPDATE` against a detector-owned column exists in the
+            shipped source, and the set of columns anything updates is exactly the four SCHEMA
+            declares a later writer for. The second is the other direction of the first, and it is
+            what stops the first being defeated without being touched: a new exception would have to
+            be declared rather than merely added.
+
+            The eleven detector-owned columns are listed by name rather than expressed as "everything
+            except the four", so a column added later is not silently covered by an exemption written
+            before it existed.
+
+Carried:    Nothing new. One code deferral moved with its obligation: `CoverageReportedCheck` deferred
+            the three scans written outside a check to 3.1, and 3.0(e) had moved that obligation to
+            4.6 without the literal following it. Landing 3.1 turned it red, naming the checkpoint
+            and saying the checkpoint shipped without coming back to it, which is the guard doing
+            exactly what it was written for. The pre-flight sweep at 3.0 had flagged this as the one
+            code reference that would have to move, so it was expected rather than discovered.
+
+## 3.2 — 2026-08-27 — phase-3-measurement — the forward fill, and a future bar two implementations disagreed about
+
+Forward returns at 1, 3, 5 and 10 sessions for every flagged setup, traded or not. **The checkpoint
+with the longest lead time in the project**: phase 3's answers need accumulated outcomes and nothing
+substitutes for elapsed time, so the clock starts when this first runs on a live night.
+
+Built:      Migration **017**, `forward_return`, keyed on subject, kind and horizon. `ForwardOutcome`
+            in Core, so the nightly fill, the replay and a test share one implementation of the sign
+            convention and the excursions. `ForwardReturnFiller`, verb `forward-returns`, at 21:30.
+
+            `fixtures/forward-cases.json`, six authored subjects, and **148 expectations at this
+            checkpoint of which 144 are `DERIVED`** through `tools/derive-indicators.py --forward`.
+
+            **The horizon is trading sessions and the calendar date is stored beside it.** A ten-day
+            return that quietly became fourteen over a holiday is not comparable with one that did
+            not, and the ceiling arithmetic is defined at the scoring horizon. `intended_date` is
+            where a naive calendar step lands and `actual_date` is the session used; where they
+            differ the row says so. That is the failure table's holiday row, answered.
+
+            **The excursions are the half a plain return cannot express.** A name that rose 15%
+            after first dropping 4% is a good spot with a badly placed exit; one that rose 15%
+            smoothly is a good spot with a well placed one. The terminal return cannot tell them
+            apart, and every sensible proposal about stop placement depends on the distinction.
+
+Findings:   **The two implementations disagreed on the split case, and both were wrong.** The
+            shipped reader returned -0.1369 and the independent restatement 1.6601, a factor of more
+            than ten apart on the same subject.
+
+            Observation: IESC's last session carries two observations, `324.12` observed that day and
+            `999.00` observed the day after. That second row is the fixture's deliberately
+            future-dated bar, planted for `point-in-time` to catch. Neither reader bounded
+            `observed_at`. The restatement took the later row. The shipped one returned the right
+            number **by accident of ordering**, because the replay happens to write that row at a
+            later stage than the method runs.
+
+            Reading: a read that is correct only because of when it happens to run is not correct.
+            Both now bound on the fixture's own as-of, declared once in the case file so the two take
+            the same instant rather than each choosing one. `point-in-time` did not catch it because
+            it reads the shipped source and this reader is test support, which is worth knowing: the
+            planted row guards the lab and nothing guards the instruments that read around it.
+
+            **The excursions were undefined on every case until the range became an authored input.**
+            The fixture computes indicator rows for its as-of night only, so a subject placed earlier
+            in the window has no ATR and every excursion came back undefined. That is the arithmetic
+            reporting honestly and it is also half the checkpoint unexercised. Each case now states
+            the range it is expressed in, which isolates what is under test, the excursion, from what
+            is not, the ATR, which has `DERIVED` expectations of its own at 1.6.
+
+            Observation, on what the nightly fill measures over the fixture. Nought. The fixture's
+            as-of is the last session it holds, so no horizon has elapsed and the honest answer is
+            no rows. Recorded as three subjects, nought written and twelve horizons not yet elapsed,
+            because "nought outcomes and every horizon pending" is a different fact from "the stage
+            did not run", and a stage whose only exercise produces no rows is a stage nothing tests.
+            That is what the six authored subjects are for.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. **1,050 expectations, 552
+            independent**, up from 902 and 408.
+
+            **The failure table's holiday row is now asserted rather than deferred.** Landing 3.2
+            brought it into scope and the report went red saying no assertion reads it, which is the
+            harness working: a claim whose checkpoint has landed and which nothing checks is
+            unexamined, and unexamined is not a pass. The assertion requires both halves, that the
+            fill stores both dates and that the committed expectations carry a slipped case and a
+            held one, because a filler that always slipped forward would satisfy every holiday case
+            and be wrong on every ordinary week.
+
+            The holiday handling is asserted on both branches. `long-one-session-mid-week` sits on a
+            Monday where the calendar horizon and the session horizon agree, and it is the control:
+            a filler that always slipped forward would pass both holiday cases and fail this one.
+
+Carried:    Nothing new.
+
+## 3.3 — 2026-08-27 — phase-3-measurement — the control draw, and a tight set that was the loose set
+
+Loose and tight control sets per flagged setup, drawn from names that cleared the liquidity floor
+and were not flagged, with match quality recorded. Built against the decision authored at 3.0(f),
+which is the point of authoring it first.
+
+Built:      Migration **018**, `control_setup`, keyed on a surrogate `control_id` so
+            `forward_return` has one column to name a control by. `ControlMatching` in Core.
+            `ControlSampler`, verb `controls`, at 18:26 **before the cap at 18:28**, so controls
+            answer for the flagged population rather than for the sixty that survive truncation.
+
+            **17 expectations, 12 of them `DERIVED`** through `--controls`. The names drawn are
+            recorded in rank order rather than counted, on the same grounds the cap records its
+            ordering: what a changed distance metric moves is which names sit in the five, and five
+            drawn either way is the same count whether the match is good or arbitrary.
+
+            No vendor call. Everything it reads is already stored, which is why a comparison this
+            good is free and why there is no excuse for not having one.
+
+Findings:   **The tight set was the loose set, on every setup, and the count could not have shown
+            it.** Observation: the first run drew identical names for `loose` and `tight` across all
+            three fixture setups, at fifteen and fifteen.
+
+            Reading: `TierClassifier` writes the ladder grade as a **later observation** of the same
+            session rather than updating the row `IndicatorEngine` wrote, which is what 2.4 decided.
+            The draw bounded its indicator read on the run instant, and the graded row is stamped one
+            millisecond after it. So every candidate came back ungraded, the tight filter compared
+            null against null, excluded nothing, and produced the loose set under another name.
+
+            The bound is now the end of the as-of date, which is what `IndicatorDailyReader` uses and
+            for exactly this reason. After it, the tight sets differ from the loose ones on all three
+            setups and one comes back with four names rather than five.
+
+            **This is the shape 2.12 named, arriving on schedule.** Two figures agreeing is not
+            something a count notices: fifteen and fifteen is what a working draw produces too. It
+            was visible only because the names were recorded rather than the totals, which is the
+            reason they are recorded. The comparison the entire project turns on would have run for
+            months against a control set that was not tight.
+
+            Observation, and it is a limit rather than a defect. **The market mood is not a matched
+            dimension, because within a night it cannot be one.** The mood is a property of the
+            session, so every candidate drawn on the same night carries the same one and matching on
+            it excludes nothing. `ARCHITECTURE.html` and the decision both name it alongside the
+            ladder. It is left out rather than implemented as a comparison that is true by
+            construction, because a dimension that always matches reads in the record as a dimension
+            that was checked. Whether the tight set should be allowed to draw from neighbouring
+            sessions, which is what would make mood a real dimension, is a question this checkpoint
+            raises and does not answer.
+
+            Observation. One tight set came back with four controls rather than five, because that
+            subject's ladder grade is shared by only four other names in the pool of twenty-seven.
+            Counted and reported as `shortOfFive`, not made up from a wider match: a tight set of
+            four is a thinner comparison than a tight set of five, and the figure beside it should
+            say so rather than the draw quietly relaxing to fill the quota.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. 1,067 expectations, 564
+            independent.
+
+            The draw is deterministic, so the same night drawn twice picks the same names. No seed
+            exists to keep point in time, no value the phase report cannot diff, and the ranking is
+            the match quality rather than an afterthought.
+
+Carried:    **One new, due at 3.5**: whether the tight set may draw from neighbouring sessions, which
+            is what would make the market mood a dimension that excludes anything. Due where the
+            scoreboard first reports the tight comparison, because that is the panel whose meaning
+            the answer changes.
+
+## 3.4 — 2026-08-27 — phase-3-measurement — the ceiling, and two denominators that are the whole figure
+
+The bound computed from the actual outcome distribution, per direction, recomputed weekly.
+
+Built:      Migration **019**, `ceiling_bound`, grain date and direction. `WinRateCeiling` in Core.
+            `CeilingCalculator`, verb `ceiling`, scheduled under RUNBOOK's **Every week** rather than
+            in the nightly table, and exempted by name from the nightly-order test with that reason.
+
+            `fixtures/ceiling-cases.json`, five authored populations, **20 `DERIVED` expectations**
+            through `--ceiling`. Authored rather than captured because what this arithmetic needs is
+            not bars: it is terminal returns and adverse excursions with a give-up beside each.
+
+            **Weekly rather than nightly on purpose.** The bound moves with the population rather
+            than with a session, and a figure recomputed every night over one more row than yesterday
+            invites reading noise as movement.
+
+Findings:   Finding, caught while writing it rather than by a check. **The first version computed
+            the bound and the achieved rate with the same expression**, so the gap was nought by
+            construction and the figure could only ever say selection has no room.
+
+            The correction is that the two have **different denominators, and that is the whole
+            figure**. The bound is over the subjects that ended ahead, which is what foresight would
+            have picked; the achieved rate is over everything the lab flagged. A bound over the whole
+            population is the achieved rate again under another name.
+
+            What foresight is granted is the outcome and nothing else. It still has to survive the
+            path: a name that finished 15% up having first traded through its give-up point was not
+            available to any rule, however well chosen, because the position was already closed.
+            Dropping that half produces a bound nothing could reach, which is worse than no bound,
+            because it says selection has room when it has none.
+
+            **The units trap has a case of its own, and it is the sharpest one here.** The excursion
+            is recorded in ATR and the give-up distance in daily ranges: two different units on two
+            different bases, both small, both looking like volatility.
+            `stopped-only-in-the-wrong-units` states subjects whose excursion is -0.9 ATR against a
+            give-up of 0.5 daily ranges. Read as bare multiples, 0.9 exceeds 0.5 and nothing
+            survives, so the bound reads 0.0000. Converted to prices the excursion is 0.9 against a
+            give-up of 5.0, everything survives, and the bound is 1.0000. A ceiling comparing the two
+            multiples raw would report the first and be confidently, plausibly wrong.
+
+            The five scenarios separate the two readings a single win rate cannot.
+            `half-the-room-unused` gives a bound of 0.5000 against 0.2500 achieved, a gap of 0.2500,
+            which says better selection has somewhere to go. `the-stop-is-the-constraint` gives
+            0.2500 against 0.2000, a gap of 0.0500, from a similar achieved rate, and says the stop
+            is binding and no selection change can help. **Telling those two apart is the entire
+            reason the bound is computed rather than assumed.**
+
+            Observation. A subject with no range at all is treated as not having survived rather than
+            as having survived. A bound that counted unmeasurable rows as available would be
+            optimistic exactly where the data is worst, which is the direction an error here must
+            never take.
+
+            Observation. Over the fixture the stage writes no row, because no horizon has closed.
+            **No row rather than a row of noughts**: a ceiling of nought reads on a scoreboard as
+            "selection has no room", and what it would mean is "nobody has measured anything yet".
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, 368 tests. 1,087 expectations, 584
+            independent.
+
+Carried:    Nothing new.
+
+## 3.5 — 2026-08-27 — phase-3-measurement — the scoreboard, and an interval that cleared zero always
+
+The Lab scoreboard page and the builder behind it. **Openable.**
+
+**This checkpoint amended its own done condition, and says so in those words.** 3.5 asks for bands
+0, 1 and 2. Band 2 has two panels and the second, loss causes as a share, needs closed trades from
+`LossClassifier` at 4.10; `ARCHITECTURE.html` already defers the `Why each loss happened` table to
+the same checkpoint. What ships is band 2's rank-decile curve and ceiling gap, with the loss panel
+present on the page **declaring the checkpoint that fills it** rather than silently absent. The
+amendment is naming that as an amendment rather than reading the done condition as satisfied.
+
+Built:      Migration **020**, `scoreboard`. `PairedInterval` in Core. `ScoreboardBuilder`, verb
+            `scoreboard`, at 21:50 last in the night because every panel reads what the stages
+            before it wrote. `LabScoreboard` in the Api, `ScoreboardView` and the page.
+
+            **22 expectations, 19 `DERIVED`** through `--interval`.
+
+            The read surface computes nothing. A page that recomputed a bound or an interval would
+            be a second implementation of the arithmetic the phase turns on, and the two would
+            eventually disagree with the page as the last place anybody looked.
+
+            Long and short are two blocks on the screen and two lists on the wire, and every panel
+            carries its own count. Where a panel has an interval it carries the **effective**
+            observations beside the row count, because those are different quantities.
+
+Findings:   **The first interval had zero width, and zero width clears zero always.** Observation:
+            all four authored series came back with `low` equal to `high` equal to the mean.
+
+            Reading: the bootstrap walked the block offsets in order, wrapping, which makes every
+            resample the same series rotated. **A rotation preserves the mean**, so every draw
+            returned the same number and the percentiles collapsed onto it. The scheme was chosen to
+            be deterministic without a seed and it is deterministic, and it is not a bootstrap.
+
+            This is the worst available failure for this particular property. The decision at 3.0(f)
+            exists because an interval assuming independence is **too narrow** and lets band 1 clear
+            zero before it should. An interval of no width is that failure taken to its limit: it
+            clears zero on any positive mean, forever, and the panel would have read green from the
+            first week. Corrected by mixing the offsets with two coprime strides, which samples with
+            replacement, reproduces exactly, and still carries no seed.
+
+            It was caught because four authored series were asked the question. Over the fixture
+            every band 1 panel is withheld, so the run was green with the bootstrap never executing.
+
+            **The effective-sample measurement had the same shape of hole and it was in the case
+            file rather than the code.** `a-series-that-repeats-itself` was built from independent
+            noise with a small wobble, so it had no autocorrelation to measure and came back at 40
+            effective observations from 40 nights. The measurement looked correct while asserting
+            nothing. Rebuilt as an AR(1) series carrying 0.85 of each night into the next, it now
+            reports **4 effective observations from 40 nights**, which is the figure a minimum sample
+            has to be counted in.
+
+            Observation. `straddling-zero` reports `clearsZero` as **no**, which is the case that
+            matters: a mean of 0.0019 against a wobble ten times its size should not be called a
+            result, and an interval that said otherwise is how band 1 announces the pattern is real
+            before it is.
+
+            Observation, on the page rather than the arithmetic. The band 2 and band 3 notices were
+            first written inside the branch that renders when panels exist, so they vanished on a day
+            with no data. That is exactly backwards: they say what the page lacks **structurally**,
+            which is true whether or not today has figures, and a band absent on an empty day is
+            missing precisely when a reader is most likely to conclude the page has shown everything
+            it has. Lifted out of the branch, and a test now asserts a built screen still names the
+            checkpoints that fill what it lacks.
+
+Verified:   `tools/ci.ps1` green on Windows, 25 steps, **369 tests**. 1,109 expectations, 603
+            independent.
+
+            Over the fixture the builder writes 9 panels, none with an interval and 6 withheld. That
+            is the honest answer for one night with no closed horizon: withheld rather than printed
+            wide, because a panel showing an interval built from a handful of nights invites a
+            reading and the count beside it is not enough to stop that.
+
+Carried:    Nothing new. The tight-set question raised at 3.3 falls due here and is **not**
+            discharged: whether the tight set may draw from neighbouring sessions is a change to what
+            the tight number means rather than to how it is computed, and this checkpoint built the
+            panel that reports it rather than deciding it. Repointed once, to the operator, on the
+            same terms as the threshold ruling: it is a judgement about what the comparison should
+            be, and no build session can take it.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the merge rule ruled on, and the surfaces instrument built
+
+Not a checkpoint. Three things that clear the path to 3.7 without waiting on the calendar, plus a
+ruling recorded where a ruling belongs.
+
+**The merge rule changed, by the operator, and `CLAUDE.md` now says so.** It read "CI green before
+merge. That is the only condition. Sign-off is a separate activity with its own record and does not
+gate the merge." It now reads two conditions, the second being that a phase branch does not merge
+until the whole phase has signed off. The prior text is in `CHANGELOG.md` with what the change buys
+and what it costs.
+
+**The cost is real and is priced rather than discovered.** Phase 3 waits three months for
+accumulation, so its branch is open for a quarter and the nightly job runs from that checkout rather
+than from `main` for the whole of it. That is the trade, taken deliberately.
+
+Built:      **`surface-claims`**, CI step 19, the obligation that fell due at 3.7. Eleven declared
+            claims, six live and asserted against the rendered page, five naming the checkpoint that
+            builds their surface.
+
+            **It is the only check in this corpus that reads a surface.** Every other one asserts
+            over source, over the store, or over a document, which is why the gallery defect
+            survived: `reached-ceiling` recorded that it ran two of its three clauses,
+            `check-completeness` confirmed the result was present, and ARCHITECTURE said the
+            narrowing is stated outright. All true of the store. The screen dropped the note whenever
+            a value sat beside it, and nothing upstream was wrong so nothing upstream could catch it.
+
+            `fixtures/surface-claims.json` states, per claim, the corpus sentence, the document it is
+            stated in, the surface, and the exact text that surface must carry. The bodies the pages
+            are rendered against are authored, because what is under test is whether a page carries a
+            note it was handed, so the note has to be handed to it.
+
+Findings:   Finding, on the check's own out-of-scope wording. Two deferred claims name a **panel**
+            rather than a page: `/scoreboard` is built and both band 2's loss panel and band 3 are on
+            it declaring their checkpoints. Named as pages, the out-of-scope line read "/scoreboard
+            does not exist yet", which is false. A wrong reason inside a passing check is the kind
+            that survives, because nobody reads a green check's detail. The surface is now named as
+            the panel and the line reads "does not carry it yet".
+
+            Observation, recorded as an obligation rather than fixed. **Band 1 does not say which
+            population it is computed over.** `ScoreboardBuilder.Series` joins `setup` to
+            `forward_return` with no `passed_all` filter, so it measures every row clearing the
+            recording floor, about 54 long and 28 short a night. Band 2's rank-decile curve beside it
+            filters on `rank IS NOT NULL`, which only candidates carry, and candidates run at 0.050 a
+            night long and nought short.
+
+            So two panels on one page are computed over populations three orders of magnitude apart
+            and nothing on the page says so. That is the fifth defect shape exactly, and it is mine
+            from the 3.5 commit. Raised at the operator rather than chosen here, because the two
+            readings are not equivalent: the recorded population has the rows but is names that
+            cleared four gates rather than names the strategy selected, and the candidate population
+            is the selection but yields about three rows in three months, which makes 3.6 unreachable
+            at the current thresholds. **It is one decision with the threshold ruling, not two.**
+
+            The sequence before 3.6 is now written into `BUILD_PLAN.md` rather than left in a
+            conversation, because every step of it waits on something a build session cannot do.
+
+Verified:   `tools/ci.ps1` green on Windows, **26 steps**, up from 25, and **371 tests**, up from 369.
+
+            Proved by removal, and this is the one that matters. `SetupCheckRowView.Caveat` reverted
+            to the pre-2.9 behaviour of returning null: `surface-claims` fails naming two claims and
+            quoting the corpus sentence each makes false. **That is the original gallery defect, and
+            this is the first thing in the suite that would have caught it.** Restored.
+
+Carried:    **One new, at the operator**: which population band 1 is computed over. One discharged:
+            the surfaces instrument, which was the last thing 3.7 carried, and its row is removed
+            from the table rather than marked closed.
+
+            Observation, and `carried-obligations` found it on this very entry, twice. The first
+            draft of this block described the discharged obligation in the live phrasing, naming the
+            checkpoint it had been due at, and the check failed saying a `Carried` block names a due
+            point no row has. Reworded, it failed again, because the rewording **quoted the phrase**
+            while explaining it.
+
+            Both are correct and neither can be otherwise. The check matches a phrase, so prose using
+            the phrase and prose about the phrase are the same string to it. That is the price of
+            reconciling a structured due point rather than a sentence, which is the trade the narrow
+            form was chosen for and the reason it is not a general prose matcher. The rule it implies
+            is small and worth stating: a discharged obligation is described without naming a due
+            point, because in a `Carried` block a due point is a claim about live work.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the population a panel is computed over, and a question the corpus already answered
+
+Corrects the entry above, which raised the band 1 population as an obligation at the operator. It is
+not the operator's: `ARCHITECTURE.html` answers it, and the session that raised it had not read
+closely enough.
+
+Findings:   **The corpus defines the word.** "Every night it writes down every stock that matched the
+            pattern, whether or not it will be traded, then over the following ten sessions records
+            what each of those stocks actually did." And the worked night: **"Twenty-two stocks are
+            flagged and all twenty-two are followed up. Fourteen pass every check and get a plan.
+            Five trade through their trigger. Two survive the concurrency and risk caps."** Then:
+            "the same night yields twenty-two observations and two trades, and the twenty are not a
+            consolation prize."
+
+            So **flagged is the recorded population and passing every check is a strict subset of
+            it.** Band 1 measures the flagged population, which is what `ScoreboardBuilder` already
+            did. The implementation was right and the obligation was a misreading.
+
+            **What was actually wrong is narrower and is now fixed.** Band 1 is over every flagged
+            setup and band 2's rank-decile curve is over the capped candidates, because a decile is a
+            position in an ordering and only a candidate carries a rank. Two populations on one page,
+            three orders of magnitude apart at the calibrated thresholds, and **nothing said which
+            rows either used**. That is the fifth defect shape sitting on the surface the sixth is
+            about: the arithmetic right, the check live, the subject present, the sentence false.
+
+            **This changes what blocks 3.6, and it is the useful part.** The threshold ruling was on
+            the critical path only while it was unclear which population band 1 measured. It is the
+            flagged one, so band 1 fills from about eighty-two setups a night whatever the thresholds
+            do. What the thresholds decide is whether anything is ever traded, which band 2 reports
+            and phase 4 acts on. **So accumulation is worth starting now**, and the ruling can be
+            taken against three months of real outcomes rather than against a reconstruction.
+
+Built:      Migration **021**, `scoreboard.population`, carried through the read surface, the view
+            and the page. Every panel says which rows it was computed over, on the same terms it says
+            its count: shown rather than left to a legend, because a legend is read once and a
+            caption is read every time.
+
+            A twelfth surface claim, so the fix is held by an assertion rather than by having
+            happened. `surface-claims` renders `/scoreboard` and requires the page to carry "over
+            every flagged setup"; the stub it renders against carries a panel of each population,
+            because a page rendering only one would satisfy the claim while still being unable to
+            tell a reader that the panel below counted something else.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 371 tests.
+
+Carried:    **One discharged**, and by reading rather than by ruling: which population band 1 is
+            computed over. The pre-3.6 sequence in `BUILD_PLAN.md` is corrected with it, and is now
+            four steps of which two are the operator's.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the minimum sample derived, and the one input to it nobody had measured
+
+Not a checkpoint. The obligation raised at 3.0(f) against `ARCHITECTURE.html`'s 160-observation
+minimum, brought forward because it came to gate 3.6 and discharged as far as a build session can
+take it.
+
+Findings:   **The figure was an estimate wearing a derivation's clothes, and it passed every check
+            this corpus has.** 160 was pinned, cited, and stated in three places that agreed with
+            each other. `pinned-constants` proves the documents agree with the code and never that
+            either is right, so all three agreed on a number nothing derived. A sample size has
+            three inputs: the difference worth detecting, the confidence, and the dispersion of the
+            statistic. The first two are judgements. **The third is a fact about the market and
+            nothing had measured it over anything.**
+
+            **A fourth input was missing entirely.** Power, being how often a sample this size finds
+            an effect that is really there, was never stated. A sample sized on confidence alone
+            controls only the false positive, so it can be arbitrarily small and still honest about
+            what it claims while finding a real effect almost never.
+
+Measured:   **The dispersion of ten-session forward returns, over two populations, stated
+            separately.** Within one session every name carries the same market move, so the
+            cross-sectional sample variance of that session's returns estimates the idiosyncratic
+            variance directly: the common term cancels and the `n-1` denominator makes it unbiased.
+            That is the same cancellation the paired difference buys on the scoreboard.
+
+            **Over the captured fixture**, 30 names and 241 sessions carrying 7,230 name-sessions:
+            single-name **0.091115**, paired against five controls **0.099811**. This is the figure
+            the arithmetic uses, and it is `DERIVED`: `tools/derive-indicators.py --dispersion`
+            restates it from what the quantities are and agrees to all six places.
+
+            **Over the calibration store**, 1,671 names clearing the $20M liquidity floor across 742
+            sessions carrying 1,194,580 name-sessions: single-name **0.088371**. Recorded as
+            agreeing rather than as confirming. That store is reconstructed history and carries
+            survivorship bias by construction, which biases a dispersion downward, and it is the
+            lower of the two. The larger is the one used.
+
+            **What the fixture figure cannot say.** Thirty names, hand-picked for liquidity, still
+            listed at the end of one year. A universe with delistings in it disperses further, so
+            0.099811 is a floor on the real figure and 196 is a floor on the real minimum.
+
+Built:      **`ForwardDispersion`** and **`MinimumSample`** in Core, the arithmetic written out with
+            each input named as measurement or judgement. `n = ((z_alpha + z_beta) * sigma_d /
+            delta)^2`, the one-sample form, because pairing has already turned two populations into
+            one series tested against zero.
+
+            At two points of ten-day forward return, two-sided 95% and 80% power, against the
+            measured dispersion: **196 effective observations.** Rounded up because a fractional
+            observation cannot be had and up asks for more evidence. Not rounded to 200, which would
+            be an authored step in a figure whose point is that no step in it is authored.
+
+            **The old figure turns out to be this same arithmetic at about 72% power.** Not a
+            different calculation. This one, with a power nobody chose, and the whole gap between
+            160 and 196 is that choice.
+
+            A new decision, `The minimum sample is derived from a measured dispersion and counted in
+            effective observations`, carrying the arithmetic, the population of each measurement,
+            and the sensitivity: detecting three points needs 87 and one and a half needs 348,
+            because the sample goes as the inverse square of the difference; at two points, 70%
+            power needs 154 and 90% needs 262.
+
+            `ARCHITECTURE.html`'s three statements corrected to 196 effective paired setup
+            observations, prior text in `CHANGELOG.md`. Its KPI line "Which takes about 13 days" is
+            replaced by "until band 1 says so": that was a rows-based calendar claim resting on
+            about twelve setups a night, band 1 as built fills at about eighty-two, and how long it
+            takes is a thing the scoreboard reports rather than a thing a document predicts.
+
+            Six new pins, and one of them is not a constant: the dispersion `DECISIONS.md` states is
+            put through `MinimumSample.Of` and required to give the minimum both documents state.
+            The measured input is a fact rather than a judgement, so what it has to agree with is
+            the derivation, not a value typed into the source.
+
+            Eleven behavioural tests. The arithmetic is asserted as properties rather than at the
+            four points the decision tabulates: halving the difference quadruples the sample, a
+            session-wide move leaves the dispersion where it was, the control mean widens the
+            difference by the stated factor, a session too thin for a cross-section is dropped
+            rather than pooled in, and a dispersion of nought is refused rather than answered with
+            nought observations.
+
+Corrected:  A reproducibility fault caught by its own test rather than by the fixture. The C# rounded
+            the single-name figure at the end and the Python restatement rounded it before pairing,
+            so the two computed the paired figure from different values. They agreed on the fixture
+            and would have agreed on most inputs, which is exactly how that class of fault hides.
+            Both now round before pairing, so the paired figure is a function of the reported
+            single-name figure rather than of an unreported one behind it.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, **382 tests**, up from 371.
+            `tools/verify-phase` GREEN: 116 claims, 66 passed, 0 failed, 50 out of scope, **0
+            unexamined**; coverage examined 3,473; 1,115 expectations of which 609 independent.
+
+Carried:    **Mostly discharged, and what is left is a ratification and only a ratification.** The
+            two judgement inputs, being the two-point difference worth detecting and 80% power, with
+            the sensitivity stated so the choice is a real one rather than a rubber stamp. No build
+            session can take those. The obligation's due point moves from 5.1 to the operator, on
+            the same terms as the other four rows there: it is a ruling rather than work, and a due
+            point that moves to the next checkpoint at every sign-off is permanent while reading as
+            pending.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the decision point stops waiting for a date
+
+Not a checkpoint. 3.6's trigger, rewritten from a calendar to a measured sample, and the two
+instrument changes that make the sample mean what it says.
+
+Findings:   **The three months was an estimate and had read as a derivation since the day it was
+            written.** It rested on about twelve setups a night. Band 1 as built fills at about
+            eighty-two, and it is a paired comparison against same-night matched controls, so the
+            market factor that dominates cross-sectional correlation cancels rather than needing to
+            be waited out. What remains to discount is the ten-day label overlap across nights, and
+            how much that costs is a property of the realised series that no estimate could have
+            known in advance. Prior text of all three statements is in `CHANGELOG.md`, and the
+            elapsed-time section now says outright that none of its figures is a trigger, so the
+            calendar is not restored from there later.
+
+            **And the instrument would not have supported the trigger.** `EffectiveObservations`
+            capped its answer at the night count, so eighty flagged setups on one night were worth
+            one observation between them. That is the correct reading of an **unpaired** figure and
+            the wrong one here: the market factor is exactly what makes forty names worth one, and
+            the paired difference removes it by construction. Counting the night as one threw away
+            what the control draw was built to buy, and against a minimum of 196 it would have made
+            three months of accumulation look like sixty observations when it was nearer six
+            thousand. **3.6 would have fired on a number that could not arrive.**
+
+Built:      **`EffectiveObservations` starts from rows and applies two measured discounts.** The
+            label overlap across nights, as the variance-inflation form over the lag-one
+            autocorrelation, capped at one because a negative correlation is noise rather than
+            evidence. And whatever common movement the matching failed to remove, as the ordinary
+            design effect: the realised variance of the nightly means over the variance they would
+            have if a night's pairs were independent, floored at one.
+
+            **The old behaviour is now the limiting case rather than the assumption.** A night that
+            cannot say how its own pairs dispersed counts as one, and a night whose pairs all move
+            together has a design effect of about its own pair count and collapses back to one. An
+            unknown is read the safe way, and the pessimistic corner is reached by arithmetic rather
+            than asserted.
+
+            `PairedInterval.Night` carries the within-night dispersion, computed in `Series` from
+            the sample form so a night of one pair disperses by nought rather than by a number taken
+            from itself.
+
+            **Migration 022, `scoreboard.n_minimum`**, carried through the read surface, the view and
+            the page. Band 1 shows three numbers on every panel every night: `n 3,180 rows, 412
+            effective of 196 needed`, with a line saying whether the panel may be read yet. Set on
+            band 1 alone, because a minimum on every panel would read as a threshold each of them is
+            being held to.
+
+            **The counts are reported from the first night, including on a withheld panel.** The
+            figure is withheld because it would be read; the counts are the thing a reader is
+            supposed to watch. They are meaningless for the first fortnight, which a number climbing
+            from nothing says better than a date does, and it is the only way to see whether the
+            overlap is costing forty percent or eighty-five.
+
+Verified:   Two authored series the fixture could not otherwise produce, both `DERIVED` against
+            `tools/derive-indicators.py --interval`, which was rewritten to the same two discounts
+            independently. `many-names-a-night-moving-apart`: 40 nights of 80 pairs whose nightly
+            means vary by exactly what independence predicts, **3,200 rows and 3,200 effective**.
+            `many-names-a-night-moving-together`: the same rows with nightly means three times wider
+            than independence allows, **3,200 rows and 345 effective**, the row count divided by a
+            design effect of about nine. The existing four scenarios are one pair a night and their
+            values are unchanged, which is the fallback asserting itself.
+
+            **Two new surface claims, both proved by removal.** With the minimum dropped from the
+            count string, `surface-claims` fails naming the claim and quoting the sentence it makes
+            false; with the below-minimum wording dropped, the same. Restored. This is the sixth
+            defect shape's own territory: a trigger that exists in the store and not on the page is
+            a trigger nobody fires on.
+
+            `tools/ci.ps1` green on Windows, 26 steps, **387 tests**, up from 382.
+
+Carried:    None new. The two judgement inputs behind the minimum stay at the operator, where the
+            entry above put them.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the minimum ratified at 262, and both judgements recorded as judgements
+
+Not a checkpoint. The operator's ruling on the two inputs the derivation left open, taken as a
+superseding decision because the figure it moves was pinned and cited.
+
+Ratified:   **Two points, two-sided 95%, 90% power. 262 effective observations.**
+
+            **Two points because it is the size of the effect being hunted rather than a target
+            chosen for roundness.** The strategy's claimed expectancy is about 0.55R on a 3% stop,
+            which is about 1.7 points of forward return. Detecting less than two points would be
+            detecting something too small to trade after costs, so the threshold is set at what is
+            worth having rather than at what is claimed.
+
+            **90% rather than the conventional 80%, because the costs here are asymmetric and in an
+            unusual direction.** A false positive is caught downstream: the forward paired test and
+            the variant machinery both sit after band 1, and a spurious reading does not survive
+            them. **A false negative is caught by nothing**, because band 1 reading flat means the
+            pattern has nothing in it and the project stops. There is no downstream from that. At
+            about eleven effective observations a night, 90% costs roughly six sessions more than
+            80%: six days against a one-in-ten chance of abandoning a working strategy.
+
+            The reasoning is recorded rather than the number alone, because both inputs are
+            judgements and a later session will otherwise read them as conventional defaults. That
+            is exactly what happened to the figure this replaces.
+
+Measured:   **One consequence stated rather than left to be derived.** 262 detects two points at 90%
+            power. Against the 1.65 points the strategy actually claims, the same sample carries
+            about **76% power**, and 90% power at 1.65 points would need **385**. Not an objection to
+            the ratification, which deliberately sizes on what is worth trading rather than on what
+            is claimed; recorded so nobody reads "90% power" as 90% of finding the strategy's own
+            claimed edge.
+
+            The sensitivity, now asserted by a test rather than stated in prose: at two points, 70%
+            power needs 154, 80% needs 196, 90% needs 262, 95% needs 324. At 90% power, detecting
+            three points needs 117 and one and a half needs 466.
+
+Built:      **A superseding decision**, `The minimum sample is 262 effective observations, ratified
+            at two points and 90% power`, carrying the measurement, both populations, the arithmetic
+            and both judgements with their reasoning. The decision it replaces moves to "Previously
+            decided" with its reasoning intact and a line saying what it got right: everything it
+            measured survives unchanged, and what it could not do was settle its own two judgements,
+            which it said outright.
+
+            **The citation sweep was counted in advance and came out where it said.** Seventeen
+            citations, of which three sit in `CHANGELOG.md` and are left alone, because a dated entry
+            names what authorised an edit at the time and correcting that would rewrite history
+            rather than the corpus. One is the decision's own heading. **Thirteen repointed**, in the
+            same commit, and the sweep reported thirteen.
+
+            Three new pins, one of which is the figure in the decision's own name: a decision whose
+            title states a number and whose body states a different one would resolve, cite and read
+            perfectly cleanly.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, **391 tests**, up from 387.
+
+Carried:    **One discharged, the last of the two the derivation left open.** The obligation raised
+            at 3.0 against the 160-observation minimum is closed and its row is removed from
+            `BUILD_PLAN.md`. Four operator rows remain, none of them about this.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — a withheld panel that could not say which shortage was blocking
+
+Not a checkpoint. A defect found by a question the report could not answer, and a correction to an
+illustration this record carried.
+
+Corrected:  **The entry above states band 1 showing `n 3,180 rows, 412 effective`, and no panel has
+            ever shown that.** It is the mockup figure from `SCREENS.html`, copied into the
+            `surface-claims` stub as a plausible body and then into a summary as an example. The real
+            band 1 panels over the golden fixture read **0 rows, 0 effective of 262 needed**. The
+            arithmetic was never wrong; an authored number was offered where a measured one would be
+            read, which is the fifth defect shape in a record rather than in a figure.
+
+Findings:   **Asked what withholds a panel, the corpus could not answer, and the honest answer is a
+            third thing neither reading proposed.** It is not the sample size and it is not the
+            population. `PairedInterval.Of` returns nothing when the series has fewer than twice the
+            block length of **sessions**, which is twenty. Rows do not enter it, effective
+            observations do not enter it, and no amount of either substitutes for a session.
+
+            **The population cannot be the reason and that is settled by construction.**
+            `ScoreboardBuilder` reads `setup`; a historical detector run writes to
+            `calibration_setup`, which nothing downstream reads. Worth nothing unless something
+            checks it, and nothing did: the existing property asserts a calibration run leaves the
+            evidence store as it found it, which says reconstructed rows never enter `setup` and says
+            nothing about whether the scoreboard goes and reads them where they do live.
+
+            **And the two live conditions could contradict each other outright.** Withholding is
+            settled by the session axis; the minimum sample is settled by how much information the
+            rows carry. A fortnight of very wide nights reaches 262 effective observations before it
+            reaches twenty sessions, and the page would then have read "the minimum sample is reached
+            and this panel may be read" beside a figure it was refusing to show. Reachable, and
+            nothing would have caught it.
+
+Built:      **Migration 023, `scoreboard.withheld_because`**, written by the builder and carried to
+            the page. A withheld panel now says "only 14 session(s) recorded and a block bootstrap
+            needs 20, which is a shortage of sessions rather than of evidence", or, before any
+            horizon closes, that no session has a closed ten-session horizon yet.
+
+            The reached line no longer claims readability. It says the minimum is reached; whether
+            there is a figure to read is the other line's business, and the two never contradict
+            because neither speaks for the other.
+
+            A fifteenth surface claim requiring the page to carry "a shortage of sessions rather than
+            of evidence", and the stub gains a withheld panel that is short of sessions while not
+            being short of evidence, because a stub showing only the ordinary case would let the
+            contradiction back in unseen.
+
+Verified:   **The population boundary asserted behaviourally rather than by reading the SQL.** A test
+            fills the calibration table, deletes the stored panels, rebuilds, and requires every
+            count to be a count of the evidence store. Proved by removal: with `setupsOnFile` changed
+            to add the two tables it fails on the spot, because a band 1 panel computed over 49,450
+            survivorship-biased rows would otherwise look exactly like one that had finally
+            accumulated a sample.
+
+            Two `FROZEN` expectations, `scoreboard.band1.shortOfSessions` and
+            `shortOfEvidence`, both 4 over the fixture. Counted apart rather than as one withheld
+            total, because a single count could never say which shortage was blocking, which is the
+            whole finding.
+
+            `tools/ci.ps1` green on Windows, 26 steps, **392 tests**. `tools/verify-phase` GREEN: 116
+            claims, 66 passed, 0 failed, 50 out of scope, **0 unexamined**; 1,134 expectations of
+            which 609 independent.
+
+Carried:    None new.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — a corrected count in the entry above
+
+Corrects the 2026-08-27 entry "the minimum ratified at 262", whose `Carried` block says **"Four
+operator rows remain"**. There are **five**: the `CONFIRMED` indicator values raised at 1.6, the
+threshold adjustment raised at 2.11, the `CONFIRMED` gallery expectations raised at 2.9, the vendor's
+quota reset boundary raised at 1.1, and whether the tight control set may draw from neighbouring
+sessions, raised at 3.3. Nine obligations stand in total: those five, one due at 4.1, one at 4.6, one
+at the move, and none due in phase 3.
+
+A count in a record, which `stated-counts` exempts by design because a record is a dated measurement
+rather than a claim about the corpus. The exemption is why this needed a reader rather than a check,
+and why the correction is a new entry rather than an edit.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the handover, which is not the sign-off
+
+**This is not the sign-off**, in those words and on 2.12's precedent. The session writing it has
+committed code to this branch and is disqualified by the fresh-session rule from reviewing it. What
+follows is what a fresh session needs in order to take 3.7: what was built, what has already been
+verified and how, what must not be redone, and where this corpus's faults have historically hidden.
+
+### What is finished
+
+**3.0 through 3.5, all seven done conditions, checked rather than asserted.**
+
+| Condition | How it was checked | Result |
+|---|---|---|
+| 1, deliverable exists and runs | The five stages run in the replay and write their rows; the scoreboard page renders under `surface-claims` | holds |
+| 2, `tools/ci.*` green with the test count in PROGRESS | Every checkpoint entry parsed for a recorded test count | 359 at 3.0, rising to 369 at 3.5, none missing |
+| 3, new store writes declared in SCHEMA | CI step 10, `writer-ownership`, both directions | green |
+| 4, constants pinned and decision names resolve | CI steps 5, 6 and 8 | green |
+| 5, the suite passes on both runners | Run 33099188802 at `f8223c9`: `windows-latest` success, `macos-latest` success, and the `rehearsal` job on a case-sensitive filesystem success | green |
+| 6, a PROGRESS entry naming what was built, measured and carried | Twelve checkpoint entries read for those sections | all present. **3.0(d) labels them `Measured` and `Findings` rather than `Built`**, and its content is the repairs it made, so the condition holds in substance and not in form |
+| 7, expectations added with their tier, at least one `DERIVED` or `CONFIRMED` | `fixtures/expectations.json` grouped by checkpoint | 3.0: 124 of 164 derived. 3.1: 3 of 3. 3.2: 144 of 148. 3.3: 12 of 17. 3.4: 20 of 20. 3.5: 36 of 41. **No checkpoint is frozen-only**, and `frozenOnly` is correctly empty |
+
+At the head commit: `tools/ci.ps1` green, 26 steps, 392 tests. `tools/verify-phase` GREEN, 116
+claims, 66 passed, 0 failed, 50 out of scope, **0 unexamined**. 1,134 expectations, 609 independent.
+
+### What was parked, and what parking does not change
+
+**3.6 is parked and 3.7 does not wait on it.** 3.7 signs off that 3.0 through 3.5 hold, which is a
+claim about code, documents and a fixture and is verifiable today. 3.6 decides whether the pattern
+works and needs a sample that does not exist. Phase 1 is the precedent and the argument: it signed
+off with the `CONFIRMED` values outstanding, on the reasoning that a due point moving at every
+sign-off is permanent while reading as pending. Here the same reasoning runs the other way, because
+a checkpoint nobody can reach for months, left as a sign-off condition, makes the sign-off
+permanently pending while every part of it that could be checked already passes.
+
+3.6 still has to happen, its trigger is measured rather than waited out, and the panel is what fires
+it: at least twenty sessions **and** at least 262 effective observations, per direction and control
+set, reported on the page every night.
+
+### What a fresh session must review
+
+**The code this session wrote, which is what disqualifies it.** Core: `ForwardDispersion`,
+`MinimumSample`, `PairedInterval`, `ForwardOutcome`, `ControlMatching`, `WinRateCeiling`,
+`ScanSpans`, `MeasurementParameters`, and the corrected `PullbackGeometry.Of`. Worker:
+`SetupJournal`, `ForwardReturnFiller`, `ControlSampler`, `CeilingCalculator`, `ScoreboardBuilder`.
+Api: `LabScoreboard`. Web: `ScoreboardView`, `Scoreboard.cshtml`. Tests: `SurfaceClaimsCheck`,
+`CarriedObligationsCheck`, `MinimumSampleTests`, `EffectiveObservationsTests`, the `PhaseReplay`
+additions, and migrations 015 through 023.
+
+**What must not be redone.** The threshold ruling, the tight-set question, the `CONFIRMED` values and
+the gallery expectations are the operator's and are listed below; a sign-off session cannot discharge
+them, and moving their due points is what made them permanent before. The prediction at 3.0(c) is
+settled and recorded; it is not re-run. The once-only threshold adjustment is **unspent** and a
+sign-off does not spend it.
+
+### Where to look, because reading will not find it
+
+This corpus has shipped six distinct defect shapes and every one of them passed a green suite.
+
+1. **The subject went away and the assertion kept passing.** `path-casing` compared no paths.
+   `bar-append-only` held one bar table of three. Break the thing and see whether the check notices.
+2. **A check narrowed its own scope silently.** Scope floors in `fixtures/checks-baseline.json` now
+   guard this per scope. Check that the floors sit under the scope carrying the property rather than
+   under a count of files read.
+3. **A stated count went stale.** `stated-counts` covers specs and exempts records.
+4. **A malformed row was dropped and nothing reported missing.** `MarkdownTable`.
+5. **A figure was computed over a population other than the one named beside it.** Every figure
+   should state its rows, its filter and its tier in the same breath.
+6. **The instrument was right and its answer was discarded downstream.** A claim that something is
+   shown is a claim about a surface, and `surface-claims` is the only check that reads one.
+
+The productive move is to break things rather than read them. Three of this phase's own defects were
+found exactly that way: the zero-width interval, the ceiling's two identical denominators, and the
+tight control set that was the loose set.
+
+### Findings
+
+**A count stated in a record went wrong twice in two entries, and nothing was ever going to catch
+it.** The ratification entry says "Four operator rows remain" where there were five; the entry
+correcting it says "Nine obligations stand in total" and then enumerates eight. `stated-counts`
+exempts records by design and rightly so, because a record states what was true on its date and a
+check enforcing today's number would rewrite history.
+
+**The lesson is not a check, it is to stop tallying.** An enumeration is self-checking and a tally is
+not, and both errors were tallies sitting beside correct enumerations. Where a record needs to say
+how many, it lists them.
+
+**The true figures, enumerated.** Ten obligations stand, of which seven are at the operator, one at
+4.1, one at 4.6, one at the move, and **none at a landed checkpoint or anywhere in phase 3**.
+
+### The seven at the operator
+
+1. **1.6** — one `CONFIRMED` indicator value per hand-picked ticker, read off a charting platform.
+2. **2.11** — the threshold adjustment the count distribution calls for. The once is unspent.
+3. **2.9** — the `CONFIRMED` gallery expectations, which are a person opening the gallery.
+4. **1.1** — whether the vendor's quota resets on the UTC date the lab counts against.
+5. **3.3** — whether the tight control set may draw from neighbouring sessions. **Wanted before 3.6
+   rather than after**, because the tight comparison is the number 3.6 turns on.
+6. **3.6** — scheduling the nightly job. Nothing accumulates until it runs, it has the longest lead
+   time in the project, and until this entry it existed only as prose in the pre-3.6 sequence.
+7. **3.6** — whether accumulation runs from the phase branch or from `main`, which parking 3.6 past
+   3.7 turned from implied into a question.
+
+Built:      Nothing. A record pass and two `BUILD_PLAN.md` edits, prior text in `CHANGELOG.md`.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 392 tests. `tools/verify-phase` GREEN, 0
+            unexamined. Both matrix runners and the rehearsal job green at `f8223c9`.
+
+Carried:    **Two new, both at the operator**, and both raised as rows rather than left in prose:
+            scheduling the nightly job, and which checkout it runs from. None discharged.
+
+**PR #4 stays in draft.** CI is green, which is one of the two merge conditions; the other is that
+the phase has signed off, and that is not this session's to do.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — the nightly job scheduled, and a stage the RUNBOOK never listed
+
+The obligation raised at the handover, discharged by the operator's instruction. The clock starts
+tonight. Two defects were found on the way and both would have been silent.
+
+Findings:   **`universe-build` was not in the RUNBOOK's nightly table, and it is the one stage whose
+            absence cannot be repaired the next day.** `UniverseBuilder` says the snapshot "is
+            written every night without exception" and that unlike everything else it "cannot be
+            reconstructed later, because a delisted name is simply absent from tomorrow's symbol
+            list". `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no
+            fallback, which its own comment defends: a stage that quietly read current membership on
+            a night with no snapshot "would produce a reconstructed answer that looks exactly like a
+            real one".
+
+            **So an operator following the RUNBOOK literally would have built a lab that flags
+            nothing and reports clean, every night, permanently.** The detectors and `ScanEngine`
+            read `Members(connection, asOf)`; with no snapshot for the night that list is empty,
+            every stage after it succeeds over nothing, and the evidence store fills with the zero
+            rows it would also hold if the strategy simply never fired. Nothing downstream could tell
+            those two apart. Fixed in the table with the reason attached, and a `snapshot-db` row
+            added beside it, which was also absent while being named in the recovery section as the
+            only recovery path.
+
+            **The live store was eight migrations behind.** `data/live` sat at `user_version` 15
+            against a code base at 23, so `controls`, `forward-returns`, `ceiling` and `scoreboard`
+            would each have failed on a missing table on the first night they ran. Migrated 15 to 23
+            after a snapshot, which `tools/migrate` takes itself and refuses to run without.
+
+Measured:   **The job could not be run when the instruction was given, and the reason is specific.**
+            It was 14:05 ET on a Thursday. The market closes at 16:00 and the vendor publishes
+            end-of-day after that, so no bar for the session existed. `SystemClock.SessionDate`
+            resolves the instant in the session zone, so every stage would have run as of
+            2026-08-27 against a day with no data.
+
+            **That would not have been a wasted run, it would have been a permanent one.** The
+            `universe_snapshot` insert is `ON CONFLICT (as_of, ticker) DO NOTHING`, so a snapshot
+            written at 14:05 off an incomplete screen is the snapshot for that date for ever and the
+            17:15 run would have written nothing over it. Setup rows are immutable after write by
+            3.1's own deliverable, so any row the detectors produced would have been the first thing
+            the evidence store ever held and computed from a session that had not happened. The
+            store's own state says the same thing from the other side: bars end 2026-08-24, the only
+            snapshot is 2026-08-25, and `setup` holds nought rows, which is exactly what the evidence
+            store should hold on the night before it starts.
+
+Built:      **`tools/nightly.ps1`**, which maps a slot to the verbs RUNBOOK gives that slot and holds
+            no scheduling logic of its own. The store is addressed by absolute path, because
+            `DataRoot` resolves through `Path.GetFullPath` and therefore through the working
+            directory, which is not a property anybody should have to reason about at three in the
+            morning. A slot stops at the first failing verb rather than running the stage that reads
+            what the failed one should have written.
+
+            **It logs the commit it ran from rather than refusing on a branch it does not expect.**
+            The job runs from a working tree, so what it executes changes when the branch does, and
+            that was raised as an obligation at the handover. A guard that refused on a mismatch was
+            written and then removed: it would have stopped accumulation on the day phase 3 merges to
+            `main`, which is the one branch change that is supposed to happen, and nothing would have
+            said why. Logging removes the silence without adding a way to fail.
+
+            **Seventeen Task Scheduler entries**, `PullbackStrategyLab-<slot>`, sixteen weekdays and
+            `ceiling` on Saturday at 08:00. The machine's timezone is Eastern, so the table's ET times
+            are its local times and no conversion is involved. First run tonight at **17:15 ET**.
+
+Verified:   The script run end to end on the one slot that writes no dated evidence: `snapshot-db`
+            against the live store, 20 tables, 1,544,279 rows, counts matched. Every task read back
+            from the scheduler with its next run time, in the order the table states.
+
+            `tools/ci.ps1` green on Windows, 26 steps, 392 tests.
+
+Carried:    **One discharged and one raised in its place, narrower.** Scheduling is done. What is left
+            is that an unelevated shell cannot set an S4U principal or store a password, so the tasks
+            carry an `Interactive` logon type and run only while the user is logged on. A logged-out
+            evening is a lost night, and by the finding above a lost night is a permanent hole rather
+            than a delay. One elevated command closes it and no build session can run it.
+
+            The checkout question raised at the handover stands, narrowed: the job runs from the
+            working tree and says which commit it ran from, so the hazard is recorded rather than
+            removed.
+
+## Phase 3 — 2026-08-27 — phase-3-measurement — one file missing from the handover's review list
+
+Corrects the 2026-08-27 handover entry, whose "What a fresh session must review" list enumerates the
+code this session wrote and was complete when written. **`tools/nightly.ps1` was added after it**,
+in the scheduling commit, and belongs on that list: it is code, this session wrote it, and it is the
+thing that will run unattended every weekday evening.
+
+The scheduling entry below the handover records it under `Built`, so the corpus holds it. What it was
+missing from is the one list a reviewer reads to know what to look at, which is worse than being
+absent from both: a list that reads as complete and is not is the first defect shape wearing an
+administrative coat.
+
+Nothing else has been added to the shipped source since the handover. The reviewer's list is that
+entry plus this one file.
+
+## 3.5 — 2026-08-27 — phase-3-measurement — reopened: three defects, and the three guards each of them got past
+
+The sign-off review of phase 3 declined to sign, on three findings. **3.5 is reopened rather than a
+new checkpoint being opened**, because none of the three adds a deliverable: each is a behaviour 3.2,
+3.4 or 3.5 already states and the code did not have. The session that found them did not fix them,
+and this session, having committed code, cannot sign them off. Both halves are the fresh-session
+rule.
+
+**The nightly job was not started before this landed**, which the review asked for. Everything band 1
+would have accumulated in the meantime was half a comparison and the nights are not recoverable.
+
+### The first: nothing ever wrote a control forward return
+
+`ForwardReturnFiller` bound `subject_kind` to the literal `setup` and its subject query read only the
+`setup` table. `ScoreboardBuilder.Series` joins outcomes on `subject_kind = 'control'`. So the
+control-mean subquery matched nothing, band 1's difference series was empty for every direction, every
+control set and every night, and the panel was withheld with `n_effective` pinned at nought.
+**Checkpoint 3.6 fires on that count**, so the decision point the whole phase exists to reach could
+never arrive.
+
+Measured on a seeded store of 30 long-side nights, 240 setups and 2,400 control draws, with every
+ten-session horizon closed. Before: 960 setup outcomes, **nought control outcomes**, all four band 1
+panels withheld with an effective count of nought, every one of them saying no horizon had closed.
+After: 9,600 control outcomes beside the 960, the two long panels answering, and the two short panels
+withheld saying no setup has been flagged on that side, which is true of that store and is the point.
+
+**Three guards each had a different reason for missing it, and that is the part worth keeping.** The
+golden fixture holds one market day, so no horizon closes in it and `forward.written` is legitimately
+nought. The interval cases hand authored nightly means straight to `PairedInterval`, so they never
+reach the query that was empty. And the one sentence in the corpus claiming control returns are
+recorded sat in prose rather than in a table, so `architecture-conformance` never enumerated it as a
+claim and reported zero unexamined while the claim was false. Each guard was working; none of them was
+pointed here.
+
+**The diagnostic pointed away from the defect, which is worse than none.** `WithheldBecause` branched
+on the length of the difference series alone, so an empty series always printed "no session has a
+closed 10-session horizon yet". With thirty nights of closed horizons in the store it still said the
+horizons had not closed, sending a reader to wait for something that had already happened. The
+shortage is now measured rather than inferred and the panel names which of four it is.
+
+### The second: PairedInterval was not a bootstrap
+
+Block starts were `(draw * 7919 + block * 104729) mod N`. Every start in draw `d` is the corresponding
+start in draw 0 shifted by the same `d * 7919`, so **every draw was one fixed lattice rotated**. At
+most `N` distinct resample means existed however many draws were asked for, and ten thousand draws was
+bit-identical to `N` draws on all five committed series.
+
+**This is the third route to the failure the class exists to prevent.** The first was walking the
+offsets in order, which gives an interval of no width; the second was assuming independence; this one
+wore the shape of a fix for the first.
+
+**The independent restatement could not see it, because it restated the same thing.**
+`tools/derive-indicators.py` hard-coded the same two strides, so what the two implementations agreed
+about was the transcription of an algorithm and never that the algorithm was the one the decision
+names. Fifteen `DERIVED` expectations agreed with each other for the whole of phase 3.
+
+**Independent block starts alone were not enough, and the measurement is why.** Over 300 authored
+null series per row, all three schemes seeing the same series, against a nominal 5%:
+
+| nights | carry-over | shipped rotation | independent, percentile | independent, studentised |
+|---|---|---|---|---|
+| 20 | 0.0 | 48.3% | 20.3% | 4.7% |
+| 20 | 0.7 | 78.7% | 37.3% | 6.0% |
+| 40 | 0.0 | 46.0% | 12.3% | 5.0% |
+| 40 | 0.7 | 71.3% | 24.0% | 6.7% |
+| 100 | 0.0 | 24.7% | 8.7% | 5.0% |
+| 100 | 0.7 | 45.0% | 14.7% | 7.7% |
+
+Studentising is the only one of the three that holds the confidence it prints, so the bounds are
+studentised rather than percentile. That is a change to a named decision and is written as one.
+
+**The rotation's rate is erratic as well as high, which is a second argument against it.** It reads
+8.7% at thirty independent nights and 46.0% at forty, because what it returns depends on how the
+lattice happens to land on the series length. A confidence that is a function of how many nights have
+accumulated is not a confidence.
+
+### The third: a positive adverse excursion was read as its own size
+
+`ForwardOutcome` computes the least favourable point on the path, which is **positive** whenever the
+path never went against the subject. Two doc-comments asserted it was negative or zero by
+construction, and the committed fixture has held a counterexample since 3.2 at
+`forward.long-ten-sessions.h1.maeAtr` of 0.3258. `WinRateCeiling.Survived` took its absolute value, so
+a long that rose without ever trading below its entry came back as having gone that far against it.
+
+Measured: a seeded long whose every subsequent low sat five points above its entry, returning 17% with
+no drawdown, was recorded at 3.0 ATR adverse against a give-up of 1.0 in price and **judged stopped
+out**. The bias falls hardest on subjects that rose cleanly, which is exactly what the ceiling's
+perfect forecaster selects, so it pushed both the bound and the achieved rate down and distorted the
+gap between them, which is the whole figure.
+
+**Every subject in `ceiling-cases.json` carried a negative excursion**, so the authored fixture was
+written to the false invariant and could not reach the path. `derive-indicators.py --ceiling` carried
+the same `abs()`, for the same reason the interval restatement did: the premise was shared, so the
+second implementation reproduced it.
+
+Built:      **`ForwardReturnFiller`** reads `control_setup` as well as `setup` and binds each row's
+            own subject kind. A control's outcome is over its own bars, from the flagging setup's
+            session, **signed by that setup's direction** and expressed in **its own** range. The two
+            populations are counted apart on `FillResult`, because a single pair of totals would have
+            read as healthy on every night of phase 3.
+
+            **`ScoreboardBuilder.WithheldBecause`** measures the shortage instead of inferring it, and
+            names which of four is blocking: nothing flagged, no setup outcome closed, no control
+            outcome closed, or too few sessions carrying a pair.
+
+            **`PairedInterval`** replaced with a studentised moving-block bootstrap taking independent
+            block starts per draw from splitmix64 at a published seed, and returning nothing where the
+            series cannot disperse. `DistinctResampleMeans` is exposed so the property can be held
+            rather than reasoned about.
+
+            **`WinRateCeiling.Survived`** floors the excursion at nought rather than taking its
+            absolute value, in one place, named. Both doc-comments corrected.
+
+            **`AccumulationPopulation`**, an authored run of 24 nights whose horizon has closed, driven
+            through the real fill and the real build **in a store of its own**. It is not rows in the
+            replay's store: authored setup rows there would move `calibration.setupRowsOutsideTheForwardNight`,
+            which is frozen at nought and stands for the evidence rule, and would pool authored rows
+            into `controls.*`, `cap.*`, `journal.*`, `gallery.*` and every `check.*` sidedness figure.
+            Its figures are namespaced `accumulation.` and **none of them is added to a captured one**.
+
+            **New assertions.** `ForwardReturnFillerTests`, five, on the control path, its sign, its
+            range, its immutability and its unclosed horizons. `PairedIntervalTests`, seven, on the
+            properties rather than the values. A `Failure behaviour` row and its arm in
+            `architecture-conformance`, backed by a named test. A `surface-claims` claim that a
+            withheld panel names a control shortage when that is the cause.
+
+            **Documents.** A superseding decision, with the old entry moved to "Previously decided"
+            with its reasoning. Three `CHANGELOG` entries. Eight obligations raised in `BUILD_PLAN`.
+
+Measured:   **The proof that the new assertions hold their subjects, done by removal.** Restoring the
+            rotation scheme turns 4 of the 7 interval tests red, reporting 40 distinct resample means
+            at ten thousand draws, an interval identical at two draw counts, and 33.5% and 59.0%
+            false clearance. Removing the control subject query turns all 5 filler tests red; restoring
+            the literal subject kind turns 3 of them red.
+
+            **Two independent implementations now agree about the right algorithm.** The C# and the
+            rewritten python restatement match to four places on all fifteen interval figures and on
+            the eight accumulation counts.
+
+Findings:   **The interval expectations all moved, and one verdict flipped.** Every low and high over
+            the five series changed, and `many-names-a-night-moving-together` went from clearing zero
+            to not clearing it. That case's stated purpose is the effective-sample measurement and its
+            `clearsZero` was incidental, but the direction is the finding: a series whose nightly means
+            vary three times wider than independence allows was **clearing zero confidently** under the
+            old interval. The new one says it does not, which is the answer that case's own note
+            implies.
+
+            **Writing repository files through a text-mode handle turned ten of them CRLF**, against a
+            corpus normalised to LF. Nothing failed to compile and the suite stayed green; what caught
+            it was a scope floor, `decision-resolves` reporting 0 decision names against a floor of 66.
+            A check that states its scope in numbers found a corruption three checks could not see, and
+            it is the third time in this corpus a floor has earned itself.
+
+            **A defect fixed in code is not fixed in the restatement.** Both `abs()` and both stride
+            constants lived in `tools/derive-indicators.py` as well, so both had to move in the same
+            commit or the `DERIVED` tier would have gone on reporting agreement about the wrong thing.
+            An independent restatement is independent about arithmetic and never about a shared premise.
+
+
+            **The fixes were reviewed before they were committed, and the review found four things
+            worth having.** Two were defects in this work: the superseded interval decision was
+            written in above `## Previously decided` rather than under it, so it parsed as a live
+            decision and nothing could have failed on it, and the surface stub drifted from the
+            producer within an hour of the reconciliation gap being raised as an obligation. One was
+            a real inconsistency in the new interval, below. One was the minimum-sample mismatch, now
+            carried.
+
+            **The observed standard error was estimated from a prefix of the series, and the obvious
+            fix was worse.** A resample is scored by the sample error of the block means it drew, so
+            the matching estimate on the observed series is the sample error of a whole number of
+            non-overlapping block means, and any such tiling leaves `n mod 10` nights out of the scale
+            while they still enter the estimate and every resample. Estimating over all `n` wrapping
+            blocks instead uses every night and was measured: it comes back conservative rather than
+            calibrated, clearing zero 0.0% to 2.3% of the time under a true null at twenty to forty
+            nights against a nominal 5%, because overlapping block means spread wider than the draws
+            do. The tiling stands and is now anchored at the recent end, so the nights left out of the
+            scale are the oldest rather than the newest.
+
+            **And the envelope is stated rather than the best cell in it.** Studentising holds 3.7% to
+            7.7% over independent nights and an AR(1) up to 0.7. Against the process a ten-session
+            overlapping label actually creates, a moving average of order nine whose correlation cuts
+            off inside the block length, it reads 3.0% to 11.7%. Against an AR(1) of 0.9 it reads 7.0%
+            to 24.0%, and that is a limit of the block length rather than of the method. The first
+            draft of this entry quoted the good cells and called it "every length and carry-over
+            tried", which was true and read as more than it said.
+
+Verified:   `tools/ci.ps1` green on Windows, 26 steps, 405 tests. `tools/verify-phase` GREEN,
+            117 claims, 67 passed, 0 failed, 50 out of scope, **0 unexamined**. 1167
+            expectations, 638 independent.
+
+Carried:    **Thirteen raised, none discharged.** Seven are the sign-off review's non-blocking
+            findings, due at 4.1 and 4.6: the `band0.degradedRuns` panel's three populations and its
+            unrendered red, excursions stored as nought where they are undefined, `intended_date`
+            being a calendar step, ratios read through the price crossing, `CeilingCalculator`'s
+            insert comment, and `SetupJournalTests` claiming four assertions and holding two. One is
+            `tools/nightly.ps1` having only a Windows half, at the move.
+
+            **Five were raised while doing this work and four of those came out of reviewing it.**
+            Nothing reconciles the `surface-claims` stub against the text its producer emits, which
+            bit within the hour: the stub kept wording `ScoreboardBuilder` no longer emits and the
+            check stayed green. The fill re-walks every subject ever recorded on every night, so its
+            cost grows with the square of the accumulation. A subject whose horizon can never close is
+            counted as not yet elapsed for ever and drops out of the control mean without saying so.
+            `ControlSampler` can draw a name that did not trade on the night it is drawn for, which
+            the fill now refuses and counts rather than mis-measuring, leaving a set thinner than five
+            with nothing saying which name went missing.
+            And **the minimum sample of 262 was sized for a normal-theory test while the test actually
+            run is a studentised bootstrap**, so reaching it does not deliver the ratified 90% power.
+            That last one is at the operator, because the two inputs it turns on are judgements this
+            corpus says belong to a person, and the direction is under-power, which is the side
+            CLAUDE.md's own argument for 90% over 80% says has no downstream.
+
+**This is not the sign-off.** A fresh session takes 3.7, and what it must review is everything named
+under Built above.
+## 3.7 — 2026-08-27 — phase-3-measurement — the phase signs off, and a list nine checks hold in one direction
+
+Fresh session, no commits of code to this repository before or during the pass. Its only commits are
+documents, which the narrowed fresh-session rule permits.
+
+Verified:   Reproduced before reading the record, in this order. `tools/ci.ps1` green on Windows, **26
+            steps, 405 tests**. `tools/verify-phase` **GREEN**: 117 claims, 67 passed, 0 failed, 50 out
+            of scope, **0 unexamined**; coverage examined 3,616 with **0 unexamined**; 1,167
+            expectations of which **638 independent**, 638 `DERIVED` and 529 `FROZEN` all matching, 0
+            changed since the last commit; inputs 67 `CAPTURED` and 88 `AUTHORED`. Run again on a clean
+            tree after the six removals below were reverted, and the figures are identical to the
+            digit.
+
+            Run a third time against the state being committed, so the sign-off is against this entry
+            and the obligation rows beside it rather than against the state it was reproduced from.
+            `tools/ci.ps1` green, 26 steps, 405 tests. `tools/verify-phase` GREEN with the same 117
+            claims, 67 passed, 0 failed, 50 out of scope and **0 unexamined**, and the same 1,167
+            expectations with 0 changed. Coverage examined reads 3,621 rather than 3,616, the five
+            being citations and due points these two document edits added.
+
+            Both runners and the rehearsal job green on the head commit in GitHub Actions, runs
+            33127616093 and 33127618208: windows-latest, macos-latest and the case-sensitive rehearsal,
+            six successful check runs. PR #4 reports `MERGEABLE` and `CLEAN`.
+
+            **Nothing in the report is out of scope until 3.6 or 3.7.** The earliest closing checkpoint
+            is 4.1, for 2 claims and 3 coverage items, so signing this checkpoint off leaves no claim
+            resting on a checkpoint that has just landed. The one coverage item whose text contains
+            "1.7" is priced rather than deferred; the figure there is a multiple of the liquidity floor.
+
+            **The figures were checked against stores rather than against this record.** The
+            accumulation store: all four band 1 panels rebuilt through the real fill and the real build
+            and read back from `scoreboard`, giving long/loose 0.0131 over -0.0332 to 0.0560, long/tight
+            0.0130 over 0.0049 to 0.0283, 144 rows and 4 and 26 effective, which is every committed
+            `accumulation.band1.*` value to the digit. The live store: 44 setups on 2026-08-27, 40 long
+            and 4 short, 440 control draws, and `calibration_setup` at 49,450 rows being 32,533 long and
+            16,917 short, which is 2.11's figure recounted rather than read.
+
+            **3.3's done condition re-derived from the live store on real market data**, which is the
+            one place phase 3 has evidence a fixture cannot supply. Of 440 draws: exactly 5 per set per
+            setup across 88 setup-set pairs, ranks 1 to 5 each appearing 88 times, **no control drawn
+            for a name flagged that night**, none drawn for its own setup's ticker, no name drawn twice
+            inside a set, 208 distinct control names, and every one of the 220 tight draws matching on
+            ladder grade against a loose set that is `falling` 76, `mixed` 82 and `rising` 62. **On all
+            44 setups the tight set differs from the loose set**, which is the defect 3.3's own commit
+            subject names, holding against a real night rather than against a fixture.
+
+            **The nightly job's first run read from the store rather than from the RUNBOOK.** Seventeen
+            `PullbackStrategyLab-*` tasks exist, all `Ready`, and their trigger times are the RUNBOOK
+            table's ET times exactly, weekdays for sixteen and Saturday for `ceiling`, every one with an
+            `Interactive` logon type as the obligation says. Fourteen slots ran on 2026-08-27 between
+            21:15 and 22:28 UTC. `forward`, `scoreboard` and `snapshot` are scheduled at 21:30, 21:50
+            and 22:00 ET and had not yet run when this was read, which is the schedule rather than a
+            fault. `sectors` failed with 149 calls used and is the night's one non-clean run.
+
+Broke:      Six things were removed or forced and the run watched, because reading has not been
+            sufficient here and the three defects that reopened 3.5 were all found by reading code.
+
+            **The literal `setup` subject kind restored.** The insert's subject kind put back from the
+            row's own to `SetupKind`. Three of the five `ForwardReturnFillerTests` go red, which is the
+            count the 3.5 entry states. `architecture-conformance` goes red naming the claim rather than
+            crashing: "[Failure behaviour] A comparison has no control outcomes: the fill no longer
+            records an outcome for a control". `fixture-replay` goes red across every
+            `accumulation.band1.*` expectation, the four panels reading `withheld` with 0 rows and
+            `panelsWithAnInterval` 4 to 0. Three instruments, three different reasons, all pointing at
+            the defect. **`surface-claims` stays green**, the stub behaving exactly as its own carried
+            obligation says it would.
+
+            **The absolute value restored on the excursion.** The floor at nought put back to an
+            absolute value. No test in the suite moves, because `WinRateCeiling.Survived` has no unit
+            test of its own; what turns is the fixture, and it turns in the direction the entry
+            predicts. The `ceiling.never-traded-against-the-entry` case, `DERIVED` at 3.4, moves on all
+            three figures: bound 1.0000 to 0.5000, achieved 0.6667 to 0.3333, gap 0.3333 to 0.1667. Both
+            the bound and the achieved rate fall, which is what a bias falling hardest on subjects that
+            rose cleanly does to a perfect forecaster's population.
+
+            **`PairedInterval` forced below its block floor.** `AccumulationPopulation.Nights` cut from
+            24 to 14 against a floor of 20. All four panels withhold and all four name the right one of
+            the four causes: "only 14 session(s) carry a pair and a block bootstrap needs 20, which is a
+            shortage of sessions rather than of evidence". Not the horizon, which is what the old
+            diagnostic would have said, and not the control shortage. The rows and effective counts are
+            still reported, 84 rows and 6, 25, 1 and 4 effective, which is what 3.6's trigger reads and
+            is the reason the counts are printed on a withheld panel at all.
+
+            **A paired series collapsed so its pairs move together.** Eighty-one pairs a night over 40
+            nights, 3,240 rows, the same nightly means throughout, only the within-night dispersion
+            moving. At a spread of 5.0 and 1.0 the design effect is at its floor of one and the series
+            is worth 1,838, the discount being the serial term alone. At 0.3 it is 377, at 0.1 it is
+            **42 against a night count of 40**, at 0.03 it is 4 and at 0.01 it is 1. The row count is
+            divided back to the night count and past it by arithmetic rather than by a cap, which is
+            what the class claims and what makes the pessimistic reading its limiting case.
+
+            **`PairedInterval` asked for four draw counts.** Distinct resample means over one 40-night
+            series: 31 at 40 draws, 51 at 100, 98 at 1,000, 130 at 10,000, with the interval moving at
+            each step, 0.0015 to 0.0072 at 40 draws and 0.0013 to 0.0061 at 10,000. Under the rotation
+            this replaces, the count was the night count whatever was asked and the interval was
+            bit-identical at two draw counts. The count now grows with the draws, which is the assertion
+            that would have failed on the day the rotation shipped.
+
+            **The four phase 3 stamp columns added to `PointInTimeCheck.Stamped`.** The check goes from
+            7 tables and 29 statements to 11 and 47, and **eight reads fail**: four `control_setup` and
+            two `ceiling_bound` in `ScoreboardBuilder`, two `scoreboard` in `LabScoreboard`. The eight
+            are four distinct statements counted twice, because `Statements()` matches each raw-string
+            literal in both of its passes.
+
+            The working tree was restored after each and `git status` is clean.
+
+Measured:   **Which checks reconcile a named set against the corpus in both directions, and which in
+            one.** Asked of every check on the roster rather than of the one the question named. A check
+            is two-way where it asserts both that everything it names exists and that everything that
+            exists is named; one-way where only the first holds. The column that matters is the last.
+
+            | Check | Reconciles | Ways | Missing direction, and what has grown past it |
+            |---|---|---|---|
+            | `coverage-reported` | roster, traits, CI steps, step names | both, four ways | none. The model the others are measured against |
+            | `check-completeness` | ARCHITECTURE gate lists against detector checks, per row | both | none for gates. It reads `setup` and never `calibration_setup`, which is a population rather than a direction |
+            | `fixture-replay` | expectations against replay measurements | both | none. A measurement no expectation names is reported unexamined |
+            | `architecture-conformance` | table rows against verdicts, and every table against the two lists | both, over tables | a claim made in prose yields nothing. That is the third guard the control-outcome defect got past, and it is recorded at 3.5 |
+            | `ci-parity` | the two step lists, as sequences | both | none |
+            | `writer-ownership` | SCHEMA writers against writes in source | both | a third direction is absent: migrations to SCHEMA. Nothing fails on a created table SCHEMA does not declare, and nothing at all reads SCHEMA's column tables |
+            | `store-portability` | the store's own schema against its values | both, derived | an empty table contributes nothing and reads as passed |
+            | `price-storage-form` | migrations against column types | derived, no list | `ALTER TABLE ... ADD COLUMN` is not scanned. Ten columns are in neither the 23 tables nor the 162 declarations |
+            | `point-in-time` | `Stamped` against the migrations | one | migrations to `Stamped`. Four phase 3 stamps and `detector_error.observed_at` have grown past it; eight reads fail once they are added |
+            | `surface-claims` | a claim file against rendered pages | one | corpus sentences to the claim file. A new sentence claiming something is shown is guarded by nothing, which is the shape of the defect the check was built for |
+            | `stated-counts` | an authored claim list against derived counts | one | spec sentences to the claim list. A new count a spec states about itself is unpinned until somebody adds it |
+            | `pinned-constants` | an authored pin list against the code | one, with two bounded exceptions | document numbers to the pin list. It counts the unpinned rows of two ARCHITECTURE tables and reports them out of scope; CLAUDE, SCHEMA, BUILD_PLAN, RUNBOOK and DECISIONS have no such second direction |
+            | `fixture-inputs` | three named endpoints against the manifest | one | the vendor client to the named list. `EodhdClient` calls four, `fundamentals` being the fourth, exercised by the `sectors` stage on the live run and captured only because the capture took it anyway |
+            | `bar-append-only` | three named bar tables against the migrations | one | migrations to the named list. A new bar table is unguarded. The `intraday_bar` tripwire covers one known future table and no other |
+            | `shell-executable` | four named entry points against the recorded modes | one | `tools/` to the named list. `derive-indicators.py` carries a shebang and mode 100644 |
+            | `decision-resolves` | citations against decision names | one | the file set. Nine documents and every `.cs` under `src`; the CI workflow and `fixtures/expectations.json` each carry a citation neither this nor `no-superseded-citation` scans |
+            | `no-superseded-citation` | citations against the superseded list | one | as above, the same file set |
+            | `carried-obligations` | PROGRESS due points against BUILD_PLAN due points | one, and it says so | the table to PROGRESS, plus its own two stated narrowings: a due point another row already uses masks an unscheduled obligation, and only the live tail is read |
+            | `path-casing` | source literals against the on-disk name | one, by nature | a literal that resolves to nothing is dropped as "not a path" rather than failed. It reads only `.cs` under `src` |
+            | `clock-usage` | production source against banned patterns | one, by nature | it reads only `.cs` under `src`. `tools/nightly.ps1` reads the machine clock and is outside the scan, correctly, and nothing says so |
+            | `api-isolation` | the Api's compiled dependency file | not a reconciliation | only the Api is asked, and only the Api is claimed |
+            | `two-platform` | the workflow's runner set | not a reconciliation | it names no set of its own. `coverage-reported` asserts the workflow declares both runners, and the roster row is exempt from having an implementation by name |
+            | `order-provenance` | not running until 4.6 | not yet | not yet |
+
+            The roster has 23 rows: 21 run as a named CI step, `two-platform` runs as the matrix, and
+            `order-provenance` starts at 4.6. Of the 22 that run, six are two-way and two more are
+            two-way by deriving both sides from their subject. Twelve are one-way, and **nine of those
+            twelve hold a hand-named list the corpus can grow past**: `point-in-time`,
+            `surface-claims`, `stated-counts`, `pinned-constants`, `fixture-inputs`,
+            `bar-append-only`, `shell-executable`, `decision-resolves` and `no-superseded-citation`.
+            The other three are one-way for reasons that are not a list: `carried-obligations` says so
+            in its own comment and argues for it, and `path-casing` and `clock-usage` are scans for an
+            absence, where the second direction is not a thing to assert. Two, `api-isolation` and
+            `two-platform`, are not reconciliations.
+
+            **And the floors under the property scopes, since the same question applies to them.** A
+            floor is a floor rather than an equality on purpose, and the gap is still worth stating: of
+            the scopes carrying a property, `point-in-time`'s statement scope holds 34% of its current
+            value, `architecture-conformance`'s component catalogue 29%, `fixture-replay`'s `DERIVED`
+            expectations 31%, `writer-ownership`'s writes 45%. Recorded 2026-08-26, before 3.5 was
+            rebuilt. Nothing is broken by this, and it is why the point-in-time statement scope could
+            fall from 29 back toward 10 without the baseline saying anything.
+
+Findings:   Finding. **`PointInTimeCheck` reconciles its stamped-table list one way, and phase 3 grew
+            past it.** The check's own comment argues the list is named rather than derived so that a
+            renamed column fails against the migration text, and the test it points at asserts exactly
+            that: every table named exists and carries its column. What no assertion anywhere makes is
+            the other direction. Four phase 3 stamps and one from 2.7 are outside the list, and adding
+            the four surfaces eight unbounded reads. **None is a live wrong result today** and the
+            reasoning is worth keeping rather than the conclusion: `forward_return` is bounded on
+            `filled_at` in every statement that touches it; a `control_setup` row is transitively
+            bounded because the query already bounds the setup's own date, and a control is drawn on its
+            setup's night; `ceiling_bound` and `scoreboard` are bounded on `as_of` and not on the stamp,
+            so a rebuild for a past date would see a later computation. That last condition is what a
+            backfill is. Carried, due 4.1.
+
+            Finding. **Nothing reads SCHEMA's column tables, and five columns are already missing from a
+            document whose second line says it is complete.** `writer-ownership` runs both ways over
+            writers and reads columns not at all. Measured against the migrated store rather than by
+            eye: `scoreboard` omits `computed_at` and `withheld_because`, `control_setup` omits
+            `drawn_at`, `ceiling_bound` omits `computed_at`, and `regime_daily` omits `indexes_above`,
+            which has been missing since 2.5. `index_bar` and `calibration_setup` list no columns and
+            say "same shape as" another table, which is a legitimate form and not a miss. What is owed
+            is the reconciliation rather than the five repairs. Carried, due 4.1.
+
+            Finding. **`ControlSampler` passes a draw instant into `Figures` that the query never uses**,
+            binding the end of the session day instead. The figure is right, because that is the bound
+            every reader in `PullbackStrategyLab.Data` uses; the signature is not, and it sits in the
+            one method whose comment cites (see: A reader's signature does not establish point-in-time;
+            the query does). Carried, due 4.1.
+
+            Finding. **`price-storage-form` cannot see a column added by `ALTER TABLE`.** Ten exist in
+            the migrations today and none is in the check's 23 tables or its 162 column declarations.
+            All ten are `TEXT` or `INTEGER`, so nothing is wrong in the store; what is wrong is that the
+            only guard on the storage half of the decimal rule is blind to the statement form a later
+            phase is most likely to add a column with. Carried, due 4.1.
+
+            Finding, and it is the general form of the four above. **Eight checks besides
+            `point-in-time` hold a hand-named list and reconcile it against the corpus in one direction
+            only.** The table above names all nine.
+            This is the under-reporting shape CLAUDE.md calls the one that matters most, arriving by a
+            route the scope floors do not cover: a floor catches a check that stops looking at what it
+            names, and nothing catches a check that never named the thing at all. Two instances are
+            already live and neither has consequences yet, the fundamentals endpoint being outside
+            `fixture-inputs`'s list and two files carrying citations outside the citation scan. Carried,
+            due 4.6, because what closes it is a second direction per check rather than eight repairs.
+
+            Observation, not carried. **`EffectiveObservations` is not monotone at exactly nought
+            dispersion.** A night reporting a spread of 0.01 is worth 1 effective observation and the
+            same night reporting no spread at all is worth 23, because a series where nothing disperses
+            takes the design-effect null branch and falls back to one observation per night discounted
+            for overlap. The class says an unknown is read the safe way rather than the flattering one,
+            and it is safe against the row count, which is what the sentence means; it is twenty-three
+            times more generous than the neighbouring known case. Reaching it needs every night's
+            dispersion to be exactly nought, which real controls cannot produce, and one non-zero night
+            puts the whole series back on the design-effect branch. Recorded rather than carried,
+            because the fix is a judgement about which corner to sit in and the corner it sits in is the
+            documented one.
+
+            Observation, not carried. **The handover says adding the stamped tables takes the check
+            "from 10 statements to 47".** The measured figure is 29. Ten is the floor in
+            `fixtures/checks-baseline.json`, recorded 2026-08-26. The 47 is right. Noted because a floor
+            read as a measurement is the same class of error as a figure read over the wrong population,
+            and this record is where a later session would look for the number.
+
+Carried:    **Ten obligations rest outside a checkpoint, and every one carries its due point.**
+            Confirmed against the table, none attempted.
+
+            **Eight at the operator**, not seven: the eighth was raised by the 3.5 reopen. The
+            `CONFIRMED` indicator values for the hand-picked tickers, raised 1.6. The threshold
+            adjustment the count distribution calls for, raised 2.11. The `CONFIRMED` gallery
+            expectations, raised 2.9. The vendor's quota reset boundary, raised 1.1. Whether the tight
+            control set may draw from neighbouring sessions, raised 3.3. The nightly job running only
+            while the user is logged on, raised 3.6. Whether accumulation runs from the branch or from
+            `main`, raised 3.6. And the minimum sample of 262 sized for a normal-theory test where the
+            test run is a studentised bootstrap, raised 3.5.
+
+            **Two at the move**: `tools/nightly.ps1` having no macOS counterpart, and step 6 of the move
+            procedure, copying the secrets file.
+
+            **The two longest-lead items, checked rather than assumed.** Scheduling the nightly job is
+            discharged: seventeen tasks are registered, all `Ready`, their times match the RUNBOOK table
+            exactly, and fourteen slots ran tonight. What remains under that heading is the narrower
+            logged-on limitation, which is a different obligation with its own row and its own reason.
+            Whether accumulation runs from the branch or from `main` is open and unchanged, and merging
+            PR #4 is what makes it answerable rather than what answers it: after the merge `main`
+            carries phase 3 and the working tree the tasks run from is still `phase-3-measurement`, so
+            the choice is a checkout the operator makes and no session can.
+
+            **Five new, raised as rows rather than left in prose**, four due 4.1 and one due 4.6, all
+            stated under Findings above. None blocks.
+
+Verdict:    **Phase 3 signs off, 3.0 through 3.5, with 3.6 parked.** Nothing found here blocks.
+
+            The reason. All seven done conditions hold and were checked rather than asserted: the five
+            stages run and write their rows in the replay, `tools/ci.*` is green at 26 steps and 405
+            tests with the count recorded, `writer-ownership` passes both ways, constants pin and
+            citations resolve, both runners and the rehearsal are green on the head commit, this entry
+            is the sixth, and every checkpoint of this phase carries independent expectations rather
+            than frozen ones alone, counted from the fixture rather than taken on trust: 3.0 has 124
+            `DERIVED` beside 40 `FROZEN`, 3.1 has 3 and 0, 3.2 has 151 and 4, 3.3 has 12 and 5, 3.4 has
+            24 and 0, and 3.5 has 37 and 26, with `frozenOnly` empty. The report is green with nothing
+            unexamined and nothing out of scope resting on a checkpoint that has just landed.
+
+            **The three defects that reopened 3.5 are fixed and each fix was proved by removal**, which
+            is the test this corpus asks for rather than a passing run. Restoring any one of the three
+            turns something red, and the three turn different things: three tests, a named architecture
+            claim, and a fixture case.
+
+            **What signing off does not mean.** 3.6 is not answered and this entry does not claim it.
+            The panel reports both of its conditions every night and no night has yet produced a closed
+            horizon, so the trigger has not been reached and cannot have been. The five obligations
+            raised here are open. And the caution phase 2 carried forward stands one layer on: phase 3's
+            measurements are exercised end to end by an authored accumulation population and by one
+            captured market day in which no horizon closes, so what the fixture holds is the arithmetic
+            rather than the market's answer to it.
+
+            One caution carried into phase 4, not a blocker. **The corpus now has a class of check that
+            cannot see what it was never told about.** Every guard this phase added is sound, and nine
+            of the twenty-one are guarding a list rather than a property. That is a cheaper failure than the six
+            shapes already recorded, because the fix is mechanical and the survey above names each
+            instance, but it is the route by which phase 4's tables, endpoints and surfaces will arrive
+            unguarded if nobody runs the second direction.

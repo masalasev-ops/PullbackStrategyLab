@@ -93,6 +93,7 @@ public sealed partial class ArchitectureConformanceCheck
         ["Proposal cites the planted null signal"] = "6.4",
         ["Variant sample never accumulates"] = "6.7",
         ["Follow-up date is a holiday"] = "3.2",
+        ["A comparison has no control outcomes"] = "3.2",
         ["Someone edits the baseline"] = "5.1",
     };
 
@@ -313,12 +314,19 @@ public sealed partial class ArchitectureConformanceCheck
                     "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning",
                     "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
                     + "The scan asks only that the run scope still exposes what is left"))
+            .Scan("Failure behaviour: A comparison has no control outcomes",
+                CheckCoverage.Backing.Test(
+                    "ForwardReturnFillerTests.A_control_draw_produces_forward_returns_of_kind_control",
+                    "a control draw is seeded and the rows are read back by subject kind, which is the "
+                    + "behaviour the scan's two source shapes stand for. The scan alone would have passed "
+                    + "for the whole of phase 3 had the query been present and unreachable"))
             .Scan("the catalogue's components exist and are registered, found by scanning declarations and registrations",
-                CheckCoverage.Backing.None(
-                    "nothing builds the host and asks the container to resolve every catalogue component. A "
-                    + "component registered in a line the registration pattern does not match would be reported "
-                    + "as unregistered, which fails loudly; one whose registration is present and unreachable "
-                    + "would not, and that is the direction with no test under it"));
+                CheckCoverage.Backing.Test(
+                    "ComponentReachabilityTests.Every_stage_the_entry_point_advertises_has_an_arm_in_the_dispatch",
+                    "the direction this scan cannot see is a registration that is present and unreachable: a "
+                    + "line the pattern does not match fails loudly, and a stage in the table with no arm in "
+                    + "the dispatch passes. The test resolves each advertised name against the dispatch, which "
+                    + "is exactly the gap between registered and reachable"));
 
         foreach (IGrouping<string, Claim> table in claims.GroupBy(c => c.Table, StringComparer.Ordinal))
         {
@@ -657,6 +665,18 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
                 : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
 
+            "Follow-up date is a holiday" => TheFillStoresBothDates()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "ForwardReturnFiller measures to the session the horizon lands on and stores the calendar date beside it, and the authored subjects assert both branches")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the fill no longer records the intended date beside the session actually used, so a follow-up that crossed a holiday reads as though it had not"),
+
+            "A comparison has no control outcomes" => TheFillRecordsBothSubjectKinds()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "ForwardReturnFiller reads control_setup as well as setup, binds each row's own subject kind rather than a literal, and the fixture carries a closed-horizon population whose control outcomes exist")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the fill no longer records an outcome for a control, so band 1's difference series is empty on every night and the panel is withheld for a cause that is not the one it names"),
+
             _ => Claim.NotExamined("Failure behaviour", condition,
                 "the checkpoint that builds it has landed and no assertion reads this row"),
         };
@@ -698,6 +718,99 @@ public sealed partial class ArchitectureConformanceCheck
             && typeof(CapResult).GetProperty(nameof(CapResult.LongCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.ShortCandidates)) is not null
             && typeof(CapResult).GetProperty(nameof(CapResult.CappedOut)) is not null;
+    }
+
+    /// <summary>
+    /// The fill records an outcome for both subject kinds, asked of the source and of the fixture.
+    ///
+    /// <b>Source alone would not hold this and the corpus has the scars to prove it.</b> The
+    /// statement that wrote control rows was absent for the whole of phase 3 while every instrument
+    /// stayed green, so what is asked here is the shape in the file <i>and</i> that the committed
+    /// fixture carries a population whose control outcomes actually exist. The behavioural half
+    /// lives in <c>ForwardReturnFillerTests</c>, which seeds a draw and reads the rows back.
+    /// </summary>
+    private static bool TheFillRecordsBothSubjectKinds()
+    {
+        string filler = RepositoryLayout.Read(System.IO.Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "ForwardReturnFiller.cs"));
+
+        // The subject query has to exist and the insert has to take each subject's own kind. A
+        // literal here is exactly what shipped, and it read as deliberate.
+        if (!filler.Contains("FROM control_setup", StringComparison.Ordinal)
+            || !filler.Contains(
+                "AddWithValue(\"@subject_kind\", subject.Kind)", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string expectations = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Root, "fixtures", "expectations.json"));
+
+        using JsonDocument document = JsonDocument.Parse(expectations);
+
+        foreach (JsonElement expectation in document.RootElement.GetProperty("expectations").EnumerateArray())
+        {
+            if (!string.Equals(
+                    expectation.GetProperty("id").GetString(),
+                    "accumulation.forward.controlsWritten",
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            // A committed figure of nought is the state the defect produced, so the expectation
+            // existing is not enough on its own.
+            return int.TryParse(expectation.GetProperty("value").GetString(), out int written) && written > 0;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The fill stores the calendar horizon beside the session it actually used, and the authored
+    /// subjects exercise both branches.
+    ///
+    /// Both halves are required, and the second is the one worth stating. A filler that always
+    /// slipped forward would satisfy every holiday case and be wrong on every ordinary week, so the
+    /// claim is not "a slip is recorded" but "a slip and a non-slip are told apart". The case file
+    /// carries a mid-week subject for exactly that, and this reads the committed expectations for
+    /// one of each rather than trusting the file's prose.
+    /// </summary>
+    private static bool TheFillStoresBothDates()
+    {
+        string filler = RepositoryLayout.Read(System.IO.Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "ForwardReturnFiller.cs"));
+
+        if (!filler.Contains("@intended_date", StringComparison.Ordinal)
+            || !filler.Contains("@actual_date", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string expectations = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Root, "fixtures", "expectations.json"));
+
+        using JsonDocument document = JsonDocument.Parse(expectations);
+
+        bool slipped = false;
+        bool held = false;
+
+        foreach (JsonElement expectation in document.RootElement.GetProperty("expectations").EnumerateArray())
+        {
+            string id = expectation.GetProperty("id").GetString() ?? string.Empty;
+
+            if (!id.StartsWith("forward.", StringComparison.Ordinal)
+                || !id.EndsWith(".slipped", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string value = expectation.GetProperty("value").GetString() ?? string.Empty;
+            slipped |= string.Equals(value, "yes", StringComparison.Ordinal);
+            held |= string.Equals(value, "no", StringComparison.Ordinal);
+        }
+
+        return slipped && held;
     }
 
     private static bool BothDetectorsRecordAnErrorRow() =>
@@ -788,11 +901,27 @@ public sealed partial class ArchitectureConformanceCheck
             // BUILD_PLAN is keyed by the checkpoint that raised each obligation, so reading it
             // as a schedule would place a component against the checkpoint that complained
             // about it rather than the one that builds it.
+            // The phase sections stop where the carried-obligations table begins, and that bound is
+            // load-bearing rather than tidy. The table sits after the last phase heading, so without
+            // it the final section runs to the end of the file and every obligation row whose
+            // "Raised" column looks like a checkpoint is read as a checkpoint row. An obligation
+            // raised at 3.0 that mentions VariantAdmitter then places VariantAdmitter at 3.0, and
+            // the claim fails saying a component due in phase 5 does not exist yet. Found at 3.0,
+            // where the first obligation row to name an unbuilt component was written; the comment
+            // below always said this must not happen and nothing stopped it.
+            int obligations = buildPlan.IndexOf("## Carried obligations", StringComparison.Ordinal);
+            int schedules = obligations < 0 ? buildPlan.Length : obligations;
+
             MatchCollection phases = PhaseHeading().Matches(buildPlan);
             for (int i = 0; i < phases.Count; i++)
             {
                 int start = phases[i].Index;
-                int end = i + 1 < phases.Count ? phases[i + 1].Index : buildPlan.Length;
+                int end = i + 1 < phases.Count ? phases[i + 1].Index : schedules;
+
+                if (start >= schedules)
+                {
+                    break;
+                }
 
                 foreach (Match row in CheckpointRow().Matches(buildPlan[start..end]))
                 {

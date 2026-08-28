@@ -33,6 +33,8 @@ public sealed class NightlyOrderTests
             ["universe-build"] = "the universe build is weekly rather than nightly",
             ["universe-build (floor lifted)"] = "the replay's second screen, which exists only here",
             ["backfill"] = "the one-time history seed, which the replay runs in front of the night",
+            ["ceiling"] = "the win-rate bound is recomputed weekly rather than nightly, so RUNBOOK "
+                + "schedules it under Every week and the nightly table correctly does not name it",
         };
 
     [Fact]

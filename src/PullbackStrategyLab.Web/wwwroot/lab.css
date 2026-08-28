@@ -222,3 +222,129 @@ h2 .count { color: var(--ink3); font-size: 13px; font-weight: 400; }
 
 kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--rule);
       border-bottom-width: 2px; border-radius: 3px; background: var(--panel); }
+
+/*
+    The scoreboard.
+
+    A class of its own rather than reusing `.band`, which is the status strip across the top of
+    every page and lays its children out in a flex row. Two things called a band on one page is
+    how a later edit to one silently rearranges the other.
+*/
+.scoreboard-band {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--panel);
+    padding: 12px 16px;
+    margin: 0 0 16px;
+}
+
+.scoreboard-band h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.panels {
+    margin: 8px 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+}
+
+.panel {
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 8px 10px;
+}
+
+.panel dt {
+    font-size: 11px;
+    color: var(--ink3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.panel dd {
+    margin: 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.panel .figure {
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The count is never optional, so it is never styled as an aside that can be skipped. */
+.panel .count {
+    font-size: 11px;
+    color: var(--ink2);
+    font-variant-numeric: tabular-nums;
+}
+
+.panel .interval {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.panel .interval.clears {
+    color: var(--good, #1a7f37);
+}
+
+.panel .interval.does-not-clear {
+    color: var(--ink3);
+}
+
+/*
+    The condition under which a panel reads badly, shown beside every panel that has one, because
+    a scoreboard that can only show good news is decoration.
+*/
+.panel .warns {
+    font-size: 11px;
+    color: var(--ink3);
+    line-height: 1.35;
+}
+
+.panel.withheld {
+    border-style: dashed;
+}
+
+/*
+    Which rows a panel was computed over. On every panel without exception, because two panels on
+    this page use different populations and at the calibrated thresholds they differ by three orders
+    of magnitude.
+*/
+.panel .over {
+    font-size: 11px;
+    color: var(--ink3);
+    font-variant-numeric: tabular-nums;
+}
+
+/*
+    Whether the panel has enough evidence to be read yet. On band 1 alone, because band 1 is the
+    panel the decision point fires on, and a trigger a reader cannot see is a date in disguise.
+*/
+.panel .minimum {
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.panel .minimum.reached {
+    color: var(--good, #1a7f37);
+}
+
+.panel .minimum.waiting {
+    color: var(--ink3);
+}
+
+/*
+    Why a panel shows no figure, which is a different question from whether the minimum is reached.
+    The interval needs sessions, the decision needs evidence, and the two can disagree, so they are
+    two lines rather than one.
+*/
+.panel .withheld-because {
+    font-size: 11px;
+    color: var(--ink3);
+    line-height: 1.35;
+}
