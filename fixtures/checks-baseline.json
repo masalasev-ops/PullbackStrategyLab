@@ -35,10 +35,10 @@
     "carried-obligations": {
       "scopes": {
         "due points the obligations table declares": 4,
-        "due points named inside a Carried block": 52
+        "due points named inside a Carried block": 52,
+        "of those whose due point has not landed, which is what is reconciled": 1
       },
       "context": [
-        "of those in the live tail, which is what is reconciled",
         "Carried blocks in PROGRESS"
       ]
     },

@@ -50,32 +50,35 @@ public sealed partial class CarriedObligationsCheck
         IReadOnlySet<string> scheduled = DuePoints(buildPlan);
         IReadOnlyList<Mention> mentions = Mentions(progress);
 
-        // Only the live tail of the record, and this is the whole of the narrowing.
+        // What is reconciled is every mention whose due point has not landed, and the narrowing is
+        // that one clause and nothing else.
         //
         // PROGRESS is append-only and its entries are history. A phase 1 block naming 1.7 is an
-        // obligation 1.7 discharged and the table then dropped; a 2.11 block naming 3.1 was true
-        // when it was written and stayed true until 3.0 repointed it. Neither is a hole, and
-        // reconciling them would be fifty-six false alarms on the first run. A check that cries
-        // wolf on its first run is a check somebody deletes, which is the objection that kept this
-        // one open for a phase.
-        //
-        // What is live is what has been written since the last checkpoint PROGRESS records. That is
-        // the commit being made rather than the archive, and it is where the failure actually
-        // happens: an obligation written into a `Carried` block tonight that never reaches the
-        // table. Correcting a dated entry is the one thing an append-only record must never do, so
-        // history is read and not reconciled.
+        // obligation 1.7 discharged and the table then dropped, so reconciling it would be a false
+        // alarm about work that is done. An obligation whose due point is still ahead is the
+        // opposite: it has to be in the table, because the table is the only place anything reads
+        // for work. Correcting a dated entry is the one thing an append-only record must never do,
+        // so history is read and not reconciled.
         // see: Nothing in the corpus is struck through
+        //
+        // <b>It used to filter on the entry as well, and that made it reconcile nothing.</b> The
+        // clause was `!schedule.HasLanded(m.Entry)`, and every `Carried` block sits under a PROGRESS
+        // entry heading whose existence is what makes that checkpoint landed. So the guard's window
+        // closed in the same commit that created the thing to guard, for every numbered checkpoint,
+        // and the run's own coverage line recorded "of those in the live tail, which is what is
+        // reconciled: 0" from 3.0 onward with nothing floored to notice. The live-tail cutoff on
+        // top of it was the same defect a second time: the tail begins after the last checkpoint
+        // PROGRESS records, and a checkpoint's own entry is that record.
+        //
+        // Reconciling on the due point alone took the count from 0 to 10 and found the hole on the
+        // first run: the 1.5 corrections entry carries an obligation due at 6.5 that never reached
+        // the table. 6.5's own done condition names the test, so it was scheduled in substance and
+        // absent from the one place obligations are supposed to live, which is exactly the failure
+        // the check's own docstring says has happened four times.
         ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
 
-        int liveFrom = LiveTailStarts(progress, schedule);
-
-        IReadOnlyList<Mention> open =
-            [.. mentions.Where(m => m.At >= liveFrom
-                                    && !schedule.HasLanded(m.Entry)
-                                    && !schedule.HasLanded(m.DuePoint))];
-
-        IReadOnlyList<Mention> unscheduled =
-            [.. open.Where(m => !scheduled.Contains(m.DuePoint))];
+        IReadOnlyList<Mention> open = Live(mentions, schedule.HasLanded);
+        IReadOnlyList<Mention> unscheduled = Unscheduled(open, scheduled);
 
         coverage
             .Examined("due points the obligations table declares", scheduled.Count)
@@ -84,10 +87,16 @@ public sealed partial class CarriedObligationsCheck
             // the block or the due-point pattern stopped matching and the check is reconciling an
             // empty list. Every empty list reconciles.
             .Examined("due points named inside a Carried block", mentions.Count)
-            // Not floored, because its size is a fact about where the cycle is rather than about
-            // the property: the live tail resets to nothing the moment a checkpoint lands, so a
-            // floor on it would go red on the next PROGRESS entry rather than on a defect.
-            .Context("of those in the live tail, which is what is reconciled", open.Count)
+            // Floored, and it is the scope that carries the property: this is the number of
+            // obligations actually put to the table. It was 0 for the whole of phase 3, recorded as
+            // context, which is a floor's absence doing exactly what the corpus says it does.
+            //
+            // The floor is 1 rather than today's 10, and the direction of the risk is why. This
+            // count legitimately *falls* as due points land, so a floor at the current value would
+            // go red on the commit that discharges 4.1's seventeen rows, which is a false alarm
+            // about work being done. What it has to catch is the count reaching nothing, and the
+            // assertion below says that in words rather than leaving it to a number nobody reads.
+            .Examined("of those whose due point has not landed, which is what is reconciled", open.Count)
             .Context("Carried blocks in PROGRESS", blocks.Count)
             .Scan(
                 "that every due point a Carried block names is one the obligations table also has",
@@ -106,68 +115,86 @@ public sealed partial class CarriedObligationsCheck
         Assert.True(scheduled.Count >= 3,
             $"Only {scheduled.Count} due point(s) parsed out of the obligations table.");
 
+        // The one this check spent phase 3 failing to say. Reconciling nothing is not a pass, and
+        // it is indistinguishable from a pass in every number above except this one.
+        Assert.True(open.Count > 0,
+            $"{mentions.Count} due point(s) are named in a Carried block and none of them was reconciled, "
+            + "because every one names a due point that has already landed. Either the record holds no open "
+            + "obligation at all, which the obligations table can be read to confirm, or the filter has "
+            + "emptied itself and this check is asserting over nothing. The second is what happened from 3.0 "
+            + "until 3.10.");
+
         Assert.True(unscheduled.Count == 0,
             $"{unscheduled.Count} due point(s) named in a Carried block have no obligation row:\n  "
             + string.Join("\n  ", unscheduled.Select(m => $"{m.Entry} says \"{m.DuePoint}\"")));
     }
 
     /// <summary>
-    /// The guard, proved against blocks written here rather than against the corpus.
+    /// Which mentions are still open: the ones whose due point has not landed.
+    ///
+    /// A named function rather than a lambda inside the check, so the proof below can run the
+    /// reconciliation itself instead of a copy of it. The copy is how the previous proof passed
+    /// while the live filter reconciled nothing: it re-implemented the intended rule inline and
+    /// asserted against its own re-implementation, so the clause that emptied the real set was
+    /// never on the path the proof took.
+    /// </summary>
+    public static IReadOnlyList<Mention> Live(IEnumerable<Mention> mentions, Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(mentions);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        return [.. mentions.Where(m => !hasLanded(m.DuePoint))];
+    }
+
+    /// <summary>Open mentions whose due point no obligation row declares.</summary>
+    public static IReadOnlyList<Mention> Unscheduled(
+        IEnumerable<Mention> live, IReadOnlySet<string> scheduled)
+    {
+        ArgumentNullException.ThrowIfNull(live);
+        ArgumentNullException.ThrowIfNull(scheduled);
+
+        return [.. live.Where(m => !scheduled.Contains(m.DuePoint))];
+    }
+
+    /// <summary>
+    /// The guard, proved by running the reconciliation against blocks written here.
     ///
     /// A check whose only subject is the repository is a check nobody can break on purpose, and this
     /// one exists because the fault it catches is silent by construction.
+    ///
+    /// <b>It calls <see cref="Live"/> and <see cref="Unscheduled"/>, which is what the check calls.</b>
+    /// The earlier version of this test re-implemented the filter inline and asserted against its
+    /// own copy, so it proved a rule the check did not run: the live filter also demanded that the
+    /// mention's own entry had not landed, which is never true of a numbered checkpoint's own
+    /// PROGRESS entry, and this test passed for the whole of phase 3 over a reconciliation of zero
+    /// items. The two cases below are the two directions, and the third asserts that a mention
+    /// whose due point has already landed is not reconciled, which is the one narrowing that stays.
     /// </summary>
     [Fact]
     public void A_carried_block_naming_an_unscheduled_due_point_is_caught()
     {
         var scheduled = new HashSet<string>(["3.0", "3.7", "the operator"], StringComparer.Ordinal);
+        var landed = new HashSet<string>(["1.7"], StringComparer.Ordinal);
 
         IReadOnlyList<Mention> mentions =
         [
             new("2.4", "3.0", 0),
             new("2.5", "4.9", 0),
             new("2.6", "the operator", 0),
+            new("1.3", "1.7", 0),
         ];
 
-        IReadOnlyList<Mention> unscheduled = [.. mentions.Where(m => !scheduled.Contains(m.DuePoint))];
+        IReadOnlyList<Mention> open = Live(mentions, landed.Contains);
 
-        Mention only = Assert.Single(unscheduled);
+        // The landed one drops out and the other three are reconciled. A filter that emptied the
+        // set would fail here rather than further down, where an empty set has nothing unscheduled
+        // in it and reads as a pass.
+        Assert.Equal(3, open.Count);
+        Assert.DoesNotContain(open, m => m.DuePoint == "1.7");
+
+        Mention only = Assert.Single(Unscheduled(open, scheduled));
         Assert.Equal("4.9", only.DuePoint);
         Assert.Equal("2.5", only.Entry);
-    }
-
-    /// <summary>
-    /// Where the live tail of the record begins: just after the last entry naming a checkpoint
-    /// PROGRESS records as landed.
-    ///
-    /// Everything before it is history and is read rather than reconciled. Everything after it is
-    /// what the session in progress has written, which is what this check guards.
-    /// </summary>
-    /// <summary>
-    /// Two conditions rather than one, because either alone lets a live block through as history or
-    /// a historical one through as live.
-    ///
-    /// The position rules out everything before the last landed entry, which is what makes the
-    /// sign-off entries headed "Phase 2 sign-off" history rather than perpetually live: their
-    /// heading names no checkpoint, so the landed test alone would never retire them. The entry's
-    /// own checkpoint rules out the last landed entry itself, whose `Carried` block is as much
-    /// history as the ones above it and whose due points a later checkpoint may legitimately have
-    /// repointed. Correcting either would mean editing a dated entry.
-    /// see: Nothing in the corpus is struck through
-    /// </summary>
-    private static int LiveTailStarts(string progress, ArchitectureConformanceCheck.Schedule schedule)
-    {
-        int last = 0;
-
-        foreach (Match heading in EntryHeading().Matches(progress))
-        {
-            if (schedule.HasLanded(heading.Groups["entry"].Value))
-            {
-                last = heading.Index;
-            }
-        }
-
-        return last;
     }
 
 

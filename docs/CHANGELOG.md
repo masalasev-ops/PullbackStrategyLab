@@ -947,3 +947,8 @@ Why:  `tools/ci.sh` could not report a failure and had not been able to for the 
 Was:  A Phase 3 table ending at 3.9.
 Now:  A 3.10 row, being the verification repair in eight lettered parts, with its done condition.
 Why:  A full code review after 3.9 found the CI script above, three checks asserting less than their names, four claims that pass by comparing nothing, and the shipped defects those gaps were covering. None of it fits inside an existing checkpoint: 3.8 and 3.9 are closed and recorded, and the work is not a deliverable either one owed. The parts are ordered by dependency rather than by severity because every part after the first is verified by a script that could not fail.
+
+### 2026-08-28 — BUILD_PLAN.md — cites Nothing in the corpus is struck through
+Was:  A carried-obligations table with no row for the empty tool set on the researcher's subscription path.
+Now:  A `| 1.5 | ... | 6.5 |` row for it, naming what the obligation is and that 6.5's own done condition already carries the test.
+Why:  `carried-obligations` found it on the first run it ever reconciled anything. The obligation was written into the phase 1 corrections entry on 2026-08-25 and never given a row, so for three phases it was scheduled in substance, by 6.5's done condition, and absent from the one place the corpus says obligations live. That is the failure the check's own docstring says has happened four times, and this is the fifth.
