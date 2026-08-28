@@ -186,15 +186,16 @@
     "point-in-time": {
       "scopes": {
         "public reads on the store's readers": 28,
-        "statements selecting from a stamped table": 32,
-        "stamped tables the check knows about": 13,
-        "exempted files, each with its reason": 2,
-        "directions of the future-dated case": 2,
-        "dateless reads exempted by name, each with its reason": 1,
-        "stamps in the list that no read bounds, each with its reason": 1
+        "statements selecting from a stamped table": 57,
+        "stamped tables the check knows about": 14,
+        "directions of the future-dated case": 2
       },
       "context": [
-        "SQL statements read across the shipped source"
+        "SQL statements read across the shipped source",
+        "exempted files, each with its reason",
+        "stamps in the list that no read bounds, each with its reason",
+        "statements exempted by a fragment of themselves, each with its reason",
+        "dateless reads exempted by name, each with its reason"
       ]
     },
     "price-storage-form": {

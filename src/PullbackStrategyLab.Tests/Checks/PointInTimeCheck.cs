@@ -145,7 +145,44 @@ public sealed class PointInTimeCheck
                 + "that night should have recorded and a rebuild for that date should see it. The mark is for "
                 + "excluding corrected rows from an analysis, not for hiding them from a rebuild. It is also the "
                 + "one nullable stamp here, and the predicate the others use would hide every uncorrected row.",
+            ["detector_error"] =
+                "nothing reads these rows to decide anything. They are counted, and read by a person asking what "
+                + "last night lost, and the stamp records when the failure was seen rather than bounding what may "
+                + "be believed. Bounding it to the session's own day would hide the errors of a late rerun from "
+                + "exactly the reader the table exists for, which is the opposite of the property. The table "
+                + "joined the stamped list at 3.9 because every observation stamp belongs there; being stamped "
+                + "and being a bound are different claims and this is the one table where they part.",
         };
+
+    /// <summary>
+    /// One statement that legitimately does not bound its stamp, named by a fragment of itself
+    /// rather than by the file it sits in.
+    ///
+    /// <b>By statement rather than by file, because both files below hold a bounded read as well.</b>
+    /// <see cref="Exempt"/> is keyed by file, and a file-level exemption on either of these would
+    /// take the guard off the correct read sitting beside the exempt one. That is the narrowing this
+    /// checkpoint is about, so the exemption added to permit a repair does not get to be an instance
+    /// of it.
+    ///
+    /// Every fragment has to match a statement that is actually there. An exemption covering nothing
+    /// is a comment that reads as a guard.
+    /// </summary>
+    public static IReadOnlyList<StatementExemption> ExemptStatements { get; } =
+    [
+        new("IndicatorDailyReader.cs", "WHERE ticker = @ticker AND as_of = @session",
+            "Latest asks which computation of a session is newest, whenever it was made, so the engine can tell "
+            + "a rerun that produces identical figures from a rebuild that produces different ones. The answer is "
+            + "about the store's contents rather than about a night, and bounding it would make a rebuild blind "
+            + "to its own prior row and write a duplicate. The evidence read in the same file takes an as-of and "
+            + "bounds computed_at against it."),
+        new("SetupSignalReader.cs", "SELECT signal_name FROM setup_signal WHERE setup_id = @setup_id",
+            "NamesFor asks which signals are already frozen for one setup, which is what makes a rerun write "
+            + "nothing. It is a question about what is in the store, it takes no date because it is not answering "
+            + "for one, and bounding it would let a rerun write a second copy of a signal it had already frozen."),
+    ];
+
+    /// <summary>A statement exempted by a fragment of its own text, with the reason.</summary>
+    public sealed record StatementExemption(string File, string Fragment, string Why);
 
     /// <summary>
     /// Statements that select from a stamped table and legitimately do not bound the stamp, by the
@@ -225,8 +262,9 @@ public sealed class PointInTimeCheck
         //    cannot hold: a query beside a reader is not bound by the reader's shape.
         int statementsExamined = 0;
         int stampedStatements = 0;
+        var exemptionsMatched = new HashSet<StatementExemption>();
 
-        foreach (string file in RepositoryLayout.ProductionSourceFiles.Where(NotAReader))
+        foreach (string file in RepositoryLayout.ProductionSourceFiles)
         {
             string source = RepositoryLayout.Read(file);
             string name = Path.GetFileName(file);
@@ -244,7 +282,17 @@ public sealed class PointInTimeCheck
 
                     stampedStatements++;
 
-                    if (statement.Contains(stamp, StringComparison.Ordinal)
+                    StatementExemption? exemption = ExemptStatements.FirstOrDefault(
+                        e => string.Equals(e.File, name, StringComparison.Ordinal)
+                             && statement.Contains(e.Fragment, StringComparison.Ordinal));
+
+                    if (exemption is not null)
+                    {
+                        exemptionsMatched.Add(exemption);
+                        continue;
+                    }
+
+                    if (Bounds(statement, stamp)
                         || Exempt.ContainsKey(name)
                         || NotBounded.ContainsKey(table))
                     {
@@ -256,6 +304,16 @@ public sealed class PointInTimeCheck
                         + "after the date it is answering for.");
                 }
             }
+        }
+
+        // An exemption that matched nothing has gone stale, and a stale exemption reads as a guard
+        // while covering a statement that is no longer there.
+        foreach (StatementExemption stale in ExemptStatements.Where(e => !exemptionsMatched.Contains(e)))
+        {
+            failures.Add(
+                $"the statement exemption for {stale.File} matched nothing. Its fragment "
+                + $"\"{stale.Fragment}\" is in no statement in that file, so the exemption covers a read that has "
+                + "moved or gone. Remove it, or point it at the statement it is now about.");
         }
 
         // 3. The behaviour, both directions.
@@ -277,9 +335,15 @@ public sealed class PointInTimeCheck
             .Examined("public reads on the store's readers", readsExamined)
             .Examined("statements selecting from a stamped table", stampedStatements)
             .Examined("stamped tables the check knows about", Stamped.Count)
-            .Examined("exempted files, each with its reason", Exempt.Count)
-            .Examined("stamps in the list that no read bounds, each with its reason", NotBounded.Count)
-            .Examined("dateless reads exempted by name, each with its reason", DatelessByName.Count)
+            // The four exemption counts are context and carry no floor, deliberately. A floor is a
+            // minimum, so flooring an exemption count fails the run when an exemption is *removed*,
+            // which is what fixing the gap under it looks like. Narrowing stays silent and
+            // tightening goes red, which is the incentive backwards. What carries the property here
+            // is the number of reads and statements examined, and those are floored above.
+            .Context("exempted files, each with its reason", Exempt.Count)
+            .Context("stamps in the list that no read bounds, each with its reason", NotBounded.Count)
+            .Context("statements exempted by a fragment of themselves, each with its reason", ExemptStatements.Count)
+            .Context("dateless reads exempted by name, each with its reason", DatelessByName.Count)
             .Examined("directions of the future-dated case", 2)
             .Context("SQL statements read across the shipped source", statementsExamined)
             .Scan("every public read on a store reader takes a date",
@@ -495,9 +559,29 @@ public sealed class PointInTimeCheck
             or "CurrentMembers" or "ForTicker" or "MarketCap" or "Industry" or "SessionsStored"
             or "Series" or "Open" or "Demands";
 
-    private static bool NotAReader(string file) =>
-        !file.Replace(Path.DirectorySeparatorChar, '/')
-            .Contains("/PullbackStrategyLab.Data/", StringComparison.Ordinal);
+    /// <summary>
+    /// Whether a statement uses the stamp in a predicate, rather than merely naming it.
+    ///
+    /// <b>This was <c>statement.Contains(stamp)</c> until 3.10, and the store readers were not read
+    /// at all.</b> Half two skipped every file under <c>PullbackStrategyLab.Data</c> on the ground
+    /// that half one covered them, and half one only asserts that a method's signature carries a
+    /// <see cref="DateOnly"/>. Between the two, nothing asserted that a reader's query bounded
+    /// anything, and the containment test would not have caught it either: a statement naming the
+    /// column in its <c>SELECT</c> list satisfied it. <c>SetupSignalReader.Read</c> was on the wrong
+    /// side of both and selects <c>s.computed_at</c>, so it passed twice over.
+    ///
+    /// A bound is a comparison. The forms the shipped source uses are the operators against a
+    /// parameter, the correlated <c>= (SELECT MAX(...))</c>, an equality against another table's
+    /// stamp in a join, and <c>IS NULL</c> for the rows a backfill could not stamp. All four put the
+    /// stamp next to an operator, and a mention in a projection does not.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    private static bool Bounds(string statement, string stamp) =>
+        Regex.IsMatch(
+            statement,
+            @"(?:\w+\s*\.\s*)?\b" + Regex.Escape(stamp) + @"\b\s*(?:<=|>=|<>|!=|<|>|=|\bIS\b)",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            TimeSpan.FromSeconds(2));
 
     /// <summary>
     /// Whether a statement selects from this table, rather than merely mentioning its name.
