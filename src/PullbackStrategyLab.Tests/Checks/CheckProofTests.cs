@@ -713,7 +713,7 @@ public sealed class CheckProofTests
         // job added or renamed moves this line. That is the point: a job silently disappearing would
         // leave a Backing.Runner reading as covered while nothing exercised it.
         Assert.Equal(
-            ["rehearsal", "slot-diagnostics", "suite"],
+            ["rehearsal", "slot-diagnostics", "slot-diagnostics-inverted", "suite"],
             CheckCoverage.WorkflowJobs.Order(StringComparer.Ordinal));
     }
 

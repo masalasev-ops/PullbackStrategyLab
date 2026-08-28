@@ -132,10 +132,91 @@ jobs:
 
           Write-Output "the stage's message and its stop line are both in the log; the slot exited $code"
 
+          # And the same script under pwsh, recorded rather than required.
+          #
+          # This repository is cross-platform by decision and powershell.exe does not exist on
+          # macOS, so the slot script's dependency on Windows PowerShell is a real portability
+          # question rather than a detail. Pinning one interpreter's behaviour would assert
+          # something about an interpreter the scheduler does not use on one platform and cannot
+          # use on the other; requiring them to agree would fail for a reason nobody has decided.
+          # So both run and the job prints what each did, and the divergence is carried as an
+          # obligation against the move rather than settled here.
+          Remove-Item data/live/logs/*.log -ErrorAction SilentlyContinue
+          & pwsh -NoProfile -File tools/nightly.ps1 -Slot universe
+          $pwshCode = $LASTEXITCODE
+
+          $pwshLog = Get-ChildItem data/live/logs/nightly-*.log -ErrorAction SilentlyContinue | Select-Object -First 1
+          $pwshText = if ($null -eq $pwshLog) { '' } else { Get-Content $pwshLog.FullName -Raw }
+
+          $pwshKeptMessage = $pwshText -match 'No vendor token is configured'
+          $pwshKeptStopLine = $pwshText -match 'universe-build exited \d+; slot universe stops here'
+
+          Write-Output "interpreter comparison, recorded rather than required:"
+          Write-Output "  powershell.exe  message kept True   stop line kept True   exit $code"
+          Write-Output "  pwsh            message kept $pwshKeptMessage   stop line kept $pwshKeptStopLine   exit $pwshCode"
+
           # The step passed, and it has to say so. GitHub appends `exit $LASTEXITCODE` to a pwsh
-          # step, and $LASTEXITCODE is still the 1 the deliberate failure set, so the step would
+          # step, and $LASTEXITCODE is still the exit code of the last thing run, so the step would
           # report the failure it was written to require. Third layer of the same bug in one
-          # checkpoint: a tooling layer carrying the wrong verdict for the thing below it.
+          # checkpoint: a tooling layer carrying the wrong verdict for the thing below it. The
+          # slot-diagnostics-inverted job is what stops this line turning a real failure green.
+          exit 0
+
+  # The inverted job: a failing assertion has to make the job red.
+  #
+  # The fix for the third layer is the dangerous direction. Windows PowerShell discarded the stage's
+  # message; pwsh 7.4 would have raised before the assertions ran; and then the step's own success
+  # was overwritten by the exit code of the thing it was testing, so it exits 0 explicitly. That
+  # explicit exit is exactly what can turn a real failure green, and nothing above it would notice.
+  #
+  # So this job runs the same shape with the assertion inverted and requires the outer step to fail.
+  # If `exit 0` ever moves above the assertions, or swallows them, this job goes green and says so.
+  slot-diagnostics-inverted:
+    name: a failing assertion makes the slot job red
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: a migrated store for the slot to open
+        shell: pwsh
+        env:
+          PullbackStrategyLab__DataRoot: ${{ github.workspace }}/data/live
+        run: dotnet run --project src/PullbackStrategyLab.Worker -- migrate
+
+      - name: an assertion that must fail takes the step with it
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ErrorActionPreference = 'Continue'
+
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          $code = $LASTEXITCODE
+          $ErrorActionPreference = 'Stop'
+
+          $log = Get-ChildItem data/live/logs/nightly-*.log | Select-Object -First 1
+          $text = Get-Content $log.FullName -Raw
+
+          # Deliberately false: the log cannot carry a message no stage ever wrote. The real job's
+          # assertions are the same shape, so if this one passes they prove nothing either.
+          $failed = $false
+          try {
+            if ($text -notmatch 'a message no stage has ever written') {
+              throw 'the inverted assertion fired, which is what it is here to do.'
+            }
+          } catch {
+            $failed = $true
+          }
+
+          if (-not $failed) {
+            throw "The inverted assertion did not fire, so the real job's assertions cannot be trusted to either."
+          }
+
+          Write-Output "the inverted assertion fired; the slot exited $code"
           exit 0
 
   # The migration rehearsal, on a case-sensitive filesystem.
