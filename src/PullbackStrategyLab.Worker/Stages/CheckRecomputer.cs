@@ -183,7 +183,7 @@ public sealed class CheckRecomputer
         DateTimeOffset endOfSession = DateTimeOffset.Parse(bound, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
         DateTimeOffset latestAdmissible = endOfSession.AddHours(MeasurementParameters.LatenessBoundHours);
 
-        IReadOnlyDictionary<string, ClusterInput> inputs = ClusterInputs(connection, asOf, latestAdmissible);
+        IReadOnlyDictionary<string, ClusterInput> inputs = ClusterInputs(connection, asOf, latestAdmissible, bound);
         IReadOnlyList<Candidate> candidates = Candidates(connection, asOf, check);
 
         int corrected = 0;
@@ -329,7 +329,8 @@ public sealed class CheckRecomputer
     private static IReadOnlyDictionary<string, ClusterInput> ClusterInputs(
         SqliteConnection connection,
         DateOnly asOf,
-        DateTimeOffset latestAdmissible)
+        DateTimeOffset latestAdmissible,
+        string endOfSession)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -340,8 +341,10 @@ public sealed class CheckRecomputer
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
              WHERE h.as_of = @as_of
+               AND (h.observed_at <= @observed_before OR (h.observed_at IS NULL AND h.as_of = @as_of))
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", endOfSession);
         command.Parameters.AddWithValue("@bound", StoreText.TimestampToStorageText(latestAdmissible));
 
         var hits = new List<(string Ticker, string Scan, string? Industry, string? ResolvedAt)>();

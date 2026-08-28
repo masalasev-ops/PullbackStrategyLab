@@ -188,8 +188,11 @@ Grain: ticker + date + scan.
 | `rank` | INTEGER | 1 to 50, by that scan's own magnitude (see: The scans select a fixed count by rank, not a threshold on the move) |
 | `magnitude` | TEXT | the ratio the rank was taken on, a fraction, on the adjusted basis |
 | `cluster_count` | INTEGER | same-industry hits that night. Written by ThemeClusterer |
+| `observed_at` | TEXT | when the lab observed the hit. Null on rows written before the column existed and never backfilled |
 
 Insert ScanEngine · Update ThemeClusterer (`cluster_count` only) · PK (`ticker`, `as_of`, `scan`)
+
+**`observed_at` exists because a hit inserted for a past session was otherwise invisible to every bound rather than merely unbounded by one.** A rerun of `scans` for an old date wrote rows no point-in-time read could tell from the originals, and a cluster count derived afterwards would have counted them silently. Every read now bounds it, and **a null is refused by a read of any session other than the row's own** rather than treated as always-visible: a row with no provenance is honestly unavailable to history and honestly available to the session it is dated for. Migration 029 backfilled the 300 rows that predate the column from the `scans` run that wrote them, matched on stage, clean outcome, session date in the session zone, and a `rows_written` equal to the hit count for that date.
 
 **`magnitude` is stored rather than recomputed.** It is what the thrust signals freeze, and deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible: a wrong magnitude still produces a plausible ranked list. Storing it also makes the rank auditable, since the ordering can be checked against the number it was taken on.
 

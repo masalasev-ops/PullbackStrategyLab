@@ -83,8 +83,10 @@ public sealed class ThemeClusterer
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
              WHERE h.as_of = @as_of
+               AND (h.observed_at <= @observed_before OR (h.observed_at IS NULL AND h.as_of = @as_of))
             """;
         read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        read.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, _options.SessionZone));
         read.Parameters.AddWithValue("@resolved_before", StoreText.EndOfSession(asOf, _options.SessionZone));
 
         var hits = new List<(string Ticker, string Scan, string? Industry)>();

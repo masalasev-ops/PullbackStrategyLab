@@ -5556,3 +5556,52 @@ Measured:   **The fifteen repaired rows were 260 minutes late and are 20.** Noth
 
 Carried:    The sector-timestamp conflation stays open and is untouched by this. Threading the
             configured session zone into the store readers is new, at 4.1.
+
+## 3.9(d) — 2026-08-28 — main — scan_hit stamped, and an obligation whose premise was false
+
+`scan_hit` was the last table feeding a point-in-time read with no observation stamp at all. That is
+a different thing from an unbounded read: a hit inserted for a past session was invisible to every
+bound the lab has, and a cluster count derived afterwards would have counted it with nothing able to
+say so.
+
+Measured:   **The blast radius, before any bound moved.** **300 rows**, all `as_of = 2026-08-27`,
+            all unstamped. **Six reads**, of which three are historical and would have started
+            refusing: `ScanHitReader.ForTicker`, called by both detectors through
+            `SessionFigures.Hits` and by `SignalVectorizer`, and the vectorizer's own
+            `cluster_count` lookup at the thrust session. The other three read a single date and
+            are same-session by construction.
+
+            **Refusing the 300 would have broken a read that must work.** The thrust window is ten
+            sessions, so for the ten sessions after 2026-08-27 a name whose thrust hit was that
+            night would have had it refused, `thrust` would have read as failing, and `thrust` is
+            gating. That is a wrong verdict on live nights, and under the clause's own stop
+            condition it is where the work stops rather than where the null is defaulted the other
+            way.
+
+Found:      **It did not stop, because the obligation's premise was false.** The row raising this
+            said the fix needed "a backfill of 300 rows with an instant nobody recorded, and
+            inventing one would be worse than the gap". The instant was recorded, in another table:
+            `run_log` holds the `scans` run of 2026-08-27 with `started_at` `22:10:03.506Z`,
+            `ended_at` `22:10:03.959Z`, outcome `clean` and **`rows_written` 300**, which is exactly
+            the number of hits that date carries. Reading an instant across from a table that
+            recorded it is not the same act as choosing one, and the row-count equality is what
+            makes it a match rather than an association.
+
+Built:      **Migration 029** adds `observed_at` and backfills from that run under three conditions,
+            all in the statement rather than assumed: the run is a `scans` run that finished clean,
+            its own session date taken in the session zone equals the hits' `as_of`, and its
+            `rows_written` equals the hit count for that date. `ended_at` rather than `started_at`,
+            because it is the latest instant any of those rows could have been written and a bound
+            must never claim a row existed earlier than it did. Two runs for one date, or a count
+            that disagrees, leaves the rows null. All **300 of 300** were stamped.
+
+            **All six reads bound the stamp, and a null is refused by any session other than the
+            row's own.** A row with no provenance is honestly unavailable to history and honestly
+            available to the session it is dated for. The rule has no live subject in this store,
+            since nothing is null, which is the right place for a guard to be.
+
+            `scan_hit` joins `PointInTimeCheck.Stamped` as its **fourteenth** table, so a read of it
+            that stops bounding the stamp now fails.
+
+Carried:    The obligation is discharged rather than repointed, and the CHANGELOG entry records its
+            prior text and says which sentence in it was wrong.

@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Data;
 
 /// <summary>
@@ -35,10 +37,12 @@ public sealed class ScanHitReader
             SELECT ticker, as_of, scan, rank, magnitude, cluster_count
               FROM scan_hit
              WHERE as_of = @as_of AND scan = @scan
+               AND (observed_at <= @observed_before OR (observed_at IS NULL AND as_of = @as_of))
              ORDER BY rank
             """;
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
         command.Parameters.AddWithValue("@scan", scan);
 
         return Read(command);
@@ -66,12 +70,14 @@ public sealed class ScanHitReader
             SELECT ticker, as_of, scan, rank, magnitude, cluster_count
               FROM scan_hit
              WHERE ticker = @ticker AND as_of >= @from AND as_of <= @as_of
+               AND (observed_at <= @observed_before OR (observed_at IS NULL AND as_of = @as_of))
              ORDER BY as_of DESC, scan
             """;
 
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
 
         return Read(command);
     }

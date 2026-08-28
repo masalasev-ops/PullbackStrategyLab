@@ -405,9 +405,15 @@ public sealed class SignalVectorizer
         {
             using SqliteCommand cluster = connection.CreateCommand();
             cluster.CommandText =
-                "SELECT cluster_count FROM scan_hit WHERE ticker = @ticker AND as_of = @as_of AND scan = @scan";
+                """
+                SELECT cluster_count FROM scan_hit
+                 WHERE ticker = @ticker AND as_of = @as_of AND scan = @scan
+                   AND (observed_at <= @observed_before OR (observed_at IS NULL AND as_of = @as_of))
+                """;
             cluster.Parameters.AddWithValue("@ticker", ticker);
             cluster.Parameters.AddWithValue("@as_of", on);
+            cluster.Parameters.AddWithValue(
+                "@observed_before", StoreText.EndOfSession(StoreText.StorageTextToDate(on), SessionBoundaries.UsEquities));
             cluster.Parameters.AddWithValue("@scan", scan);
 
             if (cluster.ExecuteScalar() is long count)
