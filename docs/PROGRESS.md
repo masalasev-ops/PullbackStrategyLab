@@ -5908,3 +5908,58 @@ Carried:    **31 open obligations: 17 at 4.1, 3 at 4.6, 3 at the move, 8 at the 
             in through a pull request. `main` was rewound to the merge commit and those commits came
             back through PR #6; the breach is recorded here rather than only fixed, because a rule
             broken and quietly repaired is one the next session has no reason not to break.
+
+## 3.9 — 2026-08-28 — phase-3-post-pass — two checks owed before the merge, both clean
+
+Two questions put before PR #6 merges. Both are reported with the commands and the counts rather
+than with an assurance, because "we checked" is the shape neither of them was asking for.
+
+Searched:   **The vendor token is in no commit, no blob and no ref.** It was read into a shell
+            variable rather than echoed, and is identified below by the first twelve hex characters
+            of its SHA-256, `4d0e827b6c2a`, so this entry does not become the thing it is about.
+
+            | Search | Command | Hits |
+            |---|---|---|
+            | The path, all refs, full history | `git log --all --full-history -- '*appsettings.Secrets.json'` | **0** |
+            | Any object whose path contains `secrets` | `git rev-list --all --objects \| grep -ci secrets` | **0** |
+            | The token as a literal, every commit reachable from every ref | `git grep -F "$TOKEN" $(git rev-list --all)` | **0** over **101** commits |
+            | Its prefix alone, in case only part was pasted | `git grep -F "$PREFIX" $(git rev-list --all)` | **0** |
+            | Every blob in the object database, reachable or not | `git cat-file --batch-all-objects \| git cat-file --batch \| grep -cF` | **0** |
+            | GitHub's own copy of the path on the default branch | `gh api repos/.../contents/...` | **404** |
+            | GitHub secret-scanning alerts | `gh api repos/.../secret-scanning/alerts` | **[]** |
+
+            Refs searched: `refs/heads/main`, `phase-3-corrections`, `phase-3-post-pass`, and the
+            three `refs/remotes/origin/*` that mirror them. The repository is **public**.
+
+            **The ignore rule predates the file by 79 minutes.** `.gitignore` was added in `bc2b861`
+            on **2026-08-25 11:23:14 -0400**, which is also the repository's first commit, and its
+            line 25 is `**/appsettings.Secrets.json`. The file was created at **2026-08-25 12:42:45
+            -0400**. So there was never a window in which the file existed unignored.
+
+            Four copies exist on disk: the source file and three under `bin/`, which line 2 of the
+            same `.gitignore` covers. **Rotation is still worth doing**, because the token reached a
+            session transcript, and that is a different exposure from the repository. It is not
+            urgent in the way a committed secret would have been.
+
+Counted:    **No duplicate band 0 panel has ever existed in the live store, and migration 030's
+            delete removed nothing.** Swept across all **24** snapshots plus the live store and the
+            CI store: every store that has a `scoreboard` table holds **9 rows for one date,
+            2026-08-27, with 9 distinct keys and 0 surplus rows**. The snapshot taken immediately
+            before 030 applied, `pullbackstrategylab-20260828-170147.db`, is the same.
+
+            The reason is that the scoreboard has been **built exactly once and never rebuilt**,
+            which is the condition the duplication needed. The defect was real and reachable; it had
+            not been reached.
+
+Named:      **Every read over `scoreboard`, and whether it could have double counted.**
+
+            | Read | Shape | Affected |
+            |---|---|---|
+            | `LabScoreboard`, the only shipped read | partitions rows into health, long and short lists; the only reduction is a `Count == 0` emptiness test | **no.** A duplicate would have rendered a band 0 panel twice on the page. No figure is summed |
+            | `CalibrationTests`, `SUM(n_rows) ... WHERE panel LIKE 'band1.%'` | the one aggregate over the table anywhere | **no.** Every `band1.*` panel carries a direction, so the primary key always constrained it. The gap was only ever in rows where `direction IS NULL`, which is band 0 alone |
+            | `AccumulationPopulation` | `WHERE panel = @panel AND direction = @d` | **no.** Direction-scoped |
+            | `PhaseReplay`, `StampBoundTests`, `ScoreboardRebuildTests` | counts written at 3.9(e) as the guard, and deletes | **no.** They postdate the fix |
+
+            **So no figure needs re-deriving and no correction is owed.** That is the answer the
+            clause asked for rather than the one it anticipated, and it rests on the scoreboard
+            having run once rather than on the constraint having held.
