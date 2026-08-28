@@ -502,6 +502,19 @@ The once is the part worth defending, and it is why the population matters. The 
 **The fresh-session rule applies to sessions that have committed code, not documents**
 The protection being bought is that a session does not review its own code. The wider wording costs a session per phase and buys nothing.
 
+**A phase branch merges on CI green, and the sign-off reviews what is already on the default branch**
+Merge is gated on CI green and on nothing else. Sign-off is a separate activity with its own record, owed on the phase as a whole before the next phase's plan rather than before any merge.
+
+**This is the second time this rule has moved, and saying so is the point of writing it down.** It began as CI green alone, was changed to add a sign-off gate, and is changed back here. A rule that oscillates without a record reads each time as though it had always been that way, so the trade is stated once and a third change has to argue against both halves rather than against whichever half it happens to find.
+
+**What the sign-off gate bought.** A default branch on which every phase is complete and reviewed, and a sign-off that can decline something at the cost of a conversation rather than a revert.
+
+**What it cost, which is the half that decided it.** A phase waiting on something that is not code keeps a branch open for as long as it waits, and the nightly job runs from that checkout for the whole of it. Phase 3 waits three months for accumulation. Production running from a branch is not a lesser defect than an unreviewed default branch; it is the more immediate one, because it is a live system rather than a property of a history, and it degrades the longer the wait it is caused by.
+
+**A correct pass held back is not held safely.** The work still exists, it still runs the nightly job, and the only thing the delay changes is which ref it runs from and how large the eventual merge is. A review of a hundred commits made three months after the fact is worse than a review of the same commits on the default branch a week after they landed.
+
+**What does not move.** A checkpoint still lands as its own commit and still satisfies all seven done conditions on its own, CI is still green before any merge, and a session that has committed code still may not sign it off.
+
 ---
 
 ## Previously decided

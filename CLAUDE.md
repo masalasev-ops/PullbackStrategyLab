@@ -255,13 +255,13 @@ Done conditions are written against **what the file will say after the edit**, n
 
 ## Merge
 
-CI green before merge, **and a phase branch does not merge until the whole phase has signed off.** Two conditions, and the second is the one that costs something.
+**CI green before merge. That is the only condition** (see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch). Sign-off is a separate activity with its own record, owed on the phase as a whole before the next phase's plan, and it does not gate the merge.
 
-**It used to be one condition.** This section read "CI green before merge. That is the only condition. Sign-off is a separate activity with its own record and does not gate the merge." That decoupling was written to stop a sign-off holding finished work hostage, and it has a real cost the other way: a phase that merges in pieces has no single commit where the phase is what it says it is, and the sign-off then reviews something already on the default branch, where declining it costs a revert rather than a conversation.
+**This rule has now moved twice, and the decision says so rather than reading as though it had always been this way.** It was CI green alone, then CI green plus a phase sign-off, and is CI green alone again. The trade is written out in the decision so a third change argues against both halves rather than against whichever it finds.
 
-**What it buys and what it costs, stated so a later session can weigh the same trade.** It buys a default branch on which every phase is complete and reviewed. It costs a long-lived branch whenever a phase waits on something that is not code: phase 3 waits three months for accumulation, so its branch is open for a quarter and the nightly job runs from that checkout rather than from `main` for the whole of it. That is the price, it is known, and it is paid deliberately.
+**What decided it is the cost of holding a correct pass back.** A phase waiting on something that is not code keeps a branch open for as long as it waits, and the nightly job runs from that checkout for the whole of it. Phase 3 waits three months for accumulation. Production running from a branch is the more immediate defect, because it is a live system rather than a property of a history.
 
-**A checkpoint still lands as its own commit** and still satisfies all seven done conditions on its own. Nothing here makes a checkpoint bigger; it makes the merge later.
+**A checkpoint still lands as its own commit** and still satisfies all seven done conditions on its own, and a session that has committed code still may not sign it off.
 
 ## Document lifecycle
 
