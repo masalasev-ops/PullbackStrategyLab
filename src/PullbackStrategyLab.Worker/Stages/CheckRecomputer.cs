@@ -58,6 +58,16 @@ public sealed class CheckRecomputer
     /// <summary>Write the corrections. Without it the stage reports what it would do and writes nothing.</summary>
     public const string ApplyFlag = "--apply";
 
+    /// <summary>
+    /// How many rows the caller expects to find, so the run fails on any other number.
+    ///
+    /// A repair derives its own set from a query, and the count somebody carried in from an earlier
+    /// investigation is what that set is checked against rather than what defines it. The pipeline
+    /// keeps running between the two, so a set that has moved is a fact worth stopping on: either
+    /// something else corrected rows, or the query no longer means what it meant.
+    /// </summary>
+    public const string ExpectFlag = "--expect";
+
     private static readonly JsonSerializerOptions CheckResultsJson = new(JsonSerializerDefaults.Web);
 
     private readonly StoreConnectionFactory _connections;
@@ -107,11 +117,26 @@ public sealed class CheckRecomputer
             return 2;
         }
 
+        int expect = Array.IndexOf(args, ExpectFlag) is int e && e >= 0 && e + 1 < args.Length
+            && int.TryParse(args[e + 1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int given)
+            ? given
+            : -1;
+
         RecheckResult result = Recompute(asOf, check, args.Contains(ApplyFlag));
 
+        Console.WriteLine($"{Name}: the set is every row of that date whose '{check}' verdict carries no value");
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, check '{check}', {result.Candidates} row(s) with no value");
         Console.WriteLine($"{Name}: {result.Corrected} corrected, {result.Refused} refused because the input was stamped after the night");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {(result.Applied ? "written" : "reported only, rerun with " + ApplyFlag)}");
+
+        if (expect >= 0 && expect != result.Candidates)
+        {
+            Console.Error.WriteLine(
+                $"{Name}: the query found {result.Candidates} row(s) and the caller expected {expect}. The set is "
+                + "what the query says and the expectation is what it is checked against, so a difference is a fact "
+                + "about the store rather than a number to update.");
+            return 2;
+        }
 
         // Non-zero where the repair was asked for and could not be made. A hand-run tool that was
         // asked to fix something, fixed nothing, and exited 0 is the shape this whole checkpoint is
@@ -344,7 +369,8 @@ public sealed class CheckRecomputer
                SET check_results = @check_results,
                    corrected_at = @corrected_at,
                    corrected_because = @corrected_because,
-                   correction_lateness_minutes = @lateness
+                   correction_lateness_minutes = @lateness,
+                   corrected_from = @corrected_from
              WHERE setup_id = @setup_id
             """;
 
@@ -356,6 +382,11 @@ public sealed class CheckRecomputer
             + $"minute(s) late against a bound of {MeasurementParameters.LatenessBoundHours} hour(s), after the "
             + "stage supplying them did not finish on the night");
         command.Parameters.AddWithValue("@lateness", latenessMinutes);
+
+        // The prior text, in the same statement as the mark, so a corrected row can never carry a
+        // mark without the state it was corrected from.
+        command.Parameters.AddWithValue(
+            "@corrected_from", JsonSerializer.Serialize(candidate.Results, CheckResultsJson));
         command.Parameters.AddWithValue("@setup_id", candidate.SetupId);
         command.ExecuteNonQuery();
     }

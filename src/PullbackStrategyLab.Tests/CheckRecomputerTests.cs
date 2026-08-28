@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Tests.Checks;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
 using Xunit;
@@ -11,11 +12,12 @@ using Xunit;
 namespace PullbackStrategyLab.Tests;
 
 /// <summary>
-/// The repair, and the two conditions it runs under.
+/// The repair, and the conditions it runs under.
 ///
-/// A setup row is corrected only where the correction uses no information the night did not have.
-/// Both halves are asserted here rather than trusted, and the bound is the half that matters: it is
-/// the one a repair is tempted to relax, because relaxing it is exactly what makes the repair work.
+/// An answer the session itself asked for may be attributed to it up to a stated lateness bound,
+/// recorded on the row and countable. Every condition is asserted here rather than trusted, and the
+/// bound is the one that matters: it is what a repair is tempted to relax, because relaxing it is
+/// exactly what makes the repair work.
 /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
 /// </summary>
 public sealed class CheckRecomputerTests : IDisposable
@@ -124,6 +126,97 @@ public sealed class CheckRecomputerTests : IDisposable
             results.Single(r => r.Name == "cluster"),
             reader.IsDBNull(1) ? null : reader.GetString(1),
             reader.IsDBNull(2) ? null : reader.GetString(2));
+    }
+
+    /// <summary>
+    /// A repaired row can be put back the way it was, from what the repair recorded.
+    ///
+    /// Auditable and reversible are different properties and the mark alone gives neither: a reader
+    /// can see the row was touched and cannot see what it said, and nothing can undo it. The prior
+    /// text is the whole JSON rather than the one verdict, because the column it restores is the
+    /// whole JSON and a partial record would need the restore to reconstruct the rest.
+    /// </summary>
+    [Fact]
+    public void A_repaired_row_can_be_restored_from_the_state_it_was_corrected_from()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB");
+        Setup(
+            "AAA",
+            "long",
+            new CheckResult("trigger-near", true, 0.51m),
+            new CheckResult("cluster", false, null));
+
+        Recomputer().Recompute(AsOf, "cluster", apply: true);
+        Assert.Equal(2m, Read("AAA", "long").Cluster.Value);
+
+        string prior = PriorState("AAA") ?? throw new InvalidOperationException("no prior state was recorded.");
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE setup
+                   SET check_results = corrected_from,
+                       corrected_at = NULL,
+                       corrected_because = NULL,
+                       correction_lateness_minutes = NULL,
+                       corrected_from = NULL
+                 WHERE ticker = 'AAA'
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        // Back to the night's own record, verdict and all, with nothing left saying it was ever
+        // corrected. Both halves matter: a restore that left the mark behind would report a
+        // correction that no longer exists.
+        (CheckResult cluster, string? correctedAt, _) = Read("AAA", "long");
+        Assert.Null(cluster.Value);
+        Assert.False(cluster.Passed);
+        Assert.Null(correctedAt);
+        Assert.Null(Lateness("AAA"));
+
+        // And the verdict the correction never touched came back with it.
+        Assert.Contains("trigger-near", prior, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The exception is one column wide, asserted against the stage's own source.
+    ///
+    /// The lateness bound admits exactly one stamped column, <c>security.sector_resolved_at</c>, and
+    /// every other input stays bounded to the session's own date. A repair that admitted a second
+    /// late input would be reconstructing the night rather than completing it, and the difference
+    /// between those two is the whole rule.
+    ///
+    /// <b>What this cannot say, stated rather than left to be assumed.</b> `scan_hit` carries no
+    /// observation stamp at all, so a hit inserted for a past session after the fact is invisible to
+    /// any bound, including this one. That is not a hole this exemption opened and it is one a
+    /// reader of this test would otherwise assume closed, so it is carried as an obligation rather
+    /// than implied to be covered.
+    /// </summary>
+    [Fact]
+    public void Exactly_one_stamped_column_is_admitted_late()
+    {
+        string source = RepositoryLayout.Read(Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "CheckRecomputer.cs"));
+
+        string[] lateBound =
+        [
+            .. PointInTimeCheck.Stamped.Values
+                .Distinct(StringComparer.Ordinal)
+                .Where(stamp => source.Contains($"{stamp} <= @bound", StringComparison.Ordinal)),
+        ];
+
+        Assert.Equal(["sector_resolved_at"], lateBound);
+    }
+
+    /// <summary>The check results as they stood before the correction, or null.</summary>
+    private string? PriorState(string ticker)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT corrected_from FROM setup WHERE ticker = @t";
+        command.Parameters.AddWithValue("@t", ticker);
+        return command.ExecuteScalar() as string;
     }
 
     /// <summary>The recorded lateness in minutes, or null on a row nothing corrected.</summary>
