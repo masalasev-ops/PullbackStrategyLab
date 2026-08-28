@@ -172,6 +172,100 @@ Nothing here depends on any open question. Start immediately.
 
 ---
 
+## The lazily-resolved attribute, scoped and not started
+
+An observation stamp records when the lab asked. Every reader treats it as when the fact became
+true. For a bar the two are the same, because the observation is dated by the market. For an
+attribute looked up lazily they are not: a company's sector was true for years before anyone asked,
+so a name resolved on the 28th is invisible to the session of the 27th although the sector it
+carries was as true on the 27th as it is now.
+
+Written up at 3.9(h) and **not started**. What follows is the scope, the counts and the decision the
+work waits on. The obligation points here rather than restating it.
+
+### It is one table wide, and the count that stopped it was a count of something else
+
+The 3.8 attempt stopped on **43 stamp-bounding query sites across 17 shipped-source files**, which is
+the size of changing the basis for every stamped table at once. That is not this work. Re-derived
+per table, thirteen of the fourteen stamped tables carry a value whose truth is dated by the session
+it belongs to, and the stamp on them is doing exactly what a point-in-time bound needs:
+
+- `daily_bar` and `index_bar` are dated by the market through `bar_date`; a bar for a past session
+  fetched today is still information the lab did not hold on that session, which is what the bound
+  says.
+- `indicator_daily`, `setup_signal`, `control_setup`, `forward_return`, `ceiling_bound`, `scoreboard`
+  and `setup` hold something computed for a stated session. Recomputing an old session today
+  produces a value the session did not have, and the bound is right to hide it.
+- `corporate_action` and `history_refetch` record when the lab learned something it genuinely could
+  not have known earlier.
+- `detector_error` and `scan_hit` are dated by the session they were produced for.
+
+`security` is the exception and is the whole of it: `sector`, `industry` and `market_cap` are
+resolved on demand, stamped with `sector_resolved_at`, and **the table has no session-date column at
+all**. That absence is the conflation rather than a consequence of it.
+
+**Five files read that stamp**, being `SecurityReader`, `SectorResolver`, `ThemeClusterer`,
+`CheckRecomputer` and `SessionFigures`. That is the blast radius, not seventeen.
+
+### What a session-date column would mean here
+
+Not a session date. An attribute that is true over a span needs the date **from** which the lab is
+willing to assert it, which is a different thing from the date it was asked on and a different thing
+again from the session that asked. The three candidates, in increasing cost:
+
+**Assert it from the date the scan first surfaced the name.** The lab asks about a name because a
+scan hit it, and that hit is dated. `security.first_seen` already holds a date of that shape for
+2,083 rows. Cheapest, and it claims the least: the attribute is asserted from the first session the
+lab had any reason to hold it.
+
+**Assert it from a validity date the vendor states.** The fundamentals endpoint carries an updated-at
+field the lab does not currently read. Truer, and it costs a re-capture and a re-derivation of the
+fundamentals expectations, of which there are 121.
+
+**Assert it from the beginning of the record.** A sector is stable over years and treating it as
+timeless is defensible for this lab's horizon. Cheapest of all and the least honest, because it
+would make a name resolved next year visible to a session two years ago.
+
+### What happens to rows whose instant was never recorded
+
+**2,083 securities, of which 234 carry a resolution and 1,849 have never been asked.** The 1,849 need
+nothing: they carry no attribute, so there is no value to date. Of the 234, one is a name the vendor
+holds nothing on, stamped so it is never asked again, and it carries no attribute either.
+
+So the backfill is **233 rows**, and every one of them has a first scan hit whose date is recorded.
+There are no rows whose instant was never recorded, which is the condition that made this look like a
+migration with an invented backfill in it.
+
+### What it costs downstream
+
+**29 frozen signal values** would change basis: `industry`, `market_cap` and `cluster_count` are
+recorded on the 29 setups of 2026-08-27 that had a resolved sector when the vectorizer ran. Those are
+frozen by design and would be recomputed under the new basis, which is a correction under the
+lateness rule and records prior state like any other. The other 15 of that night carry the repaired
+cluster and no industry, and would gain one.
+
+Every fixture expectation resting on a `security` bound would be re-derived. Today that is the
+`fundamentals.*` set, 121 expectations, all `DERIVED`.
+
+### The decision, which is the operator's
+
+**Before or after phase 4.** Stated here rather than assumed, because the two are not the same
+project.
+
+**If it lands before**, phase 4 starts against a store whose one lazily-resolved attribute is dated
+the way every other value in the lab is dated, and 29 frozen signals are corrected once, while
+nothing is trading. The cost is a phase-4 start delayed by the work above.
+
+**If it lands after**, phase 4 records orders against setups whose `industry` and `market_cap`
+signals rest on the current basis, and the correction then has to reach rows an order was placed
+against. Nothing in the corpus permits rewriting a plan, so those setups would keep the basis they
+were flagged under and the record would carry two bases with a date between them. That is not fatal
+and it is not free: every figure computed over the boundary would have to state which side of it the
+rows came from, which is the population rule applied to a basis change rather than to a filter.
+
+**The conservative answer is in force until it is answered**, which is that the stamp is the basis and
+a late resolution is invisible except through the lateness bound.
+
 ## Carried obligations
 
 Findings that did not block a checkpoint. Each names the checkpoint at which it falls due.
@@ -200,7 +294,7 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 | 3.5 | **`interval.*` is tiered `DERIVED` over a restatement that now mirrors the shipped algorithm closely enough that the tier claims more than it holds.** Reproducing a seeded resampling scheme to four places requires the same generator, the same seed, the same block order and the same tail convention, so `tools/derive-indicators.py --interval` is close to a transcription and agreement between the two says little beyond that neither was mistyped. That is exactly how the defect it replaced survived. The property tests in `PairedIntervalTests` are what actually verify the scheme now, and the question this raises is whether a tier that reads as independent verification should be claimed for any figure produced by a seeded algorithm, or whether such figures want a tier of their own | 4.1 |
 | 3.6 | **`tools/nightly.ps1` has no macOS counterpart and rebuilds from the working tree on every slot.** The corpus pairs `ci.ps1` with `ci.sh` because the two platforms need different syntax, and the nightly runner has only the Windows half while the move to the Mac is still an open obligation. It also invokes `dotnet run` without `--no-build`, so a slot compiles the working tree at 17:15 and a half-finished edit costs the night | the move |
 | 3.8 | **`rows_written` distinguishes nothing on a stage that only updates, and two stages are now in that position.** `RunScope.Complete` measures it as a row-count delta over the tables the stage declares, so `sectors` and `clusters`, which issue `UPDATE` and never `INSERT`, report 0 rows on a perfect run and 0 on a run that died after 149 calls. `CheckRecomputer` joins them. 3.8 closed the half that mattered on the night by adding `run_log.skipped` and by making a run that did not finish its list `partial`, so a reader is no longer told nothing at all. What is left is the column itself: it is measured, it is what the nightly halt keys on, and on these three stages it is measuring the wrong thing rather than measuring nothing. The fix is either a stage reporting rows affected where the delta cannot see them, which breaks the rule that the figure is measured rather than self-reported, or a column that says the delta does not apply here. Which of the two is a decision rather than a repair. Due at 4.1 with the other band 0 item, because the status band is where a reader forms the impression this figure gives them | 4.1 |
-| 3.8 | **`security.sector_resolved_at` is when the lab asked, and every reader treats it as when the fact became true.** The two are the same for a bar, whose observation is dated by the market, and are not the same for an attribute looked up lazily: a sector is true for years before anyone asks. **Attempted at 3.8 and stopped, with the count that stopped it.** Moving the basis from an instant to the session date an answer is attributed to would touch **43 stamp-bounding query sites across 17 shipped-source files**, and it is not only an edit: most stamped tables carry no session-date column to compare against, and `security` carries none at all, which is the conflation itself. So it is a migration, a backfill of instants nobody recorded, and a re-derivation of every fixture expectation that rests on a bound. Half a conversion is worse than either basis, so none of it was done. **The lateness bound reaches the outcome this row was raised for without touching the basis**, which is why the fifteen are repaired and this stays open: what is left is the modelling question rather than the repair. Due at the operator, because it decides whether a night's evidence may be completed after the fact and the conservative answer is the one in force | the operator |
+| 3.8 | **`security.sector_resolved_at` is when the lab asked, and every reader treats it as when the fact became true.** The two are the same for a bar, whose observation is dated by the market, and are not the same for an attribute looked up lazily: a sector is true for years before anyone asks. **Attempted at 3.8 and stopped; scoped at 3.9(h) and still not started.** The plan is "The lazily-resolved attribute, scoped and not started" above, which carries the counts, the three ways the attribute could be dated and their costs, and the before-or-after-phase-4 question. It is not restated here, because a row and a plan that both describe the work are two places one decision lives. What the row carries is the due point: the operator, because it decides whether a night's evidence may be completed after the fact, and the conservative answer is the one in force | the operator |
 | 3.8 | **The slot script depends on Windows PowerShell and two of its parts behave differently under pwsh.** `tools/nightly.ps1` is the Windows half of a pair whose macOS half does not exist, and the machine it runs on executes `powershell.exe`. Two parts turn on which interpreter is running. `Invoke-Stage` exists because Windows PowerShell wraps a native command's stderr in a NativeCommandError under `Stop`, which pwsh does not do, so under pwsh the function is harmless and unnecessary rather than load-bearing. And the exit-code handling turns on `$LASTEXITCODE` surviving a pipeline, where pwsh 7.4 additionally raises on a native non-zero exit under `Stop` through `$PSNativeCommandUseErrorActionPreference`. The `slot-diagnostics` job now runs the script under both and prints what each did, recorded rather than required, because requiring them to agree would fail for a reason nobody has decided and pinning one would assert something about an interpreter the scheduler does not use. **First reading, 2026-08-28**: with the fix in place both interpreters keep the message and the stop line and both exit 1, so they do not diverge on the outcome. They diverge on whether `Invoke-Stage` is load-bearing, which is the thing a macOS counterpart would have to decide about rather than inherit. What is owed is that decision, at the point the counterpart is written, since that is when a second interpreter stops being hypothetical | the move |
 | 1.11 | **Step 6 of the move procedure only, copying `appsettings.Secrets.json`.** The rest of the rehearsal now runs on every push: the `rehearsal` job on `ubuntu-latest` exercises the whole pipeline on a case-sensitive filesystem, which is the fault class neither development machine can see, then copies the store the fixture replay built and verifies it on arrival with counts and an integrity check. What a container cannot do is carry a gitignored file between two machines by hand, which was only ever verified in the negative: confirmed not to travel with a clone, never confirmed to have been copied. Due at the actual move, not at a checkpoint | the move |
 | 3.7 | **Nothing reconciles SCHEMA's column tables against the migrations, and five columns are already missing.** `writer-ownership` reads SCHEMA for writers and `SchemaDeclarations.TablesInMigrations` for which stores exist, and the columns each `### `table`` section lists are read by nothing at all. Measured at the 3.7 sign-off against the migrated store, discounting the two sections that legitimately say "same shape as" another table: `scoreboard` omits `computed_at` and `withheld_because`, `control_setup` omits `drawn_at`, `ceiling_bound` omits `computed_at`, and `regime_daily` omits `indexes_above`, which has been missing since 2.5. SCHEMA's second line says "Complete for phases 1 to 3" and `stated-counts` exempts nothing here because nothing derives that claim. What closes it is the reconciliation rather than the five repairs, on the grounds the corpus already gives for `writer-ownership` running both ways: repairing five columns leaves the sixth to arrive unnoticed | 4.1 |
@@ -223,7 +317,7 @@ The column that matters is the last one. Five of the eight block nothing at all 
 | 1.1 | Does the vendor's quota reset on the UTC date the lab counts against | Nothing today. The nightly job spends about 803 against 5,000, so a boundary six hours out of step still could not exhaust it | Nothing until the budget is close to binding, which no phase currently plans |
 | 1.6 | Three `CONFIRMED` indicator values, read off a charting platform | The `CONFIRMED` tier has no entries at all, so nothing in the corpus is verified against anything outside it | Nothing blocks. It is the tier's only possible source and the page that makes it possible has existed since 1.10 |
 | 2.9 | The `CONFIRMED` gallery expectations, from paging through a night | Same tier, other half. A person reading the gallery and writing down what they saw | Nothing blocks |
-| 2.11 | The threshold ruling: the thresholds are wrong, or the quantities they apply to are | **Band 2 and everything downstream of it.** At a median of nought candidates a night, no trade is ever planned, so phase 4 builds a trading layer nothing reaches | **Phase 4 is buildable and untestable against live rows.** It is the largest of the nine |
+| 2.11 | The threshold ruling: the thresholds are wrong, or the quantities they apply to are | **Band 2 and everything downstream of it.** At a median of nought candidates a night, no trade is ever planned, so phase 4 builds a trading layer nothing reaches. **It does not block 3.6**, corrected at 3.9(i): band 1 counts effective observations over every flagged setup rather than over candidates, so the two are different populations and both figures hold | **Phase 4 is buildable and untestable against live rows.** It is the largest of the eight. The funnel at 3.9(i) names `exit-tight` as the gate the numbers point at, passing 1.29% of 32,533 flagged long rows and 1.37% of 16,917 short, an order of magnitude tighter than the next check on either side |
 | 3.3 | May the tight control set draw from neighbouring sessions | The meaning of the tight comparison, which is the number 3.6 turns on | **3.6.** Accumulating against a tight set whose definition may change spends the accumulation twice |
 | 3.5 | 262 was sized for a z-test and a studentised bootstrap is what runs | The minimum sample, in the direction of under-power. Reaching 262 does not deliver the 90% the figure was ratified at | **3.6**, but weakly: it moves the threshold rather than the method, and the panel reports the count either way |
 | 3.6 | The tasks run only while the user is logged on | A logged-out evening is a permanent hole in the evidence, because `universe-build` writes the snapshot of who was listed and nothing can reconstruct it | Nothing blocks, and it costs a night every time it fires. One elevated command closes it |
