@@ -339,6 +339,7 @@ public sealed class ScoreboardBuilder
                     WHERE s.direction = @direction AND s.as_of <= @as_of),
                   (SELECT COUNT(*) FROM setup s
                      JOIN control_setup c ON c.setup_id = s.setup_id AND c.control_set = @set
+                                          AND c.drawn_at <= @computed_at
                      JOIN forward_return f
                        ON f.subject_id = c.control_id AND f.subject_kind = 'control'
                       AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
@@ -429,10 +430,16 @@ public sealed class ScoreboardBuilder
         command.CommandText = """
             SELECT bound, achieved, subjects FROM ceiling_bound
              WHERE direction = @direction AND as_of <= @as_of
+               AND computed_at <= @computed_before
              ORDER BY as_of DESC LIMIT 1
             """;
         command.Parameters.AddWithValue("@direction", direction);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        // The bound is recomputed weekly, so a week can carry more than one row over its life and
+        // the panel must read the one that existed on the night it is building. Bounding the as-of
+        // alone picks the right week and can still read a bound computed afterwards.
+        command.Parameters.AddWithValue("@computed_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -483,7 +490,7 @@ public sealed class ScoreboardBuilder
                       JOIN forward_return f
                         ON f.subject_id = c.control_id AND f.subject_kind = 'control'
                        AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
-                     WHERE c.control_set = @set
+                     WHERE c.control_set = @set AND c.drawn_at <= @computed_at
                      GROUP BY c.setup_id) cf
                 ON cf.setup_id = s.setup_id
              WHERE s.direction = @direction AND s.as_of <= @as_of

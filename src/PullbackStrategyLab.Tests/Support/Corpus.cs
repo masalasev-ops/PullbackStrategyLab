@@ -78,7 +78,10 @@ public static partial class Corpus
     {
         var citations = new List<Citation>();
 
-        foreach (string file in RepositoryLayout.CorpusFiles.Concat(RepositoryLayout.SourceFiles))
+        // Every tracked text file, not a named list. The named list was read in one direction and
+        // the corpus grew past it: ten migrations, six files under the web project and four at the
+        // root carry a citation and none of them was scanned.
+        foreach (string file in RepositoryLayout.TrackedTextFiles)
         {
             string text = RepositoryLayout.Read(file);
             Regex pattern = file.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)

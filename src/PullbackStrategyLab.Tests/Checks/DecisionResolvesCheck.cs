@@ -57,7 +57,8 @@ public sealed class DecisionResolvesCheck
             .Examined("decision names in DECISIONS.md", Corpus.DecisionNames.Count)
             .Examined("names under Previously decided, which also resolve", Corpus.SupersededDecisionNames.Count)
             .Examined("citations resolved", Corpus.Citations.Count)
-            .Context("files read for citations", RepositoryLayout.CorpusFiles.Count + RepositoryLayout.SourceFiles.Count)
+            .Examined("files carrying at least one citation", Corpus.Citations.Select(c => c.File).Distinct(StringComparer.Ordinal).Count())
+            .Context("tracked text files read for citations", RepositoryLayout.TrackedTextFiles.Count)
             .NoSourceScan(
                 "a citation is the subject rather than evidence about a behaviour. It reads source files, but "
                 + "what it asserts about them is that the names they cite resolve, and a citation deleted is the "

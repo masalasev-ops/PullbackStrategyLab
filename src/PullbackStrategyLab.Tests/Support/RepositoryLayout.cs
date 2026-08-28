@@ -52,6 +52,64 @@ public static class RepositoryLayout
         .Where(f => !f.Replace(Path.DirectorySeparatorChar, '/').Contains("/PullbackStrategyLab.Tests/", StringComparison.Ordinal))
         .ToArray();
 
+    /// <summary>
+    /// Every tracked text file in the repository, which is what the citation scan reads.
+    ///
+    /// <b>Derived rather than named, because the named version was a one-way door.</b> The scan
+    /// read <see cref="CorpusFiles"/> and <see cref="SourceFiles"/> and nothing asked which other
+    /// files carry a citation. The 3.7 sign-off found two that did and recorded two; the sweep at
+    /// 3.8 found <b>twenty</b>, including ten migrations and six files under the web project. The
+    /// undercount was the same shape as the gap: a hand-named list read in one direction reports the
+    /// instances somebody happened to look at.
+    ///
+    /// Read from the git index rather than from the filesystem, so an untracked scratch file cannot
+    /// add a citation and a tracked one cannot hide from the walk. Binary paths are excluded by
+    /// extension and the exclusions are listed rather than inferred.
+    /// </summary>
+    public static IReadOnlyList<string> TrackedTextFiles { get; } = ReadTrackedTextFiles();
+
+
+    private static IReadOnlyList<string> ReadTrackedTextFiles()
+    {
+        // Local rather than a static field. Static initialisers run in declaration order, so a set
+        // declared after the property that reads it initialises after it and the walk sees null,
+        // which is how this first ran. Listed rather than inferred: a file the repository holds is
+        // scanned unless its extension says it is not text.
+        HashSet<string> binary = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".db", ".parquet", ".png", ".jpg", ".jpeg", ".ico", ".woff", ".woff2",
+        };
+
+        var git = new System.Diagnostics.ProcessStartInfo("git", "ls-files -z")
+        {
+            WorkingDirectory = Root,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+        };
+
+        using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(git)
+            ?? throw new InvalidOperationException("git could not be started, so the citation scan has no file list.");
+
+        string listing = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"git ls-files exited {process.ExitCode}. The citation scan reads the index rather than the "
+                + "filesystem, so it has nothing to read.");
+        }
+
+        return
+        [
+            .. listing.Split('\0', StringSplitOptions.RemoveEmptyEntries)
+                .Where(p => !binary.Contains(Path.GetExtension(p)))
+                .Select(p => Path.Combine(Root, p.Replace('/', Path.DirectorySeparatorChar)))
+                .Where(File.Exists)
+                .OrderBy(f => f, StringComparer.Ordinal),
+        ];
+    }
+
     public static string Read(string file) => File.ReadAllText(file);
 
     /// <summary>A path as it reads in a failure message: relative to the repository, forward slashes.</summary>

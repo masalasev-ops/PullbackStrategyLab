@@ -104,6 +104,22 @@ public sealed class AccumulationPopulation : IDisposable
     public ScoreboardResult Build() =>
         new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(FillOn);
 
+    /// <summary>
+    /// The same build for another date, which is what a rebuild for a past date is.
+    ///
+    /// Separate from the one above because the stamp bounds only ever bind on a rebuild: reading
+    /// tonight, every row in the store was stamped by tonight and no bound can exclude anything. It
+    /// is the second run over a past date that can see something the first could not.
+    /// </summary>
+    public ScoreboardResult Build(DateOnly asOf) =>
+        new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(asOf);
+
+    /// <summary>A writing connection, for a test that has to stamp a row late on purpose.</summary>
+    public SqliteConnection OpenWrite() => _connections.OpenWrite();
+
+    /// <summary>A reading connection, for a test that wants the rows a build left behind.</summary>
+    public SqliteConnection OpenRead() => _connections.OpenReadOnly();
+
     /// <summary>One band 1 panel as the store holds it, or null where none was written.</summary>
     public Panel? Band1(string direction, string set)
     {

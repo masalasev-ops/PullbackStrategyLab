@@ -56,6 +56,86 @@ public sealed class PointInTimeCheck
             ["history_refetch"] = "refetched_at",
             ["security"] = "sector_resolved_at",
             ["setup_signal"] = "computed_at",
+
+            // Phase 3's four stamps, and the correction mark added at 3.8. None of the five was in
+            // this list when it was written, and nothing anywhere asked the other direction: the
+            // test below reconciles name to migration and no assertion reconciles migration to name,
+            // so a table gaining a stamp joined the corpus and this list did not notice.
+            //
+            // Adding them turned eight reads red, being two `scoreboard` and two `ceiling_bound` in
+            // ScoreboardBuilder and LabScoreboard and four `control_setup`. None was a wrong result
+            // on the day it was found, and the reason is two guards deep rather than one. A control
+            // row is transitively bounded by the setup date its query already bounds, which holds
+            // only while the draw happens on the setup's own night and is a property of the schedule
+            // rather than of the query. And the scoreboard cannot be rebuilt in place at all: its
+            // insert is ON CONFLICT DO NOTHING, so a second build for a date that already has panels
+            // writes none of them. What reaches a row is a store restored from a snapshot and re-run,
+            // or panels deleted and rebuilt, which is what StampBoundTests does.
+            ["control_setup"] = "drawn_at",
+            ["forward_return"] = "filled_at",
+            ["ceiling_bound"] = "computed_at",
+            ["scoreboard"] = "computed_at",
+            ["setup"] = "corrected_at",
+
+            // And a sixth the brief did not count, which the reverse reconciliation below found.
+            // `detector_error.observed_at` has been outside this list since 2.7. It is here because
+            // the property is every observation stamp, and stopping at a number rather than at the
+            // property is the failure this corpus keeps meeting from new directions.
+            ["detector_error"] = "observed_at",
+        };
+
+    /// <summary>
+    /// Tables carrying a column shaped like a stamp that is not an observation stamp, with the
+    /// reason each is not in <see cref="Stamped"/>.
+    ///
+    /// This exists so the reconciliation can run in the direction that was missing. Reading name to
+    /// migration says every name is real; reading migration to name says every real one is named,
+    /// and only the second could have noticed four stamps arriving in phase 3, a fifth at 3.8 and a
+    /// sixth sitting outside since 2.7.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> NotAnObservation { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["run_log"] =
+                "started_at and ended_at are when a job ran, which is operational rather than evidential. "
+                + "Nothing computes a figure about the market from a run entry.",
+            ["indicator_rebuild"] =
+                "requested_at and rebuilt_at are the two ends of a demand rather than observations of the "
+                + "market. The demand is state: it is raised, and it is satisfied.",
+            ["indicator_rebuild_rekeyed"] =
+                "a transient table a migration builds and renames over the original, so it does not survive "
+                + "the migration that creates it.",
+            ["corporate_action_observed"] =
+                "a transient table a migration builds and renames over the original.",
+            ["indicator_daily_computed"] =
+                "a transient table a migration builds and renames over the original.",
+        };
+
+    /// <summary>
+    /// Stamps that are in <see cref="Stamped"/> and that no read bounds, with the reason.
+    ///
+    /// <b>Named here rather than left out of the list, which is the point.</b> A stamp missing from
+    /// <c>Stamped</c> is a stamp nothing knows about; a stamp here is one the check knows about and
+    /// has been told not to require, and the difference is that this entry is readable, is counted,
+    /// and fails if its table stops carrying the column.
+    ///
+    /// One today. <c>setup.corrected_at</c> records that a check verdict was recomputed, and a
+    /// correction is bounded to the night's own inputs by construction, so a corrected value is what
+    /// that night should have recorded and a rebuild for that date ought to see it. Bounding it would
+    /// reproduce the defect rather than the truth. The mark exists so an analysis can exclude
+    /// corrected rows, which is a different question from what a night could see. It is also the only
+    /// nullable stamp in the list, so the predicate every other one uses would hide every row that
+    /// was never corrected, which is all of them but a few.
+    /// see: A setup row is corrected only where the correction uses no information the night did not have
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> NotBounded { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["setup"] =
+                "a correction reads only inputs bounded to the setup's own date, so the corrected value is what "
+                + "that night should have recorded and a rebuild for that date should see it. The mark is for "
+                + "excluding corrected rows from an analysis, not for hiding them from a rebuild. It is also the "
+                + "one nullable stamp here, and the predicate the others use would hide every uncorrected row.",
         };
 
     /// <summary>
@@ -155,7 +235,9 @@ public sealed class PointInTimeCheck
 
                     stampedStatements++;
 
-                    if (statement.Contains(stamp, StringComparison.Ordinal) || Exempt.ContainsKey(name))
+                    if (statement.Contains(stamp, StringComparison.Ordinal)
+                        || Exempt.ContainsKey(name)
+                        || NotBounded.ContainsKey(table))
                     {
                         continue;
                     }
@@ -187,6 +269,7 @@ public sealed class PointInTimeCheck
             .Examined("statements selecting from a stamped table", stampedStatements)
             .Examined("stamped tables the check knows about", Stamped.Count)
             .Examined("exempted files, each with its reason", Exempt.Count)
+            .Examined("stamps in the list that no read bounds, each with its reason", NotBounded.Count)
             .Examined("dateless reads exempted by name, each with its reason", DatelessByName.Count)
             .Examined("directions of the future-dated case", 2)
             .Context("SQL statements read across the shipped source", statementsExamined)
@@ -264,6 +347,93 @@ public sealed class PointInTimeCheck
     }
 
     /// <summary>
+    /// And the other direction: every table a migration gives a stamp-shaped column is named, either
+    /// in <see cref="Stamped"/> or in <see cref="NotAnObservation"/> with its reason.
+    ///
+    /// <b>This is the assertion that was missing, and its absence is what let five stamps arrive
+    /// unnoticed.</b> The test above reads the list and asks the migrations whether each entry is
+    /// real, which catches a renamed column and cannot catch a new table. Phase 3 added four stamps
+    /// and 3.8 added a fifth; none turned anything red, because nothing read in this direction, and
+    /// `detector_error.observed_at` had been outside since 2.7 for the same reason.
+    ///
+    /// A one-way reconciliation against a hand-named list reports the instances somebody happened to
+    /// look at, while the corpus it is read against keeps growing.
+    /// </summary>
+    [Fact]
+    public void Every_stamped_column_a_migration_creates_is_named_by_this_check()
+    {
+        string migrations = string.Concat(
+            Directory.EnumerateFiles(
+                Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "Migrations"), "*.sql")
+                .Order(StringComparer.Ordinal)
+                .Select(File.ReadAllText));
+
+        var found = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        foreach (Match table in Regex.Matches(
+            migrations, @"CREATE TABLE (?<name>\w+) \((?<body>.*?)\n\);", RegexOptions.Singleline))
+        {
+            List<string> stamps =
+            [
+                .. Regex.Matches(table.Groups["body"].Value, @"^\s+(?<column>\w+_at)\s", RegexOptions.Multiline)
+                    .Select(m => m.Groups["column"].Value),
+            ];
+
+            if (stamps.Count > 0)
+            {
+                found[table.Groups["name"].Value] = stamps;
+            }
+        }
+
+        // The form a column added later arrives in, which price-storage-form still cannot see and
+        // this one can. `setup.corrected_at` arrived that way at 3.8.
+        foreach (Match added in Regex.Matches(migrations, @"ALTER TABLE (?<name>\w+) ADD COLUMN (?<column>\w+_at)"))
+        {
+            string name = added.Groups["name"].Value;
+
+            if (!found.TryGetValue(name, out List<string>? stamps))
+            {
+                stamps = [];
+                found[name] = stamps;
+            }
+
+            stamps.Add(added.Groups["column"].Value);
+        }
+
+        var unnamed = new List<string>();
+
+        foreach ((string table, List<string> stamps) in found.OrderBy(p => p.Key, StringComparer.Ordinal))
+        {
+            if (NotAnObservation.ContainsKey(table))
+            {
+                continue;
+            }
+
+            if (!Stamped.TryGetValue(table, out string? named))
+            {
+                unnamed.Add(
+                    $"{table} carries {string.Join(", ", stamps)} and this check names neither a stamp for it nor "
+                    + "a reason it is not an observation.");
+                continue;
+            }
+
+            if (!stamps.Contains(named, StringComparer.Ordinal))
+            {
+                unnamed.Add($"{table} is said to carry {named} and its migration declares {string.Join(", ", stamps)}.");
+            }
+        }
+
+        // Stated in advance, because a parser that stopped matching would find no tables and no gaps,
+        // and "no gaps" reads exactly like the property holding.
+        Assert.True(found.Count >= 15,
+            $"only {found.Count} table(s) with a stamp-shaped column were found in the migrations. There have "
+            + "been at least fifteen since 3.5, so the parser stopped matching rather than the tables going away.");
+
+        Assert.True(unnamed.Count == 0,
+            $"{unnamed.Count} stamped table(s) this check does not name:\n  " + string.Join("\n  ", unnamed));
+    }
+
+    /// <summary>
     /// A bar observed tomorrow, read as of today and as of the day after.
     ///
     /// Written as a permanent case rather than as a break-and-revert, and asserted in both
@@ -338,18 +508,31 @@ public sealed class PointInTimeCheck
     /// usually several lines below the FROM clause and a per-line scan would report every one of
     /// them as unbounded.
     /// </summary>
+    /// <summary>
+    /// Every SQL statement written as a literal in a file, each yielded once.
+    ///
+    /// <b>Once is the repair.</b> Both passes below match a raw-string literal assigned to
+    /// CommandText, so every such statement was yielded twice and the scope read 29 over roughly
+    /// fifteen. A doubled scope is not a harmless miscount: it is the number a floor is set on, so a
+    /// check that quietly halved its real coverage would still have cleared a floor set on the
+    /// doubled figure. Yielded through a set keyed on the literal's position in the file, so the
+    /// second pass adds only what the first could not see, and two arms of one conditional that
+    /// happen to carry identical text are still two statements.
+    /// </summary>
     private static IEnumerable<string> Statements(string source)
     {
+        var seen = new HashSet<int>();
+
         foreach (Match match in Regex.Matches(
             source,
             """CommandText\s*=\s*(?<raw>"{3}(?<body>.*?)"{3}|"(?<line>(?:\\.|[^"])*)")""",
             RegexOptions.Singleline | RegexOptions.CultureInvariant))
         {
-            string body = match.Groups["body"].Success ? match.Groups["body"].Value : match.Groups["line"].Value;
+            Group group = match.Groups["body"].Success ? match.Groups["body"] : match.Groups["line"];
 
-            if (body.Contains("SELECT", StringComparison.OrdinalIgnoreCase))
+            if (group.Value.Contains("SELECT", StringComparison.OrdinalIgnoreCase) && seen.Add(group.Index))
             {
-                yield return body;
+                yield return group.Value;
             }
         }
 
@@ -357,12 +540,14 @@ public sealed class PointInTimeCheck
         // statements and a scan that read only the assignment would see neither.
         foreach (Match match in Regex.Matches(
             source,
-            """(?<body>"{3}\s*(?:SELECT|INSERT|UPDATE).*?"{3})""",
+            "\"{3}(?<body>\\s*(?:SELECT|INSERT|UPDATE).*?)\"{3}",
             RegexOptions.Singleline | RegexOptions.CultureInvariant))
         {
-            if (match.Groups["body"].Value.Contains("SELECT", StringComparison.OrdinalIgnoreCase))
+            Group group = match.Groups["body"];
+
+            if (group.Value.Contains("SELECT", StringComparison.OrdinalIgnoreCase) && seen.Add(group.Index))
             {
-                yield return match.Groups["body"].Value;
+                yield return group.Value;
             }
         }
     }

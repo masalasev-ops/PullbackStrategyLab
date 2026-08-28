@@ -77,12 +77,13 @@
     },
     "decision-resolves": {
       "scopes": {
-        "decision names in DECISIONS.md": 66,
-        "names under Previously decided, which also resolve": 1,
-        "citations resolved": 116
+        "decision names in DECISIONS.md": 76,
+        "names under Previously decided, which also resolve": 2,
+        "citations resolved": 280,
+        "files carrying at least one citation": 110
       },
       "context": [
-        "files read for citations"
+        "tracked text files read for citations"
       ]
     },
     "fixture-inputs": {
@@ -184,11 +185,12 @@
     "point-in-time": {
       "scopes": {
         "public reads on the store's readers": 28,
-        "statements selecting from a stamped table": 10,
-        "stamped tables the check knows about": 7,
+        "statements selecting from a stamped table": 32,
+        "stamped tables the check knows about": 13,
         "exempted files, each with its reason": 2,
         "directions of the future-dated case": 2,
-        "dateless reads exempted by name, each with its reason": 1
+        "dateless reads exempted by name, each with its reason": 1,
+        "stamps in the list that no read bounds, each with its reason": 1
       },
       "context": [
         "SQL statements read across the shipped source"
