@@ -17,10 +17,19 @@ namespace PullbackStrategyLab.Tests;
 /// cannot quietly acquire the ability. And the journal notices at runtime what CI cannot see, being
 /// a column written out of order on a live night.
 ///
-/// The three columns that are legitimately written after the row exists are named here rather than
-/// inferred: SCHEMA declares SetupCapper on `rank` and `capped_out` and LabSetups on `agreement` and
-/// `agreement_note`, and those are the only ones. A test that banned every update would ban the two
-/// the corpus allows, and would be deleted the first time it was right about the wrong thing.
+/// The columns that are legitimately written after the row exists are named here rather than
+/// inferred: SCHEMA declares SetupCapper on `rank` and `capped_out`, LabSetups on `agreement` and
+/// `agreement_note`, and CheckRecomputer on `check_results` and the two correction marks. A test
+/// that banned every update would ban the ones the corpus allows, and would be deleted the first
+/// time it was right about the wrong thing.
+///
+/// <b>The last of those is the one that needed a rule rather than a declaration</b>, because it is
+/// the first later write to a column the detector owns. Immutability exists to stop a plan being
+/// improved once its outcome is visible, and a value missing because an input stage died is not
+/// that: nothing about the outcome is known and the repair uses only what existed on the night. So
+/// the exemption is by file and by column, both checked, and the conditions on the permission
+/// itself are behavioural and live in CheckRecomputerTests.
+/// see: A setup row is corrected only where the correction uses no information the night did not have
 /// </summary>
 public sealed partial class SetupJournalTests
 {
@@ -36,24 +45,49 @@ public sealed partial class SetupJournalTests
         "trigger_price", "stop_price", "stop_distance_ranges", "thrust_scan", "thrust_session",
     ];
 
-    /// <summary>The four columns SCHEMA declares a later writer for, by name and with that writer.</summary>
+    /// <summary>The columns SCHEMA declares a later writer for, by name and with that writer.</summary>
     private static readonly Dictionary<string, string> WrittenLater = new(StringComparer.Ordinal)
     {
         ["rank"] = "SetupCapper",
         ["capped_out"] = "SetupCapper",
         ["agreement"] = "LabSetups",
         ["agreement_note"] = "LabSetups",
+        ["check_results"] = "CheckRecomputer",
+        ["corrected_at"] = "CheckRecomputer",
+        ["corrected_because"] = "CheckRecomputer",
     };
+
+    /// <summary>
+    /// The one file permitted to write a column the detector owns, and the one column it may write.
+    ///
+    /// Exempted by name rather than by shortening the list above, because the list is the property.
+    /// The permission is narrow and the narrowness is what makes it safe: a setup row is corrected
+    /// only where the correction uses no information the night did not have, which reaches a
+    /// recomputed verdict for a check the baseline records without requiring and nothing else. The
+    /// conditions on that permission are behavioural and are asserted in CheckRecomputerTests. What
+    /// is asserted here is the boundary: that no other file has the permission, and that this one
+    /// does not reach past `check_results` to a price, a size or `passed_all`.
+    /// see: A setup row is corrected only where the correction uses no information the night did not have
+    /// </summary>
+    private const string CorrectionFile = "src/PullbackStrategyLab.Worker/Stages/CheckRecomputer.cs";
+
+    private const string CorrectableColumn = "check_results";
 
     [Fact]
     public void No_update_against_a_detector_owned_column_exists_in_the_shipped_source()
     {
         var offenders = new List<string>();
         int statements = 0;
+        int exempted = 0;
 
         foreach (string file in RepositoryLayout.ProductionSourceFiles)
         {
             string source = RepositoryLayout.Read(file);
+
+            bool correcting = string.Equals(
+                RepositoryLayout.Relative(file).Replace('\\', '/'),
+                CorrectionFile,
+                StringComparison.Ordinal);
 
             foreach (Match update in UpdateSetup().Matches(source))
             {
@@ -62,10 +96,21 @@ public sealed partial class SetupJournalTests
 
                 foreach (string column in DetectorOwned)
                 {
-                    if (Regex.IsMatch(body, $@"\b{Regex.Escape(column)}\s*=", RegexOptions.CultureInvariant))
+                    if (!Regex.IsMatch(body, $@"\b{Regex.Escape(column)}\s*=", RegexOptions.CultureInvariant))
                     {
-                        offenders.Add($"{RepositoryLayout.Relative(file)} updates setup.{column}");
+                        continue;
                     }
+
+                    // The one exemption, checked rather than assumed: the correcting stage may write
+                    // the recomputed verdict and may not reach past it to a price, a size or
+                    // `passed_all`, which are the plan.
+                    if (correcting && string.Equals(column, CorrectableColumn, StringComparison.Ordinal))
+                    {
+                        exempted++;
+                        continue;
+                    }
+
+                    offenders.Add($"{RepositoryLayout.Relative(file)} updates setup.{column}");
                 }
             }
         }
@@ -79,17 +124,22 @@ public sealed partial class SetupJournalTests
 
         Assert.True(offenders.Count == 0,
             $"{offenders.Count} update(s) touch a column the detector owns:\n  " + string.Join("\n  ", offenders));
+
+        // And the exemption is exercised, so it is not a permission granted to nothing. An exemption
+        // nobody uses reads as a rule with a hole in it rather than as one with a door, and it would
+        // survive the correcting stage being deleted.
+        Assert.Equal(1, exempted);
     }
 
     /// <summary>
-    /// The columns written after the row exists are the four SCHEMA declares and no others.
+    /// The columns written after the row exists are the ones SCHEMA declares and no others.
     ///
     /// The other direction of the same property. The test above says nothing may revise what the
     /// detector wrote; this one says the set of exceptions has not grown, which is how the first
     /// test would be defeated without touching it.
     /// </summary>
     [Fact]
-    public void Only_the_four_columns_schema_declares_a_later_writer_for_are_ever_updated()
+    public void Only_the_columns_schema_declares_a_later_writer_for_are_ever_updated()
     {
         var written = new HashSet<string>(StringComparer.Ordinal);
 

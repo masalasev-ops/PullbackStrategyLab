@@ -210,7 +210,7 @@
     },
     "slot-diagnostics": {
       "scopes": {
-        "slot verbs routed through the isolating function": 21,
+        "slot verbs routed through the isolating function": 22,
         "worker invocations in tools/nightly.ps1": 1
       }
     },

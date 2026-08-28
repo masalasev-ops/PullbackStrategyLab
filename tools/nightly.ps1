@@ -39,7 +39,16 @@ $slots = @{
     'index'      = @(, @('index-bars'))
     'indicators' = @(, @('indicators'))
     'scans'      = @(@('scans'), @('tiers'))
-    'sectors'    = @(, @('sectors'))
+    # Twice, and the second pass is usually free. A name the vendor refused or answered
+    # unreadably is counted and left unstamped, so the second pass asks exactly those and
+    # costs one call each; where the first pass finished its list the second finds nothing
+    # unresolved and costs nothing at all. It is here rather than in the stage because the
+    # window it has to happen inside is short and nobody is watching it: every reader bounds
+    # on when the lookup was made, so a sector resolved after 23:59:59.999Z is invisible to
+    # the session it was wanted for, and `clusters` runs three minutes after this slot.
+    # On 2026-08-27 one name took the other 86 with it and fifteen setups recorded a cluster
+    # verdict with no value, permanently.
+    'sectors'    = @(@('sectors'), @('sectors'))
     'regime'     = @(@('clusters'), @('regime'))
     'detect'     = @(@('detect-long'), @('detect-short'))
     'seal'       = @(@('vectorize'), @('journal'))

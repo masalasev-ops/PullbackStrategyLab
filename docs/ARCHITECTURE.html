@@ -815,6 +815,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>RiskGate</b></td><td>On trigger</td><td>Sizes every position and enforces every cap. The only thing that may open a position</td></tr>
 <tr><td><b>PaperBroker</b></td><td>On order</td><td>Fills at a deliberately pessimistic price</td></tr>
 <tr><td><b>PositionManager</b></td><td>Nightly 21:15</td><td>Trails, trims and exits. Separate rule sets per direction</td></tr>
+<tr><td><b>CheckRecomputer</b></td><td>By hand, after a stage failed</td><td>Recomputes one recorded-not-required check for one night, from inputs bounded to that night, and marks the row as corrected. Refuses a gating check outright, and refuses any row whose input was stamped after the setup's own date, which is what makes it a repair rather than a rewrite</td></tr>
 <tr><td><b>SetupJournal</b></td><td>Nightly 18:25</td><td>Seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. Writes nothing, because a component enforcing immutability by writing would be the second writer of the thing it protects</td></tr>
 <tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
 <tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
@@ -844,7 +845,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 53 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 54 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -907,7 +908,7 @@ tr:hover td{background:#f4f2ec}
 <td>Last night's flagged setups, both directions, as a gallery of marked-up charts showing which checks passed and which failed. You page through by keyboard and record agree or disagree per setup. This is where the strategy actually transfers into code.</td>
 <td>Fixture setups diffed check by check, so a change to any gate shows up as a named difference rather than a count. The ten long and ten short check names asserted to exist in the detectors. Your agreement rate reported as a number.</td></tr>
 
-<tr><td><b>P3</b></td><td>SetupJournal, ForwardReturnFiller, ControlSampler, CeilingCalculator, ScoreboardBuilder, scoreboard page</td>
+<tr><td><b>P3</b></td><td>SetupJournal, ForwardReturnFiller, ControlSampler, CeilingCalculator, ScoreboardBuilder, scoreboard page, CheckRecomputer</td>
 <td>The same gallery with follow-up returns filling in behind it, plus the scoreboard's first two bands live against matched controls. <b>This is the project's own decision point.</b></td>
 <td>Forward returns and control draws diffed against the fixture, including the holiday case. The computed ceiling recomputed and compared. Confirms `setup` is still empty of anything reconstructed from history.</td></tr>
 

@@ -708,7 +708,13 @@ public sealed class CheckProofTests
         Assert.True(CheckCoverage.TestNames.Count >= 250,
             $"the assembly scan found {CheckCoverage.TestNames.Count} tests. It has held at least 250 since 2.10.");
         Assert.Contains("StoreTests.The_open_connection_reports_the_four_pragmas_from_schema", CheckCoverage.TestNames);
-        Assert.Equal(["rehearsal", "suite"], CheckCoverage.WorkflowJobs.Order(StringComparer.Ordinal));
+        // Equality rather than a floor, deliberately. A backing naming a job the workflow does not
+        // have has to fail, so the set this resolves against is the workflow's whole job list and a
+        // job added or renamed moves this line. That is the point: a job silently disappearing would
+        // leave a Backing.Runner reading as covered while nothing exercised it.
+        Assert.Equal(
+            ["rehearsal", "slot-diagnostics", "suite"],
+            CheckCoverage.WorkflowJobs.Order(StringComparer.Ordinal));
     }
 
     [Fact]

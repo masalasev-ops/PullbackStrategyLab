@@ -86,7 +86,15 @@ public sealed partial class ComponentReachabilityTests
             ?? type?.GetProperty(member)?.GetValue(null) as string;
     }
 
-    [GeneratedRegex(@"^\s*(?<owner>[A-Za-z_][A-Za-z0-9_]*)\.(?<member>Name|BackfillName)\s*=>", RegexOptions.Multiline)]
+    /// <summary>
+    /// An arm keyed on a constant, whatever the constant is called.
+    ///
+    /// It named the two it knew about, <c>Name</c> and <c>BackfillName</c>, until a third arrived:
+    /// <c>FixtureCapture.CaptureResponseName</c> was advertised by <c>list-stages</c>, dispatched two
+    /// lines away, and read as unreachable because the pattern had a list rather than a shape. Any
+    /// member ending in Name now matches, and the value is still read off the type by reflection.
+    /// </summary>
+    [GeneratedRegex(@"^\s*(?<owner>[A-Za-z_][A-Za-z0-9_]*)\.(?<member>[A-Za-z0-9_]*Name)\s*=>", RegexOptions.Multiline)]
     private static partial Regex DispatchArm();
 
     [GeneratedRegex(@"^\s*""(?<name>[a-z-]+)""\s*=>", RegexOptions.Multiline)]
