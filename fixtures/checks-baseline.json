@@ -53,8 +53,8 @@
     },
     "ci-parity": {
       "scopes": {
-        "steps declared in tools/ci.ps1": 22,
-        "steps declared in tools/ci.sh": 22
+        "steps declared in tools/ci.ps1": 27,
+        "steps declared in tools/ci.sh": 27
       }
     },
     "clock-usage": {
@@ -67,22 +67,23 @@
     },
     "coverage-reported": {
       "scopes": {
-        "checks declared in CLAUDE.md's roster": 21,
-        "of those declared to run on every CI run": 17,
-        "checks implemented in the suite": 17,
-        "checks tools/ci.* invokes as a named step": 17,
-        "files in the suite that read the shipped source": 15,
+        "checks declared in CLAUDE.md's roster": 24,
+        "of those declared to run on every CI run": 22,
+        "checks implemented in the suite": 22,
+        "checks tools/ci.* invokes as a named step": 22,
+        "files in the suite that read the shipped source": 17,
         "of those belonging to a check, which declares its scans in its own record": 12
       }
     },
     "decision-resolves": {
       "scopes": {
-        "decision names in DECISIONS.md": 66,
-        "names under Previously decided, which also resolve": 1,
-        "citations resolved": 116
+        "decision names in DECISIONS.md": 76,
+        "names under Previously decided, which also resolve": 2,
+        "citations resolved": 280,
+        "files carrying at least one citation": 110
       },
       "context": [
-        "files read for citations"
+        "tracked text files read for citations"
       ]
     },
     "fixture-inputs": {
@@ -184,11 +185,12 @@
     "point-in-time": {
       "scopes": {
         "public reads on the store's readers": 28,
-        "statements selecting from a stamped table": 10,
-        "stamped tables the check knows about": 7,
+        "statements selecting from a stamped table": 32,
+        "stamped tables the check knows about": 13,
         "exempted files, each with its reason": 2,
         "directions of the future-dated case": 2,
-        "dateless reads exempted by name, each with its reason": 1
+        "dateless reads exempted by name, each with its reason": 1,
+        "stamps in the list that no read bounds, each with its reason": 1
       },
       "context": [
         "SQL statements read across the shipped source"
@@ -206,6 +208,12 @@
     "shell-executable": {
       "scopes": {
         "shell entry points checked against their recorded mode": 4
+      }
+    },
+    "slot-diagnostics": {
+      "scopes": {
+        "slot verbs routed through the isolating function": 22,
+        "worker invocations in tools/nightly.ps1": 1
       }
     },
     "stated-counts": {

@@ -93,13 +93,13 @@ public sealed class ScoreboardBuilder
         DateTimeOffset computedAt = _clock.UtcNow;
         var panels = new List<Panel>();
 
-        panels.AddRange(Health(connection, asOf));
+        panels.AddRange(Health(connection, asOf, _options.SessionZone));
 
         foreach (string direction in new[] { "long", "short" })
         {
             panels.AddRange(AgainstControls(connection, direction, asOf, computedAt));
             panels.AddRange(RankDeciles(connection, direction, asOf, computedAt));
-            panels.AddRange(CeilingGap(connection, direction, asOf));
+            panels.AddRange(CeilingGap(connection, direction, asOf, _options.SessionZone));
         }
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
@@ -125,26 +125,51 @@ public sealed class ScoreboardBuilder
     }
 
     /// <summary>
-    /// Band 0. Account-wide, so no direction: nights recorded, degraded runs, setups on file.
+    /// Band 0. Account-wide, so no direction: nights recorded, degraded runs, setups on file, and
+    /// how much of the population rests on an answer that arrived late.
     ///
     /// <b>It reads red when degraded nights exceed 5% of the record</b>, because excluded nights are
     /// not missing at random: a night the lab lost is more likely to be a night something unusual
     /// happened, and a series with those quietly absent flatters every figure below it.
+    ///
+    /// <b>The corrections panel is the reader the correction mark needed.</b> The superseded rule
+    /// recorded a mark "so a later reader can exclude corrected rows" and shipped with a guard that
+    /// made corrected rows impossible, so the mark had neither a producer nor a consumer: a claim
+    /// about a surface, asserted against a store. This is the surface. A reader who wants to know how
+    /// much of a figure rests on a late answer can see the count and the worst lateness here rather
+    /// than deriving it, and a corpus in which corrections became common would say so on the page
+    /// rather than in a column nobody queries.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
-    private static IReadOnlyList<Panel> Health(SqliteConnection connection, DateOnly asOf)
+    private static IReadOnlyList<Panel> Health(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
-        int nights = Count(connection, "SELECT COUNT(DISTINCT as_of) FROM setup WHERE as_of <= @as_of", asOf);
+        int nights = Count(connection, "SELECT COUNT(DISTINCT as_of) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
         int degraded = Count(
             connection,
             "SELECT COUNT(DISTINCT started_at) FROM run_log WHERE outcome <> 'clean' AND started_at <= @end_of_day",
-            asOf);
-        int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf);
+            asOf, sessionZone);
+        int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
+
+        int corrected = Count(
+            connection,
+            "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of AND corrected_at IS NOT NULL",
+            asOf, sessionZone);
+
+        // The worst lateness rather than the mean, because the question a bound invites is how close
+        // anything came to it, and a mean over mostly-zero rows answers a different one.
+        int worstLateness = Count(
+            connection,
+            "SELECT COALESCE(MAX(correction_lateness_minutes), 0) FROM setup WHERE as_of <= @as_of",
+            asOf, sessionZone);
 
         return
         [
             new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null, Flagged),
             new Panel("band0.degradedRuns", null, degraded.ToString(CultureInfo.InvariantCulture), null, null, nights, null, "runs recorded"),
             new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
+            new Panel("band0.correctedRows", null, corrected.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
+            new Panel("band0.worstLatenessMinutes", null, worstLateness.ToString(CultureInfo.InvariantCulture), null, null, corrected, null, "corrected rows"),
         ];
     }
 
@@ -339,6 +364,7 @@ public sealed class ScoreboardBuilder
                     WHERE s.direction = @direction AND s.as_of <= @as_of),
                   (SELECT COUNT(*) FROM setup s
                      JOIN control_setup c ON c.setup_id = s.setup_id AND c.control_set = @set
+                                          AND c.drawn_at <= @computed_at
                      JOIN forward_return f
                        ON f.subject_id = c.control_id AND f.subject_kind = 'control'
                       AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
@@ -423,16 +449,23 @@ public sealed class ScoreboardBuilder
     /// Read straight off `ceiling_bound` rather than recomputed, because two implementations of a
     /// bound would eventually disagree and the scoreboard would be the last place anyone looked.
     /// </summary>
-    private static IReadOnlyList<Panel> CeilingGap(SqliteConnection connection, string direction, DateOnly asOf)
+    private static IReadOnlyList<Panel> CeilingGap(
+        SqliteConnection connection, string direction, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT bound, achieved, subjects FROM ceiling_bound
              WHERE direction = @direction AND as_of <= @as_of
+               AND computed_at <= @computed_before
              ORDER BY as_of DESC LIMIT 1
             """;
         command.Parameters.AddWithValue("@direction", direction);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        // The bound is recomputed weekly, so a week can carry more than one row over its life and
+        // the panel must read the one that existed on the night it is building. Bounding the as-of
+        // alone picks the right week and can still read a bound computed afterwards.
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -483,7 +516,7 @@ public sealed class ScoreboardBuilder
                       JOIN forward_return f
                         ON f.subject_id = c.control_id AND f.subject_kind = 'control'
                        AND f.horizon_days = @horizon AND f.filled_at <= @computed_at
-                     WHERE c.control_set = @set
+                     WHERE c.control_set = @set AND c.drawn_at <= @computed_at
                      GROUP BY c.setup_id) cf
                 ON cf.setup_id = s.setup_id
              WHERE s.direction = @direction AND s.as_of <= @as_of
@@ -522,12 +555,12 @@ public sealed class ScoreboardBuilder
         return nights;
     }
 
-    private static int Count(SqliteConnection connection, string sql, DateOnly asOf)
+    private static int Count(SqliteConnection connection, string sql, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@end_of_day", $"{asOf:yyyy-MM-dd}T23:59:59.999Z");
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(asOf, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }

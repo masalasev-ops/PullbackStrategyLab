@@ -1,0 +1,48 @@
+{
+  "tier": "AUTHORED",
+  "note": "Bodies the vendor can answer 200 with and the parse must survive. Authored rather than captured, because the captured fixture holds what the vendor actually sent on one day and these are the space around it. Two shapes were predicted before the real one was seen and both were wrong, so one captured shape is a sample of one from a space already proved wider than expected. The captured instance is fundamentals-MUZ.json, which is the second row here. Each is asserted three ways: the walk counts the name skipped or resolved, leaves it unstamped or stamps it, and the run says whether it finished its list. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it",
+  "shapes": [
+    {
+      "name": "empty strings and an empty capitalisation",
+      "body": "{\"General::Sector\":\"\",\"General::Industry\":\"\",\"Highlights::MarketCapitalization\":\"\"}",
+      "holdsNothing": true,
+      "why": "every field present and every one blank, which is the vendor saying it holds none of them"
+    },
+    {
+      "name": "the capitalisation the vendor answered for MUZ",
+      "body": "{\"General::Sector\":\"\",\"General::Industry\":\"\",\"Highlights::MarketCapitalization\":\"NA\"}",
+      "holdsNothing": true,
+      "why": "the real one, captured verbatim as fundamentals-MUZ.json. It threw mid-deserialization and took the whole sector walk down on 2026-08-27"
+    },
+    {
+      "name": "N/A in upper case beside real fields",
+      "body": "{\"General::Sector\":\"Technology\",\"General::Industry\":\"Software\",\"Highlights::MarketCapitalization\":\"N/A\"}",
+      "holdsNothing": false,
+      "why": "a name whose sector is known and whose capitalisation is not. The row is real and one field is absent, which is a different answer from a name the vendor holds nothing on"
+    },
+    {
+      "name": "n/a in lower case",
+      "body": "{\"General::Sector\":\"Technology\",\"General::Industry\":\"Software\",\"Highlights::MarketCapitalization\":\"n/a\"}",
+      "holdsNothing": false,
+      "why": "the same word in the case the vendor happened not to use on the day it was captured. Matching one case only is how a guard passes for a year and then does not"
+    },
+    {
+      "name": "whitespace in every field",
+      "body": "{\"General::Sector\":\"   \",\"General::Industry\":\"   \",\"Highlights::MarketCapitalization\":\"   \"}",
+      "holdsNothing": true,
+      "why": "not empty and not a word, which a trim catches and an equality test does not"
+    },
+    {
+      "name": "JSON null in every field",
+      "body": "{\"General::Sector\":null,\"General::Industry\":null,\"Highlights::MarketCapitalization\":null}",
+      "holdsNothing": true,
+      "why": "the shape a serializer produces rather than the one this vendor does, and the one every other vendor would"
+    },
+    {
+      "name": "the keys absent altogether",
+      "body": "{}",
+      "holdsNothing": true,
+      "why": "the filter returning nothing rather than returning blanks. It reads as a row of nulls and must not read as a resolved name"
+    }
+  ]
+}

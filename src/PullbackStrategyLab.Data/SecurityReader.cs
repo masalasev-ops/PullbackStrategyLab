@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Data;
 
 /// <summary>
@@ -69,5 +71,5 @@ public static class SecurityReader
         return reader.Read() ? reader.GetString(0) : null;
     }
 
-    private static string EndOf(DateOnly date) => StoreText.DateToStorageText(date) + "T23:59:59.999Z";
+    private static string EndOf(DateOnly date) => StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
 }

@@ -57,6 +57,168 @@ jobs:
           path: artifacts/checks/
           if-no-files-found: warn
 
+  # A failing stage's message survives the slot script, and so does its exit code.
+  #
+  # tools/nightly.ps1 set $ErrorActionPreference to Stop and piped a native command through 2>&1.
+  # Windows PowerShell wraps each stderr line in a NativeCommandError record, which under Stop is
+  # terminating, so the slot script died before it logged anything the stage said and before the
+  # line that says the slot stopped. Every stage had that property. It was found by reading the
+  # code after `sectors` spent 149 vendor calls on 2026-08-27 and left a log ending mid-slot.
+  #
+  # Windows PowerShell rather than pwsh, and that is the whole reason this job can see it.
+  # PowerShell 7 does not wrap native stderr this way, so the same script under pwsh passes with
+  # the defect present. The registered tasks execute powershell.exe, so this job does too, with
+  # the same arguments the scheduler uses.
+  #
+  # The failing stage is a real one denied a real precondition rather than a stub written to fail.
+  # There is no vendor token on a runner, so `universe-build` throws VendorException before it
+  # reaches the network, which is a stage failing for a reason the operator will actually meet.
+  slot-diagnostics:
+    name: a failing stage is logged by the slot script
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # nightly.ps1 addresses data/live under the repository absolutely, so the store it will
+      # open has to be the one migrated here.
+      - name: a migrated store for the slot to open
+        shell: pwsh
+        env:
+          PullbackStrategyLab__DataRoot: ${{ github.workspace }}/data/live
+        run: dotnet run --project src/PullbackStrategyLab.Worker -- migrate
+
+      - name: the slot script keeps the stage's message and its exit code
+        shell: pwsh
+        run: |
+          # This step expects a non-zero exit and reads the log afterwards, so it must not itself
+          # die on one. GitHub prepends $ErrorActionPreference = 'stop' to a pwsh step, and pwsh
+          # 7.4 raises on a native command's non-zero exit under it, which is the same trap the
+          # job exists for one interpreter version up. Turned off here and nowhere else.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ErrorActionPreference = 'Continue'
+
+          # powershell.exe explicitly, whatever this step's own shell is. The property under test
+          # is Windows PowerShell's, and running the script under pwsh would assert it of an
+          # interpreter no scheduled task uses.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          $code = $LASTEXITCODE
+
+          # Back on, so a genuine failure below is not swallowed by the line above.
+          $ErrorActionPreference = 'Stop'
+
+          $log = Get-ChildItem data/live/logs/nightly-*.log | Select-Object -First 1
+          if ($null -eq $log) { throw 'The slot wrote no log at all.' }
+          $text = Get-Content $log.FullName -Raw
+          Write-Output $text
+
+          if ($code -eq 0) {
+            throw "The slot exited 0 with a stage that could not run."
+          }
+
+          # The stage's own diagnostic, on stderr, which the defect discarded.
+          if ($text -notmatch 'No vendor token is configured') {
+            throw 'The log does not carry what universe-build wrote to stderr, so the slot script is discarding it again.'
+          }
+
+          # And the line saying the slot stopped, which never ran because the pipeline above it threw.
+          if ($text -notmatch 'universe-build exited \d+; slot universe stops here') {
+            throw 'The log does not say the slot stopped, so the script unwound instead of reaching its own failure branch.'
+          }
+
+          Write-Output "the stage's message and its stop line are both in the log; the slot exited $code"
+
+          # And the same script under pwsh, recorded rather than required.
+          #
+          # This repository is cross-platform by decision and powershell.exe does not exist on
+          # macOS, so the slot script's dependency on Windows PowerShell is a real portability
+          # question rather than a detail. Pinning one interpreter's behaviour would assert
+          # something about an interpreter the scheduler does not use on one platform and cannot
+          # use on the other; requiring them to agree would fail for a reason nobody has decided.
+          # So both run and the job prints what each did, and the divergence is carried as an
+          # obligation against the move rather than settled here.
+          Remove-Item data/live/logs/*.log -ErrorAction SilentlyContinue
+          & pwsh -NoProfile -File tools/nightly.ps1 -Slot universe
+          $pwshCode = $LASTEXITCODE
+
+          $pwshLog = Get-ChildItem data/live/logs/nightly-*.log -ErrorAction SilentlyContinue | Select-Object -First 1
+          $pwshText = if ($null -eq $pwshLog) { '' } else { Get-Content $pwshLog.FullName -Raw }
+
+          $pwshKeptMessage = $pwshText -match 'No vendor token is configured'
+          $pwshKeptStopLine = $pwshText -match 'universe-build exited \d+; slot universe stops here'
+
+          Write-Output "interpreter comparison, recorded rather than required:"
+          Write-Output "  powershell.exe  message kept True   stop line kept True   exit $code"
+          Write-Output "  pwsh            message kept $pwshKeptMessage   stop line kept $pwshKeptStopLine   exit $pwshCode"
+
+          # The step passed, and it has to say so. GitHub appends `exit $LASTEXITCODE` to a pwsh
+          # step, and $LASTEXITCODE is still the exit code of the last thing run, so the step would
+          # report the failure it was written to require. Third layer of the same bug in one
+          # checkpoint: a tooling layer carrying the wrong verdict for the thing below it. The
+          # slot-diagnostics-inverted job is what stops this line turning a real failure green.
+          exit 0
+
+  # The inverted job: a failing assertion has to make the job red.
+  #
+  # The fix for the third layer is the dangerous direction. Windows PowerShell discarded the stage's
+  # message; pwsh 7.4 would have raised before the assertions ran; and then the step's own success
+  # was overwritten by the exit code of the thing it was testing, so it exits 0 explicitly. That
+  # explicit exit is exactly what can turn a real failure green, and nothing above it would notice.
+  #
+  # So this job runs the same shape with the assertion inverted and requires the outer step to fail.
+  # If `exit 0` ever moves above the assertions, or swallows them, this job goes green and says so.
+  slot-diagnostics-inverted:
+    name: a failing assertion makes the slot job red
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: a migrated store for the slot to open
+        shell: pwsh
+        env:
+          PullbackStrategyLab__DataRoot: ${{ github.workspace }}/data/live
+        run: dotnet run --project src/PullbackStrategyLab.Worker -- migrate
+
+      - name: an assertion that must fail takes the step with it
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ErrorActionPreference = 'Continue'
+
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          $code = $LASTEXITCODE
+          $ErrorActionPreference = 'Stop'
+
+          $log = Get-ChildItem data/live/logs/nightly-*.log | Select-Object -First 1
+          $text = Get-Content $log.FullName -Raw
+
+          # Deliberately false: the log cannot carry a message no stage ever wrote. The real job's
+          # assertions are the same shape, so if this one passes they prove nothing either.
+          $failed = $false
+          try {
+            if ($text -notmatch 'a message no stage has ever written') {
+              throw 'the inverted assertion fired, which is what it is here to do.'
+            }
+          } catch {
+            $failed = $true
+          }
+
+          if (-not $failed) {
+            throw "The inverted assertion did not fire, so the real job's assertions cannot be trusted to either."
+          }
+
+          Write-Output "the inverted assertion fired; the slot exited $code"
+          exit 0
+
   # The migration rehearsal, on a case-sensitive filesystem.
   #
   # 1.11 ran the rehearsal on one machine and was recorded as partial, because the failures it

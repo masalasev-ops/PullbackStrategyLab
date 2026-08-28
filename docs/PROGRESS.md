@@ -5117,3 +5117,442 @@ Verdict:    **Phase 3 signs off, 3.0 through 3.5, with 3.6 parked.** Nothing fou
             shapes already recorded, because the fix is mechanical and the survey above names each
             instance, but it is the route by which phase 4's tables, endpoints and surfaces will arrive
             unguarded if nobody runs the second direction.
+
+## 3.8 — 2026-08-28 — phase-3-corrections — a slot script that discarded every stage's message, and a repair its own bound refused
+
+A correction pass taken after the phase signed off and before accumulation runs on. Not a
+reopening of 3.5: nothing here fails a done condition of a landed checkpoint or breaks a check
+that existed. It is a checkpoint of its own because the work has a deliverable, and it is in
+phase 3 because every one of its subjects is phase 3's own output.
+
+Verified:   `tools/ci.ps1` green on Windows, **27 steps, 434 tests**, up from 26 and 405.
+            `tools/verify-phase` **GREEN**: 118 claims, **68 passed, 0 failed, 50 out of scope, 0
+            unexamined**; coverage examined **3,932** with 0 unexamined; **1,288 expectations**, 759
+            `DERIVED` and 529 `FROZEN`, all matching, 0 differing and 0 missing. Inputs 68 `CAPTURED`
+            over **4 endpoints**, up from 3, and 94 `AUTHORED`.
+
+            Run twice, and the second run is the one reported, so the sign-off figures are against
+            the state being committed rather than against the state they were produced from. The
+            first run read 67 passed and 51 out of scope, because `CheckRecomputer`'s catalogue claim
+            was deferred to a checkpoint `PROGRESS.md` did not yet record; adding this entry landed
+            3.8 and the claim resolved to declared and registered. Coverage examined moved 3,931 to
+            3,932, the one being a citation this entry adds.
+
+            **The `fundamentals` endpoint now has a captured input, which closes one of the two live
+            instances the 3.7 sign-off named.** `fixture-inputs` counted three endpoints a live run
+            exercises where the client calls four, and the fourth was captured only by luck. It is
+            now captured deliberately, including the response that fails.
+
+            **121 `DERIVED` expectations added, which is done condition seven.** Every captured
+            `fundamentals` response is read through the real client at the transport, so the field
+            names, the number handling and the vendor's own absence words are exercised rather than
+            described. `tools/derive-indicators.py --fundamentals` restates the parse from the
+            vendor's document in Python, shares no code with the client, and agrees on all 31
+            names, including that `MUZ` is a name the vendor holds nothing on rather than a document
+            that will not parse.
+
+            **The check the slot script got was proved by removal.** With the invocation put back
+            where it was, `slot-diagnostics` reports two invocations of which one is inside the
+            isolating function, and fails. The behavioural half is a runner rather than a test, and
+            declared as one: whether Windows PowerShell wraps a native command's stderr is a property
+            of the interpreter, and no assertion about the text of a script can establish it.
+
+Built:      **(a) `tools/nightly.ps1` kept a failing stage's message and its exit code.** The script
+            set `$ErrorActionPreference = 'Stop'` and piped a native command through `2>&1`. Windows
+            PowerShell wraps each line a native command writes to stderr in a `NativeCommandError`
+            record, and under `Stop` the first one is terminating: the pipeline died before the line
+            that writes to the log ran, the slot unwound with nothing saying it had stopped, and
+            PowerShell's own exit code of 1 replaced the stage's. **Every stage had that property,
+            not one of them.** The application writes its diagnostic correctly, on stderr, and this
+            script was discarding it and then dying quietly.
+
+            The invocation now sits in `Invoke-Stage`, which sets `Continue` in its own scope and
+            nowhere else, and leaves the exit code in a script-scoped variable rather than returning
+            it, because `Write-Line` calls `Write-Output` and a returned value would arrive mixed
+            into the log lines.
+
+            **(b) One vendor call, captured rather than read.** `fundamentals/MUZ.US` answers **200**
+            with `{"General::Sector":"","General::Industry":"","Highlights::MarketCapitalization":"NA"}`.
+            Neither of the two candidates the investigation had left open: not a non-200 and not a
+            change in the vendor's shape. `JsonSerializerDefaults.Web` reads a number from a string,
+            so `"12481812480"` would have been fine and `"NA"` throws mid-deserialization.
+
+            The capture path could not have stored it before tonight, which is why nothing had.
+            `GetRawAsync` went through a read that refused a non-200 and returned no status at all,
+            so the fixture could hold thirty working `fundamentals` responses and no case where
+            anything could go wrong. It now records the status beside the body, the ordinary capture
+            refuses a non-200 for an endpoint captured as a working example, and a new
+            `capture-response` verb takes one response whatever the vendor answers.
+
+            **(c) `SectorResolver` skips a bad name instead of dying on it.** Counted, named on
+            stdout so (a) puts it in the night's log, and left unstamped so tomorrow asks again: a
+            refusal that happens once must not permanently record a good name as one the vendor has
+            nothing on. The catch names what the vendor can do and nothing else, so a failure that
+            is not the vendor still takes the stage down, because a store that will not accept a
+            write is not a condition the next ticker would survive either. The count goes in
+            `run_log.skipped`, migration 024, and a run that did not finish its list is `partial`.
+
+            **(d) The walk run to completion** against the live store for 2026-08-27.
+
+            **(e) A named decision, where there had been none.** A setup row is corrected only where
+            the correction uses no information the night did not have. Two conditions, both
+            asserted: inputs bounded to the setup's own date, and the row recording that it was
+            corrected with the date and the reason.
+
+            **(f) `CheckRecomputer`, verb `recheck`, and migration 025.** Given a date and a check it
+            recomputes from inputs bounded to that date and marks what it touched. It refuses any
+            check outside the recorded-not-required set before it reads a row, refuses a verdict that
+            already carries a number, and carries every other verdict through untouched.
+
+            **(g) The sectors slot runs the stage twice**, which is what makes the repair mostly
+            unnecessary. RUNBOOK carries the window, the deadline and the command.
+
+Measured:   **One sectors run had failed, not two, and 148 of its 149 calls were productive.**
+            `run_log` holds exactly one row before tonight: started `2026-08-27T22:12:03.201Z`, ended
+            23 seconds later, outcome `failed`, 149 calls, 0 rows. Every one of the 148 stamped
+            securities came back with sector, industry and market capitalisation, none null, all
+            stamped at the single instant the run began. **None of them predates the stage.** The
+            149th name was `MUZ`, and the stamped names are a contiguous prefix of the walk order.
+
+            **The stage threw rather than completing and writing nothing.** `outcome = failed` has
+            one source, which is `RunScope.Dispose` completing a scope nobody completed;
+            `ResolveAsync` can return only `Clean` or `Partial`. `RunAsync` prints its three summary
+            lines after `ResolveAsync` returns and printed none.
+
+            **The silence was the slot script and it was reproduced before anything was changed.** A
+            standalone script with the same two lines: the stdout line reached the log, the stderr
+            line became a `NativeCommandError`, the script aborted with no "exited N" line, and the
+            exit code came back **1 rather than 3**. Then against the real worker, on a copy of the
+            tree with no secrets file so `universe-build` throws `VendorException` before it reaches
+            the network: **both lines the defect lost are in the log** and the script exits with the
+            stage's own code.
+
+            **The walk to completion: 86 asked, 85 resolved, 1 the vendor had nothing on, 0 skipped,
+            clean, 86 calls.** Every one of that night's **234 scan names** now carries a sector.
+            Exactly one name in the store has a null sector, which is `MUZ` (`Tidal Trust II`),
+            stamped so it is never asked again, which is the true answer.
+
+            **The failures have nothing in common because there was one.** No universe-level filter
+            is warranted. `MUZ` is a fund trust and five fund-ish names among the first 148 resolved
+            normally, so security type is not the discriminator; what distinguishes it is that the
+            vendor holds no fundamentals for it, which the stage now records natively.
+
+            **The fifteen are not repairable and the reason is this checkpoint's own guard.** 15 of
+            the night's 44 setups carry `cluster` as failed with no value, and they are exactly the
+            15 whose ticker sorts after `MUZ`. Their industries now exist, resolved at
+            `2026-08-28T04:19:33.201Z`. The night's bound is `2026-08-27T23:59:59.999Z`, so the
+            information is **six hours too late**, and `recheck 2026-08-27 --check cluster` refuses
+            all fifteen by name with both instants and exits non-zero. That is the right outcome: a
+            decision whose first act is to exempt its own motivating case has no conditions on it.
+            **Those fifteen rows carry a null cluster verdict permanently.**
+
+            The denominators that matter, stated rather than the one that does not: sector coverage
+            was **148 of 234** of that night's scan names and **29 of 44** of its setups. 148 of
+            2,083 securities is not the population any stage reads, because the lookup is lazy and
+            only ever asks about names a scan surfaced.
+
+Found:      **The run log did record the failure, and the column a reader would look at cannot say
+            so.** The entry says `failed` with 149 calls, and `band0.degradedRuns` counts it. What is
+            uninformative is `rows_written = 0`: `RunScope` measures it as a row-count delta and
+            `sectors` only issues `UPDATE`, so a perfect run records 0 rows and so did the run that
+            died. Raised as an obligation rather than repaired, because the two available fixes each
+            break something stated.
+
+            **The rule this checkpoint amended existed in four places and none of them was a
+            decision.** Setup-row immutability lived in 3.1's done condition, one line of SCHEMA, a
+            migration header and a doc comment. `decision-resolves` could never have caught that,
+            because there was no name to resolve.
+
+            **Five tests failed on the new permission and each was a reconciliation rather than a
+            number to bump.** `ComponentReachabilityTests` matched dispatch arms against a list of
+            two constant names rather than against a shape, so a third was advertised, dispatched two
+            lines away, and read as unreachable. `SetupJournalTests` holds the interesting pair:
+            `check_results` is detector-owned and the correcting stage writes it, so the exemption is
+            by file and by column, both checked, and the test now asserts the exemption was
+            exercised, because an exemption nobody uses is a rule with a hole rather than one with a
+            door. `CheckProofTests` pins the workflow's whole job list by equality, which is what
+            makes a `Backing.Runner` naming a vanished job fail.
+
+            **`tools/ci.ps1` does not have this defect** and the reason is worth recording:
+            it sets the same preference and never merges the streams, so nothing is wrapped. The
+            defect belonged to the one script that merged them, which it did precisely because it
+            wanted both in the log.
+
+Carried:    **Two obligations raised, neither blocking, and both are decisions rather than repairs.**
+
+            `rows_written` measures the wrong thing rather than nothing on three update-only stages,
+            `sectors`, `clusters` and now `CheckRecomputer`. Due **4.1**, with the other band 0 item.
+
+            `security.sector_resolved_at` is when the lab asked and every reader treats it as when
+            the fact became true. That is what makes the fifteen unrepairable and it is the same
+            bound that made a 2024 calibration run see no capitalisation at 2.11, which was met by
+            exempting one clause by name rather than solved. Due at **the operator**: it decides
+            whether a night's evidence may ever be completed after the fact, and the conservative
+            answer, which is what the code does today, is the one in force.
+
+            **This session committed code and may not sign it off.** 3.8 is owed a fresh-session
+            review on the same terms as any other checkpoint.
+
+## 3.8 — 2026-08-28 — phase-3-corrections — one pass before merge: two one-way doors, a rule narrowed rather than exempted, and the fifteen repaired
+
+A second pass over 3.8, taken before merge. Twelve clauses; eleven were taken and one stopped on its own
+condition. This entry corrects nothing in the entry above it and adds what the pass found.
+
+Verified:   `tools/ci.ps1` green, **27 steps, 466 tests**, up from 434. `tools/verify-phase` **GREEN**:
+            118 claims, **68 passed, 0 failed, 50 out of scope, 0 unexamined**, unchanged on every
+            figure; coverage examined **4,107**, up from 3,932; 1,288 expectations with 0 changed;
+            inputs 68 `CAPTURED` and **97 `AUTHORED`**, up from 94.
+
+            **The claim totals not moving is the result, not a null one.** Six OPEN parameter rows,
+            an out-of-scope ceiling and a coverage item were added and none of them is an
+            architecture claim, so the four numbers that gate the report are the same four. What
+            moved is what they are measured over.
+
+Stopped:    **The bound's basis was counted before any edit and the count stopped it: 43
+            stamp-bounding query sites across 17 shipped-source files.** Moving from an instant to
+            the session date an answer is attributed to is not an edit to the sectors slot; it is
+            every point-in-time read the lab has. And it is not only an edit: most stamped tables
+            carry no session-date column to compare against, and `security` carries none at all,
+            which is the conflation itself. So it needs a migration, a backfill of instants nobody
+            recorded, and a re-derivation of every fixture expectation resting on a bound. A split
+            basis is worse than either basis, so none of it was done.
+
+            **One consequence, and it changes what the ledger below could close.** The clause that
+            closes the sector-timestamp conflation rests on the session date and the instant being
+            separate columns. They are not, because this stopped, so **that obligation stays open**
+            and now records the count that stopped it. The lateness bound reaches the outcome the
+            row was raised for without touching the basis, which is why the fifteen are repaired and
+            the modelling question is still the operator's.
+
+Found:      **The second one-way instance was twenty files, not two.** The 3.7 sign-off recorded
+            "two files carry `see:` citations outside the citation scan" and the sweep found ten
+            migrations, six under the web project and four at the root. The undercount was the same
+            shape as the gap it was describing. The scan now derives its file set from the git
+            index; all **280** citations resolve and nothing was hiding in the twenty.
+
+            **`Stamped` needed six additions, not five.** The reverse reconciliation this pass added
+            found `detector_error.observed_at`, outside since 2.7. Thirteen tables rather than the
+            twelve the brief asked for, and the deviation is deliberate: the property is every
+            observation stamp, and stopping at a number rather than at the property is the failure
+            this corpus keeps meeting from new directions.
+
+            **"Latent until a rebuild" was too generous, and writing the test is what found it.**
+            The scoreboard cannot be rebuilt in place at all: its insert is `ON CONFLICT DO NOTHING`,
+            so a second build for a date that already has panels writes none of them. The eight
+            unbounded reads were still wrong; what reaches a row is a store restored from a snapshot
+            and re-run, or panels deleted and rebuilt.
+
+            **The superseded correction rule contradicted itself.** It recorded a mark "so a later
+            reader can exclude corrected rows" under a guard that made corrected rows impossible, so
+            the mark had neither a producer nor a consumer. That is CLAUDE.md's sixth failure shape
+            written into a decision rather than into code.
+
+            **`scan_hit` carries no observation stamp**, so a hit inserted for a past session is
+            invisible to every bound the lab has. Found while asserting the lateness exception is one
+            column wide: it is, among stamped columns, and `scan_hit` has no stamp to be among them.
+
+            **The coverage floor caught a narrowing that was not one.** Moving `decision-resolves`
+            to every tracked text file made it invisible to a name-based sweep, so "files belonging
+            to a check" fell from 12 to 11 while the check read strictly more. The detector was
+            taught the new name rather than the floor lowered.
+
+            **And the citation sweep caught its own test.** `SetupImmutabilityWordingTests` was
+            invisible while untracked and appeared as a fifth site the moment it was committed, which
+            is the index-based scan doing exactly what it was written for.
+
+Built:      **The rule, narrowed rather than exempted.** "A late answer is attributed to the session
+            it was fetched for, up to a recorded lateness bound" supersedes the old wording, which
+            moves to Previously decided with its reasoning intact. Three conditions, all asserted:
+            the input is one the session itself asked for; the lateness is inside the bound and
+            recorded in a countable column; every other input stays bounded to the session's own
+            date. The cost is carried into the reasoning so a later session does not re-broaden it
+            by feel: fifteen setups is **about 5.7%** of 262 effective observations and more than one
+            session's worth, lost on the first night to a stage falling over.
+
+            The bound is 24 hours, authored, in the parameters table and in
+            `MeasurementParameters.LatenessBoundHours`, read by the recomputer rather than written
+            into it. Four sites state the rule and all four were swept against a count stated first.
+
+            **The mark has two readers**, which the superseded form promised and did not have: the
+            recomputer refuses a row already corrected, and band 0 reports the corrected count and
+            the worst lateness.
+
+Measured:   **The fifteen are repaired.** The set was derived rather than trusted: `recheck --expect
+            15` states that the set is every row of that date whose cluster verdict carries no value,
+            and exits 2 on any other number. The query found fifteen. All admitted at **260 minutes**
+            late against a bound of 24 hours, thirteen passing and two failing at a cluster of one,
+            which is a real verdict rather than an absent one. `passed_all` is unchanged on all
+            forty-four rows, because cluster is recorded and never gating.
+
+            Every repaired row carries the mark, the lateness in minutes, and the check results as
+            they stood before, verbatim. A test restores a row from that state and asserts the
+            verdict the correction never touched came back with it.
+
+Carried:    **Open obligations: 32 before this pass, 32 after.** One discharged, one added, and the
+            arithmetic is not a coincidence worth hiding: the `PointInTimeCheck` stamp gap closed and
+            `scan_hit`'s missing stamp opened. By due point: **16 at 4.1, 3 at 4.6, 9 at the
+            operator, 3 at the move** (the move gained the slot script's Windows PowerShell
+            dependency, whose two interpreter-specific parts are named).
+
+            `rows_written` on the three update-only stages stays open at 4.1, untouched, which is
+            what the scope said.
+
+            **The nine operator obligations are now one table** with what each blocks and what
+            stalls without it. Six of the nine block nothing today. **2.11 is the one that stalls a
+            phase**: at a median of nought candidates a night, phase 4 builds a trading layer nothing
+            reaches.
+
+            **This session committed code and may not sign it off.**
+
+## 3.9(a) — 2026-08-28 — phase-3-corrections — the three questions the repair owed, answered before merge
+
+Three questions put to the repair before it merges. This entry corrects one figure in the entry above
+it and adds two answers that entry did not carry.
+
+Answered:   **The cluster population: the night's whole scan population, not the fifteen.**
+            `CheckRecomputer.ClusterInputs` selects every `scan_hit` row of the date joined to
+            `security` and groups by scan and industry, so the count a repaired row receives is taken
+            over **300 scan hits across 234 distinct names**, of which 44 have a setup and 15 were
+            repaired. Asserted rather than read off the code: a repaired row's cluster now has a test
+            in which the only candidate is one row, one other name has a setup whose verdict already
+            carries a value, and a third has no setup at all, and the answer is three. A second test
+            takes five scan names with one setup and the answer is five, which no reading of "the
+            repaired set" can produce.
+
+            **The two failures at a cluster of one are real.** `RUM` in Internet Content &
+            Information and `TWST` in Diagnostics & Research are alone in their industry on their
+            scan over all 234 names.
+
+            **The lateness origin: the session's own end of day, and the 260 is the right figure.**
+            Lateness is measured from `<date>T23:59:59.999Z`, which is the bound every reader in the
+            lab already applies and is 19:59:59 Eastern. The sectors were stamped
+            `2026-08-28T04:19:33.201Z`, which is 260 minutes past that, and
+            `setup.correction_lateness_minutes` holds 260 on all fifteen.
+
+            **The "six hours" is elapsed time from the failed walk, and it is not lateness.** The
+            walk stamped its first 148 names at `2026-08-27T22:12:03.201Z` and the rerun stamped the
+            remaining 86 at `04:19:33.201Z`, six hours and seven minutes later. Both numbers are
+            arithmetically right and describe the same arrival from two origins, which is why the
+            record carried two. **The entry above states "the information is six hours too late",
+            and that phrasing is corrected here**: as a lateness the figure is 260 minutes, and six
+            hours is the gap between the two passes. Four sites carried the ambiguity and all four
+            were swept in this pass: `RUNBOOK.md` twice, `DECISIONS.md` once, and the test constants,
+            whose `OnTheNight` doc-comment also called `22:12:03.201Z` "the end of the night's own
+            day" when the end of that day is `23:59:59.999Z`.
+
+            **The forty-four: every setup that night's detectors flagged, forty long and four short.**
+            It is the denominator for the fifteen repaired, for the twenty-nine untouched, and for
+            the `passed_all` count that did not move. `passed_all` could not move on any of the
+            forty-four, because `cluster` is recorded and never gating.
+
+Found:      **The repair made that night's `cluster` column a mixed population, and the rows it could
+            not touch are damaged the same way as the fifteen it could.** The recomputer runs after
+            the walk completed, so the fifteen are counted over 234 names while the twenty-nine carry
+            what `clusters` computed at 18:15 over the 148 resolved then. Measured: **all 15 repaired
+            rows match the 234-name count and none matches the 148-name count**; **28 of the 29
+            untouched match the 148-name count**; one, `INFQ`, matches neither, recording 4 against 6
+            and 13, so a third population exists that nothing has explained. Biotechnology on the
+            `gainer` scan is the clean illustration: `SRPT` repaired reads 8, and `ABCL`, `BHVN`,
+            `ERAS` and `INBX` untouched read 6, same night, same scan, same industry.
+
+            **20 of the 29 would move and two would change verdict.** `FOUR` short and `HTFL` long
+            both record a fail at a cluster of 1 and are 2 over the full population, which passes.
+            They are the fifteen's own defect wearing a number instead of a null, and they went
+            unseen precisely because a partial input produced a plausible value rather than an absent
+            one. This is CLAUDE.md's fifth shape: every count is correct, the check is live, the
+            subject is present, and "the cluster distribution for 2026-08-27" is a figure over a
+            population nobody named.
+
+            Raised as an obligation at 4.1 rather than repaired here. Recomputing them means
+            revisiting a verdict that carries a number, which the stage refuses before reading a row
+            and the correction rule does not permit, so it is a ruling and not a build session's.
+
+Corrected:  `RUNBOOK.md`'s Recovery section described the superseded rule in four places, including
+            telling an operator that `recheck` refuses all fifteen and that they keep a null verdict
+            permanently. It is the document somebody reads at 07:00 with a broken night behind them,
+            so it is the worst place in the corpus for a stale instruction. Prior text in
+            `CHANGELOG.md` against the decision that authorised the change, in three entries.
+
+            `CheckRecomputer`'s own class comment said the fifteen "were resolved on 2026-08-28, and
+            the stage declines them", which is what it did before the rule was amended in the same
+            checkpoint.
+
+Verified:   `dotnet test --filter CheckRecomputerTests` green at **15**, up from 13.
+
+## 3.9(c) — 2026-08-28 — phase-3-corrections — the session boundary, closed in Eastern time
+
+The point-in-time bound was being built by appending `T23:59:59.999Z` to the session date. That is
+the end of the session's UTC day, not of its own day, so an Eastern session was closing at 19:59:59
+Eastern through daylight time and 18:59:59 through standard time. This corrects the boundary. It
+does not touch the conflation, which is that a stamp records when the lab asked rather than which
+session the answer belongs to, and that stays open with the count that stopped it.
+
+Counted:    **Before the edit, per table, the rows a corrected bound admits that the old one did
+            not.** A row moves if the UTC date of its stamp differs from its Eastern date. Over the
+            thirteen stamped tables: **scoreboard 9 of 9, indicator_daily 27 of 5,952, and nought
+            in the other eleven** (daily_bar 1,490,188 stamped, index_bar 2,268, corporate_action
+            66, history_refetch 2,117, security 234, setup_signal 1,406, control_setup 440, setup
+            15; forward_return, ceiling_bound and detector_error hold no rows yet).
+
+Found:      **The scoreboard was invisible to its own session, and that is a live wrong result
+            rather than a latent one.** The nine panels for 2026-08-27 were built at 21:50 Eastern
+            and stamped `2026-08-28T01:50:03.248Z`. `LabScoreboard` bounds `computed_at` on the end
+            of the as-of's UTC day, so a read for 2026-08-27 matched **0 panels**; under the
+            corrected bound it matches **9**. Both figures were run against the live store rather
+            than reasoned about. The comment above that query said the two bounds were "latent
+            rather than live until 3.8, because nothing had rebuilt a scoreboard for a past date".
+            The reasoning was sound and the conclusion was wrong for a cause it did not consider:
+            the read did not need a rebuild to be wrong, it needed the clock to pass 20:00 Eastern.
+            The `scoreboard` slot runs at 21:50, so the panels were never visible on their own
+            session date, on any night.
+
+            **Migration 009's backfill put 27 rows in the wrong session, and only the fix exposed
+            it.** It gave pre-existing indicator rows a synthesised `computed_at` of
+            `as_of || 'T00:00:00.000Z'`, described as "the first instant of its own session".
+            Midnight UTC is 20:00 Eastern on the *previous* session. While every bound was also
+            built in UTC the two errors cancelled exactly; corrected, the rows became visible one
+            day before their own session, which is a point-in-time leak. It is the only one the
+            change introduces and it was caught by an existing assertion rather than by inspection:
+            `Migration_009_rebuilds_the_indicator_table_and_loses_no_row` already asserted that a
+            read as of the day before sees nothing, and it had been passing against a stamp in the
+            wrong session because the bound was wrong by the same offset.
+
+Built:      **One function, and every bound calls it.** `SessionBoundaries.At` holds the arithmetic,
+            which was moved out of `SystemClock` rather than copied, so `IClock.SessionBoundary`
+            delegates to it and there is one implementation. `StoreText.EndOfSession(date, zone)` is
+            the text form every query binds. Twelve sites carried the literal, in five store readers,
+            five stages and the API's scoreboard read; all twelve now call it and a claim fails if
+            the literal comes back.
+
+            **The zone is named at each site rather than defaulted**, and where a store reader has no
+            configuration to read it names `SessionBoundaries.UsEquities`, which is also what
+            `PullbackStrategyLabOptions.SessionZone` defaults to rather than restating. A test
+            asserts every `appsettings.json` sets that same value, because that is the only thing
+            standing between the readers and configuration diverging from them. Threading the
+            configured zone into the nine reader methods is the real fix and is carried.
+
+            **Migration 028** moves the 27 synthesised stamps to `as_of || 'T05:00:00.000Z'`.
+            05:00Z rather than 04:00Z because one stored literal has to be inside the session on
+            both sides of the clock change, and nothing here is an observation, so an hour of
+            conservatism costs nothing where a stamp in the wrong session costs a wrong answer.
+
+Measured:   **The fifteen repaired rows were 260 minutes late and are 20.** Nothing about the
+            arrival changed: `2026-08-28T04:19:33.201Z` is 00:19 Eastern, twenty minutes past the
+            session's real end of day, and it read as four hours and twenty because the end of day
+            was being computed in UTC. The 260 was correct against the bound as it then stood, which
+            is precisely why it is corrected in the same pass rather than left to disagree with the
+            column, and `band0` reports the worst lateness on a page.
+
+            The fifteen were restored and repaired again rather than overwritten: the cluster values
+            are identical, `passed_all` is unchanged on all forty-four, and every row carries the
+            mark, the new lateness and its prior state.
+
+            **The restore is now a stage rather than a statement in a test.** `corrected_from` was
+            added so a corrected population could be put back, and the only thing that could do it
+            was an `UPDATE` the test issued itself. `recheck --restore` is the operation, owned by
+            the same writer as the correction it undoes, and it is also the only correct way to redo
+            a correction: a repair cannot be applied twice by design, so one computed against
+            something since found wrong is undone and made again.
+
+Carried:    The sector-timestamp conflation stays open and is untouched by this. Threading the
+            configured session zone into the store readers is new, at 4.1.

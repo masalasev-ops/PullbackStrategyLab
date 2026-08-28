@@ -81,6 +81,35 @@ public sealed class PhaseReplay : IDisposable
         Vendor = new EodhdClient(_http, WithToken());
     }
 
+    /// <summary>
+    /// The names the captured fixture holds a fundamentals response for, from the files rather than
+    /// from a list in code. A response added to the capture is read without anyone remembering to
+    /// add it here, which is the direction this kind of list usually fails in.
+    /// </summary>
+    private IReadOnlyList<string> CapturedFundamentalsTickers() =>
+    [
+        .. Directory.EnumerateFiles(_handler.Directory, "fundamentals-*.json")
+            .Select(f => Path.GetFileNameWithoutExtension(f)["fundamentals-".Length..])
+            .Order(StringComparer.Ordinal),
+    ];
+
+    /// <summary>
+    /// A budget for a read that is not a stage's. The captured responses cost nothing to serve and
+    /// charging them to a run entry would put figures in the run log for calls nobody made.
+    /// </summary>
+    private sealed class UncountedBudget : ICallBudget
+    {
+        public int CallsRemaining => int.MaxValue;
+
+        public bool TryCountCall() => true;
+
+        public bool TryCountCalls(int cost) => true;
+
+        public void CountCall()
+        {
+        }
+    }
+
     /// <summary>The session every stage runs for. The fixture's own date, never today's.</summary>
     public DateOnly AsOf { get; }
 
@@ -143,6 +172,10 @@ public sealed class PhaseReplay : IDisposable
 
         void Record(string id, long value) =>
             measurements.Add(new Measurement(id, value.ToString(CultureInfo.InvariantCulture)));
+
+        // Some figures are not counts. A sector is a string and comparing it as one is the point:
+        // the defect that made this necessary was a field read as the wrong type.
+        void RecordText(string id, string value) => measurements.Add(new Measurement(id, value));
 
         // 1. The tradable list, from the captured symbol list screened against the captured
         //    market day, with the lab's own floors. The screen's verdict on this market day.
@@ -294,6 +327,39 @@ public sealed class PhaseReplay : IDisposable
         Record("sectors.unresolved", sectors.Unresolved);
         Record("sectors.asked", sectors.Asked);
         Record("sectors.resolved", sectors.Resolved);
+
+        // 10a. Every captured fundamentals response read through the real client, including the
+        //      ones no scan surfaced.
+        //
+        //      The resolver above only asks about names a scan hit, which is right for a nightly
+        //      stage and leaves the interesting response unread: `fundamentals-MUZ.json` is the one
+        //      the vendor answered 200 with two empty strings and a capitalisation of the string
+        //      "NA", and it took the whole sector walk down on 2026-08-27. Thirty working examples
+        //      and no failing one is how the parse came to be exercised thirty times against nothing
+        //      that could go wrong, so every captured response is read here rather than only the
+        //      ones tonight's scan happened to want.
+        //
+        //      Recorded as four figures a name so the diff names the field that moved rather than
+        //      reporting one row unequal, and tiered DERIVED against the Python restatement in
+        //      tools/derive-indicators.py --fundamentals, which reads the same bytes with a
+        //      different language's JSON reader and shares no code with this one.
+        //      see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+        foreach (string ticker in CapturedFundamentalsTickers())
+        {
+            VendorFundamentals? held = Vendor
+                .GetFundamentalsAsync(ticker, new UncountedBudget()).GetAwaiter().GetResult().Value;
+
+            RecordText($"fundamentals.{ticker}.held", held is null ? "no" : "yes");
+
+            if (held is null)
+            {
+                continue;
+            }
+
+            RecordText($"fundamentals.{ticker}.sector", held.Sector ?? "-");
+            RecordText($"fundamentals.{ticker}.industry", held.Industry ?? "-");
+            RecordText($"fundamentals.{ticker}.marketCap", held.MarketCap?.ToString(CultureInfo.InvariantCulture) ?? "-");
+        }
 
         // 11. The cluster count, then the market mood, then the two detectors.
         ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);

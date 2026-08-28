@@ -178,6 +178,14 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
 
     public List<string> FundamentalsRequested { get; } = [];
 
+    /// <summary>
+    /// Names the lookup throws on, and what it throws.
+    ///
+    /// The call is counted first, exactly as the real client counts it before issuing the request,
+    /// so a test can tell a name that cost a call from one that never got asked.
+    /// </summary>
+    public Dictionary<string, Exception> FundamentalsThrows { get; } = new(StringComparer.Ordinal);
+
     public Task<VendorResult<VendorFundamentals?>> GetFundamentalsAsync(
         string ticker,
         ICallBudget budget,
@@ -191,6 +199,11 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
         }
 
         FundamentalsRequested.Add(ticker);
+
+        if (FundamentalsThrows.TryGetValue(ticker, out Exception? thrown))
+        {
+            throw thrown;
+        }
 
         // Absent rather than empty for a name the fixture says nothing about. A vendor that has no
         // fundamentals for a ticker returns nothing, and the stage has to tell that apart from a

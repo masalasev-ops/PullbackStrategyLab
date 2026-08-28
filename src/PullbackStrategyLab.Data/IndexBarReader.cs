@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Data;
 
 /// <summary>
@@ -54,7 +56,7 @@ public sealed class IndexBarReader
             """;
         command.Parameters.AddWithValue("@symbol", symbol);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", StoreText.DateToStorageText(asOf) + "T23:59:59.999Z");
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
         command.Parameters.AddWithValue("@sessions", sessions);
 
         var bars = new List<StoredDailyBar>();

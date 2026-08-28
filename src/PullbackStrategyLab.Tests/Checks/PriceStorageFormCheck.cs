@@ -116,10 +116,35 @@ public sealed partial class PriceStorageFormCheck
             }
         }
 
+        // What this guard cannot see, counted rather than left out.
+        //
+        // It reads CREATE TABLE bodies. A column added by ALTER TABLE is in neither figure above, so
+        // a green from here currently means less than its readers think: it means every column
+        // declared at table creation has the right affinity, not every column in the store. Thirteen
+        // arrive that way today and all thirteen are TEXT or INTEGER, so nothing is wrong in the
+        // store; what is wrong is that the one guard on the storage half of the decimal rule cannot
+        // see the statement form a later phase is most likely to add a column with.
+        //
+        // Counted here rather than fixed, and the parse is a carried obligation. A count is not the
+        // repair and it is what stops the green being read as more than it is.
+        int addedLater = System.Text.RegularExpressions.Regex.Matches(
+            string.Concat(files.Select(File.ReadAllText)),
+            @"ALTER\s+TABLE\s+\w+\s+ADD\s+COLUMN",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+
         coverage
             .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
             .Examined("column declarations checked for REAL affinity", columns)
+            .OutOfScope(
+                "columns added by ALTER TABLE, which this guard does not parse",
+                addedLater,
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint(
+                    "4.1",
+                    "the regex reads CREATE TABLE bodies, so a column added later is in neither figure above. All "
+                    + "of them are TEXT or INTEGER today, so nothing is wrong in the store; what is missing is the "
+                    + "guard's reach over the statement form a later phase is most likely to add a column with. "
+                    + "Counted here so the green states its own coverage, and the parse itself is the obligation"))
             .NoSourceScan(
                 "the migration text is the declaration itself. The store is built by executing exactly these "
                 + "statements, so a column's affinity cannot differ from what the statement says, and removing "

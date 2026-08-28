@@ -134,18 +134,21 @@ public sealed class MigrationRowSurvivalTests
         Assert.Contains("009-indicator-as-computed.sql", after.Applied);
         Assert.Equal(3, Count(connection, "indicator_daily"));
 
-        // Every row keeps its figures and its grade, and gains a computed_at of the first instant
-        // of its own session: visible from that session onward, and behind any real computation
-        // made later.
+        // Every row keeps its figures and its grade, and gains a computed_at inside its own
+        // session: visible from that session onward, and behind any real computation made later.
+        // 028 moves it from midnight UTC, which is the previous Eastern session, to 05:00Z, which
+        // is inside this one on either side of the clock change.
         StoredIndicators row = Assert.IsType<StoredIndicators>(
             IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 24)));
 
         Assert.Equal(10m, row.EmaShort);
         Assert.Equal("rising", row.LadderGrade);
-        Assert.Equal(new DateTimeOffset(2026, 8, 24, 0, 0, 0, TimeSpan.Zero), row.ComputedAt);
+        Assert.Equal(new DateTimeOffset(2026, 8, 24, 5, 0, 0, TimeSpan.Zero), row.ComputedAt);
 
         // And a read as of the day before the session sees nothing, which is the point of the
-        // column: the values were not available before the evening that produced them.
+        // column: the values were not available before the evening that produced them. This is the
+        // assertion 028 exists for. Under the UTC bound it passed against a stamp in the wrong
+        // session, because the bound was wrong by the same offset and the two cancelled.
         Assert.Null(IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 23)));
     }
 

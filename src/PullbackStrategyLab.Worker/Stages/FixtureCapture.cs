@@ -38,11 +38,30 @@ public sealed class FixtureCapture
     public const string OutFlag = "--out";
 
     /// <summary>
+    /// One response, whatever the vendor answers, added to an existing capture.
+    ///
+    /// Separate from the capture above because it asks a different question. That one collects a
+    /// working example per endpoint and refuses anything else; this one exists for the case where
+    /// what a name answers is the thing worth keeping. The first was `fundamentals/MUZ.US`, the
+    /// name that killed the sector walk on 2026-08-27, where the fixture already held thirty
+    /// responses for the endpoint and not one that could fail.
+    /// </summary>
+    public const string CaptureResponseName = "capture-response";
+
+    /// <summary>
     /// Camel case, matching the vendor's own shape and the options the client reads responses
     /// with. The manifest sits beside files written by the vendor, so it reads like them.
     /// </summary>
     private static readonly JsonSerializerOptions Manifest =
-        new(JsonSerializerDefaults.Web) { WriteIndented = true };
+        new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true,
+
+            // A null status is omitted rather than written, so adding the field left every entry
+            // already in the manifest exactly as it was. The field carries a status only where it
+            // was not a success, which is the only case anybody reading the manifest cares about.
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        };
 
     private readonly EodhdClient _vendor;
     private readonly StoreConnectionFactory _connections;
@@ -90,6 +109,95 @@ public sealed class FixtureCapture
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, outside the daily ceiling");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
+    }
+
+    /// <summary>
+    /// Captures one named response into an existing capture directory, whatever the vendor answers,
+    /// and merges it into the manifest beside the rest.
+    ///
+    /// One call, recorded, outside the daily ceiling on the same grounds the whole capture is: it
+    /// runs when a person decides to run it and stores what it fetched for good.
+    /// </summary>
+    public async Task<int> CaptureResponseAsync(string[] args, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        string? Flag(string name)
+        {
+            int at = Array.IndexOf(args, name);
+            return at >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+        }
+
+        string? directory = Flag(OutFlag);
+        string? name = Flag("--name");
+        string? path = Flag("--path");
+        string? query = Flag("--query");
+
+        if (directory is null || name is null || path is null)
+        {
+            Console.Error.WriteLine(
+                $"{CaptureResponseName}: give {OutFlag} <directory> --name <file stem> --path <endpoint> "
+                + "[--query <query>] [--cost <calls>]. The directory is a path in the repository, not under the data root.");
+            return 2;
+        }
+
+        int cost = int.TryParse(Flag("--cost"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int given)
+            ? given
+            : EodhdClient.FundamentalsCost;
+
+        using SqliteConnection connection = _connections.OpenWrite();
+        using RunScope run = _runLogger.Begin(connection, CaptureResponseName, CallCounting.OutsideTheDailyCeiling);
+
+        string full = Path.GetFullPath(directory);
+        Directory.CreateDirectory(full);
+
+        VendorResult<CapturedResponse> response = await _vendor
+            .GetRawAsync(path, query, cost, run, cancellationToken).ConfigureAwait(false);
+
+        if (response.BudgetExhausted)
+        {
+            run.Complete(RunOutcome.Partial);
+            Console.Error.WriteLine($"{CaptureResponseName}: the budget refused the call, so nothing was captured.");
+            return 1;
+        }
+
+        CapturedResponse captured = response.Require();
+        string file = name + ".json";
+        await File.WriteAllTextAsync(Path.Combine(full, file), captured.Body, cancellationToken).ConfigureAwait(false);
+
+        // Merged into the manifest rather than replacing it, and every existing entry is kept
+        // verbatim, instant and all. Re-stamping them would say they were captured now.
+        CaptureManifest? existing = ReadManifest(full);
+        var entry = new CaptureEntry(
+            file,
+            captured.Endpoint,
+            captured.Query,
+            StoreText.TimestampToStorageText(run.StartedAt),
+            captured.Body.Length,
+            captured.Status == 200 ? null : captured.Status);
+
+        List<CaptureEntry> entries =
+        [
+            .. (existing?.Responses ?? []).Where(e => !string.Equals(e.File, file, StringComparison.Ordinal)),
+            entry,
+        ];
+
+        await File.WriteAllTextAsync(
+            Path.Combine(full, "manifest.json"),
+            JsonSerializer.Serialize(
+                new CaptureManifest(
+                    existing?.Tier ?? "CAPTURED",
+                    existing?.AsOf ?? DateOnly.FromDateTime(run.StartedAt.UtcDateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    existing?.Vendor ?? _options.Vendor.Name,
+                    entries),
+                Manifest),
+            cancellationToken).ConfigureAwait(false);
+
+        RunSummary summary = run.Complete(RunOutcome.Clean);
+
+        Console.WriteLine($"{CaptureResponseName}: {path} returned {captured.Status}, {captured.Body.Length:N0} byte(s) to {file}");
+        Console.WriteLine($"{CaptureResponseName}: {summary.CallsUsed} call(s), outside the daily ceiling");
+        return 0;
     }
 
     /// <summary>
@@ -164,6 +272,27 @@ public sealed class FixtureCapture
             }
 
             CapturedResponse captured = response.Require();
+
+            // The trigger is the parse, not the status, and that distinction is the whole point.
+            //
+            // A non-200 was the obvious guard and it is not the one that would have caught anything:
+            // the response that killed the sector walk on 2026-08-27 came back 200 with a body the
+            // parse could not read. Status is one way a response goes wrong and it is not the one
+            // this endpoint went wrong in, so the condition is stated as what it actually is, which
+            // is any payload the parse cannot read, whatever the status.
+            string? unreadable = EodhdClient.WhyUnreadable(captured);
+
+            if (unreadable is not null)
+            {
+                // These endpoints are captured as working examples, so an unreadable body is a failed
+                // capture rather than an interesting one. Storing one here would put a body the parser
+                // has never seen into the fixture under a name that reads as a good response, which is
+                // worse than having no capture at all.
+                throw new VendorException(
+                    $"{path} answered {captured.Status} while capturing '{name}' and {unreadable}. This endpoint is "
+                    + $"captured as a working example. To capture what a bad answer looks like, use {CaptureResponseName}.");
+            }
+
             string file = name + ".json";
             await File.WriteAllTextAsync(Path.Combine(directory, file), captured.Body, cancellationToken).ConfigureAwait(false);
 
@@ -271,7 +400,20 @@ public static class FixtureTickers
     public static IReadOnlyList<string> All { get; } = [.. Derived, .. Spread];
 }
 
-public sealed record CaptureEntry(string File, string Endpoint, string Query, string CapturedAt, int Bytes);
+/// <summary>
+/// One captured response in the manifest.
+///
+/// <c>Status</c> is null on a response the vendor delivered normally, which is every entry captured
+/// before 3.8, and carries the code on one captured as a failing shape. Null rather than 200 so the
+/// field says "this is here because it failed" rather than repeating the ordinary case on every row.
+/// </summary>
+public sealed record CaptureEntry(
+    string File,
+    string Endpoint,
+    string Query,
+    string CapturedAt,
+    int Bytes,
+    int? Status = null);
 
 public sealed record CaptureManifest(string Tier, string AsOf, string Vendor, IReadOnlyList<CaptureEntry> Responses);
 

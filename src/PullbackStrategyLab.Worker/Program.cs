@@ -43,6 +43,7 @@ public static class Program
         builder.Services.AddSingleton<RegimeLabeler>();
         builder.Services.AddSingleton<SectorResolver>();
         builder.Services.AddSingleton<ThemeClusterer>();
+        builder.Services.AddSingleton<CheckRecomputer>();
         builder.Services.AddSingleton<LongSetupDetector>();
         builder.Services.AddSingleton<ShortSetupDetector>();
         builder.Services.AddSingleton<ScoreboardBuilder>();
@@ -77,6 +78,7 @@ public static class Program
                 DailyBarIngestor.BackfillName => host.Services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
                 IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
+                FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
                 SignalVectorizer.Name => host.Services.GetRequiredService<SignalVectorizer>().Run(rest),
                 ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
@@ -84,6 +86,7 @@ public static class Program
                 RegimeLabeler.Name => host.Services.GetRequiredService<RegimeLabeler>().Run(rest),
                 SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
                 ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
+                CheckRecomputer.Name => host.Services.GetRequiredService<CheckRecomputer>().Run(rest),
                 LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
                 ShortSetupDetector.Name => host.Services.GetRequiredService<ShortSetupDetector>().Run(rest),
                 SetupJournal.Name => host.Services.GetRequiredService<SetupJournal>().Run(rest),
@@ -139,6 +142,7 @@ public static class Program
         TierClassifier.Name,
         SectorResolver.Name,
         ThemeClusterer.Name,
+        CheckRecomputer.Name,
         RegimeLabeler.Name,
         LongSetupDetector.Name,
         ShortSetupDetector.Name,
@@ -150,6 +154,7 @@ public static class Program
         ForwardReturnFiller.Name,
         SetupCapper.Name,
         FixtureCapture.Name,
+        FixtureCapture.CaptureResponseName,
         PhaseReportStage.Name,
     ];
 

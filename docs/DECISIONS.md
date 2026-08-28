@@ -23,6 +23,25 @@ The detector is a pure function of stored daily bars, so it can be run over year
 
 Historical runs therefore write to a separate calibration table that nothing downstream reads. The evidence store begins empty on the first forward night and fills one session at a time. This is what the nightly universe snapshot exists to protect, and it is the difference between the replay this project relies on and the backtest it deliberately is not.
 
+**A late answer is attributed to the session it was fetched for, up to a recorded lateness bound**
+An answer the lab asks for on behalf of one session and receives after it may be attributed to that session, provided the delay is inside a stated bound and is recorded on the row. Beyond the bound it is refused, exactly as everything late was refused before.
+
+**What the superseded form got right and what it cost.** It was written to stop a plan being improved once its outcome is visible: a trigger nudged, a stop widened, a check re-run until it passes, each of which turns the record into a description of what would have worked. That reasoning is unchanged and most of the rule still stands on it. What it got wrong was equating "arrived after the session" with "could not have been known during it", which are different facts for an answer the lab was already asking for.
+
+**The cost is stated so a later session does not re-broaden this by feel.** Under the superseded form, fifteen of the forty-four setups of 2026-08-27 keep a null cluster verdict for ever, because a stage crashed at 18:12 and the sectors it never fetched were fetched at `2026-08-28T04:19:33.201Z`, which is 00:19 Eastern: about six hours after the crash and 20 minutes after that session's own end of day. Against a minimum sample of 262 effective observations over at least twenty sessions, fifteen setups is about **5.7%** of the target and more than one session's worth of evidence, lost on the first night to a stage falling over rather than to anything the night could not know. A rule that discards that is not being careful; it is paying for its carefulness with the evidence the project exists to gather.
+
+**Three conditions, all asserted.**
+
+**The input is one the session itself asked for.** A sector the sector walk was already resolving for that night's scan is late; a sector nobody asked for until a month afterwards is new information. The distinction is the request, not the value.
+
+**The lateness is inside the bound and is recorded on the row, in a countable column.** It is measured from the last instant of the session's own day in the session zone, which is the bound every reader in the lab already applies, and never from the stage that failed. Naming the origin is not pedantry, and this corpus has paid for it twice in one pass: the same arrival is six hours after a 18:12 stage and 20 minutes after that session's end of day, and it read as 260 minutes for as long as the end of day was being computed in UTC. A record carrying a lateness without an origin, or with an origin in the wrong zone, is a figure over an unstated basis. Not a sentence, because a sentence cannot be summed, filtered or excluded, and the first thing anybody will want to know is how much of a figure rests on late answers. `setup.correction_lateness_minutes` carries it. The bound itself is an authored value in ARCHITECTURE's parameters table, read by the recomputer rather than written into it, so moving it is one edit in the place every other authored value lives.
+
+**Every other input is bounded to the session's own date, unchanged.** The exception is one column wide. A repair that admitted a second late input would be reconstructing the night rather than completing it, and the difference between those two is the whole rule.
+
+**What stays forbidden, which is most of it.** A trigger, a stop, a size, or any gating check verdict computed from prices is never rewritten. Those are the plan. What may be completed is a recorded-not-required verdict whose input a failed stage never delivered, which today is `cluster` and nothing else. A row already corrected is not corrected again.
+
+**And the mark has a reader, which the superseded form promised and did not have.** It said a correction is recorded "so a later reader can exclude corrected rows" while the guard it shipped with made corrected rows impossible, so the mark had neither producer nor consumer. That is CLAUDE.md's sixth failure shape written into a decision: correct upstream, discarded downstream. The scoreboard now reports how many rows in the population it measures were corrected and by how much lateness, so the exclusion is available to the reader the sentence describes (see: Every phase ends in a generated phase report, not in a page somebody looks at).
+
 **Failed checks are recorded rather than discarded**
 The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
 
@@ -483,9 +502,42 @@ The once is the part worth defending, and it is why the population matters. The 
 **The fresh-session rule applies to sessions that have committed code, not documents**
 The protection being bought is that a session does not review its own code. The wider wording costs a session per phase and buys nothing.
 
+**A phase branch merges on CI green, and the sign-off reviews what is already on the default branch**
+Merge is gated on CI green and on nothing else. Sign-off is a separate activity with its own record, owed on the phase as a whole before the next phase's plan rather than before any merge.
+
+**This is the second time this rule has moved, and saying so is the point of writing it down.** It began as CI green alone, was changed to add a sign-off gate, and is changed back here. A rule that oscillates without a record reads each time as though it had always been that way, so the trade is stated once and a third change has to argue against both halves rather than against whichever half it happens to find.
+
+**What the sign-off gate bought.** A default branch on which every phase is complete and reviewed, and a sign-off that can decline something at the cost of a conversation rather than a revert.
+
+**What it cost, which is the half that decided it.** A phase waiting on something that is not code keeps a branch open for as long as it waits, and the nightly job runs from that checkout for the whole of it. Phase 3 waits three months for accumulation. Production running from a branch is not a lesser defect than an unreviewed default branch; it is the more immediate one, because it is a live system rather than a property of a history, and it degrades the longer the wait it is caused by.
+
+**A correct pass held back is not held safely.** The work still exists, it still runs the nightly job, and the only thing the delay changes is which ref it runs from and how large the eventual merge is. A review of a hundred commits made three months after the fact is worse than a review of the same commits on the default branch a week after they landed.
+
+**What does not move.** A checkpoint still lands as its own commit and still satisfies all seven done conditions on its own, CI is still green before any merge, and a session that has committed code still may not sign it off.
+
 ---
 
 ## Previously decided
+
+**A setup row is corrected only where the correction uses no information the night did not have**
+Superseded on 2026-08-28 by **A late answer is attributed to the session it was fetched for, up to a recorded lateness bound**, which keeps every condition below and adds one: an answer the session itself asked for may arrive inside a stated bound and be recorded as late, rather than being refused for having arrived at all. The reasoning is kept in full because it is still the reasoning, and only the treatment of lateness moved.
+
+Setup rows are immutable after write, and that rule was too broad. It exists to stop a plan being improved once its outcome is visible: a trigger nudged, a stop widened, a check re-run until it passes, each of which turns the record into a description of what would have worked. A value missing because an input stage failed is none of those. Nothing about the outcome is known, nothing about the plan changes, and the repair uses only what existed on the night.
+
+Left as written, the rule forbids that repair, and it did: on 2026-08-27 the sector walk died on its 149th name, `clusters` ran three minutes later over a store it had half filled, and fifteen of that night's forty-four setups recorded a cluster verdict of failed with no value. Under immutability as stated those fifteen carry a wrong verdict for ever, and the reason is not that the night was uncertain but that a stage fell over.
+
+**Two conditions, and both are asserted rather than intended.**
+
+**Inputs are bounded to the setup's own date.** A sector resolved today may not be the sector that name carried then, and reading it back into that night is using information the night did not have, however slowly the fact moves. This is the same bound every reader in the lab already applies, and it is the condition that makes the correction a repair rather than a rewrite. A recompute whose inputs are stamped after the setup's date fails and says which value was too late, rather than quietly producing a better-looking number (see: A reader's signature does not establish point-in-time; the query does).
+
+**The row records that it was corrected, with the date and the reason.** A corrected row is not the same evidence as one that was right the first time, and a later reader has to be able to exclude them without knowing this happened. An unmarked correction is indistinguishable from the plan-improvement the rule was written against, which is why the mark is a condition of the permission rather than a courtesy.
+
+**What stays forbidden is unchanged, and it is most of the rule.** A trigger, a stop, a size, or any gating check verdict computed from prices is never rewritten. Those are the plan. What may be corrected is a recorded-not-required verdict whose input a failed stage never delivered, which today is `cluster` and nothing else.
+
+**The narrowness is deliberate and it is what makes the permission safe.** A rule reading "a wrong value may be fixed" would be cited for exactly the thing immutability protects against, because every improvement looks like a correction from the inside. The two conditions are what a later session has to satisfy, and the second one leaves a trail even when the first is satisfied wrongly.
+
+**And it does not reach backwards to the fifteen it was written for.** Their sectors were resolved on 2026-08-28, after the night they are wanted for, so the date bound refuses them and the fifteen keep their null verdict permanently. That was tested rather than assumed and it is the right outcome: a decision whose first act is to exempt its own motivating case is a decision with no conditions on it (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
+
 
 A superseded decision moves here under its original name, gains one line naming what replaced it, and keeps its reasoning. A superseded decision that loses its reasoning is worse than one never written down, because the next session will re-derive the same wrong answer.
 

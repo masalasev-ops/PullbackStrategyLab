@@ -1,6 +1,8 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Data;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Api;
 
 /// <summary>
@@ -40,14 +42,23 @@ public static class LabScoreboard
         // opened on a Sunday should show Friday rather than an empty page, and a page that showed
         // nothing would read as "the lab has measured nothing" instead of "no panels were built
         // today".
+        // Both halves bound `computed_at`, and both need it. The inner query picks which day to
+        // show and the outer reads that day's panels; a bound on one of them only would either pick
+        // a day from panels the reader may not see, or read a later rebuild of the day it picked.
+        // Latent rather than live until 3.8, because nothing had rebuilt a scoreboard for a past
+        // date, and the repair this checkpoint adds is exactly the operation that does.
         command.CommandText = """
             SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum,
                    withheld_because
               FROM scoreboard
-             WHERE as_of = (SELECT MAX(as_of) FROM scoreboard WHERE as_of <= @as_of)
+             WHERE computed_at <= @computed_before
+               AND as_of = (SELECT MAX(as_of)
+                              FROM scoreboard
+                             WHERE as_of <= @as_of AND computed_at <= @computed_before)
              ORDER BY panel, direction
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

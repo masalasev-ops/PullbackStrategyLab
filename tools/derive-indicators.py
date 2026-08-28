@@ -2455,6 +2455,105 @@ def dispersion_main(argv):
     return 0
 
 
+def fundamentals_main(argv):
+    """Derive the three fields the lab keeps from every captured fundamentals response.
+
+    Written against the vendor's document rather than against EodhdClient, which is the whole
+    point of the tier: the C# reads these through System.Text.Json with a converter, and this
+    reads them with Python's json and its own rules. Two implementations agreeing on what
+    `"NA"` means is worth something; one implementation agreeing with itself is not.
+
+    The rules, stated from the responses rather than from the C#:
+
+      sector, industry   the string, unless it is empty or only whitespace, in which case the
+                         vendor is saying it holds none and the answer is absent.
+      market cap         the number. The vendor writes it as a JSON number when it has one and
+                         as the string "NA" when it does not, and it is absent in that case.
+                         A quoted number is still a number.
+      the row itself     absent when all three are, because a name the vendor holds nothing on
+                         is a real answer and is not the same as a row of nulls.
+
+    That last rule is the one that mattered. fundamentals-MUZ.json is 200 with two empty
+    strings and "NA", and reading it as a document that would not parse took a whole stage
+    down on 2026-08-27.
+    """
+    directory = argv[0] if argv else os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fixtures", "captured")
+
+    absent_words = {"na", "n/a", "none", "null", "-"}
+
+    def text(value):
+        if not isinstance(value, str):
+            return None
+        return value if value.strip() else None
+
+    def number(value):
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            raise ValueError("a boolean where a number was expected")
+        if isinstance(value, (int, float)):
+            return Decimal(str(value))
+        if isinstance(value, str):
+            if not value.strip() or value.strip().lower() in absent_words:
+                return None
+            return Decimal(value)
+        raise ValueError(f"{value!r} where a number was expected")
+
+    files = sorted(
+        f for f in os.listdir(directory)
+        if f.startswith("fundamentals-") and f.endswith(".json"))
+
+    if not files:
+        print(f"no captured fundamentals responses under {directory}")
+        return 1
+
+    rows = []
+
+    for name in files:
+        ticker = name[len("fundamentals-"):-len(".json")]
+
+        with open(os.path.join(directory, name), encoding="utf-8") as handle:
+            body = json.load(handle)
+
+        sector = text(body.get("General::Sector"))
+        industry = text(body.get("General::Industry"))
+        cap = number(body.get("Highlights::MarketCapitalization"))
+
+        rows.append((ticker, sector, industry, cap))
+
+    print(f"{len(rows)} captured fundamentals response(s) under {directory}")
+    print()
+
+    absent = 0
+    for ticker, sector, industry, cap in rows:
+        if sector is None and industry is None and cap is None:
+            absent += 1
+            print(f"  {ticker:<8} the vendor holds nothing on this name")
+            continue
+
+        print(f"  {ticker:<8} {sector or '-':<24} {industry or '-':<34} "
+              f"{cap if cap is not None else '-'}")
+
+    print()
+    print(f"{absent} of {len(rows)} are names the vendor holds nothing on.")
+    print()
+    print("As expectations, DERIVED:")
+    print()
+
+    for ticker, sector, industry, cap in rows:
+        if sector is None and industry is None and cap is None:
+            print(f'  fundamentals.{ticker}.held = "no"')
+            continue
+
+        print(f'  fundamentals.{ticker}.held = "yes"')
+        print(f'  fundamentals.{ticker}.sector = "{sector}"')
+        print(f'  fundamentals.{ticker}.industry = "{industry}"')
+        print(f'  fundamentals.{ticker}.marketCap = "{cap}"')
+
+    return 0
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "--dispersion":
         return dispersion_main(argv[2:] or [''])
@@ -2497,6 +2596,9 @@ def main(argv):
 
     if len(argv) > 1 and argv[1] == "--checks":
         return checks_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--fundamentals":
+        return fundamentals_main(argv[2:])
 
     if len(argv) > 1 and argv[1] == "--regime":
         return regime_main(argv[2:])

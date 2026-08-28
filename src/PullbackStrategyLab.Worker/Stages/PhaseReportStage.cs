@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -188,6 +189,35 @@ public sealed class PhaseReportStage
             reasons.Add($"{unclosed} out-of-scope claim(s) name no checkpoint that ends them, so they rest there forever.");
         }
 
+        // Out of scope is accounted the way unexamined is, and the reason is that it is the one
+        // bucket where scope narrows without anything going red. At 42% of the claims it is larger
+        // than the passing set, so a claim moving quietly into it is a claim nobody answers for, and
+        // nothing before 3.8 would have noticed fifty becoming sixty.
+        int unreasoned = (conformance?.Detail ?? [])
+            .Count(c => c.Verdict == "deferred" && string.IsNullOrWhiteSpace(c.Detail));
+
+        if (unreasoned > 0)
+        {
+            reasons.Add(
+                $"{unreasoned} out-of-scope claim(s) state no reason, so nothing says why they are not asserted.");
+        }
+
+        int ceiling = OutOfScopeCeiling(root);
+
+        if (ceiling < 0)
+        {
+            reasons.Add(
+                "ARCHITECTURE.html states no out-of-scope ceiling, so the one bucket that narrows without going red "
+                + "is unbounded.");
+        }
+        else if (claims.OutOfScope > ceiling)
+        {
+            reasons.Add(
+                $"{claims.OutOfScope} claim(s) are out of scope against a ceiling of {ceiling} stated in "
+                + "ARCHITECTURE.html. Either a checkpoint that should have closed some has not, or the ceiling is "
+                + "owed an edit saying why the set grew.");
+        }
+
         if (expectations.Differed > 0)
         {
             reasons.Add($"{expectations.Differed} fixture expectation(s) did not hold.");
@@ -297,6 +327,31 @@ public sealed class PhaseReportStage
         }
     }
 
+    /// <summary>
+    /// The out-of-scope ceiling the architecture document states, or -1 where it states none.
+    ///
+    /// Read rather than written into this file. A literal here would be a number the corpus does not
+    /// know about and could not reconcile, which is the shape pinned-constants exists for one level
+    /// down. Mutating the figure in the document moves the verdict, which is what makes it a claim
+    /// rather than a comment.
+    /// </summary>
+    private static int OutOfScopeCeiling(string root)
+    {
+        string file = Path.Combine(root, "docs", "ARCHITECTURE.html");
+
+        if (!File.Exists(file))
+        {
+            return -1;
+        }
+
+        Match match = Regex.Match(
+            File.ReadAllText(file),
+            "[Oo]ut of scope carries a ceiling of (?<ceiling>[0-9]+)");
+
+        return match.Success
+            ? int.Parse(match.Groups["ceiling"].Value, CultureInfo.InvariantCulture)
+            : -1;
+    }
     private static T? ReadPart<T>(string file)
         where T : class
     {

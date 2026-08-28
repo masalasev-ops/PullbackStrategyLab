@@ -96,4 +96,16 @@ public static class MeasurementParameters
     /// and fires the decision early, which is the direction that costs something.
     /// </summary>
     public const int DispersionMinimumNames = 20;
+
+    /// <summary>
+    /// How late an answer the session itself asked for may arrive and still be attributed to it.
+    ///
+    /// Authored, and it lives here so the recomputer reads it rather than carrying a literal. The
+    /// figure is the operator's: 24 hours is ample for a slot that runs at 18:12 and leaves room for
+    /// a rerun the following morning, and it is short enough that nobody could call a week-old
+    /// lookup part of the night. Moving it is one edit in ARCHITECTURE's parameters table and one
+    /// here, and pinned-constants fails if the two disagree.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    public const int LatenessBoundHours = 24;
 }

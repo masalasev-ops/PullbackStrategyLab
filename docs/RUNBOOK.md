@@ -56,7 +56,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 17:50 | `index-bars`, one call a tracker | 3 |
 | 18:00 | `indicators` | 0 |
 | 18:10 | `scans`, then `tiers` for the ladder grade | 0 |
-| 18:12 | `sectors`, resolved once per name and cached. Moved here from 19:00 on 2026-08-26: it ran after the three stages that read what it writes | ~50 |
+| 18:12 | `sectors`, resolved once per name and cached, **run twice**. Moved here from 19:00 on 2026-08-26: it ran after the three stages that read what it writes. The second pass retries the names the first could not read and costs nothing where there are none, which is what keeps a failure inside the window below | ~50 |
 | 18:15 | `clusters`, then `regime` | 0 |
 | 18:20 | `detect-long`, then `detect-short` | 0 |
 | 18:25 | `vectorize`, the signal freeze, then `journal`, which seals the night | 0 |
@@ -76,6 +76,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 **`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
+
+**The ceiling's unit is the weighted cost, not the number of requests, and the two differ by up to a hundredfold.** One fundamentals lookup is one request and one call. One whole-market bulk request is one request and a hundred calls, because that is what it replaces. Every stage prints both figures, so a line reading "15 request(s), 15 call(s)" and one reading "1 request(s), 100 call(s)" are both readable against the same 5,000, and neither can be mistaken for the other. The per-endpoint costs are ARCHITECTURE's data budget table.
 
 ### The schedule as installed
 
@@ -104,6 +106,8 @@ be recovered by rerunning tomorrow. Raised as an obligation.
 
 Open the watchlist. Check the status band: run clean, calls within budget, positions and risk within caps. If the run is marked degraded, that night is excluded from variant scoring automatically and nothing needs doing.
 
+**What the morning read can and cannot repair after a stage died part-way through its list** is worth knowing here rather than discovering it. A sector resolved this morning is *late* for last night's session, because every reader bounds on when the lookup was made. It is admitted only where the session itself asked for it and it arrived inside the lateness bound, and where it is admitted the row carries how late it was. The slot already retries within its own window, and "The repair window" under Recovery says what is left if that was not enough.
+
 ### Every week
 
 Run `ceiling`, which recomputes the win-rate bound per direction over every setup whose tenth
@@ -121,6 +125,7 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 | Symptom | Do this |
 |---|---|
 | A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date |
+| A stage walked part of its list and stopped | Read the slot's log. A stage that stops names why on its own line, and the run entry says `partial` or `failed` with `skipped` counting the names it passed over. Rerun the stage for its date; a name left unstamped is asked again. **Then read the paragraph below about the window**, because rerunning tomorrow does not repair tonight |
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
 | A corporate action was missed | Rerun `actions` for that date, with `--with-dividends` if a dividend is what was missed. It writes the action and raises the rebuild demand, and until that demand is satisfied, calculations for that ticker refuse to run. No other ticker is touched |
 | Database will not open | Restore the most recent snapshot from the data root, then re-run the nightly stages for the missing dates in order |
@@ -128,6 +133,20 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 | Researcher produced nothing | Check whether the usage allowance is exhausted. The job queues rather than returning a degraded proposal, and this is expected behaviour |
 
 Snapshots are taken before every migration and nightly. They are the recovery path; there is no other.
+
+### The repair window, which has two edges and closes 24 hours after the session's own end of day
+
+A stage that dies part-way through its list leaves the stages after it reading a store it half filled, and one of those consequences cannot be repaired the next morning.
+
+**Why there is a window at all, and where its two edges are.** Every reader in the lab bounds a lookup on when it was made, and that bound is the last instant of the session's own day **in Eastern time**: `2026-08-28T03:59:59.999Z` for the session of the 27th, which is 23:59:59 Eastern. **That instant is the origin every lateness figure in this lab is measured from**, and it is not the instant the stage that failed ran at; the two differ by the length of the evening, which is how one event comes to have two plausible-looking numbers. Inside the first edge a repair needs no mark at all. Past it, an answer the session itself asked for is still admitted for a further 24 hours and the row records how late it was, in minutes; past that it is refused (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound). The `sectors` slot runs at 18:12, so a failure there leaves five hours forty-eight before the first edge and a further day before the second, and those figures no longer move with the clock change.
+
+**So the first line of defence is not a person.** The `sectors` slot runs the stage twice. A name the vendor refused or answered unreadably is counted and left unstamped, so the second pass asks exactly those and costs one call each; where the first pass finished, the second finds nothing and costs nothing. That happens at 18:12, inside the window, without anybody watching.
+
+**If a check verdict was recorded with no value anyway**, `recheck <date> --check cluster` reports what it would correct and writes nothing, and `--apply` writes it. It refuses any gating check outright, refuses a verdict that already carries a number, refuses a row already corrected, and refuses any row whose input arrived more than the lateness bound after the session's own end of day, naming both instants and exiting non-zero. A corrected row records `corrected_at`, `corrected_because`, the lateness in minutes and the check results exactly as they stood before, so a later reader can exclude corrected rows, sum how much of a figure rests on late answers, and put any row back the way it was.
+
+**The count it recomputes is taken over the night's whole scan population**, not over the rows being repaired. That matters because a count over the repaired set would make every figure it produces an artefact of how many rows happened to be broken, and two of the fifteen came back failing at a cluster of one, which is exactly the number that shape would produce. A scan name with no setup row at all is counted, which is the form of the property no reading of "the repaired set" can produce.
+
+**And when the window has closed, it has closed.** On 2026-08-27 the sector walk died on its 149th name and fifteen setups recorded a cluster verdict of failed with no value. Fifteen of **forty-four**, and forty-four is every setup that night's detectors flagged, forty long and four short; it is the denominator for the fifteen and for the `passed_all` count that did not move. The names were resolved at `2026-08-28T04:19:33.201Z`, which is 00:19 Eastern: about six hours after the walk died and **20 minutes after that session's own end of day**. Lateness is the second of those, so all fifteen were inside the 24-hour bound, were repaired, and carry the mark. Had the rerun waited a further day, `recheck` would have refused all fifteen and they would have kept that verdict permanently. There is no command for that case and there should not be one: the alternative is reading a value back into a night that did not have it, which is the thing the whole point-in-time rule exists to stop. What is owed instead is a decision about whether a lazily-resolved attribute carries a validity date separate from its lookup instant, and that is carried as an obligation.
 
 `VACUUM INTO` writes a full copy each time, so the backup total grows faster than the store: thirty nightlies in year three is around 70 GB against a 2.5 GB database. Keep a short rolling window of nightlies plus one monthly, and prune rather than accumulating.
 

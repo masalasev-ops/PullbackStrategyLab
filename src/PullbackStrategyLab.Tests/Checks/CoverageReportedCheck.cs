@@ -305,6 +305,14 @@ public sealed partial class CoverageReportedCheck
         "RepositoryLayout.ProductionSourceFiles",
         "RepositoryLayout.SourceFiles",
         "RepositoryLayout.Source,",
+
+        // Added at 3.8, and the way it was found is the argument for it. `decision-resolves` moved
+        // from a named file list to every tracked text file, which reads strictly more of the
+        // shipped source; this sweep is name-based, so the check dropped out of it and the floor on
+        // "of those belonging to a check" went from 12 to 11. Nothing narrowed and the detector said
+        // something had, which is the right direction for a detector to be wrong in and still a
+        // reason to teach it the new name rather than lower the floor.
+        "RepositoryLayout.TrackedTextFiles",
         "SourceWrites.InProductionSource",
         "SourceWrites.ProductionFilesRead",
     ];
