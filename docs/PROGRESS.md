@@ -5605,3 +5605,51 @@ Built:      **Migration 029** adds `observed_at` and backfills from that run und
 
 Carried:    The obligation is discharged rather than repointed, and the CHANGELOG entry records its
             prior text and says which sentence in it was wrong.
+
+## 3.9(e) — 2026-08-28 — main — the rebuild that reported success, and the half of it that was not a no-op
+
+The in-place scoreboard rebuild reported a clean run having written nothing, which is the failure
+shape this lab keeps producing. Fixing it found that only six of its eleven panels were the no-op
+and the other five were doing something worse.
+
+Found:      **`ON CONFLICT DO NOTHING` never fired for an account-wide panel, so a rebuild
+            duplicated it.** `scoreboard` declares `PRIMARY KEY (as_of, panel, direction)` and
+            `direction` is null on every band 0 panel, because those are account-wide. **SQLite
+            treats nulls as distinct in a unique index**, so that key never constrained those rows.
+            Measured by the test written for the no-op: a second build of the same date attempted
+            **11** panels and skipped **6**. The other five were inserted again, so the store held
+            two of every band 0 panel; a third build would have made it three, and `LabScoreboard`
+            would have handed the page one row per copy.
+
+            The six carrying a direction were skipped correctly throughout, which is exactly why the
+            whole thing read as a silent no-op rather than as a duplication. The corpus had the
+            first half of the sentence and never asked whether it was true of every row.
+
+            Nothing was wrong in the live store: the scoreboard has run once, on 2026-08-27, and its
+            nine panels are one per key. Two of the five band 0 panels did not exist then.
+
+Built:      **Migration 030** deduplicates by `rowid`, keeping the row the first build wrote, and
+            adds `scoreboard_account_wide`, a unique index on `(as_of, panel)` where
+            `direction IS NULL`. That is what the primary key was believed to be, covering exactly
+            the rows the primary key cannot, so the two together constrain every row rather than
+            most of them. The insert drops its conflict target, because naming the primary key would
+            raise on a violation of the new index rather than skipping it.
+
+            **A build reports what it attempted and what it skipped, and fails when they are equal.**
+            Some skipped and some written is not a failure: it means the date gained a panel an
+            earlier build did not produce, and it is still reported. All skipped is a rebuild that
+            wrote nothing, and the command exits non-zero naming the count and the supported route,
+            which is to restore the snapshot taken before that night and re-run, or to clear the
+            date's panels first.
+
+            Failing rather than refusing up front, deliberately: a refusal would have to ask whether
+            the date already has panels before doing the work, which is a second query that can
+            disagree with the insert. Counting what the insert skipped cannot disagree with it, and
+            it keeps a first build for a date working.
+
+Verified:   Five tests. The second build writes nothing and does not report clean; the command exits
+            non-zero and names both the skipped count and the route; a rebuild after the date is
+            cleared writes its panels again, which is what restore-and-rerun reduces to; a build for
+            a new date stays clean while another date has panels; and an account-wide panel is
+            written once however many times the date is built, asserted as a count rather than as an
+            absence.

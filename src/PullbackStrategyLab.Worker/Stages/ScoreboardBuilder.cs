@@ -79,7 +79,17 @@ public sealed class ScoreboardBuilder
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Panels} panel(s) written");
         Console.WriteLine($"{Name}: {result.WithInterval} carrying an interval, {result.Withheld} withheld for want of a sample");
+        Console.WriteLine($"{Name}: {result.Attempted} attempted, {result.Skipped} skipped");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
+
+        if (result.Outcome == RunOutcome.Failed && result.Skipped == result.Attempted && result.Attempted > 0)
+        {
+            Console.Error.WriteLine(
+                $"{Name}: all {result.Skipped} panel(s) were skipped, so {asOf:yyyy-MM-dd} already carries panels and "
+                + "nothing was rebuilt. The insert is ON CONFLICT DO NOTHING and there is no update path, so an "
+                + "in-place rebuild of a past date writes nothing and would otherwise report a clean run. To rebuild "
+                + "it, restore the snapshot taken before that night and re-run, or delete that date's panels first.");
+        }
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
     }
@@ -102,17 +112,36 @@ public sealed class ScoreboardBuilder
             panels.AddRange(CeilingGap(connection, direction, asOf, _options.SessionZone));
         }
 
+        int skipped = 0;
+
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
             foreach (Panel panel in panels)
             {
-                Insert(connection, transaction, asOf, panel, computedAt);
+                if (!Insert(connection, transaction, asOf, panel, computedAt))
+                {
+                    skipped++;
+                    run.CountSkipped();
+                }
             }
 
             transaction.Commit();
         }
 
-        RunSummary summary = run.Complete(RunOutcome.Clean);
+        // A build that wrote nothing at all is a no-op wearing a clean run. It happens when the date
+        // already carries panels, because the insert is ON CONFLICT DO NOTHING and there is no
+        // update path: the supported way to rebuild a past date is to restore the snapshot taken
+        // before that night and re-run, or to delete that date's panels first. Failing here rather
+        // than refusing up front keeps a first build for a date working and a genuine rebuild
+        // loud, which is the pair that matters.
+        //
+        // Some panels skipped and some written is a different thing and is not a failure: it means
+        // the date gained a panel the earlier build did not produce. It is still reported.
+        RunOutcome outcome = panels.Count > 0 && skipped == panels.Count
+            ? RunOutcome.Failed
+            : RunOutcome.Clean;
+
+        RunSummary summary = run.Complete(outcome);
 
         return new ScoreboardResult(
             asOf,
@@ -121,7 +150,9 @@ public sealed class ScoreboardBuilder
             panels.Count(p => string.Equals(p.Figure, "withheld", StringComparison.Ordinal)),
             summary.RowsWritten,
             summary.CallsUsed,
-            RunOutcome.Clean);
+            outcome,
+            panels.Count,
+            skipped);
     }
 
     /// <summary>
@@ -299,7 +330,17 @@ public sealed class ScoreboardBuilder
     private static string Capitalise(string set) =>
         string.Concat(char.ToUpperInvariant(set[0]), set[1..]);
 
-    private static void Insert(
+    /// <summary>
+    /// Writes one panel, and says whether it wrote.
+    ///
+    /// <b>The return value is the whole point of this method having one.</b> The insert is
+    /// <c>ON CONFLICT DO NOTHING</c>, so a build for a date that already carries panels writes none
+    /// of them and, until 3.9(e), reported a clean run either way. A rebuild path that reports
+    /// success having written nothing is the failure shape this lab keeps producing, and it is worse
+    /// than a crash because the operator's next act is to go and read the panels they think they
+    /// just rebuilt.
+    /// </summary>
+    private static bool Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
         DateOnly asOf,
@@ -315,7 +356,11 @@ public sealed class ScoreboardBuilder
                  n_minimum, withheld_because, computed_at)
             VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
                     @population, @n_minimum, @withheld_because, @computed_at)
-            ON CONFLICT (as_of, panel, direction) DO NOTHING
+            -- No conflict target. The primary key does not constrain an account-wide panel,
+            -- because SQLite treats nulls as distinct and `direction` is null on every band 0
+            -- row; migration 030 adds the partial unique index that does. Naming the primary
+            -- key here would raise on a violation of that index rather than skipping it.
+            ON CONFLICT DO NOTHING
             """;
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
@@ -332,7 +377,7 @@ public sealed class ScoreboardBuilder
             "@withheld_because", (object?)panel.WithheldBecause ?? DBNull.Value);
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
 
-        command.ExecuteNonQuery();
+        return command.ExecuteNonQuery() == 1;
     }
 
     /// <summary>
@@ -586,4 +631,6 @@ public sealed record ScoreboardResult(
     int Withheld,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    int Attempted,
+    int Skipped);
