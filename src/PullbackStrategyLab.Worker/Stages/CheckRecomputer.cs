@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
@@ -130,7 +131,10 @@ public sealed class CheckRecomputer
         // see: A reader's signature does not establish point-in-time; the query does
         string bound = StoreText.DateToStorageText(asOf) + "T23:59:59.999Z";
 
-        IReadOnlyDictionary<string, ClusterInput> inputs = ClusterInputs(connection, asOf, bound);
+        DateTimeOffset endOfSession = DateTimeOffset.Parse(bound, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
+        DateTimeOffset latestAdmissible = endOfSession.AddHours(MeasurementParameters.LatenessBoundHours);
+
+        IReadOnlyDictionary<string, ClusterInput> inputs = ClusterInputs(connection, asOf, latestAdmissible);
         IReadOnlyList<Candidate> candidates = Candidates(connection, asOf, check);
 
         int corrected = 0;
@@ -140,28 +144,40 @@ public sealed class CheckRecomputer
         {
             if (!inputs.TryGetValue(candidate.Ticker, out ClusterInput input) || input.Industry is null)
             {
-                // The input still does not exist at the night's date. Either nothing has resolved it
-                // since, or it was resolved afterwards, and the two read differently to a person.
+                // Either nothing has resolved it at all, or it was resolved past the bound. The two
+                // read differently to a person and the second says how far past.
                 refused++;
                 run.CountSkipped();
                 Console.WriteLine(
                     input.ResolvedAt is null
                         ? $"{Name}: refused {candidate.Ticker}, still nothing resolved for it"
-                        : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt} which is after {bound}");
+                        : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt}, which is more than "
+                          + $"{MeasurementParameters.LatenessBoundHours} hour(s) after {bound}");
+                continue;
+            }
+
+            if (candidate.AlreadyCorrected)
+            {
+                // A row corrected once is not corrected again. The second correction would have no
+                // prior state to record and nothing would say which of the two the row now carries.
+                refused++;
+                run.CountSkipped();
+                Console.WriteLine($"{Name}: refused {candidate.Ticker}, already corrected at {candidate.CorrectedAt}");
                 continue;
             }
 
             CheckResult verdict = ClusterVerdict(candidate.Direction, input.Count);
+            int lateness = Lateness(input.ResolvedAt, endOfSession);
 
             if (apply)
             {
-                Write(connection, candidate, check, verdict, asOf);
+                Write(connection, candidate, check, verdict, asOf, lateness);
             }
 
             corrected++;
             Console.WriteLine(
                 $"{Name}: {candidate.Ticker} {candidate.Direction}, {check} is {(verdict.Passed ? "pass" : "fail")} "
-                + $"at {input.Count}, from an industry resolved at {input.ResolvedAt}");
+                + $"at {input.Count}, from an industry resolved at {input.ResolvedAt}, {lateness} minute(s) late");
         }
 
         RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
@@ -187,7 +203,7 @@ public sealed class CheckRecomputer
     private static IReadOnlyDictionary<string, ClusterInput> ClusterInputs(
         SqliteConnection connection,
         DateOnly asOf,
-        string bound)
+        DateTimeOffset latestAdmissible)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -200,7 +216,7 @@ public sealed class CheckRecomputer
              WHERE h.as_of = @as_of
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@bound", bound);
+        command.Parameters.AddWithValue("@bound", StoreText.TimestampToStorageText(latestAdmissible));
 
         var hits = new List<(string Ticker, string Scan, string? Industry, string? ResolvedAt)>();
         using (SqliteDataReader reader = command.ExecuteReader())
@@ -240,7 +256,7 @@ public sealed class CheckRecomputer
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT setup_id, ticker, direction, check_results
+            SELECT setup_id, ticker, direction, check_results, corrected_at
               FROM setup
              WHERE as_of = @as_of
              ORDER BY ticker, direction
@@ -261,7 +277,12 @@ public sealed class CheckRecomputer
             // measurement the night made, and this stage has no permission to revisit one.
             if (existing is { Value: null })
             {
-                candidates.Add(new Candidate(reader.GetString(0), reader.GetString(1), reader.GetString(2), results));
+                candidates.Add(new Candidate(
+                    reader.GetString(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    results,
+                    reader.IsDBNull(4) ? null : reader.GetString(4)));
             }
         }
 
@@ -286,12 +307,33 @@ public sealed class CheckRecomputer
         return new CheckResult("cluster", count >= threshold, count);
     }
 
+    /// <summary>
+    /// How far past the session's own end of day the input arrived, in minutes, never negative.
+    ///
+    /// Zero means the input was inside the session's own day, which is what a night rerun in time
+    /// produces and is the ordinary case. Minutes rather than hours, because a column in the same
+    /// unit as its own threshold cannot show how close to it a row sat.
+    /// </summary>
+    private static int Lateness(string? resolvedAt, DateTimeOffset endOfSession)
+    {
+        if (resolvedAt is null)
+        {
+            return 0;
+        }
+
+        DateTimeOffset at = DateTimeOffset.Parse(
+            resolvedAt, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
+
+        return (int)Math.Max(0, Math.Round((at - endOfSession).TotalMinutes));
+    }
+
     private void Write(
         SqliteConnection connection,
         Candidate candidate,
         string check,
         CheckResult verdict,
-        DateOnly asOf)
+        DateOnly asOf,
+        int latenessMinutes)
     {
         List<CheckResult> results = [.. candidate.Results
             .Select(r => string.Equals(r.Name, check, StringComparison.Ordinal) ? verdict : r)];
@@ -301,7 +343,8 @@ public sealed class CheckRecomputer
             UPDATE setup
                SET check_results = @check_results,
                    corrected_at = @corrected_at,
-                   corrected_because = @corrected_because
+                   corrected_because = @corrected_because,
+                   correction_lateness_minutes = @lateness
              WHERE setup_id = @setup_id
             """;
 
@@ -309,15 +352,33 @@ public sealed class CheckRecomputer
         command.Parameters.AddWithValue("@corrected_at", StoreText.TimestampToStorageText(_clock.UtcNow));
         command.Parameters.AddWithValue(
             "@corrected_because",
-            $"'{check}' recomputed for {asOf:yyyy-MM-dd} from inputs bounded to that date, after the stage "
-            + "supplying it did not finish on the night");
+            $"'{check}' recomputed for {asOf:yyyy-MM-dd} from inputs the session asked for, {latenessMinutes} "
+            + $"minute(s) late against a bound of {MeasurementParameters.LatenessBoundHours} hour(s), after the "
+            + "stage supplying them did not finish on the night");
+        command.Parameters.AddWithValue("@lateness", latenessMinutes);
         command.Parameters.AddWithValue("@setup_id", candidate.SetupId);
         command.ExecuteNonQuery();
     }
 
     private readonly record struct ClusterInput(string? Industry, int Count, string? ResolvedAt);
 
-    private sealed record Candidate(string SetupId, string Ticker, string Direction, List<CheckResult> Results);
+    /// <summary>
+    /// One row this stage could correct, with the mark it already carries.
+    ///
+    /// <c>CorrectedAt</c> is the reader the correction mark needed. A mark nothing reads is a claim
+    /// about a consumer that does not exist, which is the shape the corpus names sixth, and the
+    /// superseded rule shipped exactly that: it recorded a correction "so a later reader can exclude
+    /// corrected rows" under a guard that made corrected rows impossible.
+    /// </summary>
+    private sealed record Candidate(
+        string SetupId,
+        string Ticker,
+        string Direction,
+        List<CheckResult> Results,
+        string? CorrectedAt)
+    {
+        public bool AlreadyCorrected => CorrectedAt is not null;
+    }
 }
 
 /// <summary>What one recompute found, corrected, and declined to correct.</summary>

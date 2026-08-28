@@ -25,8 +25,17 @@ public sealed class CheckRecomputerTests : IDisposable
     /// <summary>The end of the night's own day, which is the bound every reader in the lab applies.</summary>
     private const string OnTheNight = "2026-08-27T22:12:03.201Z";
 
-    /// <summary>Six hours later and one day on, which is when the walk was rerun after it died.</summary>
-    private const string AfterTheNight = "2026-08-28T04:19:33.201Z";
+    /// <summary>
+    /// Six hours on, which is when the walk was rerun after it died on 2026-08-27. Inside the
+    /// lateness bound, so an answer stamped here is admitted and recorded as late.
+    /// </summary>
+    private const string LateButInsideTheBound = "2026-08-28T04:19:33.201Z";
+
+    /// <summary>Four days on, which no bound stated in hours admits.</summary>
+    private const string BeyondTheBound = "2026-08-31T04:19:33.201Z";
+
+    /// <summary>How late <see cref="LateButInsideTheBound"/> is against the session's own end of day.</summary>
+    private const int MinutesLate = 260;
 
     private readonly TemporaryDirectory _root = new();
     private readonly StoreConnectionFactory _connections;
@@ -117,6 +126,57 @@ public sealed class CheckRecomputerTests : IDisposable
             reader.IsDBNull(2) ? null : reader.GetString(2));
     }
 
+    /// <summary>The recorded lateness in minutes, or null on a row nothing corrected.</summary>
+    private int? Lateness(string ticker)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT correction_lateness_minutes FROM setup WHERE ticker = @t";
+        command.Parameters.AddWithValue("@t", ticker);
+        object? value = command.ExecuteScalar();
+        return value is null or DBNull
+            ? null
+            : Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// A row corrected once is not corrected again, which is the mark being read rather than only
+    /// written.
+    ///
+    /// The superseded rule recorded a mark "so a later reader can exclude corrected rows" under a
+    /// guard that made corrected rows impossible, so the mark had neither a producer nor a consumer.
+    /// This is the consumer.
+    /// </summary>
+    [Fact]
+    public void A_row_already_corrected_is_refused()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+
+        Assert.Equal(1, Recomputer().Recompute(AsOf, "cluster", apply: true).Corrected);
+
+        // The verdict now carries a number, so the row is no longer a candidate on that ground
+        // alone. Blanked back to null, the mark is the only thing between it and a second
+        // correction, which is what makes this an assertion about the mark.
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE setup SET check_results = @results WHERE ticker = 'AAA'";
+            command.Parameters.AddWithValue(
+                "@results",
+                JsonSerializer.Serialize(
+                    new[] { new CheckResult("cluster", false, null) },
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+            command.ExecuteNonQuery();
+        }
+
+        RecheckResult second = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(1, second.Candidates);
+        Assert.Equal(0, second.Corrected);
+        Assert.Equal(1, second.Refused);
+    }
+
     /// <summary>The correction mark alone, for a row carrying no cluster verdict to read.</summary>
     private string? CorrectedAt(string ticker)
     {
@@ -137,17 +197,16 @@ public sealed class CheckRecomputerTests : IDisposable
     }
 
     /// <summary>
-    /// The bound, which is the condition that decides whether this stage is a repair or a rewrite.
+    /// An input past the bound is refused and nothing is written.
     ///
-    /// This is not a corner case. It is what happened to the fifteen setups the stage was written
-    /// for: the sector walk died on 2026-08-27, the names were resolved on 2026-08-28, and the
-    /// stage declines every one of them. A repair that reached for the later value would produce a
-    /// better-looking number from information the night did not have.
+    /// This is the half that keeps the rule a rule. The superseded form refused everything arriving
+    /// after the session, which cost fifteen setups on the first night; the amended form refuses
+    /// everything arriving more than the bound after it, which is a condition rather than a licence.
     /// </summary>
     [Fact]
-    public void An_input_stamped_after_the_night_is_refused_and_nothing_is_written()
+    public void An_input_stamped_beyond_the_bound_is_refused_and_nothing_is_written()
     {
-        Night(AfterTheNight, "AAA", "BBB");
+        Night(BeyondTheBound, "AAA", "BBB");
         Setup("AAA", "long", new CheckResult("cluster", false, null));
 
         RecheckResult result = Recomputer().Recompute(AsOf, "cluster", apply: true);
@@ -162,6 +221,31 @@ public sealed class CheckRecomputerTests : IDisposable
         Assert.Null(cluster.Value);
         Assert.Null(correctedAt);
         Assert.Null(because);
+        Assert.Null(Lateness("AAA"));
+    }
+
+    /// <summary>
+    /// An input the session asked for, arriving inside the bound, is admitted and recorded as late.
+    ///
+    /// The case the amendment exists for, and exactly what happened: the sector walk died at 18:12
+    /// on 2026-08-27 and the names it never fetched were fetched at 04:19 the next morning, four
+    /// hours and twenty minutes past that session's own end of day.
+    /// </summary>
+    [Fact]
+    public void An_input_inside_the_bound_is_admitted_and_its_lateness_is_recorded()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+
+        RecheckResult result = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(1, result.Corrected);
+        Assert.Equal(0, result.Refused);
+        Assert.Equal(2m, Read("AAA", "long").Cluster.Value);
+
+        // Countable, in minutes, so a figure resting on late answers can be summed or excluded.
+        // A sentence saying the same words could do neither.
+        Assert.Equal(MinutesLate, Lateness("AAA"));
     }
 
     /// <summary>And where the input did exist on the night, the repair goes through and is marked.</summary>
