@@ -61,6 +61,37 @@ function Write-Line([string]$text) {
     Add-Content -Path $log -Value $stamped -Encoding utf8
 }
 
+# Runs one stage, puts both of its streams in the log, and leaves its exit code in
+# $script:StageExitCode.
+#
+# $ErrorActionPreference is Continue here and nowhere else, and that is the whole repair.
+# Windows PowerShell wraps every line a native command writes to stderr in a NativeCommandError
+# record. Under Stop the first one is terminating, so the pipeline below died before Write-Line
+# ran: the stage's diagnostic never reached the log, the "exited N" line never ran, the slot
+# stopped with no line saying it had, and PowerShell's own exit code of 1 replaced the stage's.
+# The application writes its message correctly, on stderr, and this script was discarding it.
+# Every stage had that property, not one of them. Found after `sectors` spent 149 vendor calls
+# on 2026-08-27 and left a log that stops mid-slot.
+#
+# A function rather than a script-scope assignment, because the isolation is the point: Stop is
+# wanted everywhere else in this file and a preference set at script scope would lift it there
+# too. Assigning inside a function scopes it to the function and the pipeline it runs.
+#
+# The exit code goes into a script-scoped variable rather than being returned, because Write-Line
+# calls Write-Output and a returned value would arrive mixed into the log lines.
+function Invoke-Stage {
+    param([Parameter(Mandatory = $true)][string[]]$Arguments)
+
+    $ErrorActionPreference = 'Continue'
+
+    # --no-launch-profile so the scheduled run cannot pick up a developer profile that points
+    # somewhere else.
+    & dotnet run --project $worker --no-launch-profile -- @Arguments 2>&1 |
+        ForEach-Object { Write-Line ("    {0}" -f $_) }
+
+    $script:StageExitCode = $LASTEXITCODE
+}
+
 $commit = 'unknown'
 $branch = 'unknown'
 try {
@@ -75,13 +106,11 @@ $env:PullbackStrategyLab__DataRoot = $dataRoot
 foreach ($verb in $slots[$Slot]) {
     Write-Line ("  running {0}" -f ($verb -join ' '))
 
-    # --no-launch-profile so the scheduled run cannot pick up a developer profile that points
-    # somewhere else. The exit code is the stage's own; a slot stops at the first failure rather
-    # than running the stage that reads what the failed one should have written.
-    & dotnet run --project $worker --no-launch-profile -- @verb 2>&1 |
-        ForEach-Object { Write-Line ("    {0}" -f $_) }
+    # The exit code is the stage's own; a slot stops at the first failure rather than running
+    # the stage that reads what the failed one should have written.
+    Invoke-Stage $verb
 
-    $code = $LASTEXITCODE
+    $code = $script:StageExitCode
     if ($code -ne 0) {
         Write-Line ("  {0} exited {1}; slot {2} stops here" -f ($verb -join ' '), $code, $Slot)
         exit $code

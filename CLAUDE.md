@@ -145,6 +145,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `api-isolation` | every CI run | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
 | `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table |
 | `ci-parity` | every CI run | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order |
+| `slot-diagnostics` | every CI run | Every stage the slot script runs is invoked through the one function that keeps a native command's stderr, so a failing stage's message and the line saying the slot stopped both reach the night's log |
 | `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |
 | `shell-executable` | every CI run | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
 

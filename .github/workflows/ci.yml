@@ -57,6 +57,81 @@ jobs:
           path: artifacts/checks/
           if-no-files-found: warn
 
+  # A failing stage's message survives the slot script, and so does its exit code.
+  #
+  # tools/nightly.ps1 set $ErrorActionPreference to Stop and piped a native command through 2>&1.
+  # Windows PowerShell wraps each stderr line in a NativeCommandError record, which under Stop is
+  # terminating, so the slot script died before it logged anything the stage said and before the
+  # line that says the slot stopped. Every stage had that property. It was found by reading the
+  # code after `sectors` spent 149 vendor calls on 2026-08-27 and left a log ending mid-slot.
+  #
+  # Windows PowerShell rather than pwsh, and that is the whole reason this job can see it.
+  # PowerShell 7 does not wrap native stderr this way, so the same script under pwsh passes with
+  # the defect present. The registered tasks execute powershell.exe, so this job does too, with
+  # the same arguments the scheduler uses.
+  #
+  # The failing stage is a real one denied a real precondition rather than a stub written to fail.
+  # There is no vendor token on a runner, so `universe-build` throws VendorException before it
+  # reaches the network, which is a stage failing for a reason the operator will actually meet.
+  slot-diagnostics:
+    name: a failing stage is logged by the slot script
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # nightly.ps1 addresses data/live under the repository absolutely, so the store it will
+      # open has to be the one migrated here.
+      - name: a migrated store for the slot to open
+        shell: pwsh
+        env:
+          PullbackStrategyLab__DataRoot: ${{ github.workspace }}/data/live
+        run: dotnet run --project src/PullbackStrategyLab.Worker -- migrate
+
+      - name: the slot script keeps the stage's message and its exit code
+        shell: pwsh
+        run: |
+          # This step expects a non-zero exit and reads the log afterwards, so it must not itself
+          # die on one. GitHub prepends $ErrorActionPreference = 'stop' to a pwsh step, and pwsh
+          # 7.4 raises on a native command's non-zero exit under it, which is the same trap the
+          # job exists for one interpreter version up. Turned off here and nowhere else.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ErrorActionPreference = 'Continue'
+
+          # powershell.exe explicitly, whatever this step's own shell is. The property under test
+          # is Windows PowerShell's, and running the script under pwsh would assert it of an
+          # interpreter no scheduled task uses.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          $code = $LASTEXITCODE
+
+          # Back on, so a genuine failure below is not swallowed by the line above.
+          $ErrorActionPreference = 'Stop'
+
+          $log = Get-ChildItem data/live/logs/nightly-*.log | Select-Object -First 1
+          if ($null -eq $log) { throw 'The slot wrote no log at all.' }
+          $text = Get-Content $log.FullName -Raw
+          Write-Output $text
+
+          if ($code -eq 0) {
+            throw "The slot exited 0 with a stage that could not run."
+          }
+
+          # The stage's own diagnostic, on stderr, which the defect discarded.
+          if ($text -notmatch 'No vendor token is configured') {
+            throw 'The log does not carry what universe-build wrote to stderr, so the slot script is discarding it again.'
+          }
+
+          # And the line saying the slot stopped, which never ran because the pipeline above it threw.
+          if ($text -notmatch 'universe-build exited \d+; slot universe stops here') {
+            throw 'The log does not say the slot stopped, so the script unwound instead of reaching its own failure branch.'
+          }
+
+          Write-Output "the stage's message and its stop line are both in the log; the slot exited $code"
+
   # The migration rehearsal, on a case-sensitive filesystem.
   #
   # 1.11 ran the rehearsal on one machine and was recorded as partial, because the failures it
