@@ -26,7 +26,8 @@
       "scopes": {
         "bar tables named by the check": 3,
         "bar tables a migration has created": 2,
-        "writes found against a bar table": 2
+        "writes found against a bar table": 2,
+        "migrations read for a delete, update or drop": 30
       },
       "context": [
         "source files scanned"

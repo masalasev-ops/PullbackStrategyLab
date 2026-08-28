@@ -143,7 +143,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `store-portability` | every CI run | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |
 | `price-storage-form` | every CI run | No migration declares a price or money column `REAL`. The storage form is the half of the decimal rule that code review cannot see |
 | `api-isolation` | every CI run | `PullbackStrategyLab.Api` has no transitive reference to `PullbackStrategyLab.Worker`, read from the compiled dependency file |
-| `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table |
+| `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table, and no migration deletes, updates or drops one |
 | `ci-parity` | every CI run | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order, and a step that fails fails the script it runs in, proved by running each shipped step function against a command that fails |
 | `slot-diagnostics` | every CI run | Every stage the slot script runs is invoked through the one function that keeps a native command's stderr, so a failing stage's message and the line saying the slot stopped both reach the night's log |
 | `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |

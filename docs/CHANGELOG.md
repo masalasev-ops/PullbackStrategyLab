@@ -957,3 +957,8 @@ Why:  `carried-obligations` found it on the first run it ever reconciled anythin
 Was:  | 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. Integrity check alone proves the file is not corrupt, **not** that it is complete. Both are needed. |
 Now:  The same, with "`tools/snapshot-db` does both against the copy and exits non-zero on either." after the first sentence.
 Why:  Found by `architecture-conformance` on the first run in which its procedure comparator had anything to compare. RUNBOOK's step 5 names the tool that performs the step and the design source of truth did not, so an operator reading the architecture would do by hand what a committed script does and exits non-zero on. The two statements of one procedure had drifted, which is the exact defect the claim exists to catch and could not, because both sides of the comparison had been empty since 1.12.
+
+### 2026-08-28 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table |
+Now:  The same row, plus "and no migration deletes, updates or drops one".
+Why:  The hard rule says "CI greps for delete and update statements against bar tables". The grep read `RepositoryLayout.SourceFiles`, which is `*.cs`, so it had never read a migration, and every table rebuild in this project is a migration. Migrations 028, 029 and 030 issue `UPDATE indicator_daily`, `UPDATE scan_hit` and `DELETE FROM scoreboard` unseen, and `DROP TABLE` plus re-`INSERT` is the established rebuild idiom in 005 and 009. None of them touches a bar table, so the property held and nothing was checking that it held.
