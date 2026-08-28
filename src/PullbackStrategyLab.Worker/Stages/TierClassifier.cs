@@ -188,8 +188,19 @@ public sealed class TierClassifier
         return Mixed;
     }
 
-    private static DateTimeOffset EndOf(DateOnly session) =>
-        new(session.Year, session.Month, session.Day, 23, 59, 59, 999, TimeSpan.Zero);
+    /// <summary>
+    /// The last instant of a session, in the session's own zone.
+    ///
+    /// <b>This was a DateTimeOffset built on TimeSpan.Zero until 3.10.</b> That closes an Eastern
+    /// session at 19:59:59 Eastern in summer and 18:59:59 in winter, so a stage running in its own
+    /// evening slot sat inside the bound and a night that ran late fell outside it, silently and
+    /// differently either side of the clock change. The 3.9 pass closed twelve sites of the same
+    /// defect written as a string concatenation and left this one, because the guard it added reads
+    /// for the concatenation and a constructor is not one.
+    /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+    /// </summary>
+    private DateTimeOffset EndOf(DateOnly session) =>
+        SessionBoundaries.EndOfSession(session, _options.SessionZone);
 
     private static int Insert(
         SqliteConnection connection,

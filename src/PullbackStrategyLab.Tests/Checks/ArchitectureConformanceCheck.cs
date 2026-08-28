@@ -667,12 +667,36 @@ public sealed partial class ArchitectureConformanceCheck
         // The literal appended to a date, rather than the literal mentioned. Prose about the defect
         // is how the defect is explained and must not read as the defect, so both patterns include
         // the concatenation or interpolation that makes it a bound.
+        //
+        // The third pattern is the constructor form, and it is here because the two above missed
+        // two live sites for the whole of 3.9. TierClassifier and IndicatorEngine each built the
+        // same wrong bound as
+        //
+        //     new(session.Year, session.Month, session.Day, 23, 59, 59, 999, TimeSpan.Zero)
+        //
+        // which contains no string at all, so a scan for an appended literal could not see it and
+        // reported the property held. The pass that added this guard was the pass that closed
+        // twelve sites of the defect, and it left two standing behind its own check. What the
+        // property is about is a session bound built on a fixed offset; the syntax it is written in
+        // is not the subject and must not be what the guard keys on.
         string[] appended = ["+ \"T23:59:59.999Z\"", "}T23:59:59.999Z\""];
 
         return !RepositoryLayout.ProductionSourceFiles
             .Select(RepositoryLayout.Read)
-            .Any(source => appended.Any(p => source.Contains(p, StringComparison.Ordinal)));
+            .Any(source =>
+                appended.Any(p => source.Contains(p, StringComparison.Ordinal))
+                || LastInstantOnAFixedOffset().IsMatch(source));
     }
+
+    /// <summary>
+    /// The last instant of a day constructed against a fixed offset rather than resolved through a
+    /// zone. <c>TimeSpan.Zero</c> and <c>TimeSpan.FromHours(n)</c> are both offsets a session
+    /// boundary may not be built from, because neither one moves with the clock change.
+    /// </summary>
+    [GeneratedRegex(
+        @"23\s*,\s*59\s*,\s*59\s*,\s*999\s*,\s*TimeSpan\s*\.\s*(Zero|From)",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex LastInstantOnAFixedOffset();
 
     /// <summary>
     /// A name the vendor holds nothing on is read, stamped and counted apart from a resolved one.
@@ -864,7 +888,7 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.Passed("Failure behaviour", condition,
                     "every point-in-time bound is built by StoreText.EndOfSession through SessionBoundaries, and no shipped source appends the UTC literal")
                 : Claim.Failed("Failure behaviour", condition,
-                    "a bound is being built by appending T23:59:59.999Z to a session date again, which closes an Eastern session at 20:00 Eastern and moves the truncation with the clock change"),
+                    "a point-in-time bound is being built on a fixed offset again, by appending T23:59:59.999Z to a session date or by constructing the day's last instant against TimeSpan.Zero. Either one closes an Eastern session at 20:00 Eastern and moves the truncation with the clock change"),
 
             _ => Claim.NotExamined("Failure behaviour", condition,
                 "the checkpoint that builds it has landed and no assertion reads this row"),
