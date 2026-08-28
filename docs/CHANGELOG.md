@@ -952,3 +952,8 @@ Why:  A full code review after 3.9 found the CI script above, three checks asser
 Was:  A carried-obligations table with no row for the empty tool set on the researcher's subscription path.
 Now:  A `| 1.5 | ... | 6.5 |` row for it, naming what the obligation is and that 6.5's own done condition already carries the test.
 Why:  `carried-obligations` found it on the first run it ever reconciled anything. The obligation was written into the phase 1 corrections entry on 2026-08-25 and never given a row, so for three phases it was scheduled in substance, by 6.5's done condition, and absent from the one place the corpus says obligations live. That is the failure the check's own docstring says has happened four times, and this is the fifth.
+
+### 2026-08-28 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  | 5 | Verify on arrival | `PRAGMA integrity_check;` then re-run the step 2 counts and compare. Integrity check alone proves the file is not corrupt, **not** that it is complete. Both are needed. |
+Now:  The same, with "`tools/snapshot-db` does both against the copy and exits non-zero on either." after the first sentence.
+Why:  Found by `architecture-conformance` on the first run in which its procedure comparator had anything to compare. RUNBOOK's step 5 names the tool that performs the step and the design source of truth did not, so an operator reading the architecture would do by hand what a committed script does and exits non-zero on. The two statements of one procedure had drifted, which is the exact defect the claim exists to catch and could not, because both sides of the comparison had been empty since 1.12.

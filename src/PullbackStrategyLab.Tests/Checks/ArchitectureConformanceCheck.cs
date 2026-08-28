@@ -571,26 +571,78 @@ public sealed partial class ArchitectureConformanceCheck
     /// </summary>
     public static Claim ProcedureStepClaim(string step, string here, string there)
     {
-        string[] hereStores = StoresNamedIn(here);
-        string[] thereStores = StoresNamedIn(there);
+        string[] hereNamed = SubstanceNamedIn(here);
+        string[] thereNamed = SubstanceNamedIn(there);
 
-        return hereStores.SequenceEqual(thereStores, StringComparer.Ordinal)
-            ? Claim.Passed("The procedure", $"step {step}", "states the same stores as RUNBOOK.md's step of the same number")
+        // Neither side names anything the comparator knows, so there is nothing to compare and the
+        // honest verdict is that this step was not examined.
+        //
+        // <b>This is the seventh shape, and it is why the branch exists.</b> The vocabulary used to
+        // be the store table names alone. The 1.12 repair rewrote both documents to say "derived
+        // from the schema rather than from a list here", which took the last table name out of both
+        // sides in the same commit, and from then on every step compared an empty list against an
+        // empty list and returned Passed. Ten claims, a floor of exactly ten, and a green phase
+        // report, over a comparator that had not compared anything for a phase and a half. No
+        // one-sided check could have caught it, because both operands went empty together.
+        //
+        // So an empty comparison is now a verdict of its own. A count of claims that passed is only
+        // worth reading if passing meant something happened.
+        if (hereNamed.Length == 0 && thereNamed.Length == 0)
+        {
+            return Claim.NotExamined("The procedure", $"step {step}",
+                "neither ARCHITECTURE.html nor RUNBOOK.md names a store, a command or a file the comparator "
+                + "recognises in this step, so the two statements of it were compared on nothing. Widen the "
+                + "vocabulary or state what this step is meant to agree on");
+        }
+
+        return hereNamed.SequenceEqual(thereNamed, StringComparer.Ordinal)
+            ? Claim.Passed("The procedure", $"step {step}",
+                $"names the same {hereNamed.Length} item(s) as RUNBOOK.md's step of the same number")
             : Claim.Failed("The procedure", $"step {step}",
-                $"names stores [{string.Join(", ", hereStores)}] where RUNBOOK.md names [{string.Join(", ", thereStores)}]. "
-                + "The same procedure in two documents, disagreeing about what an operator counts");
+                $"names [{string.Join(", ", hereNamed)}] where RUNBOOK.md names [{string.Join(", ", thereNamed)}]. "
+                + "The same procedure in two documents, disagreeing about what an operator does");
     }
 
-    private static string[] StoresNamedIn(string prose) =>
-        [.. StoreTable().Matches(prose).Select(m => m.Value).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    private static string[] SubstanceNamedIn(string prose) =>
+        [.. ProcedureSubstance().Matches(prose)
+            .Select(m => Normalise(m.Value))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)];
 
     /// <summary>
-    /// A store named in prose. Deliberately the phase 2 to 5 table names alongside the ones that
-    /// exist, because those are the ones a procedure written before they existed reaches for, and
-    /// naming a table that is not there is what makes the step count nothing.
+    /// What a step of the move procedure names that both documents have to agree on: the stores an
+    /// operator counts, and the commands and files the step turns on.
+    ///
+    /// The store names are the phase 2 to 5 tables alongside the ones that exist, because those are
+    /// the ones a procedure written before they existed reaches for, and naming a table that is not
+    /// there is what makes the step count nothing. The commands and files were added at 3.10, when
+    /// the store half of this vocabulary turned out to match nothing at all in either document.
     /// </summary>
-    [GeneratedRegex(@"\b(?:setup|setup_signal|forward_return|trade|variant|daily_bar|indicator_daily|run_log)\b", RegexOptions.CultureInvariant)]
-    private static partial Regex StoreTable();
+    [GeneratedRegex(
+        @"\b(?:setup_signal|setups?|forward_return|trade|variant|daily_bar|indicator_daily|run_log)\b"
+        + @"|VACUUM\s+INTO|PRAGMA\s+integrity_check|appsettings\.Secrets\.json"
+        + @"|tools/snapshot-db|launchd|Task\s+Scheduler"
+        + @"|\bdatabase\b|\bwatchlist\b|\bsession\s+boundaries\b|\bread-only\b|\barchive\b",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex ProcedureSubstance();
+
+    /// <summary>
+    /// One matched term in the form both documents can be compared on: lower case, single-spaced
+    /// and singular, so "setups" here and "setup" there is an agreement rather than a difference.
+    /// The two documents are written for different readers and their grammar is allowed to differ;
+    /// what they name is not.
+    /// </summary>
+    private static string Normalise(string term)
+    {
+        string collapsed = WhiteSpaceRun().Replace(term.Trim().ToLowerInvariant(), " ");
+
+        return collapsed.EndsWith('s') && !collapsed.EndsWith("_signal", StringComparison.Ordinal)
+            ? collapsed[..^1]
+            : collapsed;
+    }
+
+    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
+    private static partial Regex WhiteSpaceRun();
 
     /// <summary>
     /// What is wrong with the out-of-scope claims, taken as a set. Three things, and each is a

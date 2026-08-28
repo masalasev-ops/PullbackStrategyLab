@@ -430,8 +430,8 @@ public sealed class CheckProofTests
         // wording is allowed to differ and the substance is not.
         ArchitectureConformanceCheck.Claim claim = ArchitectureConformanceCheck.ProcedureStepClaim(
             "2",
-            "A row count for every table the store holds, derived from the schema.",
-            "Row counts for every table, taken from the schema rather than from a list here.");
+            "A row count for every table the database holds, derived from the schema.",
+            "Row counts for every table in the database, taken from the schema rather than from a list here.");
 
         Assert.Equal(ArchitectureConformanceCheck.Pass, claim.Verdict);
     }
@@ -448,7 +448,23 @@ public sealed class CheckProofTests
             "A row count for every table the store holds, derived from the schema.");
 
         Assert.Equal(ArchitectureConformanceCheck.Fail, claim.Verdict);
-        Assert.Contains("disagreeing about what an operator counts", claim.Detail, StringComparison.Ordinal);
+        Assert.Contains("disagreeing about what an operator does", claim.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_procedure_step_neither_document_names_anything_in_is_reported_as_unexamined()
+    {
+        // The seventh shape, as a case. Both operands empty is not agreement: it is a comparison
+        // that did not happen, and returning Pass for it is how ten claims sat at a floor of ten
+        // over a comparator that had compared nothing since 1.12 took the last table name out of
+        // both documents in one commit.
+        ArchitectureConformanceCheck.Claim claim = ArchitectureConformanceCheck.ProcedureStepClaim(
+            "1",
+            "Confirm no nightly or replay job is mid-run.",
+            "Confirm no stage is mid-run.");
+
+        Assert.Equal(ArchitectureConformanceCheck.Unexamined, claim.Verdict);
+        Assert.Contains("compared on nothing", claim.Detail, StringComparison.Ordinal);
     }
 
     // ---- a confirmed value carries where it came from ------------------------------------
