@@ -51,6 +51,13 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("ARCHITECTURE.html, data budget, the hard ceiling",
             architecture.Contains("Hard ceiling of 5,000 calls a day", StringComparison.Ordinal),
             defaults.DailyCallCeiling == 5000, "the stated ceiling against the configured default"));
+
+        // Snapshot retention, which deletes files the operator cannot get back. RUNBOOK is where an
+        // operator reads how far a restore can reach, so a number that drifted from the code there
+        // would be a promise about recovery that the lab does not keep.
+        pins.Add(Pin.Text("RUNBOOK.md, the snapshots kept against the configured default",
+            runbook.Contains("keeps the last 7 snapshots", StringComparison.Ordinal),
+            defaults.SnapshotsKept == 7, "the stated retention against the configured default"));
         pins.Add(Pin.Text("CLAUDE.md, the daily vendor call ceiling",
             claude.Contains("daily vendor call ceiling is 5,000", StringComparison.Ordinal),
             defaults.DailyCallCeiling == 5000, "the stated ceiling against the configured default"));

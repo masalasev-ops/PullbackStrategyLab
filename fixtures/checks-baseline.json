@@ -181,7 +181,8 @@
         "SCHEMA.md, store configuration, foreign_keys": 1,
         "SCHEMA.md, store configuration, journal_mode": 1,
         "SCHEMA.md, store configuration, synchronous": 1,
-        "SCHEMA.md, the three index symbols": 1
+        "SCHEMA.md, the three index symbols": 1,
+        "RUNBOOK.md, the snapshots kept against the configured default": 1
       }
     },
     "point-in-time": {

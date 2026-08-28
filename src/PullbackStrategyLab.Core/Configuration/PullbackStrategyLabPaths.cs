@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace PullbackStrategyLab.Core.Configuration;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace PullbackStrategyLab.Core.Configuration;
 /// while .NET source and project directories keep the framework's PascalCase.
 /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
 /// </summary>
-public sealed class PullbackStrategyLabPaths
+public sealed partial class PullbackStrategyLabPaths
 {
     public const string StoreFileName = "pullbackstrategylab.db";
     public const string SnapshotDirectoryName = "snapshots";
@@ -30,6 +32,38 @@ public sealed class PullbackStrategyLabPaths
     /// <summary>A snapshot named for the instant it was taken, in a form that sorts chronologically.</summary>
     public string SnapshotFile(DateTimeOffset takenAt) =>
         Path.Combine(SnapshotDirectory, $"pullbackstrategylab-{takenAt.UtcDateTime:yyyyMMdd-HHmmss}.db");
+
+    /// <summary>
+    /// Every snapshot in the directory, oldest first.
+    ///
+    /// Matched against the name this class generates rather than against <c>*.db</c>, and that is
+    /// what makes the escape hatch work: retention only ever deletes files it could have written,
+    /// so a snapshot renamed to anything else, <c>before-the-4.1-migration.db</c> say, is kept for
+    /// as long as the operator wants it and is invisible to the policy. Named here rather than in
+    /// the stage that prunes, because the class that composes the name is the one that can say
+    /// which names are its own.
+    /// </summary>
+    public IReadOnlyList<string> SnapshotFiles()
+    {
+        if (!Directory.Exists(SnapshotDirectory))
+        {
+            return [];
+        }
+
+        return
+        [
+            .. Directory.EnumerateFiles(SnapshotDirectory, "*.db")
+                .Where(f => GeneratedSnapshotName().IsMatch(Path.GetFileName(f)))
+                // The name carries the instant in a form that sorts chronologically, so ordinal
+                // order is age order. Sorting on a file timestamp instead would reorder the set
+                // whenever a copy or a restore touched one.
+                .Order(StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>The shape <see cref="SnapshotFile"/> produces, and nothing else.</summary>
+    [GeneratedRegex(@"^pullbackstrategylab-\d{8}-\d{6}\.db$", RegexOptions.CultureInvariant)]
+    private static partial Regex GeneratedSnapshotName();
 
     public void EnsureDirectories()
     {

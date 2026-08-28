@@ -141,6 +141,12 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
 | A corporate action was missed | Rerun `actions` for that date, with `--with-dividends` if a dividend is what was missed. It writes the action and raises the rebuild demand, and until that demand is satisfied, calculations for that ticker refuse to run. No other ticker is touched |
 | Database will not open | Restore the most recent snapshot from the data root, then re-run the nightly stages for the missing dates in order |
+
+**The lab keeps the last 7 snapshots and removes the rest, which bounds what a restore can reach back to.** There was no retention until 3.11 and twenty-four had accumulated in four days, 4.6 GB against a store holding one session of setups and growing about 290 MB a night. Seven is a week, which covers a fault found on a Monday that happened before the weekend, and it is `PullbackStrategyLab:SnapshotsKept` if a machine wants a different number.
+
+**Removal happens only after the new snapshot has passed both its checks**, the row counts matching and `integrity_check` answering ok, so a short disk cannot cost a week of recovery points. Each removal is named in the night's log.
+
+**To keep one past the window, rename it.** Retention only ever deletes files matching the name the lab generates, `pullbackstrategylab-YYYYMMDD-HHMMSS.db`, so a copy renamed to anything else, `before-the-4.1-migration.db` say, survives indefinitely and is invisible to the policy.
 | `git` permission error mid-commit on Windows | Run `git fsck` before retrying. Usually a real-time scanner or file indexer holding a handle on a loose object. Add a scanner exclusion for the repository folder |
 | Researcher produced nothing | Check whether the usage allowance is exhausted. The job queues rather than returning a degraded proposal, and this is expected behaviour |
 

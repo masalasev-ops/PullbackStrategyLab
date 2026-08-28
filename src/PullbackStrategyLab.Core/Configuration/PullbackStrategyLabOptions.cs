@@ -44,6 +44,26 @@ public sealed record PullbackStrategyLabOptions
     [Range(1, int.MaxValue)]
     public int DailyCallCeiling { get; init; } = 5000;
 
+    /// <summary>
+    /// How many snapshots the lab keeps. Older ones are removed after a new one is verified.
+    ///
+    /// <b>There was no retention at all until 3.11, and the store is 290 MB a night.</b> Twenty-four
+    /// snapshots had accumulated in four days against a store holding one session of setups, which
+    /// is 4.6 GB of recovery points for an evidence base of forty-four rows. A recovery path that
+    /// fills the disk it recovers onto is not one.
+    ///
+    /// <b>Seven, because the thing being recovered from is a night.</b> A snapshot exists so that a
+    /// store a stage corrupted, or a migration went wrong on, can be put back. Both are noticed
+    /// within a night or two, and the pre-migration copy that `migrate` takes itself is the newest
+    /// of the set at the moment it matters. Seven is a week of them, which covers a fault found on
+    /// a Monday that happened before the weekend.
+    ///
+    /// It bounds the directory at about 2 GB at today's store size, and the bound moves with the
+    /// store rather than staying put, which is worth knowing before the store is ten times larger.
+    /// </summary>
+    [Range(1, int.MaxValue)]
+    public int SnapshotsKept { get; init; } = 7;
+
     public VendorOptions Vendor { get; init; } = new();
 
     public ApiOptions Api { get; init; } = new();

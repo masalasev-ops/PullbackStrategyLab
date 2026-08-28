@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
@@ -27,12 +28,19 @@ public sealed class SnapshotStage
     private readonly StoreConnectionFactory _connections;
     private readonly PullbackStrategyLabPaths _paths;
     private readonly IClock _clock;
+    private readonly PullbackStrategyLabOptions _options;
 
-    public SnapshotStage(StoreConnectionFactory connections, PullbackStrategyLabPaths paths, IClock clock)
+    public SnapshotStage(
+        StoreConnectionFactory connections,
+        PullbackStrategyLabPaths paths,
+        IClock clock,
+        IOptions<PullbackStrategyLabOptions> options)
     {
         _connections = connections;
         _paths = paths;
         _clock = clock;
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options.Value;
     }
 
     public int Run(string[] args)
@@ -50,6 +58,20 @@ public sealed class SnapshotStage
         Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
             $"snapshot-db: wrote {result.SnapshotFile} ({result.Bytes:N0} bytes)"));
         Console.WriteLine($"snapshot-db: integrity {result.Integrity}");
+
+        // Said out loud rather than left to be noticed by a directory listing. A stage that
+        // deletes recovery points and does not name them is one nobody can audit from the night's
+        // log, which is where every other thing the night did is recorded.
+        if (result.Removed.Count > 0)
+        {
+            Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+                $"snapshot-db: removed {result.Removed.Count} snapshot(s) beyond the {_options.SnapshotsKept} kept"));
+
+            foreach (string removed in result.Removed)
+            {
+                Console.WriteLine($"snapshot-db:   removed {Path.GetFileName(removed)}");
+            }
+        }
 
         foreach (TableCount table in result.Counts)
         {
@@ -74,7 +96,7 @@ public sealed class SnapshotStage
     {
         if (!_connections.StoreExists)
         {
-            return new SnapshotResult(false, _connections.StoreFile, 0, "no store", []);
+            return new SnapshotResult(false, _connections.StoreFile, 0, "no store", [], []);
         }
 
         _paths.EnsureDirectories();
@@ -120,7 +142,61 @@ public sealed class SnapshotStage
                     after.GetValueOrDefault(table, -1)))
         ];
 
-        return new SnapshotResult(true, destination, new FileInfo(destination).Length, integrity, counts);
+        var result = new SnapshotResult(true, destination, new FileInfo(destination).Length, integrity, counts, []);
+
+        // Older snapshots go only once this one has proved itself, which is the whole of the
+        // safety here. A short disk or a corrupt page produces a file, and deleting a week of
+        // recovery points because a broken new one was written is the failure this ordering
+        // exists to prevent. Complete and integrity ok are the same two conditions the stage
+        // exits non-zero on, and the same two migrate refuses to run without.
+        return result.Complete && string.Equals(integrity, "ok", StringComparison.Ordinal)
+            ? result with { Removed = Prune(destination) }
+            : result;
+    }
+
+    /// <summary>
+    /// Removes all but the newest <see cref="PullbackStrategyLabOptions.SnapshotsKept"/> snapshots
+    /// and returns what it removed.
+    ///
+    /// Three things it will not do. It only ever considers files matching the name this lab
+    /// generates, so a snapshot renamed to keep it is invisible to the policy and survives for as
+    /// long as the operator wants. It never removes the snapshot just taken, whatever the setting,
+    /// because a retention of one that deleted its own output would leave none. And a file it
+    /// cannot delete is reported rather than thrown on: a snapshot held open by a copy is a reason
+    /// to say so, not a reason to fail a run that has already produced a good copy.
+    /// </summary>
+    private IReadOnlyList<string> Prune(string justTaken)
+    {
+        string[] older =
+        [
+            .. _paths.SnapshotFiles()
+                .Where(f => !string.Equals(
+                    Path.GetFullPath(f), Path.GetFullPath(justTaken), StringComparison.OrdinalIgnoreCase)),
+        ];
+
+        int surplus = older.Length + 1 - _options.SnapshotsKept;
+
+        if (surplus <= 0)
+        {
+            return [];
+        }
+
+        var removed = new List<string>();
+
+        foreach (string file in older.Take(surplus))
+        {
+            try
+            {
+                File.Delete(file);
+                removed.Add(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"{Name}: could not remove {file}: {e.Message}");
+            }
+        }
+
+        return removed;
     }
 
     /// <summary>
@@ -176,7 +252,8 @@ public sealed record SnapshotResult(
     string SnapshotFile,
     long Bytes,
     string Integrity,
-    IReadOnlyList<TableCount> Counts)
+    IReadOnlyList<TableCount> Counts,
+    IReadOnlyList<string> Removed)
 {
     /// <summary>Every table present on both sides with the same number of rows.</summary>
     public bool Complete => Counts.All(c => c.Matches);
