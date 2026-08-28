@@ -5556,3 +5556,410 @@ Measured:   **The fifteen repaired rows were 260 minutes late and are 20.** Noth
 
 Carried:    The sector-timestamp conflation stays open and is untouched by this. Threading the
             configured session zone into the store readers is new, at 4.1.
+
+## 3.9(d) — 2026-08-28 — main — scan_hit stamped, and an obligation whose premise was false
+
+`scan_hit` was the last table feeding a point-in-time read with no observation stamp at all. That is
+a different thing from an unbounded read: a hit inserted for a past session was invisible to every
+bound the lab has, and a cluster count derived afterwards would have counted it with nothing able to
+say so.
+
+Measured:   **The blast radius, before any bound moved.** **300 rows**, all `as_of = 2026-08-27`,
+            all unstamped. **Six reads**, of which three are historical and would have started
+            refusing: `ScanHitReader.ForTicker`, called by both detectors through
+            `SessionFigures.Hits` and by `SignalVectorizer`, and the vectorizer's own
+            `cluster_count` lookup at the thrust session. The other three read a single date and
+            are same-session by construction.
+
+            **Refusing the 300 would have broken a read that must work.** The thrust window is ten
+            sessions, so for the ten sessions after 2026-08-27 a name whose thrust hit was that
+            night would have had it refused, `thrust` would have read as failing, and `thrust` is
+            gating. That is a wrong verdict on live nights, and under the clause's own stop
+            condition it is where the work stops rather than where the null is defaulted the other
+            way.
+
+Found:      **It did not stop, because the obligation's premise was false.** The row raising this
+            said the fix needed "a backfill of 300 rows with an instant nobody recorded, and
+            inventing one would be worse than the gap". The instant was recorded, in another table:
+            `run_log` holds the `scans` run of 2026-08-27 with `started_at` `22:10:03.506Z`,
+            `ended_at` `22:10:03.959Z`, outcome `clean` and **`rows_written` 300**, which is exactly
+            the number of hits that date carries. Reading an instant across from a table that
+            recorded it is not the same act as choosing one, and the row-count equality is what
+            makes it a match rather than an association.
+
+Built:      **Migration 029** adds `observed_at` and backfills from that run under three conditions,
+            all in the statement rather than assumed: the run is a `scans` run that finished clean,
+            its own session date taken in the session zone equals the hits' `as_of`, and its
+            `rows_written` equals the hit count for that date. `ended_at` rather than `started_at`,
+            because it is the latest instant any of those rows could have been written and a bound
+            must never claim a row existed earlier than it did. Two runs for one date, or a count
+            that disagrees, leaves the rows null. All **300 of 300** were stamped.
+
+            **All six reads bound the stamp, and a null is refused by any session other than the
+            row's own.** A row with no provenance is honestly unavailable to history and honestly
+            available to the session it is dated for. The rule has no live subject in this store,
+            since nothing is null, which is the right place for a guard to be.
+
+            `scan_hit` joins `PointInTimeCheck.Stamped` as its **fourteenth** table, so a read of it
+            that stops bounding the stamp now fails.
+
+Carried:    The obligation is discharged rather than repointed, and the CHANGELOG entry records its
+            prior text and says which sentence in it was wrong.
+
+## 3.9(e) — 2026-08-28 — main — the rebuild that reported success, and the half of it that was not a no-op
+
+The in-place scoreboard rebuild reported a clean run having written nothing, which is the failure
+shape this lab keeps producing. Fixing it found that only six of its eleven panels were the no-op
+and the other five were doing something worse.
+
+Found:      **`ON CONFLICT DO NOTHING` never fired for an account-wide panel, so a rebuild
+            duplicated it.** `scoreboard` declares `PRIMARY KEY (as_of, panel, direction)` and
+            `direction` is null on every band 0 panel, because those are account-wide. **SQLite
+            treats nulls as distinct in a unique index**, so that key never constrained those rows.
+            Measured by the test written for the no-op: a second build of the same date attempted
+            **11** panels and skipped **6**. The other five were inserted again, so the store held
+            two of every band 0 panel; a third build would have made it three, and `LabScoreboard`
+            would have handed the page one row per copy.
+
+            The six carrying a direction were skipped correctly throughout, which is exactly why the
+            whole thing read as a silent no-op rather than as a duplication. The corpus had the
+            first half of the sentence and never asked whether it was true of every row.
+
+            Nothing was wrong in the live store: the scoreboard has run once, on 2026-08-27, and its
+            nine panels are one per key. Two of the five band 0 panels did not exist then.
+
+Built:      **Migration 030** deduplicates by `rowid`, keeping the row the first build wrote, and
+            adds `scoreboard_account_wide`, a unique index on `(as_of, panel)` where
+            `direction IS NULL`. That is what the primary key was believed to be, covering exactly
+            the rows the primary key cannot, so the two together constrain every row rather than
+            most of them. The insert drops its conflict target, because naming the primary key would
+            raise on a violation of the new index rather than skipping it.
+
+            **A build reports what it attempted and what it skipped, and fails when they are equal.**
+            Some skipped and some written is not a failure: it means the date gained a panel an
+            earlier build did not produce, and it is still reported. All skipped is a rebuild that
+            wrote nothing, and the command exits non-zero naming the count and the supported route,
+            which is to restore the snapshot taken before that night and re-run, or to clear the
+            date's panels first.
+
+            Failing rather than refusing up front, deliberately: a refusal would have to ask whether
+            the date already has panels before doing the work, which is a second query that can
+            disagree with the insert. Counting what the insert skipped cannot disagree with it, and
+            it keeps a first build for a date working.
+
+Verified:   Five tests. The second build writes nothing and does not report clean; the command exits
+            non-zero and names both the skipped count and the route; a rebuild after the date is
+            cleared writes its panels again, which is what restore-and-rerun reduces to; a build for
+            a new date stays clean while another date has panels; and an account-wide panel is
+            written once however many times the date is built, asserted as a count rather than as an
+            absence.
+
+## 3.9(f) — 2026-08-28 — phase-3-post-pass — a claim for every behaviour change, and the ones that are not claims
+
+Tests went 434 to 486 across the correction pass and this one, and the claim total had not moved.
+That is the signal to look rather than a null result: a claim total that does not move while the code
+does means the architecture document no longer states what the code is, and the next session reads a
+document that is behind.
+
+Mapped:     One line per behaviour change, with what asserts it. **Six were architecture claims and
+            had none; six are not architecture claims and the reason is given per item.**
+
+            | Change | Asserted by | Claim |
+            |---|---|---|
+            | A name the vendor holds nothing on is read, stamped and counted apart from a resolution | `FundamentalsParseTests`, `FundamentalsShapeTests` | **added**, "The vendor holds nothing on a name" |
+            | One name's vendor failure costs that name, counted, run `partial` | `SectorResolverTests` | **added**, "A vendor refuses one name mid-walk" |
+            | The lateness bound, read from the parameters table, with the lateness and the prior state recorded, and the restore | `CheckRecomputerTests` | **added**, "An input the session asked for arrives after the session" |
+            | The capture refuses a 200 the parse cannot read, keyed on the parse | `FundamentalsShapeTests` | **added**, "The vendor answers 200 with a body the parse cannot read" |
+            | The stamped list reconciled in both directions, fourteen tables | `PointInTimeCheck` | **added**, "A migration adds a column recording when the lab observed something" |
+            | A rebuild that wrote nothing fails, account-wide panels uniquely constrained | `ScoreboardRebuildTests` | **added**, "A rebuild writes no rows" |
+            | Every bound closes the session in its own zone | `SessionBoundaryTests` | added at 3.9(c), "A stage writes after the UTC date rolls" |
+            | `scan_hit` stamped, a null refused by any session but its own | `ScanHitStampTests` | covered by the stamped-list claim, which now names `scan_hit` as one of its fourteen |
+            | The slot script keeps a native command's stderr | `slot-diagnostics`, two runner jobs | **not an architecture claim.** The slot script is scheduling, which the architecture places outside the application by design, so it has no component row to make a claim about. It is on the check roster with a runner backing, which is where a property of the harness belongs |
+            | The inverted CI job, which fails when an assertion is made to fail | the workflow | **not an architecture claim.** A job asserting that another job can go red is a property of the workflow file and nothing else, and `architecture-conformance` reads the document against the code |
+            | The citation scan derives its file set from the git index | `decision-resolves` | **not an architecture claim.** It is a check widening its own scope, and the coverage floor is what holds it |
+            | Six parameters marked OPEN, the completeness claim removed | `AuthoredParametersTests` | **not an architecture claim.** The authored-parameters table is not a claim table: it states values, and the test asserts the document against itself rather than the document against the code |
+            | An out-of-scope ceiling and a reason per deferred claim | the phase report's own section claims | **not an architecture claim.** It is the report constraining itself, which the document already covers under its phase-report section |
+            | 27 backfilled indicator stamps moved into their own session | `MigrationRowSurvivalTests` | **not an architecture claim.** It is a data repair to rows a superseded migration wrote, not a behaviour anything can assert going forward |
+
+Verified:   **The three the clause named are provably red when their code is reverted**, each run and
+            each reverted. Dropping `scan_hit` from the stamped list turns the reconciliation claim
+            red. Replacing `MeasurementParameters.LatenessBoundHours` with the literal 24 turns the
+            lateness claim red. Replacing the capture's guard with a status-only test, which is what
+            it was before 3.8 and which still compiles, turns the capture claim red and names the
+            response that killed the first sector walk.
+
+            The revert of the capture guard had to be written as a status check rather than as a
+            deleted call, because a call to a method that does not exist fails the build and a claim
+            that cannot be evaluated is not a claim proved red.
+
+Carried:    **Two of the seven new claims are out of scope until 3.9 lands**, being the rebuild and
+            the boundary, because `FailureBehaviourCheckpoints` names the checkpoint that builds a
+            behaviour and the report defers a claim until `PROGRESS.md` records it. They are
+            deferred rather than unexamined, they name a checkpoint `BUILD_PLAN.md` has, and they
+            become asserted when this checkpoint's own entry lands.
+
+## 3.9(g) — 2026-08-28 — phase-3-post-pass — the obligation ledger reconciled, and the count the 3.8 record stated
+
+The 3.8 entry says "Open obligations: 32 before this pass, 32 after. One discharged, one added."
+**Both figures are wrong and so is the count of additions.** Reconciled here by reading the table out
+of every commit that changed it and diffing row identity, rather than by counting the table twice.
+
+Corrected:  **3.8 opened four obligations and discharged one, and it started from 28 rather than 32.**
+            The arithmetic in the 3.8 entry was internally consistent and both of its numbers were
+            wrong, which is why it read as a reconciliation. It stated the count as it stood
+            immediately before its own edit as both the before and the after.
+
+            | Commit | Move | Row |
+            |---|---|---|
+            | `6afa4f4` 3.8(g) | 28 to 30, opened | `rows_written` distinguishes nothing on an update-only stage |
+            | `6afa4f4` 3.8(g) | opened | `security.sector_resolved_at` is when the lab asked, not when the fact became true |
+            | `166d273` 3.8 | 30 to 31, opened | `scan_hit` carries no observation stamp |
+            | `5c2db96` 3.8 | 31 to 32, opened | The slot script depends on Windows PowerShell |
+            | `411acbb` 3.8 | 32 to 31, discharged | `PointInTimeCheck.Stamped` names seven tables and nothing asks the other direction |
+
+            **The `ALTER TABLE` parse was already a row and was not an addition.** It was raised at
+            3.7 as part of `price-storage-form` reading only `CREATE TABLE` bodies, and 3.8 half
+            closed it. So of the three the brief expected, one was already carried and two were
+            opened, alongside two more the brief did not name.
+
+Moved:      **3.9, so far.**
+
+            | Commit | Move | Row |
+            |---|---|---|
+            | `36a0465` 3.9(a)(c) | 31 to 33, opened | The repair made 2026-08-27's `cluster` column a mixed population |
+            | `36a0465` 3.9(a)(c) | opened | The store readers name the session zone rather than reading the configured one |
+            | `40752c9` 3.9(b) | 33 to 32, discharged | Whether phase 3's accumulation runs from the branch or from `main`, closed by the merge at `6f27926` |
+            | `651b342` 3.9(d) | 32 to 31, discharged | `scan_hit` carries no observation stamp |
+
+Carried:    **31 open, by due point: 17 at 4.1, 3 at 4.6, 3 at the move, 8 at the operator.**
+
+            **The two the clause asked about by name.** The sector-timestamp conflation stays open
+            at the operator and carries the count that stopped it, 43 stamp-bounding query sites
+            across 17 shipped-source files; the boundary work at 3.9(c) did not touch it and the
+            record says so. Branch-or-`main` is discharged at 3.9(b) naming the merge commit, and
+            its second copy in the operator table went with it, taking that table from nine to eight.
+
+            **`rows_written` on the three update-only stages stays open at 4.1, untouched**, which
+            is what the scope said.
+
+## 3.9(i) — 2026-08-28 — phase-3-post-pass — the funnel, and the two units the question conflated
+
+The premise put to this clause is that a median of nought candidates a night and a 3.6 gate needing
+262 effective observations across 20 sessions cannot both hold. **They can, and the reason is that
+they are counted over different populations.** The funnel below is reported with a denominator per
+stage so the two are never added together again.
+
+Reported:   **The population, first, because every figure under it is one-sided or replayed.**
+            The candidate median is over `calibration_setup`: **49,450 rows over 602 sessions**,
+            2024-04-01 to 2026-08-24, **replayed and never live**. The live `setup` table holds
+            **44 rows on one session**, 2026-08-27.
+
+            **The funnel, long side, over the 602 replayed sessions.** Denominator 32,533 flagged
+            rows at every stage, since every check is recorded on every row that clears the floor.
+
+            | Check | Passing | Of 32,533 |
+            |---|---|---|
+            | `moves-enough`, `thrust`, `tradable`, `uptrend` | 32,533 | 100% |
+            | `held-floor` | 30,442 | 93.6% |
+            | `trigger-near` | 15,739 | 48.4% |
+            | `contraction` | 15,169 | 46.6% |
+            | `dip-shape` | 3,230 | 9.93% |
+            | **`exit-tight`** | **419** | **1.29%** |
+            | `cluster` | 0 | 0%, and not gating |
+
+            **The funnel, short side, over 601 replayed sessions.** Denominator 16,917 flagged rows.
+
+            | Check | Passing | Of 16,917 |
+            |---|---|---|
+            | `downtrend`, `moves-enough`, `thrust`, `tradable-shortable` | 16,917 | 100% |
+            | `no-reclaim` | 16,596 | 98.1% |
+            | `averages-squeezing` | 4,927 | 29.1% |
+            | `bounce-shape` | 2,376 | 14.0% |
+            | `reached-ceiling` | 859 | 5.08% |
+            | **`exit-tight`** | **232** | **1.37%** |
+            | `cluster` | 0 | 0%, and not gating |
+
+            **Candidates, which is the conjunction: 30 long over 602 sessions and nought short over
+            601.** One candidate every twenty sessions on the long side and none at all on the short.
+            The median a night is nought on both sides, and it is a median over replayed sessions.
+
+            **The live night's own funnel, for comparison and stated as the one night it is.** 2,083
+            securities in the universe, 300 scan hits across 234 distinct names, 44 setups flagged
+            (40 long, 4 short), and **nought candidates on either side**.
+
+Answered:   **Candidates and effective observations are not the same unit, and this is the whole of
+            the apparent contradiction.** `band1.vsLoose` and `band1.vsTight` record
+            `population = "every flagged setup"` and `n_minimum = 262`. The 262 is counted over
+            flagged setups paired with their drawn controls, discounted for serial correlation.
+            Candidates are the subset with `passed_all = 1`, and **band 1 does not read them at
+            all**. Read off the live scoreboard rather than inferred: the four band 1 panels name
+            that population on the row.
+
+            **The conversion, where one is wanted.** Over the replayed population a candidate is
+            0.092% of flagged long rows, 30 in 32,533, and 0% of flagged short rows, nought in
+            16,917. So a rate stated in candidates is about a thousandth of the same rate stated in
+            flagged setups on the long side, and is not convertible at all on the short.
+
+            **What each gate is therefore about.** 3.6 is the decision to keep measuring, and it
+            fills from flagged setups. Candidates are what a trading layer would act on, so they are
+            phase 4's denominator and not 3.6's.
+
+Restated:   **3.6's twenty sessions is not the binding condition; 262 effective observations is, and
+            it binds on the short side.** At the one live night's flagging rate, and taking the most
+            optimistic possible discount, which is none at all:
+
+            **Long: 40 flagged a night, so 262 needs at least 7 sessions of flagging, plus the ten
+            sessions the last one's horizon takes to close, which is about 17 sessions.**
+
+            **Short: 4 flagged a night, so 262 needs at least 66 sessions of flagging plus the
+            horizon, which is about 76 sessions, or fifteen weeks.**
+
+            Both are floors and the real figures are larger, because a ten-session forward return
+            makes adjacent nights share most of their window and the block bootstrap discounts for
+            it. **How much larger cannot be stated yet**: `n_effective` is nought on all four band 1
+            panels because no horizon has closed, and the first will close around 2026-09-11. A
+            figure invented for the discount now would be a number with no measurement behind it.
+
+            So 3.6 is reachable and is not near. The condition stands as pre-registered and is not
+            amended; what is corrected is the reading that twenty sessions was the target.
+
+Judged:     **Of the three readings offered, the numbers support the second: a threshold upstream is
+            too tight, and it is `exit-tight`.** It passes 1.29% long and 1.37% short, an order of
+            magnitude tighter than the next check on either side, and it is the same check on both,
+            which is what makes it structural rather than a one-side accident. The 2.11 obligation
+            already names the cause: the cap is 0.5 daily ranges against a median stop distance of
+            1.157 long and 1.191 short, so a stop at the extreme of a two-to-seven bar move is asked
+            to sit inside half a day's range, which the geometry cannot produce.
+
+            **The third reading has one candidate and it is not one.** `cluster` passes nought of
+            49,450 rows, which is exactly what a stage dropping rows looks like. It is not: the
+            replay has no `scan_hit` rows, so no cluster count exists to pass, and `cluster` is
+            recorded and never gating, which the 30 long candidates existing at all confirms. It is
+            named here because a 0% row in a funnel is the first thing a reader will point at.
+
+            **The first reading cannot be separated from the second until the second is settled.**
+            Thirty candidates in 602 sessions is measured downstream of a gate admitting 1.3%, so it
+            is not evidence about how rare the pattern is. It becomes evidence once `exit-tight` is
+            ruled on.
+
+Carried:    **2.11 stays open at the operator and is unchanged by this**, which is the point of the
+            clause: what was owed was the funnel and the unit, not the ruling. What this removes is
+            the reason to think the ruling is urgent for 3.6. It is urgent for phase 4, which would
+            build a trading layer that fires about once every twenty sessions on the long side and
+            never on the short.
+
+## 3.9 — 2026-08-28 — phase-3-post-pass — the post-pass closes
+
+Nine parts, in the run order the brief set. Parts (a) and (c) landed before the merge and are
+recorded above; (b) is the merge itself; (d) through (i) followed it. Every part has its own entry;
+this one closes the checkpoint and states what moved.
+
+Built:      **The session boundary, closed in Eastern time.** One function, twelve sites, and a live
+            wrong result found rather than reasoned about: the scoreboard for 2026-08-27 returned
+            **0 of its 9 panels** to a read of its own session and returns 9 now.
+
+            **`scan_hit` stamped**, the last table feeding a point-in-time read with no observation
+            stamp, backfilled from the `scans` run that recorded both instants and a row count
+            matching exactly. Fourteen stamped tables.
+
+            **A rebuild that writes nothing fails**, and the account-wide panels are constrained by
+            an index nulls do not escape, which is the defect the no-op was hiding half of.
+
+            **`recheck --restore`**, so the property the corpus claimed about `corrected_from` is
+            reachable by something other than a statement inside a test.
+
+            **Three migrations**: 028 moving 27 synthesised indicator stamps into their own session,
+            029 adding and backfilling `scan_hit.observed_at`, 030 deduplicating and constraining the
+            account-wide panels.
+
+Measured:   **The three questions the repair owed**, answered at (a) and one of them corrected at (c):
+            the cluster is formed over the night's whole scan population, forty-four is every setup
+            the night's detectors flagged, and lateness is measured from the session's own end of
+            day, which made the fifteen 20 minutes late rather than 260.
+
+            **The funnel, with a denominator per stage**, at (i). `exit-tight` passes **1.29% of
+            32,533 flagged long rows and 1.37% of 16,917 short** over 602 replayed sessions, an order
+            of magnitude tighter than the next check on either side. Candidates and effective
+            observations are different units over different populations, so a median of nought
+            candidates a night and a 262-observation gate both hold.
+
+Verified:   `tools/ci.ps1` green, **27 steps**. `tools/verify-phase` green. **1,296 expectations**, up
+            from 1,288, the eight added at 3.9 being **five `DERIVED` and three `FROZEN`**: the scan
+            hits carrying a stamp inside their own session, and the rebuild attempting eleven panels,
+            skipping eleven, reporting failed, and leaving the five account-wide panels at five.
+
+            **Seven claims added to the architecture's tables** and the two placed at 3.9 become
+            asserted with this entry. Three of the seven were each proved red by reverting the code
+            they read and running the harness.
+
+Carried:    **31 open obligations: 17 at 4.1, 3 at 4.6, 3 at the move, 8 at the operator.**
+            Reconciled row by row against the commits that moved them at (g), which found the 3.8
+            record's own count wrong: that pass opened four and discharged one from a starting point
+            of 28, not "32 before, 32 after, one and one".
+
+            **The lazily-resolved attribute is scoped and not started**, at (h), and it is one table
+            wide rather than fourteen. `security` is the whole of it, five files read its stamp, the
+            backfill is 233 rows and every one of them has a recorded first scan hit, so the
+            migration with an invented backfill in it does not exist. The before-or-after-phase-4
+            question is stated as the operator's.
+
+            **This session committed code and may not sign it off.** It also committed three changes
+            straight to `main` after the merge, which broke the standing rule that every change goes
+            in through a pull request. `main` was rewound to the merge commit and those commits came
+            back through PR #6; the breach is recorded here rather than only fixed, because a rule
+            broken and quietly repaired is one the next session has no reason not to break.
+
+## 3.9 — 2026-08-28 — phase-3-post-pass — two checks owed before the merge, both clean
+
+Two questions put before PR #6 merges. Both are reported with the commands and the counts rather
+than with an assurance, because "we checked" is the shape neither of them was asking for.
+
+Searched:   **The vendor token is in no commit, no blob and no ref.** It was read into a shell
+            variable rather than echoed, and is identified below by the first twelve hex characters
+            of its SHA-256, `4d0e827b6c2a`, so this entry does not become the thing it is about.
+
+            | Search | Command | Hits |
+            |---|---|---|
+            | The path, all refs, full history | `git log --all --full-history -- '*appsettings.Secrets.json'` | **0** |
+            | Any object whose path contains `secrets` | `git rev-list --all --objects \| grep -ci secrets` | **0** |
+            | The token as a literal, every commit reachable from every ref | `git grep -F "$TOKEN" $(git rev-list --all)` | **0** over **101** commits |
+            | Its prefix alone, in case only part was pasted | `git grep -F "$PREFIX" $(git rev-list --all)` | **0** |
+            | Every blob in the object database, reachable or not | `git cat-file --batch-all-objects \| git cat-file --batch \| grep -cF` | **0** |
+            | GitHub's own copy of the path on the default branch | `gh api repos/.../contents/...` | **404** |
+            | GitHub secret-scanning alerts | `gh api repos/.../secret-scanning/alerts` | **[]** |
+
+            Refs searched: `refs/heads/main`, `phase-3-corrections`, `phase-3-post-pass`, and the
+            three `refs/remotes/origin/*` that mirror them. The repository is **public**.
+
+            **The ignore rule predates the file by 79 minutes.** `.gitignore` was added in `bc2b861`
+            on **2026-08-25 11:23:14 -0400**, which is also the repository's first commit, and its
+            line 25 is `**/appsettings.Secrets.json`. The file was created at **2026-08-25 12:42:45
+            -0400**. So there was never a window in which the file existed unignored.
+
+            Four copies exist on disk: the source file and three under `bin/`, which line 2 of the
+            same `.gitignore` covers. **Rotation is still worth doing**, because the token reached a
+            session transcript, and that is a different exposure from the repository. It is not
+            urgent in the way a committed secret would have been.
+
+Counted:    **No duplicate band 0 panel has ever existed in the live store, and migration 030's
+            delete removed nothing.** Swept across all **24** snapshots plus the live store and the
+            CI store: every store that has a `scoreboard` table holds **9 rows for one date,
+            2026-08-27, with 9 distinct keys and 0 surplus rows**. The snapshot taken immediately
+            before 030 applied, `pullbackstrategylab-20260828-170147.db`, is the same.
+
+            The reason is that the scoreboard has been **built exactly once and never rebuilt**,
+            which is the condition the duplication needed. The defect was real and reachable; it had
+            not been reached.
+
+Named:      **Every read over `scoreboard`, and whether it could have double counted.**
+
+            | Read | Shape | Affected |
+            |---|---|---|
+            | `LabScoreboard`, the only shipped read | partitions rows into health, long and short lists; the only reduction is a `Count == 0` emptiness test | **no.** A duplicate would have rendered a band 0 panel twice on the page. No figure is summed |
+            | `CalibrationTests`, `SUM(n_rows) ... WHERE panel LIKE 'band1.%'` | the one aggregate over the table anywhere | **no.** Every `band1.*` panel carries a direction, so the primary key always constrained it. The gap was only ever in rows where `direction IS NULL`, which is band 0 alone |
+            | `AccumulationPopulation` | `WHERE panel = @panel AND direction = @d` | **no.** Direction-scoped |
+            | `PhaseReplay`, `StampBoundTests`, `ScoreboardRebuildTests` | counts written at 3.9(e) as the guard, and deletes | **no.** They postdate the fix |
+
+            **So no figure needs re-deriving and no correction is owed.** That is the answer the
+            clause asked for rather than the one it anticipated, and it rests on the scoreboard
+            having run once rather than on the constraint having held.

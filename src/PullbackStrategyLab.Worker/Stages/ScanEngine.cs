@@ -135,7 +135,7 @@ public sealed class ScanEngine
                 foreach ((Candidate candidate, int rank) in Top(measured, scan))
                 {
                     hits++;
-                    if (Insert(connection, transaction, candidate.Ticker, asOf, scan, rank, Magnitude(candidate, scan)))
+                    if (Insert(connection, transaction, candidate.Ticker, asOf, scan, rank, Magnitude(candidate, scan), _clock.UtcNow))
                     {
                         inserted++;
                     }
@@ -199,13 +199,14 @@ public sealed class ScanEngine
         DateOnly asOf,
         string scan,
         int rank,
-        decimal magnitude)
+        decimal magnitude,
+        DateTimeOffset observedAt)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
-            INSERT INTO scan_hit (ticker, as_of, scan, rank, magnitude)
-            VALUES (@ticker, @as_of, @scan, @rank, @magnitude)
+            INSERT INTO scan_hit (ticker, as_of, scan, rank, magnitude, observed_at)
+            VALUES (@ticker, @as_of, @scan, @rank, @magnitude, @observed_at)
             ON CONFLICT (ticker, as_of, scan) DO NOTHING
             """;
 
@@ -214,6 +215,12 @@ public sealed class ScanEngine
         command.Parameters.AddWithValue("@scan", scan);
         command.Parameters.AddWithValue("@rank", rank);
         command.Parameters.AddWithValue("@magnitude", StoreText.RatioToStorageText(magnitude));
+
+        // When the lab observed the hit, so a rerun of `scans` for a past date writes rows a
+        // point-in-time read can tell from the originals. `ON CONFLICT DO NOTHING` means a
+        // rerun of the same session leaves the first stamp standing, which is correct: the
+        // row is the one the first run wrote.
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
 
         return command.ExecuteNonQuery() == 1;
     }

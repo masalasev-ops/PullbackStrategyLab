@@ -13,6 +13,8 @@ using PullbackStrategyLab.Web.Pages;
 using PullbackStrategyLab.Web.Shell;
 using PullbackStrategyLab.Worker.Vendor;
 
+using PullbackStrategyLab.Core.Time;
+
 namespace PullbackStrategyLab.Tests.Support;
 
 /// <summary>
@@ -177,6 +179,20 @@ public sealed class PhaseReplay : IDisposable
         // the defect that made this necessary was a field read as the wrong type.
         void RecordText(string id, string value) => measurements.Add(new Measurement(id, value));
 
+        // One scalar out of the replay's own store, with the session and its end of day already
+        // bound. Both parameters are always supplied, so a query naming neither is still valid and
+        // one naming either cannot be written against the wrong instant by accident.
+        int Scalar(string sql)
+        {
+            using SqliteConnection connection = _connections.OpenReadOnly();
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            command.Parameters.AddWithValue(
+                "@end_of_session", StoreText.EndOfSession(AsOf, SessionBoundaries.UsEquities));
+            return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
         // 1. The tradable list, from the captured symbol list screened against the captured
         //    market day, with the lab's own floors. The screen's verdict on this market day.
         UniverseBuildResult screened = Build(_options).GetAwaiter().GetResult();
@@ -300,6 +316,15 @@ public sealed class PhaseReplay : IDisposable
         Record("scans.shortOfHistory", scans.ShortOfHistory);
         Record("scans.hits", scans.Hits);
         Record("scans.inserted", scans.Inserted);
+
+        // 3.9(d). Every hit the walk writes carries an observation stamp, and every one of them is
+        // inside the session's own day. Two counts rather than one, because a column populated with
+        // an instant outside the session would satisfy "not null" and be worse than a null.
+        Record("scans.stamped", Scalar(
+            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL"));
+        Record("scans.stampedInsideTheSession", Scalar(
+            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL "
+            + "AND observed_at <= @end_of_session"));
 
         // 9. The ladder grade, which writes a later observation of the same session rather than
         //    updating the row the engine wrote.
@@ -471,6 +496,22 @@ public sealed class PhaseReplay : IDisposable
         Record("scoreboard.panels", scored.Panels);
         Record("scoreboard.withInterval", scored.WithInterval);
         Record("scoreboard.withheld", scored.Withheld);
+        Record("scoreboard.attempted", scored.Attempted);
+        Record("scoreboard.skipped", scored.Skipped);
+
+        // 3.9(e). Building the same date again writes nothing, and the run says so. Over the golden
+        // fixture rather than only in a unit test, because the shape being guarded is a stage
+        // reporting success on a store it did not change, and the fixture is the only place the
+        // whole pipeline's store is the subject.
+        ScoreboardResult rebuilt = new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
+
+        Record("scoreboard.rebuild.attempted", rebuilt.Attempted);
+        Record("scoreboard.rebuild.skipped", rebuilt.Skipped);
+        RecordText("scoreboard.rebuild.outcome", rebuilt.Outcome.ToStorageText());
+
+        // And the account-wide panels did not multiply, which is the half the no-op was hiding.
+        Record("scoreboard.accountWideRows", Scalar(
+            "SELECT COUNT(*) FROM scoreboard WHERE as_of = @as_of AND direction IS NULL"));
 
         // Which shortage is holding band 1 back, counted rather than described. Withholding is
         // settled by the session axis and the minimum sample by how much information the rows

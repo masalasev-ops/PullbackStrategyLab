@@ -188,8 +188,11 @@ Grain: ticker + date + scan.
 | `rank` | INTEGER | 1 to 50, by that scan's own magnitude (see: The scans select a fixed count by rank, not a threshold on the move) |
 | `magnitude` | TEXT | the ratio the rank was taken on, a fraction, on the adjusted basis |
 | `cluster_count` | INTEGER | same-industry hits that night. Written by ThemeClusterer |
+| `observed_at` | TEXT | when the lab observed the hit. Null on rows written before the column existed and never backfilled |
 
 Insert ScanEngine · Update ThemeClusterer (`cluster_count` only) · PK (`ticker`, `as_of`, `scan`)
+
+**`observed_at` exists because a hit inserted for a past session was otherwise invisible to every bound rather than merely unbounded by one.** A rerun of `scans` for an old date wrote rows no point-in-time read could tell from the originals, and a cluster count derived afterwards would have counted them silently. Every read now bounds it, and **a null is refused by a read of any session other than the row's own** rather than treated as always-visible: a row with no provenance is honestly unavailable to history and honestly available to the session it is dated for. Migration 029 backfilled the 300 rows that predate the column from the `scans` run that wrote them, matched on stage, clean outcome, session date in the session zone, and a `rows_written` equal to the hit count for that date.
 
 **`magnitude` is stored rather than recomputed.** It is what the thrust signals freeze, and deriving it later from bars would put the same arithmetic in two places in the one situation where a disagreement is invisible: a wrong magnitude still produces a plausible ranked list. Storing it also makes the rank auditable, since the ordering can be checked against the number it was taken on.
 
@@ -369,7 +372,9 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 | `population` | TEXT NULL | which rows the figure was computed over, said on the panel |
 | `n_minimum` | INTEGER NULL | what `n_effective` must reach before the panel may be read. Band 1 only |
 
-Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`)
+Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`) · Unique (`as_of`, `panel`) where `direction IS NULL`
+
+**The second index is what the primary key was believed to be.** SQLite treats nulls as distinct in a unique index, and `direction` is null on every band 0 panel, so the primary key never constrained an account-wide row: a rebuild of a date inserted a second copy of every band 0 panel rather than skipping it, and a third build a third copy. The panels carrying a direction were skipped correctly the whole time, which is why the defect read as the no-op it was half of. Migration 030 deduplicates and adds the partial index, and the insert drops its conflict target so any uniqueness violation is skipped rather than only the primary key's.
 
 *`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured).*
 

@@ -82,6 +82,15 @@ public sealed class PointInTimeCheck
             // the property is every observation stamp, and stopping at a number rather than at the
             // property is the failure this corpus keeps meeting from new directions.
             ["detector_error"] = "observed_at",
+
+            // Added at 3.9(d). It was the last table feeding a point-in-time read with no
+            // stamp at all, so a hit inserted for a past session was invisible to every bound
+            // rather than merely unbounded by one. The 300 rows that predate the column were
+            // backfilled from the `scans` run that wrote them, which recorded both instants
+            // and a row count that matches exactly, so the honest answer was available and a
+            // null was not needed. Where a null does occur, a read of a session other than the
+            // row's own refuses it.
+            ["scan_hit"] = "observed_at",
         };
 
     /// <summary>

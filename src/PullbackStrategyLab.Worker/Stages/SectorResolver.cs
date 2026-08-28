@@ -114,7 +114,7 @@ public sealed class SectorResolver
         // first pass died early and the second asked for everything reads exactly like a quiet
         // night unless the passes are told apart.
         int pass = PassNumber(connection, run.StartedAt);
-        IReadOnlyList<string> unresolved = Unresolved(connection, asOf);
+        IReadOnlyList<string> unresolved = Unresolved(connection, asOf, _options.SessionZone);
 
         int asked = 0;
         int resolved = 0;
@@ -205,7 +205,8 @@ public sealed class SectorResolver
     /// Keyed on `sector_resolved_at` rather than on `sector` being null, because a name the vendor
     /// has nothing on has a null sector for ever and would otherwise be re-asked every night.
     /// </summary>
-    private static IReadOnlyList<string> Unresolved(SqliteConnection connection, DateOnly asOf)
+    private static IReadOnlyList<string> Unresolved(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -213,9 +214,11 @@ public sealed class SectorResolver
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
              WHERE h.as_of = @as_of AND s.sector_resolved_at IS NULL
+               AND (h.observed_at <= @observed_before OR (h.observed_at IS NULL AND h.as_of = @as_of))
              ORDER BY h.ticker
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         var tickers = new List<string>();
         using SqliteDataReader reader = command.ExecuteReader();

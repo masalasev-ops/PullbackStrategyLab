@@ -9706,6 +9706,70 @@
       "checkpoint": "3.8",
       "producedBy": "tools/derive-indicators.py --fundamentals, restating the parse from the vendor's document in Python",
       "note": "Every captured `fundamentals` response read through the real client at the transport, so the field names, the number handling and the vendor's own absence words are all exercised rather than described. Derived independently by `tools/derive-indicators.py --fundamentals`, which reads the same bytes with a different language's JSON reader and shares no code with the client. The response that matters is MUZ: the vendor answered 200 with two empty strings and a capitalisation of the string \"NA\", which threw mid-deserialization and took the sector walk down on 2026-08-27. Thirty working examples and no failing one is how a parse came to be exercised thirty times against nothing that could go wrong, so `held` is recorded for every name and the three fields only where the vendor holds them."
+    },
+    {
+      "id": "scans.stamped",
+      "tier": "DERIVED",
+      "value": "180",
+      "checkpoint": "3.9",
+      "producedBy": "counted out of the store by a query, against scans.inserted, which the replay takes from the stage's own counter. Two producers and one number: the stage says it inserted 180 rows and the store says 180 of them carry an observation stamp, so a stamp that stopped being written would separate the two rather than moving both",
+      "note": "scan_hit gained observed_at at 3.9(d). Before it, a hit inserted for a past session was invisible to every bound the lab has rather than merely unbounded by one"
+    },
+    {
+      "id": "scans.stampedInsideTheSession",
+      "tier": "DERIVED",
+      "value": "180",
+      "checkpoint": "3.9",
+      "producedBy": "the same count, bounded on an end-of-session instant the replay computes from the IANA zone rather than taking from the stage. A stamp outside its own session would satisfy \"not null\" and be worse than a null, so the two counts are kept apart",
+      "note": "equal to scans.stamped whenever the walk ran inside its own session, which is the ordinary case and the one this pins"
+    },
+    {
+      "id": "scoreboard.attempted",
+      "tier": "DERIVED",
+      "value": "11",
+      "checkpoint": "3.9",
+      "producedBy": "counted off the panel structure rather than read back: five band 0 panels, which are account-wide, plus two directions times two band 1 sets and one band 2 gap",
+      "note": "the first build of a date attempts every panel it produced"
+    },
+    {
+      "id": "scoreboard.skipped",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "3.9",
+      "producedBy": "the first build of a date, which conflicts with nothing",
+      "note": "the pair to scoreboard.rebuild.skipped. Without it a stage that skipped everything on every build would satisfy the rebuild expectation alone"
+    },
+    {
+      "id": "scoreboard.rebuild.attempted",
+      "tier": "DERIVED",
+      "value": "11",
+      "checkpoint": "3.9",
+      "producedBy": "the same arithmetic off the panel structure; a rebuild produces the same panels it did the first time",
+      "note": "equal to scoreboard.attempted, which is what makes the skipped count below mean what it says"
+    },
+    {
+      "id": "scoreboard.rebuild.skipped",
+      "tier": "DERIVED",
+      "value": "11",
+      "checkpoint": "3.9",
+      "producedBy": "every panel of a date that already carries panels, since the insert is ON CONFLICT DO NOTHING and there is no update path. Equal to the attempted count by the property being asserted rather than by a figure read back",
+      "note": "it was six of eleven until 3.9(e). The five account-wide panels were being inserted again rather than skipped, because SQLite treats nulls as distinct in a unique index and direction is null on every one of them"
+    },
+    {
+      "id": "scoreboard.rebuild.outcome",
+      "tier": "DERIVED",
+      "value": "failed",
+      "checkpoint": "3.9",
+      "producedBy": "follows from skipped equalling attempted, which is the condition the stage fails on",
+      "note": "a rebuild that wrote nothing reported clean until 3.9(e), which is the shape this lab keeps producing: the operator reads a clean run and goes to look at panels that did not move"
+    },
+    {
+      "id": "scoreboard.accountWideRows",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "3.9",
+      "producedBy": "counted off the band 0 panel list, and read after the rebuild rather than after the first build, so it is the duplication guard rather than a restatement of the panel count",
+      "note": "two builds left ten of these until 3.9(e) and a third would have left fifteen. Migration 030 adds the partial unique index the primary key could not be"
     }
   ],
   "frozenOnly": []
