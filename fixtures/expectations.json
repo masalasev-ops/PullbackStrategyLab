@@ -9772,5 +9772,41 @@
       "note": "two builds left ten of these until 3.9(e) and a third would have left fifteen. Migration 030 adds the partial unique index the primary key could not be"
     }
   ],
-  "frozenOnly": []
+  "frozenOnly": [
+    {
+      "checkpoint": "1.1",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "1.2",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "1.11",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "2.1",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "2.12",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "3.7",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    },
+    {
+      "checkpoint": "3.10",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+    }
+  ]
 }

@@ -1155,6 +1155,15 @@ public sealed partial class ArchitectureConformanceCheck
         /// <summary>The last checkpoint PROGRESS records, which is the pointer the whole corpus uses.</summary>
         public string LastLanded { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// Every checkpoint PROGRESS records, rather than only the last one.
+        ///
+        /// Added at 3.10 so fixture-replay can ask done condition seven of a checkpoint that
+        /// contributed no expectation at all. Grouping the expectations answers it only for the
+        /// checkpoints that turned up.
+        /// </summary>
+        public IReadOnlyCollection<string> Landed => _landed;
+
         public static Schedule Read()
         {
             var schedule = new Schedule();

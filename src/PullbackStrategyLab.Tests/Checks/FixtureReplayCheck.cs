@@ -234,7 +234,8 @@ public sealed partial class FixtureReplayCheck
         // permission read from BUILD_PLAN rather than assumed.
         ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
         IReadOnlyList<string> doneConditionSeven = DoneConditionSevenProblems(
-            expected.Expectations, expected.FrozenOnly ?? [], schedule.Obligations, schedule.HasLanded);
+            expected.Expectations, expected.FrozenOnly ?? [], schedule.Obligations, schedule.HasLanded,
+            schedule.Landed);
 
         CheckpointTier[] tiers = [.. ByCheckpoint(expected.Expectations)];
         CheckpointTier[] frozenOnly = [.. tiers.Where(t => t.Independent == 0)];
@@ -350,14 +351,63 @@ public sealed partial class FixtureReplayCheck
         IReadOnlyList<Expectation> expectations,
         IReadOnlyList<Permit> permits,
         IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
-        Func<string, bool> hasLanded)
+        Func<string, bool> hasLanded) =>
+        DoneConditionSevenProblems(expectations, permits, obligations, hasLanded, []);
+
+    /// <summary>
+    /// The same, asked of every landed checkpoint rather than only of the ones that turned up in the
+    /// fixture.
+    ///
+    /// <b>A checkpoint contributing nothing was never asked the question.</b> The loop below groups
+    /// the expectations, so a checkpoint with none is not a group and could land silently: 1.1, 1.2,
+    /// 1.11, 2.1, 2.12 and 3.7 all did, and 3.10 would have. Done condition seven says a checkpoint
+    /// that adds behaviour and no expectation has widened the unexamined set, and zero expectations
+    /// is the largest version of exactly that, so it is the one case the check could not see.
+    /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+    /// </summary>
+    public static IReadOnlyList<string> DoneConditionSevenProblems(
+        IReadOnlyList<Expectation> expectations,
+        IReadOnlyList<Permit> permits,
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> obligations,
+        Func<string, bool> hasLanded,
+        IReadOnlyCollection<string> landed)
     {
+        ArgumentNullException.ThrowIfNull(landed);
         ArgumentNullException.ThrowIfNull(expectations);
         ArgumentNullException.ThrowIfNull(permits);
         ArgumentNullException.ThrowIfNull(obligations);
         ArgumentNullException.ThrowIfNull(hasLanded);
 
         var problems = new List<string>();
+
+        // The checkpoints that contributed nothing, asked first, because the loop below cannot see
+        // them. A permit is required on exactly the same terms as a frozen-only one: zero
+        // independent expectations is what both states have in common, and the difference between
+        // "all FROZEN" and "none at all" is a matter of degree in the wrong direction.
+        var contributed = expectations.Select(e => e.Checkpoint).ToHashSet(StringComparer.Ordinal);
+
+        foreach (string checkpoint in landed.Where(c => !contributed.Contains(c)).Order(StringComparer.Ordinal))
+        {
+            Permit? permit = permits.FirstOrDefault(
+                p => string.Equals(p.Checkpoint, checkpoint, StringComparison.Ordinal));
+
+            if (permit is null)
+            {
+                problems.Add(
+                    $"{checkpoint} has landed and contributed no expectation to the fixture at all, and nothing "
+                    + "permits it. Done condition seven asks each checkpoint for at least one DERIVED or CONFIRMED "
+                    + "expectation, so either one is added or the checkpoint names a carried obligation that is open.");
+                continue;
+            }
+
+            if (MatchingObligations(obligations, permit.Obligation).Count == 0)
+            {
+                problems.Add(
+                    $"{checkpoint} contributed no expectation and names an obligation raised at {permit.Obligation}, "
+                    + "and BUILD_PLAN's carried obligations table has no row raised there. A permission resting on "
+                    + "nothing is the same as no permission.");
+            }
+        }
 
         foreach (CheckpointTier checkpoint in ByCheckpoint(expectations))
         {
@@ -428,11 +478,17 @@ public sealed partial class FixtureReplayCheck
 
         foreach (Permit permit in permits)
         {
-            if (!expectations.Any(e => string.Equals(e.Checkpoint, permit.Checkpoint, StringComparison.Ordinal)))
+            // A permit for a checkpoint with no expectations is legitimate exactly when that
+            // checkpoint has landed, which is the case the loop at the top of this method now
+            // requires a permit for. What stays a problem is a permit naming a checkpoint the diff
+            // never reaches and the record never recorded: that names nothing and permits nothing,
+            // and it would sit here reading as a permission for ever.
+            if (!expectations.Any(e => string.Equals(e.Checkpoint, permit.Checkpoint, StringComparison.Ordinal))
+                && !landed.Contains(permit.Checkpoint))
             {
                 problems.Add(
-                    $"{permit.Checkpoint} is listed as frozen-only and has no expectations in the fixture at all, so "
-                    + "the permit names a checkpoint the diff never reaches.");
+                    $"{permit.Checkpoint} is listed as frozen-only, has no expectations in the fixture at all and is "
+                    + "not a checkpoint PROGRESS records, so the permit names a checkpoint the diff never reaches.");
             }
         }
 

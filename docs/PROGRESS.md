@@ -5963,3 +5963,108 @@ Named:      **Every read over `scoreboard`, and whether it could have double cou
             **So no figure needs re-deriving and no correction is owed.** That is the answer the
             clause asked for rather than the one it anticipated, and it rests on the scoreboard
             having run once rather than on the constraint having held.
+
+## 3.10 — 2026-08-28 — phase-3-verification-repair — the verification repair
+
+A full code review after 3.9 read every shipped file and every check. It found one CI script that
+could not report a failure, three checks asserting less than their names, four claims passing by
+comparing nothing, and the shipped defects those gaps had been covering. The parts are ordered by
+dependency rather than by severity, because every part after the first is verified by a script that
+could not fail.
+
+Built:      **`tools/ci.sh` reporting a failing step's own exit code.** The status was captured from
+            the negation of the command rather than from the command, so it was 0 exactly when the
+            step failed and the script exited 0. All **27** steps route through that function, so a
+            failing step aborted the run and the run reported success. The macOS half of the matrix
+            and the ubuntu rehearsal job both enter through this script and neither could report red
+            for the whole of phase 3, against a merge rule whose only condition is CI green.
+            `ci-parity` could not see it: the two scripts declare identical step names in identical
+            order and disagreed only in what they did with a non-zero status.
+
+            **`point-in-time` reading the store readers.** Half two skipped every file under
+            `PullbackStrategyLab.Data`, and half one asserts only that a signature carries a
+            `DateOnly`, so nothing asserted that a reader's query bounded anything. A bound is now a
+            comparison rather than a containment test, which a column named in a `SELECT` list
+            satisfied. **`SetupSignalReader.Read` bounds `computed_at`**, which it did not.
+
+            **The two session bounds 3.9 left.** `TierClassifier` and `IndicatorEngine` each built
+            one from a fixed UTC offset in constructor form, which contains no string, so the guard
+            3.9 added for the appended form could not match it. Both resolve through
+            `SessionBoundaries.EndOfSession` against the configured zone, and the guard reads the
+            constructor form too.
+
+            **`carried-obligations` reconciling something.** Its filter required that the mention's
+            own entry had not landed, and every `Carried` block sits under the PROGRESS entry
+            heading that makes its checkpoint landed, so the window closed in the commit that
+            created the thing to guard.
+
+            **A claim decided on nothing reported as unexamined.** `ProcedureStepClaim` compared the
+            store names each document's step mentions; the 1.12 repair took the last table name out
+            of both documents in one commit, and every step compared an empty list against an empty
+            list and returned a pass.
+
+            **`bar-append-only` reading the migrations.** `RepositoryLayout.SourceFiles` is `*.cs`,
+            so the check the hard rule describes as a grep for deletes and updates against bar
+            tables had never read a migration, and a migration is where every table rebuild lives.
+
+            **Done condition seven asked of every landed checkpoint**, not only of the ones that
+            appear in the fixture. A checkpoint contributing no expectation was not a group and was
+            never asked.
+
+            **Six shipped defects**: two scoreboard health panels rendering their raw store key, an
+            interval bound parsed from a raw TEXT column mid-render, the short detector's missing
+            zero guard, the chart page offering a window the read surface refuses, `MigrateStage`
+            accepting an unverified snapshot, and RUNBOOK's nightly budget.
+
+Measured:   **The narrowing, in numbers.** `point-in-time` went from **32** statements examined to
+            **57**, the 25 being the store readers. `carried-obligations` went from **0** mentions
+            reconciled to **10**. `The procedure` went from ten claims comparing nothing to ten
+            comparing substance. `bar-append-only` reads **30** migrations where it read none.
+
+            **What the floors had allowed.** They were last raised at 2.6 and stood through thirteen
+            landed checkpoints. `fixture-replay` was floored at **568** against **1,296**, and at
+            **197** DERIVED against **766**, so **728** expectations and every DERIVED expectation
+            for 3.1 through 3.5 could have been deleted with every floor holding. Thirty-two floors
+            are re-recorded from this run; three are deliberately held because their value falls on
+            correct work.
+
+            **What the honest checks found on their first run.** `carried-obligations` found the 1.5
+            entry's obligation, due at 6.5 and never given a row, open since 2026-08-25.
+            `The procedure` found RUNBOOK naming `tools/snapshot-db` at step 5 where ARCHITECTURE
+            did not. Done condition seven found **seven** landed checkpoints that contributed no
+            expectation: 1.1, 1.2, 1.11, 2.1, 2.12, 3.7 and this one.
+
+            **The nightly budget.** RUNBOOK priced `universe-build` at **~5** calls and
+            `UniverseBuilderTests` has asserted **2,005** since it was written. The night is
+            **~2,803** rather than ~803, and **2,803 to 4,003** with holidays inside the screening
+            window, so the headroom is under twice expected usage rather than the seven times the
+            configuration comment claimed.
+
+Verified:   `tools/ci.ps1` green, **27 steps**. `tools/verify-phase` green. **487 tests**, up from
+            486. **1,296 expectations**, unchanged. **125 claims, 75 passed, 0 failed, 50 out of
+            scope, 0 unexamined.** Coverage examined **4,241**.
+
+            **Every repair was proved red before it was proved green**, by reverting the code it
+            reads and running the harness: the CI script against the form at HEAD, the widened
+            point-in-time scan against the unbounded read, the session guard against the constructor
+            form, the reconciliation against the removed obligation row, and the migration scan
+            against a 031 that deletes from `daily_bar`. The proof migration is not committed.
+
+Carried:    **The seven landed checkpoints that contributed no fixture expectation**, raised here and
+            due at 4.1. Some are plausibly expectation-free, being scaffolding, a sign-off or a
+            document pass, and none of that has been established. **This checkpoint is one of the
+            seven and its permit rests on the same row**, which is stated rather than left to be
+            found: the work here is checks and repairs, the fixture's output is unchanged, and
+            saying so is the condition rather than an exemption from it.
+
+            **What this pass did not fix**, all from the same review and none of it started: the
+            `degraded` clause of the vendor-ceiling hard rule has no column anywhere;
+            `SignalVectorizer` freezes the detectors' absent-quantity placeholders as evidence;
+            `LabStatus` shows one `run_log` row of about eighteen; the decile panel divides a
+            per-direction rank by the pooled nightly total; `ForwardDispersion` measures over a
+            population the 262-observation minimum does not govern; `held-floor` compares every
+            pullback bar against the as-of session's average rather than each bar's own; and
+            `CeilingCalculator` has no tests. Turning these into obligation rows is owed before
+            phase 4 planning.
+
+            **This session committed code and may not sign it off.**
