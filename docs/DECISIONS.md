@@ -421,6 +421,15 @@ A plaintext gitignored file rather than user-secrets, because user-secrets are e
 
 Two properties have to hold or the choice quietly breaks things. The file is registered **before** environment variables in every project, so an environment variable still wins, which is what CI and any future container depend on. And it is optional, so a machine without one falls back to environment variables rather than failing to start. Adding a JSON source after the host builder is constructed puts it last and inverts both properties, and doing that in one project but not another makes two projects resolve the same key differently with nothing on the surface to show it.
 
+**The lab keeps one store per purpose under one data root, and CI never opens the operator's**
+Two stores exist and only one of them holds evidence. `data/live` is the lab: the nightly job writes it, it is the thing a move procedure copies, and it is the only store any figure in the record comes from. `data/ci` is a scratch store `tools/ci.*` creates, drops and recreates on every run.
+
+**The split is not tidiness, it is the drop.** The first step of both CI scripts is `drop-store`, deliberately, so that a migration which only works against an already-populated file fails on a runner rather than on the second machine. Pointed at the operator's root, that step deletes the evidence store, and it would do it quietly and on every run. Nothing in the code can tell the two apart, because a store is a file path, so the property is held by the entry points setting the root and by this entry saying why.
+
+**A third store is the failure this exists to prevent, and it has already happened once.** The configured default is a data root that is neither of them, so a stage run by hand without the environment variable set does not open the live store and does not fail either: it creates a new one, migrates it, and reports success against an empty file. `data/pullbackstrategylab.db` sat in the repository from 2026-08-27 at `user_version` 15 with sixteen tables and no rows, produced during the session that was diagnosing why the live store was eight migrations behind. The phantom is the reason that diagnosis took a session: two stores answered the question differently and the operator was reading the wrong one. It was deleted at 3.11 and the default is what stops the next one.
+
+**What may create a store, stated so a fourth does not arrive by accident.** `tools/nightly.ps1` against `data/live`, `tools/ci.*` against `data/ci`, and a hand-run of `migrate` against whichever root is configured. Nothing else. `tools/verify-phase` names a `data/verify` root it has never created, which is dead configuration rather than a third store, and it is named here so that a step which later opens one is a change somebody made rather than one nobody noticed.
+
 **The store contains no absolute paths**
 What keeps it a directory that can be copied to another machine. Easy to preserve from the start, tedious to retrofit once chart exports or log paths have been persisted.
 
