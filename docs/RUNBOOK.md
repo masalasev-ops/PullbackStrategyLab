@@ -77,6 +77,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 
 The job counts calls as it goes and stops rather than overrunning the ceiling. A stopped job writes a partial-run row and the affected setups are marked degraded.
 
+**The ceiling's unit is the weighted cost, not the number of requests, and the two differ by up to a hundredfold.** One fundamentals lookup is one request and one call. One whole-market bulk request is one request and a hundred calls, because that is what it replaces. Every stage prints both figures, so a line reading "15 request(s), 15 call(s)" and one reading "1 request(s), 100 call(s)" are both readable against the same 5,000, and neither can be mistaken for the other. The per-endpoint costs are ARCHITECTURE's data budget table.
+
 ### The schedule as installed
 
 Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`,

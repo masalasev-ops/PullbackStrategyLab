@@ -216,4 +216,66 @@ public sealed class SectorResolverTests : IDisposable
         // and never ends, which reads as a job still running.
         Assert.Equal("failed", LastRun().Outcome);
     }
+
+    /// <summary>
+    /// The three counts partition the pool, so a reader can say how many names carry a sector.
+    ///
+    /// The line these replaced said "86 asked, 85 resolved, 1 the vendor had nothing on", and a
+    /// reader concluded that all 234 of the night's names carry a sector. At most 233 can: a name
+    /// the vendor holds nothing on is stamped and has none, which is a third state neither of the
+    /// first two figures reports. Two numbers cannot describe three states.
+    /// </summary>
+    [Fact]
+    public async Task The_three_counts_sum_to_the_pool()
+    {
+        Scanned("AAA", "BBB", "CCC", "DDD");
+
+        var vendor = new FakeMarketDataVendor();
+        vendor.Fundamentals["AAA"] = new VendorFundamentals("AAA", "Industrials", "Engineering", 1_000m);
+        vendor.Fundamentals["BBB"] = new VendorFundamentals("BBB", "Energy", "Oil & Gas", 2_000m);
+
+        // CCC answers nothing, which is a real answer and stamps the row.
+        vendor.FundamentalsThrows["DDD"] = new JsonException("unreadable");
+
+        SectorResult result = await Resolver(vendor).ResolveAsync(AsOf, limit: 200);
+
+        Assert.Equal(2, result.Resolved);
+        Assert.Equal(1, result.VendorHadNothing);
+        Assert.Equal(1, result.Skipped);
+
+        int unstamped = result.Unresolved - result.Resolved - result.VendorHadNothing;
+
+        Assert.Equal(1, unstamped);
+        Assert.Equal(result.Unresolved, result.Resolved + result.VendorHadNothing + unstamped);
+
+        // Both units. Four names asked, four requests, four calls at one apiece; the same four
+        // against a bulk endpoint would be four hundred, and reporting one figure makes the other
+        // unrecoverable.
+        Assert.Equal(4, result.Requests);
+        Assert.Equal(4 * EodhdClient.FundamentalsCost, result.CallsUsed);
+    }
+
+    /// <summary>
+    /// The second pass counts itself, so a night where the first died early and the second asked
+    /// for everything is visible rather than averaged into one total.
+    /// </summary>
+    [Fact]
+    public async Task Each_pass_of_the_night_says_which_pass_it_is()
+    {
+        Scanned("AAA", "BBB");
+
+        var first = new FakeMarketDataVendor();
+        first.Fundamentals["AAA"] = new VendorFundamentals("AAA", "Industrials", "Engineering", 1_000m);
+        first.FundamentalsThrows["BBB"] = new JsonException("unreadable");
+
+        Assert.Equal(1, (await Resolver(first).ResolveAsync(AsOf, limit: 200)).Pass);
+
+        var second = new FakeMarketDataVendor();
+        second.Fundamentals["BBB"] = new VendorFundamentals("BBB", "Utilities", "Water", 3_000m);
+
+        SectorResult retry = await Resolver(second).ResolveAsync(AsOf, limit: 200);
+
+        Assert.Equal(2, retry.Pass);
+        Assert.Equal(1, retry.Asked);
+    }
 }

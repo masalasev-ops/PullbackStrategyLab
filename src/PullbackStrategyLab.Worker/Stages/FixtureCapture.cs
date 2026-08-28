@@ -273,15 +273,24 @@ public sealed class FixtureCapture
 
             CapturedResponse captured = response.Require();
 
-            if (captured.Status != 200)
+            // The trigger is the parse, not the status, and that distinction is the whole point.
+            //
+            // A non-200 was the obvious guard and it is not the one that would have caught anything:
+            // the response that killed the sector walk on 2026-08-27 came back 200 with a body the
+            // parse could not read. Status is one way a response goes wrong and it is not the one
+            // this endpoint went wrong in, so the condition is stated as what it actually is, which
+            // is any payload the parse cannot read, whatever the status.
+            string? unreadable = EodhdClient.WhyUnreadable(captured);
+
+            if (unreadable is not null)
             {
-                // These endpoints are captured as working examples, so a refusal is a failed capture
-                // rather than an interesting one. Storing an error page here would put a body the
-                // parser has never seen into the fixture under a name that reads as a good response,
-                // which is worse than having no capture at all.
+                // These endpoints are captured as working examples, so an unreadable body is a failed
+                // capture rather than an interesting one. Storing one here would put a body the parser
+                // has never seen into the fixture under a name that reads as a good response, which is
+                // worse than having no capture at all.
                 throw new VendorException(
-                    $"{path} returned {captured.Status} while capturing '{name}'. This endpoint is captured as a "
-                    + $"working example. To capture what a refusal looks like, use {CaptureResponseName}.");
+                    $"{path} answered {captured.Status} while capturing '{name}' and {unreadable}. This endpoint is "
+                    + $"captured as a working example. To capture what a bad answer looks like, use {CaptureResponseName}.");
             }
 
             string file = name + ".json";

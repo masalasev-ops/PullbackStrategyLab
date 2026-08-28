@@ -254,6 +254,67 @@ public sealed class EodhdClient : IMarketDataVendor
     /// <summary>Whitespace read as absent, because the vendor writes an empty string for a field it does not hold.</summary>
     private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
+    /// <summary>
+    /// Why a captured response could not be read, or null where it reads cleanly.
+    ///
+    /// <b>The condition a capture refuses on, stated as what it is.</b> A non-200 was the obvious
+    /// guard and it is not the one that would have caught anything: the response that killed the
+    /// sector walk on 2026-08-27 came back 200 with a capitalisation of the string "NA", and a guard
+    /// on status would have stored it as a working example. Status is one way a response goes wrong.
+    /// The condition is any payload the parse cannot read, whatever the status.
+    ///
+    /// It reads the body through the same options and the same shapes the stages read it through, so
+    /// a change to either moves this with it. A path with no shape declared here is reported as
+    /// unchecked rather than as clean, because "nothing objected" and "nothing looked" are the two
+    /// answers this whole corpus exists to keep apart.
+    /// </summary>
+    public static string? WhyUnreadable(CapturedResponse response)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        if (response.Status != 200)
+        {
+            return $"the vendor answered {response.Status}";
+        }
+
+        try
+        {
+            if (response.Endpoint.StartsWith("fundamentals/", StringComparison.Ordinal))
+            {
+                JsonSerializer.Deserialize<FundamentalsRow>(response.Body, Json);
+            }
+            else if (response.Endpoint.StartsWith("exchange-symbol-list/", StringComparison.Ordinal))
+            {
+                JsonSerializer.Deserialize<SymbolRow[]>(response.Body, Json);
+            }
+            else if (response.Endpoint.StartsWith("eod-bulk-last-day/", StringComparison.Ordinal))
+            {
+                if (response.Query.Contains("type=", StringComparison.Ordinal))
+                {
+                    JsonSerializer.Deserialize<BulkActionRow[]>(response.Body, Json);
+                }
+                else
+                {
+                    JsonSerializer.Deserialize<BulkBarRow[]>(response.Body, Json);
+                }
+            }
+            else if (response.Endpoint.StartsWith("eod/", StringComparison.Ordinal))
+            {
+                JsonSerializer.Deserialize<HistoryBarRow[]>(response.Body, Json);
+            }
+            else
+            {
+                return null;
+            }
+        }
+        catch (JsonException e)
+        {
+            return $"the body will not shape: {e.Message}";
+        }
+
+        return null;
+    }
+
     private static string Iso(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     /// <summary>
