@@ -59,13 +59,38 @@ public static class LabStatus
         return command.ExecuteScalar() as string;
     }
 
+    /// <summary>
+    /// The worst outcome of the most recent night's runs, rather than the last row written.
+    ///
+    /// <b>A night is about eighteen stages and this read returned one of them.</b> Ordering by
+    /// started_at and taking one row means the band shows whichever stage happened to finish last,
+    /// so a DailyBarIngestor that stopped on the call ceiling at 20:10 and wrote outcome 'partial'
+    /// was replaced on the screen by a SignalVectorizer that finished clean at 22:40, and the band
+    /// read "vectorize clean" for the whole of the next day.
+    ///
+    /// The hard rule says a stage stops rather than overrunning and writes a partial run entry. The
+    /// entry was written, was correct, and was invisible, which is the failure shape where the
+    /// instrument is right and the surface discards the answer.
+    ///
+    /// So the read takes the night rather than the row: the most recent session in the log, and
+    /// within it the worst outcome any stage reached, failed before partial before clean. The
+    /// stage named is the one that reached it, so the band names the stage that went wrong rather
+    /// than the stage that went last.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
+    /// </summary>
     private static RunSummaryResponse? LatestRun(SqliteConnection connection)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT stage, started_at, ended_at, outcome, calls_used
               FROM run_log
-             ORDER BY started_at DESC
+             WHERE substr(started_at, 1, 10) = (SELECT substr(MAX(started_at), 1, 10) FROM run_log)
+             ORDER BY CASE outcome
+                          WHEN 'failed'  THEN 0
+                          WHEN 'partial' THEN 1
+                          ELSE 2
+                      END,
+                      started_at DESC
              LIMIT 1;
             """;
 

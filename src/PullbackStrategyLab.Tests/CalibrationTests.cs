@@ -288,4 +288,32 @@ public sealed class CalibrationTests
         Assert.Throws<ArgumentOutOfRangeException>(() => NightlyCounts.RatePerName(3, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => NightlyCounts.ScaledTo(0.1, 0));
     }
+
+    [Fact]
+    public void The_rank_decile_is_taken_over_the_direction_own_allocation()
+    {
+        // NightlyCap ranks each side separately and says so: "Ranked within a direction and never
+        // across". The decile denominator was the pooled sixty, so a short rank of 20, which is the
+        // last one the cap takes on that side, landed in decile 4 and band2.decile5 through
+        // decile10 did not exist on the short side at all.
+        //
+        // Both sides now span the full ten, so a decile label means the same fraction of its own
+        // ordering on either side and the two curves can be read against each other.
+        Assert.Equal(1, ScoreboardBuilder.Decile(1, "long"));
+        Assert.Equal(10, ScoreboardBuilder.Decile(NightlyCap.LongAllocation, "long"));
+
+        Assert.Equal(1, ScoreboardBuilder.Decile(1, "short"));
+        Assert.Equal(10, ScoreboardBuilder.Decile(NightlyCap.ShortAllocation, "short"));
+
+        // The defect as a case: under the pooled denominator this was 4.
+        Assert.Equal(10, ScoreboardBuilder.Decile(20, "short"));
+
+        // A rank past the cap is a candidate the cap truncated. It stays inside the scale rather
+        // than opening an eleventh decile, which is what the clamp is for.
+        Assert.Equal(10, ScoreboardBuilder.Decile(NightlyCap.LongAllocation + 25, "long"));
+
+        // And the two sides are not the same function, which is the whole point.
+        Assert.NotEqual(ScoreboardBuilder.Decile(20, "long"), ScoreboardBuilder.Decile(20, "short"));
+    }
+
 }

@@ -460,7 +460,7 @@ public sealed class ScoreboardBuilder
             while (reader.Read())
             {
                 int rank = reader.GetInt32(0);
-                int decile = Math.Clamp(((rank - 1) * Deciles / Math.Max(1, NightlyCapTotal)) + 1, 1, Deciles);
+                int decile = Decile(rank, direction);
 
                 if (!byDecile.TryGetValue(decile, out List<decimal>? returns))
                 {
@@ -486,7 +486,30 @@ public sealed class ScoreboardBuilder
         ];
     }
 
-    private static int NightlyCapTotal => Core.Detection.NightlyCap.Total;
+    /// <summary>
+    /// Which decile of its own side's ranking a setup sits in.
+    ///
+    /// <b>The denominator is the direction's own allocation, and it was the pooled total.</b>
+    /// NightlyCap ranks each side separately and says so: "Ranked within a direction and never
+    /// across". Dividing a per-direction ordinal by the pooled sixty put long ranks 1 to 40 into
+    /// deciles 1 to 7 and short ranks 1 to 20 into deciles 1 to 4, so band2.decile5 through
+    /// decile10 did not exist on the short side at all and the same decile label covered a rank of
+    /// 6 out of 40 on one side and 6 out of 20 on the other.
+    ///
+    /// The panel's whole purpose is that a flat curve across the deciles means the rank is
+    /// decorative, and a curve over four points on one side and seven on the other, whose labels
+    /// mean different fractions of different orderings, cannot be read that way or compared
+    /// between the two.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    public static int Decile(int rank, string direction) =>
+        Math.Clamp(((rank - 1) * Deciles / Math.Max(1, Allocation(direction))) + 1, 1, Deciles);
+
+    /// <summary>How many the cap takes on one side, which is the ordering a rank on that side is in.</summary>
+    private static int Allocation(string direction) =>
+        string.Equals(direction, Core.Detection.SetupDirection.Short, StringComparison.Ordinal)
+            ? Core.Detection.NightlyCap.ShortAllocation
+            : Core.Detection.NightlyCap.LongAllocation;
 
     /// <summary>
     /// Band 2's second panel. The gap between what was achieved and what was available.
