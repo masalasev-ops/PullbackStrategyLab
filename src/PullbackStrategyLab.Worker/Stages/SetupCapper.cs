@@ -84,9 +84,17 @@ public sealed class SetupCapper
         // among names it was never ranked against.
         NightlyCap.Candidate[] candidates =
         [
+            // The give-up distance is nullable from 031 and cannot be null here, because a setup
+            // that passed every check passed `exit-tight`, which fails outright on an absent stop
+            // distance. The pattern makes that a filter rather than an assumption: a candidate that
+            // somehow arrived without one is dropped from the ranking rather than ranked at nought,
+            // which is the position a cap ordered on give-up would put it in.
+            // see: A gate handed an absent or degenerate quantity fails rather than passing
             .. setups
                 .Where(s => s.PassedAll)
-                .Select(s => new NightlyCap.Candidate(s.SetupId, s.Ticker, s.Direction, s.StopDistanceRanges)),
+                .Where(s => s.StopDistanceRanges is not null)
+                .Select(s => new NightlyCap.Candidate(
+                    s.SetupId, s.Ticker, s.Direction, s.StopDistanceRanges!.Value)),
         ];
 
         IReadOnlyList<NightlyCap.Placement> placements = NightlyCap.Apply(candidates);

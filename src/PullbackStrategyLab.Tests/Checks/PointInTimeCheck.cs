@@ -111,13 +111,6 @@ public sealed class PointInTimeCheck
             ["indicator_rebuild"] =
                 "requested_at and rebuilt_at are the two ends of a demand rather than observations of the "
                 + "market. The demand is state: it is raised, and it is satisfied.",
-            ["indicator_rebuild_rekeyed"] =
-                "a transient table a migration builds and renames over the original, so it does not survive "
-                + "the migration that creates it.",
-            ["corporate_action_observed"] =
-                "a transient table a migration builds and renames over the original.",
-            ["indicator_daily_computed"] =
-                "a transient table a migration builds and renames over the original.",
         };
 
     /// <summary>
@@ -473,10 +466,28 @@ public sealed class PointInTimeCheck
             stamps.Add(added.Groups["column"].Value);
         }
 
+        // A rebuild's intermediate table is reconciled under the name it ends up with.
+        //
+        // SQLite cannot relax a constraint in place, so a migration that needs to creates the table
+        // under a working name, copies the rows, drops the original and renames. Migrations 005, 009
+        // and 031 all do it. The two intermediates that existed before 031 were hand-listed in
+        // NotAnObservation with a reason, which is the one-directional list this corpus keeps
+        // finding: it works until the next rebuild, and then the next rebuild is a red run and a
+        // third hand entry. Following the rename is the rule those entries were standing in for.
+        var renamedTo = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (Match rename in Regex.Matches(
+            migrations, @"ALTER TABLE (?<from>\w+) RENAME TO (?<to>\w+)"))
+        {
+            renamedTo[rename.Groups["from"].Value] = rename.Groups["to"].Value;
+        }
+
         var unnamed = new List<string>();
 
-        foreach ((string table, List<string> stamps) in found.OrderBy(p => p.Key, StringComparer.Ordinal))
+        foreach ((string found_, List<string> stamps) in found.OrderBy(p => p.Key, StringComparer.Ordinal))
         {
+            string table = renamedTo.TryGetValue(found_, out string? final) ? final : found_;
+
             if (NotAnObservation.ContainsKey(table))
             {
                 continue;

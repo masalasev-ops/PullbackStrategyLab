@@ -8261,7 +8261,8 @@
       "id": "signal.2026-08-24-INTC-short.stop_distance_ranges",
       "tier": "FROZEN",
       "value": "0.0000",
-      "checkpoint": "2.7"
+      "checkpoint": "2.7",
+      "voidedBecause": "Voided at 3.11. This expectation froze the defect: the detector recorded exit-tight as failed with value null and the note 'no stop or no daily range for the session' on the same row, and the signal store held 0.0000 because trigger_price, stop_price and stop_distance_ranges were NOT NULL and the detector flattened an absent quantity into nought. Migration 031 lets the column say absent, so this setup now freezes no give-up distance and there is no value to compare. The subject is gone rather than changed."
     },
     {
       "id": "signal.2026-08-24-INTC-short.stop_price",
@@ -8552,18 +8553,19 @@
     },
     {
       "id": "signals.absent",
-      "tier": "FROZEN",
-      "value": "0",
-      "checkpoint": "2.2",
-      "producedBy": "the replay itself, recorded to detect change"
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "3.11",
+      "producedBy": "derived by hand at 3.11 and then run. The fixture holds three setups; exactly one, 2026-08-24-INTC-short, has a degenerate geometry, recorded on its own row as bounce-shape failed with '0 bar(s)'. Of the three geometry signals only stop_distance_ranges is absent for it, because its trigger and stop are both 85.14 and are real prices from the degenerate bounce. One setup times one absent signal is one.",
+      "note": "Was 0, when an absent give-up distance was frozen as 0.0000 rather than skipped."
     },
     {
       "id": "signals.frozen",
-      "tier": "FROZEN",
-      "value": "99",
-      "checkpoint": "2.2",
-      "producedBy": "the replay itself, recorded to detect change",
-      "note": "Was 66. The third setup carries the same thirty-three signals as the other two."
+      "tier": "DERIVED",
+      "value": "98",
+      "checkpoint": "3.11",
+      "producedBy": "derived by hand at 3.11 and then run. Ninety-nine were frozen while every geometry signal was written whether or not the detector had one. One is now absent, by the derivation recorded on signals.absent, so ninety-eight are frozen.",
+      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two."
     },
     {
       "id": "signals.setups",

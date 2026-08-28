@@ -92,7 +92,7 @@ else
                         <dl class="plan">
                             <dt>trigger</dt><dd>@card.Price(card.TriggerPrice)</dd>
                             <dt>give up</dt><dd>@card.Price(card.StopPrice)</dd>
-                            <dt>distance</dt><dd>@card.Ranges(card.StopDistanceRanges) ranges</dd>
+                            <dt>distance</dt><dd>@card.Ranges(card.StopDistanceRanges)@(card.StopDistanceRanges is null ? "" : " ranges")</dd>
                         </dl>
 
                         <ul class="checks">

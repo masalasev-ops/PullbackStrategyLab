@@ -45,17 +45,32 @@ public sealed record SetupCardView(
     int? Rank,
     bool? CappedOut,
     bool PassedAll,
-    decimal TriggerPrice,
-    decimal StopPrice,
-    decimal StopDistanceRanges,
+    decimal? TriggerPrice,
+    decimal? StopPrice,
+    decimal? StopDistanceRanges,
     string? Agreement,
     string? AgreementNote,
     IReadOnlyList<SetupCheckRowView> Checks,
     IReadOnlyList<Candle> Candles)
 {
-    public string Price(decimal value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+    /// <summary>
+    /// A price as the card shows it, and the words "not set" where the detector recorded none.
+    ///
+    /// A setup whose geometry is degenerate has no trigger and no stop, and until 031 the column
+    /// could not say so: the card rendered $0.00, which reads as a price rather than as an
+    /// absence, and a give-up of nothing looks like the tightest stop on the page. The corpus
+    /// rule is that a claim about what is shown is a claim about the surface, so the absence has
+    /// to reach the surface rather than stop at the store.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    public string Price(decimal? value) =>
+        value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : NotSet;
 
-    public string Ranges(decimal value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+    public string Ranges(decimal? value) =>
+        value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : NotSet;
+
+    /// <summary>What a card says where the detector recorded no quantity at all.</summary>
+    public const string NotSet = "not set";
 
     /// <summary>The rank, or a word saying there is none, because a blank cell reads as a zero.</summary>
     public string RankLabel => Rank?.ToString(CultureInfo.InvariantCulture) ?? "unranked";

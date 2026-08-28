@@ -496,9 +496,15 @@ public sealed class LongSetupDetector
         command.Parameters.AddWithValue("@direction", Direction);
         command.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckResultsJson));
         command.Parameters.AddWithValue("@passed_all", passedAll ? 1 : 0);
-        command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(evidence.Pullback?.Trigger ?? 0m));
-        command.Parameters.AddWithValue("@stop_price", StoreText.PriceToStorageText(evidence.Pullback?.Stop ?? 0m));
-        command.Parameters.AddWithValue("@stop_distance_ranges", StoreText.RatioToStorageText(evidence.StopDistanceRanges ?? 0m));
+        // Null rather than nought where the geometry is absent, which is what the column could
+        // not say until 031. A give-up distance of 0 is not a small give-up: it is a trade with no
+        // stop, and it clears every threshold written as a maximum. The detector already refuses
+        // to compute these on a degenerate pullback, so the flattening happened here and
+        // nowhere else, and SignalVectorizer then froze the 0 into a table written once.
+        // see: A gate handed an absent or degenerate quantity fails rather than passing
+        command.Parameters.AddWithValue("@trigger_price", Text(evidence.Pullback?.Trigger, StoreText.PriceToStorageText));
+        command.Parameters.AddWithValue("@stop_price", Text(evidence.Pullback?.Stop, StoreText.PriceToStorageText));
+        command.Parameters.AddWithValue("@stop_distance_ranges", Text(evidence.StopDistanceRanges, StoreText.RatioToStorageText));
 
         // Null rather than an empty string where the thrust could not be resolved. A name with
         // no hit is a real state, and a column that says "" for it cannot be told apart from a
@@ -556,6 +562,16 @@ public sealed class LongSetupDetector
         $"{StoreText.DateToStorageText(asOf)}-{ticker}-{Direction}";
 
     private static readonly JsonSerializerOptions CheckResultsJson = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// A quantity as the column stores it, or DBNull where the detector recorded none.
+    ///
+    /// Named and shared rather than three inline conditionals, because the whole class of
+    /// error here is one of the three being flattened while the others are not.
+    /// </summary>
+    private static object Text(decimal? value, Func<decimal, string> format) =>
+        value is decimal present ? format(present) : DBNull.Value;
+
 }
 
 /// <summary>What one forward night's detection did.</summary>

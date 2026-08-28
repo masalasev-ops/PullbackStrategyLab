@@ -20,6 +20,7 @@ public sealed class MigrationRowSurvivalTests
 {
     private const int BeforeTheRekey = 4;
     private const int BeforeTheIndicatorRekey = 8;
+    private const int BeforeTheGeometryRebuild = 30;
 
     [Fact]
     public void Migration_005_rebuilds_both_tables_and_loses_no_row()
@@ -173,4 +174,83 @@ public sealed class MigrationRowSurvivalTests
         command.CommandText = sql;
         return command.ExecuteScalar();
     }
+
+    [Fact]
+    public void Migration_031_rebuilds_both_setup_tables_and_loses_no_row()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        MigrationResult before = runner.Apply(connection, throughVersion: BeforeTheGeometryRebuild);
+        Assert.Equal(BeforeTheGeometryRebuild, before.ToVersion);
+
+        Execute(connection, """
+            INSERT INTO security (ticker, name, exchange, type, first_seen) VALUES
+                ('AAA', 'AAA', 'NASDAQ', 'Common Stock', '2026-08-01'),
+                ('BBB', 'BBB', 'NASDAQ', 'Common Stock', '2026-08-01');
+
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all, rank, capped_out,
+                 trigger_price, stop_price, stop_distance_ranges, agreement, agreement_note,
+                 thrust_scan, thrust_session)
+            VALUES
+                ('a', '2026-08-24', 'AAA', 'long',  '[]', 1, 3, 0, '120.50', '118.00', '0.4200',
+                 'agree', 'looks right', 'gainer', '2026-08-21'),
+                ('b', '2026-08-24', 'BBB', 'short', '[]', 0, NULL, NULL, '85.14', '85.14', '0',
+                 NULL, NULL, NULL, NULL);
+
+            INSERT INTO calibration_setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all,
+                 trigger_price, stop_price, stop_distance_ranges)
+            VALUES
+                ('c', '2026-08-20', 'AAA', 'long', '[]', 1, '99.00', '97.00', '0.5000');
+            """);
+
+        Assert.Equal(2, Count(connection, "setup"));
+        Assert.Equal(1, Count(connection, "calibration_setup"));
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("031-setup-geometry-absent.sql", after.Applied);
+
+        Assert.Equal(2, Count(connection, "setup"));
+        Assert.Equal(1, Count(connection, "calibration_setup"));
+
+        // Every column travels, not only the three the rebuild is about. A rebuild that dropped a
+        // column would leave a store that opens and queries perfectly well with less in it, and the
+        // two thrust columns were missing from the first draft of this migration.
+        StoredSetup kept = SetupReader.Read(connection, new DateOnly(2026, 8, 24))
+            .Single(x => x.SetupId == "a");
+
+        Assert.Equal(120.50m, kept.TriggerPrice);
+        Assert.Equal(118.00m, kept.StopPrice);
+        Assert.Equal(0.4200m, kept.StopDistanceRanges);
+        Assert.Equal(3, kept.Rank);
+        Assert.Equal("agree", kept.Agreement);
+        Assert.Equal("looks right", kept.AgreementNote);
+
+        // The flattened row is copied verbatim rather than reinterpreted. Its stop_distance_ranges
+        // is the literal 0 the old columns forced, and turning that into NULL here would be
+        // reconstructing a detector's decision from a sentinel.
+        StoredSetup flattened = SetupReader.Read(connection, new DateOnly(2026, 8, 24))
+            .Single(x => x.SetupId == "b");
+
+        Assert.Equal(0m, flattened.StopDistanceRanges);
+
+        // And the column can now hold what it could not before.
+        Execute(connection, """
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all,
+                 trigger_price, stop_price, stop_distance_ranges)
+            VALUES ('d', '2026-08-25', 'BBB', 'short', '[]', 0, NULL, NULL, NULL);
+            """);
+
+        StoredSetup absent = SetupReader.Read(connection, new DateOnly(2026, 8, 25)).Single();
+
+        Assert.Null(absent.TriggerPrice);
+        Assert.Null(absent.StopPrice);
+        Assert.Null(absent.StopDistanceRanges);
+    }
+
 }

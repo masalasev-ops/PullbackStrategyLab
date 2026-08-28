@@ -75,9 +75,9 @@ public sealed class SetupReader
                 reader.GetInt32(5) == 1,
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
                 reader.IsDBNull(7) ? null : reader.GetInt32(7) == 1,
-                StoreText.StorageTextToPrice(reader.GetString(8)),
-                StoreText.StorageTextToPrice(reader.GetString(9)),
-                StoreText.StorageTextToRatio(reader.GetString(10)),
+                reader.IsDBNull(8) ? null : StoreText.StorageTextToPrice(reader.GetString(8)),
+                reader.IsDBNull(9) ? null : StoreText.StorageTextToPrice(reader.GetString(9)),
+                reader.IsDBNull(10) ? null : StoreText.StorageTextToRatio(reader.GetString(10)),
                 reader.IsDBNull(11) ? null : reader.GetString(11),
                 reader.IsDBNull(12) ? null : reader.GetString(12)));
         }
@@ -96,8 +96,8 @@ public sealed record StoredSetup(
     bool PassedAll,
     int? Rank,
     bool? CappedOut,
-    decimal TriggerPrice,
-    decimal StopPrice,
-    decimal StopDistanceRanges,
+    decimal? TriggerPrice,
+    decimal? StopPrice,
+    decimal? StopDistanceRanges,
     string? Agreement,
     string? AgreementNote);

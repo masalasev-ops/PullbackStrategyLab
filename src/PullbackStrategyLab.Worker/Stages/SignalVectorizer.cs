@@ -208,14 +208,34 @@ public sealed class SignalVectorizer
         StoredSetup setup,
         DateOnly asOf)
     {
-        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // The trade geometry, read back from the row the detector wrote rather than recomputed.
+        // These are raw prices, because that is what trades tomorrow.
+        //
+        // Added only where the detector recorded one. A setup whose geometry is degenerate has no
+        // trigger, no stop and no give-up distance, and until 031 the column could not say so: the
+        // detector wrote nought, this stage froze the nought into setup_signal, and setup_signal is
+        // written once and never updated. The fixture's own 2026-08-24-INTC-short is the case, with
+        // `exit-tight` recorded as failed with value null on the same row whose frozen signal said
+        // stop_distance_ranges = 0. The rule fourteen lines below has always said what to do here:
+        // absent rather than zero, because a missing signal is meaningful and a zero is a number a
+        // rule could be built on.
+        // see: A gate handed an absent or degenerate quantity fails rather than passing
+        if (setup.TriggerPrice is decimal trigger)
         {
-            // The trade geometry, read back from the row the detector wrote rather than recomputed.
-            // These are raw prices, because that is what trades tomorrow.
-            ["trigger_price"] = StoreText.PriceToStorageText(setup.TriggerPrice),
-            ["stop_price"] = StoreText.PriceToStorageText(setup.StopPrice),
-            ["stop_distance_ranges"] = StoreText.RatioToStorageText(setup.StopDistanceRanges),
-        };
+            values["trigger_price"] = StoreText.PriceToStorageText(trigger);
+        }
+
+        if (setup.StopPrice is decimal stop)
+        {
+            values["stop_price"] = StoreText.PriceToStorageText(stop);
+        }
+
+        if (setup.StopDistanceRanges is decimal giveUp)
+        {
+            values["stop_distance_ranges"] = StoreText.RatioToStorageText(giveUp);
+        }
 
         IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, setup.Ticker, asOf, HistorySessions);
         if (bars.Count == 0)
@@ -261,8 +281,15 @@ public sealed class SignalVectorizer
                 decimal range = indicators.AverageDailyRange * last.Close;
                 if (range != 0m)
                 {
-                    values["trigger_distance_ranges"] =
-                        StoreText.RatioToStorageText(Math.Abs(setup.TriggerPrice - last.Close) / range);
+                    // Derived from the trigger, so it is absent wherever the trigger is. Computing
+                    // it against a trigger the detector never set produced |0 - close| / range,
+                    // which for a $150 name with a 4% daily range is about 25 ranges and reads as a
+                    // very distant trigger rather than as no trigger at all.
+                    if (setup.TriggerPrice is decimal triggerPrice)
+                    {
+                        values["trigger_distance_ranges"] =
+                            StoreText.RatioToStorageText(Math.Abs(triggerPrice - last.Close) / range);
+                    }
                 }
             }
         }

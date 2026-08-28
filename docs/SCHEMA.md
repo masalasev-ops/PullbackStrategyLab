@@ -228,8 +228,8 @@ Grain: date + ticker + direction. **Rows are immutable after write, except by a 
 | `passed_all` | INTEGER | |
 | `rank` | INTEGER | give-up distance in range units, ascending |
 | `capped_out` | INTEGER | truncated by SetupCapper |
-| `trigger_price`, `stop_price` | TEXT | raw prices |
-| `stop_distance_ranges` | TEXT | the number check nine turns on |
+| `trigger_price`, `stop_price` | TEXT NULL | raw prices, null where the geometry is absent |
+| `stop_distance_ranges` | TEXT NULL | the number check nine turns on, null where the geometry is absent |
 | `agreement` | TEXT NULL | `agree`, `disagree`, null. What a person thought, recorded from the gallery. Null is "not looked at" and is a different fact from disagreeing |
 | `agreement_note` | TEXT NULL | |
 | `thrust_scan` | TEXT NULL | which of the six scans produced the thrust this setup was measured against |
@@ -238,6 +238,8 @@ Grain: date + ticker + direction. **Rows are immutable after write, except by a 
 | `corrected_because` | TEXT NULL | why, naming the check and the stage that failed on the night |
 | `correction_lateness_minutes` | INTEGER NULL | how far past the session's own end of day the latest input the correction used arrived. Zero where every input was inside the session's own day |
 | `corrected_from` | TEXT NULL | the check results as they stood before the correction, verbatim, so a repaired row is reversible and a reader can see the verdict was absent rather than only that the row was touched |
+
+**The three geometry columns are nullable as of migration 031, and nought is not the same answer as none.** They were `NOT NULL`, so a setup whose geometry the detector could not compute had nowhere to record that: the detector wrote nought, `SignalVectorizer` froze the nought into `setup_signal`, which is written once and never updated, and the gallery rendered a trade whose give-up was nothing. A give-up distance of 0 is not a tight stop; it clears every threshold written as a maximum. The golden fixture's `2026-08-24-INTC-short` is the case: `exit-tight` is recorded on that row as failed with value null, and the frozen signal for the same setup on the same night said `0.0000`. Rows written before 031 keep the flattened nought, because reconstructing a detector's decision from a sentinel is a rewrite of a stop and the rule against that has no exception (see: A gate handed an absent or degenerate quantity fails rather than passing).
 
 Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Update SetupCapper (`capped_out`, `rank`) · Update LabSetups (`agreement`, `agreement_note`, the two columns the Worker cannot own because the Worker has no judgement to record) · Update CheckRecomputer (`check_results`, `corrected_at`, `corrected_because`, `correction_lateness_minutes`, `corrected_from`, and only for a check the baseline records without requiring)
 
@@ -473,10 +475,10 @@ question asked of whichever average that direction's floor is.*
 
 | Signal | Formula | Source columns | Status |
 |---|---|---|---|
-| `trigger_price` | as written, a raw price | `setup.trigger_price` | active |
-| `stop_price` | as written, a raw price | `setup.stop_price` | active |
-| `stop_distance_ranges` | \|trigger − stop\| / (`adr_20` × close) | `setup.stop_distance_ranges` | active |
-| `trigger_distance_ranges` | \|trigger − close\| / (`adr_20` × close) | `daily_bar.close`, `setup.trigger_price`, `indicator_daily.adr_20` | active |
+| `trigger_price` | as written, a raw price. **Absent where the setup has none** | `setup.trigger_price` | active |
+| `stop_price` | as written, a raw price. **Absent where the setup has none** | `setup.stop_price` | active |
+| `stop_distance_ranges` | \|trigger − stop\| / (`adr_20` × close). **Absent where the setup has none** | `setup.stop_distance_ranges` | active |
+| `trigger_distance_ranges` | \|trigger − close\| / (`adr_20` × close). **Absent where the trigger is** | `daily_bar.close`, `setup.trigger_price`, `indicator_daily.adr_20` | active |
 
 ### Liquidity and the name
 

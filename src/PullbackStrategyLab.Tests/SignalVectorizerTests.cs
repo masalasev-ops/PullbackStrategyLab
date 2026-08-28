@@ -172,6 +172,38 @@ public sealed class SignalVectorizerTests : IDisposable
         Assert.Contains(Frozen("TINY-long"), name => name == "trigger_price");
     }
 
+    [Fact]
+    public void A_setup_whose_geometry_is_absent_freezes_no_geometry_signal()
+    {
+        // The defect this is named for, as a case. Until 031 the three geometry columns were NOT
+        // NULL, the detector wrote nought where it had recorded no quantity, and this stage froze
+        // the nought into setup_signal, which is written once and never updated. The fixture's own
+        // 2026-08-24-INTC-short carried `exit-tight` failed with value null and a frozen
+        // stop_distance_ranges of 0.0000 on the same row, on the same night.
+        //
+        // Every assertion below fails if the guards in Values() are removed: the three signals come
+        // back as "0.00", "0.00" and "0.000000", and trigger_distance_ranges comes back as a real
+        // number computed from a trigger that does not exist.
+        Seed("FLAT", "long", geometry: false);
+
+        VectorizeResult result = Stage().Vectorize(AsOf);
+
+        IReadOnlyList<string> frozen = Frozen("FLAT-long");
+
+        Assert.DoesNotContain(frozen, name => name == "trigger_price");
+        Assert.DoesNotContain(frozen, name => name == "stop_price");
+        Assert.DoesNotContain(frozen, name => name == "stop_distance_ranges");
+        Assert.DoesNotContain(frozen, name => name == "trigger_distance_ranges");
+
+        // Absent rather than merely missing: the stage counts what it could not compute, so a
+        // signal that vanished for some other reason would not look like this.
+        Assert.True(result.Absent >= 4);
+
+        // And the rest of the row is still frozen, so this is a setup the stage processed rather
+        // than one it skipped.
+        Assert.Contains(frozen, name => name == "close_adjusted");
+    }
+
     // ---- helpers -----------------------------------------------------------------------------
 
     private IReadOnlyList<string> Frozen(string setupId)
@@ -208,7 +240,7 @@ public sealed class SignalVectorizerTests : IDisposable
     /// produced. That is the honest shape for this checkpoint: the property under test is the row,
     /// not what decided it.
     /// </summary>
-    private void Seed(string ticker, string direction, int bars = 200)
+    private void Seed(string ticker, string direction, int bars = 200, bool geometry = true)
     {
         using SqliteConnection connection = _connections.OpenWrite();
 
@@ -244,11 +276,17 @@ public sealed class SignalVectorizerTests : IDisposable
         }
 
         using SqliteCommand setup = connection.CreateCommand();
-        setup.CommandText = """
-            INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
-                               trigger_price, stop_price, stop_distance_ranges)
-            VALUES (@setup_id, @as_of, @ticker, @direction, '{}', 1, '120.50', '118.00', '0.4200')
-            """;
+        setup.CommandText = geometry
+            ? """
+              INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
+                                 trigger_price, stop_price, stop_distance_ranges)
+              VALUES (@setup_id, @as_of, @ticker, @direction, '{}', 1, '120.50', '118.00', '0.4200')
+              """
+            : """
+              INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
+                                 trigger_price, stop_price, stop_distance_ranges)
+              VALUES (@setup_id, @as_of, @ticker, @direction, '{}', 0, NULL, NULL, NULL)
+              """;
         setup.Parameters.AddWithValue("@setup_id", $"{ticker}-{direction}");
         setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
         setup.Parameters.AddWithValue("@ticker", ticker);
