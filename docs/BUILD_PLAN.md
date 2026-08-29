@@ -322,6 +322,63 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 | 3.8 | **The repair made 2026-08-27's `cluster` column a mixed population, and the rows it could not touch are damaged in the same way as the fifteen it could.** The recomputer forms its cluster over the night's whole scan population, which is the right basis and is now asserted. But it runs after the sector walk completed, so the fifteen repaired rows are counted over all **234** of that night's scan names while the other **29** carry what `clusters` computed at 18:15 over the **148** resolved at the time. Measured: all 15 repaired rows match the 234-name count and none matches the 148-name count; 28 of the 29 untouched rows match the 148-name count, and one, `INFQ`, matches neither at 4 against 6 and 13, so a third population exists that nothing has explained. **20 of the 29 would move** if recomputed, and **two would change verdict**: `FOUR` short and `HTFL` long both record a fail at a cluster of 1 and are 2 over the full population, which passes. Those two are the fifteen's own defect wearing a number instead of a null, and they are invisible precisely because a partial input produced a plausible value. `passed_all` is untouched either way, since `cluster` is recorded and never gating. Two things are owed and only the second is a build session's: a ruling on whether a verdict computed from a partial input may be revisited, which the stage refuses by design and the correction rule does not currently permit; and, failing that ruling, any figure stated over that night's `cluster` column reports the split rather than one number (see: Long and short are never pooled into one figure) | 4.1 |
 | 3.9 | **The store readers name the session zone rather than reading the configured one.** `StoreText.EndOfSession(date, zone)` takes the zone explicitly and every caller passes one, but a store reader is a static helper with no configuration to read, so nine reader methods across five readers pass `SessionBoundaries.UsEquities` while the ten stage and API sites pass `_options.SessionZone`. Those are the same string today: `PullbackStrategyLabOptions.SessionZone` defaults to the constant rather than restating it, and a test asserts every `appsettings.json` sets that same value, so configuration cannot diverge without the suite failing. **The guard is real and it is a guard rather than a design.** The fix is to thread the configured zone through the nine reader signatures, which reaches 66 call sites, 44 in shipped source and 22 in the suite. It was not done in the same pass as the boundary itself because a signature change on every store read, landed beside a change to what every bound means, would make one of the two impossible to review | 4.1 |
 
+### What the thirty due at 4.1 are, before any of them is moved
+
+Thirty of the forty-five rows above fall due at 4.1, whose own deliverable is a page. A due point
+that moves at every sign-off is permanent while reading as pending, and that failure is already
+named for the operator's eight below; this is the same failure at aggregate scale, arrived at one
+legitimate local decision at a time. If 4.1 lands with these undischarged, the next sign-off's first
+act is re-pointing thirty rows, which is the act this section exists to make unnecessary.
+
+**Nothing is moved here and no row's due point changes.** What this is is the ordering, so the
+decision about what to move is taken once, with the three groups in front of whoever takes it,
+rather than thirty times by whoever is closest to each row. Classified against phase 4's stated done
+conditions rather than against a sense of importance.
+
+| Group | Count | What it means |
+|---|---|---|
+| Blocks a phase-4 done condition | 1 | 4.1 cannot meet done condition 2 while it stands |
+| Belongs to a later checkpoint's subject | 5 | Cheapest to discharge inside work already scheduled |
+| Independent of phase 4 entirely | 24 | Nothing in phase 4 touches it, and 4.1 is where it landed by default |
+
+**The one that blocks is the fixture permit, and it blocks mechanically rather than by judgement.**
+`fixtures/expectations.json` names seven frozen-only checkpoints under `frozenOnly`, each resting on
+the obligation raised at 3.10, which falls due at 4.1. `fixture-replay` fails a permit whose due
+checkpoint `PROGRESS.md` already records, in those words: "that checkpoint shipped without
+discharging it and nothing said so at the time". So the first CI run after 4.1's PROGRESS entry lands
+turns red seven times over, and 4.1's own done condition 2 is `tools/ci.*` green. **This is the guard
+working rather than a fault**, and it is the reason the group has a member at all: every other row
+here is a debt somebody has to choose to pay, and this one collects itself. It has to be discharged,
+or repointed with its reason, before 4.1's entry is written rather than after.
+
+**The five that belong to later subjects, each with the checkpoint that is cheapest.** Which clause
+of a multi-clause gate failed, raised at 2.9, is 4.1's own subject: the watchlist greys a failed
+check and names it, and naming the clause is the same sentence one level down. The direction
+`surface-claims` does not reconcile is 4.1's too, because 4.1 adds a page and a visibility claim and
+the missing direction is the one that lets a new corpus sentence go unclaimed. `rows_written`
+distinguishing nothing on an update-only stage falls at 4.8, where PositionManager becomes the third
+stage in that position. SCHEMA's column tables going unreconciled against the migrations falls at
+4.6, which is where the tables carrying orders arrive. `price-storage-form` reading only
+`CREATE TABLE` bodies falls at 4.6 for the same reason and is the sharpest of the five: phase 4 is
+where money columns arrive, and a check that cannot see a column added by `ALTER TABLE` is a check
+with a hole in it at exactly the moment the hard rule about prices starts to matter.
+
+**The twenty-four that are independent are independent, and saying so is the useful half.** They are
+phase 3's own measurement code, its verification instruments, its records and its operational
+scripts. None of them is touched by anything phase 4 builds, none blocks a phase-4 done condition,
+and 4.1 is where they sit because 4.1 was the next checkpoint when each was raised rather than
+because anything about 4.1 bears on them. **A due point chosen as "the next one" is a due point
+nobody chose**, which is what makes twenty-four of thirty the finding here rather than the residue.
+What they need is a due point that means something, and this section does not pick one: choosing it
+is the decision, and it belongs to whoever plans phase 4 with these three groups in front of them.
+
+**This is a section rather than a ninth document, deliberately.** The corpus is eight documents plus
+one artefact and a ninth requires retiring one, so a classification of BUILD_PLAN's own obligations
+table earns its place inside BUILD_PLAN rather than beside it
+(see: The corpus is eight documents plus one artefact, and a ninth requires retiring one). It also
+puts it where phase 4's plan cannot fail to read it, which is the same file, a screen above the
+table it classifies.
+
 ### The eight that are the operator's, and what each one blocks
 
 Listed together because they are answered together or not at all. Nine sessions have each moved one of these to the next checkpoint for a good local reason, and a due point that moves at every sign-off is permanent while reading as pending. None can be taken by a build session: each is a judgement, a reading of a screen, or an act on a machine.

@@ -108,6 +108,39 @@ public sealed partial class StatedCountsCheck
         Assert.Contains("Six phases.", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim("BUILD_PLAN.md, six phases", 6, PhaseHeading().Matches(buildPlan).Count, "phase headings"));
 
+        // BUILD_PLAN.md, the obligations classified at 4.1 against the obligations table itself.
+        //
+        // Four numbers in one section, and every one of them is a count of rows somewhere else in
+        // the same document: the total due at 4.1, and the three groups it is split into. The
+        // classification's whole value is that the three add up to the pile, so a group that
+        // silently stops covering the table is the one thing that would make the section worse than
+        // not having written it. Derived from the obligations table rather than from the prose,
+        // which is what "a number a spec states about its own contents" means.
+        IReadOnlyList<IReadOnlyList<string>> obligations =
+            MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations");
+        int dueAtTheWatchlist = obligations.Count(
+            r => r.Count > 2 && r[2].Trim().Equals("4.1", StringComparison.Ordinal));
+
+        Assert.Contains("### What the thirty due at 4.1 are", buildPlan, StringComparison.Ordinal);
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations due at 4.1",
+            30,
+            dueAtTheWatchlist,
+            "rows of the carried obligations table falling due at 4.1"));
+
+        IReadOnlyList<IReadOnlyList<string>> groups =
+            MarkdownTable.BodyRowsAfter(buildPlan, "### What the thirty due at 4.1 are");
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the three groups the thirty are classified into",
+            3,
+            groups.Count,
+            "rows of the classification table"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the three groups add up to the pile they classify",
+            dueAtTheWatchlist,
+            groups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
+            "the classification's own three counts, summed"));
+
         // BUILD_PLAN.md 1.11, all ten steps of the move procedure in RUNBOOK.
         IReadOnlyList<IReadOnlyList<string>> moveSteps = MarkdownTable.BodyRowsAfter(runbook, "## Moving the store to another machine");
         Assert.Contains("all ten steps", buildPlan, StringComparison.Ordinal);
