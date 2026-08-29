@@ -6777,3 +6777,86 @@ Carried:    **Two rows, both due at 4.1**, and one existing row extended.
             **3.12 is signed off.** All seven done conditions hold, and the one finding left open is
             a record hole rather than a defect in shipped code. Under the stopping rules it fails no
             done condition and breaks no check, so it is a carried obligation and not a reopening.
+## 3.11(f) — 2026-08-29 — phase-3-signoff — the entry `97b3a2a` never wrote, and what it changed
+
+Written on 2026-08-29 by the 3.12 sign-off session, about a commit made at 22:25 Eastern on
+2026-08-28 by another session. **It is assembled from the commit's diff rather than from a run**, so
+every figure below is one that commit states about itself and nothing here is a measurement taken
+today. It is owed because `97b3a2a` changed four things in the corpus and the shipped source and
+left no dated entry, which is finding six of the phase 3 sign-off.
+
+Built:      **`SCHEMA.md`'s `closes_beyond_floor` row, which is the one that mattered.** The
+            description read "sessions in the pullback closing below `ema_21`, long; above `ema_50`,
+            short", and the provenance column named `daily_bar.adj_close`,
+            `indicator_daily.ema_21` and `indicator_daily.ema_50`. After 3.11(f) the signal reads
+            neither indicator column: the floor comes from the bars. It now reads "closing below the
+            21-day average **as at that session**, long; above the 50-day, short. The average is a
+            series over the window, not the value at the as-of date", with `daily_bar.adj_close`
+            alone as provenance. A provenance column naming a table the signal does not read is
+            wrong in the one document that declares data ownership, which is why this is first.
+
+            **The decision `The averages are one implementation, computed nightly and drawn on
+            demand`, restated as two components in three shapes.** It said the arithmetic is called
+            by two components, `IndicatorEngine` computing the value at the as-of date and the read
+            surface computing the series a chart needs. That was complete when written and one shape
+            short once `held-floor` began reading a span, so it now names the series
+            `IndicatorEngine` computes for the checks that read a span rather than a point, being
+            `held-floor` and `no-reclaim`. A paragraph records that the third shape arrived at 3.11
+            and that the defect it fixed is this decision's own failure mode reached from inside the
+            lab rather than from the read surface.
+
+            **Two check notes, which are the words the gallery shows a person.**
+            `held-floor`'s unknown note went from "no 21-day average for the session" to "no 21-day
+            average over the dip", and `no-reclaim`'s from "for the session" to "over the bounce".
+            Nothing pinned that text, and the commit records checking before editing.
+
+            **The assertion, replaced because it was a second implementation.**
+            `FloorSeriesTests.The_floor_series_is_the_average_the_chart_draws` called
+            `Averages.ExponentialSeries` with `IndicatorEngine`'s own period and warm-up constants
+            and compared `FloorSeries` to the result. That proves `FloorSeries` delegates and says
+            nothing about the page: the chart uses a period literal of 21 and its own
+            `WarmupSessions`, so either could move with the test still green. It is replaced by
+            `LabChartTests.The_floor_the_detectors_compare_against_is_the_line_the_page_draws`,
+            which reads the rendered `ema21` line out of `LabChart.Read` and compares the detector's
+            floor to it, with the overlap asserted non-null so nulls cannot agree with nulls.
+            **Proved red twice**, by changing the chart's period literal alone and by changing the
+            chart's warm-up constant alone.
+
+            Prior text for both document edits is in `CHANGELOG.md`, written at the time.
+
+Verified:   **516 tests**, which is the figure `97b3a2a` states and is quoted here as that commit's
+            own rather than restated from a run made today. The sweep behind the document edits
+            expected about twenty hits and found thirty-one on the narrow terms and one more on a
+            widened pass, with the per-file guesses wrong in both directions: `SCHEMA.md` held
+            eleven where four were expected and `DECISIONS.md` held none of the narrow terms at all.
+
+Findings:   **This entry discharges finding six of the phase 3 sign-off, and the sign-off entry above
+            it says that finding is open.** That disposition was correct when written and is
+            corrected here rather than edited there. The count in that entry should now read seven
+            closed rather than six closed and one open.
+
+            **What it does not correct is the sentence the finding was really about.** The entry of
+            2026-08-28 states that period and warm-up are "asserted equal to what the chart builds".
+            That was false on the day it was written, because the assertion then compared
+            `FloorSeries` to a second implementation, and it became true at `97b3a2a` three commits
+            later. The sentence stands as written, a record being corrected by a new dated entry and
+            never edited, and what was missing was this paragraph saying so. **The record was right
+            by an accident of ordering and is now right on the record.**
+
+            **The convention half is recorded and not corrected.** The sign-off also found that the
+            commit's subject reads `3.11(f)` where the work discharged an obligation due at 4.1, and
+            the convention names the checkpoint that owes the work. A commit subject is history and
+            cannot be rewritten once merged. This entry is headed `3.11(f)` to match where the work
+            and the record gap sit, and not `4.1`, because a PROGRESS entry headed with a checkpoint
+            is a checkpoint that has landed: every out-of-scope claim and every obligation due at
+            4.1 rests on 4.1 being one `PROGRESS.md` does not yet record, and heading an entry that
+            way would silently invalidate all of them.
+
+            Observation, left open rather than resolved. **No row in the obligations table today
+            names the work this commit discharged**, so the 4.1 due point the finding cites cannot
+            be tied to a row from the record as it stands. It is stated as the sign-off stated it
+            and no link is invented here, because an entry that guessed which obligation was meant
+            would be worse than one that says it could not tell.
+
+Carried:    Nothing new. The row this entry discharges is removed from `BUILD_PLAN.md` with its
+            prior text in `CHANGELOG.md`.
