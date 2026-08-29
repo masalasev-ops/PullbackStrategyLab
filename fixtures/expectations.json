@@ -9776,10 +9776,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "32",
+      "value": "33",
       "checkpoint": "3.12",
-      "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 032-setup-degraded.sql, and a store the runner has taken all the way reads that number in user_version, so a fully migrated store reads 32. Independent of MigrationRunner.LatestVersion, which reads the same files through the assembly's resources.",
-      "note": "What the guard added at 3.12 compares a store against. On 2026-08-28 the live store read 30 against this number and four stages died on a column it had not got."
+      "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 033-corrected-check.sql, and a store the runner has taken all the way reads that number in user_version, so a fully migrated store reads 33. Independent of MigrationRunner.LatestVersion, which reads the same files through the assembly's resources.",
+      "note": "What the guard added at 3.12 compares a store against. On 2026-08-28 the live store read 30 against this number and four stages died on a column it had not got. Moved from 32 to 33 at 3.13, which added 033-corrected-check.sql: the figure is the highest migration number this build carries, so it moves whenever a migration lands and the old value no longer holds because the file it named is no longer the last one. Kept at checkpoint 3.12 rather than reattributed, because the expectation asserts the guard 3.12 built rather than the migration that last moved its value. A store at 32 is now behind the build, which is the state every stage refuses."
     },
     {
       "id": "store.rowsPointingAtSetup",
@@ -9807,6 +9807,11 @@
     }
   ],
   "frozenOnly": [
+    {
+      "checkpoint": "3.13",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation, and unlike the seven before it the reason is established rather than owed. Its three deliverables are the phase report writing both files or neither, a restore scoped to the check it validates, and a command line whose flags declare their arity. The golden fixture replays the nightly pipeline; the phase report is the instrument that reads the replay rather than a stage in it, and `recheck` is a hand-run repair that no night invokes, so none of the three is reachable by replaying a market day. Producing one would mean authoring a broken night into the replay store, which puts an authored row into a population whose figures are reported as captured. All three are held by behavioural tests instead, two of them proved red before green by removing the thing each guards."
+    },
     {
       "checkpoint": "1.1",
       "obligation": "3.10",

@@ -385,10 +385,6 @@ public sealed class PhaseReportStage
         }
     }
 
-    /// <summary>
-    /// The repository, found by walking up to the solution file. The report reads the corpus and
-    /// writes beside it, so it needs the repository rather than the build output.
-    /// </summary>
     /// <summary>What Assemble puts in the commit field, which the write replaces or refuses.</summary>
     public const string Unstamped = "unstamped";
 
@@ -419,11 +415,44 @@ public sealed class PhaseReportStage
     /// Returns the stamped report, or null when it refused. Both files go through here so there is
     /// one guard rather than one per file, and the stamp is applied at the write rather than in
     /// <c>Assemble</c> so that assembling a report and writing one cannot disagree about it.
+    ///
+    /// <b>"Or writes neither" was a claim the method did not hold.</b> It wrote the JSON and then
+    /// rendered and wrote the page, so a throw in the render left a current JSON beside the previous
+    /// run's page. That is the same staleness the commit stamp was added at 3.12 to make visible,
+    /// reintroduced one file over and one step later: the JSON says which tree produced it and the
+    /// page beside it says nothing, and the page is the half a person reads.
+    ///
+    /// <b>Both payloads are produced before either file is touched, then both are moved into
+    /// place.</b> Rendering first is what closes the real window, because building the page is the
+    /// only step here that can fail on its own contents. The temporary files and the moves close the
+    /// smaller one after it: a process killed mid-write leaves a half-written temporary rather than
+    /// a half-written report, and a move within one directory is the cheapest thing the filesystem
+    /// offers that either happens or does not.
+    ///
+    /// The alternative was writing the page first and the JSON last with the JSON as the marker,
+    /// which was rejected: it leaves a new page beside an old JSON on a kill, and it cannot say so,
+    /// where this leaves both files exactly as the previous run left them.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
     /// </summary>
-    public static Report? WriteReport(Report report, string artifacts, Head? head)
+    public static Report? WriteReport(Report report, string artifacts, Head? head) =>
+        WriteReport(report, artifacts, head, Html);
+
+    /// <summary>
+    /// The write, with the page renderer given rather than fixed, so a test can make rendering throw
+    /// and assert that neither file moved.
+    ///
+    /// The renderer is a parameter for exactly one reason and it is worth naming: the property this
+    /// method now holds is that nothing is written until everything is rendered, and a property
+    /// about ordering can only be asserted by a caller that can fail the first half. Without the
+    /// seam the test would have to corrupt a report to make <see cref="Html"/> throw, which asserts
+    /// the renderer rather than the ordering.
+    /// </summary>
+    public static Report? WriteReport(
+        Report report, string artifacts, Head? head, Func<Report, string> renderPage)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(artifacts);
+        ArgumentNullException.ThrowIfNull(renderPage);
 
         string? refusal = WhyTheReportCannotBeWritten(head);
         if (refusal is not null)
@@ -434,10 +463,28 @@ public sealed class PhaseReportStage
 
         Report stamped = report with { Commit = head!.Sha, TreeClean = head.Clean };
 
+        // Rendered first, both of them, so a failure here has touched nothing.
+        string json = JsonSerializer.Serialize(stamped, Json);
+        string page = renderPage(stamped);
+
         Directory.CreateDirectory(artifacts);
-        File.WriteAllText(Path.Combine(artifacts, "phase-report.json"), JsonSerializer.Serialize(stamped, Json));
-        File.WriteAllText(Path.Combine(artifacts, "phase-report.html"), Html(stamped));
+        MoveIntoPlace(Path.Combine(artifacts, "phase-report.json"), json);
+        MoveIntoPlace(Path.Combine(artifacts, "phase-report.html"), page);
         return stamped;
+    }
+
+    /// <summary>
+    /// Writes one file by writing a temporary beside it and moving it over the target.
+    ///
+    /// Beside the target rather than in the system temporary directory, because a move across
+    /// filesystems is a copy and a delete and stops being the cheap either-or this relies on.
+    /// </summary>
+    private static void MoveIntoPlace(string path, string contents)
+    {
+        string temporary = path + ".writing";
+
+        File.WriteAllText(temporary, contents);
+        File.Move(temporary, path, overwrite: true);
     }
 
     /// <summary>
@@ -494,6 +541,10 @@ public sealed class PhaseReportStage
         }
     }
 
+    /// <summary>
+    /// The repository, found by walking up to the solution file. The report reads the corpus and
+    /// writes beside it, so it needs the repository rather than the build output.
+    /// </summary>
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

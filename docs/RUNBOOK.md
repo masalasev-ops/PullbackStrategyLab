@@ -96,15 +96,21 @@ that log's first entry, since the job runs from a working tree and what it execu
 branch does.
 
 **The ref the job runs from is `main`, as of 2026-08-29.** It is not configured anywhere: the slot
-script runs whatever the working tree is checked out to, and the tree is on `main` because `743a98a`
-was fast-forwarded onto it once `tools/ci.ps1` was green at that commit. Nothing enforces this and
-nothing should pretend to, so the check is the log: the first line of every night's entry names the
-branch and the commit, and a night that ran from something else says so in its own record.
+script runs whatever the working tree is checked out to, and the tree is on `main` because PR #8
+merged at `6661f2d` and the tree was returned to it. Nothing enforces this and nothing should
+pretend to, so the check is the log: the first line of every night's entry names the branch and the
+commit, and a night that ran from something else says so in its own record.
 
-**It has now been on a branch twice, and the second time cost a night.** Before `6f27926` the job ran
-from `phase-3-corrections`. Every slot of 2026-08-28 then ran from `phase-3-verification-repair`, at
-six different commits during one night, and that is the night the lab flagged nothing
+**It has now been on a branch three times, the second cost a night, and the third happened inside
+the pass that closed the second.** Before `6f27926` the job ran from `phase-3-corrections`. Every
+slot of 2026-08-28 then ran from `phase-3-verification-repair`, at six different commits during one
+night, and that is the night the lab flagged nothing
 (see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch).
+The third is the one worth reading twice: the 3.12 sign-off closed "production running from a branch"
+by returning the tree to `main`, then created `phase-3-signoff` and committed the closure onto it, so
+the tree was on a branch again in the act of recording that it was not. It stayed there from
+13:32Z until PR #8 merged at 14:26Z, which is inside one day and outside no slot, and it was found by
+a review reading `git status` rather than by anything the corpus runs.
 The merge rule was moved to CI green alone precisely so production would not run from a branch, and
 between the rule and the checkout there is nothing but somebody remembering. Anyone leaving the tree
 on a branch overnight is choosing which code runs the night, and the way to undo it is
@@ -168,7 +174,9 @@ A stage that dies part-way through its list leaves the stages after it reading a
 
 **So the first line of defence is not a person.** The `sectors` slot runs the stage twice. A name the vendor refused or answered unreadably is counted and left unstamped, so the second pass asks exactly those and costs one call each; where the first pass finished, the second finds nothing and costs nothing. That happens at 18:12, inside the window, without anybody watching.
 
-**If a check verdict was recorded with no value anyway**, `recheck <date> --check cluster` reports what it would correct and writes nothing, and `--apply` writes it. It refuses any gating check outright, refuses a verdict that already carries a number, refuses a row already corrected, and refuses any row whose input arrived more than the lateness bound after the session's own end of day, naming both instants and exiting non-zero. A corrected row records `corrected_at`, `corrected_because`, the lateness in minutes and the check results exactly as they stood before, so a later reader can exclude corrected rows, sum how much of a figure rests on late answers, and put any row back the way it was.
+**If a check verdict was recorded with no value anyway**, `recheck --as-of <date> --check cluster` reports what it would correct and writes nothing, and `--apply` writes it. It refuses any gating check outright, refuses a verdict that already carries a number, refuses a row already corrected, and refuses any row whose input arrived more than the lateness bound after the session's own end of day, naming both instants and exiting non-zero. A corrected row records `corrected_at`, `corrected_because`, `corrected_check`, the lateness in minutes and the check results exactly as they stood before, so a later reader can exclude corrected rows, sum how much of a figure rests on late answers, and put any row back the way it was.
+
+**The arguments go in any order and `--as-of` is the form to write.** A bare date still works, so `recheck <date> --check cluster` parses as it always did, and the two forms must agree if both are given. This is worth a sentence because until 3.13 it was false: the date was whatever argument was neither a flag nor the check's own name, so `recheck --check cluster --expect 15 2026-08-27` read `15` as the date and exited on the format. Three of the four orderings anybody would write did that, and the one this line documented was the one that happened to work. Every flag now declares whether it takes a value, an option the stage does not know is refused by name rather than ignored, and `--restore` puts back only the rows corrected for the check named.
 
 **The count it recomputes is taken over the night's whole scan population**, not over the rows being repaired. That matters because a count over the repaired set would make every figure it produces an artefact of how many rows happened to be broken, and two of the fifteen came back failing at a cluster of one, which is exactly the number that shape would produce. A scan name with no setup row at all is counted, which is the form of the property no reading of "the repaired set" can produce.
 

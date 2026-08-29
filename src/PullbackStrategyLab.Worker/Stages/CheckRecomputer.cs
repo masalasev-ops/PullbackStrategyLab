@@ -107,8 +107,19 @@ public sealed class CheckRecomputer
     {
         ArgumentNullException.ThrowIfNull(args);
 
-        int at = Array.IndexOf(args, CheckFlag);
-        string? check = at >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+        Arguments parsed;
+
+        try
+        {
+            parsed = Arguments.Parse(args);
+        }
+        catch (ArgumentException e)
+        {
+            Console.Error.WriteLine($"{Name}: {e.Message}");
+            return 2;
+        }
+
+        string? check = parsed.Check;
 
         if (check is null)
         {
@@ -117,10 +128,7 @@ public sealed class CheckRecomputer
             return 2;
         }
 
-        string? date = args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal) && a != check);
-        DateOnly asOf = date is not null
-            ? DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)
-            : _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
+        DateOnly asOf = parsed.AsOf ?? _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
 
         if (!SetupChecks.RecordedNotRequired.Contains(check))
         {
@@ -133,19 +141,15 @@ public sealed class CheckRecomputer
             return 2;
         }
 
-        int expect = Array.IndexOf(args, ExpectFlag) is int e && e >= 0 && e + 1 < args.Length
-            && int.TryParse(args[e + 1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int given)
-            ? given
-            : -1;
-
-        bool restoring = args.Contains(RestoreFlag);
+        int expect = parsed.Expect;
+        bool restoring = parsed.Restoring;
 
         RecheckResult result = restoring
-            ? Restore(asOf, check, args.Contains(ApplyFlag))
-            : Recompute(asOf, check, args.Contains(ApplyFlag));
+            ? Restore(asOf, check, parsed.Applying)
+            : Recompute(asOf, check, parsed.Applying);
 
         Console.WriteLine(restoring
-            ? $"{Name}: the set is every row of that date this stage corrected and recorded a prior state for"
+            ? $"{Name}: the set is every row of that date this stage corrected for '{check}' and recorded a prior state for"
             : $"{Name}: the set is every row of that date whose '{check}' verdict carries no value");
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, check '{check}', {result.Candidates} row(s) in the set");
         Console.WriteLine(restoring
@@ -239,12 +243,28 @@ public sealed class CheckRecomputer
     /// Puts every row this stage corrected for one date and check back the way the night wrote it.
     ///
     /// The prior text is the whole check-results JSON, so the restore is a column assignment rather
-    /// than a merge, and the four correction columns are cleared in the same statement: a row that
+    /// than a merge, and the five correction columns are cleared in the same statement: a row that
     /// kept its mark after being restored would report a correction that no longer exists.
     ///
     /// A row marked corrected with no prior state recorded is refused rather than guessed at. That
     /// pair cannot be produced by this stage, which writes both in one statement, so encountering it
     /// means something else wrote the mark and the restore has nothing to put back.
+    ///
+    /// <b>"And check" was in this sentence before it was in the query.</b> The argument was
+    /// validated against the recomputable list and then discarded: the read bounded on the date
+    /// alone, so a restore put back every corrected row of that date whatever check each was
+    /// corrected for. It is harmless while `cluster` is the only admitted check, because there is
+    /// only one thing a row can have been corrected for, and it is silently destructive on the day
+    /// a second is admitted, undoing one check's corrections in the course of restoring another's
+    /// with nothing in the output naming them. Selecting on `corrected_check` rather than on a
+    /// phrase inside `corrected_because` is the other half: a figure recovered from prose moves
+    /// when somebody rewords the sentence.
+    ///
+    /// <b>A row corrected before 033 carries no `corrected_check` and is not restored by any
+    /// scoped call.</b> That is the conservative direction and it is stated rather than left to be
+    /// discovered: the fifteen rows of 2026-08-27 were all corrected for `cluster`, so the answer a
+    /// backfill would give is knowable, and producing it would mean this stage reading the sentence
+    /// the column exists to stop anybody reading. They are counted and named instead.
     /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     public RecheckResult Restore(DateOnly asOf, string check, bool apply)
@@ -255,22 +275,48 @@ public sealed class CheckRecomputer
         using RunScope run = _runLogger.Begin(connection, Name, "setup");
 
         var rows = new List<(string SetupId, string Ticker, string? Prior)>();
+        int unscoped = 0;
 
         using (SqliteCommand read = connection.CreateCommand())
         {
+            // Scoped to the check, which is what the argument was validated for. A row corrected
+            // for another check on the same date is another check's row and this call is not
+            // about it.
             read.CommandText = """
                 SELECT setup_id, ticker, corrected_from
                   FROM setup
-                 WHERE as_of = @as_of AND corrected_at IS NOT NULL
+                 WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check = @check
                  ORDER BY ticker, direction
                 """;
             read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            read.Parameters.AddWithValue("@check", check);
 
             using SqliteDataReader reader = read.ExecuteReader();
             while (reader.Read())
             {
                 rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
             }
+        }
+
+        using (SqliteCommand read = connection.CreateCommand())
+        {
+            // Corrected before 033 and therefore outside every scoped call. Counted and reported
+            // rather than swept in, because a restore that quietly widened itself to rows it cannot
+            // identify is the fault this scoping is about, arrived at from the other side.
+            read.CommandText = """
+                SELECT COUNT(*) FROM setup
+                 WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check IS NULL
+                """;
+            read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            unscoped = Convert.ToInt32(read.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        if (unscoped > 0)
+        {
+            Console.WriteLine(
+                $"{Name}: {unscoped} corrected row(s) of that date record no check and are outside this restore. "
+                + "They were corrected before migration 033 added the column, so which check each carries is in "
+                + "`corrected_because` and nowhere a query can select on.");
         }
 
         int restored = 0;
@@ -295,7 +341,8 @@ public sealed class CheckRecomputer
                            corrected_at = NULL,
                            corrected_because = NULL,
                            correction_lateness_minutes = NULL,
-                           corrected_from = NULL
+                           corrected_from = NULL,
+                           corrected_check = NULL
                      WHERE setup_id = @setup_id
                     """;
                 command.Parameters.AddWithValue("@setup_id", setupId);
@@ -474,7 +521,8 @@ public sealed class CheckRecomputer
                    corrected_at = @corrected_at,
                    corrected_because = @corrected_because,
                    correction_lateness_minutes = @lateness,
-                   corrected_from = @corrected_from
+                   corrected_from = @corrected_from,
+                   corrected_check = @corrected_check
              WHERE setup_id = @setup_id
             """;
 
@@ -491,8 +539,142 @@ public sealed class CheckRecomputer
         // mark without the state it was corrected from.
         command.Parameters.AddWithValue(
             "@corrected_from", JsonSerializer.Serialize(candidate.Results, CheckResultsJson));
+
+        // And what the mark is about, in the same statement for the same reason. The name was
+        // reaching the row inside `corrected_because` and nowhere else, so the one value a restore
+        // has to select on was the one that was prose.
+        command.Parameters.AddWithValue("@corrected_check", check);
         command.Parameters.AddWithValue("@setup_id", candidate.SetupId);
         command.ExecuteNonQuery();
+    }
+
+    // Nested types sit at the end of this class, beside ClusterInput and Candidate below.
+    // That is this file's own convention and it is also load-bearing: `writer-ownership`
+    // attributes a write to the nearest type declaration above it rather than to the type whose
+    // braces enclose it, so a nested type declared above a statement reattributes that statement
+    // to the nested type. Declaring Arguments at the top of the class moved both UPDATE setup
+    // statements onto `Arguments` and turned the check red in both directions.
+    /// <summary>The date to recompute for, named rather than positional.</summary>
+    public const string AsOfFlag = "--as-of";
+
+    /// <summary>
+    /// This stage's command line, parsed once with the arity of every flag declared.
+    ///
+    /// <b>The date used to be whatever argument was neither a flag nor the check's own name.</b>
+    /// `--check`'s value was excluded by naming it and no other flag's value was, so
+    /// <c>recheck --check cluster --expect 15 2026-08-27</c> took <c>15</c> as the date and died on
+    /// the format. It failed loudly and wrote nothing, so this was never a correctness fault; what
+    /// it was is a command with exactly one ordering that works and nothing anywhere saying which.
+    ///
+    /// <b>The arity is declared rather than the exclusion, because the exclusion is what did not
+    /// scale.</b> Naming `--check` fixed one flag and left the next one to reintroduce the fault,
+    /// which is how `--expect` arrived. Here every flag is in one of two sets and anything else is
+    /// refused by name, so a flag added later cannot be added without saying whether it takes a
+    /// value: the alternative, assuming an unknown flag takes one, would let a new boolean swallow
+    /// the date and fall back to today, which is the same fault reading as success.
+    ///
+    /// <c>--as-of</c> is the form to write and the bare date still works, so the RUNBOOK's
+    /// documented ordering keeps parsing. Both are accepted and they must agree.
+    /// </summary>
+    public sealed record Arguments(string? Check, DateOnly? AsOf, int Expect, bool Applying, bool Restoring)
+    {
+        /// <summary>The flags carrying a value, which is the next argument along.</summary>
+        public static IReadOnlySet<string> TakeAValue { get; } =
+            new HashSet<string>(StringComparer.Ordinal) { CheckFlag, ExpectFlag, AsOfFlag };
+
+        /// <summary>The flags that are their own value.</summary>
+        public static IReadOnlySet<string> StandAlone { get; } =
+            new HashSet<string>(StringComparer.Ordinal) { ApplyFlag, RestoreFlag };
+
+        /// <summary>
+        /// The command line, or an <see cref="ArgumentException"/> naming what it could not read.
+        ///
+        /// Every failure here is a refusal rather than a default. A command line this stage cannot
+        /// read is one where somebody meant something specific, and guessing at it is how a repair
+        /// runs against the wrong night.
+        /// </summary>
+        public static Arguments Parse(IReadOnlyList<string> args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            string? check = null;
+            string? named = null;
+            string? positional = null;
+            int expect = -1;
+            bool applying = false;
+            bool restoring = false;
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                string argument = args[i];
+
+                if (!argument.StartsWith("--", StringComparison.Ordinal))
+                {
+                    if (positional is not null)
+                    {
+                        throw new ArgumentException(
+                            $"'{positional}' and '{argument}' are both given as the date. One date, or use {AsOfFlag}.");
+                    }
+
+                    positional = argument;
+                    continue;
+                }
+
+                if (StandAlone.Contains(argument))
+                {
+                    applying |= string.Equals(argument, ApplyFlag, StringComparison.Ordinal);
+                    restoring |= string.Equals(argument, RestoreFlag, StringComparison.Ordinal);
+                    continue;
+                }
+
+                if (!TakeAValue.Contains(argument))
+                {
+                    throw new ArgumentException(
+                        $"'{argument}' is not an option this stage knows. It takes "
+                        + $"{string.Join(", ", TakeAValue.Order(StringComparer.Ordinal))} with a value and "
+                        + $"{string.Join(", ", StandAlone.Order(StringComparer.Ordinal))} on their own. An option is "
+                        + "refused rather than ignored, because an option nobody reads is an instruction nobody carried out.");
+                }
+
+                if (i + 1 >= args.Count)
+                {
+                    throw new ArgumentException($"{argument} needs a value after it.");
+                }
+
+                // The value, consumed here so it can never be read as the date. This is the whole
+                // repair: the loop knows what is a value because the flag said so.
+                string value = args[++i];
+
+                if (string.Equals(argument, CheckFlag, StringComparison.Ordinal))
+                {
+                    check = value;
+                }
+                else if (string.Equals(argument, AsOfFlag, StringComparison.Ordinal))
+                {
+                    named = value;
+                }
+                else if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out expect))
+                {
+                    throw new ArgumentException($"{ExpectFlag} takes a whole number and was given '{value}'.");
+                }
+            }
+
+            if (named is not null && positional is not null
+                && !string.Equals(named, positional, StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"the date is given twice and the two disagree: '{positional}' and {AsOfFlag} '{named}'.");
+            }
+
+            string? date = named ?? positional;
+
+            return new Arguments(check, date is null ? null : ReadDate(date), expect, applying, restoring);
+        }
+
+        private static DateOnly ReadDate(string value) =>
+            DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly date)
+                ? date
+                : throw new ArgumentException($"'{value}' is not a date. Give it as yyyy-MM-dd.");
     }
 
     private readonly record struct ClusterInput(string? Industry, int Count, string? ResolvedAt);
