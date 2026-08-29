@@ -1,0 +1,34 @@
+-- 033  setup.corrected_check
+--
+-- Which check a correction recomputed, as a value rather than as a phrase inside a sentence.
+--
+-- 025 through 027 added the mark, the lateness and the prior state, and between them they say that
+-- a row was corrected, how late its input was, and what it said before. None of them says *what
+-- was corrected*. The check's name reached the row only inside `corrected_because`, which reads
+-- "'cluster' recomputed for 2026-08-27 from inputs the session asked for, ...", so the one thing a
+-- caller has to be able to select on is the one thing that is prose.
+--
+-- The consequence is the restore. `recheck --restore --check <name>` validated the check argument
+-- against the recomputable list and then issued a statement bounded on the date alone, so it put
+-- back every corrected row of that date whatever check each was corrected for. Harmless while
+-- `cluster` is the only admitted check, because there is only one thing a row can have been
+-- corrected for, and silently destructive on the day a second is admitted: restoring one check
+-- would undo the other's corrections, in the same statement, with nothing in the output naming
+-- them. The alternative was parsing the check's name back out of `corrected_because`, which is the
+-- shape this project refuses everywhere else: a figure recovered from prose is a figure whose
+-- meaning moves when somebody rewords the sentence.
+-- see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+--
+-- Null wherever `corrected_at` is null, and written in the same statement as the other four, so a
+-- corrected row can never carry a mark without saying what the mark is about.
+--
+-- Existing rows are left null rather than backfilled from the sentence. Fifteen rows of
+-- 2026-08-27 carry a correction and every one of them is `cluster`, so the backfill would be
+-- correct and would also be this migration reading prose to produce a value, which is what the
+-- column exists to stop. A restore of those fifteen is a restore of the only check there was, and
+-- the reader that needs the column is the one that runs after a second check is admitted.
+--
+-- Nothing here is added to calibration_setup, on the same grounds as 025: a calibration row is not
+-- evidence and nothing downstream reads it.
+
+ALTER TABLE setup ADD COLUMN corrected_check TEXT NULL

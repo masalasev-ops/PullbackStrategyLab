@@ -650,4 +650,144 @@ public sealed class CheckRecomputerTests : IDisposable
         // it was moved.
         Assert.NotNull(Read("AAA", "long").CorrectedAt);
     }
+
+    /// <summary>Which check a row's correction was recorded against, or null where it records none.</summary>
+    private string? CorrectedCheck(string ticker)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT corrected_check FROM setup WHERE ticker = @t";
+        command.Parameters.AddWithValue("@t", ticker);
+        return command.ExecuteScalar() as string;
+    }
+
+    /// <summary>
+    /// A row corrected under a second check, written the way the store will hold one once a second
+    /// check is admitted.
+    ///
+    /// <b>Seeded rather than recomputed, and the reason is the point of the test.</b>
+    /// <c>SetupChecks.RecordedNotRequired</c> admits `cluster` and nothing else today, so the state
+    /// this test is about cannot be produced by running the stage twice. The property under test is
+    /// the restore's scope, not the admission list, and a defect that only appears once a list
+    /// grows is one that has to be asserted before the list grows or it is discovered by the
+    /// correction it destroys.
+    /// </summary>
+    private void CorrectedUnderAnotherCheck(string ticker, string direction, string check)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE setup
+               SET check_results = @after,
+                   corrected_at = '2026-08-28T04:30:00.000Z',
+                   corrected_because = @because,
+                   correction_lateness_minutes = 260,
+                   corrected_from = @before,
+                   corrected_check = @check
+             WHERE ticker = @t AND direction = @dir
+            """;
+        // Both verdicts on the row, because a setup carries every check's and the one being
+        // corrected sits among the others. A row holding only the corrected verdict would let the
+        // restore look right while dropping everything beside it.
+        var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        command.Parameters.AddWithValue(
+            "@after",
+            JsonSerializer.Serialize(
+                new[] { new CheckResult("cluster", true, 2m), new CheckResult(check, true, 3m) }, json));
+        command.Parameters.AddWithValue(
+            "@before",
+            JsonSerializer.Serialize(
+                new[] { new CheckResult("cluster", true, 2m), new CheckResult(check, false, null) }, json));
+        command.Parameters.AddWithValue("@because", $"'{check}' recomputed, seeded by a test");
+        command.Parameters.AddWithValue("@check", check);
+        command.Parameters.AddWithValue("@t", ticker);
+        command.Parameters.AddWithValue("@dir", direction);
+        Assert.Equal(1, command.ExecuteNonQuery());
+    }
+
+    /// <summary>
+    /// A restore scoped to one check leaves another check's corrections standing.
+    ///
+    /// <b>The argument was validated and then discarded.</b> `Restore` took the check, checked it
+    /// against the recomputable list in `Run`, and issued a statement bounded on the date alone, so
+    /// it put back every corrected row of that date whatever check each was corrected for. Its own
+    /// doc comment said "for one date and check". Harmless while `cluster` is the only admitted
+    /// check, because there is only one thing a row can have been corrected for, and silently
+    /// destructive on the day a second is admitted.
+    ///
+    /// So the case asserted here is the one that will exist rather than the one that does: two
+    /// rows on one date corrected under two checks, one restored, the other read back.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    [Fact]
+    public void A_restore_scoped_to_one_check_leaves_another_checks_corrections_standing()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+        Setup("BBB", "long", new CheckResult("cluster", true, 2m));
+
+        // The real path writes the column, so what the restore selects on is what the stage records
+        // rather than something the test arranged.
+        Assert.Equal(1, Recomputer().Recompute(AsOf, "cluster", apply: true).Corrected);
+        Assert.Equal("cluster", CorrectedCheck("AAA"));
+
+        CorrectedUnderAnotherCheck("BBB", "long", "thrust");
+
+        RecheckResult restored = Recomputer().Restore(AsOf, "cluster", apply: true);
+
+        // One candidate, not two. The other row is on the same date and is another check's.
+        Assert.Equal(1, restored.Candidates);
+        Assert.Equal(1, restored.Corrected);
+
+        Assert.Null(Read("AAA", "long").CorrectedAt);
+        Assert.Null(CorrectedCheck("AAA"));
+
+        // And the row this call was never about is exactly as it was: mark, reason, lateness, prior
+        // state and verdict.
+        Assert.NotNull(Read("BBB", "long").CorrectedAt);
+        Assert.Equal("thrust", CorrectedCheck("BBB"));
+        Assert.Equal(260, Lateness("BBB"));
+        Assert.NotNull(PriorState("BBB"));
+
+        // The other direction, so what passes above is the scoping rather than the restore having
+        // stopped working: asked for that check, it restores that row.
+        RecheckResult other = Recomputer().Restore(AsOf, "thrust", apply: true);
+        Assert.Equal(1, other.Candidates);
+        Assert.Equal(1, other.Corrected);
+        Assert.Null(CorrectedCheck("BBB"));
+    }
+
+    /// <summary>
+    /// A row corrected before migration 033 records no check, so no scoped restore reaches it, and
+    /// the stage says so rather than passing over it.
+    ///
+    /// The conservative direction. Backfilling the column from `corrected_because` would be correct
+    /// for the fifteen rows that exist and would be this stage reading the sentence the column was
+    /// added to stop anybody reading.
+    /// </summary>
+    [Fact]
+    public void A_row_corrected_before_the_column_existed_is_reported_rather_than_swept_in()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+
+        Assert.Equal(1, Recomputer().Recompute(AsOf, "cluster", apply: true).Corrected);
+
+        // The state migration 033 leaves behind: a mark, a prior state, and no check.
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE setup SET corrected_check = NULL WHERE ticker = 'AAA'";
+            command.ExecuteNonQuery();
+        }
+
+        RecheckResult restored = Recomputer().Restore(AsOf, "cluster", apply: true);
+
+        Assert.Equal(0, restored.Candidates);
+        Assert.Equal(0, restored.Corrected);
+
+        // Left exactly as it was rather than restored on a guess.
+        Assert.NotNull(Read("AAA", "long").CorrectedAt);
+        Assert.NotNull(PriorState("AAA"));
+    }
 }

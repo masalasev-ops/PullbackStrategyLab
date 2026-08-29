@@ -145,7 +145,7 @@ public sealed class CheckRecomputer
             : Recompute(asOf, check, args.Contains(ApplyFlag));
 
         Console.WriteLine(restoring
-            ? $"{Name}: the set is every row of that date this stage corrected and recorded a prior state for"
+            ? $"{Name}: the set is every row of that date this stage corrected for '{check}' and recorded a prior state for"
             : $"{Name}: the set is every row of that date whose '{check}' verdict carries no value");
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, check '{check}', {result.Candidates} row(s) in the set");
         Console.WriteLine(restoring
@@ -239,12 +239,28 @@ public sealed class CheckRecomputer
     /// Puts every row this stage corrected for one date and check back the way the night wrote it.
     ///
     /// The prior text is the whole check-results JSON, so the restore is a column assignment rather
-    /// than a merge, and the four correction columns are cleared in the same statement: a row that
+    /// than a merge, and the five correction columns are cleared in the same statement: a row that
     /// kept its mark after being restored would report a correction that no longer exists.
     ///
     /// A row marked corrected with no prior state recorded is refused rather than guessed at. That
     /// pair cannot be produced by this stage, which writes both in one statement, so encountering it
     /// means something else wrote the mark and the restore has nothing to put back.
+    ///
+    /// <b>"And check" was in this sentence before it was in the query.</b> The argument was
+    /// validated against the recomputable list and then discarded: the read bounded on the date
+    /// alone, so a restore put back every corrected row of that date whatever check each was
+    /// corrected for. It is harmless while `cluster` is the only admitted check, because there is
+    /// only one thing a row can have been corrected for, and it is silently destructive on the day
+    /// a second is admitted, undoing one check's corrections in the course of restoring another's
+    /// with nothing in the output naming them. Selecting on `corrected_check` rather than on a
+    /// phrase inside `corrected_because` is the other half: a figure recovered from prose moves
+    /// when somebody rewords the sentence.
+    ///
+    /// <b>A row corrected before 033 carries no `corrected_check` and is not restored by any
+    /// scoped call.</b> That is the conservative direction and it is stated rather than left to be
+    /// discovered: the fifteen rows of 2026-08-27 were all corrected for `cluster`, so the answer a
+    /// backfill would give is knowable, and producing it would mean this stage reading the sentence
+    /// the column exists to stop anybody reading. They are counted and named instead.
     /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     public RecheckResult Restore(DateOnly asOf, string check, bool apply)
@@ -255,22 +271,48 @@ public sealed class CheckRecomputer
         using RunScope run = _runLogger.Begin(connection, Name, "setup");
 
         var rows = new List<(string SetupId, string Ticker, string? Prior)>();
+        int unscoped = 0;
 
         using (SqliteCommand read = connection.CreateCommand())
         {
+            // Scoped to the check, which is what the argument was validated for. A row corrected
+            // for another check on the same date is another check's row and this call is not
+            // about it.
             read.CommandText = """
                 SELECT setup_id, ticker, corrected_from
                   FROM setup
-                 WHERE as_of = @as_of AND corrected_at IS NOT NULL
+                 WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check = @check
                  ORDER BY ticker, direction
                 """;
             read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            read.Parameters.AddWithValue("@check", check);
 
             using SqliteDataReader reader = read.ExecuteReader();
             while (reader.Read())
             {
                 rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
             }
+        }
+
+        using (SqliteCommand read = connection.CreateCommand())
+        {
+            // Corrected before 033 and therefore outside every scoped call. Counted and reported
+            // rather than swept in, because a restore that quietly widened itself to rows it cannot
+            // identify is the fault this scoping is about, arrived at from the other side.
+            read.CommandText = """
+                SELECT COUNT(*) FROM setup
+                 WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check IS NULL
+                """;
+            read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+            unscoped = Convert.ToInt32(read.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        if (unscoped > 0)
+        {
+            Console.WriteLine(
+                $"{Name}: {unscoped} corrected row(s) of that date record no check and are outside this restore. "
+                + "They were corrected before migration 033 added the column, so which check each carries is in "
+                + "`corrected_because` and nowhere a query can select on.");
         }
 
         int restored = 0;
@@ -295,7 +337,8 @@ public sealed class CheckRecomputer
                            corrected_at = NULL,
                            corrected_because = NULL,
                            correction_lateness_minutes = NULL,
-                           corrected_from = NULL
+                           corrected_from = NULL,
+                           corrected_check = NULL
                      WHERE setup_id = @setup_id
                     """;
                 command.Parameters.AddWithValue("@setup_id", setupId);
@@ -474,7 +517,8 @@ public sealed class CheckRecomputer
                    corrected_at = @corrected_at,
                    corrected_because = @corrected_because,
                    correction_lateness_minutes = @lateness,
-                   corrected_from = @corrected_from
+                   corrected_from = @corrected_from,
+                   corrected_check = @corrected_check
              WHERE setup_id = @setup_id
             """;
 
@@ -491,6 +535,11 @@ public sealed class CheckRecomputer
         // mark without the state it was corrected from.
         command.Parameters.AddWithValue(
             "@corrected_from", JsonSerializer.Serialize(candidate.Results, CheckResultsJson));
+
+        // And what the mark is about, in the same statement for the same reason. The name was
+        // reaching the row inside `corrected_because` and nowhere else, so the one value a restore
+        // has to select on was the one that was prose.
+        command.Parameters.AddWithValue("@corrected_check", check);
         command.Parameters.AddWithValue("@setup_id", candidate.SetupId);
         command.ExecuteNonQuery();
     }
