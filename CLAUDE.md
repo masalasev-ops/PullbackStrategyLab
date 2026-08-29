@@ -212,7 +212,7 @@ This was undocumented until 3.7 and lived only in sixty commits of history, whic
 
 Three rules learned the hard way:
 
-- Greps over markdown must be whitespace-tolerant.
+- Greps over markdown must be whitespace-tolerant, **and markup-tolerant over the span they match**. A phrase in this corpus is written with emphasis wherever the writer wanted emphasis, so a pattern reading `due at` finds nothing in `due **at 3.6**` or `Due **4.1**`, and one built on a literal space cannot cross the line break a long table cell puts in the middle of it. Both cost `carried-obligations` six of the seventy-one due points the record names, and one of the six was a real obligation in no table row. The failure is silent in the way this file's whole Checks section is about: a match that never happens is not a match that broke, so the count it feeds was never higher and no floor under that count can see it.
 - A sweep expecting a non-zero count states that count in advance. "Returns nothing" is self-validating; "returns 17" is not.
 - A test proving a check works must be permanent, not a break-and-revert done by hand once.
 

@@ -1,6 +1,6 @@
 {
  "recordedAt": "2026-08-28",
- "note": "One entry per check. Each scope carrying the property has a floor under it; scopes whose size is a fact about the corpus rather than about the property are listed under context and carry none. Re-recorded in full at 3.10 from a run on the date above. They had last been raised at 2.6 and had stood through thirteen landed checkpoints, so fixture-replay was floored at 568 against 1,296 and 728 expectations could have been deleted while every floor held. Three scopes were deliberately not raised because their value legitimately falls: carried-obligations' reconciled count falls as due points land, ci-parity runs one interpreter on the runners that are not Windows, and writer-ownership's multi-writer count is an exemption count where a fall is tightening. Extended at 3.14: `stated-counts` gains the two claims that derive BUILD_PLAN's permit figure from the fixture, and `fixture-replay`'s \"checkpoints with expectations in the fixture\" becomes \"checkpoints asked done condition seven\", floored at 38 against the old 27. The rename is the point rather than a tidy: the old scope counted the checkpoints the fixture holds something for, which is the set that excludes every checkpoint under a permit, so the figure beside it read 29 of 29 while eight landed checkpoints carried no verification and were named nowhere in the run. A floor on a scope that cannot see the hole is a floor holding the wrong thing, which is the failure the per-scope rule was written for, one level in.",
+ "note": "One entry per check. Each scope carrying the property has a floor under it; scopes whose size is a fact about the corpus rather than about the property are listed under context and carry none. Re-recorded in full at 3.10 from a run on the date above. They had last been raised at 2.6 and had stood through thirteen landed checkpoints, so fixture-replay was floored at 568 against 1,296 and 728 expectations could have been deleted while every floor held. Three scopes were deliberately not raised because their value legitimately falls: carried-obligations' reconciled count falls as due points land, ci-parity runs one interpreter on the runners that are not Windows, and writer-ownership's multi-writer count is an exemption count where a fall is tightening. Extended at 3.14: `stated-counts` gains the two claims that derive BUILD_PLAN's permit figure from the fixture, and `fixture-replay`'s \"checkpoints with expectations in the fixture\" becomes \"checkpoints asked done condition seven\", floored at 38 against the old 27. The rename is the point rather than a tidy: the old scope counted the checkpoints the fixture holds something for, which is the set that excludes every checkpoint under a permit, so the figure beside it read 29 of 29 while eight landed checkpoints carried no verification and were named nowhere in the run. A floor on a scope that cannot see the hole is a floor holding the wrong thing, which is the failure the per-scope rule was written for, one level in. Extended again at 3.14: `carried-obligations` moves from 56 to 71 named due points and from 5 to 7 declared ones, and neither is growth in the record. The pattern read a literal `due ` optionally followed by `at `, so it could not see the forms `due before 5.1`, `Due **4.1**`, `due **at 3.6**`, `Due at **the operator**` or a phrase wrapped across a line break, and 6 of the 71 were invisible. One of the six was a real obligation in no table row, so the floor at 56 sat above a scope that had never held the property and would have kept sitting there. The seventh declared due point is that obligation now written down. `stated-counts` gains the obligations table's own total, which was prose reading fifty-eight over fifty-nine rows.",
  "checks": {
   "api-isolation": {
    "scopes": {
@@ -35,8 +35,8 @@
   },
   "carried-obligations": {
    "scopes": {
-    "due points the obligations table declares": 5,
-    "due points named inside a Carried block": 56,
+    "due points the obligations table declares": 7,
+    "due points named inside a Carried block": 71,
     "of those whose due point has not landed, which is what is reconciled": 1
    },
    "context": [
@@ -251,6 +251,7 @@
     "RUNBOOK.md, the backfill total, fixed term": 1,
     "RUNBOOK.md, the backfill total, term in N": 1,
     "ARCHITECTURE.html, the nightly cap splits into its own parts": 1,
+    "BUILD_PLAN.md, the carried obligations table's own total": 1,
     "BUILD_PLAN.md, the obligations due at 4.1": 1,
     "BUILD_PLAN.md, the three groups add up to the pile they classify": 1,
     "BUILD_PLAN.md, the three groups the thirty-one are classified into": 1,

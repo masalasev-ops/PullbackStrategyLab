@@ -121,6 +121,16 @@ public sealed partial class StatedCountsCheck
         int dueAtTheWatchlist = obligations.Count(
             r => r.Count > 2 && r[2].Trim().Equals("4.1", StringComparison.Ordinal));
 
+        // The table's own total, which was prose and went stale the moment a row was added. It read
+        // "fifty-eight" while the table held fifty-nine, which is exactly what this check is for: a
+        // number a spec states about its own contents, derived from the contents.
+        Assert.Contains("of the fifty-nine rows above fall due at 4.1", buildPlan, StringComparison.Ordinal);
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the carried obligations table's own total",
+            59,
+            obligations.Count,
+            "rows of the carried obligations table"));
+
         Assert.Contains("### What the thirty-one due at 4.1 are", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations due at 4.1",

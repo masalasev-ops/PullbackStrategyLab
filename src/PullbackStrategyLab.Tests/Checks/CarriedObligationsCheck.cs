@@ -197,6 +197,63 @@ public sealed partial class CarriedObligationsCheck
         Assert.Equal("2.5", only.Entry);
     }
 
+    /// <summary>
+    /// The parser, proved against every form the record writes a due point in.
+    ///
+    /// <b>Why this exists separately from the test above.</b> That one proves the reconciliation and
+    /// builds its <see cref="Mention"/> values by hand, which steps over the parser completely. So
+    /// the rule was guarded and the reading of the record was not, and the reading is the half that
+    /// was broken: the pattern matched four of the six forms the corpus actually uses and dropped
+    /// "due before 5.1" on the floor, which was a real obligation nobody had scheduled.
+    ///
+    /// <b>Nine, stated in advance.</b> A sweep expecting a non-zero count states that count before
+    /// running, because "it found some" is self-validating. Four in the first block and five in the
+    /// second, the fifth being a phrase wrapped across a line break, which the literal space in the
+    /// old pattern could not cross either.
+    /// </summary>
+    [Fact]
+    public void The_parser_reads_every_form_the_record_writes_a_due_point_in()
+    {
+        const string progress = """
+## 2.4 — 2026-01-01 — a-branch — the first entry
+
+Carried:    One due at 3.1, one due 3.2, one due at the operator and one due at the move.
+
+## 2.5 — 2026-01-02 — a-branch — the second entry
+
+Carried:    **One new, due before 5.1**: a minimum sample restated. Due **4.1**, with the other
+            band 0 item. Another is due **at 3.6**, and one is Due at **the operator**: it decides
+            whether a night's evidence may be completed after the fact. A last one is due at
+            4.6 with the rest of the verification work.
+
+            A sentence about a due point that moves at every sign-off names no due point at all,
+            and neither does a due date, a due diligence or the word due on its own.
+""";
+
+        IReadOnlyList<Mention> mentions = Mentions(progress);
+
+        Assert.Equal(9, mentions.Count);
+
+        Assert.Equal(
+            ["3.1", "3.2", "the move", "the operator"],
+            mentions.Where(m => m.Entry == "2.4").Select(m => m.DuePoint).Order(StringComparer.Ordinal));
+
+        // The five the old pattern could not see, named one at a time so a failure says which form
+        // regressed rather than only that a count moved.
+        IReadOnlyList<string> second =
+            [.. mentions.Where(m => m.Entry == "2.5").Select(m => m.DuePoint)];
+
+        Assert.Contains("5.1", second);          // "due before 5.1", the one that was lost
+        Assert.Contains("4.1", second);          // "Due **4.1**", emphasis before the checkpoint
+        Assert.Contains("3.6", second);          // "due **at 3.6**", emphasis before the "at"
+        Assert.Contains("the operator", second); // "Due at **the operator**", emphasis after it
+        Assert.Contains("4.6", second);          // "due at\n4.6", wrapped across a line break
+
+        // And the negative half, which is what stops the pattern being widened into a token scan:
+        // a checkpoint mentioned in passing is not an obligation carried to it.
+        Assert.DoesNotContain(mentions, m => m.DuePoint is "5.7" or "1.1");
+    }
+
 
     /// <summary>Every `Carried:` block in the record, as text.</summary>
     private static IReadOnlyList<string> CarriedBlocks(string progress)
@@ -214,11 +271,33 @@ public sealed partial class CarriedObligationsCheck
     /// <summary>
     /// The due points a `Carried` block names, with the entry that named them.
     ///
-    /// "due at 3.1", "due 3.1", "due at the operator" and "due at the move" are the four forms the
-    /// record uses. Matched on the phrase rather than on any checkpoint-shaped token, because an
-    /// entry mentioning a checkpoint in passing is not carrying an obligation to it.
+    /// Matched on the phrase rather than on any checkpoint-shaped token, because an entry
+    /// mentioning a checkpoint in passing is not carrying an obligation to it.
+    ///
+    /// <b>The pattern named four forms and the record writes six.</b> It was
+    /// `\bdue (?:at )?` with a literal space, so it saw "due at 3.1", "due 3.1",
+    /// "due at the operator" and "due at the move", and silently missed "Due **4.1**",
+    /// "due **at 3.6**", "Due at **the operator**" and "due before 5.1": markdown emphasis inside
+    /// the phrase, and "before" where the record says before rather than at. The literal space
+    /// missed a further form nothing had noticed, being a phrase wrapped across a line break, which
+    /// is the whitespace tolerance CLAUDE.md requires of greps over markdown and this did not have.
+    ///
+    /// <b>What it cost, measured before the change.</b> 65 due points recognised of 71 present in
+    /// the same blocks. Five of the six missed name a checkpoint the old pattern would have matched
+    /// but for the markup, so they reconciled correctly by luck through some other mention. The
+    /// sixth is the one that mattered: "due before 5.1", the 160-observation minimum sample raised
+    /// at 3.0, whose due point was in no obligation row at all. So the check that exists to catch
+    /// an obligation nobody scheduled was holding one for a phase and a half, and none of its own
+    /// numbers could show it. A due point the pattern never matched never enters `mentions`, and
+    /// the floor under that count catches a fall from where the count already was rather than a
+    /// scope it never reached. That is this docstring's own failure a fifth time, and the first
+    /// instance the check itself was hiding.
+    ///
+    /// <b>Public because the parser now has a proof.</b> The reconciliation was proved against
+    /// hand-built <see cref="Mention"/> values, which is the right shape for that rule and steps
+    /// over the parser entirely, so nothing exercised the one part that was broken.
     /// </summary>
-    private static IReadOnlyList<Mention> Mentions(string progress)
+    public static IReadOnlyList<Mention> Mentions(string progress)
     {
         var mentions = new List<Mention>();
         string entry = "before the first entry";
@@ -266,6 +345,8 @@ public sealed partial class CarriedObligationsCheck
     [GeneratedRegex(@"^## (?<entry>\S+) ", RegexOptions.Multiline)]
     private static partial Regex EntryHeading();
 
-    [GeneratedRegex(@"\bdue (?:at )?(?<due>\d+\.\d+|the operator|the move)\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(
+        @"\bdue\s+(?:\*\*\s*)?(?:(?:at|before)\s+)?(?:\*\*\s*)?(?<due>\d+\.\d+|the operator|the move)\b",
+        RegexOptions.IgnoreCase)]
     private static partial Regex DuePhrase();
 }

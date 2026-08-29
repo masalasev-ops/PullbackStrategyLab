@@ -7266,3 +7266,125 @@ Carried:    **Twelve rows, and one of them changes a due point rather than addin
             `tools/verify-phase` figures in "the sign-off that follows", and there was none: not in
             PROGRESS, not in BUILD_PLAN, and not on a branch. **This session has committed code and
             may not sign it off.**
+
+## 3.14 — 2026-08-29 — phase-3-completeness-review — the obligation the check that looks for lost obligations had lost
+
+Raised while answering whether phase 4 planning may begin. One part is built, because it is a check
+reading less than its label and this corpus fixes those where it finds them; one part is recorded and
+not acted on, because it is a judgement rather than a fault.
+
+Found:      **`carried-obligations` could not read two of the six forms the record writes a due point
+            in, and one of the unread ones was a real obligation nobody had scheduled.** The pattern
+            was `\bdue (?:at )?(\d+\.\d+|the operator|the move)\b`. It matched "due at 3.1", "due
+            3.1", "due at the operator" and "due at the move", and missed markdown emphasis inside
+            the phrase and the word "before": "Due **4.1**", "due **at 3.6**", "Due at **the
+            operator**" and "due before 5.1". The literal space missed a further form nothing had
+            noticed at all, a phrase wrapped across a line break, which is the whitespace tolerance
+            CLAUDE.md requires of greps over markdown and this did not have.
+
+            **Measured before the change: 65 due points recognised of 71 present** in the same
+            blocks. Five of the six recovered name a checkpoint that reconciled correctly anyway
+            through some other mention, so they cost nothing and were luck. The sixth is the one that
+            mattered.
+
+            **The 160-observation minimum sample, raised at 3.0(f) and in no obligation row since.**
+            `ARCHITECTURE.html` states 160 paired setup observations as the bar `VariantAdmitter`
+            writes into a version's pre-registration, which is then immutable. 3.0(f) established
+            that the figure was computed as though the observations were independent, wrote its
+            `Carried` block as "due before 5.1", and no row was ever added. So the check whose entire
+            subject is an obligation nobody scheduled was itself holding one, for a phase and a half,
+            and none of its own numbers could show it: a due point the pattern never matched never
+            enters the count, and the floor under that count catches a fall from where the count
+            already was rather than a scope it never reached. **That is the fifth instance of the
+            failure this check's own docstring says has happened four times, and the first the check
+            was hiding.**
+
+            **It is also the second minimum sample in this corpus sized as if observations were
+            independent**, the first being the 262 that 3.6 fires on. The two are the same arithmetic
+            one phase apart, and both are pushed the same way: upward.
+
+Built:      The pattern reads all six forms and tolerates a line break. **`Mentions` is public and has
+            a proof**, which it did not: the existing test builds `Mention` values by hand, which is
+            the right shape for the reconciliation rule and steps over the parser entirely, so
+            nothing exercised the half that was broken. The new test feeds a record holding all nine
+            due points across two entries, states nine in advance, names each recovered form
+            individually so a regression says which one, and asserts the negative half, being that a
+            checkpoint mentioned in passing is not an obligation carried to it.
+
+            The 160-observation obligation is now a row, due at 5.1, carrying why it was not moved at
+            3.0(f) and what closes it.
+
+            **Two floors raised, and neither is growth in the record.** `carried-obligations` moves
+            from 56 to 71 named due points and from 5 to 7 declared ones. The floor at 56 sat above a
+            scope that had never held the property, which is why it held while the pattern read 65.
+
+            `stated-counts` gains the obligations table's own total. It was prose reading fifty-eight
+            over a table of fifty-nine rows, so it went stale on the row this entry adds and is now
+            derived from the table.
+
+Verified:   **Proved red before green by restoring the old pattern.** The parser test reads 4 of the
+            9 forms and fails on the count; the check fails on its own coverage floor. Both pass with
+            the pattern restored, and no obligation is unscheduled at 71 recognised due points, 21 of
+            them reconciled against 7 declared.
+
+Owed:       **The obligation raised at 3.11 against `ForwardDispersion` is due at 4.1, and what it
+            corrects is the number 3.6 turns on.** The row's own last sentence says so: "A ruling
+            rather than a repair, because it moves the number 3.6 turns on." 3.6 is a phase 3
+            checkpoint and 4.1 the first of phase 4, so the due point falls after the checkpoint that
+            consumes the figure, and by the time the row is read 3.6 has fired on the uncorrected
+            262. Its twin, raised at 3.5, says the same thing from the other side and is due at the
+            operator, which is the honest due point for a ruling.
+
+            **Not repointed here.** It fails no done condition and breaks no check, so the stopping
+            rule puts it at the sign-off, and choosing between the operator and a point before 3.6 is
+            a judgement about whose question it is rather than a correction of a fault. Named so 3.15
+            has something to rule on without re-deriving it.
+
+            **One reading that is not owed.** 3.11's `Carried` block names two obligations due before
+            phase 4 planning and only one of them is open: `held-floor` and `no-reclaim` comparing
+            every dip bar against the as-of session's average rather than each bar's own was
+            discharged at 3.11(f), the same day it was raised, which is why it has no row and needs
+            none. It reads as a second missing obligation and is not one.
+
+            **This session committed code and may not sign it off.**
+
+## 2.11 — 2026-08-29 — phase-3-completeness-review — the threshold ruling, taken by the operator
+
+Not a checkpoint entry. The obligation raised at 2.11 and judged still open at 3.0(c) has been due at
+the operator since the 2.12 sign-off, and BUILD_PLAN names it the one open question that stalls a
+phase. It was put to them on 2026-08-29 and answered.
+
+Asked:      Four readings, stated as alternatives rather than as a recommendation with padding.
+            Spend the once-only threshold adjustment now, loosening the retrace cap at 0.40 and the
+            give-up cap at 0.5 daily ranges toward the band. Keep the once unspent and hunt the
+            second wrong quantity. Rule that the 5 to 60 band is itself the wrong quantity and
+            re-derive it. Or defer the whole thing to the sign-off at 3.15.
+
+Ruled:      **The once stays unspent and the second wrong quantity is what is hunted.** That is the
+            reading BUILD_PLAN's own row already argues for, and the ruling is recorded because it
+            had never been taken: a row that reads as pending because nobody was asked is different
+            from one that reads as pending because the answer is work not yet done, and until today
+            this was the first.
+
+            **The band is not re-derived.** That was the third reading and it was declined. It would
+            have made the count correct by moving what counts as correct, and the band's own figures
+            predate any measurement, so re-deriving it against the funnel it is supposed to judge
+            would be circular.
+
+What it     **The row stays open, and what it waits on has changed.** It is no longer waiting for an
+changes:    answer. It waits on the identification of a second wrong quantity, in the same way the
+            geometry was the first, found at 2.11 and corrected at 3.0(c) with a prediction that came
+            half true: the retrace medians moved, from 1.060 to 0.5208 long and 1.006 to 0.4568 short
+            over dips and bounces of 2 to 7 bars, and the nightly count did not, staying at a median
+            of nought per side with 30 in total long over 602 sessions and nought short.
+
+            **For phase 4 it settles one thing outright.** The plan is written against flagged setups
+            rather than passing ones, which is what 4.1's deliverable renders in any case, and
+            nothing built in phase 4 may assume a trade will ever fire while the count stands. The
+            funnel at 3.9(i) names `exit-tight` as the gate the numbers point at, passing 1.29% of
+            32,533 flagged long rows and 1.37% of 16,917 short, an order of magnitude tighter than
+            the next check on either side, and that is the first place a hunt would look.
+
+            No decision in `DECISIONS.md` moves. The ruling affirms the course that document and the
+            plan already set rather than changing it, and a decision is changed only by another
+            decision.
