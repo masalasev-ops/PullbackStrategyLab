@@ -82,6 +82,7 @@ Invoke-Step 'check-fixture-inputs'         { Invoke-Check 'fixture-inputs' }
 Invoke-Step 'check-fixture-replay'         { Invoke-Check 'fixture-replay' }
 Invoke-Step 'check-check-completeness'     { Invoke-Check 'check-completeness' }
 Invoke-Step 'check-carried-obligations'    { Invoke-Check 'carried-obligations' }
+Invoke-Step 'check-checkpoint-test-count'  { Invoke-Check 'checkpoint-test-count' }
 Invoke-Step 'check-surface-claims'         { Invoke-Check 'surface-claims' }
 Invoke-Step 'check-point-in-time'         { Invoke-Check 'point-in-time' }
 Invoke-Step 'check-architecture-conformance' { Invoke-Check 'architecture-conformance' }

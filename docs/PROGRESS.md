@@ -6502,3 +6502,112 @@ exist.
 
 **Nothing else in that entry moves.** The measured flips, the fixture's 1,296 unchanged expectations
 and the reading that the fixture is not the witness to the change all stand.
+
+## 3.12 — 2026-08-29 — main — the merge, the claim that asserted a declaration, and the figures the entry owed
+
+Continues 3.12. The entry above records what was built; this one records the merge the decision
+already permitted, four defects in that work, and the figures done condition 2 asks for and the
+entry above does not carry.
+
+Built:      **The merge.** `tools/ci.ps1` green at `743a98a`, **27 steps, 530 tests**, which is the
+            figure that commit states. `main` fast-forwarded onto it, nineteen commits, and the
+            working tree the seventeen scheduled tasks run from is back on `main`. The merge rule
+            gates on CI green and nothing else
+            (see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch).
+
+            **The store-version claim asserts the call rather than the declaration.** It read
+            `Program.cs` for `WhyThisStageCannotRun(`,
+            `MigrationRunner.ReadUserVersion(connection)` and `MigrationRunner.LatestVersion`, and
+            all three are satisfied inside `WhyThisStageCannotRun` and `WhyTheStoreCannotBeRead`,
+            which are declared in that same file. Its verdict is now a detector run through the CLI
+            against a store one migration short, with the exit code, the stderr and the row count in
+            `run_log` read back, and the three exemptions asserted by name rather than counted.
+
+            **`checkpoint-test-count`, a new check.** Every checkpoint PROGRESS records as built
+            states a test count in one of its own entries. It runs as a named CI step in both
+            scripts, carries a floor in `fixtures/checks-baseline.json`, and its parser is proved
+            against authored entries in `CheckProofTests` rather than against the corpus it reads.
+            3.9 is exempt by name: its nine entries predate the check, a dated entry is never
+            edited, and a count written today for a run in August would be a measurement nobody took.
+
+            **Four obligation rows and one amended done condition**, below.
+
+Measured:   **Done condition (c) was universal and its deliverable names one claim, so the
+            population was counted before the choice was made.** Of the 76 claims
+            `architecture-conformance` gives a live verdict, 54 sit in a table stating a sentence
+            per row, and **40 of those sentences carry more than one clause**: 13 of 14 in Failure
+            behaviour, 12 of 25 in the Component catalogue, 6 of 6 in Build order, 6 of 6 in Running
+            on Windows and macOS, and 3 of 3 in The phase report. About 160 clauses, counted by
+            splitting each cell at a sentence end, a semicolon, or a comma before `and`, `which`,
+            `because` or `so`, with citations excluded.
+
+            **This checkpoint amends its own done condition**, in those words, as CLAUDE.md
+            requires. Condition (c) read "every clause of a corpus sentence a claim names is
+            asserted by that claim, or the claim says which clause it does not reach" and now reads
+            the one claim its deliverable names, being the vendor-ceiling claim's third clause.
+            What decided it is the figure above rather than the difficulty: each of the 40 needs its
+            clauses classified as assertable or as rationale before anything can be asserted about
+            them, a Failure behaviour cell states the behaviour and the reason for it in the same
+            breath, and that classification is judgement no check can make. Prior text in CHANGELOG,
+            the sweep is a carried obligation, and the amendment is named here so a reader sees an
+            amendment rather than a condition and a run that met it.
+
+            **The old scan measured against the mutated file rather than argued about.** With the
+            call block at the top of `Main` deleted and the method and both helpers untouched, all
+            three of the old scan's patterns are still present, one occurrence each. The claim and
+            the new test both fail on that deletion; the claim's detail reads "nothing compares the
+            store's version against the build's before a stage opens it".
+
+Verified:   `tools/ci.ps1` green, **28 steps**, **533 tests**, up from 530. `tools/verify-phase`
+            **GREEN**: **126 claims**, 76 passed, 0 failed, 50 out of
+            scope, **0 unexamined**. Coverage examined **4,410**. **1,299
+            expectations**, unchanged: this pass adds a check, a claim's subject and four rows, and
+            produces no new pipeline output.
+
+            **The coverage figure is taken against the committed tree, and the difference is worth
+            one line.** Run before `CheckpointTestCountCheck.cs`, `StoreVersionRefusal.cs` and
+            `WorkerCli.cs` were tracked, the same report read **4,405**: `decision-resolves` and
+            `no-superseded-citation` walk the git index rather than the filesystem, so the five
+            citations those three files carry were invisible until `git add`. Neither number is
+            wrong and they are over different populations, which is the population rule reaching a
+            figure nobody expected it to: a coverage count taken from a dirty tree is a count over
+            the files git happens to know about.
+
+            **Every repair proved red before green.** The store-version claim and its test against
+            the deleted call block, as above. `checkpoint-test-count` against the record as it stood
+            before this entry, where it named 3.12 and nothing else, which is the defect it was
+            written for reporting itself.
+
+Findings:   Observation, and it is the reason the store-version instance is worth its row. The four
+            recorded instances of an assertion outliving its subject each lost a **declaration**: a
+            method, a table, a bar table, a malformed row. This one lost a **call**. Nothing in a
+            source scan distinguishes the two, because a scan that greps a file for an identifier
+            cannot tell the line that declares it from the line that runs it, and the identifier
+            most likely to appear in the file is the declaration. Recorded on 2.11's row rather than
+            made a rule, since the rule it argues for is the one already written: an assertion must
+            fail when the thing it guards is removed, and the proof of that is permanent.
+
+Carried:    **Four raised here, all due at 4.1**, and one existing row extended.
+
+            A phase branch that has gone green stays checked out, so the nightly runs from it rather
+            than from `main`; the 3.7 sign-off and the phase 3 sign-off each recorded it and neither
+            became a row, which is the finding rather than the branch. `foreign_key_check` runs after
+            the migration it checks has committed, so it reports the damage rather than preventing
+            it. The band's schema-mismatch line renders only when `/status` answers, and
+            `LabStatusView.Down` builds the unreachable state with both version fields nought, so a
+            status that could not answer states no mismatch rather than an unknown one. And forty
+            claims are narrower than the corpus sentence they name, which is the sweep condition (c)
+            was amended out of.
+
+            Two doc comments state behaviour the code does not have, and they share the first row's
+            subject rather than taking one of their own: `LabStatus.LatestRun` says the band "names
+            the stage that went wrong rather than the stage that went last" against a read that
+            orders by `started_at DESC` within one outcome, and `MigrationRunner.Apply` says its
+            `throughVersion` bound "exists for one caller" against a second caller 3.12 added.
+
+            **The 4.6 row on source-scan assertions nothing exercises now records a live instance**,
+            which is an argument for pulling it earlier rather than a change to it.
+
+            **This session committed code and may not sign it off.** What a fresh session owes is
+            the sign-off of 3.12 against `main`, stating all seven of the phase 3 sign-off's
+            findings by its own numbering with what closed each.

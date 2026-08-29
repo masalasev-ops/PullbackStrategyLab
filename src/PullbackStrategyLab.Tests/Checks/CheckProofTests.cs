@@ -1275,4 +1275,72 @@ public sealed class CheckProofTests
         Assert.Contains("the permission is spent",
             FixtureReplayCheck.PermitReason([Open], permit, checkpoint => checkpoint == "2.1"), StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// The checkpoint parser told against authored entries rather than against the corpus it reads.
+    ///
+    /// Four cases in one fragment, because they are the four ways this can be wrong: a checkpoint
+    /// whose entry carries the figure, one whose entry does not, a lettered part folded onto its
+    /// checkpoint so its sibling's figure answers for it, and a sign-off, which builds nothing and
+    /// runs no CI of its own. The check itself asks the corpus; if the parser stopped matching, the
+    /// corpus would answer with an empty list and every empty list passes.
+    /// </summary>
+    [Fact]
+    public void The_checkpoint_parser_sees_the_entry_that_states_no_test_count()
+    {
+        const string progress = """
+            # PROGRESS.md
+
+            ## 9.1 — 2026-01-02 — a-branch — the one that carries its figures
+
+            Built:      Something.
+
+            Verified:   `tools/ci.ps1` green, **27 steps**. **530 tests**, up from 516.
+
+            ## 9.2 — 2026-01-03 — a-branch — the one that does not
+
+            Built:      Something else, and no figures anywhere.
+
+            Verified:   The suite passes.
+
+            ## 9.3(a) — 2026-01-04 — a-branch — a lettered part with no figure of its own
+
+            Built:      A part.
+
+            ## 9.3 — 2026-01-05 — a-branch — and the part of it that carries them
+
+            Built:      The rest.
+
+            Verified:   **531 tests**.
+
+            ## Phase 9 sign-off — 2026-01-06 — a-branch — builds nothing
+
+            Built:      Nothing. This heading is not a checkpoint identifier.
+            """;
+
+        IReadOnlyList<CheckpointTestCountCheck.Entry> entries =
+            CheckpointTestCountCheck.Entries(progress);
+
+        // The sign-off is not a checkpoint entry and does not owe a figure.
+        Assert.Equal(4, entries.Count);
+        Assert.DoesNotContain(entries, e => e.Checkpoint.StartsWith("Phase", StringComparison.Ordinal));
+
+        // "The suite passes" is not a count. A check that accepted it would accept the sentence
+        // 3.12 could have written instead of the one it owed.
+        Assert.True(entries.Single(e => e.Checkpoint == "9.1").StatesATestCount);
+        Assert.False(entries.Single(e => e.Checkpoint == "9.2").StatesATestCount);
+
+        // The lettered part folds onto its checkpoint, so its sibling's figure answers for it.
+        Assert.Equal(2, entries.Count(e => e.Checkpoint == "9.3"));
+        Assert.Contains(entries.Where(e => e.Checkpoint == "9.3"), e => e.StatesATestCount);
+
+        string[] silent =
+        [
+            .. entries.GroupBy(e => e.Checkpoint, StringComparer.Ordinal)
+                .Where(g => !g.Any(e => e.StatesATestCount))
+                .Select(g => g.Key),
+        ];
+
+        Assert.Equal(["9.2"], silent);
+    }
 }

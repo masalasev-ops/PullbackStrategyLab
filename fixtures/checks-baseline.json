@@ -52,10 +52,18 @@
         "check results across those rows": 30
       }
     },
+    "checkpoint-test-count": {
+      "scopes": {
+        "checkpoints PROGRESS records as built": 30
+      },
+      "context": [
+        "entries under those checkpoints"
+      ]
+    },
     "ci-parity": {
       "scopes": {
-        "steps declared in tools/ci.ps1": 27,
-        "steps declared in tools/ci.sh": 27,
+        "steps declared in tools/ci.ps1": 28,
+        "steps declared in tools/ci.sh": 28,
         "ci step functions run against a step that fails": 1
       }
     },
@@ -69,10 +77,10 @@
     },
     "coverage-reported": {
       "scopes": {
-        "checks declared in CLAUDE.md's roster": 24,
-        "of those declared to run on every CI run": 22,
-        "checks implemented in the suite": 22,
-        "checks tools/ci.* invokes as a named step": 22,
+        "checks declared in CLAUDE.md's roster": 25,
+        "of those declared to run on every CI run": 23,
+        "checks implemented in the suite": 23,
+        "checks tools/ci.* invokes as a named step": 23,
         "files in the suite that read the shipped source": 20,
         "of those belonging to a check, which declares its scans in its own record": 12
       }
