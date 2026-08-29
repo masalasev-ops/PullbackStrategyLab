@@ -6860,3 +6860,63 @@ Findings:   **This entry discharges finding six of the phase 3 sign-off, and the
 
 Carried:    Nothing new. The row this entry discharges is removed from `BUILD_PLAN.md` with its
             prior text in `CHANGELOG.md`.
+
+## 3.12 sign-off — 2026-08-29 — phase-3-review-findings — correction: the fresh-session rule was not met for `b5e0b96`
+
+Corrects the opening paragraph of **3.12 sign-off — 2026-08-29 — seven findings disposed of, and
+the report that could not say where it came from**, which reads that the session "has since
+committed two instruments, `PhaseReportStage` and `tools/verify-phase.ps1` on one side and
+`PhaseReplay` on the other, and **neither is in the shipped pipeline**: one is the reporting stage
+and its invocation, the other is the test-support harness."
+
+That entry is left exactly as it stands. Records are corrected by a new dated entry.
+
+**The sentence is false on the fact.** `PhaseReportStage` is shipped code. `Program.cs` registers it
+as a singleton at line 57, dispatches it at line 119 and lists it in `StageNames` at line 245, so it
+is a stage of the Worker in the same sense as every other. The true statement is the narrower one,
+that no slot in `tools/nightly.ps1` runs it, which is a fact about the schedule rather than about
+what shipped.
+
+**And it is answering a question the rule does not ask.** The rule is "a session that has committed
+**code** to this repository must not sign that code off. A session whose only commits are documents
+may." It is keyed on whether code was committed, not on whether that code runs in a night. `b5e0b96`
+changed `src/PullbackStrategyLab.Worker/Stages/PhaseReportStage.cs`, added `tools/verify-phase.ps1`,
+and changed `src/PullbackStrategyLab.Tests/Support/PhaseReplay.cs`, and `16e41d0` signed the phase
+off. So the rule was not met for `b5e0b96`, and no reading of "shipped pipeline" reaches it, because
+the phrase is not in the rule.
+
+**What the narrowing cost, stated plainly.** Nothing, as it turns out, and that is knowable only
+now. The gap was one commit wide: every other finding the 3.12 sign-off disposed of was 3.12's code,
+written by another session, and that half of the pass holds. What had no independent read was the
+two repairs the sign-off made to the instrument it was quoting, which is the least comfortable place
+for a gap to be, since a report that cannot be trusted to say where it came from is exactly what
+those repairs were about.
+
+**This review supplies the read the rule requires.** A session with no commits to this repository
+before it, reading `b5e0b96` as shipped code:
+
+- `WhyTheReportCannotBeWritten` refuses on a null head and `WriteReport` returns null rather than
+  stamping a placeholder, so the failure mode the repair names cannot be reached with a step in it.
+- `ReadHead` validates the sha's shape, 40 characters and all hex, rather than trusting whatever
+  `git rev-parse` returned, and returns null when `git status --porcelain` cannot be read, so a git
+  that answers something other than a commit is a refusal rather than a stamp nobody can resolve.
+- Both repairs were proved red before green by removing the thing each guards, which the original
+  entry records and which the suite still holds:
+  `A_report_that_cannot_name_its_commit_is_not_written_at_all` and the probe-row test that turns
+  `store.observationsAfterTheAsOf` from 0 to 1 when `StoreIntegrityFigures` is moved back below the
+  probe.
+- `tools/verify-phase.ps1` hands the work to the one bash script rather than reimplementing it, and
+  exits 3 with a named message when no bash is found, so the two-implementations fault it was
+  written to avoid is not reintroduced by the fix.
+
+Two defects were found in that code and neither is in the above. They are repaired at 3.13 rather
+than carried, and they are named there.
+
+**Not established, and therefore not claimed.** Whether the "shipped pipeline" argument was supplied
+to that session or reached by it is not something this record can settle: `/prompts` is gitignored
+and holds three phase plans, none of which contains the phrase. The correction is about the sentence
+and the rule, both of which are on the record, and stops there.
+
+**Nothing else in that entry moves.** Its six closed findings, its figures, its process correction
+about quoting an earlier run's artifacts, and its seven done conditions all stand, and finding six
+was closed on its own terms by the entry at `b6948fd`.
