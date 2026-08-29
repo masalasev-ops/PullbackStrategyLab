@@ -33,9 +33,14 @@ fi
 # Every check writes its coverage and its part under artifacts/ as it runs, so the parts are
 # stale until this has run. Cleared first: a part left over from an earlier run reads as this
 # run's evidence and is the one failure mode a report cannot detect in itself.
+# `input-tiers.json` was missing from this list until the phase 3 review, so the report's own
+# "the input-tier part is missing" reason could never fire: a part left by an earlier run was
+# always there to read. That is the exact failure the paragraph above names, in the one part
+# the paragraph's author did not name.
 rm -f "$repository_root/artifacts/doc-conformance.json" \
       "$repository_root/artifacts/fixture-diff.json" \
       "$repository_root/artifacts/expected-checks.json" \
+      "$repository_root/artifacts/input-tiers.json" \
       "$repository_root/artifacts/phase-report.json" \
       "$repository_root/artifacts/phase-report.html"
 rm -rf "$repository_root/artifacts/checks"

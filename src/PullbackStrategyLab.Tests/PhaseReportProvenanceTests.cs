@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
 using Xunit;
@@ -143,13 +144,14 @@ public sealed class PhaseReportProvenanceTests
     /// <summary>
     /// The wrapper that stops the Windows invocation no-opping, asserted as a file rather than run.
     ///
-    /// Running it would mean running the whole gate, which is the one thing a unit test must not
-    /// do. What is asserted is what the wrapper is for: that it exists, that it hands the work to
-    /// the one bash script rather than reimplementing it, and that a machine with no bash gets a
-    /// named message and a non-zero exit instead of a silent success.
+    /// Running the whole of it would mean running the whole gate, which is the one thing a unit test
+    /// must not do. What is asserted here is what the wrapper is for: that it exists, and that it
+    /// hands the work to the one bash script rather than reimplementing it. The refusal itself is
+    /// asserted by running it, in the test below, because a string in a line that never executes is
+    /// what the previous version of this test read.
     /// </summary>
     [Fact]
-    public void The_windows_wrapper_defers_to_the_one_script_and_refuses_when_there_is_no_bash()
+    public void The_windows_wrapper_defers_to_the_one_script()
     {
         string wrapper = Path.Combine(RepositoryLayout.Root, "tools", "verify-phase.ps1");
         Assert.True(File.Exists(wrapper), $"{wrapper} does not exist.");
@@ -160,9 +162,68 @@ public sealed class PhaseReportProvenanceTests
         // of the gate a phase signs off against is the defect one level up.
         Assert.Contains("'tools/verify-phase'", text, StringComparison.Ordinal);
         Assert.DoesNotContain("dotnet test", text, StringComparison.Ordinal);
+    }
 
-        // And a machine with no bash is told so, loudly, rather than getting an exit code of 0.
-        Assert.Contains("no bash found", text, StringComparison.Ordinal);
-        Assert.Contains("exit 3", text, StringComparison.Ordinal);
+    /// <summary>
+    /// A machine with no usable bash is told so and exits 3, proved by running the wrapper with
+    /// nowhere to find one.
+    ///
+    /// <b>The string scan this replaces passed against a wrapper whose refusal was unreachable.</b>
+    /// The file sets a Stop preference and the branch called <c>Write-Error</c>, which under Stop is
+    /// terminating, so the <c>exit 3</c> beneath it never ran and the process exited 1: the code a
+    /// red phase report exits with, from the branch that handles there being no gate to run at all.
+    /// The old test asserted the literal "exit 3" appeared in the text, which it did.
+    ///
+    /// <b>And the wrapper it now runs is one that rejects a bash it cannot use.</b> On a stock
+    /// Windows 11 <c>Get-Command bash</c> answers with the WSL launcher in System32, ahead of Git
+    /// for Windows on the path. That is not a bash for this tree, and the fallback list naming Git
+    /// for Windows was never reached because the lookup had already succeeded.
+    ///
+    /// Windows only, because it runs `powershell.exe`, and the wrapper exists for Windows alone:
+    /// the other machine runs `tools/verify-phase` directly. Skipped rather than absent, and the
+    /// skip is a fact about the runner rather than about the property.
+    /// </summary>
+    [Fact]
+    public void The_windows_wrapper_refuses_with_exit_three_when_no_bash_can_be_found()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        string empty = Directory.CreateTempSubdirectory("verify-phase-nobash").FullName;
+
+        try
+        {
+            var start = new ProcessStartInfo("powershell.exe")
+            {
+                WorkingDirectory = RepositoryLayout.Root,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+            };
+
+            start.ArgumentList.Add("-NoProfile");
+            start.ArgumentList.Add("-NonInteractive");
+            start.ArgumentList.Add("-File");
+            start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root, "tools", "verify-phase.ps1"));
+
+            // The one candidate, and it is not a bash. Emptying PATH and the three fallbacks was
+            // tried first and does not isolate the search: a child PowerShell recovers
+            // ProgramFiles whatever the parent sets, so Git for Windows was found and the gate ran.
+            start.Environment["PullbackStrategyLab__Bash"] = Path.Combine(empty, "not-a-bash.exe");
+
+            using Process process = Process.Start(start)!;
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit(60_000);
+
+            Assert.Equal(3, process.ExitCode);
+            Assert.Contains("no bash found", error, StringComparison.Ordinal);
+            Assert.Contains("nothing was run", error, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(empty, recursive: true);
+        }
     }
 }
