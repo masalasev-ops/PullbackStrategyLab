@@ -790,4 +790,100 @@ public sealed class CheckRecomputerTests : IDisposable
         Assert.NotNull(Read("AAA", "long").CorrectedAt);
         Assert.NotNull(PriorState("AAA"));
     }
+
+    /// <summary>
+    /// Every ordering of the arguments parses to the same command, and no flag's value can be
+    /// taken as the date.
+    ///
+    /// <b>The date was whatever argument was neither a flag nor the check's own name.</b>
+    /// `--check`'s value was excluded by naming it and `--expect`'s was not, so
+    /// <c>recheck --check cluster --expect 15 2026-08-27</c> read <c>15</c> as the date and died on
+    /// the format. Loud, and never a correctness fault; what it was is a command with one working
+    /// ordering and nothing saying which one. The RUNBOOK documents
+    /// <c>recheck &lt;date&gt; --check cluster</c>, which is the ordering that happened to work.
+    ///
+    /// Asserted across the orderings rather than on the one that failed, because a fix that named
+    /// `--expect` too would pass a test written only about `--expect`.
+    /// </summary>
+    [Theory]
+    [InlineData("2026-08-27", "--check", "cluster", "--expect", "15", "--apply")]
+    [InlineData("--check", "cluster", "--expect", "15", "2026-08-27", "--apply")]
+    [InlineData("--expect", "15", "--check", "cluster", "--apply", "2026-08-27")]
+    [InlineData("--apply", "--expect", "15", "2026-08-27", "--check", "cluster")]
+    [InlineData("--check", "cluster", "--as-of", "2026-08-27", "--expect", "15", "--apply")]
+    [InlineData("--as-of", "2026-08-27", "--expect", "15", "--apply", "--check", "cluster")]
+    public void Every_documented_ordering_parses_to_the_same_command(params string[] args)
+    {
+        CheckRecomputer.Arguments parsed = CheckRecomputer.Arguments.Parse(args);
+
+        Assert.Equal("cluster", parsed.Check);
+        Assert.Equal(new DateOnly(2026, 8, 27), parsed.AsOf);
+        Assert.Equal(15, parsed.Expect);
+        Assert.True(parsed.Applying);
+        Assert.False(parsed.Restoring);
+    }
+
+    /// <summary>
+    /// The parse refuses what it cannot read rather than defaulting, and the refusals are the ones
+    /// that would otherwise run a repair against the wrong night.
+    ///
+    /// An unknown option is refused by name, which is what stops a flag added later from
+    /// reintroducing the fault: it cannot be added without declaring whether it takes a value.
+    /// </summary>
+    [Fact]
+    public void The_parse_refuses_what_it_cannot_read()
+    {
+        // A flag nobody declared. Refused rather than ignored, and rather than assumed to take a
+        // value, which is how a new boolean would swallow the date.
+        Assert.Contains(
+            "is not an option this stage knows",
+            Assert.Throws<ArgumentException>(
+                () => CheckRecomputer.Arguments.Parse(["--dry-run", "2026-08-27"])).Message,
+            StringComparison.Ordinal);
+
+        // Two dates, which cannot both be meant.
+        Assert.Contains(
+            "both given as the date",
+            Assert.Throws<ArgumentException>(
+                () => CheckRecomputer.Arguments.Parse(["2026-08-27", "2026-08-28"])).Message,
+            StringComparison.Ordinal);
+
+        // The named and the positional form disagreeing.
+        Assert.Contains(
+            "given twice and the two disagree",
+            Assert.Throws<ArgumentException>(
+                () => CheckRecomputer.Arguments.Parse(["2026-08-27", "--as-of", "2026-08-28"])).Message,
+            StringComparison.Ordinal);
+
+        // A flag at the end with nothing after it, which used to leave the check null and read as
+        // "no check given".
+        Assert.Contains(
+            "needs a value after it",
+            Assert.Throws<ArgumentException>(
+                () => CheckRecomputer.Arguments.Parse(["--check"])).Message,
+            StringComparison.Ordinal);
+
+        // A date that is not one, named as a date rather than as whatever it looked like.
+        Assert.Contains(
+            "is not a date",
+            Assert.Throws<ArgumentException>(
+                () => CheckRecomputer.Arguments.Parse(["--as-of", "15"])).Message,
+            StringComparison.Ordinal);
+
+        // And the same two forms agreeing is not an error.
+        Assert.Equal(
+            new DateOnly(2026, 8, 27),
+            CheckRecomputer.Arguments.Parse(["2026-08-27", "--as-of", "2026-08-27"]).AsOf);
+    }
+
+    /// <summary>
+    /// The command refuses a mis-parsed line rather than running against today, end to end through
+    /// <c>Run</c> rather than through the parser alone.
+    /// </summary>
+    [Fact]
+    public void The_command_exits_two_on_an_argument_it_cannot_read()
+    {
+        Assert.Equal(2, Recomputer().Run(["--check", "cluster", "--dry-run"]));
+        Assert.Equal(2, Recomputer().Run(["--check", "cluster", "--as-of", "the-27th"]));
+    }
 }
