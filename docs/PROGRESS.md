@@ -6156,3 +6156,69 @@ Carried:    **Two of the seven are not started, and neither is a defect in the c
             phase 4 planning.
 
             **This session committed code and may not sign it off.**
+
+## 3.11 — 2026-08-28 — phase-3-verification-repair — the first night's verdicts, recorded before the floor comparison changes
+
+Not a checkpoint entry. `held-floor` and `no-reclaim` are about to stop comparing every dip bar
+against the as-of session's average and start comparing each bar against the average as at that
+bar. Setup rows are immutable, so the one session already recorded cannot be re-flagged and the
+record will have a seam. This is what stood on the near side of it, taken before the change rather
+than reconstructed after.
+
+Measured:   **44 setups on 2026-08-27, 40 long and 4 short, none passing every check.** Read from
+            `data/live` at `user_version` 30.
+
+            **The two checks the change touches passed everything.** `held-floor` 40 of 40 long,
+            `no-reclaim` 4 of 4 short. Every verdict below is under the scalar comparison.
+
+            | Direction | Check | Pass | Fail |
+            |---|---|---|---|
+            | long | tradable | 40 | 0 |
+            | long | moves-enough | 40 | 0 |
+            | long | uptrend | 40 | 0 |
+            | long | thrust | 40 | 0 |
+            | long | **held-floor** | **40** | **0** |
+            | long | dip-shape | 6 | 34 |
+            | long | contraction | 13 | 27 |
+            | long | trigger-near | 7 | 33 |
+            | long | exit-tight | 0 | 40 |
+            | long | cluster | 33 | 7 |
+            | short | tradable-shortable | 4 | 0 |
+            | short | moves-enough | 4 | 0 |
+            | short | downtrend | 4 | 0 |
+            | short | thrust | 4 | 0 |
+            | short | **no-reclaim** | **4** | **0** |
+            | short | averages-squeezing | 3 | 1 |
+            | short | bounce-shape | 1 | 3 |
+            | short | reached-ceiling | 0 | 4 |
+            | short | exit-tight | 1 | 3 |
+            | short | cluster | 1 | 3 |
+
+            **Only 9 of the 44 have a dip the two definitions could disagree over.** The comparison
+            walks the bars after the pullback extreme, so a setup whose extreme is the last session
+            has no bar to compare and returns nought under either definition. Thirty-three long and
+            two short are in that state.
+
+            | Direction | With at least one dip bar | Tickers and their bar counts |
+            |---|---|---|
+            | long | 7 of 40 | ALM 2, AMLX 2, HTFL 1, IOVA 3, MRNA 4, SLS 2, TEM 2 |
+            | short | 2 of 4 | BLLN 5, LASR 1 |
+
+            **The dip-bar spread**, which is what bounds how far the two averages can drift apart
+            within one comparison. Long: 33 setups at 0 bars, 1 at 1, 4 at 2, 1 at 3, 1 at 4. Short:
+            2 at 0, 1 at 1, 1 at 5.
+
+Findings:   Observation. Every long setup failed `exit-tight` and every short failed
+            `reached-ceiling`, so no setup on this night passed every check whatever the floor
+            comparison says. Reading: a flip in `held-floor` or `no-reclaim` on this night could not
+            have changed what was traded, because nothing was. It could have changed what was
+            recorded as having passed that one check, which is what this entry preserves.
+
+            Observation. The affected population is nine setups and the largest dip among them is
+            five bars. Reading: over five sessions a 21-day average moves by a fraction of a daily
+            range, so the two definitions differ on a narrow band, and this night is too small to
+            say how often they differ in general. It is a seam in the record rather than a
+            measurement of the difference.
+
+Carried:    Nothing new. The change itself and its measured flips are recorded in the entry that
+            makes it.
