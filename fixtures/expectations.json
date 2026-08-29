@@ -9796,6 +9796,14 @@
       "checkpoint": "3.12",
       "producedBy": "SQLite's own PRAGMA foreign_key_check over the replay store after every migration and every stage has run, which is a computation outside this solution rather than a restatement of one inside it.",
       "note": "Nought, over the 127 rows the expectation above counts. Migration 031 rebuilds setup, which setup_signal and control_setup both reference; against the live store it failed outright with FOREIGN KEY constraint failed and had never been applied to a store holding rows. This is the property that would have been broken, stated with its population beside it."
+    },
+    {
+      "id": "store.observationsAfterTheAsOf",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "3.12",
+      "producedBy": "derived from the harness before it was run. StoreIntegrityFigures is called before PointInTimeFigures, which is the only thing in the replay that writes a row observed later than the run, so the count of rows in daily_bar with an observed_at after the clock's own instant is nought by the ordering rather than by what the fixture happens to hold.",
+      "note": "The comment above the point-in-time call, turned into a number. It said nothing above that call may see the row it writes, and at 3.12 a new method was added underneath it and saw it, with no figure moving and nothing failing. This figure is what fails: any measurement taken after the probe reads 1 here."
     }
   ],
   "frozenOnly": [

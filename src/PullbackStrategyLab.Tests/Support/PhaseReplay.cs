@@ -541,9 +541,14 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ReadSurfaceFigures());
         measurements.AddRange(GalleryFigures());
 
-        // Last, because it writes a row into the store on purpose and nothing above it may see one.
-        measurements.AddRange(PointInTimeFigures());
         measurements.AddRange(StoreIntegrityFigures());
+
+        // Last, and this comment governs this one call. It writes a row into the store on purpose,
+        // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
+        // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
+        // is the same sentence measured instead of asserted in prose, and any figure that moves
+        // below this line turns it red rather than waiting to be noticed.
+        measurements.AddRange(PointInTimeFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -1747,19 +1752,6 @@ public sealed class PhaseReplay : IDisposable
     public const string CorrectedClose = "999.00";
 
     /// <summary>
-    /// A correction observed after the night, read from both sides of its own observation.
-    ///
-    /// AUTHORED, and it has to be: the captured day holds one evening's responses, so a vendor
-    /// restating a figure the following evening is a case the fixture cannot contain. It is the same
-    /// tier and the same reasoning as the synthetic split at 1.5.
-    ///
-    /// <b>Two figures rather than one verdict.</b> "The night did not see it" is satisfied perfectly
-    /// by a read that returns nothing at all, and by a store that never took the row. Reading the
-    /// same session from both sides of the correction's own instant is what makes the first figure
-    /// mean the bound held rather than the row being missing.
-    /// see: A gate handed an absent or degenerate quantity fails rather than passing
-    /// </summary>
-    /// <summary>
     /// What the store looks like once the pipeline has filled it and every migration has run.
     ///
     /// <b>The violation count is worthless without the population beside it.</b> Nought orphans over
@@ -1785,7 +1777,28 @@ public sealed class PhaseReplay : IDisposable
                     .ToString(CultureInfo.InvariantCulture)),
             new Measurement("store.foreignKeyViolations",
                 MigrationRunner.ForeignKeyViolations(read).Length.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("store.observationsAfterTheAsOf",
+                ObservationsLaterThan(read, _clock.UtcNow).ToString(CultureInfo.InvariantCulture)),
         ];
+    }
+
+    /// <summary>
+    /// Rows the store holds that were observed later than this run, which must be none while the
+    /// point-in-time probe has not been written yet.
+    ///
+    /// <b>This is the comment above the call turned into a number.</b> "Nothing above it may see
+    /// one" was prose for twelve checkpoints, and prose is what a new call sitting underneath it
+    /// does not have to obey: 3.12 added one and inherited the probe, and no figure moved, so
+    /// nothing failed. The three figures beside this one still cannot see the row, and this one
+    /// exists so that the next figure added here cannot either without saying so.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    private static int ObservationsLaterThan(SqliteConnection connection, DateTimeOffset instant)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM daily_bar WHERE observed_at > @instant";
+        command.Parameters.AddWithValue("@instant", StoreText.TimestampToStorageText(instant));
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     private static long Rows(SqliteConnection connection, string table)
@@ -1795,6 +1808,19 @@ public sealed class PhaseReplay : IDisposable
         return (long)(command.ExecuteScalar() ?? 0L);
     }
 
+    /// <summary>
+    /// A correction observed after the night, read from both sides of its own observation.
+    ///
+    /// AUTHORED, and it has to be: the captured day holds one evening's responses, so a vendor
+    /// restating a figure the following evening is a case the fixture cannot contain. It is the same
+    /// tier and the same reasoning as the synthetic split at 1.5.
+    ///
+    /// <b>Two figures rather than one verdict.</b> "The night did not see it" is satisfied perfectly
+    /// by a read that returns nothing at all, and by a store that never took the row. Reading the
+    /// same session from both sides of the correction's own instant is what makes the first figure
+    /// mean the bound held rather than the row being missing.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
     private IReadOnlyList<Measurement> PointInTimeFigures()
     {
         DateTimeOffset afterwards = _clock.UtcNow.AddDays(1);
