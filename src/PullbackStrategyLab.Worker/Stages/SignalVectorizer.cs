@@ -381,16 +381,17 @@ public sealed class SignalVectorizer
             values["retrace_depth"] = StoreText.RatioToStorageText(depth);
         }
 
-        if (indicators is not null)
-        {
-            // The floor is the 21-day average long and the 50-day short, which is the one place the
-            // two check lists are not mirrors: held-floor reads the medium average and no-reclaim
-            // reads the long one.
-            decimal floor = isLong ? indicators.EmaMedium : indicators.EmaLong;
-            values["closes_beyond_floor"] =
-                PullbackGeometry.ClosesBeyondFloor(shaped, pullback, floor, isLong)
-                    .ToString(CultureInfo.InvariantCulture);
-        }
+        // The floor is the 21-day average long and the 50-day short, which is the one place the two
+        // check lists are not mirrors: held-floor reads the medium average and no-reclaim reads the
+        // long one. Built from the bars through the same helper the detectors use, so the frozen
+        // signal is the number the gate was decided on rather than a second computation of it.
+        //
+        // It no longer needs the stored figures. Those carry the average as at the setup date, which
+        // is one point of a series, and comparing a dip against one point is the defect 3.11 fixed.
+        values["closes_beyond_floor"] =
+            PullbackGeometry.ClosesBeyondFloor(
+                shaped, pullback, IndicatorEngine.FloorSeries(shaped, isLong), isLong)
+                .ToString(CultureInfo.InvariantCulture);
     }
 
     private static PullbackGeometry.Bar OnBothBases(StoredDailyBar bar)

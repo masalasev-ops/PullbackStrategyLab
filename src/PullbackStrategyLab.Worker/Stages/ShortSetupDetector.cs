@@ -351,7 +351,8 @@ public sealed class ShortSetupDetector
                 {
                     // The 50-day, where the long side reads the 21-day. The one place the two check
                     // lists are not mirrors, and it sits here rather than in the geometry.
-                    closesBeyond = PullbackGeometry.ClosesBeyondFloor(shaped, bounce, figures.EmaLong, isLong: false);
+                    closesBeyond = PullbackGeometry.ClosesBeyondFloor(
+                        shaped, bounce, IndicatorEngine.FloorSeries(shaped, isLong: false), isLong: false);
                 }
             }
         }

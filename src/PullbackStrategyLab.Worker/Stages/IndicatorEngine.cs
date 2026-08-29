@@ -39,6 +39,31 @@ public sealed class IndicatorEngine
     public const int EmaMediumPeriod = 21;
     public const int EmaLongPeriod = 50;
 
+    /// <summary>
+    /// The floor a dip is measured against, as a series over the same bars the geometry reads.
+    ///
+    /// <b>One construction for all three callers, and that is the point.</b> Both detectors and
+    /// SignalVectorizer compare a dip against this, and the chart draws it; four separate builds of
+    /// "the 21-day average" would drift, and the whole reason `held-floor` is worth fixing is that
+    /// the code and the chart were telling a reader different stories. Period and warm-up come from
+    /// the constants this class already owns, which are the ones the nightly figures and the drawn
+    /// line are both computed from.
+    ///
+    /// The 21-day average on the long side and the 50-day on the short, which is the one place the
+    /// two check lists are not mirrors.
+    /// see: The averages are one implementation, computed nightly and drawn on demand
+    /// </summary>
+    public static IReadOnlyList<decimal?> FloorSeries(IReadOnlyList<PullbackGeometry.Bar> bars, bool isLong)
+    {
+        ArgumentNullException.ThrowIfNull(bars);
+
+        decimal[] closes = [.. bars.Select(b => b.Close)];
+
+        // A history shorter than the warm-up yields a series of nulls rather than an exception, and
+        // ClosesBeyondFloor counts a session with no average as neither held nor broken.
+        return Averages.ExponentialSeries(closes, isLong ? EmaMediumPeriod : EmaLongPeriod, WarmupSessions);
+    }
+
     /// <summary>Wilder's period for the true range average, which is what ATR has always meant.</summary>
     public const int AtrPeriod = 14;
 

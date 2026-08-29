@@ -982,3 +982,8 @@ Why:  The hard rule reads "A stage stops rather than overrunning, writes a parti
 Was:  A recovery table naming "Restore the most recent snapshot from the data root" with nothing said about how many snapshots exist or how far back one reaches.
 Now:  The same, plus three paragraphs: the lab keeps the last 7 and removes the rest, removal happens only after the new snapshot passes both its checks and is named in the night's log, and a snapshot renamed out of the generated form is kept indefinitely.
 Why:  There was no retention at all. Twenty-four snapshots had accumulated in four days, 4.6 GB against a store holding one session of setups, growing about 290 MB a night. RUNBOOK is where an operator reads how far a restore can reach back, so the bound belongs where the restore instruction is, and the 7 is pinned against `PullbackStrategyLabOptions.SnapshotsKept` so the promise cannot drift from the code that keeps it.
+
+### 2026-08-28 — BUILD_PLAN.md — cites The averages are one implementation, computed nightly and drawn on demand
+Was:  | 3.11 | **`held-floor` and `no-reclaim` compare every pullback bar against the as-of session's average rather than each bar's own.** ... Not repaired here because it changes what the detectors flag, which moves every count phase 3 has recorded. | 4.1 |
+Now:  removed
+Why:  Discharged at 3.11(f) rather than repointed. The comparison is per bar, the two definitions are pinned apart in both directions by `FloorSeriesTests`, and the golden fixture reports no flip in either direction over its three setups. The 44 rows of 2026-08-27 stay as they were flagged and the seam is stated in PROGRESS with the date the definition changed.

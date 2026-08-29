@@ -355,7 +355,8 @@ public sealed class LongSetupDetector
 
                 if (pullback is not null && figures is not null)
                 {
-                    closesBeyond = PullbackGeometry.ClosesBeyondFloor(shaped, pullback, figures.EmaMedium, isLong: true);
+                    closesBeyond = PullbackGeometry.ClosesBeyondFloor(
+                        shaped, pullback, IndicatorEngine.FloorSeries(shaped, isLong: true), isLong: true);
                 }
             }
         }

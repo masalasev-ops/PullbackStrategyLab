@@ -6222,3 +6222,79 @@ Findings:   Observation. Every long setup failed `exit-tight` and every short fa
 
 Carried:    Nothing new. The change itself and its measured flips are recorded in the entry that
             makes it.
+
+## 3.11(f) — 2026-08-28 — phase-3-verification-repair — the floor compared per bar, and the seam it leaves
+
+`held-floor` and `no-reclaim` now compare each dip session against the average as at that session.
+ARCHITECTURE said "No daily close below the 21-day average during the dip" throughout; the dip is a
+span, the average is a series, the chart draws it as one, and the code was the only one of the three
+holding the average as at the setup date against every bar. The document is unchanged, because it
+was never the thing that was wrong.
+
+Built:      **`PullbackGeometry.ClosesBeyondFloor` takes the floor as a series.** A session whose
+            average has not converged is counted as neither held nor broken, because failing a setup
+            for the age of its history rather than for its shape is a different check.
+
+            **`IndicatorEngine.FloorSeries`, one construction for all three callers.** Both detectors
+            and `SignalVectorizer` compare against it and the chart draws it, and four separate
+            builds of "the 21-day average" is how the code and the screen came to tell a reader
+            different stories in the first place. Period and warm-up are the constants the nightly
+            figures and the drawn line already use, asserted equal to what the chart builds.
+
+            The vectorizer no longer reads the stored figures for this. They carry the average as at
+            the setup date, which is the one point the defect was.
+
+Measured:   **No setup flips on the golden fixture, in either direction.** The replay produces
+            **1,296 of 1,296** expectations unchanged, and **18 of them touch this comparison**: three
+            per-setup verdicts, three frozen `closes_beyond_floor` signals, four authored gate cases
+            either side of the threshold, and eight per-check counts. Every one holds at the value it
+            was committed with under the prior comparison.
+
+            | Setup | Direction | Dip bars | Beyond, before | Beyond, after | Verdict |
+            |---|---|---|---|---|---|
+            | 2026-08-24-HOOD-long | long | 1 | 0 | 0 | pass, unchanged |
+            | 2026-08-24-INTC-short | short | 0 | 0 | 0 | pass, unchanged |
+            | IESC-long | long | 8 | 4 | 4 | fail, unchanged |
+
+            **Why the fixture cannot tell the two apart, stated rather than left as a happy result.**
+            INTC has no dip session at all, so no comparison is made under either definition. HOOD
+            has one, and a 21-day average moves by a fraction of a daily range over one session.
+            IESC has eight and four of them are beyond the floor, but each is beyond it by more than
+            the average drifts across those eight sessions, so none crosses.
+
+            **So the fixture is not the witness to this change and the unit tests are.** A fixture
+            that agrees under both definitions says the change is safe over these three rows; it
+            does not say the definitions agree, and reading it that way is the shape this corpus
+            keeps meeting. What separates them is `FloorSeriesTests`, which builds a rising average
+            and a falling one over the same dip and pins the disagreement in both directions:
+            rising, the series counts **0** breaches where the as-of value counts **2**; falling, the
+            series counts **2** where the as-of value counts **0**. Five of its six cases fail
+            against the scalar form, checked by reverting it.
+
+            **The direction of the error, since it is not symmetric in cost.** On a rising average
+            the scalar form is stricter than the chart and **drops** a setup whose closes were above
+            the line. On a falling average it is looser and **admits** one whose closes were below
+            it. The second is the one that costs something, because a setup admitted on a false
+            reading of its dip goes into the evidence and is measured.
+
+Findings:   Observation. The golden fixture holds no captured row on which the two definitions
+            differ, and the authored gate cases are built either side of a threshold rather than
+            across a drifting average. Reading: an expectation that would distinguish them cannot be
+            derived from the captured day, so this checkpoint adds none, and the guard is a
+            behavioural test rather than a fixture row. That is the honest position and it is worth
+            naming: the fixture's silence here is a property of the captured day, not evidence about
+            the strategy.
+
+Carried:    **The seam, and the date it falls on.** Every setup row with `as_of = 2026-08-27`, being
+            the 44 of the lab's first night, was flagged under the prior comparison. Their verdicts
+            are recorded in this record's entry of the same date, taken before the change. The
+            definition changed on **2026-08-28** and every session flagged from that date forward
+            uses the per-session average. Setup rows are immutable and the 44 stay exactly as they
+            are: a later reader comparing the first night against any night after it is comparing
+            across a definition, and this paragraph is where that is stated rather than where it has
+            to be worked out.
+
+            The obligation raised at 3.11 for this is discharged and its row is removed from
+            BUILD_PLAN's carried obligations.
+
+            **This session committed code and may not sign it off.**

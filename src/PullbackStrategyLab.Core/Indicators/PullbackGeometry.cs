@@ -110,22 +110,45 @@ public static class PullbackGeometry
     }
 
     /// <summary>
-    /// How many sessions of the pullback closed the wrong side of its floor.
+    /// How many sessions of the pullback closed the wrong side of its floor, each against the
+    /// average as at that session.
     ///
     /// The floor is the 21-day average on the long side and the 50-day on the short side, which is
     /// the one place the two check lists are not mirrors: `held-floor` reads the medium average and
     /// `no-reclaim` reads the long one. Passed in rather than chosen here, so the asymmetry sits in
     /// the detectors where the corpus states it.
+    ///
+    /// <b>The floor was one number until 3.11 and it is a series.</b> ARCHITECTURE says "No daily
+    /// close below the 21-day average during the dip". The dip is a span, the average is a series,
+    /// and the chart draws it as one, so the document and the screen already agreed with each other
+    /// and the code was the odd one out: it compared every bar of the dip against the average as at
+    /// the setup date. On a rising average that is stricter than what the chart shows, because the
+    /// as-of value is the highest the line reached, and a bar that closed above its own session's
+    /// average is counted as beyond the floor while the chart shows it above the line. On a falling
+    /// average it is looser in the same way, which is the direction that admits a setup rather than
+    /// dropping one.
+    ///
+    /// A session with no average yet, which is a bar inside the warm-up, is not counted either way.
+    /// It is not evidence that the close held and not evidence that it did not, and counting it as
+    /// a breach would fail a setup for the age of its history rather than for its shape.
+    /// see: The averages are one implementation, computed nightly and drawn on demand
     /// </summary>
-    public static int ClosesBeyondFloor(IReadOnlyList<Bar> bars, Pullback pullback, decimal floor, bool isLong)
+    public static int ClosesBeyondFloor(
+        IReadOnlyList<Bar> bars, Pullback pullback, IReadOnlyList<decimal?> floor, bool isLong)
     {
         ArgumentNullException.ThrowIfNull(bars);
         ArgumentNullException.ThrowIfNull(pullback);
+        ArgumentNullException.ThrowIfNull(floor);
 
         int beyond = 0;
         for (int i = pullback.ExtremeIndex + 1; i < bars.Count; i++)
         {
-            if (isLong ? bars[i].Close < floor : bars[i].Close > floor)
+            if (i >= floor.Count || floor[i] is not decimal atThatSession)
+            {
+                continue;
+            }
+
+            if (isLong ? bars[i].Close < atThatSession : bars[i].Close > atThatSession)
             {
                 beyond++;
             }
