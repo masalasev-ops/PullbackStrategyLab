@@ -119,7 +119,7 @@ public static class LongPullbackRules
 
     private static CheckResult HeldFloor(LongEvidence e) =>
         e.ClosesBeyondFloor is not int beyond
-            ? CheckResult.Unknown("held-floor", "no 21-day average for the session")
+            ? CheckResult.Unknown("held-floor", "no 21-day average over the dip")
             : new CheckResult("held-floor", beyond == 0, beyond);
 
     private static CheckResult Contraction(LongEvidence e) =>

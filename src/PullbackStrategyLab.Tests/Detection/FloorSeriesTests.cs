@@ -148,26 +148,4 @@ public sealed class FloorSeriesTests
         Assert.Equal(1, PullbackGeometry.ClosesBeyondFloor(bars, dip, Series(101m, 95m), isLong: true));
     }
 
-    [Fact]
-    public void The_floor_series_is_the_average_the_chart_draws()
-    {
-        // The series the detectors compare against is Averages.ExponentialSeries over the same
-        // closes and the same period the chart draws, which is what makes the gate and the line
-        // agree. Asserted here rather than assumed, because the whole defect was two things called
-        // "the 21-day average" that were not the same number.
-        decimal[] closes = [.. Enumerable.Range(0, 200).Select(i => 100m + i)];
-        PullbackGeometry.Bar[] bars =
-            [.. closes.Select(c => new PullbackGeometry.Bar(c, c + 1m, c - 1m, c, c + 1m, c - 1m))];
-
-        IReadOnlyList<decimal?> floor =
-            PullbackStrategyLab.Worker.Stages.IndicatorEngine.FloorSeries(bars, isLong: true);
-
-        IReadOnlyList<decimal?> drawn = Averages.ExponentialSeries(
-            closes,
-            PullbackStrategyLab.Worker.Stages.IndicatorEngine.EmaMediumPeriod,
-            PullbackStrategyLab.Worker.Stages.IndicatorEngine.WarmupSessions);
-
-        Assert.Equal(drawn, floor);
-        Assert.NotNull(floor[^1]);
-    }
 }

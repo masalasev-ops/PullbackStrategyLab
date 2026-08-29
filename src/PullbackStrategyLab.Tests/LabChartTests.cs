@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
@@ -187,4 +188,61 @@ public sealed class LabChartTests : IDisposable
         Assert.All(series.Take(149), v => Assert.Null(v));
         Assert.NotNull(series[149]);
     }
+
+    [Fact]
+    public void The_floor_the_detectors_compare_against_is_the_line_the_page_draws()
+    {
+        // The only external check on what the lab flags.
+        //
+        // `held-floor` fails a setup whose dip closed under the 21-day average, and the chart is
+        // where a person goes to see whether they agree. If the gate and the line are two different
+        // numbers both called "the 21-day average", the disagreement is invisible: the page shows a
+        // close above the line and the gate says it was below, and nothing anywhere says which is
+        // the lab's answer. That is what happened until 3.11, with the gate holding one point of
+        // the series against every session of the dip.
+        //
+        // <b>Read from the chart's own output rather than rebuilt here.</b> An expected series
+        // constructed in this method would prove two implementations written by the same session
+        // agree and would say nothing about the page. So the assertion takes the rendered ema21
+        // line out of LabChart.Read and compares the detector's floor to it. It goes red if the
+        // chart's period literal, its warm-up constant, or its basis is changed on its own.
+        // see: The averages are one implementation, computed nightly and drawn on demand
+        const int Drawn = 60;
+
+        Seed();
+
+        ChartResponse chart = Read("TEST", Drawn);
+        IReadOnlyList<decimal?> line = chart.Averages.Single(a => a.Name == "ema21").Values;
+
+        // The same bars the chart read, shaped the way the detectors shape them.
+        IReadOnlyList<StoredDailyBar> bars;
+        using (SqliteConnection connection = _connections.OpenReadOnly())
+        {
+            bars = DailyBarReader.Read(
+                connection, "TEST", AsOf, Drawn + LabChart.WarmupSessions, _clock.UtcNow);
+        }
+
+        PullbackGeometry.Bar[] shaped =
+        [
+            .. bars.Select(b => new PullbackGeometry.Bar(
+                b.AdjustedClose, b.AdjustedClose, b.AdjustedClose, b.AdjustedClose, b.High, b.Low)),
+        ];
+
+        IReadOnlyList<decimal?> floor = IndicatorEngine.FloorSeries(shaped, isLong: true);
+
+        // The chart drops the warm-up and draws the rest, so the line is the tail of the series the
+        // detector compares against. Stated as a count rather than inferred, because a comparison
+        // over an empty overlap would agree with anything.
+        Assert.Equal(Drawn, line.Count);
+        Assert.True(floor.Count >= line.Count);
+
+        IReadOnlyList<decimal?> tail = [.. floor.Skip(floor.Count - line.Count)];
+
+        Assert.Equal(line, tail);
+
+        // And the overlap is real numbers rather than nulls agreeing with nulls, which is the way
+        // this assertion could hold while comparing nothing.
+        Assert.All(tail, v => Assert.NotNull(v));
+    }
+
 }

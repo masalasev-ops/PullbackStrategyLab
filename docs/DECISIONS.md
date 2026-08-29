@@ -347,7 +347,9 @@ About 45,000 calls a day for arithmetic that is one recursive loop over data alr
 
 **The averages are one implementation, computed nightly and drawn on demand**
 
-The arithmetic lives in Core and is called by two components. IndicatorEngine computes the value at the as-of date and is the sole writer of `indicator_daily`. The read surface computes the same average at every session in a window, which is the shape a chart needs, and writes nothing.
+The arithmetic lives in Core and is called by two components in three shapes. IndicatorEngine computes the value at the as-of date and is the sole writer of `indicator_daily`, and it computes the same average at every session in a window for the checks that read a span rather than a point, which `held-floor` and `no-reclaim` do. The read surface computes that same series for the line a chart draws, and writes nothing.
+
+**The third shape was added at 3.11 and the reason is the one this decision already gives.** `held-floor` compared every session of a dip against the average as at the setup date, which is one point of a series, so the gate and the drawn line disagreed about a stock while both were called the 21-day average. That is this decision's own failure mode reached from inside the lab rather than from the read surface.
 
 The alternative is a second implementation in the read surface, and it is a bad one for a reason that is specific to averages: two exponential averages that disagree only in their seed converge to the same place and differ for a long time on the way, and both of them look like a moving average. A chart drawn from the second one would be a picture of numbers the lab never acted on, and there is no way to see that by looking at it. The one line the two share is asserted rather than assumed: the last value of the drawn series equals the value the engine stores for the same window.
 

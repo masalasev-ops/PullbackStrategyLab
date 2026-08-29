@@ -466,7 +466,7 @@ a 19% jump means something different for a 7% range stock than for a 3% one.*
 | `pullback_bars` | sessions from the thrust extreme to the setup date | `daily_bar.bar_date` | active |
 | `pullback_extreme` | lowest adjusted low since the thrust extreme, long; highest adjusted high, short | `daily_bar.low`, `daily_bar.high`, `daily_bar.close`, `daily_bar.adj_close` | active |
 | `retrace_depth` | (thrust extreme − `pullback_extreme`) / (thrust extreme − thrust origin), signed so both directions read the same way | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close` | active |
-| `closes_beyond_floor` | sessions in the pullback closing below `ema_21`, long; above `ema_50`, short | `daily_bar.adj_close`, `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `closes_beyond_floor` | sessions in the pullback closing below the 21-day average **as at that session**, long; above the 50-day, short. The average is a series over the window, not the value at the as-of date | `daily_bar.adj_close` | active |
 
 *`closes_beyond_floor` reads a different average per direction, because the checks do: `held-floor`
 is the 21-day and `no-reclaim` is the 50-day. One signal rather than two, because the pair is one

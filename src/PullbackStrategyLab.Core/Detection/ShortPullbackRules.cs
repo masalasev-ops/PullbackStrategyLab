@@ -231,7 +231,7 @@ public static class ShortPullbackRules
 
     private static CheckResult NoReclaim(ShortEvidence e) =>
         e.ClosesBeyondFloor is not int beyond
-            ? CheckResult.Unknown("no-reclaim", "no 50-day average for the session")
+            ? CheckResult.Unknown("no-reclaim", "no 50-day average over the bounce")
             : new CheckResult("no-reclaim", beyond == 0, beyond);
 
     private static CheckResult ExitTight(ShortEvidence e) =>
