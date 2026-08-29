@@ -55,9 +55,13 @@ public sealed class PhaseReportStage
 
         Report report = Assemble(root, artifacts, suite, _clock.UtcNow);
 
-        Directory.CreateDirectory(artifacts);
-        File.WriteAllText(Path.Combine(artifacts, "phase-report.json"), JsonSerializer.Serialize(report, Json));
-        File.WriteAllText(Path.Combine(artifacts, "phase-report.html"), Html(report));
+        Report? written = WriteReport(report, artifacts, ReadHead(root));
+        if (written is null)
+        {
+            return 2;
+        }
+
+        report = written;
 
         Console.WriteLine($"{Name}: phase {report.Phase}, {report.Claims.Total} claim(s), {report.Expectations.Total} expectation(s)"
             + (report.Expectations.Voided > 0 ? $", {report.Expectations.Voided} of them void" : string.Empty));
@@ -65,6 +69,7 @@ public sealed class PhaseReportStage
         Console.WriteLine($"{Name}: coverage examined {report.Coverage.Sum(c => c.Examined)}, unexamined {report.Coverage.Sum(c => c.Unexamined)}");
         Console.WriteLine($"{Name}: inputs {string.Join(", ", (report.Inputs?.Tiers ?? []).Select(t => $"{t.Tier} {t.Count}"))}");
         Console.WriteLine($"{Name}: expectations changed since the last commit: {report.ExpectationsChangedSinceHead}");
+        Console.WriteLine($"{Name}: {report.Commit}, working tree {(report.TreeClean ? "clean" : "dirty")}, generated {report.GeneratedAt}");
         Console.WriteLine($"{Name}: artifacts/phase-report.html");
         Console.WriteLine($"{Name}: {(report.Green ? "GREEN" : "NOT GREEN")}");
 
@@ -261,6 +266,8 @@ public sealed class PhaseReportStage
             conformance?.Phase ?? 0,
             conformance?.LastLanded ?? "nothing recorded",
             generatedAt.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            Unstamped,
+            true,
             reasons.Count == 0,
             reasons,
             claims,
@@ -382,6 +389,111 @@ public sealed class PhaseReportStage
     /// The repository, found by walking up to the solution file. The report reads the corpus and
     /// writes beside it, so it needs the repository rather than the build output.
     /// </summary>
+    /// <summary>What Assemble puts in the commit field, which the write replaces or refuses.</summary>
+    public const string Unstamped = "unstamped";
+
+    /// <summary>The commit a report was produced at, and whether anything was uncommitted with it.</summary>
+    public sealed record Head(string Sha, bool Clean);
+
+    /// <summary>
+    /// Why a report may not be written, or null when it may.
+    ///
+    /// <b>An artifact that cannot say where it came from is the thing this refuses.</b> Every phase
+    /// sign-off in this project quotes <c>artifacts/phase-report.json</c>, and until 3.12 the file
+    /// carried no commit at all: a run that did not happen left the previous run's report in place,
+    /// reading as current, and nothing on the page or in the JSON distinguished the two. Writing a
+    /// report with a placeholder where the sha goes would be the same fault with an extra step, so
+    /// the stage writes nothing and exits non-zero instead.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
+    /// </summary>
+    public static string? WhyTheReportCannotBeWritten(Head? head) => head is null
+        ? "the HEAD commit could not be read, so a report written here could not say which tree "
+          + "produced it. A phase report is quoted at every sign-off and an undatable one is worse "
+          + "than none, because it reads exactly like a current one. Run this from inside the "
+          + "repository, with git on the path."
+        : null;
+
+    /// <summary>
+    /// Stamps the report with the commit that produced it and writes both files, or writes neither.
+    ///
+    /// Returns the stamped report, or null when it refused. Both files go through here so there is
+    /// one guard rather than one per file, and the stamp is applied at the write rather than in
+    /// <c>Assemble</c> so that assembling a report and writing one cannot disagree about it.
+    /// </summary>
+    public static Report? WriteReport(Report report, string artifacts, Head? head)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentException.ThrowIfNullOrWhiteSpace(artifacts);
+
+        string? refusal = WhyTheReportCannotBeWritten(head);
+        if (refusal is not null)
+        {
+            Console.Error.WriteLine($"{Name}: {refusal}");
+            return null;
+        }
+
+        Report stamped = report with { Commit = head!.Sha, TreeClean = head.Clean };
+
+        Directory.CreateDirectory(artifacts);
+        File.WriteAllText(Path.Combine(artifacts, "phase-report.json"), JsonSerializer.Serialize(stamped, Json));
+        File.WriteAllText(Path.Combine(artifacts, "phase-report.html"), Html(stamped));
+        return stamped;
+    }
+
+    /// <summary>
+    /// The commit HEAD is at and whether the working tree is clean, or null if either cannot be had.
+    ///
+    /// Read from git rather than tracked anywhere, on the same grounds as the expectations
+    /// comparison above: git already knows. A tree with uncommitted changes still produces a report
+    /// and the report says so, because refusing there would refuse every run made while working.
+    /// The sha is checked for shape rather than taken on trust, so a git that answers something
+    /// other than a commit is a refusal rather than a stamp nobody can resolve.
+    /// </summary>
+    public static Head? ReadHead(string root)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+
+        string? sha = Git(root, "rev-parse HEAD")?.Trim();
+        if (sha is null || sha.Length != 40 || !sha.All(Uri.IsHexDigit))
+        {
+            return null;
+        }
+
+        string? status = Git(root, "status --porcelain");
+        return status is null ? null : new Head(sha, status.Trim().Length == 0);
+    }
+
+    /// <summary>One git command's standard output, or null if it did not start or did not succeed.</summary>
+    private static string? Git(string root, string arguments)
+    {
+        try
+        {
+            var start = new ProcessStartInfo("git", arguments)
+            {
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            };
+
+            using Process? git = Process.Start(start);
+            if (git is null)
+            {
+                return null;
+            }
+
+            string output = git.StandardOutput.ReadToEnd();
+            git.WaitForExit();
+            return git.ExitCode == 0 ? output : null;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // git is not on the path. A refusal rather than a throw, because the caller's job is
+            // to say why no report was written and a stack trace does not say it.
+            return null;
+        }
+    }
+
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -411,7 +523,9 @@ public sealed class PhaseReportStage
 
         page.Append(CultureInfo.InvariantCulture,
             $"<h1>Phase {report.Phase} report <span class=\"{(report.Green ? "green" : "red")}\">{(report.Green ? "green" : "not green")}</span></h1>");
-        page.Append(CultureInfo.InvariantCulture, $"<p class=\"when\">Generated {E(report.GeneratedAt)}</p>");
+        page.Append(CultureInfo.InvariantCulture,
+            $"<p class=\"when\">Generated {E(report.GeneratedAt)} at commit {E(report.Commit)}, "
+            + $"working tree {(report.TreeClean ? "clean" : "dirty")}</p>");
 
         if (report.Reasons.Count > 0)
         {
@@ -649,6 +763,8 @@ public sealed class PhaseReportStage
         int Phase,
         string LastLanded,
         string GeneratedAt,
+        string Commit,
+        bool TreeClean,
         bool Green,
         IReadOnlyList<string> Reasons,
         ClaimSummary Claims,

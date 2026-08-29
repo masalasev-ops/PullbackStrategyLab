@@ -1,0 +1,120 @@
+using PullbackStrategyLab.Tests.Support;
+using PullbackStrategyLab.Worker.Stages;
+using Xunit;
+
+namespace PullbackStrategyLab.Tests;
+
+/// <summary>
+/// The phase report saying which tree produced it, and refusing to be written when it cannot.
+///
+/// <b>What it is for.</b> `tools/verify-phase` is a bash script with no extension, `tools/ci.*`
+/// never calls it, and until 3.12 `artifacts/phase-report.json` carried no commit and no run
+/// instant of its own. Invoked from PowerShell on Windows the script does not execute, returns 0,
+/// and leaves the previous run's artifacts in place reading as current. The script's own rm block
+/// at the top is the guard for exactly that and it is inside the thing that did not run, so the
+/// fix cannot live there. Every phase sign-off in this project quotes that artifact, and the 3.12
+/// sign-off quoted an earlier run's before catching it.
+/// see: Every phase ends in a generated phase report, not in a page somebody looks at
+/// </summary>
+public sealed class PhaseReportProvenanceTests
+{
+    private static PhaseReportStage.Report AReport() => new(
+        Phase: 3,
+        LastLanded: "3.12",
+        GeneratedAt: "2026-08-29 06:27:13Z",
+        Commit: PhaseReportStage.Unstamped,
+        TreeClean: true,
+        Green: true,
+        Reasons: [],
+        Claims: new PhaseReportStage.ClaimSummary(1, 1, 0, 0, 0),
+        Expectations: new PhaseReportStage.FixtureSummary(1, 1, 0, 0, [], []),
+        IndependentExpectations: 1,
+        ExpectationsChangedSinceHead: "0",
+        Inputs: null,
+        Fixture: null,
+        ClaimDetail: [],
+        Coverage: []);
+
+    [Fact]
+    public void A_report_that_cannot_name_its_commit_is_not_written_at_all()
+    {
+        using var artifacts = new TemporaryDirectory();
+
+        // A directory that is not a repository, so git answers non-zero and there is no sha.
+        using var notARepository = new TemporaryDirectory();
+        Assert.Null(PhaseReportStage.ReadHead(notARepository.Path));
+
+        PhaseReportStage.Report? written = PhaseReportStage.WriteReport(
+            AReport(), artifacts.Path, PhaseReportStage.ReadHead(notARepository.Path));
+
+        // Neither file, rather than one of the two or a file with a placeholder in it. A report
+        // that cannot say where it came from reads exactly like a current one, which is the whole
+        // fault: the operator's next act is to quote it.
+        Assert.Null(written);
+        Assert.False(File.Exists(Path.Combine(artifacts.Path, "phase-report.json")));
+        Assert.False(File.Exists(Path.Combine(artifacts.Path, "phase-report.html")));
+
+        Assert.Contains("could not be read",
+            PhaseReportStage.WhyTheReportCannotBeWritten(null)!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_report_written_from_the_repository_carries_the_commit_the_tree_state_and_the_instant()
+    {
+        using var artifacts = new TemporaryDirectory();
+
+        PhaseReportStage.Head head = Assert.IsType<PhaseReportStage.Head>(
+            PhaseReportStage.ReadHead(RepositoryLayout.Root));
+
+        // The other direction, so "always refuses" is not what passes the test above.
+        Assert.Null(PhaseReportStage.WhyTheReportCannotBeWritten(head));
+
+        PhaseReportStage.Report written = Assert.IsType<PhaseReportStage.Report>(
+            PhaseReportStage.WriteReport(AReport(), artifacts.Path, head));
+
+        // Forty hex characters, and not the placeholder Assemble builds with. A report stamped
+        // "unstamped" would be identifiable and useless, which is the failure mode with an extra
+        // step in it.
+        Assert.Equal(40, written.Commit.Length);
+        Assert.All(written.Commit, c => Assert.True(Uri.IsHexDigit(c)));
+        Assert.NotEqual(PhaseReportStage.Unstamped, written.Commit);
+
+        // All three on the page, near the verdict, because the page is what a person reads and the
+        // JSON is what a build session reads.
+        string page = File.ReadAllText(Path.Combine(artifacts.Path, "phase-report.html"));
+        Assert.Contains(written.Commit, page, StringComparison.Ordinal);
+        Assert.Contains(written.GeneratedAt, page, StringComparison.Ordinal);
+        Assert.Contains("working tree", page, StringComparison.Ordinal);
+
+        string json = File.ReadAllText(Path.Combine(artifacts.Path, "phase-report.json"));
+        Assert.Contains(written.Commit, json, StringComparison.Ordinal);
+        Assert.Contains("treeClean", json, StringComparison.Ordinal);
+        Assert.Contains("generatedAt", json, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The wrapper that stops the Windows invocation no-opping, asserted as a file rather than run.
+    ///
+    /// Running it would mean running the whole gate, which is the one thing a unit test must not
+    /// do. What is asserted is what the wrapper is for: that it exists, that it hands the work to
+    /// the one bash script rather than reimplementing it, and that a machine with no bash gets a
+    /// named message and a non-zero exit instead of a silent success.
+    /// </summary>
+    [Fact]
+    public void The_windows_wrapper_defers_to_the_one_script_and_refuses_when_there_is_no_bash()
+    {
+        string wrapper = Path.Combine(RepositoryLayout.Root, "tools", "verify-phase.ps1");
+        Assert.True(File.Exists(wrapper), $"{wrapper} does not exist.");
+
+        string text = File.ReadAllText(wrapper);
+
+        // It runs the script rather than being a second implementation of it. Two implementations
+        // of the gate a phase signs off against is the defect one level up.
+        Assert.Contains("'tools/verify-phase'", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("dotnet test", text, StringComparison.Ordinal);
+
+        // And a machine with no bash is told so, loudly, rather than getting an exit code of 0.
+        Assert.Contains("no bash found", text, StringComparison.Ordinal);
+        Assert.Contains("exit 3", text, StringComparison.Ordinal);
+    }
+}

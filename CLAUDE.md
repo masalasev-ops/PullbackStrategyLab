@@ -68,9 +68,11 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
 | Run the suite | `dotnet test src/PullbackStrategyLab.Tests` | same |
 | Run one test | `dotnet test --filter FullyQualifiedName~<name>` | same |
 | **Verify a checkpoint** | `tools/ci.ps1` | `tools/ci.sh` |
-| **Verify a phase** | `tools/verify-phase` | same |
+| **Verify a phase** | `tools/verify-phase.ps1` | `tools/verify-phase` |
 | Apply migrations | `tools/migrate` | same |
 | Snapshot the store | `tools/snapshot-db` | same |
+
+**The two cells differ for `verify-phase` alone, and that is the point.** `tools/verify-phase` is a bash script with no extension, so PowerShell will not execute it: called by name from a PowerShell session it returns 0 having done nothing, and the previous run's `artifacts/phase-report.*` stay on disk reading as current. The script clears those files at its own top, which is the right guard in the wrong place, because it is inside the thing that did not run. `tools/verify-phase.ps1` finds a bash and hands the work to the one script rather than reimplementing it, and exits non-zero with a named message when the machine has none. The other half is that the report now carries the commit that produced it and refuses to be written without one, so a stale artifact is identifiable as well as harder to produce. Found at the 3.12 sign-off, by a session that did exactly this and quoted an earlier run's figures.
 
 **`tools/verify-phase` is what a phase signs off against.** It runs the pipeline over the committed golden fixture, diffs every stage's output against frozen expectations, parses the architecture document's tables and asserts each claim against the code, and writes `artifacts/phase-report.html` for you and `artifacts/phase-report.json` for a build session. A phase is not done until that report is green, and "green" includes that nothing is listed as unexamined. (see: Every phase ends in a generated phase report, not in a page somebody looks at)
 
@@ -267,6 +269,10 @@ Done conditions are written against **what the file will say after the edit**, n
 **What decided it is the cost of holding a correct pass back.** A phase waiting on something that is not code keeps a branch open for as long as it waits, and the nightly job runs from that checkout for the whole of it. Phase 3 waits three months for accumulation. Production running from a branch is the more immediate defect, because it is a live system rather than a property of a history.
 
 **A checkpoint still lands as its own commit** and still satisfies all seven done conditions on its own, and a session that has committed code still may not sign it off.
+
+**Every change reaches `main` through a branch and a pull request, and none is committed to `main` directly.** That includes a document pass, a correction, a ruling and a sign-off, on the same grounds the commit subject includes them: the exception that feels too small to branch for is the one that gets taken, and a record of what reached the default branch and how is worth more than the minute it costs. The branch is deleted after the merge and the working tree is returned to `main`, because the tree the nightly runs from is this repository's production checkout and a branch left checked out is the hazard the row at 3.12 carries.
+
+**This was undocumented until the 3.12 sign-off and lived only in two records naming a PR number.** `PR #4` appears in the 3.7 sign-off and `PR #5` in an answered question, and neither is a rule; the Merge section above said only that CI green is the condition, which is a statement about when a merge may happen and never about how a change arrives. So the convention was inferred from history, and history is where it broke: `ecf5a3b`, `3e88a35` and `2b5316c` were committed straight to `main`, and the sign-off session that found them was one command away from doing it a fourth time. This is the second convention in this corpus to be lost that way, after the commit subject at 3.7, which is the paragraph in "Conventions" that says a convention existing only in what previous sessions happened to do is one the next session will break. Two instances of the same failure in the same corpus is the point at which the reasoning there stops being an argument for writing it down and starts being an argument for a check.
 
 ## Document lifecycle
 
