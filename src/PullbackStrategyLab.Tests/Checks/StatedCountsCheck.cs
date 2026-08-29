@@ -121,17 +121,17 @@ public sealed partial class StatedCountsCheck
         int dueAtTheWatchlist = obligations.Count(
             r => r.Count > 2 && r[2].Trim().Equals("4.1", StringComparison.Ordinal));
 
-        Assert.Contains("### What the thirty due at 4.1 are", buildPlan, StringComparison.Ordinal);
+        Assert.Contains("### What the thirty-one due at 4.1 are", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations due at 4.1",
-            30,
+            31,
             dueAtTheWatchlist,
             "rows of the carried obligations table falling due at 4.1"));
 
         IReadOnlyList<IReadOnlyList<string>> groups =
-            MarkdownTable.BodyRowsAfter(buildPlan, "### What the thirty due at 4.1 are");
+            MarkdownTable.BodyRowsAfter(buildPlan, "### What the thirty-one due at 4.1 are");
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups the thirty are classified into",
+            "BUILD_PLAN.md, the three groups the thirty-one are classified into",
             3,
             groups.Count,
             "rows of the classification table"));

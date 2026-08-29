@@ -1,3 +1,5 @@
+using System.Globalization;
+using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 
@@ -41,7 +43,15 @@ public sealed class ProbeRowVisibilityTests
 
         // And the three beside it are what they were, so this test says the probe is outside the
         // method rather than merely that one new number is nought.
-        Assert.Equal("32", Single(integrity, "store.schemaVersion"));
+        // Read from the build rather than restated, because this assertion is that the replay still
+        // produces the figure, not that the figure is right: a literal here is a second place the
+        // schema version lives and it goes stale on the next migration, which is how it turned red
+        // at 3.13 for a reason that had nothing to do with the probe. The fixture expectation
+        // derives the same number by hand from the filenames on purpose, and that independence is
+        // where it belongs.
+        Assert.Equal(
+            MigrationRunner.LatestVersion.ToString(CultureInfo.InvariantCulture),
+            Single(integrity, "store.schemaVersion"));
         Assert.Equal("127", Single(integrity, "store.rowsPointingAtSetup"));
         Assert.Equal("0", Single(integrity, "store.foreignKeyViolations"));
 

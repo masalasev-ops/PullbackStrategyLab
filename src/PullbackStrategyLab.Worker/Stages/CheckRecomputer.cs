@@ -84,129 +84,6 @@ public sealed class CheckRecomputer
     /// </summary>
     public const string RestoreFlag = "--restore";
 
-    /// <summary>The date to recompute for, named rather than positional.</summary>
-    public const string AsOfFlag = "--as-of";
-
-    /// <summary>
-    /// This stage's command line, parsed once with the arity of every flag declared.
-    ///
-    /// <b>The date used to be whatever argument was neither a flag nor the check's own name.</b>
-    /// `--check`'s value was excluded by naming it and no other flag's value was, so
-    /// <c>recheck --check cluster --expect 15 2026-08-27</c> took <c>15</c> as the date and died on
-    /// the format. It failed loudly and wrote nothing, so this was never a correctness fault; what
-    /// it was is a command with exactly one ordering that works and nothing anywhere saying which.
-    ///
-    /// <b>The arity is declared rather than the exclusion, because the exclusion is what did not
-    /// scale.</b> Naming `--check` fixed one flag and left the next one to reintroduce the fault,
-    /// which is how `--expect` arrived. Here every flag is in one of two sets and anything else is
-    /// refused by name, so a flag added later cannot be added without saying whether it takes a
-    /// value: the alternative, assuming an unknown flag takes one, would let a new boolean swallow
-    /// the date and fall back to today, which is the same fault reading as success.
-    ///
-    /// <c>--as-of</c> is the form to write and the bare date still works, so the RUNBOOK's
-    /// documented ordering keeps parsing. Both are accepted and they must agree.
-    /// </summary>
-    public sealed record Arguments(string? Check, DateOnly? AsOf, int Expect, bool Applying, bool Restoring)
-    {
-        /// <summary>The flags carrying a value, which is the next argument along.</summary>
-        public static IReadOnlySet<string> TakeAValue { get; } =
-            new HashSet<string>(StringComparer.Ordinal) { CheckFlag, ExpectFlag, AsOfFlag };
-
-        /// <summary>The flags that are their own value.</summary>
-        public static IReadOnlySet<string> StandAlone { get; } =
-            new HashSet<string>(StringComparer.Ordinal) { ApplyFlag, RestoreFlag };
-
-        /// <summary>
-        /// The command line, or an <see cref="ArgumentException"/> naming what it could not read.
-        ///
-        /// Every failure here is a refusal rather than a default. A command line this stage cannot
-        /// read is one where somebody meant something specific, and guessing at it is how a repair
-        /// runs against the wrong night.
-        /// </summary>
-        public static Arguments Parse(IReadOnlyList<string> args)
-        {
-            ArgumentNullException.ThrowIfNull(args);
-
-            string? check = null;
-            string? named = null;
-            string? positional = null;
-            int expect = -1;
-            bool applying = false;
-            bool restoring = false;
-
-            for (int i = 0; i < args.Count; i++)
-            {
-                string argument = args[i];
-
-                if (!argument.StartsWith("--", StringComparison.Ordinal))
-                {
-                    if (positional is not null)
-                    {
-                        throw new ArgumentException(
-                            $"'{positional}' and '{argument}' are both given as the date. One date, or use {AsOfFlag}.");
-                    }
-
-                    positional = argument;
-                    continue;
-                }
-
-                if (StandAlone.Contains(argument))
-                {
-                    applying |= string.Equals(argument, ApplyFlag, StringComparison.Ordinal);
-                    restoring |= string.Equals(argument, RestoreFlag, StringComparison.Ordinal);
-                    continue;
-                }
-
-                if (!TakeAValue.Contains(argument))
-                {
-                    throw new ArgumentException(
-                        $"'{argument}' is not an option this stage knows. It takes "
-                        + $"{string.Join(", ", TakeAValue.Order(StringComparer.Ordinal))} with a value and "
-                        + $"{string.Join(", ", StandAlone.Order(StringComparer.Ordinal))} on their own. An option is "
-                        + "refused rather than ignored, because an option nobody reads is an instruction nobody carried out.");
-                }
-
-                if (i + 1 >= args.Count)
-                {
-                    throw new ArgumentException($"{argument} needs a value after it.");
-                }
-
-                // The value, consumed here so it can never be read as the date. This is the whole
-                // repair: the loop knows what is a value because the flag said so.
-                string value = args[++i];
-
-                if (string.Equals(argument, CheckFlag, StringComparison.Ordinal))
-                {
-                    check = value;
-                }
-                else if (string.Equals(argument, AsOfFlag, StringComparison.Ordinal))
-                {
-                    named = value;
-                }
-                else if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out expect))
-                {
-                    throw new ArgumentException($"{ExpectFlag} takes a whole number and was given '{value}'.");
-                }
-            }
-
-            if (named is not null && positional is not null
-                && !string.Equals(named, positional, StringComparison.Ordinal))
-            {
-                throw new ArgumentException(
-                    $"the date is given twice and the two disagree: '{positional}' and {AsOfFlag} '{named}'.");
-            }
-
-            string? date = named ?? positional;
-
-            return new Arguments(check, date is null ? null : ReadDate(date), expect, applying, restoring);
-        }
-
-        private static DateOnly ReadDate(string value) =>
-            DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly date)
-                ? date
-                : throw new ArgumentException($"'{value}' is not a date. Give it as yyyy-MM-dd.");
-    }
-
     private static readonly JsonSerializerOptions CheckResultsJson = new(JsonSerializerDefaults.Web);
 
     private readonly StoreConnectionFactory _connections;
@@ -669,6 +546,135 @@ public sealed class CheckRecomputer
         command.Parameters.AddWithValue("@corrected_check", check);
         command.Parameters.AddWithValue("@setup_id", candidate.SetupId);
         command.ExecuteNonQuery();
+    }
+
+    // Nested types sit at the end of this class, beside ClusterInput and Candidate below.
+    // That is this file's own convention and it is also load-bearing: `writer-ownership`
+    // attributes a write to the nearest type declaration above it rather than to the type whose
+    // braces enclose it, so a nested type declared above a statement reattributes that statement
+    // to the nested type. Declaring Arguments at the top of the class moved both UPDATE setup
+    // statements onto `Arguments` and turned the check red in both directions.
+    /// <summary>The date to recompute for, named rather than positional.</summary>
+    public const string AsOfFlag = "--as-of";
+
+    /// <summary>
+    /// This stage's command line, parsed once with the arity of every flag declared.
+    ///
+    /// <b>The date used to be whatever argument was neither a flag nor the check's own name.</b>
+    /// `--check`'s value was excluded by naming it and no other flag's value was, so
+    /// <c>recheck --check cluster --expect 15 2026-08-27</c> took <c>15</c> as the date and died on
+    /// the format. It failed loudly and wrote nothing, so this was never a correctness fault; what
+    /// it was is a command with exactly one ordering that works and nothing anywhere saying which.
+    ///
+    /// <b>The arity is declared rather than the exclusion, because the exclusion is what did not
+    /// scale.</b> Naming `--check` fixed one flag and left the next one to reintroduce the fault,
+    /// which is how `--expect` arrived. Here every flag is in one of two sets and anything else is
+    /// refused by name, so a flag added later cannot be added without saying whether it takes a
+    /// value: the alternative, assuming an unknown flag takes one, would let a new boolean swallow
+    /// the date and fall back to today, which is the same fault reading as success.
+    ///
+    /// <c>--as-of</c> is the form to write and the bare date still works, so the RUNBOOK's
+    /// documented ordering keeps parsing. Both are accepted and they must agree.
+    /// </summary>
+    public sealed record Arguments(string? Check, DateOnly? AsOf, int Expect, bool Applying, bool Restoring)
+    {
+        /// <summary>The flags carrying a value, which is the next argument along.</summary>
+        public static IReadOnlySet<string> TakeAValue { get; } =
+            new HashSet<string>(StringComparer.Ordinal) { CheckFlag, ExpectFlag, AsOfFlag };
+
+        /// <summary>The flags that are their own value.</summary>
+        public static IReadOnlySet<string> StandAlone { get; } =
+            new HashSet<string>(StringComparer.Ordinal) { ApplyFlag, RestoreFlag };
+
+        /// <summary>
+        /// The command line, or an <see cref="ArgumentException"/> naming what it could not read.
+        ///
+        /// Every failure here is a refusal rather than a default. A command line this stage cannot
+        /// read is one where somebody meant something specific, and guessing at it is how a repair
+        /// runs against the wrong night.
+        /// </summary>
+        public static Arguments Parse(IReadOnlyList<string> args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            string? check = null;
+            string? named = null;
+            string? positional = null;
+            int expect = -1;
+            bool applying = false;
+            bool restoring = false;
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                string argument = args[i];
+
+                if (!argument.StartsWith("--", StringComparison.Ordinal))
+                {
+                    if (positional is not null)
+                    {
+                        throw new ArgumentException(
+                            $"'{positional}' and '{argument}' are both given as the date. One date, or use {AsOfFlag}.");
+                    }
+
+                    positional = argument;
+                    continue;
+                }
+
+                if (StandAlone.Contains(argument))
+                {
+                    applying |= string.Equals(argument, ApplyFlag, StringComparison.Ordinal);
+                    restoring |= string.Equals(argument, RestoreFlag, StringComparison.Ordinal);
+                    continue;
+                }
+
+                if (!TakeAValue.Contains(argument))
+                {
+                    throw new ArgumentException(
+                        $"'{argument}' is not an option this stage knows. It takes "
+                        + $"{string.Join(", ", TakeAValue.Order(StringComparer.Ordinal))} with a value and "
+                        + $"{string.Join(", ", StandAlone.Order(StringComparer.Ordinal))} on their own. An option is "
+                        + "refused rather than ignored, because an option nobody reads is an instruction nobody carried out.");
+                }
+
+                if (i + 1 >= args.Count)
+                {
+                    throw new ArgumentException($"{argument} needs a value after it.");
+                }
+
+                // The value, consumed here so it can never be read as the date. This is the whole
+                // repair: the loop knows what is a value because the flag said so.
+                string value = args[++i];
+
+                if (string.Equals(argument, CheckFlag, StringComparison.Ordinal))
+                {
+                    check = value;
+                }
+                else if (string.Equals(argument, AsOfFlag, StringComparison.Ordinal))
+                {
+                    named = value;
+                }
+                else if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out expect))
+                {
+                    throw new ArgumentException($"{ExpectFlag} takes a whole number and was given '{value}'.");
+                }
+            }
+
+            if (named is not null && positional is not null
+                && !string.Equals(named, positional, StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"the date is given twice and the two disagree: '{positional}' and {AsOfFlag} '{named}'.");
+            }
+
+            string? date = named ?? positional;
+
+            return new Arguments(check, date is null ? null : ReadDate(date), expect, applying, restoring);
+        }
+
+        private static DateOnly ReadDate(string value) =>
+            DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly date)
+                ? date
+                : throw new ArgumentException($"'{value}' is not a date. Give it as yyyy-MM-dd.");
     }
 
     private readonly record struct ClusterInput(string? Industry, int Count, string? ResolvedAt);

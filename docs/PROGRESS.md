@@ -6920,3 +6920,125 @@ and the rule, both of which are on the record, and stops there.
 **Nothing else in that entry moves.** Its six closed findings, its figures, its process correction
 about quoting an earlier run's artifacts, and its seven done conditions all stand, and finding six
 was closed on its own terms by the entry at `b6948fd`.
+
+## 3.13 — 2026-08-29 — phase-3-review-findings — the review's findings, and a nested type that moved two writes
+
+The review after the 3.12 sign-off, run by a session with no commits to this repository, found five
+things. Two are rows and three are repairs to shipped code, which is a checkpoint rather than a set
+of obligations on the reading that made 3.8 through 3.12 checkpoints. Two of the three sit in code
+`b5e0b96` committed and `16e41d0` signed off, so this is also where the read that code never had is
+discharged; the correction naming that gap is the entry above.
+
+Found:      **The phase report wrote one file of two.** `WriteReport`'s doc comment said "writes
+            both files, or writes neither" above a method that wrote the JSON, rendered the page,
+            then wrote it. A throw in the render left a current JSON beside the previous run's page:
+            the staleness the commit stamp was added at 3.12 to make visible, one file over and one
+            step later, and the page is the half a person reads.
+
+            **`recheck --restore` validated a check argument and discarded it.** The query bounded
+            on the date alone, so a restore put back every corrected row of that date whatever check
+            each was corrected for. Harmless while `cluster` is the only admitted check and silently
+            destructive on the day a second is, undoing one check's corrections in the course of
+            restoring another's with nothing in the output naming them.
+
+            **`recheck`'s date was whatever argument was neither a flag nor the check's own name.**
+            `--check`'s value was excluded by naming it and no other flag's was. Measured rather
+            than described: of the four orderings anybody would write, **three** read `--expect`'s
+            value as the date and exited on the format, and the one the RUNBOOK documented is the
+            one that happened to work.
+
+Built:      **(a)** Both report payloads are rendered before either file is touched, then each is
+            written to a temporary beside its target and moved over it. Rendering first closes the
+            real window, since building the page is the only step that can fail on its own
+            contents. The alternative of writing the page first with the JSON as a marker is
+            rejected in the source with its reason. The renderer is a parameter so a caller can
+            fail the first half, which is the only way an ordering can be asserted.
+
+            **(b) Migration 033 adds `setup.corrected_check`, because there was no column.** 025
+            through 027 record that a row was corrected, how late its input was and what it said
+            before, and none records what was corrected: the check's name reached the row only
+            inside `corrected_because`, as a phrase inside a sentence. Parsing it back out was the
+            alternative and is the shape this project refuses everywhere else. The restore now
+            selects on the column, and a row corrected before 033 carries none and is reported with
+            a count rather than swept in.
+
+            **(c)** Every flag declares whether it takes a value, its value is consumed by the loop
+            that read the flag, and an option the stage does not know is refused by name. Assuming
+            an unknown flag takes one was rejected in the source: a new boolean would swallow the
+            date and fall back to today, which is this fault reading as success. `--as-of` added as
+            the form to write, with the bare date still parsing so the RUNBOOK's ordering keeps
+            working, and the two must agree if both are given.
+
+Verified:   `tools/ci.ps1` green, **28 steps, 548 tests**, up from 537 by the eleven this checkpoint
+            adds. `tools/verify-phase` under bash GREEN, with its figures and sha in the sign-off
+            that follows rather than here, because this entry is a checkpoint's and not a phase's.
+
+            **Both repairs with a red-before-green proof, by removing the thing each guards.**
+            Reverting the write to the 3.12 order fails
+            `A_page_that_cannot_be_rendered_leaves_both_files_as_the_last_run_left_them` on the JSON
+            having been replaced. Reverting the restore to the date-only query fails
+            `A_restore_scoped_to_one_check_leaves_another_checks_corrections_standing` on the
+            candidate count. The third part is asserted across six orderings rather than on the one
+            that failed, because a fix naming `--expect` would pass a test written only about
+            `--expect`.
+
+            **The second check is seeded rather than recomputed and the helper says why.**
+            `SetupChecks.RecordedNotRequired` admits one check, so the state the scoping test is
+            about cannot be produced by running the stage twice. A defect that only appears once a
+            list grows is asserted before the list grows or it is found by the correction it
+            destroys.
+
+Measured:   **Three of four argument orderings read `15` as the date** under the old rule, against
+            one that worked. **Seven frozen-only permits** in `fixtures/expectations.json` rest on
+            the obligation raised at 3.10, which falls due at 4.1, and `fixture-replay` fails a
+            permit whose due checkpoint PROGRESS records: that is the one carried obligation of
+            thirty-one that blocks a phase-4 done condition, and it blocks 4.1's own condition 2.
+
+            **`store.schemaVersion` moves from 32 to 33** and stays attributed to 3.12. The figure
+            is the highest migration number the build carries, so it moves whenever a migration
+            lands; the expectation asserts the guard 3.12 built rather than the migration that last
+            moved its value. `ProbeRowVisibilityTests` restated the same number as a literal and
+            went red for a reason that had nothing to do with the probe, so it now reads
+            `MigrationRunner.LatestVersion` while the fixture keeps deriving it by hand from the
+            filenames, which is where the independence belongs.
+
+            **The seven done conditions, each with what met it.** One, three deliverables exist and
+            run. Two, `tools/ci.*` green at 28 steps and 548 tests, recorded here. Three, the one
+            new store write is `corrected_check`, declared in SCHEMA on CheckRecomputer's writer
+            line and in `SetupJournalTests`' column list, and `writer-ownership` passes. Four, no
+            new numeric constant is stated in a doc, and every decision name cited in the new code
+            and documents resolves. Five, the matrix runs the suite on both runners. Six, this
+            entry. Seven, **amended, and named as an amendment here.** This checkpoint contributes
+            no fixture expectation and takes a permit under the obligation raised at 3.10, on the
+            same footing 3.10 itself did. What is different is that the permit states a reason
+            rather than recording that one is owed: the phase report is the instrument that reads
+            the replay rather than a stage in it, `recheck` is a hand-run repair no night invokes,
+            and producing an expectation for either would mean authoring a broken night into the
+            replay store, which puts an authored row into a population whose figures are reported
+            as captured. All three deliverables are held by behavioural tests instead.
+
+Carried:    **Two rows, both due at 4.1, and one existing row extended.**
+
+            `writer-ownership` attributing a write to the nearest type declaration above it rather
+            than to the type whose braces enclose it. Found by hitting it: declaring
+            `CheckRecomputer.Arguments` at the top of its class moved both `UPDATE setup` statements
+            onto `Arguments` and turned the check red in both directions. It is loud only because
+            every file in this corpus puts nested types last; where a file holds two components the
+            mis-attribution lands on a name SCHEMA does have and the check passes on the wrong
+            subject.
+
+            Three small things found in one read, of which one has a consequence:
+            `LabStatusView.SchemaBehind` is a not-equal named as "behind", so a build older than its
+            store reads on the band as a build newer than its store and sends the operator to run a
+            migration that is not owed, where the guard's own message distinguishes the two.
+
+            The 3.5 row on `CeilingCalculator`'s insert comment is extended with the general form
+            3.9(e) implemented in one place only, rather than joined by a second row.
+
+            **The classification of the thirty-one due at 4.1 is in BUILD_PLAN** and moves nothing:
+            one blocks, five belong to a later checkpoint's subject, twenty-five are independent of
+            phase 4 entirely. Its four numbers are derived from the obligations table and checked.
+
+            **`data/live` is at 32 and this build needs 33.** Every stage refuses until
+            `tools/migrate` runs, naming both versions, which is the 3.12 guard doing what the night
+            of 2026-08-28 had nothing to do. It is still a night if nobody runs it.
