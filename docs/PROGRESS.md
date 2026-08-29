@@ -7042,3 +7042,227 @@ Carried:    **Two rows, both due at 4.1, and one existing row extended.**
             **`data/live` is at 32 and this build needs 33.** Every stage refuses until
             `tools/migrate` runs, naming both versions, which is the 3.12 guard doing what the night
             of 2026-08-28 had nothing to do. It is still a night if nobody runs it.
+
+## 3.14 — 2026-08-29 — phase-3-completeness-review — the clause that governed no row, and a repair that raised what it repaired
+
+A completeness review of the whole of phase 3, asked whether everything owed up to it had been
+done and whether phase 4's plan could start. The answer is no, on three separable counts, and this
+checkpoint is the code half of it. The two that are not code are 3.15, which the plan did not have,
+and the 2.11 threshold ruling, which is the operator's and which BUILD_PLAN already records as the
+one open question that stalls a phase.
+
+Reproduced before reading anything: `tools/ci.ps1` green at 28 steps and 548 tests, and
+`tools/verify-phase` under Git bash GREEN at 126 claims, 76 passed, 0 failed, 50 out of scope, 0
+unexamined, 1,300 expectations with 1 void, coverage examined 4,445. Both figures are the ones the
+3.13 entry states. Every defect below was found on that tree, with both gates green.
+
+Found:      **`fixture-replay` applied the permit guard's four clauses to one of two populations,
+            and every permit is in the other.** `DoneConditionSevenProblems` asked done condition
+            seven in two loops: one over the landed checkpoints that contributed no expectation at
+            all, one over the checkpoints the fixture holds expectations for. The clause failing a
+            permit **whose obligation has already fallen due** was written only in the second, along
+            with the clause about an obligation named ambiguously. All eight permits in
+            `fixtures/expectations.json` name checkpoints with no expectations, so all eight take
+            the first loop. **BUILD_PLAN calls that guard the one row at 4.1 that collects itself**,
+            and it would have stayed green through 4.1 and every checkpoint after it. The seven
+            proof tests could not have seen it: each calls the four-argument overload, which passes
+            an empty landed set, so the loop carrying every live permit never ran in any of them.
+            This is a defect shape none of the seven in CLAUDE.md covers and it is now the eighth.
+
+            **The same grouping made the eight permitted checkpoints invisible to the coverage
+            record.** `frozenOnly` was taken over the checkpoints the fixture holds something for,
+            which is the set that excludes every permitted one, so the loop whose own comment says a
+            single summary row "is the shape of report that let this sit unnoticed" emitted nothing
+            at all. The report read "checkpoints with expectations in the fixture 29" and "of those
+            carrying an independently produced expectation 29", which is 29 of 29, while eight
+            landed checkpoints carried no verification and were named in neither the examined, the
+            unexamined nor the out-of-scope column.
+
+            **`CheckRecomputer` recomputed `cluster` from a hit the detector did not read, and two
+            of the fifteen rows it repaired carry the wrong number.** `ClusterInputs` took the
+            largest count over every scan a name hit on the setup's own session; its comment said
+            that was "what the detector read from `scan_hit.cluster_count` for that name". The
+            detector reads one hit, the most recent inside the thrust window on an upward or
+            downward mover scan, and records which on the setup row. A maximum is never smaller, so
+            the repair could only ever raise a recorded verdict's value. In `data/live`,
+            **`2026-08-27-PATH-long` reads 13 where its `leader` thrust counts 6, and
+            `2026-08-27-PURR-long` reads 4 where its `gainer` thrust counts 3**. Both verdicts stand
+            because the threshold is 2 and both numbers clear it; a name whose thrust scan counts 1
+            while another counts 2 would have been promoted from fail to pass, which is the thing
+            immutability exists to prevent, arrived at through the permission that narrows it.
+
+            **The effective-observation count described a different estimator from the one reported
+            beside it.** `PairedInterval.Of` returns the unweighted mean of the nightly means, so a
+            night of five pairs moves the answer as far as a night of eighty-two.
+            `EffectiveObservations` started from the sum of the pair counts. Those agree only when
+            every night carries the same number: the estimator's precision is governed by the
+            harmonic mean of the pair counts and the sum is their arithmetic mean, and the
+            arithmetic mean is never smaller. **Forty nights alternating eighty and five pairs
+            reported 965 where the estimate carries 214.** 3.6 fires on this figure.
+
+            **`surface-claims` declared a source scan it does not perform, backed by a test that
+            called nothing in it.** `A_surface_that_drops_a_claim_is_caught` declared two constants
+            and asserted that one contained a substring and the other did not. It is a property of
+            `string.Contains` and holds however the check behaves; the comparison could have been
+            deleted and it would have stayed green. The declaration was the wrong shape as well:
+            the check reads a rendered page and an authored claim and no shipped source at all,
+            which is the shape twelve peer checks declare `NoSourceScan` for. The run reported 18
+            source scans of which 2 unbacked where the honest figures are 17 and 2.
+
+            **`tools/ci.ps1` and `tools/ci.sh` deferred to a pre-set `PullbackStrategyLab__DataRoot`
+            and step 1 of both is an unconditional delete.** An operator who exports the root
+            RUNBOOK step 3 tells them to configure, then runs the suite, loses `data/live` and every
+            night in it. The decision this holds says the property rests on the entry points setting
+            the root, and both of them defaulted instead.
+
+            **`tools/verify-phase.ps1` chose the Windows Subsystem for Linux launcher, and its own
+            refusal was unreachable.** `Get-Command bash` on this machine answers with
+            `C:\Windows\System32\bash.exe` ahead of Git for Windows, which is not a bash for this
+            tree; with no distribution installed the operator's documented Windows command exits 1,
+            the code a red report exits with, having run nothing. The fallback list naming Git for
+            Windows was never reached. Separately its no-bash branch called `Write-Error` under a
+            Stop preference, which is terminating, so the `exit 3` beneath it never ran and the test
+            asserting that code read a string in a line that could not execute.
+
+            **`tools/verify-phase` cleared every report part except `input-tiers.json`**, so the
+            report's own "the input-tier part is missing" reason could never fire again, which is
+            the exact failure the clearing block's own comment names.
+
+            **The phase report listed the voided expectation under a red "Expectations that did not
+            hold" on a page headed green.** The counting has always read `is not ("matched" or
+            "void")` and the page read `!= "matched"`; the per-tier void count was dropped on the
+            way in, so the FROZEN row rendered 528 total against 527 matched with one row
+            unaccounted anywhere.
+
+            **A superseded decision was never moved out of the live section.** `fbeccec` pasted the
+            whole body of "The minimum sample is derived from a measured dispersion and counted in
+            effective observations" over the `Supersedes` line of an unrelated decision under "Data
+            and platform", leaving the orphaned tail of that line below it. A reader of DECISIONS
+            found a fully reasoned live entry stating the minimum as **196 effective observations at
+            80% power** where the live answer is 262 at 90%. No check could see it: neither line is
+            a bold-only line, so `decision-resolves` never registered the name and
+            `no-superseded-citation` could not find it under the heading it reads.
+
+            **Two figures in BUILD_PLAN's own classification section were wrong, and one of them is
+            the standing instruction for what must be discharged before 4.1.** It said seven
+            frozen-only permits where the fixture holds eight, in the commit that added the eighth,
+            and "six of the eight" over eight rows with one exception named. And it names one row as
+            collecting itself at 4.1 where two do: `price-storage-form` defers 18 columns to 4.1 and
+            `CheckCoverage.DeferralProblems` fails a deferral naming a landed checkpoint on exactly
+            the terms the permits are failed on.
+
+Built:      **(a)** `DoneConditionSevenProblems` has one population and one body. `Populations` is
+            every checkpoint that landed or contributed, a checkpoint with none entering as nought
+            of nought, and every clause is applied to all of them. The coverage record is taken over
+            the same set, so each permitted checkpoint is named as an out-of-scope item closing at
+            the checkpoint its obligation falls due at, rather than being absent from every column.
+
+            **(b)** `ClusterInputs` counts per session, scan and industry, and the lookup is keyed on
+            the setup row's own `thrust_scan` and `thrust_session`. A row naming no thrust is refused
+            with a message saying so rather than one about its sector. The test seeds now write the
+            thrust a detector would have written, which they did not: the store the tests built was
+            not a store a detector could have produced, and that is why nothing here could have
+            caught it.
+
+            **(c)** The effective count is `n` times the harmonic mean of the pair counts, discounted
+            by the same design effect and serial term as before. An even series is unchanged to the
+            digit, which is why no fixture expectation moved and why nothing noticed.
+
+            **(d)** `surface-claims` declares `NoSourceScan` with its reason, the comparison is a
+            public pure method, and the proof calls it with a page body that carries the claim and
+            one that does not.
+
+            **(e)** Both CI entry points assign the data root rather than defaulting to it.
+
+            **(f)** The wrapper rejects the WSL launchers by name, asks each remaining candidate to
+            read `tools/verify-phase` from the repository root before handing it the gate, names the
+            bash it chose, and writes its refusal to the error stream directly so `exit 3` is
+            reached. `PullbackStrategyLab__Bash` names one instead of searching, which is also what
+            makes the refusal reachable from a test: emptying the search environment does not, because
+            a child PowerShell recovers `ProgramFiles` whatever the parent sets.
+
+            **(g)** `input-tiers.json` is in the clearing list.
+
+            **(h)** `TierBreakdown` carries `Void`, the tier table has a column for it, and a voided
+            row is rendered under its own heading rather than as one that did not hold.
+
+            **(i)** The superseded decision is under "Previously decided" with its own bold-only name
+            line and its reasoning intact, and the `Supersedes` line it displaced is restored.
+            BUILD_PLAN's counts are corrected, the classification names both rows that collect
+            themselves, `writer-ownership`'s attribution row moves from the group meaning "nothing in
+            phase 4 touches it" to 4.6, and `stated-counts` now derives the permit figure from the
+            fixture so the two cannot part again.
+
+Verified:   `tools/ci.ps1` green, **28 steps, 557 tests**, up from 548 by the nine this checkpoint
+            adds. `tools/verify-phase` under Git bash GREEN, with its figures and sha in 3.15 rather
+            than here, because this entry is a checkpoint's and not a phase's.
+
+            **Every repair proved red before green by removing the thing it guards.** Disabling the
+            due-point clause for the zero-contribution population fails both new permit tests on an
+            empty collection, which is the state the shipped check was in. Reverting the cluster
+            lookup to the maximum fails
+            `The_repaired_count_is_the_thrusts_own_scan_rather_than_the_largest_the_name_carries` at
+            13 against 6 and `A_thrust_on_an_earlier_session_is_counted_over_that_session` at 3
+            against 2. Reverting the effective count to the row sum fails
+            `An_uneven_series_is_worth_its_harmonic_mean_rather_than_its_row_count` at 965 against
+            214, and `An_even_series_is_worth_exactly_what_it_was_before` passes either way, which is
+            the assertion that nothing right was moved.
+
+            **The wrapper's refusal is proved by running it**, in a child `powershell.exe` pointed at
+            a bash that is not one, reading the exit code and the message off the process. The string
+            scan it replaces passed against a wrapper whose `exit 3` could not execute.
+
+Measured:   **The two wrong live values, and what putting them right would cost.** `PATH` and `PURR`
+            on 2026-08-27, both long, both on a recorded-not-required verdict, neither changing a
+            gate. `AlreadyCorrected` refuses a second correction, so the repair is a restore of that
+            date's cluster corrections followed by a re-run. It is rowed as the operator's, on the
+            grounds a build session does not act on the running store.
+
+            **The eight permits, up from seven at 3.13.** 1.1, 1.2, 1.11, 2.1, 2.12, 3.7, 3.10 and
+            3.13, every one naming the obligation raised at 3.10 and due at 4.1. Two rows now collect
+            themselves at 4.1 rather than one, the second being `price-storage-form`'s 18 deferred
+            columns.
+
+            **The classification's three groups are 2, 5 and 24 rather than 1, 5 and 25**, summing to
+            the same 31, and the sum is derived rather than stated. Fifty-eight obligation rows, up
+            from forty-six by the twelve this pass raises.
+
+            **The seven done conditions, each with what met it.** One, nine deliverables exist and
+            run. Two, `tools/ci.*` green at 28 steps and 557 tests, recorded here. Three, no new
+            store write. Four, no new numeric constant is stated in a doc, and every decision name
+            cited in the new code and documents resolves. Five, the matrix runs the suite on both
+            runners. Six, this entry. Seven, **amended, and named as an amendment here.** This
+            checkpoint contributes no fixture expectation and takes a permit under the obligation
+            raised at 3.10, on 3.13's footing: the permit states its reason rather than recording
+            that one is owed. Seven of its nine deliverables are the verification harness or the
+            tools that run it rather than stages in the replayed pipeline, the recompute is a
+            hand-run repair no night invokes, and the document pass produces no figure. The ninth,
+            the effective-observation baseline, does touch a replayed figure and is unchanged over
+            an even series by construction, which is the only kind `fixtures/interval-cases.json`
+            can express: that gap is the row this checkpoint raises due at 3.6, and an expectation
+            added before it closes would assert the case that already agreed. All nine are held by
+            behavioural tests instead, every one proved red before green.
+
+Carried:    **Twelve rows, and one of them changes a due point rather than adding to 4.1.**
+            `PairedInterval.Estimate.Nights` and the interval fixture's inability to express an
+            uneven series both fall due **at 3.6**, because both are 3.6's own instruments rather
+            than phase 4's: the panel is stated to show both halves of 3.6's trigger every night and
+            it shows one, and the `DERIVED` tier that would have caught the count still asserts only
+            the population in which the two figures agree.
+
+            Nine fall at 4.6 with the rest of the verification work: `recheck --expect` compared after
+            the writes, a dry run that opens a run scope, two `SectorResolver` figures over
+            populations other than the ones named beside them, `point-in-time` blind to an
+            interpolated statement, `architecture-conformance`'s scan backed by a scan,
+            `path-casing` blind to verbatim and raw literals, SCHEMA's `calibration_setup` sentence,
+            RUNBOOK step 3 against the two-roots decision, and CHANGELOG unreconciled against the
+            spec diffs.
+
+            One is the operator's, being the two live rows above.
+
+            **3.15 is the row this review found missing rather than a row it raises.** Phase 3's
+            table ended at 3.13 and its only sign-off is 3.7, scoped by its own done condition to 3.0
+            through 3.5. Every other phase's table ends in its sign-off. 3.13's own record parks its
+            `tools/verify-phase` figures in "the sign-off that follows", and there was none: not in
+            PROGRESS, not in BUILD_PLAN, and not on a branch. **This session has committed code and
+            may not sign it off.**

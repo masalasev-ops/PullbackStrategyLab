@@ -360,33 +360,7 @@ The rule was written naming splits because a split is the loud case. The reason 
 
 Magnitude does not enter it. A dividend distorts an average less than a split does, and "less wrong" is not a category this design has.
 
-Supersedes **The minimum sample is derived from a measured dispersion and counted in effective observations**
-A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. The first two are judgements and belong to a person. The third is a fact about the market, and until this decision nothing in the corpus had measured it.
-
-**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it since has treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
-
-**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
-
-**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
-
-**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
-
-| Input | Value | Kind |
-|---|---|---|
-| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, and ARCHITECTURE's own |
-| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
-| `z_beta`, 80% power | 0.841621 | judgement, and the input nothing ever stated |
-| `sigma_d`, the paired dispersion | 0.099811 | measured |
-
-Which gives **196 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 200 would be an authored step in a figure whose whole point is that no step in it is authored.
-
-**What the old figure turns out to have been.** 160 is this same arithmetic at about 72% power. It was not a different calculation, it was this one with a power nobody chose, and the gap between 160 and 196 is entirely that choice.
-
-**The two judgements are the operator's and the sensitivity is stated so the choice is a real one.** At the measured dispersion, detecting three points needs 87 and detecting one and a half needs 348, because the sample goes as the inverse square of the difference. At two points, 70% power needs 154 and 90% needs 262. Moving either is a superseding decision, not an adjustment.
-
-Superseded on 2026-08-27 by **The minimum sample is 262 effective observations, ratified at two points and 90% power**. Everything it measured survives unchanged: the dispersion, the population it was taken over, and the arithmetic. What it could not do was settle its own two judgements, which it said outright and left to a ratification. 196 was that arithmetic at an unratified 80% power, and it was never a figure anybody had chosen.
-
-**A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
+Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision below.
 
 **A rebuild is satisfied by a recorded refetch, not by inferring one from what changed**
 The obvious implementation is to infer it. The refetch writes bars, bars carry an `observed_at`, so a window observed after the action must be a window that has been rebuilt. It does not work, and it fails quietly in both directions.
@@ -529,6 +503,32 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**The minimum sample is derived from a measured dispersion and counted in effective observations**
+A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. The first two are judgements and belong to a person. The third is a fact about the market, and until this decision nothing in the corpus had measured it.
+
+**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it since has treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+
+**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+
+**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+
+**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+
+| Input | Value | Kind |
+|---|---|---|
+| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, and ARCHITECTURE's own |
+| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
+| `z_beta`, 80% power | 0.841621 | judgement, and the input nothing ever stated |
+| `sigma_d`, the paired dispersion | 0.099811 | measured |
+
+Which gives **196 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 200 would be an authored step in a figure whose whole point is that no step in it is authored.
+
+**What the old figure turns out to have been.** 160 is this same arithmetic at about 72% power. It was not a different calculation, it was this one with a power nobody chose, and the gap between 160 and 196 is entirely that choice.
+
+**The two judgements are the operator's and the sensitivity is stated so the choice is a real one.** At the measured dispersion, detecting three points needs 87 and detecting one and a half needs 348, because the sample goes as the inverse square of the difference. At two points, 70% power needs 154 and 90% needs 262. Moving either is a superseding decision, not an adjustment.
+
+Superseded on 2026-08-27 by **The minimum sample is 262 effective observations, ratified at two points and 90% power**. Everything it measured survives unchanged: the dispersion, the population it was taken over, and the arithmetic. What it could not do was settle its own two judgements, which it said outright and left to a ratification. 196 was that arithmetic at an unratified 80% power, and it was never a figure anybody had chosen.
 
 **A setup row is corrected only where the correction uses no information the night did not have**
 Superseded on 2026-08-28 by **A late answer is attributed to the session it was fetched for, up to a recorded lateness bound**, which keeps every condition below and adds one: an answer the session itself asked for may arrive inside a stated bound and be recorded as late, rather than being refused for having arrived at all. The reasoning is kept in full because it is still the reasoning, and only the treatment of lateness moved.
