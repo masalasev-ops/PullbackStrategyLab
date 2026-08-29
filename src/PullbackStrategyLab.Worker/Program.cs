@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PullbackStrategyLab.Data;
@@ -66,6 +67,26 @@ public static class Program
         string stage = args[0];
         string[] rest = args[1..];
 
+        // The store's schema version against the one this build carries, before any stage opens it.
+        //
+        // On 2026-08-28 migrations 031 and 032 landed and data/live was never migrated. detect-long,
+        // vectorize, controls and cap each died on 'no such column: degraded_because', one slot after
+        // the next, and the night produced no setups at all against inputs that were entirely clean.
+        // Every message named a column, which says what broke and not why, and nothing anywhere said
+        // the store was two migrations behind the code reading it.
+        //
+        // Refused here rather than inside each stage, because the property is about the store rather
+        // than about any one stage's statements: a stage that adds a column requirement would
+        // otherwise have to remember to bring a guard along with it, and the one that did not is
+        // exactly how this was found.
+        string? refusal = WhyThisStageCannotRun(
+            stage, host.Services.GetRequiredService<StoreConnectionFactory>());
+        if (refusal is not null)
+        {
+            Console.Error.WriteLine($"{stage}: {refusal}");
+            return 1;
+        }
+
         try
         {
             return stage switch
@@ -119,6 +140,72 @@ public static class Program
 
         return 0;
     }
+
+    /// <summary>
+    /// The three stages that run against a store at any version, and why each one has to.
+    ///
+    /// <c>migrate</c> is the repair itself. <c>snapshot-db</c> is the recovery path, and the RUNBOOK
+    /// has it run before every migration, so a guard that refused it would refuse the one command
+    /// standing between a behind store and an irreversible one. <c>list-stages</c> reads nothing.
+    /// </summary>
+    public static IReadOnlyList<string> RunsWhateverVersionTheStoreIsAt { get; } =
+    [
+        MigrateStage.Name,
+        SnapshotStage.Name,
+        "list-stages",
+    ];
+
+    /// <summary>
+    /// Why this stage may not run against this store, or null when it may.
+    ///
+    /// The whole decision, so the exemptions are exercised by a test rather than read off the list:
+    /// a guard whose escape hatch nothing asserts is a guard that can be widened silently.
+    /// </summary>
+    public static string? WhyThisStageCannotRun(string stage, StoreConnectionFactory connections)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(stage);
+        ArgumentNullException.ThrowIfNull(connections);
+
+        return RunsWhateverVersionTheStoreIsAt.Contains(stage, StringComparer.Ordinal)
+            ? null
+            : WhyTheStoreCannotBeRead(connections);
+    }
+
+    /// <summary>
+    /// Why the store cannot be read by this build, or null when it can.
+    ///
+    /// A store the build has never created is not behind: <c>migrate</c> creates it, and refusing
+    /// here would refuse a first run. A store <em>ahead</em> of the build is refused on the same
+    /// footing as one behind it, because an older binary run against a migrated store reads columns
+    /// whose meaning has moved, which is the same fault with the sign changed and no louder.
+    /// </summary>
+    public static string? WhyTheStoreCannotBeRead(StoreConnectionFactory connections)
+    {
+        ArgumentNullException.ThrowIfNull(connections);
+
+        if (!connections.StoreExists)
+        {
+            return null;
+        }
+
+        using SqliteConnection connection = connections.OpenReadOnly();
+        return WhyTheStoreCannotBeRead(
+            MigrationRunner.ReadUserVersion(connection), MigrationRunner.LatestVersion);
+    }
+
+    /// <summary>The comparison alone, so a test can state both numbers rather than build a store.</summary>
+    public static string? WhyTheStoreCannotBeRead(int found, int needed) => found == needed
+        ? null
+        : found < needed
+            ? $"the store is at schema {found} and this build needs {needed}. Run tools/migrate before "
+              + "any stage, and read the night's log for the slots that already ran: a stage that "
+              + "needed a column the store has not got has failed rather than written a partial night."
+            : $"the store is at schema {found} and this build is written against {needed}. It has been "
+              + "migrated by a newer build than this one, so a column this binary reads may no longer "
+              // Not "Update the checkout": writer-ownership scans the shipped source for writes, and
+              // that phrase reads as UPDATE against a table called "the". Prose about a thing must
+              // not read as the thing, which is the rule the session-bound guard states for itself.
+              + "mean what it did. Move the checkout forward rather than running against it.";
 
     private static int UnknownStage(string stage)
     {

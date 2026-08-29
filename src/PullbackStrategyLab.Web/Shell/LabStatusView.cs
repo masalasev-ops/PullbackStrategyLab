@@ -17,6 +17,7 @@ public sealed record LabStatusView(
     string? Unreachable,
     string Store,
     int SchemaVersion,
+    int SchemaVersionExpected,
     string? Session,
     string? LastRunStage,
     string? LastRunOutcome,
@@ -38,7 +39,7 @@ public sealed record LabStatusView(
     /// what was wrong.
     /// </summary>
     public static LabStatusView Down(string why) =>
-        new(false, why, "unreachable", 0, null, null, null, 0, 0, 0, 0, null, null, null, null);
+        new(false, why, "unreachable", 0, 0, null, null, null, 0, 0, 0, 0, null, null, null, null);
 
     public string SessionText => Session ?? "no session recorded";
 
@@ -49,10 +50,20 @@ public sealed record LabStatusView(
     public string CallsText => string.Create(
         CultureInfo.InvariantCulture, $"{CallsUsed:N0} of {DailyCallCeiling:N0}");
 
+    /// <summary>
+    /// Whether the store is at a version other than the one the running build was written against.
+    ///
+    /// The version was already on the band and had nothing beside it, so the number was there to be
+    /// read and there was nothing to read it against. On 2026-08-28 it said 30 while the build
+    /// needed 32, four stages died on a column the store had not got, and the band carried the
+    /// figure that would have said so all night.
+    /// </summary>
+    public bool SchemaBehind => Store == "ready" && SchemaVersion != SchemaVersionExpected;
+
     public string StoreText => Store switch
     {
         "ready" => string.Create(CultureInfo.InvariantCulture,
-            $"schema {SchemaVersion} · {UniverseMembers:N0} names · {BarsStored:N0} bars"),
+            $"schema {SchemaVersion} of {SchemaVersionExpected} · {UniverseMembers:N0} names · {BarsStored:N0} bars"),
         "no-store" => "no store yet, run tools/migrate",
         _ => "unreachable",
     };

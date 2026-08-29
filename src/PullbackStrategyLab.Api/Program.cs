@@ -56,7 +56,8 @@ public static class Program
         // What the status band across the top of every screen reads. One request per page load,
         // answered from the store read-only.
         app.MapGet("/status", (StoreConnectionFactory connections, IClock clock, IOptions<PullbackStrategyLabOptions> configured) =>
-            Results.Ok(LabStatus.Read(connections, clock, configured.Value.DailyCallCeiling)));
+            Results.Ok(LabStatus.Read(
+                connections, clock, configured.Value.DailyCallCeiling, configured.Value.SessionZone)));
 
         // One stock's window. The only endpoint that takes a name from the caller, so the name
         // reaches the store as a parameter and never as text in a statement.

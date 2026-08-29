@@ -6298,3 +6298,207 @@ Carried:    **The seam, and the date it falls on.** Every setup row with `as_of 
             BUILD_PLAN's carried obligations.
 
             **This session committed code and may not sign it off.**
+
+## Phase 3 sign-off — 2026-08-29 — phase-3-verification-repair — the report was green and the lab had lost a night
+
+Fresh session, no commits of code to this repository before the pass. The review is recorded here;
+the repairs it required are 3.12, and the session that made them is not the session that may sign
+them off.
+
+Verified:   Reproduced before reading the record. `tools/ci.ps1` green, **27 steps, 516 tests**,
+            which is the figure the last commit states. `tools/verify-phase` **GREEN**: 125 claims,
+            75 passed, 0 failed, 50 out of scope, **0 unexamined**; coverage examined 4,327 with 0
+            unexamined; **1,296 expectations**, one void, 0 changed since the last commit; inputs 68
+            `CAPTURED` and 97 `AUTHORED`.
+
+            Every one of those figures is correct, and on the tree that produced them the lab had
+            flagged nothing for a night.
+
+Findings:   **Blocking. The lab lost the night of 2026-08-28 and nothing in the corpus records it.**
+            Migrations 031 and 032 landed at 3.11 and `data/live` was never migrated: `user_version`
+            30 against a build needing 32. `detect-long`, `vectorize`, `controls` and `cap` each
+            recorded `failed` with `no such column: degraded_because`, at 22:20Z, 22:25Z, 22:26Z and
+            22:28Z. `detect-short` never ran, because the slot stops at the first failure. The
+            `setup` table held **44 rows, every one `as_of` 2026-08-27**, while that night's inputs
+            were entirely clean: 2,005 bars, 1,989 indicator rows, 300 scan hits, 141 sectors, a
+            regime row. The read surface was down with it: `SetupReader.Read` selects
+            `degraded_because` on the evidence table unconditionally, so the gallery threw on the
+            same column from 18:20 onwards. Nothing compared the store's version against the code's,
+            anywhere.
+
+            **Blocking. The status band reported that night clean**, which is the defect 3.11(c) was
+            written to fix, reintroduced one grouping later. `LabStatus.LatestRun` took the night as
+            `substr(started_at, 1, 10)`, the stored UTC day, and the lab's night crosses it: the
+            installed schedule runs 17:15 to 22:00 Eastern, landing between 21:15Z and 02:00Z. The
+            newest UTC date held `forward-returns` and `scoreboard` alone, both clean. Read against
+            the live store the band returned **`scoreboard`, `clean`**. `RunLogger.IncompleteStagesOf`
+            bounds the same table correctly, in the same checkpoint, and says why in the same words.
+            Every row `LabStatusTests` seeded sat inside one UTC day, being the RUNBOOK's Eastern
+            times written with a Z, so the population could not tell the two bounds apart. 3.10(c)'s
+            guard hunts an appended literal and a `TimeSpan.Zero` constructor; a SQL `substr` is a
+            third form and sits in a read rather than in a bound.
+
+            **Blocking, and found only by trying to repair the first.** Migration 031 rebuilds
+            `setup`, which `setup_signal` and `control_setup` both reference. `DROP TABLE` on a
+            parent with child rows fails while foreign keys are enforced, so **031 had never been
+            applied to a store with rows in it and could not be**. `tools/ci.*` drops the store and
+            migrates an empty one; `MigrationRowSurvivalTests` seeds `setup` and nothing that points
+            at it. Against the live store it failed with `FOREIGN KEY constraint failed` and rolled
+            back.
+
+            **The vendor-ceiling claim asserted two of its three clauses.** ARCHITECTURE says a
+            stopped job writes a partial-run row **and the affected setups are marked degraded**. The
+            verdict read "the run scope reports what is left and a stage stops rather than
+            overrunning" and would have passed with `RunLogger.DegradedBecause` deleted, through the
+            whole of the checkpoint that built it.
+
+            **Two statements 3.11 put on a page were held by nothing.** The degraded note on the
+            gallery and the population on the decile panel are both in `surface-claims`'s declared
+            missing direction, which 3.7 named and 3.11 walked through twice.
+
+            **`97b3a2a` left no PROGRESS entry.** It changed DECISIONS, SCHEMA and two gallery-visible
+            check notes, and replaced an assertion the previous commit's entry describes; its own
+            message says that claim "was wrong", and no dated entry corrects the record that carries
+            it. Its subject also reads `3.11(f)` where the work discharged an obligation due at 4.1,
+            and the convention names the checkpoint that owes it. First instance since the convention
+            was written down at 3.7; recorded rather than made a check, on the reasoning there.
+
+            **The branch is 18 commits ahead of `main`** and every slot of 2026-08-28 ran from it, at
+            six different commits during one night. The merge rule moved to CI green alone precisely
+            so production would not run from a branch.
+
+Measured:   **Which of the corpus's instruments could have seen any of it, asked of each.** None.
+            `tools/ci.*` runs against `data/ci`, `tools/verify-phase` against `data/verify`, and no
+            check opens `data/live` or reads a night's log. The one place the fault was written down
+            was `data/live/logs/nightly-2026-08-28.log`. The 3.11 record had read the live store that
+            same evening and copied `user_version 30` down as provenance.
+
+Findings:   **A seventh defect shape, and it is the first that is not about an assertion.** The six
+            recorded shapes are faults in something the corpus wrote. This is a fault in what the
+            corpus points at: every check takes its subject from the source, the documents, the
+            golden fixture, or a store the check builds, and the running lab is in none of them. A
+            green report is a statement about the build and never about the lab. Written into
+            CLAUDE.md, with its prior text in CHANGELOG.
+
+Carried:    The three blocking findings and the three smaller ones are **3.12**, added to
+            BUILD_PLAN with its done condition. Four questions rather than repairs are carried
+            obligations due at 4.1: the band's tie-break within one outcome, the direction
+            `surface-claims` does not reconcile, a recovered night's panels, and the degraded mark's
+            window.
+
+            **This session then built 3.12 and may not sign it off.** The review above stands as the
+            record of what was found; a fresh session owes the sign-off of the repairs.
+
+## 3.12 — 2026-08-29 — phase-3-verification-repair — the sign-off's findings, and a migration that had never run against rows
+
+Built:      **A stage refuses to run against a store at a version other than the build's.**
+            `MigrationRunner.LatestVersion` is the last migration's own number rather than the count
+            of them, because the two agree only while the numbering has no gap.
+            `Program.WhyThisStageCannotRun` compares it against the store's `user_version` before
+            dispatch and names both figures. Three stages are exempt and each says why: `migrate` is
+            the repair, `snapshot-db` is the recovery path the RUNBOOK runs before every migration,
+            and `list-stages` reads nothing. A store **ahead** of the build is refused on the same
+            footing, with a different message. A store that does not exist yet is not behind
+            anything.
+
+            **The band says so rather than printing two numbers to be compared.** `schema 30 of 32`,
+            with a line above the band naming what will fail and what to run. The version was already
+            on the band all night with nothing beside it.
+
+            **The status band's night is bounded in the session zone.** `LatestRun` resolves the
+            newest run's session through the clock and bounds on `SessionBoundaries.At` and
+            `StoreText.EndOfSession`, which is what `RunLogger.IncompleteStagesOf` already did.
+
+            **Foreign keys are off for the length of a migration run and every migration is checked
+            against `foreign_key_check` after it commits.** SQLite's own procedure for a table
+            rebuild, and not optional: the pragma is a no-op inside a transaction, so it cannot live
+            in the migration file. Enforcement is put back afterwards and a test asserts that it
+            bites.
+
+            **The vendor-ceiling claim asserts its third clause**, being that both detectors read the
+            night's incomplete stages through a session-bounded reader and bind the result onto every
+            setup row of that session. **A failure-behaviour row for the version guard**, with prior
+            text in CHANGELOG. **Three surface claims**: the degraded note on the gallery, the
+            population on a decile panel, and the schema mismatch on the band.
+
+Measured:   **The night of 2026-08-28, recovered from the inputs it already had.** Migration first,
+            which took a snapshot before it as the RUNBOOK requires, then 30 to 32 with every row
+            intact: `setup` 44, `calibration_setup` 49,450, `setup_signal` 1,406, `control_setup` 440,
+            `forward_return` 483, and `foreign_key_check` empty.
+
+            Then the six stages the failure had cost, for `2026-08-28` and no other date.
+
+            | Stage | Result |
+            |---|---|
+            | `detect-long` | 2,005 examined, **47 recorded**, 0 passing every gating check |
+            | `detect-short` | 2,005 examined, **26 recorded**, 0 passing every gating check |
+            | `vectorize` | 2,362 signals frozen over 73 setups, 33 distinct names |
+            | `journal` | 73 sealed, 73 carrying frozen signal evidence |
+            | `controls` | 365 loose and 365 tight drawn, 0 sets short of 5 |
+            | `cap` | 0 candidates either side, so nothing to truncate |
+
+            **73 setups on 2026-08-28, 47 long and 26 short**, against 44 on 2026-08-27. Neither
+            night has a setup passing every gating check.
+
+            **Forty of the 73 record an absent give-up distance as absent**, 18 long and 22 short,
+            where all 44 rows of the first night carry the flattened nought the columns forced before
+            migration 031. That is 3.11(a)'s repair visible in the evidence store for the first time,
+            and it is a seam of its own: the two nights express the same state two ways.
+
+            **Every one of the 73 carries a degraded mark**, reading `cap, controls, detect-long,
+            recheck, vectorize`, which is the third clause of the vendor-ceiling rule doing exactly
+            what it was built for. The night was short of its inputs, the rows say so, and they are
+            immutable.
+
+            **`forward-returns` wrote nothing** for the new setups: 424 horizons not yet elapsed,
+            which is correct on the day. **`scoreboard` refused**, naming all 11 panels as skipped,
+            which is 3.9(e)'s guard: the insert is `ON CONFLICT DO NOTHING` and a past date already
+            carries panels. Carried as an obligation rather than forced.
+
+Verified:   Every repair proved red before green by reverting the code it reads. The three status
+            tests fail against the `substr` grouping and return `scoreboard` and `clean`, which is
+            what the live store returned. `Migration_031_rebuilds_a_setup_table_that_other_tables_point_at`
+            fails with `SQLite Error 19: FOREIGN KEY constraint failed` without the pragma, which is
+            the error the live store gave.
+
+Findings:   Observation. The recovery ran at 00:03 Eastern on 2026-08-29, about four minutes after
+            the session of the 28th ended. Reading: this is a first write rather than a correction,
+            so the lateness bound does not reach it and nothing on the row records the delay; the
+            `run_log` entries carry the instants and this paragraph carries the reason a reader will
+            find a session's rows written after that session's own end of day.
+
+Carried:    Four obligations due at 4.1: the band names the last stage to reach a night's worst
+            outcome rather than the first; `surface-claims` reconciles in one direction only; a night
+            recovered after its scoreboard has run leaves that night's panels stating the night that
+            was lost; and the degraded mark's window is the session's calendar day, so an early-hours
+            repair of the previous night falls inside it, which is why `recheck` appears in a mark
+            written for 2026-08-28.
+
+            **This session committed code and may not sign it off.**
+
+## 3.11(f) — 2026-08-29 — phase-3-verification-repair — correction: the seam was dated to a session on which nothing was flagged
+
+Corrects the `Carried` block of **3.11(f) — 2026-08-28 — the floor compared per bar, and the seam it
+leaves**, which reads "The definition changed on **2026-08-28** and every session flagged from that
+date forward uses the per-session average."
+
+That is false in two ways, and the entry is left as it stands because records are corrected by a new
+dated entry rather than edited.
+
+**No session was flagged on 2026-08-28 when that sentence was written.** The `detect` slot had died
+at 18:20 that evening on a column the store had not got, and the night's setups did not exist until
+they were recovered at 00:03 Eastern on 2026-08-29. The sign-off entry above records how.
+
+**And the change had not shipped when that slot ran.** `72d2649` was committed at 21:54 Eastern on
+2026-08-28, three and a half hours after the detect slot. Even had the store been current, the rows
+of 2026-08-28 would have been flagged under the scalar comparison.
+
+**What is true.** The 44 rows of `as_of = 2026-08-27` are the only setups in the evidence store
+flagged under the scalar comparison, and their verdicts are recorded in the entry of 2026-08-28
+taken before the change. The 73 rows of `as_of = 2026-08-28` were flagged under the per-session
+average, by a detector run after the change. The seam falls between the two nights, which is where
+the original entry put it; what it got wrong is the date on which the second side of it began to
+exist.
+
+**Nothing else in that entry moves.** The measured flips, the fixture's 1,296 unchanged expectations
+and the reading that the fixture is not the witness to the change all stand.

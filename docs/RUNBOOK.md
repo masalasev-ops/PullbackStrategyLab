@@ -116,7 +116,9 @@ be recovered by rerunning tomorrow. Raised as an obligation.
 
 ### Every morning
 
-Open the watchlist. Check the status band: run clean, calls within budget, positions and risk within caps. If the run is marked degraded, that night is excluded from variant scoring automatically and nothing needs doing.
+Open the watchlist. Check the status band: **the store at the schema the build needs**, run clean, calls within budget, positions and risk within caps. If the run is marked degraded, that night is excluded from variant scoring automatically and nothing needs doing.
+
+**The schema pair reads `schema 30 of 32` when the store is behind**, with a line above the band saying what will fail and what to run. It is first in that list because it is the one fault that stops the night producing anything at all rather than degrading what it produces, and because the band is where it becomes visible: on 2026-08-28 the number was on every page all night with nothing beside it to read it against.
 
 **What the morning read can and cannot repair after a stage died part-way through its list** is worth knowing here rather than discovering it. A sector resolved this morning is *late* for last night's session, because every reader bounds on when the lookup was made. It is admitted only where the session itself asked for it and it arrived inside the lateness bound, and where it is admitted the row carries how late it was. The slot already retries within its own window, and "The repair window" under Recovery says what is left if that was not enough.
 
@@ -137,6 +139,7 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 | Symptom | Do this |
 |---|---|
 | A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date |
+| A stage failed naming a column the store has not got | The store is behind its migrations. Every stage but `migrate`, `snapshot-db` and `list-stages` now refuses before opening the store and names both versions, so this is what the refusal looks like from the other side. Run `tools/migrate`, which snapshots first, then **rerun that night's stages for their own date**, in slot order: a stage that refused wrote nothing, and the stages after it read what it should have written. On 2026-08-28 four stages died this way and the night flagged nothing at all |
 | A stage walked part of its list and stopped | Read the slot's log. A stage that stops names why on its own line, and the run entry says `partial` or `failed` with `skipped` counting the names it passed over. Rerun the stage for its date; a name left unstamped is asked again. **Then read the paragraph below about the window**, because rerunning tomorrow does not repair tonight |
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
 | A corporate action was missed | Rerun `actions` for that date, with `--with-dividends` if a dividend is what was missed. It writes the action and raises the rebuild demand, and until that demand is satisfied, calculations for that ticker refuse to run. No other ticker is touched |

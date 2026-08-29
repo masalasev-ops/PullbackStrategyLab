@@ -54,32 +54,121 @@ public sealed partial class MigrationRunner
             .Where(m => m.Number > startingVersion && (throughVersion is null || m.Number <= throughVersion))
             .ToList();
 
-        foreach (Migration migration in outstanding)
+        // Foreign keys off for the length of the run, and every migration checked against them
+        // afterwards. This is SQLite's own procedure for a table rebuild and it is not optional:
+        // relaxing NOT NULL means creating a new table, copying, dropping the old one and renaming,
+        // and DROP TABLE on a parent with child rows present fails outright while enforcement is on.
+        //
+        // <b>CI could not have found this and did not.</b> tools/ci.* drops the store and migrates an
+        // empty one, so every rebuild ran against a table with nothing referencing it. Migration 031
+        // rebuilds `setup`, which `setup_signal` and `control_setup` both reference; against the live
+        // store, holding 44 setups with 1,406 signals and 440 controls, it failed with
+        // "FOREIGN KEY constraint failed" and rolled back. The store sat two migrations behind for a
+        // night and four stages died on the column it had not got.
+        //
+        // The pragma is a no-op inside a transaction, so it cannot live in the migration file and has
+        // to be here. What replaces the enforcement is foreign_key_check, run after each migration
+        // commits: it reports every orphan in the whole store rather than refusing one statement, so
+        // a rebuild that dropped rows some other table pointed at fails here with the rows named.
+        bool foreignKeysWereOn = ReadPragmaFlag(connection, "foreign_keys");
+        Execute(connection, "PRAGMA foreign_keys = OFF;");
+
+        try
         {
-            using SqliteTransaction transaction = connection.BeginTransaction();
-
-            using (SqliteCommand command = connection.CreateCommand())
+            foreach (Migration migration in outstanding)
             {
-                command.Transaction = transaction;
-                command.CommandText = migration.Sql;
-                command.ExecuteNonQuery();
-            }
+                using SqliteTransaction transaction = connection.BeginTransaction();
 
-            using (SqliteCommand command = connection.CreateCommand())
+                using (SqliteCommand command = connection.CreateCommand())
+                {
+                    command.Transaction = transaction;
+                    command.CommandText = migration.Sql;
+                    command.ExecuteNonQuery();
+                }
+
+                using (SqliteCommand command = connection.CreateCommand())
+                {
+                    command.Transaction = transaction;
+                    // user_version takes no parameter. The value is an int parsed from a
+                    // filename that matched a three-digit pattern, so there is nothing to inject.
+                    command.CommandText = string.Create(CultureInfo.InvariantCulture, $"PRAGMA user_version = {migration.Number};");
+                    command.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+
+                string[] orphans = ForeignKeyViolations(connection);
+                if (orphans.Length > 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Migration '{migration.Name}' left {orphans.Length} foreign key violation(s), so it "
+                        + "dropped or rewrote rows another table points at. The migration has committed and the "
+                        + "store needs the snapshot taken before it. Violations, as child table, rowid and parent: "
+                        + string.Join("; ", orphans.Take(20)));
+                }
+            }
+        }
+        finally
+        {
+            if (foreignKeysWereOn)
             {
-                command.Transaction = transaction;
-                // user_version takes no parameter. The value is an int parsed from a
-                // filename that matched a three-digit pattern, so there is nothing to inject.
-                command.CommandText = string.Create(CultureInfo.InvariantCulture, $"PRAGMA user_version = {migration.Number};");
-                command.ExecuteNonQuery();
+                Execute(connection, "PRAGMA foreign_keys = ON;");
             }
-
-            transaction.Commit();
         }
 
         return new MigrationResult(startingVersion, ReadUserVersion(connection),
             outstanding.Select(m => m.Name).ToArray());
     }
+
+    private static void Execute(SqliteConnection connection, string sql)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
+    private static bool ReadPragmaFlag(SqliteConnection connection, string pragma)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA {pragma};";
+        return Convert.ToInt32(command.ExecuteScalar() ?? 0, CultureInfo.InvariantCulture) == 1;
+    }
+
+    /// <summary>
+    /// Every orphaned row in the store, as child table, rowid and the parent it points at.
+    ///
+    /// <c>foreign_key_check</c> rather than the enforcement the migrations run without: it asks the
+    /// question of the whole store at once, after the rebuild, which is the shape of answer wanted
+    /// here. A constraint refuses one statement; this names the rows.
+    /// </summary>
+    public static string[] ForeignKeyViolations(SqliteConnection connection)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "PRAGMA foreign_key_check;";
+
+        var violations = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            violations.Add(string.Create(
+                CultureInfo.InvariantCulture,
+                $"{reader.GetString(0)} rowid {(reader.IsDBNull(1) ? "null" : reader.GetValue(1))} -> {reader.GetString(2)}"));
+        }
+
+        return [.. violations];
+    }
+
+    /// <summary>
+    /// The version a store sits at once every migration this build carries has been applied.
+    ///
+    /// The last migration's own number rather than the count of them. The two agree only while the
+    /// numbering has no gap, and what a caller wants here is what this build expects to find in a
+    /// store, which is a number written in the files rather than an arithmetic fact about how many
+    /// of them there are.
+    /// </summary>
+    public static int LatestVersion => All()[^1].Number;
 
     public static int ReadUserVersion(SqliteConnection connection)
     {

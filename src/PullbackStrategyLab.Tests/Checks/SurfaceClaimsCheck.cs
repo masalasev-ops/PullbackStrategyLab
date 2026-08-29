@@ -185,7 +185,8 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
         });
 
     private const string Status = """
-        { "store": "ready", "schemaVersion": 20, "session": "2026-08-24", "lastRun": null,
+        { "store": "ready", "schemaVersion": 20, "schemaVersionExpected": 32,
+          "session": "2026-08-24", "lastRun": null,
           "universeMembers": 2070, "barsStored": 1482108, "callsUsed": 0, "dailyCallCeiling": 5000,
           "marketMood": null, "positionsOpen": null, "shortPositionsOpen": null, "riskAtStake": null }
         """;
@@ -205,7 +206,7 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
             { "setupId": "2026-08-24-INTC-short", "ticker": "INTC", "direction": "short",
               "rank": null, "cappedOut": null, "passedAll": false,
               "triggerPrice": 85.14, "stopPrice": 85.14, "stopDistanceRanges": 0.0,
-              "agreement": null, "agreementNote": null,
+              "agreement": null, "agreementNote": null, "degradedBecause": "sectors",
               "checks": [
                 { "name": "reached-ceiling", "passed": false, "value": 2.0193,
                   "note": "21-day and 50-day only; the anchored clause arrives at 4.4" },

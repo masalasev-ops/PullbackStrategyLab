@@ -107,6 +107,7 @@ public sealed class LabApiClient
                 null,
                 payload.Store,
                 payload.SchemaVersion,
+                payload.SchemaVersionExpected,
                 payload.Session,
                 payload.LastRun?.Stage,
                 payload.LastRun?.Outcome,
@@ -423,6 +424,7 @@ public sealed class LabApiClient
     private sealed record StatusPayload(
         string Store,
         int SchemaVersion,
+        int SchemaVersionExpected,
         string? Session,
         RunPayload? LastRun,
         long UniverseMembers,

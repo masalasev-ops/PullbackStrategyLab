@@ -16,10 +16,12 @@ namespace PullbackStrategyLab.Api;
 /// </summary>
 public static class LabStatus
 {
-    public static StatusResponse Read(StoreConnectionFactory connections, IClock clock, int dailyCallCeiling)
+    public static StatusResponse Read(
+        StoreConnectionFactory connections, IClock clock, int dailyCallCeiling, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connections);
         ArgumentNullException.ThrowIfNull(clock);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionZone);
 
         if (!connections.StoreExists)
         {
@@ -35,8 +37,9 @@ public static class LabStatus
         return new StatusResponse(
             "ready",
             MigrationRunner.ReadUserVersion(connection),
+            MigrationRunner.LatestVersion,
             LatestSession(connection),
-            LatestRun(connection),
+            LatestRun(connection, clock, sessionZone),
             CountRows(connection, "universe_member", "removed_on IS NULL"),
             CountRows(connection, "daily_bar", null),
             callsUsed,
@@ -76,15 +79,33 @@ public static class LabStatus
     /// within it the worst outcome any stage reached, failed before partial before clean. The
     /// stage named is the one that reached it, so the band names the stage that went wrong rather
     /// than the stage that went last.
+    ///
+    /// <b>And the night is bounded in the session zone, not on the UTC date.</b> That grouping was
+    /// <c>substr(started_at, 1, 10)</c>, which is the stored UTC day, and the lab's night crosses it:
+    /// the schedule runs 17:15 to 22:00 Eastern, so the slots land between 21:15Z and 02:00Z the
+    /// following morning. On 2026-08-28 detect-long, vectorize, controls and cap all failed at
+    /// 22:20Z to 22:28Z and forward-returns and scoreboard ran clean at 01:30Z and 01:50Z the next
+    /// day, so the newest UTC date held those two rows alone and the band read "scoreboard clean"
+    /// over a night that produced no setups at all. The ordering was right and the population was a
+    /// different night. <see cref="RunLogger.IncompleteStagesOf"/> bounds the same table correctly
+    /// and says why in the same words; this read is the one that did not use it.
     /// see: Every phase ends in a generated phase report, not in a page somebody looks at
     /// </summary>
-    private static RunSummaryResponse? LatestRun(SqliteConnection connection)
+    private static RunSummaryResponse? LatestRun(
+        SqliteConnection connection, IClock clock, string sessionZone)
     {
+        DateOnly? session = LatestSessionInTheLog(connection, clock, sessionZone);
+        if (session is null)
+        {
+            return null;
+        }
+
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT stage, started_at, ended_at, outcome, calls_used
               FROM run_log
-             WHERE substr(started_at, 1, 10) = (SELECT substr(MAX(started_at), 1, 10) FROM run_log)
+             WHERE started_at >= @start_of_session
+               AND started_at <= @end_of_session
              ORDER BY CASE outcome
                           WHEN 'failed'  THEN 0
                           WHEN 'partial' THEN 1
@@ -93,6 +114,13 @@ public static class LabStatus
                       started_at DESC
              LIMIT 1;
             """;
+
+        command.Parameters.AddWithValue(
+            "@start_of_session",
+            StoreText.TimestampToStorageText(
+                SessionBoundaries.At(session.Value, TimeOnly.MinValue, sessionZone)));
+        command.Parameters.AddWithValue(
+            "@end_of_session", StoreText.EndOfSession(session.Value, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
         if (!reader.Read())
@@ -108,6 +136,24 @@ public static class LabStatus
             // because a stage that was killed part way is exactly what the band is for.
             reader.IsDBNull(3) ? "unfinished" : reader.GetString(3),
             reader.GetInt32(4));
+    }
+
+    /// <summary>
+    /// The session the newest run in the log belongs to, resolved through the clock rather than by
+    /// truncating the stored instant.
+    ///
+    /// Truncating is what the grouping above used to do, and a stored instant of
+    /// <c>2026-08-29T01:50Z</c> truncates to the 29th while belonging to the session of the 28th.
+    /// </summary>
+    private static DateOnly? LatestSessionInTheLog(
+        SqliteConnection connection, IClock clock, string sessionZone)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT MAX(started_at) FROM run_log;";
+
+        return command.ExecuteScalar() is string newest
+            ? clock.SessionDate(StoreText.StorageTextToTimestamp(newest), sessionZone)
+            : null;
     }
 
     private static long CountRows(SqliteConnection connection, string table, string? where)
@@ -131,6 +177,7 @@ public static class LabStatus
 public sealed record StatusResponse(
     string Store,
     int SchemaVersion,
+    int SchemaVersionExpected,
     string? Session,
     RunSummaryResponse? LastRun,
     long UniverseMembers,
@@ -143,7 +190,8 @@ public sealed record StatusResponse(
     decimal? RiskAtStake)
 {
     public static StatusResponse NoStore(int dailyCallCeiling) =>
-        new("no-store", 0, null, null, 0, 0, 0, dailyCallCeiling, null, null, null, null);
+        new("no-store", 0, MigrationRunner.LatestVersion, null, null, 0, 0, 0, dailyCallCeiling,
+            null, null, null, null);
 }
 
 public sealed record RunSummaryResponse(string Stage, string StartedAt, string? EndedAt, string Outcome, int CallsUsed);

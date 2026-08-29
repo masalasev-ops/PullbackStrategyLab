@@ -253,4 +253,92 @@ public sealed class MigrationRowSurvivalTests
         Assert.Null(absent.StopDistanceRanges);
     }
 
+    /// <summary>
+    /// The same rebuild against a store where something points at the table being rebuilt.
+    ///
+    /// <b>The test above passes on an empty neighbourhood and that is the whole gap.</b> It seeds
+    /// <c>setup</c> and <c>calibration_setup</c> and nothing else, so <c>DROP TABLE setup</c> drops a
+    /// table with no child rows and foreign key enforcement has nothing to refuse. <c>tools/ci.*</c>
+    /// drops the store and migrates an empty one, so it could not have found this either.
+    ///
+    /// Against the live store on 2026-08-29, holding 44 setups with 1,406 signals and 440 controls,
+    /// migration 031 failed with "FOREIGN KEY constraint failed" and rolled back. It had never been
+    /// applied to a store with rows in it and it could not be. The store stayed two migrations
+    /// behind, four stages died on the column it had not got, and the night produced nothing.
+    ///
+    /// So the population here is the one that matters: both children of <c>setup</c> carry rows, the
+    /// rebuild has to succeed, and nothing may be orphaned by it.
+    /// </summary>
+    [Fact]
+    public void Migration_031_rebuilds_a_setup_table_that_other_tables_point_at()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        runner.Apply(connection, throughVersion: BeforeTheGeometryRebuild);
+
+        Execute(connection, """
+            INSERT INTO security (ticker, name, exchange, type, first_seen) VALUES
+                ('AAA', 'AAA', 'NASDAQ', 'Common Stock', '2026-08-01'),
+                ('CCC', 'CCC', 'NASDAQ', 'Common Stock', '2026-08-01');
+
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all,
+                 trigger_price, stop_price, stop_distance_ranges)
+            VALUES ('a', '2026-08-24', 'AAA', 'long', '[]', 1, '120.50', '118.00', '0.4200');
+
+            INSERT INTO setup_signal (setup_id, signal_name, value, computed_at) VALUES
+                ('a', 'stop_distance_ranges', '0.4200', '2026-08-24T22:40:00.000Z'),
+                ('a', 'ema_21_distance',      '0.0130', '2026-08-24T22:40:00.000Z');
+
+            INSERT INTO control_setup
+                (control_id, setup_id, control_ticker, control_set, match_quality, rank, drawn_at)
+            VALUES ('a-loose-1', 'a', 'CCC', 'loose', 'rising', 1, '2026-08-24T22:45:00.000Z');
+            """);
+
+        Assert.Equal(2, Count(connection, "setup_signal"));
+        Assert.Equal(1, Count(connection, "control_setup"));
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("031-setup-geometry-absent.sql", after.Applied);
+
+        // The rebuild ran, and the rows that pointed at the dropped table still point at rows that
+        // exist. foreign_key_check reads the whole store, so it answers for every table at once.
+        Assert.Equal(1, Count(connection, "setup"));
+        Assert.Equal(2, Count(connection, "setup_signal"));
+        Assert.Equal(1, Count(connection, "control_setup"));
+        Assert.Empty(MigrationRunner.ForeignKeyViolations(connection));
+    }
+
+    /// <summary>
+    /// Enforcement is put back after a run, so the store the lab then writes through is the store
+    /// SCHEMA describes.
+    ///
+    /// The guard the rebuild needs is scoped to the migration run and to nothing else. A connection
+    /// left with foreign keys off would accept an orphan on every insert after it, silently, which
+    /// is a worse fault than the one turning them off repairs.
+    /// </summary>
+    [Fact]
+    public void Foreign_keys_are_enforced_again_once_the_migrations_have_run()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+
+        using SqliteConnection connection = factory.OpenWrite();
+        new MigrationRunner(factory).Apply(connection);
+
+        Assert.Equal("1", StoreConnectionFactory.ReadPragma(connection, "foreign_keys"));
+
+        // And it bites: a setup naming a ticker no security row holds is refused.
+        SqliteException refused = Assert.Throws<SqliteException>(() => Execute(connection, """
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all,
+                 trigger_price, stop_price, stop_distance_ranges)
+            VALUES ('z', '2026-08-24', 'NOPE', 'long', '[]', 1, NULL, NULL, NULL);
+            """));
+
+        Assert.Contains("FOREIGN KEY", refused.Message, StringComparison.OrdinalIgnoreCase);
+    }
 }

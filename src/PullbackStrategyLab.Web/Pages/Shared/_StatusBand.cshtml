@@ -13,6 +13,20 @@
     <p class="down">The read surface is not answering: @Model.Unreachable. The pages render; the figures do not.</p>
 }
 
+@*
+    The store being at a version other than the build's is stated outright rather than left to be
+    read off the two numbers in the band. A stage that needs a column the store has not got fails
+    with a message naming the column, and every night it fails is a night that produces nothing.
+*@
+@if (Model.SchemaBehind)
+{
+    <p class="down">
+        The store is at schema @Model.SchemaVersion and this build needs @Model.SchemaVersionExpected.
+        Stages that read a column the store has not got will fail. Run <code>tools/migrate</code>, then
+        rerun the night's stages for their own date.
+    </p>
+}
+
 <div class="band">
     <div><b>Session</b>@Model.SessionText</div>
     <div><b>Store</b>@Model.StoreText</div>

@@ -101,6 +101,7 @@ public sealed partial class ArchitectureConformanceCheck
         ["A migration adds a column recording when the lab observed something"] = "3.8",
         ["A rebuild writes no rows"] = "3.9",
         ["A stage writes after the UTC date rolls"] = "3.9",
+        ["The store is at a schema version other than the build's"] = "3.12",
         ["Someone edits the baseline"] = "5.1",
     };
 
@@ -318,9 +319,19 @@ public sealed partial class ArchitectureConformanceCheck
                     + "the behaviour the blocked counter in the scan stands for"))
             .Scan("Failure behaviour: Daily API ceiling reached",
                 CheckCoverage.Backing.Test(
-                    "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning",
-                    "the stage is given a ceiling it reaches mid-run and stops, and the run entry says partial. "
-                    + "The scan asks only that the run scope still exposes what is left"))
+                    "RunLoggerTests.A_night_with_a_stage_that_stopped_short_names_it_and_an_ordinary_night_names_nothing",
+                    "the third clause, which is the one the verdict did not assert until 3.12. A night with a "
+                    + "stage that ended other than cleanly names it and an ordinary night names nothing, both "
+                    + "read back through DegradedBecause. The first two clauses are exercised by "
+                    + "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning, "
+                    + "and the scan asks only that the run scope still exposes what is left and that both "
+                    + "detectors still call the reader"))
+            .Scan("Failure behaviour: The store is at a schema version other than the build's",
+                CheckCoverage.Backing.Test(
+                    "StoreVersionGuardTests.A_store_one_migration_behind_the_build_refuses_the_stage_and_names_both_versions",
+                    "a store is stood up one migration short and a detector is refused, with both numbers in the "
+                    + "message; the exemptions and the store that does not exist yet are asserted beside it, so "
+                    + "the scan is left holding only that the comparison is still wired in before dispatch"))
             .Scan("Failure behaviour: A comparison has no control outcomes",
                 CheckCoverage.Backing.Test(
                     "ForwardReturnFillerTests.A_control_draw_produces_forward_returns_of_kind_control",
@@ -884,9 +895,17 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "a detector no longer records the name it could not decide, so a lost name reads as a quiet night"),
 
-            "Daily API ceiling reached" => runScope.Contains("CallsRemaining", StringComparison.Ordinal)
-                ? Claim.Passed("Failure behaviour", condition, "the run scope reports what is left and a stage stops rather than overrunning")
-                : Claim.Failed("Failure behaviour", condition, "the run scope no longer exposes the remaining ceiling"),
+            "Daily API ceiling reached" => TheCeilingRuleHoldsAllThreeOfItsClauses()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the run scope reports what is left, a stage stops rather than overrunning, and both detectors read the night's incomplete stages and write them onto every setup row of that session")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the run scope no longer exposes the remaining ceiling, or a detector no longer marks the setups a stopped stage degraded, so a night flagged on incomplete inputs is indistinguishable from an ordinary one"),
+
+            "The store is at a schema version other than the build's" => TheStoreVersionIsComparedBeforeAnyStageRuns()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "Program compares the store's user_version against the last migration this build carries and refuses before dispatch, with three named exemptions and both numbers in the message")
+                : Claim.Failed("Failure behaviour", condition,
+                    "nothing compares the store's version against the build's before a stage opens it, so a store behind its migrations fails on a raw SQLite error naming a column part way through a night"),
 
             "Follow-up date is a holiday" => TheFillStoresBothDates()
                 ? Claim.Passed("Failure behaviour", condition,
@@ -1076,6 +1095,67 @@ public sealed partial class ArchitectureConformanceCheck
         }
 
         return slipped && held;
+    }
+
+    /// <summary>
+    /// All three clauses of the vendor-ceiling rule, rather than the two that were asserted.
+    ///
+    /// The sentence is "the nightly job counts as it goes and stops rather than overrunning. A
+    /// stopped job writes a partial-run row <b>and the affected setups are marked degraded</b>." The
+    /// verdict read "the run scope reports what is left and a stage stops rather than overrunning",
+    /// which is the first two, and it passed for the whole of 3.11: the checkpoint that built the
+    /// third clause added the column, the reader and the writers and left the claim asserting the
+    /// sentence it had before. Deleting <c>RunLogger.DegradedBecause</c> would not have moved it.
+    /// </summary>
+    private static bool TheCeilingRuleHoldsAllThreeOfItsClauses()
+    {
+        string runScope = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "RunScope.cs"));
+
+        if (!runScope.Contains("CallsRemaining", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string runLogger = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "RunLogger.cs"));
+
+        // The mark is derived from the night's own run rows rather than from a flag somebody sets,
+        // and the read is bounded in the session zone. Both halves, because a mark computed over a
+        // UTC day would carry the previous night's failures onto this night's setups.
+        if (!runLogger.Contains("public static string? DegradedBecause(", StringComparison.Ordinal)
+            || !runLogger.Contains("IncompleteStagesOf(connection, session, sessionZone)", StringComparison.Ordinal)
+            || !runLogger.Contains("StoreText.EndOfSession(session, sessionZone)", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        // And both detectors call it and bind what it returns. The call rather than the column: a
+        // column in a migration with nothing writing it is exactly the state the third clause was
+        // in before 3.11, and it read as present.
+        return new[] { "LongSetupDetector.cs", "ShortSetupDetector.cs" }
+            .Select(name => RepositoryLayout.Read(
+                Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", name)))
+            .All(source =>
+                source.Contains("RunLogger.DegradedBecause(connection, asOf, _options.SessionZone)", StringComparison.Ordinal)
+                && source.Contains("command.Parameters.AddWithValue(\"@degraded_because\"", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The store's version compared against the build's before any stage is dispatched.
+    ///
+    /// The exemption list is read as well as the comparison, because a guard whose escape hatch
+    /// nothing asserts can be widened one stage at a time until it guards nothing.
+    /// </summary>
+    private static bool TheStoreVersionIsComparedBeforeAnyStageRuns()
+    {
+        string program = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Program.cs"));
+
+        return program.Contains("WhyThisStageCannotRun(", StringComparison.Ordinal)
+            && program.Contains("MigrationRunner.ReadUserVersion(connection)", StringComparison.Ordinal)
+            && program.Contains("MigrationRunner.LatestVersion", StringComparison.Ordinal)
+            && Worker.Program.RunsWhateverVersionTheStoreIsAt.Count == 3;
     }
 
     private static bool BothDetectorsRecordAnErrorRow() =>

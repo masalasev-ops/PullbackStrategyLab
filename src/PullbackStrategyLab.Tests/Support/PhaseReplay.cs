@@ -543,6 +543,7 @@ public sealed class PhaseReplay : IDisposable
 
         // Last, because it writes a row into the store on purpose and nothing above it may see one.
         measurements.AddRange(PointInTimeFigures());
+        measurements.AddRange(StoreIntegrityFigures());
 
         return new PhaseReplayResult(
             AsOf,
@@ -1758,6 +1759,42 @@ public sealed class PhaseReplay : IDisposable
     /// mean the bound held rather than the row being missing.
     /// see: A gate handed an absent or degenerate quantity fails rather than passing
     /// </summary>
+    /// <summary>
+    /// What the store looks like once the pipeline has filled it and every migration has run.
+    ///
+    /// <b>The violation count is worthless without the population beside it.</b> Nought orphans over
+    /// a store where nothing references anything is the answer an empty neighbourhood gives, and that
+    /// is precisely the state migration 031 was verified in: <c>tools/ci.*</c> drops the store and
+    /// migrates an empty one, <c>MigrationRowSurvivalTests</c> seeded <c>setup</c> and nothing
+    /// pointing at it, and the rebuild failed the first time it met a store with rows. So the rows
+    /// that point at the rebuilt table are counted and stated in the same breath as the nought.
+    ///
+    /// The check is SQLite's own <c>foreign_key_check</c> rather than anything in this solution,
+    /// which is what makes the figure independent of the code that produced the store.
+    /// </summary>
+    private IReadOnlyList<Measurement> StoreIntegrityFigures()
+    {
+        using SqliteConnection read = _connections.OpenReadOnly();
+
+        return
+        [
+            new Measurement("store.schemaVersion",
+                MigrationRunner.ReadUserVersion(read).ToString(CultureInfo.InvariantCulture)),
+            new Measurement("store.rowsPointingAtSetup",
+                (Rows(read, "setup_signal") + Rows(read, "control_setup"))
+                    .ToString(CultureInfo.InvariantCulture)),
+            new Measurement("store.foreignKeyViolations",
+                MigrationRunner.ForeignKeyViolations(read).Length.ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    private static long Rows(SqliteConnection connection, string table)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM {table};";
+        return (long)(command.ExecuteScalar() ?? 0L);
+    }
+
     private IReadOnlyList<Measurement> PointInTimeFigures()
     {
         DateTimeOffset afterwards = _clock.UtcNow.AddDays(1);
