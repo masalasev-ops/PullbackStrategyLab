@@ -1,6 +1,6 @@
 {
  "recordedAt": "2026-08-28",
- "note": "One entry per check. Each scope carrying the property has a floor under it; scopes whose size is a fact about the corpus rather than about the property are listed under context and carry none. Re-recorded in full at 3.10 from a run on the date above. They had last been raised at 2.6 and had stood through thirteen landed checkpoints, so fixture-replay was floored at 568 against 1,296 and 728 expectations could have been deleted while every floor held. Three scopes were deliberately not raised because their value legitimately falls: carried-obligations' reconciled count falls as due points land, ci-parity runs one interpreter on the runners that are not Windows, and writer-ownership's multi-writer count is an exemption count where a fall is tightening.",
+ "note": "One entry per check. Each scope carrying the property has a floor under it; scopes whose size is a fact about the corpus rather than about the property are listed under context and carry none. Re-recorded in full at 3.10 from a run on the date above. They had last been raised at 2.6 and had stood through thirteen landed checkpoints, so fixture-replay was floored at 568 against 1,296 and 728 expectations could have been deleted while every floor held. Three scopes were deliberately not raised because their value legitimately falls: carried-obligations' reconciled count falls as due points land, ci-parity runs one interpreter on the runners that are not Windows, and writer-ownership's multi-writer count is an exemption count where a fall is tightening. Extended at 3.14: `stated-counts` gains the two claims that derive BUILD_PLAN's permit figure from the fixture, and `fixture-replay`'s \"checkpoints with expectations in the fixture\" becomes \"checkpoints asked done condition seven\", floored at 37 rather than 29. The rename is the point rather than a tidy: the old scope counted the checkpoints the fixture holds something for, which is the set that excludes every checkpoint under a permit, so the figure beside it read 29 of 29 while eight landed checkpoints carried no verification and were named nowhere in the run. A floor on a scope that cannot see the hole is a floor holding the wrong thing, which is the failure the per-scope rule was written for, one level in.",
  "checks": {
   "api-isolation": {
    "scopes": {
@@ -106,9 +106,9 @@
   "fixture-replay": {
    "scopes": {
     "DERIVED expectations diffed": 766,
-    "checkpoints with expectations in the fixture": 27,
     "expectations diffed": 1296,
-    "of those carrying an independently produced expectation": 27
+    "of those carrying an independently produced expectation": 27,
+    "checkpoints asked done condition seven": 37
    },
    "context": [
     "FROZEN expectations diffed",
@@ -253,7 +253,9 @@
     "ARCHITECTURE.html, the nightly cap splits into its own parts": 1,
     "BUILD_PLAN.md, the obligations due at 4.1": 1,
     "BUILD_PLAN.md, the three groups add up to the pile they classify": 1,
-    "BUILD_PLAN.md, the three groups the thirty-one are classified into": 1
+    "BUILD_PLAN.md, the three groups the thirty-one are classified into": 1,
+    "BUILD_PLAN.md, the frozen-only permits the fixture holds": 1,
+    "BUILD_PLAN.md, the times the first run after 4.1 turns red": 1
    }
   },
   "store-portability": {

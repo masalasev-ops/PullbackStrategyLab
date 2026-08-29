@@ -141,6 +141,28 @@ public sealed partial class StatedCountsCheck
             groups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
             "the classification's own three counts, summed"));
 
+        // BUILD_PLAN.md, the frozen-only permits, derived from the fixture rather than from the prose.
+        //
+        // The one number in this registry whose subject is another file, and it is here because the
+        // rule is about a number a spec states rather than about where the number is derived from.
+        // It read "seven" from the commit that made it eight until 3.14: the paragraph is the
+        // standing instruction for what must be discharged before 4.1's entry is written, and it
+        // understated the set by one. `stated-counts` is a registry and could not have caught an
+        // unregistered figure, which is the row raised at 3.7 about checks that reconcile a
+        // hand-named list in one direction; registering this one closes the instance rather than
+        // the row.
+        int permits = FixtureReplayCheck.ReadExpectations().FrozenOnly?.Count ?? 0;
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the frozen-only permits the fixture holds",
+            InWords(buildPlan, "`fixtures/expectations.json` names ", " frozen-only checkpoints"),
+            permits,
+            "entries under frozenOnly in fixtures/expectations.json"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the times the first run after 4.1 turns red",
+            InWords(buildPlan, "turns red ", " times over"),
+            permits,
+            "entries under frozenOnly in fixtures/expectations.json"));
+
         // BUILD_PLAN.md 1.11, all ten steps of the move procedure in RUNBOOK.
         IReadOnlyList<IReadOnlyList<string>> moveSteps = MarkdownTable.BodyRowsAfter(runbook, "## Moving the store to another machine");
         Assert.Contains("all ten steps", buildPlan, StringComparison.Ordinal);
@@ -280,6 +302,32 @@ public sealed partial class StatedCountsCheck
     }
 
     /// <summary>Reads the number the prose states between two fixed phrases, so the claim is parsed rather than assumed.</summary>
+    /// <summary>
+    /// The number named in words between two phrases, because this corpus writes small counts out.
+    ///
+    /// Only as far as twelve, which is as far as any count this registry holds goes. A word outside
+    /// the table fails loudly rather than reading as nothing, on the grounds a name that does not
+    /// resolve is better than one that silently does.
+    /// </summary>
+    private static int InWords(string text, string before, string after)
+    {
+        Match match = Regex.Match(
+            text,
+            Regex.Escape(before) + @"(?<n>[a-z-]+)" + Regex.Escape(after),
+            RegexOptions.CultureInvariant);
+        Assert.True(match.Success, $"No word appears between {before} and {after}.");
+
+        string word = match.Groups["n"].Value;
+        Assert.True(NumberWords.ContainsKey(word), $"\"{word}\" between {before} and {after} is not a number word.");
+        return NumberWords[word];
+    }
+
+    private static readonly IReadOnlyDictionary<string, int> NumberWords = new Dictionary<string, int>(StringComparer.Ordinal)
+    {
+        ["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6,
+        ["seven"] = 7, ["eight"] = 8, ["nine"] = 9, ["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12,
+    };
+
     private static int StatedBetween(string text, string before, string after)
     {
         Match match = Regex.Match(

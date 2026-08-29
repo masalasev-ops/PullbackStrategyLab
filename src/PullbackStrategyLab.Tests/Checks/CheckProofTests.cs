@@ -1176,6 +1176,79 @@ public sealed class CheckProofTests
             _ => false));
     }
 
+    // ---- the same clauses over the checkpoint that contributed nothing ----------------------
+
+    // Every test above passes the four-argument overload, which supplies an empty `landed`, so the
+    // zero-contribution branch never ran in any of them. Every permit in `fixtures/expectations.json`
+    // names a checkpoint with no expectations at all, so every live permit was in exactly the
+    // population none of these tests reached, and the two clauses written only in the other branch
+    // reached none of them. The four below name their population by passing one.
+
+    [Fact]
+    public void A_landed_checkpoint_that_contributed_nothing_is_in_the_population()
+    {
+        IReadOnlyList<FixtureReplayCheck.CheckpointTier> population = FixtureReplayCheck.Populations(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            ["1.6", "1.1"]);
+
+        Assert.Equal(2, population.Count);
+
+        FixtureReplayCheck.CheckpointTier contributed = population.Single(c => c.Checkpoint == "1.6");
+        Assert.Equal(1, contributed.Total);
+        Assert.Equal(1, contributed.Independent);
+
+        // Nought of nought rather than absent, which is what lets one body ask it every clause.
+        FixtureReplayCheck.CheckpointTier silent = population.Single(c => c.Checkpoint == "1.1");
+        Assert.Equal(0, silent.Total);
+        Assert.Equal(0, silent.Independent);
+    }
+
+    [Fact]
+    public void A_permit_for_a_checkpoint_that_contributed_nothing_and_has_fallen_due_permits_nothing()
+    {
+        // The clause that was written in one branch and not the other, over the population every
+        // live permit is in. It is the guard BUILD_PLAN calls the one that collects itself at 4.1.
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit("1.1", "1.1", "landed contributing nothing")],
+            [Open],
+            checkpoint => checkpoint == "2.1",
+            ["1.6", "1.1"]));
+
+        Assert.Contains("PROGRESS already records 2.1", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_for_a_checkpoint_that_contributed_nothing_and_names_two_obligations_is_ambiguous()
+    {
+        ArchitectureConformanceCheck.Obligation[] two =
+        [
+            new("1.12", "2.2", "the out-of-scope naming rule"),
+            new("1.12", "2.1", "the examined floor per scope"),
+        ];
+
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit("1.1", "1.12", "landed contributing nothing")],
+            two,
+            _ => false,
+            ["1.6", "1.1"]));
+
+        Assert.Contains("2 rows raised there", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_for_a_checkpoint_that_contributed_nothing_and_is_open_is_permitted()
+    {
+        // The other direction, so the three above are not passing because everything fails.
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit("1.1", "1.1", "landed contributing nothing")],
+            [Open],
+            _ => false,
+            ["1.6", "1.1"]));
+    }
+
     // ---- an out-of-scope coverage item names what ends it -----------------------------------
 
     // The obligation raised at 1.12 and due at 2.2. An out-of-scope architecture claim has always

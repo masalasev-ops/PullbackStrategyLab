@@ -24,14 +24,25 @@ public sealed class EffectiveObservationsTests
 
     /// <summary>A series of nightly means with a stated pair count and within-night spread.</summary>
     private static IReadOnlyList<PairedInterval.Night> Series(
-        int pairs, decimal within, Func<int, decimal> mean)
+        int pairs, decimal within, Func<int, decimal> mean) => Series(_ => pairs, within, mean);
+
+    /// <summary>
+    /// The same, with the pair count given per night.
+    ///
+    /// <b>The scalar form is what hid the defect.</b> Every series this file built stamped one count
+    /// on all forty nights, and on an even series the sum of the pair counts and the figure the
+    /// reported estimator actually carries are the same number. Nothing here could tell the two
+    /// apart until a series could be uneven.
+    /// </summary>
+    private static IReadOnlyList<PairedInterval.Night> Series(
+        Func<int, int> pairs, decimal within, Func<int, decimal> mean)
     {
         var start = new DateOnly(2026, 1, 5);
 
         return
         [
             .. Enumerable.Range(0, Nights)
-                .Select(i => new PairedInterval.Night(start.AddDays(i), mean(i), pairs, within)),
+                .Select(i => new PairedInterval.Night(start.AddDays(i), mean(i), pairs(i), within)),
         ];
     }
 
@@ -158,5 +169,54 @@ public sealed class EffectiveObservationsTests
 
             Assert.Equal(nights, PairedInterval.EffectiveObservations(few));
         }
+    }
+
+    /// <summary>
+    /// An uneven series counts what the reported estimate is worth, not what its rows add up to.
+    ///
+    /// <b>The estimate is the unweighted mean of the nightly means</b>, so a night of five pairs
+    /// moves it as far as a night of eighty. Its precision is governed by the harmonic mean of the
+    /// pair counts, and the row sum is their arithmetic mean, which is never smaller.
+    ///
+    /// <b>The two series here share their nightly means exactly</b>, so the serial term and the
+    /// observed variance are the same number in both and the only thing that differs is how the
+    /// pairs are spread. Both sit at the design effect's floor, which is the regime the defect lives
+    /// in: above the floor the harmonic mean cancels out of the arithmetic and the pair counts stop
+    /// mattering at all, and at the floor they are the whole of it.
+    ///
+    /// Forty nights alternating eighty and five pairs hold 1,700 rows and are worth 214 observations
+    /// against the even series' 1,816 over 3,200 rows. The ratio is the harmonic mean over the
+    /// arithmetic one, 9.41 against 42.5. Before this was corrected the uneven series read 965: the
+    /// row sum under the same discounts, four and a half times what the estimate carries.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// </summary>
+    [Fact]
+    public void An_uneven_series_is_worth_its_harmonic_mean_rather_than_its_row_count()
+    {
+        static int Alternating(int i) => i % 2 == 0 ? 80 : 5;
+
+        decimal Mean(int i) => 0.004m + Wobble(i, 0.011m);
+
+        IReadOnlyList<PairedInterval.Night> even = Series(80, 0.1m, Mean);
+        IReadOnlyList<PairedInterval.Night> uneven = Series(Alternating, 0.1m, Mean);
+
+        Assert.Equal(3_200, even.Sum(n => n.Pairs));
+        Assert.Equal(1_700, uneven.Sum(n => n.Pairs));
+
+        int evenEffective = PairedInterval.EffectiveObservations(even);
+        int unevenEffective = PairedInterval.EffectiveObservations(uneven);
+
+        // The even series is unchanged by this correction: the arithmetic and harmonic means of one
+        // repeated number are that number, which is why nothing the fixture asserts had to move.
+        Assert.Equal(1_816, evenEffective);
+
+        Assert.Equal(214, unevenEffective);
+
+        // The property, stated without the two literals: the uneven series is worth a fraction of
+        // its rows close to the harmonic mean over the arithmetic mean, and nowhere near its rows.
+        Assert.True(
+            unevenEffective * 4 < uneven.Sum(n => n.Pairs),
+            $"An uneven series reported {unevenEffective} of {uneven.Sum(n => n.Pairs)} rows, which is the "
+            + "row sum rather than what the night-weighted mean is worth.");
     }
 }
