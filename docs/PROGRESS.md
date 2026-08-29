@@ -6611,3 +6611,169 @@ Carried:    **Four raised here, all due at 4.1**, and one existing row extended.
             **This session committed code and may not sign it off.** What a fresh session owes is
             the sign-off of 3.12 against `main`, stating all seven of the phase 3 sign-off's
             findings by its own numbering with what closed each.
+## 3.12 sign-off — 2026-08-29 — phase-3-signoff — seven findings disposed of, and the report that could not say where it came from
+
+Fresh session, no commits to this repository before the pass. It has since committed two
+instruments, `PhaseReportStage` and `tools/verify-phase.ps1` on one side and `PhaseReplay` on the
+other, and **neither is in the shipped pipeline**: one is the reporting stage and its invocation,
+the other is the test-support harness. Nothing this session wrote runs in a night, and the code
+under review is 3.12's, written by another session. The fresh-session rule protects against a
+session reviewing its own code and it holds here on that reading; it is stated rather than left for
+a reader to work out.
+
+Verified:   `tools/ci.ps1` green, **28 steps, 537 tests**, up from 533 by the four this pass adds.
+            `tools/verify-phase` under bash **GREEN**: **126 claims**, 76 passed, 0 failed, 50 out
+            of scope, **0 unexamined**; coverage examined **4,424**, 0 unexamined; **1,300
+            expectations**, 1 void, 0 changed since the last commit; inputs 68 `CAPTURED` and 97
+            `AUTHORED`.
+
+            **Those figures come from `b5e0b960ff2619841a2ea6fd9c4d4bef42df739a`, working tree
+            clean, generated 2026-08-29 13:27:39Z**, and the report says so itself for the first
+            time. The commit is the one carrying the two instrument repairs below, so what is
+            reported is the tree this entry signs off rather than a tree a reader has to infer.
+
+            **The lab, which neither instrument reaches.** `data/live` reads `user_version` **32**,
+            taken from bytes 60 to 63 of the file header rather than through a connection, against
+            `032-setup-degraded.sql`. `data/live/logs/nightly-2026-08-29.log` records the `ceiling`
+            slot clean at 08:00 with its first line reading `main at 2b5316c`. `ceiling` is a
+            guarded stage, so a clean run of it is the guard comparing the two versions and finding
+            them equal, which is the repair working rather than being described.
+
+Findings:   **Seven findings were raised by the phase 3 sign-off. Six are closed and one is open,
+            which is seven.** They are listed in that reviewer's own numbering so none is absorbed
+            into a summary.
+
+            **One, the lost night of 2026-08-28 and nothing comparing the store's version against
+            the code's. Closed.** `Program.WhyThisStageCannotRun` sits between the host being built
+            and the dispatch; `WhyTheStoreCannotBeRead` refuses a store behind the build and one
+            ahead of it with different messages, both naming the two numbers.
+            `MigrationRunner.LatestVersion` is the last migration's own number rather than the count
+            of them. `StoreVersionGuardTests` covers both directions, a store that does not exist
+            yet, the three exemptions by name, and the whole thing through the CLI against a store
+            stood up one migration short, reading the exit code, the stderr and `run_log` back and
+            asserting the absence of `no such column`. ARCHITECTURE carries a failure row, the band
+            states the mismatch, a surface claim holds the sentence, and the RUNBOOK carries it in
+            the morning read and in recovery. Confirmed on the lab above.
+
+            **Two, the band reporting that night clean. Closed.** `LatestRun` resolves the newest
+            run's session through the clock and bounds on `SessionBoundaries.At` and
+            `StoreText.EndOfSession`. What makes it credible is the population rather than the code:
+            `LabStatusTests` was reseeded onto the installed Eastern schedule so its rows fall on
+            two UTC dates with the four failures on the earlier one, and the old grouping returns
+            `scoreboard` and `clean` against it. The defect is reproduced in a test rather than
+            described.
+
+            **Three, migration 031 never applied to a store with rows. Closed.** Foreign keys are
+            off for the length of a migration run, restored afterwards only if they were on, and
+            every migration is checked against `foreign_key_check` once it commits.
+            `Migration_031_rebuilds_a_setup_table_that_other_tables_point_at` seeds both children;
+            `Foreign_keys_are_enforced_again_once_the_migrations_have_run` proves the restore bites
+            rather than reading the pragma back. `store.foreignKeyViolations` at nought is stated
+            with `store.rowsPointingAtSetup` at 127 beside it, which is the population rule applied
+            to the one figure that means nothing without it.
+
+            **Four, the vendor-ceiling claim asserting two of its three clauses. Closed.**
+            `TheCeilingRuleHoldsAllThreeOfItsClauses` reads the run scope, both halves of
+            `DegradedBecause`, and the call and the bound parameter in each detector, and the scan
+            names a behavioural backing that exercises the third clause specifically. The name
+            resolves to a test that exists.
+
+            **Five, two statements 3.11 put on a page held by nothing. Closed.** Three claims were
+            added rather than two, the third being the schema mismatch 3.12 put on the band.
+
+            **Six, `97b3a2a` leaving no PROGRESS entry. Open, and rowed.** It is the one finding of
+            the seven with no discharge, and it **closed on paper and not in fact**: done condition
+            (f) reads "the seam 3.11(f) dated to a session on which nothing was flagged, corrected",
+            which is the Carried block's dating, a real defect cleanly corrected by the entry of
+            2026-08-29, and not the finding. The live consequence is one sentence. The entry of
+            2026-08-28 states that period and warm-up are "asserted equal to what the chart builds",
+            which was false when written, because the assertion then called
+            `Averages.ExponentialSeries` with `IndicatorEngine`'s own constants and proved only that
+            `FloorSeries` delegates. It became true three commits later at `97b3a2a`. **The record
+            is right today by an accident of ordering**, and nothing shows a reader that: the commit
+            appears nowhere in the corpus except inside the finding naming it.
+
+            **Seven, production running from a branch. Closed for the instance, rowed for the
+            mechanism.** `main` is at `2b5316c`, the phase branch is an ancestor of it, the working
+            tree was returned to `main`, and the RUNBOOK is restated to 2026-08-29 and says the tree
+            has been on a branch twice and what the second time cost. The log line above closes the
+            instance on the running system, which is the only place it could be closed.
+
+            **Two findings of this pass, both repaired here rather than carried.**
+
+            **The phase report could not say where it came from, and the run that produced it could
+            not be told from one that did not happen.** `tools/verify-phase` is a bash script with
+            no extension, `tools/ci.*` never calls it, and `artifacts/phase-report.json` carried no
+            sha and no instant of its own. Invoked from PowerShell it does not execute, exits 0, and
+            leaves the previous run's artifacts reading as current; the script's own `rm` block is
+            the guard for exactly that and sits inside the thing that did not run, so the fix cannot
+            live there. The stage now stamps both files with the commit, the tree state and the
+            instant, and refuses to write either when it cannot read a sha, because a report with a
+            placeholder where the sha goes is the same fault with a step in it. `tools/verify-phase.ps1`
+            is the second and cheaper guard, on the invocation: it finds a bash and hands the work
+            to the one script rather than reimplementing it, and exits 3 with a named message when
+            there is none. CLAUDE.md's command table pointed Windows at the form that no-ops.
+
+            **`PhaseReplay`'s probe row was visible to a method that ran after it.** The
+            point-in-time call carried a comment saying it is last and nothing above it may see the
+            row it writes; 3.12 added `StoreIntegrityFigures` directly underneath and it inherited
+            the probe. No figure moved, because none of the three could see a `daily_bar` row, so
+            nothing failed and nothing could have. The call is moved above the probe, the comment
+            governs the one call it is about, and the two stacked summaries are split so
+            `PointInTimeFigures` has its own again and takes its `see:` citation with it, which is
+            why `decision-resolves` stayed green while the citation annotated a foreign key count.
+            Then the comment was made a figure: `store.observationsAfterTheAsOf` counts rows
+            observed later than the run, is taken before the probe is written, and is nought.
+
+            **Both repairs proved red before green, by removing the thing each guards.** Deleting
+            the report's refusal and letting the placeholder through fails
+            `A_report_that_cannot_name_its_commit_is_not_written_at_all`. Moving
+            `StoreIntegrityFigures` back below the probe turns `store.observationsAfterTheAsOf` from
+            0 to 1, failing the test and `fixture-replay` together.
+
+            **A process correction, recorded because the next session will do the same thing.** This
+            reviewer ran `tools/verify-phase` from PowerShell, read exit code 0, and quoted the
+            figures in `artifacts/phase-report.json` as this pass's own. They were an earlier run's:
+            the artifacts regenerated that morning were the CI suite's, and the report itself was
+            hours old. The error was caught by noticing that `phase-report.json` had a timestamp the
+            other artifacts did not share, which is luck rather than method. It is the reason the
+            first repair above exists rather than a row, and the reason the entry now quotes a sha.
+
+            Observation, unchanged from the first pass and still not worth a row. The store-version
+            guard is called before `Main`'s `try`, so a store that exists and cannot be opened throws
+            past the catch clause whose comment explains why every stage failure reads
+            `stage: message`. The exit is non-zero and the stderr reaches the night's log either way.
+
+Measured:   **The seven done conditions, each named with what met it.** One, 3.12's deliverable
+            exists and runs: the guard, the session-zone bound, the foreign key handling, the third
+            clause, the surface claims and the recovered night. Two, `tools/ci.*` green at 28 steps
+            and 537 tests, recorded here. Three, no new store write; the only new writes are a
+            migration run's own pragma handling and nothing `writer-ownership` does not already
+            declare, and it passes. Four, the constants stated in docs are pinned and every decision
+            name cited in the new code and documents resolves, both checks green. Five, the matrix
+            job runs the suite on both runners. Six, this entry and the two before it. Seven, 3.12's
+            expectations are in the fixture with their tiers, and `store.observationsAfterTheAsOf`
+            is `DERIVED` rather than frozen, so the checkpoint adds verification and not only
+            regression detection.
+
+Carried:    **Two rows, both due at 4.1**, and one existing row extended.
+
+            Finding six, whose subject is the narrowing rather than the missing paragraph: a done
+            condition authored about the seam dating closed a finding about a missing entry, and one
+            sentence in the record is right today by an accident of ordering.
+
+            The two quantities sharing one truncation expression. `LabStatus` computed a session day
+            with it and was wrong; `RunLogger.CallsUsedOn` computes the vendor's quota day with it
+            and is right. A guard cannot separate them, so the decision owed is about the quantity:
+            whether the quota day should stop sharing the expression and carry a name of its own.
+
+            The degraded mark's window is extended to name the status band, which now shares it:
+            `LatestRun` bounds on the session's calendar day, the recovery of 2026-08-28 ran at
+            00:03 Eastern on the 29th, and the question of what a night is now has two readers.
+
+            **The doc comment finding takes no row**, because the clause above closes it rather than
+            carrying it.
+
+            **3.12 is signed off.** All seven done conditions hold, and the one finding left open is
+            a record hole rather than a defect in shipped code. Under the stopping rules it fails no
+            done condition and breaks no check, so it is a carried obligation and not a reopening.
