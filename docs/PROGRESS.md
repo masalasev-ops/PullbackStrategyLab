@@ -7388,3 +7388,44 @@ changes:    answer. It waits on the identification of a second wrong quantity, i
             No decision in `DECISIONS.md` moves. The ruling affirms the course that document and the
             plan already set rather than changing it, and a decision is changed only by another
             decision.
+
+## 3.14 — 2026-08-29 — phase-3-completeness-review — the pointer that moved backwards when a record was corrected
+
+Not a checkpoint entry. Found by running `tools/verify-phase` after recording the 2.11 ruling, and
+worth its own entry because the fault is a collision between two rules rather than a mistake in
+either one.
+
+Found:      **The phase report titled itself "Phase 2 report" with 3.14 landed.** Same commit, same
+            126 claims, same 76 passed and 50 out of scope, 0 unexamined. The only thing that had
+            changed was that the last entry in `docs/PROGRESS.md` was now a ruling recorded against
+            2.11.
+
+            **Two rules in CLAUDE.md, and they cannot both be read literally.** "Which checkpoint the
+            build is on is the last entry in `docs/PROGRESS.md`" is a pointer, written that way so
+            the number does not live in two places. "A record is corrected by a new dated entry
+            naming what it corrects" is how every correction in this corpus is made. Follow the
+            second and the first moves backwards, by as many phases as the correction reaches.
+            `ArchitectureConformanceCheck.Schedule` read `landed[^1]` and both `LastLanded` and
+            `Phase` came off it.
+
+            **It is display-only and it was still worth stopping for.** `Phase` reaches the console
+            line, the page `<title>` and the `<h1>`; nothing gates scope on it, which is why the
+            claim counts were identical either way. The artefact it mislabels is the one a phase
+            signs off against, and 3.15 has not run yet.
+
+Built:      The pointer is the furthest checkpoint recorded, ordered by phase and then numerically
+            within it, so 3.14 beats 3.9 where an ordinal compare would not. `Schedule.Furthest` is
+            public and separate, because the fault is invisible from outside: the value only goes
+            wrong when the last entry names an earlier checkpoint than one above it, and a test
+            reading the live record asserts whatever the corpus happens to hold that day.
+
+            CLAUDE.md's pointer now reads "the furthest checkpoint `docs/PROGRESS.md` records",
+            carrying the rule it collided with and this instance. **The proxy gave way rather than
+            the correction rule**, because appending a dated entry is what this corpus requires
+            everywhere and "last" was only ever standing in for "furthest" while every entry
+            happened to be a new checkpoint.
+
+Verified:   Proved red before green against the naive implementation: `Assert.Equal("3.14", ...)`
+            over `["3.12", "3.13", "3.14", "2.11"]` returns "2.11". The report reads phase 3 again.
+
+            **This session committed code and may not sign it off.**
