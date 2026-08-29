@@ -93,6 +93,54 @@ public sealed class PhaseReportProvenanceTests
     }
 
     /// <summary>
+    /// A failure rendering the page leaves both files exactly as the previous run left them.
+    ///
+    /// <b>The claim was in the doc comment before it was in the code.</b> "Writes both files, or
+    /// writes neither" sat above a method that wrote the JSON and then rendered and wrote the page,
+    /// so a throw in the render left a current JSON beside a stale page. That is the staleness the
+    /// commit stamp was added to make visible, one file over: the JSON says which tree produced it
+    /// and the page beside it says nothing, and the page is the half a person reads.
+    ///
+    /// Asserted by making the render throw rather than by reading the method, because the property
+    /// is an ordering and a scan for the corrected shape passes against the broken one. Both files
+    /// are seeded with text this run would replace, so "unchanged" is a comparison against a known
+    /// value rather than an absence.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
+    /// </summary>
+    [Fact]
+    public void A_page_that_cannot_be_rendered_leaves_both_files_as_the_last_run_left_them()
+    {
+        using var artifacts = new TemporaryDirectory();
+
+        string json = Path.Combine(artifacts.Path, "phase-report.json");
+        string page = Path.Combine(artifacts.Path, "phase-report.html");
+
+        const string Previous = "the previous run's file";
+        File.WriteAllText(json, Previous);
+        File.WriteAllText(page, Previous);
+
+        PhaseReportStage.Head head = Assert.IsType<PhaseReportStage.Head>(
+            PhaseReportStage.ReadHead(RepositoryLayout.Root));
+
+        Assert.Throws<InvalidOperationException>(() => PhaseReportStage.WriteReport(
+            AReport(), artifacts.Path, head,
+            _ => throw new InvalidOperationException("the page could not be rendered")));
+
+        Assert.Equal(Previous, File.ReadAllText(json));
+        Assert.Equal(Previous, File.ReadAllText(page));
+
+        // Nothing left half-written beside them either, so a later run cannot find a temporary
+        // reading as a report.
+        Assert.Empty(Directory.GetFiles(artifacts.Path, "*.writing"));
+
+        // And the same call with a renderer that works replaces both, so what the assertions above
+        // hold is the ordering rather than the write never happening.
+        Assert.NotNull(PhaseReportStage.WriteReport(AReport(), artifacts.Path, head, _ => "<p>a page</p>"));
+        Assert.NotEqual(Previous, File.ReadAllText(json));
+        Assert.Equal("<p>a page</p>", File.ReadAllText(page));
+    }
+
+    /// <summary>
     /// The wrapper that stops the Windows invocation no-opping, asserted as a file rather than run.
     ///
     /// Running it would mean running the whole gate, which is the one thing a unit test must not
