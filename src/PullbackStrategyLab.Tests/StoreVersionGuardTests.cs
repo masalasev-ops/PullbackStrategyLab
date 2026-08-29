@@ -126,6 +126,50 @@ public sealed class StoreVersionGuardTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// The whole thing through the entry point, which is the only subject that carries the claim.
+    ///
+    /// <b>Every test above calls the guard's own method, and that is not where the guard lives.</b>
+    /// What makes a detector refuse is the block at the top of <c>Main</c> that calls it before the
+    /// dispatch, and deleting that block leaves every method here intact and every test above green.
+    /// The architecture-conformance claim read <c>Program.cs</c> for four patterns and all four are
+    /// satisfied inside the guard's own methods, so it was green through the same deletion. Done
+    /// condition (a) asked for a store stood up one migration short with a detector run against it,
+    /// and until 3.12 nothing did that.
+    ///
+    /// <b>Nought rows in <c>run_log</c> is the "before" half.</b> A detector that reached its own
+    /// code opens the store for writing and <see cref="RunLogger.Begin"/> puts a row in that table
+    /// before it reads anything, so an empty log is the refusal having happened ahead of the stage
+    /// rather than inside it. The absence of <c>no such column</c> is the other half: that is the
+    /// error the live store gave on 2026-08-28, and coming before it is the whole point.
+    /// </summary>
+    [Fact]
+    public void A_detector_run_through_the_entry_point_against_a_short_store_refuses_before_it_opens_it()
+    {
+        StoreVersionRefusal.Outcome outcome = StoreVersionRefusal.OverAStoreOneMigrationShort();
+
+        Assert.Equal(1, outcome.ExitCode);
+
+        // Both numbers, on stderr, from a process rather than from a call.
+        Assert.Contains($"{StoreVersionRefusal.Stage}:", outcome.Error, StringComparison.Ordinal);
+        Assert.Contains(
+            outcome.Found.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            outcome.Error, StringComparison.Ordinal);
+        Assert.Contains(
+            outcome.Needed.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            outcome.Error, StringComparison.Ordinal);
+        Assert.Contains("tools/migrate", outcome.Error, StringComparison.Ordinal);
+
+        // Not the error the night gave. A guard that refused after the stage had opened the store
+        // would say this instead, and would be worth nothing.
+        Assert.DoesNotContain("no such column", outcome.Error, StringComparison.Ordinal);
+
+        Assert.Equal(0, outcome.RunRows);
+
+        // And the verdict the claim carries is this run, so the two cannot drift apart.
+        Assert.True(StoreVersionRefusal.IsTheRefusal(outcome));
+    }
+
     [Fact]
     public void The_version_the_build_needs_is_the_last_migration_rather_than_the_count_of_them()
     {

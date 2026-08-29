@@ -295,10 +295,16 @@ public sealed partial class ArchitectureConformanceCheck
                 Json));
 
         // The failure table is where this check reads source text to conclude something about
-        // behaviour, and it is where the fourth instance of an assertion outliving its subject
-        // shipped: the detector-error claim passed with the catch clause deleted, because the
-        // private method issuing the insert was still in the file with nothing calling it. Each
-        // of the four names what exercises it, so a claim resting on text alone is visible.
+        // behaviour, and it is where two instances of an assertion outliving its subject shipped.
+        // The fourth: the detector-error claim passed with the catch clause deleted, because the
+        // private method issuing the insert was still in the file with nothing calling it. The
+        // fifth: the store-version claim read three patterns that are all satisfied inside the
+        // guard's own methods, so it passed with the line that calls the guard deleted. That one
+        // is no longer listed here, because it no longer reads source at all: its verdict is a
+        // detector run through the CLI against a store one migration short.
+        //
+        // Every scan that remains names what exercises it, so a claim resting on text alone is
+        // visible rather than counted.
         coverage
             .Scan("Failure behaviour: Detector errors on one stock",
                 CheckCoverage.Backing.Test(
@@ -326,12 +332,6 @@ public sealed partial class ArchitectureConformanceCheck
                     + "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning, "
                     + "and the scan asks only that the run scope still exposes what is left and that both "
                     + "detectors still call the reader"))
-            .Scan("Failure behaviour: The store is at a schema version other than the build's",
-                CheckCoverage.Backing.Test(
-                    "StoreVersionGuardTests.A_store_one_migration_behind_the_build_refuses_the_stage_and_names_both_versions",
-                    "a store is stood up one migration short and a detector is refused, with both numbers in the "
-                    + "message; the exemptions and the store that does not exist yet are asserted beside it, so "
-                    + "the scan is left holding only that the comparison is still wired in before dispatch"))
             .Scan("Failure behaviour: A comparison has no control outcomes",
                 CheckCoverage.Backing.Test(
                     "ForwardReturnFillerTests.A_control_draw_produces_forward_returns_of_kind_control",
@@ -1142,21 +1142,34 @@ public sealed partial class ArchitectureConformanceCheck
     }
 
     /// <summary>
-    /// The store's version compared against the build's before any stage is dispatched.
+    /// The store's version compared against the build's before any stage is dispatched, proved by
+    /// dispatching one.
     ///
-    /// The exemption list is read as well as the comparison, because a guard whose escape hatch
-    /// nothing asserts can be widened one stage at a time until it guards nothing.
+    /// <b>This was a source scan, and the scan could not see the thing its own name says.</b> It
+    /// read <c>Program.cs</c> for <c>WhyThisStageCannotRun(</c>,
+    /// <c>MigrationRunner.ReadUserVersion(connection)</c> and <c>MigrationRunner.LatestVersion</c>,
+    /// and all three are satisfied inside <c>WhyThisStageCannotRun</c> and
+    /// <c>WhyTheStoreCannotBeRead</c>, which live in that same file. Deleting the block at the top
+    /// of <c>Main</c> that calls the guard before the dispatch left every pattern in place, this
+    /// claim green, and a detector free to run against a store two migrations behind it. Every test
+    /// beside it called the guard's own method and never reached <c>Main</c>, so nothing anywhere
+    /// exercised the call site. Fifth instance of an assertion outliving its subject, and the first
+    /// where the subject is a call rather than a declaration: the four before it lost a method, a
+    /// table or a clause, and this one lost the line that runs it.
+    ///
+    /// <b>So the verdict is the behaviour.</b> A store stood up one migration short, a detector run
+    /// through the CLI against it, and the refusal read off stderr with both versions in it and
+    /// nothing in <c>run_log</c>, which is the stage not having opened the store. The three
+    /// exemptions are asserted by name beside it rather than counted, because a guard whose escape
+    /// hatch nothing asserts can be widened one stage at a time until it guards nothing, and a count
+    /// of three is satisfied by any three names.
+    /// see: Every phase ends in a generated phase report, not in a page somebody looks at
     /// </summary>
-    private static bool TheStoreVersionIsComparedBeforeAnyStageRuns()
-    {
-        string program = RepositoryLayout.Read(
-            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Program.cs"));
-
-        return program.Contains("WhyThisStageCannotRun(", StringComparison.Ordinal)
-            && program.Contains("MigrationRunner.ReadUserVersion(connection)", StringComparison.Ordinal)
-            && program.Contains("MigrationRunner.LatestVersion", StringComparison.Ordinal)
-            && Worker.Program.RunsWhateverVersionTheStoreIsAt.Count == 3;
-    }
+    private static bool TheStoreVersionIsComparedBeforeAnyStageRuns() =>
+        StoreVersionRefusal.IsTheRefusal(StoreVersionRefusal.OverAStoreOneMigrationShort())
+        && Worker.Program.RunsWhateverVersionTheStoreIsAt
+            .Order(StringComparer.Ordinal)
+            .SequenceEqual(["list-stages", MigrateStage.Name, SnapshotStage.Name], StringComparer.Ordinal);
 
     private static bool BothDetectorsRecordAnErrorRow() =>
         new[] { "LongSetupDetector.cs", "ShortSetupDetector.cs" }
