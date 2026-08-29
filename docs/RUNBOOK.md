@@ -96,15 +96,21 @@ that log's first entry, since the job runs from a working tree and what it execu
 branch does.
 
 **The ref the job runs from is `main`, as of 2026-08-29.** It is not configured anywhere: the slot
-script runs whatever the working tree is checked out to, and the tree is on `main` because `743a98a`
-was fast-forwarded onto it once `tools/ci.ps1` was green at that commit. Nothing enforces this and
-nothing should pretend to, so the check is the log: the first line of every night's entry names the
-branch and the commit, and a night that ran from something else says so in its own record.
+script runs whatever the working tree is checked out to, and the tree is on `main` because PR #8
+merged at `6661f2d` and the tree was returned to it. Nothing enforces this and nothing should
+pretend to, so the check is the log: the first line of every night's entry names the branch and the
+commit, and a night that ran from something else says so in its own record.
 
-**It has now been on a branch twice, and the second time cost a night.** Before `6f27926` the job ran
-from `phase-3-corrections`. Every slot of 2026-08-28 then ran from `phase-3-verification-repair`, at
-six different commits during one night, and that is the night the lab flagged nothing
+**It has now been on a branch three times, the second cost a night, and the third happened inside
+the pass that closed the second.** Before `6f27926` the job ran from `phase-3-corrections`. Every
+slot of 2026-08-28 then ran from `phase-3-verification-repair`, at six different commits during one
+night, and that is the night the lab flagged nothing
 (see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch).
+The third is the one worth reading twice: the 3.12 sign-off closed "production running from a branch"
+by returning the tree to `main`, then created `phase-3-signoff` and committed the closure onto it, so
+the tree was on a branch again in the act of recording that it was not. It stayed there from
+13:32Z until PR #8 merged at 14:26Z, which is inside one day and outside no slot, and it was found by
+a review reading `git status` rather than by anything the corpus runs.
 The merge rule was moved to CI green alone precisely so production would not run from a branch, and
 between the rule and the checkout there is nothing but somebody remembering. Anyone leaving the tree
 on a branch overnight is choosing which code runs the night, and the way to undo it is
