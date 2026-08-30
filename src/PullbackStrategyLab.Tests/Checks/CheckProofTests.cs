@@ -1022,7 +1022,7 @@ public sealed class CheckProofTests
     {
         Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
-            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.1")],
             [Open],
             _ => false));
     }
@@ -1032,7 +1032,7 @@ public sealed class CheckProofTests
     {
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
-            [new FixtureReplayCheck.Permit("1.4", "1.2", "whole-market counts")],
+            [new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.2")],
             [Open],
             _ => false));
 
@@ -1046,7 +1046,7 @@ public sealed class CheckProofTests
         // checkpoint the record already carries is one that checkpoint shipped without closing.
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
-            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.1")],
             [Open],
             checkpoint => checkpoint == "2.1"));
 
@@ -1061,7 +1061,7 @@ public sealed class CheckProofTests
         // ever removed.
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("b.one", FixtureReplayCheck.Confirmed, "1.4")],
-            [new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts")],
+            [new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.1")],
             [Open],
             _ => false));
 
@@ -1073,7 +1073,7 @@ public sealed class CheckProofTests
     {
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
-            [new FixtureReplayCheck.Permit("3.4", "1.1", "a checkpoint with nothing in the fixture")],
+            [new FixtureReplayCheck.Permit("3.4", "a checkpoint with nothing in the fixture", Obligation: "1.1")],
             [Open],
             _ => false));
 
@@ -1156,7 +1156,7 @@ public sealed class CheckProofTests
 
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("b.one", FixtureReplayCheck.Frozen, "1.4")],
-            [new FixtureReplayCheck.Permit("1.4", "1.12", "whole-market counts")],
+            [new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.12")],
             two,
             _ => false));
 
@@ -1210,7 +1210,7 @@ public sealed class CheckProofTests
         // live permit is in. It is the guard BUILD_PLAN calls the one that collects itself at 4.1.
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
-            [new FixtureReplayCheck.Permit("1.1", "1.1", "landed contributing nothing")],
+            [new FixtureReplayCheck.Permit("1.1", "landed contributing nothing", Obligation: "1.1")],
             [Open],
             checkpoint => checkpoint == "2.1",
             ["1.6", "1.1"]));
@@ -1229,7 +1229,7 @@ public sealed class CheckProofTests
 
         string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
-            [new FixtureReplayCheck.Permit("1.1", "1.12", "landed contributing nothing")],
+            [new FixtureReplayCheck.Permit("1.1", "landed contributing nothing", Obligation: "1.12")],
             two,
             _ => false,
             ["1.6", "1.1"]));
@@ -1243,10 +1243,105 @@ public sealed class CheckProofTests
         // The other direction, so the three above are not passing because everything fails.
         Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
             [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
-            [new FixtureReplayCheck.Permit("1.1", "1.1", "landed contributing nothing")],
+            [new FixtureReplayCheck.Permit("1.1", "landed contributing nothing", Obligation: "1.1")],
             [Open],
             _ => false,
             ["1.6", "1.1"]));
+    }
+
+    // ---- the settled permit shape ------------------------------------------------------------
+
+    // A permit is open, resting on an obligation nobody has discharged, or it is settled, because
+    // it has been established that no replayed market day could produce a figure for that
+    // checkpoint. The first three tests hold the shapes apart; the fourth is the one that matters,
+    // because a settled permit whose subject would otherwise have fallen due is exactly the state
+    // the whole shape exists to express.
+
+    [Fact]
+    public void A_settled_permit_needs_no_obligation()
+    {
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit(
+                "1.1", "a phase sign-off", Settled: "a sign-off adds no stage to the replayed pipeline")],
+            [Open],
+            _ => false,
+            ["1.6", "1.1"]));
+    }
+
+    [Fact]
+    public void A_settled_permit_stays_permitted_when_every_obligation_has_fallen_due()
+    {
+        // The property the shape was added for. The same population that fails an open permit
+        // above, with `hasLanded` true of everything, so an obligation-backed permit could not
+        // survive it. Nothing closes a settled permit, so nothing about a due point reaches it.
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit(
+                "1.1", "a phase sign-off", Settled: "a sign-off adds no stage to the replayed pipeline")],
+            [Open],
+            _ => true,
+            ["1.6", "1.1"]));
+    }
+
+    [Fact]
+    public void A_permit_carrying_both_an_obligation_and_a_settled_reason_is_caught()
+    {
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit(
+                "1.1", "landed contributing nothing", Obligation: "1.1", Settled: "and also settled")],
+            [Open],
+            _ => false,
+            ["1.6", "1.1"]));
+
+        Assert.Contains("open or it is settled", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_permit_carrying_neither_an_obligation_nor_a_settled_reason_is_caught()
+    {
+        // `Why` alone is prose and nothing reads it, which is the state every permit was in before
+        // the two shapes existed.
+        //
+        // <b>This one cannot be proved red by deleting the branch it guards, and that is a stronger
+        // result rather than a missing proof.</b> `Obligation` is nullable, so the clause below is
+        // what narrows it before `MatchingObligations` takes a non-null string; removing it fails
+        // the build with CS8604 rather than turning this test red. The guard is held by the
+        // compiler, and the test says which behaviour that guard produces.
+        string problem = Assert.Single(FixtureReplayCheck.DoneConditionSevenProblems(
+            [Expectation("a.one", FixtureReplayCheck.Derived, "1.6")],
+            [new FixtureReplayCheck.Permit("1.1", "landed contributing nothing")],
+            [Open],
+            _ => false,
+            ["1.6", "1.1"]));
+
+        Assert.Contains("neither an open obligation nor a settled reason", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_permit_the_fixture_actually_holds_survives_4_1_landing()
+    {
+        // The property BUILD_PLAN states, asserted over the real file rather than over an authored
+        // one. Its "one blocks, and it blocks mechanically rather than by judgement" was true of
+        // nine permits resting on an obligation due at 4.1: the first CI run after 4.1's PROGRESS
+        // entry would have turned red nine times over, and 4.1's own done condition 2 is that
+        // `tools/ci.*` is green.
+        //
+        // `hasLanded` answers true for everything, which is stronger than naming 4.1 and is the
+        // point: no permit the fixture holds may depend on any checkpoint being unlanded. A permit
+        // that goes back to resting on an obligation fails here on the commit that does it rather
+        // than on the commit that lands the checkpoint, which is months later and belongs to
+        // somebody else.
+        FixtureReplayCheck.ExpectationFile fixture = FixtureReplayCheck.ReadExpectations();
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            fixture.Expectations,
+            fixture.FrozenOnly ?? [],
+            schedule.Obligations,
+            _ => true,
+            schedule.Landed));
     }
 
     // ---- an out-of-scope coverage item names what ends it -----------------------------------
@@ -1340,7 +1435,7 @@ public sealed class CheckProofTests
         // The run is red either way when a permit has expired. What was wrong was the page: the
         // record beside the failure still read "permitted by", because the reason resolved the
         // obligation and stopped rather than asking the question the assertion above it asked.
-        var permit = new FixtureReplayCheck.Permit("1.4", "1.1", "whole-market counts");
+        var permit = new FixtureReplayCheck.Permit("1.4", "whole-market counts", Obligation: "1.1");
 
         Assert.Contains("permitted by the obligation raised at 1.1",
             FixtureReplayCheck.PermitReason([Open], permit, _ => false), StringComparison.Ordinal);

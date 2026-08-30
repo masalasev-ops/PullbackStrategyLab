@@ -8320,3 +8320,168 @@ Carried:    **One row, and it is not a threshold.** `reached-ceiling` runs two o
             three. The obligations table reads fifty-eight.
 
             Nothing else is carried and nothing else is changed.
+
+## 3.10 — 2026-08-30 — phase-4-permit-discharge — six permits settled, and the shape that had only one
+
+Not a checkpoint entry. It discharges part of the obligation raised at 3.10 and due at 4.1, which
+BUILD_PLAN calls the one row that collects itself.
+
+**Headed 3.10 rather than 4.1, and that half is mechanical.** `Schedule.HasLanded` reads this file's
+headings, so a heading naming 4.1 would record the watchlist checkpoint as landed while its
+deliverable does not exist, and it would spend the permits' own due point in the entry that was
+supposed to precede it. The work is the 3.10 row's, so the entry is 3.10's, which is the reasoning
+the 3.14 decision-point entries give.
+
+Found:      **A permit had exactly one shape and the answer needs two.** `fixtures/expectations.json`
+            permits a checkpoint to be frozen-only, and every permit rested on a carried obligation:
+            `fixture-replay` fails one whose due checkpoint `PROGRESS.md` already records. That is
+            the right shape for a checkpoint nobody has examined yet, and it cannot express the
+            result of examining one.
+
+            All nine named the obligation raised at 3.10, due at 4.1. Six of them are checkpoints no
+            replayed market day could ever produce a figure for: 2.1 is a spec pass, 3.10 is the
+            verification harness, and 2.12, 3.7, 3.13 and 3.15 are phase sign-offs. Under one shape
+            the only thing that could be done with those six is to move the obligation's due point,
+            **which is the failure the corpus names in three other places**: a due point that moves
+            at every sign-off is permanent while reading as pending. 2.1(d)'s own done condition had
+            already refused it, in the words "gone from `fixtures/expectations.json` rather than
+            re-dated".
+
+            **3.10 is the one worth stating, because it is the one that looks replayable.** Seven of
+            its eight parts are the harness, which reads the replay rather than being a stage in it.
+            The eighth is the shipped-code defects the other seven revealed, and one of those is two
+            session bounds moving from a fixed UTC offset to the configured zone. The fixture holds
+            one market day, 2026-08-24, which is inside daylight saving, so the offset the repair
+            removed and the zone it moved to **resolve to the same instant on that date**: a replay
+            over this fixture cannot tell the repaired expression from the broken one. That is why
+            3.10's own done condition asks for a behavioural test failing in January and in July,
+            and it is why an expectation here would have been a figure that agrees with both.
+
+Built:      **A permit names an open obligation or the settled reason nothing could close it, and
+            never both or neither.** `Permit` gains `Settled`; `Obligation` becomes nullable. A
+            settled permit is not asked after a due point at all, because establishing that no
+            replayed market day could produce a figure is what discharges the obligation for that
+            checkpoint, and a permit that recorded it and went on resting on the obligation would be
+            re-dating what it had just closed.
+            (see: A frozen-only permit names an open obligation or the settled reason nothing could close it)
+
+            **This is the third shape `OutOfScopeReason` already needed at 2.2**, arrived at
+            independently and for the same reason its own source comment gives: forcing a permanent
+            exemption into a shape that names a checkpoint invents one. The risk is the one that
+            comment names too, so the two counts are reported apart and the settled set growing is
+            visible in the phase report rather than absorbed into a figure that reads as temporary.
+
+            **Six settled, three left open.** 2.1, 2.12, 3.7, 3.10, 3.13 and 3.15 carry their reason
+            at the permit, each written from what that checkpoint built rather than from a template.
+            1.1, 1.2 and 1.11 stay open on the obligation, because whether they could have
+            contributed has not been established and establishing it is the obligation rather than a
+            note.
+
+            **`stated-counts` reads two figures where it read one.** How many permits the fixture
+            holds and how many the first run after 4.1 turns red were the same number and are not
+            any more. Reading the second off the first would restate a figure that stops meaning
+            what it says the moment a permit is settled.
+
+Verified:   **Proved red before green by removing each guard, and one of the three could not be
+            removed at all.** Deleting the settled branch fails
+            `A_settled_permit_needs_no_obligation` and
+            `A_settled_permit_stays_permitted_when_every_obligation_has_fallen_due`, and exactly
+            those two of the eighty-eight in that class. Deleting the both-shapes branch fails
+            `A_permit_carrying_both_an_obligation_and_a_settled_reason_is_caught` and nothing else.
+
+            **The third is held by the compiler rather than by a test, and that is stronger.**
+            `Obligation` is nullable and the neither-shape clause is what narrows it before
+            `MatchingObligations` takes a non-null string, so removing it fails the build with
+            CS8604 rather than turning a test red. The test says which behaviour the guard produces
+            and its comment says why no red run exists for it.
+
+            **Ten existing construction sites were positional and the record's order changed.** They
+            compiled unchanged and bound the obligation into `Why` and the prose into `Obligation`,
+            which is a silent rebinding rather than a break. All ten are now named arguments.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **586 tests**, up from 582.
+
+            Permits: **nine held, six settled, three open.** The times the first CI run after 4.1's
+            entry would turn red falls from nine to three.
+
+Carried:    **Nothing new, and the obligation raised at 3.10 stays open against three checkpoints
+            rather than nine.** It is not repointed and its due checkpoint is unchanged.
+
+            **This session committed code and may not sign it off.**
+
+## 3.10 — 2026-08-30 — phase-4-permit-discharge — the last three permits, and a matcher that could not cross a line break
+
+Not a checkpoint entry. It discharges the remainder of the obligation raised at 3.10 and due at 4.1,
+which the entry above discharged six of. Headed 3.10 for the reason that entry gives.
+
+Found:      **1.1 and 1.2 could have contributed, and nothing had asked.** Both landed before the
+            fixture existed and both are cross-cutting wiring, which is why they read as unmeasurable:
+            the replay uses the clock and the run logger on every stage and measured neither. 1.1's
+            figure is `run_log`, whose sole writer is RunLogger and which is 1.1's own deliverable.
+            1.2's is the session zone, resolved through the clock abstraction from an IANA identifier.
+
+            **1.11 could not, and the reason is not that it is infrastructure.** Its deliverable is
+            RUNBOOK's move procedure executed end to end on a second machine, and no replayed market
+            day performs a procedure. Its mechanical steps are held rather than unheld, by the
+            `rehearsal` job on `ubuntu-latest` that runs the pipeline and then the store copy on a
+            case-sensitive filesystem on every push, which is a runner backing. The one step nothing
+            can automate is copying `appsettings.Secrets.json`, which is the obligation raised at 1.11
+            against the real move and is unaffected.
+
+            **A count this registry reads had never reached zero, and the word table could not say
+            it.** `stated-counts` writes small counts out in words and its table starts at one, so the
+            claim about permits still resting on an obligation became unstatable at exactly the moment
+            the answer was nought. A registry that cannot say zero forces the prose into a digit or
+            forces the claim to be dropped when the thing it counts is finished, which is when the
+            count is most worth having. `nought` and `none` are in the table.
+
+            **And `InWords` could not cross a line break.** It joined its two literals with
+            `Regex.Escape`, so every space in them was a literal space. Rewrapping the permit sentence
+            put "seven" at the start of the next line and the pattern matched nothing at all: not a
+            wrong number, no claim. **That is the first rule in CLAUDE.md's Verification section, in
+            the check that reads the most prose of any in the roster**, and it is the same defect
+            `carried-obligations` was repaired for at 3.14. Every literal space now matches a run of
+            whitespace.
+
+Built:      **Three figures, and the count that is over invocations rather than stages.**
+            `clock.sessionEndUtc` is `DERIVED`, restated outside the solution by
+            `tools/derive-indicators.py --session`, which resolves the same IANA identifier through
+            CPython's `zoneinfo`: a second reader of the same tzdata in a different runtime rather
+            than a second copy of the arithmetic. What it catches is the lookup failing or silently
+            answering in UTC, which is what `InvariantGlobalization` does and which CLAUDE.md names as
+            the setting that silently breaks IANA lookup. Nothing in the fixture would have moved if
+            it had been flipped on.
+
+            `runlog.entries` is `DERIVED` at **24**, and the derivation is the half worth stating. The
+            harness tabulates **21** stage invocations in `PhaseReplayResult.Stages`; the logger wrote
+            24. The difference is the two calibration detector runs and the withheld-scoreboard rerun,
+            none of which the harness's own list records, so a missing run entry on a path that list
+            does not cover is exactly what this figure sees and the list cannot. `runlog.distinctStages`
+            is `FROZEN` at 19 beside it, for a stage vanishing from the pipeline entirely.
+
+Verified:   **The new test was proved red by putting one permit back rather than by reading it.**
+            `Every_permit_the_fixture_actually_holds_survives_4_1_landing` reads the committed fixture
+            and the committed obligations table and answers `hasLanded` true for everything, which is
+            stronger than naming 4.1: no permit may depend on any checkpoint being unlanded. Reverting
+            1.11 to the open shape fails it; restored, it passes. **It fails on the commit that
+            reopens a permit rather than on the commit that lands 4.1**, which is months later and
+            belongs to somebody else.
+
+            The whitespace repair has no separate test and does not need one: BUILD_PLAN now wraps the
+            sentence `stated-counts` reads, so reverting the matcher turns the check red against the
+            committed document. That is the permanent proof the rule asks for rather than a
+            break-and-revert done by hand.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **587 tests**, up from 586.
+
+            Permits: **seven held, seven settled, nought open**, down from nine held and nine open.
+            Expectations: **1,325**, up from 1,322, of which 796 are independently produced.
+
+            The obligation raised at 3.10 is **discharged in full**. Two checkpoints took 2.1(d)'s
+            route and seven were settled.
+
+Carried:    **Nothing new, and one row leaves the table**, being the obligation raised at 3.10. The
+            obligations due at 4.1 fall from twenty-nine to twenty-eight, and the group BUILD_PLAN
+            calls the one that blocks mechanically is now empty.
+
+            **This session committed code and may not sign it off.**

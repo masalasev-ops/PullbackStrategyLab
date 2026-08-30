@@ -242,17 +242,34 @@ public sealed partial class StatedCountsCheck
         // unregistered figure, which is the row raised at 3.7 about checks that reconcile a
         // hand-named list in one direction; registering this one closes the instance rather than
         // the row.
-        int permits = FixtureReplayCheck.ReadExpectations().FrozenOnly?.Count ?? 0;
+        IReadOnlyList<FixtureReplayCheck.Permit> allPermits =
+            FixtureReplayCheck.ReadExpectations().FrozenOnly ?? [];
+        int permits = allPermits.Count;
+
+        // The two figures are different quantities and were the same number until the permit shape
+        // gained its settled form. How many permits the fixture holds is one thing; how many of
+        // them the first run after 4.1 turns red is another, and only the ones still resting on an
+        // obligation are in the second. Reading the second off the first would restate a figure
+        // that has stopped meaning what it says the moment a permit is settled, which is the shape
+        // this whole registry exists to refuse.
+        // see: A frozen-only permit names an open obligation or the settled reason nothing could close it
+        int open = allPermits.Count(p => p.Obligation is not null);
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the frozen-only permits the fixture holds",
             InWords(buildPlan, "`fixtures/expectations.json` names ", " frozen-only checkpoints"),
             permits,
             "entries under frozenOnly in fixtures/expectations.json"));
         claims.Add(new Claim(
+            "BUILD_PLAN.md, the frozen-only permits still resting on an open obligation",
+            InWords(buildPlan, "of which ", " still rest on an open obligation"),
+            open,
+            "entries under frozenOnly carrying an obligation rather than a settled reason"));
+        claims.Add(new Claim(
             "BUILD_PLAN.md, the times the first run after 4.1 turns red",
             InWords(buildPlan, "turns red ", " times over"),
-            permits,
-            "entries under frozenOnly in fixtures/expectations.json"));
+            open,
+            "entries under frozenOnly carrying an obligation rather than a settled reason"));
 
         // BUILD_PLAN.md 1.11, all ten steps of the move procedure in RUNBOOK.
         IReadOnlyList<IReadOnlyList<string>> moveSteps = MarkdownTable.BodyRowsAfter(runbook, "## Moving the store to another machine");
@@ -402,9 +419,22 @@ public sealed partial class StatedCountsCheck
     /// </summary>
     private static int InWords(string text, string before, string after)
     {
+        // Whitespace-tolerant across the span it matches, which is the corpus's own rule for a grep
+        // over markdown and which this did not obey. Every literal space in `before` and `after`
+        // matches any run of whitespace, so a sentence the prose happens to wrap reads the same as
+        // one that fits on a line. It failed on exactly that: the permit sentence was rewrapped and
+        // "names seven frozen-only checkpoints" put the number at the start of the next line, so
+        // the pattern found nothing and the claim it feeds could not be made at all.
+        static string Loose(string literal) =>
+            string.Join(@"\s+", literal.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Regex.Escape))
+            + (literal.EndsWith(' ') ? @"\s+" : string.Empty);
+
         Match match = Regex.Match(
             text,
-            Regex.Escape(before) + @"(?<n>[a-z-]+)" + Regex.Escape(after),
+            (before.StartsWith(' ') ? @"\s+" : string.Empty) + Loose(before)
+                + @"(?<n>[a-z-]+)"
+                + (after.StartsWith(' ') ? @"\s+" : string.Empty) + Loose(after),
             RegexOptions.CultureInvariant);
         Assert.True(match.Success, $"No word appears between {before} and {after}.");
 
@@ -462,8 +492,13 @@ public sealed partial class StatedCountsCheck
                 : null;
     }
 
+    // `nought` and `none` are here because a count this registry reads can legitimately reach
+    // zero, and until the permits were discharged none ever had. A table that cannot say zero
+    // forces the prose into a number, or forces the claim to be dropped at exactly the moment the
+    // thing it counts is finished, which is when the count is most worth stating.
     private static readonly IReadOnlyDictionary<string, int> NumberWords = new Dictionary<string, int>(StringComparer.Ordinal)
     {
+        ["nought"] = 0, ["none"] = 0,
         ["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6,
         ["seven"] = 7, ["eight"] = 8, ["nine"] = 9, ["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12,
         ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,

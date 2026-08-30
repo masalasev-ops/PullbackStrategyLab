@@ -251,6 +251,15 @@ public sealed partial class FixtureReplayCheck
         coverage.Examined("checkpoints asked done condition seven", tiers.Length);
         coverage.Examined("of those carrying an independently produced expectation", tiers.Length - frozenOnly.Length);
 
+        // The two permit shapes, counted apart. Reporting them as one number would let the settled
+        // set grow without anything saying so, which is the failure by-design already names one
+        // level up: a permanent exemption absorbed into a figure that reads as temporary.
+        Permit[] live = [.. expected.FrozenOnly ?? []];
+        coverage.Context("frozen-only checkpoints resting on an open obligation",
+            live.Count(p => p.Settled is null));
+        coverage.Context("frozen-only checkpoints settled, which nothing will close",
+            live.Count(p => p.Settled is not null));
+
         foreach (CheckpointTier checkpoint in frozenOnly)
         {
             Permit? permit = (expected.FrozenOnly ?? [])
@@ -260,14 +269,19 @@ public sealed partial class FixtureReplayCheck
             // row saying "five checkpoints are frozen-only" is the shape of report that let this
             // sit unnoticed, because it reads as one item rather than as five.
             //
-            // The deferral is to the checkpoint the permit's obligation falls due at, which puts a
-            // frozen-only checkpoint under the same rule as everything else here: that checkpoint
-            // has to exist and has to be open. Where the permit resolves to nothing the deferral is
-            // by design and says so, because the assertion above has already failed the run and a
-            // second complaint about the same thing would only crowd the page.
-            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches = permit is null
-                ? []
-                : MatchingObligations(schedule.Obligations, permit.Obligation);
+            // The deferral is to the checkpoint the permit's obligation falls due at, which puts an
+            // open frozen-only checkpoint under the same rule as everything else here: that
+            // checkpoint has to exist and has to be open. Where the permit resolves to nothing the
+            // deferral is by design and says so, because the assertion above has already failed the
+            // run and a second complaint about the same thing would only crowd the page.
+            //
+            // A settled permit takes the by-design branch on purpose rather than by falling through
+            // it. Nothing closes it, so there is no checkpoint to group it under, and that is the
+            // same reading `OutOfScopeReason.ByDesign` was added for.
+            IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
+                permit?.Obligation is null
+                    ? []
+                    : MatchingObligations(schedule.Obligations, permit.Obligation);
 
             coverage.OutOfScope(
                 checkpoint.Total == 0
@@ -441,6 +455,39 @@ public sealed partial class FixtureReplayCheck
                 continue;
             }
 
+            // Which of the two shapes this permit is in, asserted rather than inferred. A permit
+            // carrying both would rest on an obligation and claim to be closed at the same time,
+            // and whichever the reader believed would be the one they looked at first; a permit
+            // carrying neither states a reason in prose and nothing holds it, which is the shape
+            // the `Why` field alone always had.
+            if (permit.Settled is not null && permit.Obligation is not null)
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is listed as frozen-only and carries both a settled reason and the "
+                    + $"obligation raised at {permit.Obligation}. A permit is open or it is settled, and one naming "
+                    + "both says the question is closed and still waiting on the same page.");
+                continue;
+            }
+
+            if (permit.Settled is not null)
+            {
+                // Settled, so nothing here asks after a due point. Establishing that no replayed
+                // market day could produce a figure is what discharges the obligation for this
+                // checkpoint, and a permit that recorded that and then went on resting on the
+                // obligation would be re-dating what it had just closed.
+                continue;
+            }
+
+            if (permit.Obligation is null)
+            {
+                problems.Add(
+                    $"{checkpoint.Checkpoint} is listed as frozen-only and names neither an open obligation nor a "
+                    + "settled reason. Done condition seven asks each checkpoint for at least one DERIVED or "
+                    + "CONFIRMED expectation, so either one is added, or the permit names the obligation it rests "
+                    + "on, or it records that no replayed market day could produce a figure for this checkpoint.");
+                continue;
+            }
+
             IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
                 MatchingObligations(obligations, permit.Obligation);
 
@@ -537,6 +584,22 @@ public sealed partial class FixtureReplayCheck
         if (permit is null)
         {
             return "nothing permits it";
+        }
+
+        if (permit.Settled is not null && permit.Obligation is not null)
+        {
+            return $"it is settled and also rests on the obligation raised at {permit.Obligation}, so which of the "
+                + "two permits it is not stated";
+        }
+
+        if (permit.Settled is not null)
+        {
+            return $"settled, and nothing will close it: {permit.Settled}";
+        }
+
+        if (permit.Obligation is null)
+        {
+            return "it names neither an open obligation nor a settled reason, so nothing permits it";
         }
 
         IReadOnlyList<ArchitectureConformanceCheck.Obligation> matches =
@@ -707,13 +770,32 @@ public sealed partial class FixtureReplayCheck
         IReadOnlyList<Permit>? FrozenOnly = null);
 
     /// <summary>
-    /// A checkpoint permitted to be frozen-only, and the carried obligation that permits it.
+    /// A checkpoint permitted to be frozen-only, in one of exactly two shapes.
     ///
     /// It lives beside the expectations rather than in a check, because it is a fact about this
     /// fixture's contents and it has to be edited in the same commit as the expectation that
     /// discharges it.
+    ///
+    /// <b>An obligation</b>, which is the open shape: nobody has yet established whether this
+    /// checkpoint could have contributed an expectation, the question is a carried obligation, and
+    /// the permit rests on it until it falls due. That obligation has to exist in BUILD_PLAN and
+    /// has to be one PROGRESS does not yet record, on exactly the terms an out-of-scope claim obeys.
+    ///
+    /// <b>Settled</b>, which is the closed shape: it has been established that no replayed market
+    /// day could produce a figure for this checkpoint, and the reason is recorded here. Nothing
+    /// will ever close it, so resting it on an obligation would be a due point that moves at every
+    /// sign-off, which is permanent while reading as pending. This is the third shape
+    /// <see cref="CheckCoverage.OutOfScopeReason.ByDesign"/> already had, arrived at the same way
+    /// and for the same reason: forcing a permanent exemption into a shape that names a checkpoint
+    /// invents one.
+    ///
+    /// <b>Exactly one of the two, and the check fails a permit carrying both or neither.</b> The
+    /// risk is the one by-design already names: if everything drifts into `settled` the naming rule
+    /// is decoration. What holds it is that the two counts are reported separately, so the settled
+    /// set growing is visible in the phase report rather than absorbed into one number.
+    /// see: A frozen-only permit names an open obligation or the settled reason nothing could close it
     /// </summary>
-    public sealed record Permit(string Checkpoint, string Obligation, string Why);
+    public sealed record Permit(string Checkpoint, string Why, string? Obligation = null, string? Settled = null);
 
     /// <summary>One checkpoint's expectations, counted, and how many of them verify anything.</summary>
     public sealed record CheckpointTier(string Checkpoint, int Total, int Independent);

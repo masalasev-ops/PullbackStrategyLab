@@ -1696,6 +1696,14 @@
    "note": "Detector rows only. The authored cases are counted nowhere near this figure."
   },
   {
+   "id": "clock.sessionEndUtc",
+   "tier": "DERIVED",
+   "value": "2026-08-25T03:59:59Z",
+   "checkpoint": "1.2",
+   "producedBy": "an independent resolution of the same IANA identifier through CPython's zoneinfo, computed outside the solution by tools/derive-indicators.py --session",
+   "note": "Checkpoint 1.2's figure, being the clock abstraction resolving an IANA identifier rather than a fixed offset. The last instant of 2026-08-24 in America/New_York, in UTC. The two implementations read the same tzdata by different code paths in different runtimes, which is what the tier claims and all it claims: it cannot catch tzdata itself being wrong, and it does catch the lookup failing or silently answering in UTC. That last one is the case worth having, because it is what InvariantGlobalization does and CLAUDE.md names it as the setting that silently breaks IANA lookup. The date is inside daylight saving, so the offset is -4 and a build that had fallen back to UTC would read 2026-08-24T23:59:59Z here."
+  },
+  {
    "id": "clusters.clustered",
    "tier": "FROZEN",
    "value": "114",
@@ -8365,6 +8373,22 @@
    "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
   },
   {
+   "id": "runlog.distinctStages",
+   "tier": "FROZEN",
+   "value": "19",
+   "checkpoint": "1.1",
+   "producedBy": "the replay itself, recorded to detect change",
+   "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely."
+  },
+  {
+   "id": "runlog.entries",
+   "tier": "DERIVED",
+   "value": "24",
+   "checkpoint": "1.1",
+   "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run",
+   "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24."
+  },
+  {
    "id": "scan.decliner.hits",
    "tier": "FROZEN",
    "value": "30",
@@ -9984,49 +10008,39 @@
  ],
  "frozenOnly": [
   {
-   "checkpoint": "3.15",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation, and like 3.13 and 3.14 the reason is established rather than owed. It is the phase sign-off: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, two rulings the plan asked it to take, and the document repairs those produce. The golden fixture replays the nightly pipeline, and a sign-off adds no stage to it and no behaviour to freeze: there is no figure a market day could be replayed to produce, because the checkpoint's whole output is a reading of what already ran. Its document repairs are held by `stated-counts`, which now derives BUILD_PLAN's permit figure from this file, so the count below and the sentence naming it cannot part again. 3.7, the previous phase sign-off, is in this list on the same footing and was permitted retrospectively at 3.10; this one states its reason at the time it lands, which is what the obligation asks for."
-  },
-  {
-   "checkpoint": "3.13",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation, and unlike the seven before it the reason is established rather than owed. Its three deliverables are the phase report writing both files or neither, a restore scoped to the check it validates, and a command line whose flags declare their arity. The golden fixture replays the nightly pipeline; the phase report is the instrument that reads the replay rather than a stage in it, and `recheck` is a hand-run repair that no night invokes, so none of the three is reachable by replaying a market day. Producing one would mean authoring a broken night into the replay store, which puts an authored row into a population whose figures are reported as captured. All three are held by behavioural tests instead, two of them proved red before green by removing the thing each guards."
-  },
-  {
-   "checkpoint": "1.1",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
-  },
-  {
-   "checkpoint": "1.2",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
-  },
-  {
    "checkpoint": "1.11",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "a rehearsal executed by a person across two machines, whose mechanical steps the rehearsal job already runs on every push",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. Its deliverable is RUNBOOK's \"Moving the store to another machine\" executed end to end on a second machine, all ten steps, with the counts matched and the result recorded in PROGRESS. That is a procedure performed by a person across two machines, and no replayed market day performs a procedure: the fixture replays the nightly pipeline, and the move is not in it. Its mechanical steps are exercised rather than left unheld, by the rehearsal job on ubuntu-latest which runs the whole pipeline and then the store copy on a case-sensitive filesystem on every push, and that is a runner backing rather than a fixture expectation. The one step nothing can automate is step 6, copying appsettings.Secrets.json, which is a human act and is itself the carried obligation raised at 1.11 against the real move."
   },
   {
    "checkpoint": "2.1",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "a spec pass: documents, decisions and the verification harness, none of which is a stage in the replayed pipeline",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. Its five deliverables are a Signals section of SCHEMA giving every signal its formula and source columns, the phase 2 underspecifications settled as decisions, BUILD_PLAN's malformed obligation row and the parser that dropped it, the examined floor moved from per check to per scope, and the DERIVED expectations 1.3, 1.4, 1.5 and 1.7 owed. The golden fixture replays the nightly pipeline and none of the five is a stage in it: four are documents or the verification harness, and the fifth wrote expectations over four earlier checkpoints' behaviour, which is what discharged their permits and is never a contribution by the checkpoint that wrote it. The signal library the spec pass authored is held by check-completeness against ARCHITECTURE's own gate lists, and the signals themselves are frozen by SignalVectorizer at 2.2, whose expectations the fixture carries."
   },
   {
    "checkpoint": "2.12",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "a phase sign-off, whose reading pass has as its subject what the fixture cannot be evidence about",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase 2 sign-off: a verification run reproduced from the committed tree, the gallery review, and one reading pass over what the fixture's composition cannot be evidence about. A sign-off adds no stage to the replayed pipeline and no behaviour to freeze, so there is no figure a market day could be replayed to produce. The reading pass is the sharper half of that: its subject is what the fixture cannot answer, and an expectation over the fixture is the one instrument that could not carry its finding. Its answer is a record, and the thrust worked example it produced is stated in PROGRESS."
   },
   {
    "checkpoint": "3.7",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "a phase sign-off, which adds no stage to the replayed pipeline and no behaviour to freeze",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase 3 sign-off covering 3.0 through 3.5, on exactly the footing 3.15 states: its deliverables are a verification run reproduced from the committed tree and a disposition for every finding, and a sign-off adds no stage to the replayed pipeline and no behaviour to freeze. It was permitted retrospectively at 3.10 without the question being asked; the question is asked here and the answer is that no replayed market day could produce a figure for it."
   },
   {
    "checkpoint": "3.10",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "the verification harness, plus one shipped repair the fixture's single August day cannot distinguish from the defect",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. Seven of its eight parts are the verification harness itself, being the two CI scripts, four checks and the scope floors, and the harness reads the replay rather than being a stage in it. The eighth is the shipped-code defects the other seven revealed: SetupSignalReader.Read bounding computed_at, and the two session bounds in TierClassifier and IndicatorEngine moving from a fixed UTC offset to the configured zone. That last one is the case worth stating, because it is the one that looks replayable and is not. The fixture holds one market day, 2026-08-24, which falls inside daylight saving, so the fixed offset the repair removed and the configured zone it moved to resolve to the same instant on that date and no replay over it can tell the repaired expression from the broken one. That is why the checkpoint's own done condition asks for a behavioural test failing against the old expression in January and in July rather than for a fixture expectation, and those tests exist."
+  },
+  {
+   "checkpoint": "3.13",
+   "settled": "the phase report and a hand-run repair command, neither of which a night invokes",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. Its three deliverables are the phase report writing both files or neither, a restore scoped to the check it validates, and a command line whose flags declare their arity. The golden fixture replays the nightly pipeline; the phase report is the instrument that reads the replay rather than a stage in it, and recheck is a hand-run repair that no night invokes, so none of the three is reachable by replaying a market day. Producing one would mean authoring a broken night into the replay store, which puts an authored row into a population whose figures are reported as captured. All three are held by behavioural tests instead, two of them proved red before green by removing the thing each guards."
+  },
+  {
+   "checkpoint": "3.15",
+   "settled": "a phase sign-off, whose whole output is a reading of what already ran",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase sign-off covering 3.8 through 3.14: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, two rulings the plan asked it to take, and the document repairs those produce. The golden fixture replays the nightly pipeline, and a sign-off adds no stage to it and no behaviour to freeze: there is no figure a market day could be replayed to produce, because the checkpoint's whole output is a reading of what already ran. Its document repairs are held by stated-counts, which derives BUILD_PLAN's permit figure from this file, so the count and the sentence naming it cannot part again."
   }
  ]
 }

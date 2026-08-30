@@ -1764,12 +1764,45 @@ public sealed class PhaseReplay : IDisposable
     /// The check is SQLite's own <c>foreign_key_check</c> rather than anything in this solution,
     /// which is what makes the figure independent of the code that produced the store.
     /// </summary>
+    /// <summary>
+    /// What the run logger wrote, and what the session zone resolved to.
+    ///
+    /// <b>Two checkpoints whose deliverables the replay uses everywhere and measured nowhere.</b>
+    /// 1.1 and 1.2 landed before the fixture existed and contributed no expectation to it, so both
+    /// sat under a permit asking whether they could have contributed at all. They can, and these
+    /// are the figures.
+    ///
+    /// <b>`runlog` is 1.1's, being RunLogger as the sole writer of `run_log`.</b> The count is over
+    /// stage invocations rather than over stages, which is the half worth having: the harness
+    /// tabulates twenty-one invocations in <see cref="PhaseReplayResult.Stages"/> and the logger
+    /// wrote twenty-four, the difference being the two calibration detector runs and the withheld
+    /// scoreboard rerun, none of which the harness's own list records. So a run entry going missing
+    /// on a path the stage list does not cover is exactly what this figure sees and that list
+    /// cannot.
+    ///
+    /// <b>`clock` is 1.2's, being the clock abstraction resolving an IANA identifier.</b> The
+    /// session zone's end-of-day for the fixture's own as-of, in UTC. It is derived outside the
+    /// solution from the same IANA identifier by `tools/derive-indicators.py --session`, which is a
+    /// second reader of the same tzdata rather than a second copy of this arithmetic, and it is the
+    /// figure that moves if `InvariantGlobalization` is ever flipped on: that setting is named in
+    /// CLAUDE.md as the one that silently breaks IANA lookup, and until now nothing in the fixture
+    /// would have changed if it had been.
+    /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+    /// </summary>
     private IReadOnlyList<Measurement> StoreIntegrityFigures()
     {
         using SqliteConnection read = _connections.OpenReadOnly();
 
         return
         [
+            new Measurement("runlog.entries",
+                Rows(read, "run_log").ToString(CultureInfo.InvariantCulture)),
+            new Measurement("runlog.distinctStages",
+                DistinctStagesLogged(read).ToString(CultureInfo.InvariantCulture)),
+            new Measurement("clock.sessionEndUtc",
+                SessionBoundaries.EndOfSession(AsOf, _options.Value.SessionZone)
+                    .ToUniversalTime()
+                    .ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)),
             new Measurement("store.schemaVersion",
                 MigrationRunner.ReadUserVersion(read).ToString(CultureInfo.InvariantCulture)),
             new Measurement("store.rowsPointingAtSetup",
@@ -1798,6 +1831,14 @@ public sealed class PhaseReplay : IDisposable
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM daily_bar WHERE observed_at > @instant";
         command.Parameters.AddWithValue("@instant", StoreText.TimestampToStorageText(instant));
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>How many distinct stages left a run entry, which is the shape of the count above.</summary>
+    private static int DistinctStagesLogged(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(DISTINCT stage) FROM run_log;";
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
