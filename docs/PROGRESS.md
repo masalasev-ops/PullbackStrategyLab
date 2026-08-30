@@ -8133,3 +8133,190 @@ Carried:    One new row, the fixture reach above. Two rows leave the table, bein
             the fault is loud, but a refusal still costs the night. `tools/migrate` closes it.
 
             **This session committed code and may not sign it off.**
+
+## 3.15 — 2026-08-30 — phase-4-permit-reading-and-short-funnel — correction: the reason the permits were not discharged was the wrong reason
+
+Corrects the 3.15 carried-rulings entry of 2026-08-30, under `Carried`, which reads: "It is not
+discharged here because a permit is spent by an independently produced expectation, and there is no
+phase-4 behaviour to derive one from yet."
+
+**The first clause is right and the second is wrong.** A permit is spent by an independently produced
+expectation. It is not spent by a phase-4 one. A permit names one checkpoint and is spent by an
+expectation over **that checkpoint's** behaviour, and the nine it names are 1.1, 1.2, 1.11, 2.1,
+2.12, 3.7, 3.10, 3.13 and 3.15, every one of which had landed when the sentence was written. The
+behaviour each expectation would be derived from existed on the day, so 3.15 could have discharged
+them and the reason it gave for not doing so does not hold. What was true is that it chose not to,
+which is a legitimate thing for a sign-off session to do and a different sentence.
+
+**Why it matters more than an entry being loose.** The sentence licenses a reading in which the
+permits close by construction when 4.1 lands, and that reading was taken in conversation on the same
+day. Under it, nothing has to be done: 4.1 produces phase-4 behaviour, the expectations follow, the
+permits go. Under the correct reading, nine permits have to be discharged one at a time **before**
+4.1's PROGRESS entry is written, because `fixture-replay` fails a permit whose obligation's due
+checkpoint the record already holds, and 4.1's own done condition 2 is `tools/ci.*` green. The
+difference between the two readings is the whole of BUILD_PLAN's "one blocks, and it blocks
+mechanically rather than by judgement".
+
+**2.1(d) settles the remedy and had already settled it.** Four frozen-only permits, at 1.3, 1.4, 1.5
+and 1.7, were discharged at 2.1 by writing the `DERIVED` expectations those checkpoints owed, and its
+done condition says the permits are gone from the fixture rather than re-dated. Nothing distinguishes
+these nine from those four in kind. What the obligation raised at 3.10 adds is a prior question 2.1
+did not face, being whether each checkpoint could have contributed an expectation at all, so the
+route has two ends: write the expectation, or establish that no replayed market day could produce a
+figure for that checkpoint and record the reason, which is what 3.13 and 3.15 already did in their
+own permit text. A permit resting on an established reason still has to stop naming an obligation
+that falls due at 4.1, because the guard fails on the due point and not on the quality of the reason.
+
+**BUILD_PLAN is the statement that was correct and it is the one that was edited**, because it named
+the block and not the remedy, which is what left the remedy to be inferred. The correction is a clean
+edit there with its prior text in `CHANGELOG.md`; this entry is the record's half, since a record is
+corrected by a new dated entry rather than in place.
+
+**No code, no migration and no fixture edit.** No permit is discharged here and the count stays at
+nine. Which of the two routes applies to each is settled per checkpoint by a session that reads what
+each one built, and that is the obligation rather than this entry.
+
+## 2.11 — 2026-08-30 — phase-4-permit-reading-and-short-funnel — what the short side would need, measured against the long side beside it
+
+Not a checkpoint entry, and **nothing is changed by it**. No threshold, gate or definition is touched,
+the once-only threshold adjustment stays unspent and is the operator's, and nothing below is a
+proposal. What follows is measurement.
+
+Measured     Every figure is over `calibration_setup` in `data/live`, read-only, across the **602
+over:        sessions from 2024-04-01 to 2026-08-24**, being **32,533 rows flagged long** and **16,917
+             flagged short**. Long and short are reported separately throughout and no figure covers
+             both. `cluster` is excluded from every conjunction because it is recorded and never
+             gating. A median a night is taken over all 602 sessions with a session producing none
+             counted as nought, because the median is over the nights the lab ran rather than over
+             the nights that produced something.
+             (see: Long and short are never pooled into one figure)
+
+The funnel:  **Long, each gate over the rows still alive when it is reached.**
+
+             | gate | reached | passed | removed | pass rate |
+             |---|---|---|---|---|
+             | `tradable` | 32,533 | 32,533 | 0 | 100.00% |
+             | `moves-enough` | 32,533 | 32,533 | 0 | 100.00% |
+             | `uptrend` | 32,533 | 32,533 | 0 | 100.00% |
+             | `thrust` | 32,533 | 32,533 | 0 | 100.00% |
+             | `dip-shape` | 32,533 | 3,230 | 29,303 | 9.93% |
+             | `held-floor` | 3,230 | 3,228 | 2 | 99.94% |
+             | `contraction` | 3,228 | 2,069 | 1,159 | 64.10% |
+             | `trigger-near` | 2,069 | 1,981 | 88 | 95.75% |
+             | `exit-tight` | 1,981 | 30 | 1,951 | 1.51% |
+
+             **Short, on the same terms.**
+
+             | gate | reached | passed | removed | pass rate |
+             |---|---|---|---|---|
+             | `tradable-shortable` | 16,917 | 16,917 | 0 | 100.00% |
+             | `moves-enough` | 16,917 | 16,917 | 0 | 100.00% |
+             | `downtrend` | 16,917 | 16,917 | 0 | 100.00% |
+             | `averages-squeezing` | 16,917 | 4,927 | 11,990 | 29.12% |
+             | `thrust` | 4,927 | 4,927 | 0 | 100.00% |
+             | `bounce-shape` | 4,927 | 432 | 4,495 | 8.77% |
+             | `reached-ceiling` | 432 | 9 | 423 | 2.08% |
+             | `no-reclaim` | 9 | 9 | 0 | 100.00% |
+             | `exit-tight` | 9 | 0 | 9 | 0.00% |
+
+             Passing every gate: **30 long rows and 0 short rows** over 602 sessions, median nought a
+             night on both sides.
+
+             **Four gates a side remove nothing at all**, being `tradable`/`tradable-shortable`,
+             `moves-enough`, `uptrend`/`downtrend` and `thrust`. They are what a row already satisfies
+             by being in this table, so each side has **five live gates**: long
+             `dip-shape, held-floor, contraction, trigger-near, exit-tight`, short
+             `averages-squeezing, bounce-shape, reached-ceiling, no-reclaim, exit-tight`.
+
+Relaxations: **Long. One single, one pair and seven triples reach or approach the band floor of 5.**
+             Of 9 singles, 1 lifts the median above nought and 8 read nought: `exit-tight` alone gives
+             median **2.5** over 1,981 rows. Of 36 pairs, 8 lift it and 28 read nought; the only one
+             reaching the floor is `dip-shape+exit-tight` at median **12** over 8,507 rows. Of 84
+             triples, 28 lift it and 56 read nought; 7 reach the floor, every one of them containing
+             `dip-shape+exit-tight`, the best being `dip-shape+contraction+exit-tight` at median **20**
+             over 14,032 rows.
+
+             **Short. No single and no pair lifts the median off nought. Three triples do, and one
+             reaches the floor.** Of 9 singles, **0** lift it. Of 36 pairs, **0** lift it; the widest
+             pair by rows is `bounce-shape+exit-tight` at 495 rows and still median nought. Of 84
+             triples, 3 lift it and 81 read nought:
+
+             | relaxed | median a night | rows |
+             |---|---|---|
+             | `bounce-shape`+`reached-ceiling`+`exit-tight` | **5** | 4,763 |
+             | `averages-squeezing`+`reached-ceiling`+`exit-tight` | 2 | 2,375 |
+             | `averages-squeezing`+`bounce-shape`+`exit-tight` | 1 | 779 |
+
+             **So the short side does have a route and it needs three gates where long needs two.**
+             That is new against the hunt of 2026-08-29, which examined singles and pairs and
+             concluded short had no candidate; the conclusion was correct over what it examined and
+             the triples were not examined. The one route sits **exactly on** the band floor of 5
+             rather than clearing it, against long's 12 on its own best pair, so the two are not
+             comparable in strength even where both reach.
+
+Examined:    **130 combinations computed per direction**: 1 baseline, 9 singles, 36 pairs, 84 triples,
+             out of 512 subsets of the nine gates. Stated as distinct relaxations rather than as
+             subsets, because relaxing a gate that removes nothing is a no-op and 382 of the 512 would
+             otherwise read as unexamined ground when most of them are duplicates: **over the five
+             live gates a side there are 32 distinct relaxations, 26 of them examined and 6 not.**
+
+             **The six unexamined are the same shape on both sides**, being every four-gate and the
+             one five-gate relaxation. Long: the five 4-subsets of
+             `dip-shape, held-floor, contraction, trigger-near, exit-tight` and their union. Short: the
+             five 4-subsets of `averages-squeezing, bounce-shape, reached-ceiling, no-reclaim,
+             exit-tight` and their union. **A combination that was never tried is named here rather
+             than left to read as one that failed.** None was computed and nothing below rests on
+             them; a relaxation of four of five live gates is most of the detector removed, and what
+             it would admit is not a fact about this strategy.
+
+Binding      **It is not the pattern's rarity and it is not the universe's size.** Short flags a
+constraint:  median of **14.5 names a night** against a band floor of 5, so the input to the funnel is
+             about three times what the band asks for. Long flags 47.5. Short is the thinner side by a
+             factor of about three and it is not thin in absolute terms: if everything below the flag
+             passed, short would clear the floor with room.
+
+             **It is the series.** Long carries one hard gate before `exit-tight`, being `dip-shape` at
+             9.93%. Short carries three, being `averages-squeezing` at 29.12%, `bounce-shape` at 8.77%
+             and `reached-ceiling` at 2.08%. The product is what empties it: 432 rows reach
+             `reached-ceiling` in 602 sessions and 9 survive it.
+
+             **And the deepest of the three is running a narrower definition than the document states,
+             by a known and scheduled amount.** `reached-ceiling` asks whether price is within half a
+             daily range of the 21-day average, **or** the 50-day, **or** the declining average price
+             anchored to the last swing high. The third clause is a volume-weighted average over
+             minute bars and `VwapEngine` arrives at **4.4**, so the check runs two of its three
+             disjuncts and says so on every verdict it writes. A disjunction missing a disjunct is
+             strictly harder to pass, and this is the gate that takes short from 432 to 9.
+
+             **The long detector has no deferred clause anywhere and the short detector has two**, the
+             second being the market-capitalisation clause of `tradable-shortable`, exempted by name in
+             calibration and not a choke, since that gate passes 100%. So the two sides are not being
+             measured like for like today, and the asymmetry sits on the short side's tightest gate.
+
+             **`exit-tight` on the short side is starved rather than strict, and nothing is known about
+             it.** Nine rows reach it in 602 sessions and none passes. At the long side's conditional
+             rate of 1.51% a sample of nine returns zero passes **87.2%** of the time, so 0 of 9 is
+             exactly what a rate identical to long's would most likely produce. The one-sided 95% upper
+             bound on the short rate given 0 of 9 is **28.3%**. Reading the short `exit-tight` rate as
+             nought, or as worse than long's, is reading a sample of nine.
+
+Not          The four gates that remove nothing remove nothing over this population; that is a fact
+claimed:     about the flagged rows and not about the checks, which ran and passed. The counterfactual
+             counts are arithmetic over recorded check results rather than a re-run of the detectors,
+             so they say what the recorded conjunction would have admitted and not what a detector
+             with different thresholds would have flagged. Any threshold actually spent is re-measured
+             by a calibration re-run, as 3.0(c) did for the geometry.
+
+             **No proposal is made.** Which of the three short gates should move, whether
+             `reached-ceiling` should be read as measured or as owed until 4.4, and whether the once is
+             spent at all, are the operator's and are not touched here.
+
+Carried:    **One row, and it is not a threshold.** `reached-ceiling` runs two of its three
+            disjunctive clauses until 4.4 and the long detector has no deferred clause anywhere, so
+            the two sides are not measured like for like and the asymmetry sits on the short side's
+            tightest gate. Rowed as an obligation due at 3.6 rather than 4.4, because 3.6 comes first
+            and is where the short-side number is read: either the funnel is re-measured once the
+            clause runs, or 3.6's short-side reading records that it was taken against two clauses of
+            three. The obligations table reads fifty-eight.
+
+            Nothing else is carried and nothing else is changed.
