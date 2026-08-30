@@ -29,6 +29,14 @@ public static class IntervalCases
     /// <c>PairsPerNight</c> and <c>WithinNightDispersion</c> are what let a night count as more than
     /// one observation. A file holding only the means could exercise nothing but the corner where a
     /// night cannot say how its own pairs dispersed and therefore counts as one.
+    ///
+    /// <c>PairsByNight</c> overrides <c>PairsPerNight</c> where it is present, and it exists because
+    /// a scalar cannot express the case the effective count is actually computed over. The reported
+    /// estimator carries the harmonic mean of the pair counts and the row total carries their
+    /// arithmetic mean; the two are the same number exactly when every night holds the same count,
+    /// which was every scenario in this file until 2026-08-30. So the tier built to verify the
+    /// effective count was comparing the shipped code and the restatement over the one population in
+    /// which the defect 3.14 repaired could not appear.
     /// </summary>
     public sealed record Scenario(
         string Name,
@@ -36,7 +44,8 @@ public static class IntervalCases
         string Recipe,
         int PairsPerNight,
         decimal WithinNightDispersion,
-        IReadOnlyList<decimal> NightlyMeans);
+        IReadOnlyList<decimal> NightlyMeans,
+        IReadOnlyList<int>? PairsByNight = null);
 
     private sealed record CaseFile(string Tier, IReadOnlyList<Scenario> Scenarios);
 
@@ -62,10 +71,21 @@ public static class IntervalCases
 
         var start = new DateOnly(2026, 1, 5);
 
+        if (scenario.PairsByNight is { Count: > 0 } byNight && byNight.Count != scenario.NightlyMeans.Count)
+        {
+            throw new InvalidOperationException(
+                $"{scenario.Name} carries {byNight.Count} pair count(s) for {scenario.NightlyMeans.Count} night(s). "
+                + "A per-night count that does not line up with the series would silently pair a night's mean with "
+                + "another night's weight, which is the shape of fault this scenario exists to catch.");
+        }
+
         return
         [
             .. scenario.NightlyMeans.Select((mean, i) => new PairedInterval.Night(
-                start.AddDays(i), mean, scenario.PairsPerNight, scenario.WithinNightDispersion)),
+                start.AddDays(i),
+                mean,
+                scenario.PairsByNight is { Count: > 0 } counts ? counts[i] : scenario.PairsPerNight,
+                scenario.WithinNightDispersion)),
         ];
     }
 

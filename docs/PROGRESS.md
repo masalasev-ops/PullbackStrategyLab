@@ -7772,3 +7772,196 @@ Carried:    **Nothing new, and one row's shape is worth naming.** The classifica
             yet.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-30 — phase-3-tight-set-and-instruments — the tight control set reaches across sessions, ruled by the operator
+
+Not a checkpoint entry. The obligation raised at 3.3, due at 3.5 and repointed to the operator at
+that checkpoint, has been open since. It was put to them on 2026-08-30 and answered.
+
+Asked:      Whether the tight control set may draw from neighbouring sessions carrying the same
+            market mood. The tight set is declared to match on the trend ladder **and the market
+            mood**, and within one night the second cannot be a dimension: the mood is a property of
+            the session, so every candidate that night carries the same one and matching on it
+            excludes nothing. `ControlSampler` leaves it out rather than performing a comparison
+            true by construction. Two readings: make the dimension real by reaching across sessions,
+            or drop it and say the tight set differs from the loose one by the trend ladder alone.
+
+Ruled:      **The tight set draws from any session sharing the market mood. The loose set stays
+            within the night.** The dimension is kept and made real rather than dropped.
+
+            **The cost is accepted rather than discovered later.** A setup and its tight controls
+            may now come from different sessions, so the market factor common to one night no longer
+            cancels between them and the difference series carries whatever moved between those
+            sessions on top of the idiosyncratic term the comparison is for. That is a matched
+            dimension bought with a comparison across time. It is taken because the alternative is a
+            tight set that differs from the loose set by the trend ladder alone, which is a weaker
+            question than the one the scoreboard says it asks. The loose set staying within the
+            night keeps a within-night comparison on the panel beside the across-session one, which
+            is what makes the cost readable.
+
+            Recorded as a decision, because a later session could reasonably choose the other
+            reading and the difference would be invisible in the number
+            (see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night).
+            It does not supersede the decision above it: that one names the matched dimensions and
+            the nightly cadence and never said the tight set was confined to the night, which was an
+            implementation fact rather than a decided one. Its five citations stand.
+
+What it     **The row leaves the operator for 3.6.** The judgement is closed and what remains is the
+changes:    draw, which is a build session's work: `ControlSampler`'s candidate population, the mood
+            dimension in `match_quality`, and the ARCHITECTURE sentence describing the tight set as
+            a within-night comparison. It joins the two instruments already due at 3.6, so all three
+            things 3.6 needs before it can be read now sit at 3.6.
+
+            **The operator's list is nine again**, having been ten earlier the same day. Two rows
+            moved in opposite directions: `ForwardDispersion` arrived from 4.1 under the 3.15
+            sign-off's ruling, and this one left. Both movements are named in the section, because a
+            count that returns to where it started reads as nothing having happened.
+
+Measured:   **Ruled before any evidence was spent, which is the only time it could be.** The live
+            store holds two scoreboard dates, 2026-08-27 and 2026-08-28, and band 1 on the later one
+            reads `n_effective` 0 against `n_minimum` 262 on both sides and both control sets,
+            withheld because "40 setup(s) flagged and none has closed its 10-session horizon yet, so
+            there is no series to take an interval over". No interval has ever been taken over the
+            old definition, so none is discarded and no accumulation is spent twice. Read from
+            `data/live` read-only; nothing in this pass writes to the running store.
+
+Owed:       The draw itself, at 3.6, with the two instruments beside it. Until it is built, the
+            tight comparison on the panel is still the within-night one, and any figure taken from
+            it says so.
+
+## 3.14 — 2026-08-30 — phase-3-tight-set-and-instruments — the interval tier reaches uneven nights, and the restatement that had not moved with the code
+
+Not a checkpoint entry. Discharges the obligation raised at 3.14 and due at 3.6, which is the first
+of the two instruments 3.6 needs before it can be read.
+
+Found:      **The independent restatement still carried the arithmetic 3.14 replaced.**
+            `tools/derive-indicators.py --interval` computed the effective count as
+            `rows / design * serial`, where the shipped code has computed
+            `Clamp(independent / design * serial, rows)` since 3.14, `independent` being the night
+            count times the harmonic mean of the pair counts. The two are the same number exactly
+            when every night carries the same count, and every scenario in
+            `fixtures/interval-cases.json` did, so the restatement and the code agreed over the
+            whole file while carrying different formulas. That is the obligation's own claim
+            confirmed from the other side: it named the fixture and the defect was in the
+            restatement as well.
+
+Built:      **`pairsByNight`**, an optional per-night list overriding the scalar, read the same way
+            by `IntervalCases` and by the restatement, with a refusal in both when its length does
+            not match the series. A count that lined up with the wrong night would pair a mean with
+            another night's weight silently, which is the shape of fault the scenario exists to
+            catch.
+
+            **Two scenarios, both reusing `many-names-a-night-moving-apart`'s series verbatim** so
+            the pair counts are the only thing that differs and the mean and bounds are identical to
+            the even case by construction. `nights-that-differ-in-pair-count` alternates eighty and
+            five pairs over forty nights, which is the case the 3.14 record names.
+            `a-few-nights-too-thin-to-say` puts five one-pair nights among nights of eighty, where
+            the design effect skips them for having no degrees of freedom while the harmonic mean
+            counts them: the two discounts read the same series through different populations of
+            nights, which no uniform series can reach.
+
+Measured:   **The shipped code and the restatement agree to every place printed.**
+            `nights-that-differ-in-pair-count` reads 1,700 rows and **376** effective;
+            `a-few-nights-too-thin-to-say` reads 2,805 rows and **294** effective. Fourteen
+            `DERIVED` expectations, tagged 3.14 because they verify 3.14's repair and were carried
+            to the first pass that could produce them.
+
+Verified:   **Proved by restoring the old arithmetic in the restatement alone.** With
+            `rows / design * serial` back, the two new scenarios read **1,700** and **2,805**
+            against the shipped 376 and 294, a factor of 4.5 and 9.5. **The two even scenarios read
+            3,200 and 345 either way**, unchanged to the digit, which is the whole finding: the
+            population the fixture held could not distinguish the two formulas, and the population
+            it now holds separates them by an order of magnitude.
+
+            `fixture-replay` reported the fourteen figures as unexamined before the expectations
+            were added, naming each one, which is the widening guard doing its job.
+
+Owed:       **3.14's frozen-only permit is spent and removed**, so the permits fall from ten to
+            nine and BUILD_PLAN's two derived figures fall with them. The obligation row is removed
+            and the table is fifty-eight. One instrument remains at 3.6, `Estimate.Nights` reaching
+            the panel, and the draw the 3.3 ruling leaves owed.
+
+## 2.11 — 2026-08-30 — phase-3-tight-set-and-instruments — the hunt for the second wrong quantity, and the premise it did not survive
+
+Not a checkpoint entry. The 2.11 ruling of 2026-08-29 left the row waiting on the identification of a
+second wrong quantity, the geometry having been the first. This is that hunt. **Nothing is changed by
+it**: the once-only threshold adjustment is the operator's and stays unspent, and no threshold, gate
+or rule is touched here. What follows is measurement.
+
+Measured     Every figure below is over `calibration_setup` in `data/live`, read-only, across the
+over:        **602 sessions from 2024-04-01 to 2026-08-24**, being **32,533 rows flagged long** and
+             **16,917 flagged short**. Long and short are reported separately throughout and no
+             figure covers both. `cluster` is excluded from every conjunction because it is recorded
+             and never gating, which the 3.14 entry establishes.
+
+Found:       **The long funnel has one dominant constraint and it is `exit-tight`.** Conditionally,
+             each gate over the rows still alive when it is reached: `dip-shape` 9.93% of 32,533,
+             `held-floor` 99.94% of 3,230, `contraction` 64.10% of 3,228, `trigger-near` 95.75% of
+             2,069, **`exit-tight` 1.51% of 1,981**. Forcing `exit-tight` to pass and changing
+             nothing else takes the long count from 30 to 1,981 and the median from nought to
+             **3 a night**. Every other long gate forced to pass leaves the count at 30, except
+             `dip-shape`, which gives 419 and a median of nought.
+
+             **The quantity it caps sits below the first percentile of what the geometry produces.**
+             Over the 1,981 long rows that reach `exit-tight` with a value, the stop distance in
+             daily ranges reads p1 0.343, p25 0.928, **p50 1.184**, p75 1.475, p90 1.787, max 2.600,
+             against a cap of 0.5. That confirms the 2.11 row's own sentence, that a stop at the
+             extreme of a two-to-seven bar move is being asked to sit inside half a day's range and
+             the geometry cannot produce it, and puts a number on it.
+
+             **One quantity is not enough, which is where the framing breaks.** Forcing `exit-tight`
+             to pass gives a median of 3 a night long against a band floor of 5. Reaching the band
+             needs `dip-shape` as well: forcing both gives 8,507 long rows and a median of **12 a
+             night**. So on the long side there is no *second* wrong quantity in the sense the row
+             assumes, being one more like the geometry. There are two.
+
+             **The short side has no candidate at all.** Conditionally: `averages-squeezing` 29.12%
+             of 16,917, `thrust` 100% of 4,927, `bounce-shape` 8.77% of 4,927, `reached-ceiling`
+             2.08% of 432, `no-reclaim` 100% of 9, **`exit-tight` 0 of 9**. No single short gate
+             forced to pass takes the median above nought; the best is `exit-tight` at 9 rows over
+             602 sessions. No pair does either: the best pair, `bounce-shape` with `exit-tight`,
+             gives 495 rows over 602 sessions and a median of nought. **Nine short rows in 602
+             sessions reach `exit-tight` at all**, so whatever is wrong on the short side is upstream
+             of the gate the long side dies at.
+
+             **So the premise that the two sides fail the same way does not survive conditional
+             measurement**, and that premise is what the row's "structural rather than a long-side
+             accident" rests on. Unconditionally `exit-tight` passes 1.29% of 32,533 long and 1.37%
+             of 16,917 short, which reads as one failure appearing twice. Conditionally it is 1.51%
+             of the 1,981 long rows that reach it and 0 of the 9 short rows that do. The long side
+             dies at `exit-tight`; the short side has already died three gates earlier. Same
+             instrument, same day, different diagnosis per side, which is the pooling rule biting on
+             a diagnosis rather than on a figure.
+             (see: Long and short are never pooled into one figure)
+
+             **A supporting finding on which clause of the shape gate fails, since the store does
+             not record it and `value` and `note` together can reconstruct it.** `dip-shape` is a
+             retrace at or below 0.40 **and** a dip of 2 to 7 bars. Over all 32,533 long rows the bar
+             clause passes 29.05% and the retrace clause 66.34%; of the 29,303 long failures,
+             **62.63% fail on the bar clause alone** and 21.23% on the retrace clause alone. The
+             median dip length in the flagged long population is **1 bar**. Over all 16,917 short
+             rows the bar clause passes 32.06% and the recovery clause 67.70%, and 62.42% of the
+             14,541 short failures are the bar clause alone, with a median bounce of 1 bar.
+
+             **That matters because every retrace figure this corpus has quoted was taken after the
+             bar clause.** Over all 32,533 flagged long rows the median retrace is **0.1771**, well
+             inside the 0.40 cap. Over dips of 2 to 7 bars it is the 0.5208 the 3.0(c) record
+             quotes. Both are correct over the population named beside them, and the cap was argued
+             from the conditioned one while the gate applies to the unconditioned one.
+
+What it      **The row stays open and stays the operator's, and what it waits on changes again.** It
+changes:     no longer waits on identifying a second wrong quantity, because the answer is that the
+             long side has two and the short side has none that any single relaxation reaches. What
+             it waits on now is a judgement this measurement cannot take: whether to spend the once
+             on the long side, where the two quantities and their cost are now numbers, or to treat
+             the short side's three-gate funnel as the finding and stop expecting the two sides to
+             be fixed by one change.
+
+             **No decision moves and no threshold is touched.** The once is unspent, the 5 to 60
+             band is not re-derived, and nothing in `LongPullbackRules` or `ShortPullbackRules`
+             changed in this pass.
+
+Owed:        The counterfactual counts above are arithmetic over recorded check results, not a
+             re-run of the detectors, so they say what the recorded conjunction would have admitted
+             and not what a detector with different thresholds would have flagged. Any threshold
+             actually spent is re-measured by a calibration re-run, as 3.0(c) did for the geometry.

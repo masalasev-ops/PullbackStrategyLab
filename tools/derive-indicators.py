@@ -2228,9 +2228,31 @@ def interval_main(argv):
             continue
 
         count = len(nights)
-        pairs = int(scenario.get("pairsPerNight", 1))
         within = Decimal(str(scenario.get("withinNightDispersion", 0)))
-        rows = count * pairs
+
+        # Per-night pair counts where the scenario states them, otherwise one count on every night.
+        #
+        # A scalar was the only form until 2026-08-30, and a scalar is the one population in which
+        # the two quantities below are the same number, so this restatement and the shipped code
+        # agreed over every scenario in the file while carrying different arithmetic.
+        if "pairsByNight" in scenario:
+            by_night = [int(x) for x in scenario["pairsByNight"]]
+            if len(by_night) != count:
+                raise SystemExit(
+                    "%s states %d pair count(s) for %d night(s)" % (name, len(by_night), count))
+        else:
+            by_night = [int(scenario.get("pairsPerNight", 1))] * count
+
+        # rows is n times the arithmetic mean of the pair counts. independent is n times their
+        # harmonic mean, which is the effective sample of an unweighted mean of nightly means: the
+        # variance of that estimator is (1/n^2) * sum_i sigma^2 / p_i, so its effective sample is
+        # n^2 / sum_i (1/p_i). The harmonic mean never exceeds the arithmetic one, so rows can only
+        # ever overstate, and it overstates by most where the counts are furthest apart.
+        rows = sum(by_night)
+        reciprocals = sum(Decimal(1) / Decimal(max(1, p)) for p in by_night)
+        independent = (Decimal(count) * Decimal(count) / reciprocals
+                       if reciprocals > 0 else Decimal(count))
+
         blocks = count // block
 
         # The bootstrap runs in IEEE-754 double, matching the shipped code exactly: these are
@@ -2313,15 +2335,30 @@ def interval_main(argv):
             serial = Decimal(1) if rho <= -1 else (1 - rho) / (1 + rho)
             serial = min(Decimal(1), max(Decimal(0), serial))
 
-            if pairs < 2 or within <= 0:
-                # Nothing in the series says how a night's own pairs dispersed, so a night counts
-                # as one observation however many it holds.
+            # The design effect, pooled over the nights that can speak to it.
+            #
+            # A night of one pair says nothing about how its own pairs dispersed, so it carries no
+            # degrees of freedom and is skipped here. It is still counted by the harmonic mean
+            # above, and by the average below, which is the whole interaction a uniform series
+            # cannot reach: the two discounts read the same series through different populations of
+            # nights.
+            degrees = sum(p - 1 for p in by_night if p >= 2)
+            weighted = sum(Decimal(p - 1) * within * within for p in by_night if p >= 2)
+
+            if degrees == 0 or weighted <= 0:
+                # Either every night carries one pair, or no night's pairs disperse at all. Neither
+                # says anything about clustering, so a night counts as one.
                 scaled = Decimal(count) * serial
             else:
-                observed = variance / (count - 1)
-                expected = within * within / pairs
-                design = max(Decimal(1), observed / expected)
-                scaled = Decimal(rows) / design * serial
+                pooled = weighted / Decimal(degrees)
+                expected = sum(pooled / Decimal(max(1, p)) for p in by_night) / Decimal(count)
+
+                if expected <= 0:
+                    scaled = Decimal(count) * serial
+                else:
+                    observed = variance / (count - 1)
+                    design = max(Decimal(1), observed / expected)
+                    scaled = independent / design * serial
 
             effective = max(1, min(rows, int(scaled.quantize(Decimal("1"), rounding=ROUND_HALF_UP))))
 
