@@ -1416,4 +1416,49 @@ public sealed class CheckProofTests
 
         Assert.Equal(["9.2"], silent);
     }
+
+    /// <summary>
+    /// The number-word parse behind the obligation counts, over every form BUILD_PLAN writes one
+    /// in, with the count stated in advance.
+    ///
+    /// It is here because 3.15's fifth finding took those counts off C# literals, and the parse is
+    /// what replaced them: a figure the document states about its own contents is read from the
+    /// document, so adding or repointing an obligation row is a document edit rather than a source
+    /// edit. That mattered concretely. A session that commits code may not sign it off, so while
+    /// the counts were literals a sign-off session could not raise or repoint an obligation without
+    /// disqualifying itself, and 3.15 ruled a repoint it then had to record as unexecuted.
+    ///
+    /// The compound tens are the forms that forced it. A flat lookup of one to twelve read
+    /// "fifty-nine" and "twenty-nine" as no number at all, and a parse that answers null where the
+    /// document states a figure is the silent narrowing this suite exists to refuse: the claim
+    /// would not have been wrong, it would not have been made.
+    /// </summary>
+    [Fact]
+    public void The_number_word_parse_reads_every_form_the_plan_states_a_count_in()
+    {
+        (string Word, int Value)[] forms =
+        [
+            ("one", 1),                 // a lone unit
+            ("nineteen", 19),           // the teens, which are not a compound
+            ("twenty", 20),             // a round ten on its own
+            ("twenty-nine", 29),        // the count due at 4.1
+            ("fifty-nine", 59),         // the obligations table's own total
+            ("Twenty-nine", 29),        // capitalised, because a count opens a sentence
+            ("ninety-nine", 99),        // the top of the range the parse claims
+        ];
+
+        Assert.Equal(7, forms.Length);
+
+        foreach ((string word, int value) in forms)
+        {
+            Assert.Equal(value, StatedCountsCheck.FromWords(word));
+        }
+
+        // What it must not read, because a parse that guesses is worse than one that refuses: the
+        // check asserts on null and would otherwise pin a claim to a number nobody wrote.
+        string[] notNumbers = ["rows", "twenty-twenty", "fifty-ten", "nine-fifty", "", "-"];
+
+        Assert.Equal(6, notNumbers.Length);
+        Assert.All(notNumbers, w => Assert.Null(StatedCountsCheck.FromWords(w)));
+    }
 }
