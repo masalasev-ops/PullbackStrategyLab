@@ -237,14 +237,18 @@ public sealed partial class FixtureReplayCheck
             expected.Expectations, expected.FrozenOnly ?? [], schedule.Obligations, schedule.HasLanded,
             schedule.Landed);
 
-        CheckpointTier[] tiers = [.. ByCheckpoint(expected.Expectations)];
+        // Over every checkpoint done condition seven is owed of, not only the ones the fixture
+        // holds something for. Grouping the expectations made the eight permitted checkpoints
+        // invisible to this record as well as to the assertion: they were neither examined, nor
+        // unexamined, nor out of scope, and the two figures below read as 29 of 29.
+        CheckpointTier[] tiers = [.. Populations(expected.Expectations, schedule.Landed)];
         CheckpointTier[] frozenOnly = [.. tiers.Where(t => t.Independent == 0)];
 
         coverage.NoSourceScan(
             "it runs the pipeline over the golden fixture and diffs what the run produced. Every figure it "
             + "compares was computed by the code rather than read out of it");
 
-        coverage.Examined("checkpoints with expectations in the fixture", tiers.Length);
+        coverage.Examined("checkpoints asked done condition seven", tiers.Length);
         coverage.Examined("of those carrying an independently produced expectation", tiers.Length - frozenOnly.Length);
 
         foreach (CheckpointTier checkpoint in frozenOnly)
@@ -266,7 +270,9 @@ public sealed partial class FixtureReplayCheck
                 : MatchingObligations(schedule.Obligations, permit.Obligation);
 
             coverage.OutOfScope(
-                $"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN",
+                checkpoint.Total == 0
+                    ? $"checkpoint {checkpoint.Checkpoint}, which contributed no expectation at all"
+                    : $"checkpoint {checkpoint.Checkpoint}, whose {checkpoint.Total} expectation(s) are all FROZEN",
                 1,
                 matches.Count == 1
                     ? CheckCoverage.OutOfScopeReason.UntilCheckpoint(
@@ -358,11 +364,17 @@ public sealed partial class FixtureReplayCheck
     /// The same, asked of every landed checkpoint rather than only of the ones that turned up in the
     /// fixture.
     ///
-    /// <b>A checkpoint contributing nothing was never asked the question.</b> The loop below groups
-    /// the expectations, so a checkpoint with none is not a group and could land silently: 1.1, 1.2,
-    /// 1.11, 2.1, 2.12 and 3.7 all did, and 3.10 would have. Done condition seven says a checkpoint
-    /// that adds behaviour and no expectation has widened the unexamined set, and zero expectations
-    /// is the largest version of exactly that, so it is the one case the check could not see.
+    /// <b>A checkpoint contributing nothing was never asked the question.</b> <see cref="ByCheckpoint"/>
+    /// groups the expectations, so a checkpoint with none is not a group and could land silently:
+    /// 1.1, 1.2, 1.11, 2.1, 2.12 and 3.7 all did, and 3.10 would have. Done condition seven says a
+    /// checkpoint that adds behaviour and no expectation has widened the unexamined set, and zero
+    /// expectations is the largest version of exactly that, so it is the one case the check could
+    /// not see.
+    ///
+    /// <b>The four-argument overload above passes an empty <c>landed</c>, and that is what a caller
+    /// is choosing when it uses it.</b> Every proof test did, which is why none of them ran the
+    /// zero-contribution case at all while every permit in the fixture was in it. A test written
+    /// about this method now names its population by passing one.
     /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
     /// </summary>
     public static IReadOnlyList<string> DoneConditionSevenProblems(
@@ -380,36 +392,23 @@ public sealed partial class FixtureReplayCheck
 
         var problems = new List<string>();
 
-        // The checkpoints that contributed nothing, asked first, because the loop below cannot see
-        // them. A permit is required on exactly the same terms as a frozen-only one: zero
-        // independent expectations is what both states have in common, and the difference between
-        // "all FROZEN" and "none at all" is a matter of degree in the wrong direction.
-        var contributed = expectations.Select(e => e.Checkpoint).ToHashSet(StringComparer.Ordinal);
-
-        foreach (string checkpoint in landed.Where(c => !contributed.Contains(c)).Order(StringComparer.Ordinal))
-        {
-            Permit? permit = permits.FirstOrDefault(
-                p => string.Equals(p.Checkpoint, checkpoint, StringComparison.Ordinal));
-
-            if (permit is null)
-            {
-                problems.Add(
-                    $"{checkpoint} has landed and contributed no expectation to the fixture at all, and nothing "
-                    + "permits it. Done condition seven asks each checkpoint for at least one DERIVED or CONFIRMED "
-                    + "expectation, so either one is added or the checkpoint names a carried obligation that is open.");
-                continue;
-            }
-
-            if (MatchingObligations(obligations, permit.Obligation).Count == 0)
-            {
-                problems.Add(
-                    $"{checkpoint} contributed no expectation and names an obligation raised at {permit.Obligation}, "
-                    + "and BUILD_PLAN's carried obligations table has no row raised there. A permission resting on "
-                    + "nothing is the same as no permission.");
-            }
-        }
-
-        foreach (CheckpointTier checkpoint in ByCheckpoint(expectations))
+        // One population and one body, because two of them is how the clauses came apart.
+        //
+        // This asked its question in two loops: one over the landed checkpoints that contributed
+        // nothing, one over the checkpoints the fixture holds. Only the second carried the clause
+        // about a permit whose obligation has fallen due, and about an obligation named
+        // ambiguously. Every permit in the file names a checkpoint with no expectations at all, so
+        // every permit went down the first branch and neither clause reached one: the guard
+        // BUILD_PLAN calls the thing that collects itself at 4.1 would have stayed green through
+        // 4.1's own CI run. The proof tests could not see it either, because they all call the
+        // four-argument overload, which passes an empty `landed`, so the first loop never ran in
+        // any of them. Two loops with complementary blind spots and a suite that only ever
+        // exercised one.
+        //
+        // So the population is every checkpoint that landed or contributed, a checkpoint with no
+        // expectations enters it as nought of nought, and one body applies every clause to all of
+        // them.
+        foreach (CheckpointTier checkpoint in Populations(expectations, landed))
         {
             Permit? permit = permits.FirstOrDefault(
                 p => string.Equals(p.Checkpoint, checkpoint.Checkpoint, StringComparison.Ordinal));
@@ -430,9 +429,15 @@ public sealed partial class FixtureReplayCheck
             if (permit is null)
             {
                 problems.Add(
-                    $"every one of {checkpoint.Checkpoint}'s {checkpoint.Total} expectation(s) is FROZEN, and nothing "
-                    + "permits it. Done condition seven asks each checkpoint for at least one DERIVED or CONFIRMED "
-                    + "expectation, so either one is added or the checkpoint names a carried obligation that is open.");
+                    checkpoint.Total == 0
+                        ? $"{checkpoint.Checkpoint} has landed and contributed no expectation to the fixture at all, "
+                          + "and nothing permits it. Done condition seven asks each checkpoint for at least one "
+                          + "DERIVED or CONFIRMED expectation, so either one is added or the checkpoint names a "
+                          + "carried obligation that is open."
+                        : $"every one of {checkpoint.Checkpoint}'s {checkpoint.Total} expectation(s) is FROZEN, and "
+                          + "nothing permits it. Done condition seven asks each checkpoint for at least one DERIVED "
+                          + "or CONFIRMED expectation, so either one is added or the checkpoint names a carried "
+                          + "obligation that is open.");
                 continue;
             }
 
@@ -442,9 +447,9 @@ public sealed partial class FixtureReplayCheck
             if (matches.Count == 0)
             {
                 problems.Add(
-                    $"{checkpoint.Checkpoint} is frozen-only and names an obligation raised at {permit.Obligation}, "
-                    + "and BUILD_PLAN's carried obligations table has no row raised there. A permission resting on "
-                    + "nothing is the same as no permission.");
+                    $"{checkpoint.Checkpoint} contributed no independently produced expectation and names an "
+                    + $"obligation raised at {permit.Obligation}, and BUILD_PLAN's carried obligations table has no "
+                    + "row raised there. A permission resting on nothing is the same as no permission.");
                 continue;
             }
 
@@ -586,6 +591,38 @@ public sealed partial class FixtureReplayCheck
     }
 
     /// <summary>
+    /// Every checkpoint done condition seven is owed of: the ones the fixture holds expectations
+    /// for, and the ones PROGRESS records that it holds none for.
+    ///
+    /// <b>A checkpoint with no expectations enters as nought of nought rather than not at all.</b>
+    /// <see cref="ByCheckpoint"/> groups the expectations, so a checkpoint that contributed nothing
+    /// is not a group and cannot be asked anything. That was closed at 3.10 by asking it in a second
+    /// loop, and a second loop is how the clauses came apart: the one about a permit whose
+    /// obligation has fallen due was written in the first loop and never copied to the second, and
+    /// every permit in the fixture takes the second. One population is what stops that recurring,
+    /// and it is also what lets the coverage record name each permitted checkpoint, which the
+    /// grouped form could not reach either.
+    /// see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+    /// </summary>
+    public static IReadOnlyList<CheckpointTier> Populations(
+        IReadOnlyList<Expectation> expectations,
+        IReadOnlyCollection<string> landed)
+    {
+        ArgumentNullException.ThrowIfNull(expectations);
+        ArgumentNullException.ThrowIfNull(landed);
+
+        IReadOnlyList<CheckpointTier> contributed = ByCheckpoint(expectations);
+        var named = contributed.Select(c => c.Checkpoint).ToHashSet(StringComparer.Ordinal);
+
+        return
+        [
+            .. contributed
+                .Concat(landed.Where(c => !named.Contains(c)).Select(c => new CheckpointTier(c, 0, 0)))
+                .OrderBy(c => c.Checkpoint, StringComparer.Ordinal)
+        ];
+    }
+
+    /// <summary>
     /// The CONFIRMED expectations that do not say where they were read from and when.
     ///
     /// Separated from the run so it can be proved against expectations written by hand. It is the
@@ -642,7 +679,14 @@ public sealed partial class FixtureReplayCheck
     [GeneratedRegex(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.CultureInvariant)]
     private static partial Regex ReadOnDate();
 
-    private static ExpectationFile ReadExpectations()
+    /// <summary>
+    /// The committed expectations, as this check reads them.
+    ///
+    /// Public so `stated-counts` can derive BUILD_PLAN's permit count from the same file this check
+    /// enforces against, rather than parsing the JSON a second way. Two readers of one file is how
+    /// two answers about it appear.
+    /// </summary>
+    public static ExpectationFile ReadExpectations()
     {
         if (!File.Exists(ExpectationsFile))
         {

@@ -81,28 +81,20 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
                 rendered[claim.Surface] = html;
             }
 
-            // The claim states the text its surface must carry, and this is the assertion the whole
-            // check exists to make: not that the value is in the store, not that a result was
-            // recorded, but that the string is in what came back from the page.
-            if (claim.MustCarry is not null
-                && !html.Contains(claim.MustCarry, StringComparison.Ordinal))
-            {
-                failures.Add(
-                    $"{claim.Name}: {claim.Surface} does not carry \"{claim.MustCarry}\". "
-                    + $"{claim.StatedIn} says \"{claim.Sentence}\", and it is not true of the page.");
-            }
+            failures.AddRange(Missing(claim, html));
         }
 
         coverage
             .Examined("claims of visibility declared in the corpus", file.Claims.Length())
             .Examined("of those whose surface exists and was rendered and read", live.Length)
             .Context("surfaces rendered", rendered.Count)
-            .Scan(
-                "that a corpus sentence asserting visibility is true of the rendered page",
-                CheckCoverage.Backing.Test(
-                    $"{nameof(SurfaceClaimsCheck)}.{nameof(A_surface_that_drops_a_claim_is_caught)}",
-                    "the comparison is run against a page body written by hand, so the guard is "
-                    + "proved against a case rather than against whatever the pages happen to render"));
+            .NoSourceScan(
+                "it renders each page through the host and compares what came back against the text the "
+                + "corpus claims is on it. Neither side is the shipped source: one is a rendered response and "
+                + "the other is an authored claim, so nothing here concludes anything by reading code. It "
+                + "declared a source-scan assertion until the phase 3 review, backed by a test that compared "
+                + "two of its own string constants and called nothing in this class, which is the shape "
+                + "CLAUDE.md names worse than no backing at all because it reads as covered");
 
         foreach (Claim claim in deferred)
         {
@@ -125,19 +117,64 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     }
 
     /// <summary>
-    /// The guard, proved against a page body written here.
+    /// What a rendered page fails to carry, or nothing where it carries everything the claim names.
+    ///
+    /// Separated from the run so the comparison can be proved against a page body written by hand.
+    /// It was inline until the phase 3 review, which is why the test named as its backing could
+    /// only compare two literals of its own: there was nothing to call.
+    /// </summary>
+    public static IReadOnlyList<string> Missing(Claim claim, string html)
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+        ArgumentNullException.ThrowIfNull(html);
+
+        // The claim states the text its surface must carry, and this is the assertion the whole
+        // check exists to make: not that the value is in the store, not that a result was
+        // recorded, but that the string is in what came back from the page.
+        if (claim.MustCarry is null || html.Contains(claim.MustCarry, StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        return
+        [
+            $"{claim.Name}: {claim.Surface} does not carry \"{claim.MustCarry}\". "
+            + $"{claim.StatedIn} says \"{claim.Sentence}\", and it is not true of the page.",
+        ];
+    }
+
+    /// <summary>
+    /// The guard, proved against a page body written here and run through the check's own
+    /// comparison.
     ///
     /// A check whose only subject is the live pages is a check nobody can break on purpose, and this
     /// one exists because the fault it catches is invisible to everything else in the suite.
+    ///
+    /// <b>It called nothing in this class until the phase 3 review.</b> It declared two constants
+    /// and asserted that one contained a substring and the other did not, which is a property of
+    /// `string.Contains` and holds however this check behaves. Deleting the comparison left it
+    /// green.
     /// </summary>
     [Fact]
     public void A_surface_that_drops_a_claim_is_caught()
     {
-        const string CarriesIt = "<span class=\"caveat\">the anchored clause arrives at 4.4</span>";
-        const string DropsIt = "<span class=\"reading\">2.0193</span>";
+        var claim = new Claim(
+            Name: "a-claim",
+            Sentence: "the caveat is shown beside the reading",
+            StatedIn: "ARCHITECTURE.html",
+            Surface: "/setups",
+            MustCarry: "the anchored clause arrives at 4.4",
+            ArrivesAt: null,
+            Why: "a proof, not a run");
 
-        Assert.Contains("the anchored clause arrives at 4.4", CarriesIt, StringComparison.Ordinal);
-        Assert.DoesNotContain("the anchored clause arrives at 4.4", DropsIt, StringComparison.Ordinal);
+        Assert.Empty(Missing(claim, "<span class=\"caveat\">the anchored clause arrives at 4.4</span>"));
+
+        string failure = Assert.Single(Missing(claim, "<span class=\"reading\">2.0193</span>"));
+        Assert.Contains("does not carry", failure, StringComparison.Ordinal);
+        Assert.Contains("the anchored clause arrives at 4.4", failure, StringComparison.Ordinal);
+
+        // A claim naming no text is not a claim about the page's words, and is not a failure.
+        Assert.Empty(Missing(claim with { MustCarry = null }, "anything at all"));
     }
 
     /// <summary>

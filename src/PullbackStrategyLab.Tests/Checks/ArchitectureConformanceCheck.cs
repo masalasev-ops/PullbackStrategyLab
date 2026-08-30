@@ -142,6 +142,28 @@ public sealed partial class ArchitectureConformanceCheck
             .Where(m => m.Success)
             .Select(m => m.Groups["route"].Value)];
 
+    /// <summary>
+    /// The pointer is the furthest checkpoint recorded, not the last entry written.
+    ///
+    /// Proved over a set built here rather than over the live PROGRESS, because the live record is
+    /// whatever the corpus holds today and the fault only appears when a dated correction names an
+    /// earlier checkpoint than one already recorded. That is a shape this corpus produces on
+    /// purpose and had never asserted: on 2026-08-29, with 3.14 landed, a ruling recorded against
+    /// 2.11 retitled the phase report "Phase 2 report".
+    /// </summary>
+    [Fact]
+    public void The_pointer_is_the_furthest_checkpoint_recorded_rather_than_the_last_entry_written()
+    {
+        // The order a dated correction produces: 2.11 recorded after 3.14, both on the same day.
+        Assert.Equal("3.14", Schedule.Furthest(["3.12", "3.13", "3.14", "2.11"]));
+
+        // Ordered by phase first, so a high minor in an earlier phase does not win.
+        Assert.Equal("4.1", Schedule.Furthest(["3.14", "4.1", "2.12"]));
+
+        // And numerically within a phase, where an ordinal compare would put 3.9 above 3.14.
+        Assert.Equal("3.14", Schedule.Furthest(["3.9", "3.14"]));
+    }
+
     [Fact]
     [Trait("check", "architecture-conformance")]
     public void Every_claim_the_architecture_makes_in_a_table_has_a_verdict()
@@ -1242,10 +1264,10 @@ public sealed partial class ArchitectureConformanceCheck
         {
         }
 
-        /// <summary>The phase the build is on, which is the major number of the last checkpoint recorded.</summary>
+        /// <summary>The phase the build is on, being the major number of the furthest checkpoint recorded.</summary>
         public int Phase { get; private set; }
 
-        /// <summary>The last checkpoint PROGRESS records, which is the pointer the whole corpus uses.</summary>
+        /// <summary>The furthest checkpoint PROGRESS records, which is the pointer the whole corpus uses.</summary>
         public string LastLanded { get; private set; } = string.Empty;
 
         /// <summary>
@@ -1256,6 +1278,25 @@ public sealed partial class ArchitectureConformanceCheck
         /// checkpoints that turned up.
         /// </summary>
         public IReadOnlyCollection<string> Landed => _landed;
+
+        /// <summary>
+        /// The furthest checkpoint in a set of landed ones, ordered by phase and then by checkpoint.
+        ///
+        /// Separate and public because the fault it fixes is invisible from the outside: the value
+        /// only goes wrong when PROGRESS's last entry names an earlier checkpoint than some entry
+        /// above it, which is exactly what a dated correction produces, and a test that reads the
+        /// live PROGRESS asserts whatever the corpus happens to hold that day.
+        /// </summary>
+        public static string Furthest(IReadOnlyCollection<string> landed)
+        {
+            ArgumentNullException.ThrowIfNull(landed);
+            Assert.NotEmpty(landed);
+
+            return landed
+                .OrderBy(c => int.Parse(c.Split('.')[0], CultureInfo.InvariantCulture))
+                .ThenBy(c => int.Parse(c.Split('.')[1], CultureInfo.InvariantCulture))
+                .Last();
+        }
 
         public static Schedule Read()
         {
@@ -1323,9 +1364,22 @@ public sealed partial class ArchitectureConformanceCheck
             Assert.NotEmpty(schedule._rows);
             Assert.NotEmpty(schedule._landed);
 
-            // The last entry in PROGRESS, which is how the whole corpus answers "which checkpoint
-            // is the build on". Stated as a pointer rather than as a number anywhere.
-            schedule.LastLanded = landed[^1].Groups["checkpoint"].Value;
+            // The furthest checkpoint PROGRESS records, which is how the whole corpus answers
+            // "which checkpoint is the build on". Stated as a pointer rather than as a number
+            // anywhere.
+            //
+            // <b>The furthest, not the last entry, which is what this read until 3.14.</b> Two rules
+            // in CLAUDE.md cannot both be read literally: the pointer says the build is on the last
+            // entry in PROGRESS, and the record rule says a record is corrected by a new dated entry
+            // naming what it corrects. So correcting an old checkpoint appends an entry naming that
+            // checkpoint, and the pointer then names one the build passed phases ago. It fired the
+            // day it was exercised: a ruling recorded against 2.11 on 2026-08-29, with 3.14 landed,
+            // retitled the phase report "Phase 2 report" and moved `LastLanded` back two phases.
+            //
+            // The proxy gives way rather than the correction rule, because appending a dated entry
+            // is what this corpus requires everywhere and "last" was only ever standing in for
+            // "furthest" while every entry happened to be a new checkpoint.
+            schedule.LastLanded = Furthest(schedule._landed);
             schedule.Phase = int.Parse(schedule.LastLanded.Split('.')[0], CultureInfo.InvariantCulture);
 
             return schedule;

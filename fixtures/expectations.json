@@ -9808,6 +9808,11 @@
   ],
   "frozenOnly": [
     {
+      "checkpoint": "3.14",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation, and like 3.13 the reason is established rather than owed. Its eleven deliverables are the permit guard in fixture-replay, the cluster recompute's key, the effective-observation baseline, surface-claims' scan declaration, the two CI entry points' data root, the Windows wrapper's bash choice, the clearing list in tools/verify-phase, the phase report's rendering of a voided row, the due-point pattern in carried-obligations, the checkpoint pointer, and a document pass. The golden fixture replays the nightly pipeline: nine of the eleven are the verification harness or the tools that run it rather than stages in it, the recompute is a hand-run repair no night invokes, and the document pass produces no figure. The one that touches a replayed figure is the effective-observation baseline, and it is unchanged over an even series by construction, which is the only kind the fixture can express: that gap is the row raised at 3.14 and due at 3.6, and an expectation added before it is closed would assert the case that already agreed. All eleven are held by behavioural tests, every one proved red before green by removing the thing it guards."
+    },
+    {
       "checkpoint": "3.13",
       "obligation": "3.10",
       "why": "landed without contributing an expectation, and unlike the seven before it the reason is established rather than owed. Its three deliverables are the phase report writing both files or neither, a restore scoped to the check it validates, and a command line whose flags declare their arity. The golden fixture replays the nightly pipeline; the phase report is the instrument that reads the replay rather than a stage in it, and `recheck` is a hand-run repair that no night invokes, so none of the three is reachable by replaying a market day. Producing one would mean authoring a broken night into the replay store, which puts an authored row into a population whose figures are reported as captured. All three are held by behavioural tests instead, two of them proved red before green by removing the thing each guards."

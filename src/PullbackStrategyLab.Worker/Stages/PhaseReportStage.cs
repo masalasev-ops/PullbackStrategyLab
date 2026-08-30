@@ -658,13 +658,15 @@ public sealed class PhaseReportStage
             }
 
             page.Append("<h3>Expectations, by tier</h3>");
-            page.Append("<table><tr><th>Tier</th><th>Total</th><th>Matched</th><th>Differed</th><th>Missing</th><th>What it can say</th></tr>");
+            page.Append("<table><tr><th>Tier</th><th>Total</th><th>Matched</th><th>Differed</th><th>Missing</th>"
+                + "<th>Void</th><th>What it can say</th></tr>");
             foreach (TierBreakdown tier in report.Expectations.ByTier)
             {
                 page.Append(CultureInfo.InvariantCulture,
                     $"<tr><td>{E(tier.Tier)}</td><td>{tier.Total}</td><td>{tier.Matched}</td>"
                     + $"<td class=\"{(tier.Differed > 0 ? "red" : string.Empty)}\">{tier.Differed}</td>"
-                    + $"<td class=\"{(tier.Missing > 0 ? "red" : string.Empty)}\">{tier.Missing}</td><td>{E(Meaning(tier.Tier))}</td></tr>");
+                    + $"<td class=\"{(tier.Missing > 0 ? "red" : string.Empty)}\">{tier.Missing}</td>"
+                    + $"<td>{tier.Void}</td><td>{E(Meaning(tier.Tier))}</td></tr>");
             }
 
             page.Append("</table>");
@@ -678,7 +680,30 @@ public sealed class PhaseReportStage
 
             page.Append("</table>");
 
-            DiffRow[] broken = [.. report.Fixture.Rows.Where(r => r.Verdict != "matched")];
+            // Void is not broken, and the page said it was. The counting above has always read
+            // `is not ("matched" or "void")`, and this read `!= "matched"`, so the one voided
+            // expectation was listed under a red heading with "nothing" against it on a report
+            // headed green. The instrument was right and the surface disagreed with it, which is the
+            // shape this corpus names sixth, in the page a phase is signed off from.
+            DiffRow[] broken = [.. report.Fixture.Rows.Where(r => r.Verdict is not ("matched" or "void"))];
+            DiffRow[] voided = [.. report.Fixture.Rows.Where(r => r.Verdict == "void")];
+
+            if (voided.Length > 0)
+            {
+                page.Append("<h3>Voided, with the reason</h3>");
+                page.Append("<p>A voided expectation compares nothing and verifies nothing. It is not a "
+                    + "failure and it is not coverage, so it is counted apart from both.</p>");
+                page.Append("<table><tr><th>Id</th><th>Tier</th><th>Checkpoint</th><th>Expected</th></tr>");
+                foreach (DiffRow row in voided)
+                {
+                    page.Append(CultureInfo.InvariantCulture,
+                        $"<tr><td>{E(row.Id)}</td><td>{E(row.Tier)}</td><td>{E(row.Checkpoint)}</td>"
+                        + $"<td>{E(row.Expected)}</td></tr>");
+                }
+
+                page.Append("</table>");
+            }
+
             if (broken.Length > 0)
             {
                 page.Append("<h3 class=\"red\">Expectations that did not hold</h3>");
@@ -870,7 +895,14 @@ public sealed class PhaseReportStage
 
     public sealed record StageRun(string Stage, int CallsUsed, int RowsWritten, string Outcome);
 
-    public sealed record TierBreakdown(string Tier, int Total, int Matched, int Differed, int Missing);
+    /// <summary>
+    /// One tier's diff, void included.
+    ///
+    /// <c>Void</c> was absent until the phase 3 review, so the count the check writes per tier was
+    /// dropped on the way in and the table below rendered 528 total against 527 matched with the
+    /// remaining row unaccounted anywhere on the page.
+    /// </summary>
+    public sealed record TierBreakdown(string Tier, int Total, int Matched, int Differed, int Missing, int Void = 0);
 
     public sealed record DiffRow(
         string Id,

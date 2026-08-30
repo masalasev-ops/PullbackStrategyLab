@@ -103,23 +103,51 @@ public sealed class CheckRecomputerTests : IDisposable
     }
 
     /// <summary>A setup carrying the verdicts given, exactly as a detector writes them.</summary>
-    private void Setup(string ticker, string direction, params CheckResult[] results)
+    private void Setup(string ticker, string direction, params CheckResult[] results) =>
+        Setup(ticker, direction, "gainer", AsOf, results);
+
+    /// <summary>
+    /// The same, naming the hit the detector selected as its thrust.
+    ///
+    /// <b>Every row that reaches this stage carries one.</b> The recording floor is tradable,
+    /// moves-enough, uptrend and thrust, so a name with no thrust is never written at all, and the
+    /// cluster verdict this stage repairs is the count on that one hit. The seeds left both columns
+    /// null until the recompute was corrected to read them, which is why the defect could not have
+    /// been caught here: the store the tests built was not a store a detector could have written.
+    /// </summary>
+    private void Setup(string ticker, string direction, string thrustScan, DateOnly thrustSession, params CheckResult[] results)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO setup
                 (setup_id, as_of, ticker, direction, check_results, passed_all,
-                 trigger_price, stop_price, stop_distance_ranges)
-            VALUES (@id, @d, @t, @dir, @results, 0, '10.00', '9.00', '0.5')
+                 trigger_price, stop_price, stop_distance_ranges, thrust_scan, thrust_session)
+            VALUES (@id, @d, @t, @dir, @results, 0, '10.00', '9.00', '0.5', @scan, @session)
             """;
         command.Parameters.AddWithValue("@id", $"{AsOf:yyyy-MM-dd}-{ticker}-{direction}");
         command.Parameters.AddWithValue("@d", StoreText.DateToStorageText(AsOf));
         command.Parameters.AddWithValue("@t", ticker);
         command.Parameters.AddWithValue("@dir", direction);
+        command.Parameters.AddWithValue("@scan", thrustScan);
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(thrustSession));
         command.Parameters.AddWithValue(
             "@results",
             JsonSerializer.Serialize(results, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+        command.ExecuteNonQuery();
+    }
+
+    /// <summary>One more hit for a name, on a named scan and session.</summary>
+    private void Hit(string ticker, string scan, DateOnly session, int rank = 1)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "INSERT INTO scan_hit (as_of, ticker, scan, magnitude, rank) VALUES (@d, @t, @s, '1.0', @r)";
+        command.Parameters.AddWithValue("@d", StoreText.DateToStorageText(session));
+        command.Parameters.AddWithValue("@t", ticker);
+        command.Parameters.AddWithValue("@s", scan);
+        command.Parameters.AddWithValue("@r", rank);
         command.ExecuteNonQuery();
     }
 
@@ -885,5 +913,100 @@ public sealed class CheckRecomputerTests : IDisposable
     {
         Assert.Equal(2, Recomputer().Run(["--check", "cluster", "--dry-run"]));
         Assert.Equal(2, Recomputer().Run(["--check", "cluster", "--as-of", "the-27th"]));
+    }
+    /// <summary>
+    /// The repaired value is the count behind the hit the detector chose, not the largest count the
+    /// name has anywhere.
+    ///
+    /// <b>Written against the case the live store already held.</b> On 2026-08-27 two of the fifteen
+    /// rows the repair corrected carry a number the detector's rule cannot produce: PATH's thrust was
+    /// a `leader` hit whose industry counted 6, and 13 was written from the `gainer` side; PURR's was
+    /// a `gainer` hit counting 3, and 4 was written. The verdicts did not move, because the
+    /// threshold is 2 and both numbers clear it, and that is the only reason this was a wrong value
+    /// rather than a wrong gate: a name whose thrust scan counts 1 while another scan counts 2 is
+    /// promoted from fail to pass by the same arithmetic. A maximum is never smaller than the value
+    /// it replaces, so the direction of the error is always towards passing, which is the direction
+    /// a repair of an already-recorded verdict must never have.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    [Fact]
+    public void The_repaired_count_is_the_thrusts_own_scan_rather_than_the_largest_the_name_carries()
+    {
+        // Three names in one industry on `gainer`, two of them also on `leader`. The gainer side
+        // counts three, the leader side two.
+        Night("2026-08-27T21:00:00.000Z", "AAA", "BBB", "CCC");
+        Hit("AAA", "leader", AsOf);
+        Hit("BBB", "leader", AsOf);
+
+        // AAA's detector took the `leader` hit, so its verdict was decided on two and not on three.
+        Setup("AAA", "long", "leader", AsOf, new CheckResult("cluster", false, null, null));
+
+        RecheckResult result = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(1, result.Corrected);
+        Assert.Equal(2, Read("AAA", "long").Cluster.Value);
+    }
+
+    /// <summary>
+    /// A row whose detector recorded no thrust is refused, naming that rather than the sector.
+    ///
+    /// It cannot arise from a detector, because thrust is on the recording floor, and it is asserted
+    /// anyway: the recompute keys on two columns that are nullable in the schema, and reading a null
+    /// key as "no industry" would have produced the sector message for a row whose sector is fine.
+    /// </summary>
+    [Fact]
+    public void A_row_that_names_no_thrust_is_refused_rather_than_recomputed()
+    {
+        Night("2026-08-27T21:00:00.000Z", "AAA");
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                INSERT INTO setup
+                    (setup_id, as_of, ticker, direction, check_results, passed_all,
+                     trigger_price, stop_price, stop_distance_ranges)
+                VALUES (@id, @d, 'AAA', 'long', @results, 0, '10.00', '9.00', '0.5')
+                """;
+            command.Parameters.AddWithValue("@id", $"{AsOf:yyyy-MM-dd}-AAA-long");
+            command.Parameters.AddWithValue("@d", StoreText.DateToStorageText(AsOf));
+            command.Parameters.AddWithValue(
+                "@results",
+                JsonSerializer.Serialize(
+                    new[] { new CheckResult("cluster", false, null, null) },
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+            command.ExecuteNonQuery();
+        }
+
+        RecheckResult result = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(0, result.Corrected);
+        Assert.Equal(1, result.Refused);
+        Assert.Null(Read("AAA", "long").Cluster.Value);
+    }
+
+    /// <summary>
+    /// A thrust on an earlier session is counted over that session, not over the setup's own.
+    ///
+    /// The window looks back twenty sessions, so the two dates differ on most rows. Reading the
+    /// as-of would take a count over a night the verdict was never computed from.
+    /// </summary>
+    [Fact]
+    public void A_thrust_on_an_earlier_session_is_counted_over_that_session()
+    {
+        DateOnly earlier = AsOf.AddDays(-3);
+
+        Night("2026-08-27T21:00:00.000Z", "AAA", "BBB", "CCC");
+        Hit("AAA", "gainer", earlier);
+        Hit("BBB", "gainer", earlier);
+
+        Setup("AAA", "long", "gainer", earlier, new CheckResult("cluster", false, null, null));
+
+        RecheckResult result = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(1, result.Corrected);
+
+        // Two on the earlier session, three on the as-of. The earlier one is the subject.
+        Assert.Equal(2, Read("AAA", "long").Cluster.Value);
     }
 }

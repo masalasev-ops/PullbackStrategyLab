@@ -18,7 +18,14 @@ worker_project="$repository_root/src/PullbackStrategyLab.Worker"
 
 # A data root of its own, so a green run never depends on, and never destroys, whatever
 # the operator has been running against.
-: "${PullbackStrategyLab__DataRoot:=$repository_root/data/ci}"
+#
+# Assigned rather than defaulted, which is the whole of it. `${VAR:=default}` yields to an
+# exported value, and step 1 of this script deletes the store under whatever it yields to. An
+# operator who exports the root the RUNBOOK tells them to configure, then runs the suite, loses
+# `data/live` and every night in it. The decision this holds is the one that says the entry points
+# set the root, and it says so because they are the only place that can.
+# see: The lab keeps one store per purpose under one data root, and CI never opens the operator's
+PullbackStrategyLab__DataRoot="$repository_root/data/ci"
 export PullbackStrategyLab__DataRoot
 data_root="$PullbackStrategyLab__DataRoot"
 

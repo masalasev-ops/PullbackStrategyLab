@@ -194,12 +194,31 @@ public static class PairedInterval
     /// How many independent observations the series is really worth, measured from the series
     /// rather than assumed.
     ///
-    /// <b>It starts from rows and not from nights, and that is what the pairing bought.</b> Forty
-    /// names flagged on one night share a market factor, which is why an unpaired figure over them
-    /// is worth about one observation however many names it has. The paired difference removes that
-    /// factor by construction, so what is left inside a night is each name's own move against its own
-    /// controls, and those are close to independent of each other. Counting a night as one
+    /// <b>It starts from the pairs and not from the nights, and that is what the pairing bought.</b>
+    /// Forty names flagged on one night share a market factor, which is why an unpaired figure over
+    /// them is worth about one observation however many names it has. The paired difference removes
+    /// that factor by construction, so what is left inside a night is each name's own move against
+    /// its own controls, and those are close to independent of each other. Counting a night as one
     /// observation would throw away exactly the thing the control draw was built to buy.
+    ///
+    /// <b>The baseline is the harmonic mean of the pair counts and not their sum, because that is
+    /// the estimator this class reports.</b> <see cref="Of"/> takes the unweighted mean of the
+    /// nightly means, so a night of five pairs moves the answer as far as a night of eighty-two.
+    /// The variance of that estimator is <c>(1/n^2) * sum_i sigma^2 / p_i</c>, whose effective
+    /// sample is <c>n^2 / sum_i (1/p_i)</c>, being <c>n</c> times the harmonic mean of the pair
+    /// counts. The sum of the pair counts is <c>n</c> times their arithmetic mean, and the
+    /// arithmetic mean is never below the harmonic one, so the sum can only ever overstate.
+    ///
+    /// <b>The two agree exactly when every night carries the same number of pairs, and that is the
+    /// only case anything looked at.</b> Every scenario in <c>fixtures/interval-cases.json</c>
+    /// carries one scalar `pairsPerNight`, and every series the suite built came from a helper that
+    /// stamps one count on all forty nights, so the figure the fixture asserts and the figure the
+    /// estimator needs were the same number and nothing could tell them apart. On a series
+    /// alternating eighty-two and five pairs over forty nights the sum reads 1,740 against a true
+    /// 377, and 3.6 fires on this figure: the panel would report the minimum reached on a quarter of
+    /// the evidence it claims. A night's pair count moves with the flagged count, with a degraded
+    /// night, and with control fills that lag, so an even series is the case that will not happen.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     ///
     /// <b>Two discounts are then applied, both measured.</b>
     ///
@@ -230,6 +249,13 @@ public static class PairedInterval
 
         int nights = series.Count;
         int rows = series.Sum(n => n.Pairs);
+
+        // A night with no pairs carries no information and would send the harmonic mean to nought,
+        // taking the whole series with it. It should not be in the series at all; floored rather
+        // than thrown on, because this is a reporting figure and refusing to answer is worse than
+        // answering without it.
+        decimal reciprocals = series.Sum(n => 1m / Math.Max(1, n.Pairs));
+        decimal independent = reciprocals <= 0m ? nights : nights * nights / reciprocals;
 
         if (nights < 3)
         {
@@ -274,7 +300,7 @@ public static class PairedInterval
             return Clamp(nights * serial, rows);
         }
 
-        return Clamp(rows / design * serial, rows);
+        return Clamp(independent / design * serial, rows);
     }
 
     /// <summary>

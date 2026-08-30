@@ -187,7 +187,7 @@ public sealed class CheckRecomputer
         DateTimeOffset endOfSession = DateTimeOffset.Parse(bound, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
         DateTimeOffset latestAdmissible = endOfSession.AddHours(MeasurementParameters.LatenessBoundHours);
 
-        IReadOnlyDictionary<string, ClusterInput> inputs = ClusterInputs(connection, asOf, latestAdmissible, bound);
+        ClusterCounts inputs = ClusterInputs(connection, asOf, latestAdmissible, bound);
         IReadOnlyList<Candidate> candidates = Candidates(connection, asOf, check);
 
         int corrected = 0;
@@ -195,17 +195,23 @@ public sealed class CheckRecomputer
 
         foreach (Candidate candidate in candidates)
         {
-            if (!inputs.TryGetValue(candidate.Ticker, out ClusterInput input) || input.Industry is null)
+            ClusterInput input = inputs.For(candidate);
+
+            if (input.Industry is null)
             {
-                // Either nothing has resolved it at all, or it was resolved past the bound. The two
-                // read differently to a person and the second says how far past.
+                // Three states, and they read differently to a person. Nothing has resolved the
+                // industry at all; it was resolved past the bound, and the message says how far
+                // past; or the row names no thrust, in which case its cluster verdict carried no
+                // value for a reason no sector lookup can repair and the row is left alone.
                 refused++;
                 run.CountSkipped();
                 Console.WriteLine(
-                    input.ResolvedAt is null
-                        ? $"{Name}: refused {candidate.Ticker}, still nothing resolved for it"
-                        : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt}, which is more than "
-                          + $"{MeasurementParameters.LatenessBoundHours} hour(s) after {bound}");
+                    candidate.ThrustScan is null || candidate.ThrustSession is null
+                        ? $"{Name}: refused {candidate.Ticker}, its row names no thrust, so no hit decided its cluster verdict"
+                        : input.ResolvedAt is null
+                            ? $"{Name}: refused {candidate.Ticker}, still nothing resolved for it"
+                            : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt}, which is more than "
+                              + $"{MeasurementParameters.LatenessBoundHours} hour(s) after {bound}");
                 continue;
             }
 
@@ -230,7 +236,8 @@ public sealed class CheckRecomputer
             corrected++;
             Console.WriteLine(
                 $"{Name}: {candidate.Ticker} {candidate.Direction}, {check} is {(verdict.Passed ? "pass" : "fail")} "
-                + $"at {input.Count}, from an industry resolved at {input.ResolvedAt}, {lateness} minute(s) late");
+                + $"at {input.Count}, over {candidate.ThrustScan} on {candidate.ThrustSession}, from an industry "
+                + $"resolved at {input.ResolvedAt}, {lateness} minute(s) late");
         }
 
         RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
@@ -360,20 +367,32 @@ public sealed class CheckRecomputer
     }
 
     /// <summary>
-    /// The cluster count per ticker as it stood on the night, and when the industry behind it was
-    /// resolved.
+    /// The cluster count behind the hit each setup's own detector selected, and when the industry
+    /// behind it was resolved.
     ///
     /// This is <c>ThemeClusterer</c>'s own arithmetic and its own bound, deliberately reproduced
     /// rather than shared, because the two answer different questions: the clusterer writes a count
-    /// per scan hit and this reads a count per ticker for a check that already ran. What must not
-    /// differ is the bound, which is why it is passed in rather than rebuilt here.
+    /// per scan hit and this reads the count one already-recorded check was decided on. What must
+    /// not differ is the bound, which is why it is passed in rather than rebuilt here.
     ///
-    /// Grouped by scan as well as by industry, as the clusterer groups it. Two names in the same
-    /// industry on opposite scans are the industry splitting rather than shifting. Where a ticker
-    /// appears on more than one scan the largest of its counts is taken, which is what the detector
-    /// read from <c>scan_hit.cluster_count</c> for that name.
+    /// <b>Keyed on the hit the detector chose, which is what this got wrong.</b> It took the largest
+    /// count over every scan the ticker hit on the setup's own session, and its comment said that
+    /// was "what the detector read from <c>scan_hit.cluster_count</c> for that name". The detector
+    /// reads one hit: the most recent inside the thrust window, restricted to the upward or downward
+    /// mover scans, tie-broken by rank, and it records which one on the setup row as
+    /// <c>thrust_scan</c> and <c>thrust_session</c>. A maximum over all scans is a different
+    /// quantity and it is never smaller, so the recompute could only ever raise a verdict's value
+    /// and never lower it, which is the direction a repair must not have. On 2026-08-27 it wrote 13
+    /// where the detector's rule gives 6 for PATH, and 4 where it gives 3 for PURR: two of the
+    /// fifteen rows the repair corrected.
+    ///
+    /// Grouped by session and by scan as well as by industry, as the clusterer groups it. Two names
+    /// in the same industry on opposite scans are the industry splitting rather than shifting, and
+    /// the thrust can sit on an earlier session than the setup, so the session is part of the key
+    /// rather than assumed to be the as-of.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
-    private static IReadOnlyDictionary<string, ClusterInput> ClusterInputs(
+    private static ClusterCounts ClusterInputs(
         SqliteConnection connection,
         DateOnly asOf,
         DateTimeOffset latestAdmissible,
@@ -381,20 +400,20 @@ public sealed class CheckRecomputer
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT h.ticker, h.scan,
+            SELECT h.ticker, h.scan, h.as_of,
                    CASE WHEN s.sector_resolved_at IS NOT NULL AND s.sector_resolved_at <= @bound
                         THEN s.industry END,
                    s.sector_resolved_at
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
-             WHERE h.as_of = @as_of
-               AND (h.observed_at <= @observed_before OR (h.observed_at IS NULL AND h.as_of = @as_of))
+             WHERE h.as_of <= @as_of
+               AND (h.observed_at <= @observed_before OR h.observed_at IS NULL)
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@observed_before", endOfSession);
         command.Parameters.AddWithValue("@bound", StoreText.TimestampToStorageText(latestAdmissible));
 
-        var hits = new List<(string Ticker, string Scan, string? Industry, string? ResolvedAt)>();
+        var hits = new List<(string Ticker, string Scan, string Session, string? Industry, string? ResolvedAt)>();
         using (SqliteDataReader reader = command.ExecuteReader())
         {
             while (reader.Read())
@@ -402,29 +421,25 @@ public sealed class CheckRecomputer
                 hits.Add((
                     reader.GetString(0),
                     reader.GetString(1),
-                    reader.IsDBNull(2) ? null : reader.GetString(2),
-                    reader.IsDBNull(3) ? null : reader.GetString(3)));
+                    reader.GetString(2),
+                    reader.IsDBNull(3) ? null : reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetString(4)));
             }
         }
 
-        Dictionary<(string Scan, string Industry), int> counts = hits
+        Dictionary<(string Session, string Scan, string Industry), int> counts = hits
             .Where(h => h.Industry is not null)
-            .GroupBy(h => (h.Scan, Industry: h.Industry!))
+            .GroupBy(h => (h.Session, h.Scan, Industry: h.Industry!))
             .ToDictionary(g => g.Key, g => g.Count());
 
-        var byTicker = new Dictionary<string, ClusterInput>(StringComparer.Ordinal);
+        var byTicker = new Dictionary<string, (string? Industry, string? ResolvedAt)>(StringComparer.Ordinal);
 
-        foreach ((string ticker, string scan, string? industry, string? resolvedAt) in hits)
+        foreach ((string ticker, _, _, string? industry, string? resolvedAt) in hits)
         {
-            int count = industry is null ? 0 : counts[(scan, industry)];
-
-            if (!byTicker.TryGetValue(ticker, out ClusterInput held) || count > held.Count)
-            {
-                byTicker[ticker] = new ClusterInput(industry, count, resolvedAt);
-            }
+            byTicker[ticker] = (industry, resolvedAt);
         }
 
-        return byTicker;
+        return new ClusterCounts(counts, byTicker);
     }
 
     /// <summary>The rows whose verdict for this check has no value, which is what an absent input leaves.</summary>
@@ -432,7 +447,8 @@ public sealed class CheckRecomputer
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT setup_id, ticker, direction, check_results, corrected_at
+            SELECT setup_id, ticker, direction, check_results, corrected_at,
+                   thrust_scan, thrust_session
               FROM setup
              WHERE as_of = @as_of
              ORDER BY ticker, direction
@@ -458,7 +474,9 @@ public sealed class CheckRecomputer
                     reader.GetString(1),
                     reader.GetString(2),
                     results,
-                    reader.IsDBNull(4) ? null : reader.GetString(4)));
+                    reader.IsDBNull(4) ? null : reader.GetString(4),
+                    reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.IsDBNull(6) ? null : reader.GetString(6)));
             }
         }
 
@@ -677,6 +695,40 @@ public sealed class CheckRecomputer
                 : throw new ArgumentException($"'{value}' is not a date. Give it as yyyy-MM-dd.");
     }
 
+    /// <summary>
+    /// The per-(session, scan, industry) counts the clusterer would have written, and what each
+    /// ticker's industry is and when it was resolved.
+    ///
+    /// Two lookups rather than one per-ticker answer, because the count a setup's verdict was
+    /// decided on is a property of the hit its detector chose rather than of the ticker.
+    /// </summary>
+    private sealed record ClusterCounts(
+        IReadOnlyDictionary<(string Session, string Scan, string Industry), int> Counts,
+        IReadOnlyDictionary<string, (string? Industry, string? ResolvedAt)> ByTicker)
+    {
+        /// <summary>
+        /// The count behind one setup's own thrust, or null where the row names no thrust, the
+        /// industry is unresolved or resolved too late, or that scan and session produced no
+        /// countable hit at all.
+        /// </summary>
+        public ClusterInput For(Candidate candidate)
+        {
+            (string? industry, string? resolvedAt) =
+                ByTicker.TryGetValue(candidate.Ticker, out (string? Industry, string? ResolvedAt) held)
+                    ? held
+                    : (null, null);
+
+            if (industry is null || candidate.ThrustScan is null || candidate.ThrustSession is null)
+            {
+                return new ClusterInput(null, 0, resolvedAt);
+            }
+
+            return Counts.TryGetValue((candidate.ThrustSession, candidate.ThrustScan, industry), out int count)
+                ? new ClusterInput(industry, count, resolvedAt)
+                : new ClusterInput(null, 0, resolvedAt);
+        }
+    }
+
     private readonly record struct ClusterInput(string? Industry, int Count, string? ResolvedAt);
 
     /// <summary>
@@ -692,7 +744,9 @@ public sealed class CheckRecomputer
         string Ticker,
         string Direction,
         List<CheckResult> Results,
-        string? CorrectedAt)
+        string? CorrectedAt,
+        string? ThrustScan,
+        string? ThrustSession)
     {
         public bool AlreadyCorrected => CorrectedAt is not null;
     }
