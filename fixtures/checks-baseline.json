@@ -112,7 +112,9 @@
    },
    "context": [
     "FROZEN expectations diffed",
-    "captured responses the replay read"
+    "captured responses the replay read",
+    "frozen-only checkpoints resting on an open obligation",
+    "frozen-only checkpoints settled, which nothing will close"
    ]
   },
   "no-superseded-citation": {
@@ -259,6 +261,7 @@
     "BUILD_PLAN.md, the questions that are the operator's": 1,
     "BUILD_PLAN.md, the operator's table against the obligations table": 1,
     "BUILD_PLAN.md, the frozen-only permits the fixture holds": 1,
+    "BUILD_PLAN.md, the frozen-only permits still resting on an open obligation": 1,
     "BUILD_PLAN.md, the times the first run after 4.1 turns red": 1
    }
   },

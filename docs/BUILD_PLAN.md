@@ -371,11 +371,21 @@ itself. It has to be discharged, or repointed with its reason, before 4.1's entr
 than after.
 
 **The one that blocks is the fixture permit.** `fixtures/expectations.json` names nine frozen-only checkpoints
-under `frozenOnly`, each resting on the obligation raised at 3.10, which falls due at 4.1.
-`fixture-replay` fails a permit whose due checkpoint `PROGRESS.md` already records, in those words:
-"that checkpoint shipped without discharging it and nothing said so at the time". So the first CI run
-after 4.1's PROGRESS entry lands turns red nine times over, and 4.1's own done condition 2 is
-`tools/ci.*` green.
+under `frozenOnly`, of which three still rest on an open obligation, being the one raised at 3.10 which
+falls due at 4.1. `fixture-replay` fails a permit whose due checkpoint `PROGRESS.md` already records, in
+those words: "that checkpoint shipped without discharging it and nothing said so at the time". So the
+first CI run after 4.1's PROGRESS entry lands turns red three times over, and 4.1's own done condition 2
+is `tools/ci.*` green.
+
+**It was nine of nine until 2026-08-30, and six of them are now settled rather than discharged by an
+expectation.** A permit rested on an obligation and nothing else, so a checkpoint that could never have
+contributed an expectation carried a due point that moves at every sign-off, which is permanent while
+reading as pending. A permit now names an open obligation **or** the settled reason nothing could close
+it, and the six settled here are the two spec-and-harness checkpoints and the four sign-offs: 2.1, 3.10,
+2.12, 3.7, 3.13 and 3.15. Each was settled by reading what that checkpoint built, and the reasons are at
+the permits rather than here. The two counts are reported apart in the phase report, so the settled set
+growing is visible rather than absorbed into a figure that reads as temporary
+(see: A frozen-only permit names an open obligation or the settled reason nothing could close it).
 
 **The permits are discharged before 4.1's entry is written, and nothing about 4.1 discharges them.**
 That has to be said outright, because the opposite reading is available and has been taken: that a

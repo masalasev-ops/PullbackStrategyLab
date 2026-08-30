@@ -242,17 +242,34 @@ public sealed partial class StatedCountsCheck
         // unregistered figure, which is the row raised at 3.7 about checks that reconcile a
         // hand-named list in one direction; registering this one closes the instance rather than
         // the row.
-        int permits = FixtureReplayCheck.ReadExpectations().FrozenOnly?.Count ?? 0;
+        IReadOnlyList<FixtureReplayCheck.Permit> allPermits =
+            FixtureReplayCheck.ReadExpectations().FrozenOnly ?? [];
+        int permits = allPermits.Count;
+
+        // The two figures are different quantities and were the same number until the permit shape
+        // gained its settled form. How many permits the fixture holds is one thing; how many of
+        // them the first run after 4.1 turns red is another, and only the ones still resting on an
+        // obligation are in the second. Reading the second off the first would restate a figure
+        // that has stopped meaning what it says the moment a permit is settled, which is the shape
+        // this whole registry exists to refuse.
+        // see: A frozen-only permit names an open obligation or the settled reason nothing could close it
+        int open = allPermits.Count(p => p.Obligation is not null);
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the frozen-only permits the fixture holds",
             InWords(buildPlan, "`fixtures/expectations.json` names ", " frozen-only checkpoints"),
             permits,
             "entries under frozenOnly in fixtures/expectations.json"));
         claims.Add(new Claim(
+            "BUILD_PLAN.md, the frozen-only permits still resting on an open obligation",
+            InWords(buildPlan, "of which ", " still rest on an open obligation"),
+            open,
+            "entries under frozenOnly carrying an obligation rather than a settled reason"));
+        claims.Add(new Claim(
             "BUILD_PLAN.md, the times the first run after 4.1 turns red",
             InWords(buildPlan, "turns red ", " times over"),
-            permits,
-            "entries under frozenOnly in fixtures/expectations.json"));
+            open,
+            "entries under frozenOnly carrying an obligation rather than a settled reason"));
 
         // BUILD_PLAN.md 1.11, all ten steps of the move procedure in RUNBOOK.
         IReadOnlyList<IReadOnlyList<string>> moveSteps = MarkdownTable.BodyRowsAfter(runbook, "## Moving the store to another machine");

@@ -189,6 +189,17 @@ Measured at 2.6, which is what forced the choice: eight of the ten long checks w
 
 The cases are AUTHORED and are never counted as evidence about the market. They are the same tier as the synthetic split at 1.5 and carry the same limitation: they encode this author's reading of the gate, which is why the expectation over them is produced by a second implementation rather than by the rules themselves.
 
+**A frozen-only permit names an open obligation or the settled reason nothing could close it**
+Done condition seven asks every checkpoint for one expectation that is `DERIVED` or `CONFIRMED`. A checkpoint that contributed none is permitted to be frozen-only by a named permit in `fixtures/expectations.json`, and until now a permit had exactly one shape: it rested on a carried obligation, and `fixture-replay` failed it once that obligation's due checkpoint landed.
+
+That shape is right for a checkpoint nobody has yet examined, and it cannot express the answer. Some checkpoints could have contributed an expectation and did not, which is a debt. Others could not, and never will: a phase sign-off adds no stage to the replayed pipeline and no behaviour to freeze, a spec pass produces documents, and a repair whose defect only appears across a daylight-saving boundary cannot be distinguished by a fixture holding one market day in August. Resting those on an obligation gives them a due point that moves at every sign-off, which is permanent while reading as pending.
+
+So a permit carries exactly one of two things. **An obligation**, meaning nobody has established whether this checkpoint could have contributed, the question is carried in `BUILD_PLAN.md`, and the permit expires when it falls due. **A settled reason**, meaning it has been established that no replayed market day could produce a figure for that checkpoint, recorded at the permit. A permit carrying both, or neither, fails.
+
+This is the third shape `OutOfScopeReason.ByDesign` already needed at 2.2, arrived at independently and for the same reason: forcing a permanent exemption into a shape that names a checkpoint invents one, and recording it as prose loses the distinction the guard is for.
+
+The risk is the one by-design already names. If everything drifts into settled, the rule is decoration. What holds it is that the two counts are reported separately in the phase report, so the settled set growing is visible rather than absorbed into a number that reads as temporary. Settling a permit is a judgement about one checkpoint, made by a session that reads what that checkpoint built, and it is recorded with its reasoning rather than as a flag.
+
 **A fixture expectation changes only with a recorded reason, and the report counts what changed**
 When a diff fails, regenerating the expectations is the cheapest way to make it pass and it destroys the fixture's only purpose. So a changed expectation carries a reason line, and the report states how many expectations changed since the last commit alongside how many passed.
 
