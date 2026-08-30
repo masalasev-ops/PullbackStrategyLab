@@ -35,6 +35,31 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"(?<n>\d*)N", RegexOptions.CultureInvariant)]
     private static partial Regex TermInN();
 
+    /// <summary>
+    /// The sentence the classification section opens with, which states the count due at 4.1 and
+    /// the obligations table's own total in one breath. Both were C# literals until 3.15's fifth
+    /// finding; matching the sentence pins its shape as well as reading the two figures out of it.
+    /// </summary>
+    [GeneratedRegex(@"(?<due>[A-Za-z][a-z-]*) of the (?<total>[a-z-]+) rows above fall due at 4\.1",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex OpeningSentence();
+
+    /// <summary>
+    /// The classification heading, which states the same count a third time and is the anchor its
+    /// table is read from. Matched rather than spelled out, so the count is not written here.
+    /// </summary>
+    [GeneratedRegex(@"^### What the (?<due>[a-z-]+) due at 4\.1 are[^\n]*",
+        RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex ClassificationHeading();
+
+    /// <summary>
+    /// The heading over the operator's questions, which states how many there are. The count in it
+    /// went stale at 3.14 and nothing here was reading it.
+    /// </summary>
+    [GeneratedRegex(@"^### The (?<count>[a-z-]+) that are the operator's[^\n]*",
+        RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex OperatorHeading();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -121,27 +146,52 @@ public sealed partial class StatedCountsCheck
         int dueAtTheWatchlist = obligations.Count(
             r => r.Count > 2 && r[2].Trim().Equals("4.1", StringComparison.Ordinal));
 
-        // The table's own total, which was prose and went stale the moment a row was added. It read
-        // "fifty-eight" while the table held fifty-nine, which is exactly what this check is for: a
-        // number a spec states about its own contents, derived from the contents.
-        Assert.Contains("of the fifty-nine rows above fall due at 4.1", buildPlan, StringComparison.Ordinal);
+        // The table's own total and the count due at 4.1, both read out of the document.
+        //
+        // They were the literals 59 and 31 until 3.15, and that is the sign-off's fifth finding:
+        // six lines below, the permit claims call InWords and read their figure out of BUILD_PLAN,
+        // so the number lives in one place and moving it is a document edit. These two were pinned
+        // here instead, which made adding or repointing an obligation row a source edit. A session
+        // that commits code may not sign it off, so a sign-off session could not touch the
+        // obligations table without disqualifying itself: 3.15 ruled a repoint and recorded that it
+        // could not execute it, for exactly that reason.
+        //
+        // The opening sentence states both figures, so one match pins the shape of the sentence as
+        // well as the numbers in it.
+        Match opening = OpeningSentence().Match(buildPlan);
+        Assert.True(opening.Success,
+            "BUILD_PLAN.md's classification section no longer opens with \"<count> of the <total> rows above fall "
+            + "due at 4.1\", which is the sentence both obligation figures are read from.");
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the carried obligations table's own total",
-            59,
+            FromWordsOrFail(opening.Groups["total"].Value),
             obligations.Count,
             "rows of the carried obligations table"));
 
-        Assert.Contains("### What the thirty-one due at 4.1 are", buildPlan, StringComparison.Ordinal);
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the obligations due at 4.1",
-            31,
+            "BUILD_PLAN.md, the obligations due at 4.1, stated in its opening sentence",
+            FromWordsOrFail(opening.Groups["due"].Value),
+            dueAtTheWatchlist,
+            "rows of the carried obligations table falling due at 4.1"));
+
+        // The heading states the same count a third time, and it is the anchor the classification
+        // table is read from, so it is matched rather than spelled out.
+        Match heading = ClassificationHeading().Match(buildPlan);
+        Assert.True(heading.Success,
+            "BUILD_PLAN.md has no \"### What the <count> due at 4.1 are\" heading, which is both a stated count "
+            + "and the anchor the classification table is read from.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations due at 4.1, stated in its heading",
+            FromWordsOrFail(heading.Groups["due"].Value),
             dueAtTheWatchlist,
             "rows of the carried obligations table falling due at 4.1"));
 
         IReadOnlyList<IReadOnlyList<string>> groups =
-            MarkdownTable.BodyRowsAfter(buildPlan, "### What the thirty-one due at 4.1 are");
+            MarkdownTable.BodyRowsAfter(buildPlan, heading.Value);
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups the thirty-one are classified into",
+            "BUILD_PLAN.md, the three groups the pile is classified into",
             3,
             groups.Count,
             "rows of the classification table"));
@@ -150,6 +200,37 @@ public sealed partial class StatedCountsCheck
             dueAtTheWatchlist,
             groups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
             "the classification's own three counts, summed"));
+
+        // BUILD_PLAN.md, the operator's own list, and the count nothing here derived.
+        //
+        // Its heading states how many rows the table below it has, and two sentences beside it
+        // state the same figure again. It read "eight" in both of those while the table held nine,
+        // from 3.14 until this pass, and nothing could see it: this registry named the total, the
+        // count due at 4.1, the three groups and the permits, and not this one. A registry cannot
+        // catch an unregistered figure, which is the row raised at 3.7 about checks that reconcile
+        // a hand-named list in one direction only. Registering it closes the instance rather than
+        // the row.
+        //
+        // The second claim is the reconciliation the first cannot make: the section is a reading of
+        // the obligations table, so a question that leaves the table has to leave the section too.
+        Match operatorHeading = OperatorHeading().Match(buildPlan);
+        Assert.True(operatorHeading.Success,
+            "BUILD_PLAN.md has no \"### The <count> that are the operator's\" heading, which is both a stated "
+            + "count and the anchor the operator's table is read from.");
+
+        IReadOnlyList<IReadOnlyList<string>> operatorQuestions =
+            MarkdownTable.BodyRowsAfter(buildPlan, operatorHeading.Value);
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the questions that are the operator's",
+            FromWordsOrFail(operatorHeading.Groups["count"].Value),
+            operatorQuestions.Count,
+            "rows of the operator's table"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the operator's table against the obligations table",
+            operatorQuestions.Count,
+            obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal)),
+            "rows of the carried obligations table falling due at the operator"));
 
         // BUILD_PLAN.md, the frozen-only permits, derived from the fixture rather than from the prose.
         //
@@ -328,14 +409,71 @@ public sealed partial class StatedCountsCheck
         Assert.True(match.Success, $"No word appears between {before} and {after}.");
 
         string word = match.Groups["n"].Value;
-        Assert.True(NumberWords.ContainsKey(word), $"\"{word}\" between {before} and {after} is not a number word.");
-        return NumberWords[word];
+        int? value = FromWords(word);
+        Assert.True(value is not null, $"\"{word}\" between {before} and {after} is not a number word.");
+        return value.Value;
+    }
+
+    /// <summary>
+    /// A number word, or a failure naming the word that was not one.
+    ///
+    /// Separate from <see cref="InWords"/> because the obligation counts are read out of a matched
+    /// sentence rather than from between two fixed strings, and both routes need the same parse.
+    /// </summary>
+    private static int FromWordsOrFail(string word)
+    {
+        int? value = FromWords(word);
+        Assert.True(value is not null, $"\"{word}\" is not a number word.");
+        return value.Value;
+    }
+
+    /// <summary>
+    /// One to nineteen, the round tens, and the compound tens this corpus writes its larger counts
+    /// in, case-insensitively because a count at the start of a sentence is capitalised.
+    ///
+    /// It was a flat lookup of one to twelve until 3.15's fifth finding took the obligation counts
+    /// off C# literals. "fifty-nine" and "thirty-one" are the two that needed the compound form,
+    /// and they are the two whose whole point is that a row can be added or repointed by editing
+    /// the document alone.
+    /// </summary>
+    public static int? FromWords(string word)
+    {
+        ArgumentNullException.ThrowIfNull(word);
+
+        string lower = word.ToLowerInvariant();
+
+        if (NumberWords.TryGetValue(lower, out int direct))
+        {
+            return direct;
+        }
+
+        string[] parts = lower.Split('-');
+
+        if (parts.Length == 1)
+        {
+            return Tens.TryGetValue(parts[0], out int round) ? round : null;
+        }
+
+        return parts.Length == 2
+            && Tens.TryGetValue(parts[0], out int tens)
+            && NumberWords.TryGetValue(parts[1], out int units)
+            && units is > 0 and < 10
+                ? tens + units
+                : null;
     }
 
     private static readonly IReadOnlyDictionary<string, int> NumberWords = new Dictionary<string, int>(StringComparer.Ordinal)
     {
         ["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6,
         ["seven"] = 7, ["eight"] = 8, ["nine"] = 9, ["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12,
+        ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,
+        ["seventeen"] = 17, ["eighteen"] = 18, ["nineteen"] = 19,
+    };
+
+    private static readonly IReadOnlyDictionary<string, int> Tens = new Dictionary<string, int>(StringComparer.Ordinal)
+    {
+        ["twenty"] = 20, ["thirty"] = 30, ["forty"] = 40, ["fifty"] = 50,
+        ["sixty"] = 60, ["seventy"] = 70, ["eighty"] = 80, ["ninety"] = 90,
     };
 
     private static int StatedBetween(string text, string before, string after)

@@ -7667,3 +7667,93 @@ Carried:    **Nothing new is added to the obligations table and three rows are e
             **A handoff prompt for the five was written to `/prompts`** and is gitignored, so
             everything in it that the corpus will later cite is in this entry or in BUILD_PLAN
             already, which is the rule that folder rests on.
+
+## 3.15 — 2026-08-30 — phase-3-carried-rulings — the ruling executed, and the row and the check made to agree
+
+Not a checkpoint entry. It executes what the 3.15 sign-off ruled and recorded that it could not do,
+and settles the one disagreement BUILD_PLAN names as owed before 4.1's entry is written.
+
+**No checkpoint is added to the plan, and that is a judgement rather than a default.** The tension is
+real: a 3.16 landing after the sign-off that covers 3.8 through 3.14 would be a checkpoint nothing
+signs off, which is exactly the gap 3.14 found when phase 3's table ended at 3.13 with only 3.7's
+sign-off scoped to 3.0 through 3.5, and repeating that shape one checkpoint later would be the same
+defect knowingly. The alternative to a 3.16 with its own sign-off row beside it is to discharge each
+finding at the due point the obligations table already carries for it and add nothing to the plan.
+**That is what happened here**, on the grounds that the table is what exists for this and that
+nothing done in this pass adds a deliverable: one check reads its figures from the document instead
+of from its own source, and two rows move to due points that were already argued for them in writing.
+
+**Recorded against 3.15 rather than against 4.1, and that half is mechanical.** The work falls due at
+4.1 and at the operator, so the commit subject names 4.1 nowhere and this heading does not either:
+`Schedule.HasLanded` reads this file, and a heading naming 4.1 would make the ten frozen-only permits
+and every deferral resting on 4.1 fail on the next run. The work is 3.15's own carried ruling, so the
+entry is 3.15's.
+
+**Two rows moved where 3.15's ruling named one.** The `ForwardDispersion` repoint is the one 3.15
+ruled and the count it predicted was 31 to 30. `price-storage-form` is the second and is not a new
+judgement: BUILD_PLAN already named 4.6 for it, already said what was owed before 4.1 was that the
+row and the check agree rather than that the parse be written, and the reconciliation was cheap once
+moving a row had stopped being a source edit. Both are named in the classification section so a
+reader sees which two moved and under what, rather than inferring it from a count.
+
+Built:      **The obligation counts come off their literals, which is 3.15's fifth finding and the
+            thing that blocked the rest.** `stated-counts` pinned the table's total and the count due
+            at 4.1 as `59` and `31` in `StatedCountsCheck.cs`, six lines above permit claims that read
+            their figure out of BUILD_PLAN. So adding or repointing an obligation row was a source
+            edit, and a session that commits code may not sign it off: 3.15 ruled a repoint and had to
+            record it as unexecuted. Both figures are now read from the document, the opening sentence
+            and the heading matched separately so the count is checked in both places it is stated.
+
+            **`InWords` read one to twelve and the counts are compound tens.** A flat lookup returns
+            no number for "fifty-nine", and a parse that answers nothing where the document states a
+            figure is the silent narrowing this suite exists to refuse: the claim would not have been
+            wrong, it would not have been made. `FromWords` is public and has a proof running it over
+            seven forms and six non-forms, each count stated in advance and each form named, on the
+            grounds 3.14 made `Mentions` public for.
+
+            **The `ForwardDispersion` obligation raised at 3.11 is repointed from 4.1 to the
+            operator**, which is the ruling 3.15 took and could not execute. It is now the tenth row
+            of the operator's table, beside the twin raised at 3.5 that says the same thing about the
+            same quantity from the other side.
+
+            **`price-storage-form`'s row and its own deferral both read 4.6.** The row raised at 3.7
+            said 4.1 while the classification sent it to 4.6, and `CheckCoverage.DeferralProblems`
+            fails a deferral naming a checkpoint this file records. BUILD_PLAN already said what was
+            owed before 4.1 was that the two agree rather than that the parse be written. Nothing
+            about the parse changed and it is still owed at 4.6, where the tables carrying orders
+            arrive.
+
+            **The operator's section reads ten, and 2.11 no longer reads as unanswered.** Two counts
+            in it said eight while the table held nine, from 3.14 until today. The heading's count is
+            now derived from the table below it and the table is reconciled against the obligation
+            rows due at the operator, in both directions. The 2.11 question is restated as ruled on
+            2026-08-29 and open on what it now waits on, which is the identification of a second
+            wrong quantity rather than an answer; the section is where whoever plans phase 4 is sent
+            to read, and it was pointing them at a settled question.
+
+Measured:   **The table is fifty-nine rows and no row left it.** 4.1 falls from 31 to 29, 4.6 rises
+            from 12 to 13, the operator rises from 9 to 10, and the classification's three groups go
+            from 2, 5 and 24 to 1, 5 and 23, still summing to the pile they classify. The ten permits
+            are untouched and still rest on the obligation raised at 3.10, which still falls due at
+            4.1.
+
+Verified:   **Proved red before green against the count that had been stale.** Restoring "### The
+            nine that are the operator's" fails `stated-counts` with "BUILD_PLAN.md, the questions
+            that are the operator's: states 9, derived 10 from rows of the operator's table", which
+            is the sentence nothing in the corpus could produce yesterday.
+
+            `tools/ci.ps1` green, 28 steps, **560 tests**, up from 559 by the parse proof.
+
+Carried:    **Nothing new, and one row's shape is worth naming.** The classification section no longer
+            promises that nothing in it moves, because two rows moved under rulings that named them
+            and a promise a later session has to break is worse than a count. The twenty-three
+            independent rows are untouched and choosing their due points is still the decision that
+            section hands to whoever plans phase 4.
+
+            **What still collects itself at 4.1 is the fixture permit, alone.** Ten frozen-only
+            checkpoints rest on the obligation raised at 3.10 and `fixture-replay` fails each one the
+            moment this file records 4.1. It is not discharged here because a permit is spent by an
+            independently produced expectation, and there is no phase-4 behaviour to derive one from
+            yet.
+
+            **This session committed code and may not sign it off.**

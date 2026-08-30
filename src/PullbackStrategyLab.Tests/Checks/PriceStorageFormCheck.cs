@@ -136,11 +136,18 @@ public sealed partial class PriceStorageFormCheck
             .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
             .Examined("column declarations checked for REAL affinity", columns)
+            // 4.6 rather than 4.1, from 2026-08-30, so the deferral and the obligation row it
+            // defers to name the same checkpoint. BUILD_PLAN's classification had sent the row to
+            // 4.6 as the cheapest place to write the parse while this argument said 4.1, and a
+            // deferral to a checkpoint PROGRESS records fails the run: the first CI run after 4.1's
+            // entry landed would have turned this step red for a disagreement rather than for a
+            // defect. 4.6 is where the tables carrying orders arrive, which is where money columns
+            // start to matter.
             .OutOfScope(
                 "columns added by ALTER TABLE, which this guard does not parse",
                 addedLater,
                 CheckCoverage.OutOfScopeReason.UntilCheckpoint(
-                    "4.1",
+                    "4.6",
                     "the regex reads CREATE TABLE bodies, so a column added later is in neither figure above. All "
                     + "of them are TEXT or INTEGER today, so nothing is wrong in the store; what is missing is the "
                     + "guard's reach over the statement form a later phase is most likely to add a column with. "
