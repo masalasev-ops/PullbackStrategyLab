@@ -7880,3 +7880,88 @@ Owed:       **3.14's frozen-only permit is spent and removed**, so the permits f
             nine and BUILD_PLAN's two derived figures fall with them. The obligation row is removed
             and the table is fifty-eight. One instrument remains at 3.6, `Estimate.Nights` reaching
             the panel, and the draw the 3.3 ruling leaves owed.
+
+## 2.11 — 2026-08-30 — phase-3-tight-set-and-instruments — the hunt for the second wrong quantity, and the premise it did not survive
+
+Not a checkpoint entry. The 2.11 ruling of 2026-08-29 left the row waiting on the identification of a
+second wrong quantity, the geometry having been the first. This is that hunt. **Nothing is changed by
+it**: the once-only threshold adjustment is the operator's and stays unspent, and no threshold, gate
+or rule is touched here. What follows is measurement.
+
+Measured     Every figure below is over `calibration_setup` in `data/live`, read-only, across the
+over:        **602 sessions from 2024-04-01 to 2026-08-24**, being **32,533 rows flagged long** and
+             **16,917 flagged short**. Long and short are reported separately throughout and no
+             figure covers both. `cluster` is excluded from every conjunction because it is recorded
+             and never gating, which the 3.14 entry establishes.
+
+Found:       **The long funnel has one dominant constraint and it is `exit-tight`.** Conditionally,
+             each gate over the rows still alive when it is reached: `dip-shape` 9.93% of 32,533,
+             `held-floor` 99.94% of 3,230, `contraction` 64.10% of 3,228, `trigger-near` 95.75% of
+             2,069, **`exit-tight` 1.51% of 1,981**. Forcing `exit-tight` to pass and changing
+             nothing else takes the long count from 30 to 1,981 and the median from nought to
+             **3 a night**. Every other long gate forced to pass leaves the count at 30, except
+             `dip-shape`, which gives 419 and a median of nought.
+
+             **The quantity it caps sits below the first percentile of what the geometry produces.**
+             Over the 1,981 long rows that reach `exit-tight` with a value, the stop distance in
+             daily ranges reads p1 0.343, p25 0.928, **p50 1.184**, p75 1.475, p90 1.787, max 2.600,
+             against a cap of 0.5. That confirms the 2.11 row's own sentence, that a stop at the
+             extreme of a two-to-seven bar move is being asked to sit inside half a day's range and
+             the geometry cannot produce it, and puts a number on it.
+
+             **One quantity is not enough, which is where the framing breaks.** Forcing `exit-tight`
+             to pass gives a median of 3 a night long against a band floor of 5. Reaching the band
+             needs `dip-shape` as well: forcing both gives 8,507 long rows and a median of **12 a
+             night**. So on the long side there is no *second* wrong quantity in the sense the row
+             assumes, being one more like the geometry. There are two.
+
+             **The short side has no candidate at all.** Conditionally: `averages-squeezing` 29.12%
+             of 16,917, `thrust` 100% of 4,927, `bounce-shape` 8.77% of 4,927, `reached-ceiling`
+             2.08% of 432, `no-reclaim` 100% of 9, **`exit-tight` 0 of 9**. No single short gate
+             forced to pass takes the median above nought; the best is `exit-tight` at 9 rows over
+             602 sessions. No pair does either: the best pair, `bounce-shape` with `exit-tight`,
+             gives 495 rows over 602 sessions and a median of nought. **Nine short rows in 602
+             sessions reach `exit-tight` at all**, so whatever is wrong on the short side is upstream
+             of the gate the long side dies at.
+
+             **So the premise that the two sides fail the same way does not survive conditional
+             measurement**, and that premise is what the row's "structural rather than a long-side
+             accident" rests on. Unconditionally `exit-tight` passes 1.29% of 32,533 long and 1.37%
+             of 16,917 short, which reads as one failure appearing twice. Conditionally it is 1.51%
+             of the 1,981 long rows that reach it and 0 of the 9 short rows that do. The long side
+             dies at `exit-tight`; the short side has already died three gates earlier. Same
+             instrument, same day, different diagnosis per side, which is the pooling rule biting on
+             a diagnosis rather than on a figure.
+             (see: Long and short are never pooled into one figure)
+
+             **A supporting finding on which clause of the shape gate fails, since the store does
+             not record it and `value` and `note` together can reconstruct it.** `dip-shape` is a
+             retrace at or below 0.40 **and** a dip of 2 to 7 bars. Over all 32,533 long rows the bar
+             clause passes 29.05% and the retrace clause 66.34%; of the 29,303 long failures,
+             **62.63% fail on the bar clause alone** and 21.23% on the retrace clause alone. The
+             median dip length in the flagged long population is **1 bar**. Over all 16,917 short
+             rows the bar clause passes 32.06% and the recovery clause 67.70%, and 62.42% of the
+             14,541 short failures are the bar clause alone, with a median bounce of 1 bar.
+
+             **That matters because every retrace figure this corpus has quoted was taken after the
+             bar clause.** Over all 32,533 flagged long rows the median retrace is **0.1771**, well
+             inside the 0.40 cap. Over dips of 2 to 7 bars it is the 0.5208 the 3.0(c) record
+             quotes. Both are correct over the population named beside them, and the cap was argued
+             from the conditioned one while the gate applies to the unconditioned one.
+
+What it      **The row stays open and stays the operator's, and what it waits on changes again.** It
+changes:     no longer waits on identifying a second wrong quantity, because the answer is that the
+             long side has two and the short side has none that any single relaxation reaches. What
+             it waits on now is a judgement this measurement cannot take: whether to spend the once
+             on the long side, where the two quantities and their cost are now numbers, or to treat
+             the short side's three-gate funnel as the finding and stop expecting the two sides to
+             be fixed by one change.
+
+             **No decision moves and no threshold is touched.** The once is unspent, the 5 to 60
+             band is not re-derived, and nothing in `LongPullbackRules` or `ShortPullbackRules`
+             changed in this pass.
+
+Owed:        The counterfactual counts above are arithmetic over recorded check results, not a
+             re-run of the detectors, so they say what the recorded conjunction would have admitted
+             and not what a detector with different thresholds would have flagged. Any threshold
+             actually spent is re-measured by a calibration re-run, as 3.0(c) did for the geometry.
