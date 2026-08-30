@@ -7505,6 +7505,17 @@ Verified:   Reproduced before reading the record, on `main` at `b8e73a1`, the me
             the digit, which is what a merge that moves no content predicts and is stated because it
             was checked rather than assumed.
 
+            **Run again against the state being committed**, so the sign-off is against this entry
+            and the four document edits beside it rather than against the tree it was reproduced
+            from. `tools/ci.ps1` green, 28 steps, 559 tests. `tools/verify-phase.ps1` GREEN with the
+            same 126 claims, 76 passed, 0 failed, 50 out of scope and **0 unexamined**, the same
+            1,300 expectations with 1 void and 0 changed, and the same inputs, from
+            `66aa36ac527725971e2dda75a3b92ff44b467077`, working tree clean, generated 2026-08-30
+            04:09:10Z. **Coverage examined reads 4,501 rather than 4,490**, the eleven being the
+            citations and due points these document edits added, which is the same effect 3.7
+            recorded at five and the reason the figure is quoted with a sha rather than treated as a
+            constant of the corpus.
+
             **The Windows wrapper was the thing that ran it**, not a bash invoked by hand. It
             printed `verify-phase: using C:\Program Files\Git\bin\bash.exe`, having rejected
             `C:\Windows\system32\bash.exe` and the `WindowsApps` alias. On this machine
