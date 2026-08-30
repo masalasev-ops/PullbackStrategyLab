@@ -278,6 +278,7 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 
 | Raised | Obligation | Due at |
 |---|---|---|
+| 2.11 | **The short side's tightest gate runs two of its own three clauses until 4.4, and the long detector has no deferred clause anywhere.** `reached-ceiling` asks whether price is within half a daily range of the 21-day average, **or** the 50-day, **or** the declining average price anchored to the last swing high; the third is a volume-weighted average over minute bars and `VwapEngine` arrives at 4.4, so the check runs two disjuncts and records that it does. A disjunction missing a disjunct is strictly harder to pass, and this is the gate that takes the short funnel from 432 rows to 9 over 602 sessions, at 2.08%. Measured on 2026-08-30: short carries three hard gates in series where long carries one, and no single gate or pair lifts its median off nought, though one triple containing this gate reaches the band floor exactly. **What is owed is not a threshold**, which is the operator's, but the reading: 3.6 decides per direction and never pooled, and whoever reads the short side before 4.4 is reading a detector the corpus itself calls narrower than its specification, while the long side beside it is not. Either the short funnel is re-measured once the clause runs, or 3.6's short-side reading records that it was taken against two clauses of three. **Due at 3.6 rather than 4.4**, because 3.6 comes first and is where the number is read | 3.6 |
 | 3.6 | **The tight set's cross-session reach has no fixture expectation, because the golden fixture holds one market day.** The draw now takes tight controls from any session at or before the setup's that shares the market mood, and `controls.*.nearest` reports `sessionsApart` nought on every row of the fixture, because the only session it can reach is the setup's own. So the committed expectations hold the recorded shape of a tight draw and say nothing about the reach, which is the behaviour the ruling added. The property is held by `ControlMatchingTests` and `ControlSamplerTests` over authored multi-session stores, both proved red before green, so what is missing is regression detection over the replayed pipeline rather than verification. **Priced, because that is what decides when it closes**: it needs a capture holding more than one market day, which is the same input the whole-market liquidity floor is already waiting on at 1,900 vendor calls and about 130 MB committed for ever. It closes with that capture and not before, and it is rowed here rather than discharged by authoring a second population into the replay, which would put authored rows into a fixture whose figures are reported as captured | 3.6 |
 | 3.14 | **`recheck --expect` is compared after every correction has been written, so it reports a set that moved rather than refusing one.** `Run` calls `Recompute` or `Restore`, which perform the whole walk and issue every `UPDATE`, and only then compares `expect` against the candidate count and returns 2. The flag's own doc says the run fails on any other number and the 3.8 record says it exits 2 on any other number, both of which describe a guard that fires before the writes. An operator who names fifteen and finds twenty has corrected all twenty by the time the exit code says so, and the exit code is the only thing that says so. The repair is to derive the candidate set, compare it, and return before the first `UPDATE`. **The 3.15 sign-off adds two more of the same stage's command line, found by running it.** `--as-of` given twice with different values is not refused: `Arguments.Parse` overwrites `named` with no duplicate guard, so `recheck --check cluster --as-of 2026-08-27 --as-of 2026-08-28` runs against the 28th and exits 0, where two positionals and a positional disagreeing with a named one are both refused. `--check` and `--expect` repeat silently on the same footing, so what is owed is one rule for a repeated flag rather than a third named exception, which is the shape 3.13(c) replaced with a declared arity for exactly this reason. And the refusal a corrected row already carries cannot name its check: `Candidates` selects `corrected_at` and not `corrected_check`, so a row corrected under a second admitted check refuses a `cluster` recompute with a message reading as though `cluster` had been done, and 3.13(b) added that column so the check's name would stop being prose | 4.6 |
 | 3.14 | **`recheck` without `--apply` opens a write connection and a run scope, and a dry run can mark the night degraded.** The flag says the stage reports what it would do and writes nothing. Both `Recompute` and `Restore` call `OpenWrite` and `RunLogger.Begin` before looking at `apply`, and both complete the scope as `Partial` when anything was refused, whatever `apply` said. `RunLogger.IncompleteStagesOf` selects every non-clean run of the session's day and the detectors write that string into `setup.degraded_because` for every row of the night, so an operator asking what a repair would do can mark a whole night degraded by asking. Nothing has observed it because every live dry run so far refused nothing | 4.6 |
@@ -338,7 +339,7 @@ Findings that did not block a checkpoint. Each names the checkpoint at which it 
 
 ### What the twenty-nine due at 4.1 are
 
-Twenty-nine of the fifty-seven rows above fall due at 4.1, whose own deliverable is a page. A due point
+Twenty-nine of the fifty-eight rows above fall due at 4.1, whose own deliverable is a page. A due point
 that moves at every sign-off is permanent while reading as pending, and that failure is already
 named for the operator's nine below; this is the same failure at aggregate scale, arrived at one
 legitimate local decision at a time. If 4.1 lands with these undischarged, the next sign-off's first
@@ -375,6 +376,37 @@ under `frozenOnly`, each resting on the obligation raised at 3.10, which falls d
 "that checkpoint shipped without discharging it and nothing said so at the time". So the first CI run
 after 4.1's PROGRESS entry lands turns red nine times over, and 4.1's own done condition 2 is
 `tools/ci.*` green.
+
+**The permits are discharged before 4.1's entry is written, and nothing about 4.1 discharges them.**
+That has to be said outright, because the opposite reading is available and has been taken: that a
+permit is spent by an independently produced expectation, that phase-4 behaviour is what such an
+expectation would be derived from, and that the permits therefore close by construction when 4.1
+lands. **The reading is wrong, and it is wrong on its own terms.** A permit names one checkpoint and
+is spent by an expectation over *that* checkpoint's behaviour. The nine it names are 1.1, 1.2, 1.11,
+2.1, 2.12, 3.7, 3.10, 3.13 and 3.15, every one of which landed in phase 1, 2 or 3, so the behaviour
+each expectation would be derived from exists today and has for months. 4.1 is the date the
+obligation falls due and not the source of anything: an expectation 4.1 produces discharges 4.1's own
+done condition 7 and spends no permit at all. So there is no ordering inside 4.1 that makes the
+by-construction reading true, and none is stated here, because a rule that depends on two things
+happening in the right order inside one checkpoint is a rule a session remembers rather than one a
+check enforces, and this corpus has the second available.
+
+**2.1(d) is the precedent and it is exact.** Four frozen-only permits, at 1.3, 1.4, 1.5 and 1.7, were
+discharged at 2.1 by writing the `DERIVED` expectations those checkpoints owed, and its done
+condition reads "The four frozen-only permits are gone from `fixtures/expectations.json` rather than
+re-dated". Nothing distinguishes these nine from those four in kind: the same guard, the same file,
+the same remedy, and the same fact that the permitted checkpoint had already landed when the
+expectation was written. What differs is only that the obligation raised at 3.10 asks a question 2.1
+did not have to ask, being **whether** each checkpoint could have contributed an expectation at all.
+So the route has two ends and both close a permit: write the expectation the checkpoint owed, which
+is 2.1(d)'s route, or establish that no replayed market day could produce a figure for it and record
+that reason, which is the route 3.13 and 3.15 already took in their own permit text. A permit whose
+reason is established still has to stop resting on an obligation that falls due at 4.1, because the
+guard fails on the due point rather than on the quality of the reason.
+
+**Which of the two applies to each of the nine is the obligation's own work and is not settled here.**
+It is settled per checkpoint, before 4.1's PROGRESS entry, by a session that reads what each one
+built.
 
 **It said seven until 3.14, and until 3.14 it would not have turned red at all.** The count went stale
 in the commit that added the eighth permit, which is the ordinary way a prose figure about another
