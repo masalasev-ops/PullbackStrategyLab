@@ -306,19 +306,22 @@ Grain: signal name. The library.
 Insert SignalAdmissionTest · Read SignalVectorizer, ContextPacker, SignalBackfiller
 
 ### `control_setup`
-Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cost.
+Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cost. Still one row per ticker per set per setup after the tight set was allowed to reach across sessions: where a name qualifies on several sessions the nearest is drawn and the others are not, so a set is five distinct names rather than one name seen five times.
 
 | Column | Type | Note |
 |---|---|---|
 | `control_id` | TEXT PK | `{setup_id}-{control_set}-{control_ticker}`, so `forward_return` has one column to point at |
 | `setup_id`, `control_ticker` | TEXT | |
 | `control_set` | TEXT | `loose` or `tight` |
+| `control_as_of` | TEXT NULL | the control's **own** session, which is the setup's for a loose draw and may be an earlier one for a tight draw |
 | `match_quality` | TEXT | the distance on each matched dimension, separately, never as one number |
 | `rank` | INTEGER | 1 to 5 by distance, ticker as the tiebreak. The fifth is by construction the worst of the five |
 
 Insert ControlSampler · UNIQUE (`setup_id`, `control_set`, `control_ticker`)
 
 *Five per set per setup, drawn by deterministic nearest neighbour with no randomness, before the cap rather than after it (see: Controls are drawn by nearest neighbour on the matched dimensions, five per set, with no randomness). `match_quality` is per dimension because a single blended distance cannot say which dimension the match was bad on, and that is the thing a later reader needs.*
+
+*`control_as_of` is the session a control's outcome is measured from, and it stopped being derivable on 2026-08-30. The tight set is declared to match on the trend ladder **and** the market mood, and within one night the mood cannot be a dimension, so the operator ruled that the tight set draws from any session sharing the mood while the loose set stays within the night (see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night). `ForwardReturnFiller` had read the control's session off the setup it was drawn against, and its own comment said why: a control's session is the session it was drawn for. That is now false for half the rows, and left alone it would have measured a tight control's ten-day return from the setup's night rather than the control's: a real return of a real stock over a real window, and the wrong one, which nothing downstream could have seen. Migration 035 backfills every existing row from its setup, which states what was already true of every draw made under the within-night rule rather than inferring anything.*
 
 *`control_id` is a surrogate and it is here for one reason: `forward_return` records outcomes for setups and controls in one table, and a control had no single column to be named by. The alternative was a composite subject key on `forward_return`, which puts three columns in the subject of every outcome row and makes the point-in-time read wider than it needs to be.*
 
@@ -375,6 +378,8 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 | `n_effective` | INTEGER NULL | the effective observations, which is not the same number and is what a minimum sample is counted in |
 | `population` | TEXT NULL | which rows the figure was computed over, said on the panel |
 | `n_minimum` | INTEGER NULL | what `n_effective` must reach before the panel may be read. Band 1 only |
+| `n_sessions` | INTEGER NULL | how many sessions carry a pair, which is the other half of what the panel is read against. Band 1 only |
+| `n_minimum_sessions` | INTEGER NULL | what `n_sessions` must reach. Band 1 only |
 
 Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`) · Unique (`as_of`, `panel`) where `direction IS NULL`
 
@@ -383,6 +388,8 @@ Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`) · Unique (`as_of
 *`n_rows` and `n_effective` are both stored because they are different quantities: ten-day labels overlap, so the information in 3,180 rows is worth fewer than 3,180 independent observations and the ratio is a property of the realised series rather than of the design (see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured).*
 
 *`n_effective` starts from rows rather than from nights, and that is what the control draw bought. Same-night setups share a market factor, which is why an unpaired figure over forty names is worth about one observation; the paired difference removes it by construction, so what is left inside a night is each name's own move against its own controls. Two discounts are then measured from the series: the label overlap across nights, and whatever common movement the matching failed to remove. A night that cannot say how its own pairs dispersed counts as one, which makes the pessimistic reading the limiting case rather than the assumption.*
+
+*`n_sessions` and `n_minimum_sessions` are the second condition, stored beside the first rather than derived on the page. Checkpoint 3.6 fires on at least twenty sessions **and** at least 262 effective observations, and the two are needed because they are settled by different things: sessions are what the block bootstrap needs before an interval exists at all, observations are what the decision needs before the interval means anything, and neither substitutes for the other. `PairedInterval.Estimate` has carried the session count since the interval was written and nothing read it: the builder took five of its six fields, this table had no column, and the panel rendered the row count and the effective count. The session count reached a reader only inside `withheld_because`, in prose, and that column is null the moment an interval exists, so it disappeared at exactly the point it starts deciding how much the interval is worth (see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured).*
 
 *`n_minimum` is stored rather than looked up on the page, on the same grounds the interval is: the panel is read back as it stood, and a minimum that moved after a night was recorded would silently restate what that night's reading meant. It is set on band 1 alone, because band 1 is the panel checkpoint 3.6 fires on and a minimum on every panel would read as a threshold each of them is held to (see: The minimum sample is 262 effective observations, ratified at two points and 90% power).*
 

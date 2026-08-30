@@ -248,12 +248,24 @@ public sealed class ForwardReturnFiller
     /// controls'. Signing the two differently would make that subtraction a sum on the short side,
     /// with the right arithmetic and the wrong meaning, and nothing downstream could see it.
     ///
-    /// <b>The ATR is the control's own, on the setup's date.</b> The excursions are expressed in the
-    /// subject's own range, so borrowing the setup's would state the control's path in units of a
-    /// different stock's volatility.
+    /// <b>The ATR is the control's own, on the control's own date.</b> The excursions are expressed
+    /// in the subject's own range, so borrowing the setup's would state the control's path in units
+    /// of a different stock's volatility.
     ///
-    /// Bounded on the fill instant like its sibling above, and joined through `setup` rather than
-    /// carrying a date of its own, because a control's session is the session it was drawn for.
+    /// <b>The date is the control's own and no longer the setup's, and that sentence used to run the
+    /// other way.</b> It read "joined through `setup` rather than carrying a date of its own,
+    /// because a control's session is the session it was drawn for", which was true while every
+    /// draw was within the night and became false when the tight set was allowed to reach across
+    /// sessions. A tight control drawn from a session three months earlier would otherwise have had
+    /// its ten-day return measured from the setup's night: a real return of a real stock over a real
+    /// window, and the wrong window, which is not a shape anything downstream could have seen.
+    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    ///
+    /// `COALESCE` because every row drawn before migration 035 carries the setup's own date and the
+    /// migration backfills exactly that. The fallback is belt and braces for a row written between
+    /// the two, and it is the setup's date, which is what such a row would have meant.
+    ///
+    /// Bounded on the fill instant like its sibling above.
     ///
     /// <b>`control_setup` is stamped, so the read bounds `drawn_at` as well.</b> The sampler runs
     /// before this stage on the same night, so on a live run every draw is already older than the
@@ -269,11 +281,13 @@ public sealed class ForwardReturnFiller
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT c.control_id, s.as_of, c.control_ticker, s.direction, i.atr_14
+            SELECT c.control_id, COALESCE(c.control_as_of, s.as_of), c.control_ticker, s.direction,
+                   i.atr_14
               FROM control_setup c
               JOIN setup s ON s.setup_id = c.setup_id
               LEFT JOIN indicator_daily i
-                ON i.ticker = c.control_ticker AND i.as_of = s.as_of
+                ON i.ticker = c.control_ticker
+               AND i.as_of = COALESCE(c.control_as_of, s.as_of)
                AND i.computed_at = (SELECT MAX(d.computed_at) FROM indicator_daily d
                                      WHERE d.ticker = i.ticker AND d.as_of = i.as_of
                                        AND d.computed_at <= @filled_at)

@@ -276,6 +276,14 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     /// to tell a reader that the panel beside it is not an answer yet, which is the state the panel
     /// will be in for every night of the wait.
     ///
+    /// <b>And the case the old trigger got wrong: evidence far above the minimum, on five
+    /// sessions.</b> 3.6 fires on twenty sessions AND 262 effective observations, and the page
+    /// compared the effective count alone before rendering the sentence of the whole condition. A
+    /// panel at 900 observations over 5 sessions would have announced the project's own decision
+    /// point on a reading the bootstrap refused to give an interval to. It is here rather than in
+    /// the view tests alone because the claim is about what a person reads, and the two panels that
+    /// disagree have to be on one page for the page to be the thing asserted over.
+    ///
     /// The withheld panels name which shortage is blocking them. The first names a shortage of
     /// sessions rather than of evidence, because that is a distinction the page could not previously
     /// draw: withholding is settled by the session axis and the minimum by how much information the
@@ -305,17 +313,24 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
               "low": "-0.0030", "high": "0.0250", "rows": 3180, "effective": 412,
               "population": "every flagged setup", "minimum": 262,
-              "withheldBecause": null },
+              "withheldBecause": null, "sessions": 214, "minimumSessions": 20 },
             { "name": "band1.vsLoose", "direction": "long", "figure": "withheld",
               "low": null, "high": null, "rows": 240, "effective": 31,
               "population": "every flagged setup", "minimum": 262,
-              "withheldBecause": "only 14 session(s) carry a pair and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence" }
+              "withheldBecause": "only 14 session(s) carry a pair and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence",
+              "sessions": 14, "minimumSessions": 20 }
           ],
           "short": [
             { "name": "band1.vsLoose", "direction": "short", "figure": "withheld",
               "low": null, "high": null, "rows": 0, "effective": 0,
               "population": "every flagged setup", "minimum": 262,
-              "withheldBecause": "144 setup outcome(s) have closed and no control outcome has, so no pair exists. That is a shortage of control outcomes rather than of time, and waiting does not fix it" },
+              "withheldBecause": "144 setup outcome(s) have closed and no control outcome has, so no pair exists. That is a shortage of control outcomes rather than of time, and waiting does not fix it",
+              "sessions": 0, "minimumSessions": 20 },
+            { "name": "band1.vsTight", "direction": "short", "figure": "withheld",
+              "low": null, "high": null, "rows": 1740, "effective": 900,
+              "population": "every flagged setup", "minimum": 262,
+              "withheldBecause": "only 5 session(s) carry a pair and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence",
+              "sessions": 5, "minimumSessions": 20 },
             { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
               "low": null, "high": null, "rows": 1120, "effective": null,
               "population": "capped candidates only", "minimum": null,

@@ -143,6 +143,16 @@ weeks standing, because the gap narrowing over time is the thing worth looking a
 
 Open the scoreboard. Band 1 is the one that matters. If the tight-control comparison has been flat for a quarter, that is the project's answer and it is worth taking seriously rather than waiting for it to improve.
 
+**Band 1 states both halves of the decision point's trigger and neither substitutes for the other.** Each panel reads `n <rows> rows, <effective> effective of 262 needed, over <sessions> session(s) of 20 needed`, and below it either the sentence saying both conditions are reached or the one naming what it is short of. Sessions are what the block bootstrap needs before an interval exists at all; effective observations are what the decision needs before the interval means anything. A fortnight of very wide nights reaches the second before the first, and a year of thin ones does the reverse, so the panel says which one is holding rather than leaving it to be worked out.
+
+### After a merge that carries a migration
+
+**Run `tools/migrate` against the live store, the same day, before the next nightly slot.** A merge moves the checkout the schedule runs from; it does not touch the store. Every stage but `migrate`, `snapshot-db` and `list-stages` refuses before opening a store whose version is not the build's, in both directions, so the mismatch is loud rather than silent. It still costs the night: a refusing stage writes nothing and the stages after it read what it should have written.
+
+**The order is merge, then migrate, and not the other way round.** A store migrated ahead of the checkout is refused on the same footing as one behind it, because an older binary reading a migrated store reads columns whose meaning has moved. So migrating before the merge lands buys the same lost night from the other side.
+
+This is here because it has happened: migrations 031 and 032 landed on 2026-08-28, the live store was never migrated, four stages died and the lab flagged nothing. Nothing in the verification harness can catch it, because every check in this project takes its subject from the source, the documents, the golden fixture, or a store the check itself builds, and the running lab is in none of those.
+
 ---
 
 ## Recovery

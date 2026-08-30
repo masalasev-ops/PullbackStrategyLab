@@ -115,12 +115,25 @@ else
                                     reach the minimum, and a trigger nobody can see from the
                                     first night is a date in disguise.
                                 *@
+                                @*
+                                    Both halves of the trigger, and the one that is short is named.
+                                    3.6 fires on twenty sessions AND 262 effective observations,
+                                    which are settled by different things; this block compared the
+                                    effective count alone and rendered the sentence of the whole
+                                    condition, so a fortnight of very wide nights would have
+                                    announced the trigger on a panel the bootstrap had refused to
+                                    give an interval to.
+                                *@
                                 @if (panel.Reached is bool reached)
                                 {
                                     <span class="minimum @(reached ? "reached" : "waiting")">
                                         @(reached
-                                            ? "the minimum sample is reached"
+                                            ? "both conditions are reached: the sessions and the minimum sample"
                                             : "below the minimum sample, so this panel is not yet an answer")
+                                        @if (!reached && panel.ShortOf is string shortOf)
+                                        {
+                                            <span class="short-of">short of @shortOf</span>
+                                        }
                                     </span>
                                 }
 

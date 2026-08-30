@@ -245,7 +245,14 @@ public sealed class ScoreboardBuilder
                     MeasurementParameters.MinimumEffectiveObservations,
                     WithheldBecause(
                         Shortage.Measure(connection, direction, set, asOf, computedAt),
-                        series.Count)));
+                        series.Count),
+                    // The session count comes from the series rather than from an estimate, because
+                    // on this branch there is no estimate: `Of` returned null. That is the branch a
+                    // reader watches for the whole of the wait, so it is the branch on which the
+                    // count most needs to be there, and reporting it only once an interval exists
+                    // would hide it for exactly as long as it is the thing being waited for.
+                    series.Count,
+                    MeasurementParameters.MinimumSessions));
                 continue;
             }
 
@@ -258,7 +265,13 @@ public sealed class ScoreboardBuilder
                 estimate.Rows,
                 estimate.EffectiveObservations,
                 Flagged,
-                MeasurementParameters.MinimumEffectiveObservations));
+                MeasurementParameters.MinimumEffectiveObservations,
+                // The sixth field of the estimate, which was computed and discarded from the day the
+                // interval was written. `withheld_because` carried the session count in prose and is
+                // null on exactly this branch, so once an interval existed the count vanished from
+                // the panel at the point it began to decide how much the interval was worth.
+                Sessions: estimate.Nights,
+                MinimumSessions: MeasurementParameters.MinimumSessions));
         }
 
         return panels;
@@ -353,9 +366,10 @@ public sealed class ScoreboardBuilder
         command.CommandText = """
             INSERT INTO scoreboard
                 (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
-                 n_minimum, withheld_because, computed_at)
+                 n_minimum, withheld_because, computed_at, n_sessions, n_minimum_sessions)
             VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
-                    @population, @n_minimum, @withheld_because, @computed_at)
+                    @population, @n_minimum, @withheld_because, @computed_at, @n_sessions,
+                    @n_minimum_sessions)
             -- No conflict target. The primary key does not constrain an account-wide panel,
             -- because SQLite treats nulls as distinct and `direction` is null on every band 0
             -- row; migration 030 adds the partial unique index that does. Naming the primary
@@ -376,6 +390,9 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue(
             "@withheld_because", (object?)panel.WithheldBecause ?? DBNull.Value);
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
+        command.Parameters.AddWithValue("@n_sessions", (object?)panel.Sessions ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@n_minimum_sessions", (object?)panel.MinimumSessions ?? DBNull.Value);
 
         return command.ExecuteNonQuery() == 1;
     }
@@ -641,9 +658,18 @@ public sealed class ScoreboardBuilder
     /// <c>Minimum</c> is what the effective count has to reach before the panel's question may be
     /// answered, and it is set on band 1 alone because band 1 is the panel a checkpoint fires on.
     /// </summary>
+    /// <summary>
+    /// One stored panel.
+    ///
+    /// <b><c>Sessions</c> and <c>MinimumSessions</c> are the second half of 3.6's trigger.</b> They
+    /// are null on every panel no checkpoint fires on, exactly as <c>Minimum</c> is, and set
+    /// together on band 1: a count with no minimum beside it, or a minimum with no count, would be
+    /// half a condition rendered as though it were the whole one.
+    /// </summary>
     private sealed record Panel(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
-        int? Effective, string Population, int? Minimum = null, string? WithheldBecause = null);
+        int? Effective, string Population, int? Minimum = null, string? WithheldBecause = null,
+        int? Sessions = null, int? MinimumSessions = null);
 }
 
 /// <summary>What one day's build produced.</summary>

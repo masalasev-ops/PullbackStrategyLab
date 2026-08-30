@@ -270,13 +270,19 @@ public sealed class ForwardReturnFillerTests : IDisposable
             Execute(connection,
                 """
                 INSERT INTO control_setup
-                VALUES (@cid, @sid, @ct, 'loose', '{}', @rank, @obs)
+                    (control_id, setup_id, control_ticker, control_set, match_quality, rank,
+                     drawn_at, control_as_of)
+                VALUES (@cid, @sid, @ct, 'loose', '{}', @rank, @obs, @cas)
                 """,
                 ("@cid", $"{setupId}-loose-{name}"),
                 ("@sid", setupId),
                 ("@ct", name),
                 ("@rank", rank++),
-                ("@obs", Observed));
+                ("@obs", Observed),
+                // A loose control's own session is the setup's, which is what the sampler writes for
+                // every loose draw and what migration 035 backfilled for every row drawn before the
+                // column existed.
+                ("@cas", Flagged.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
         }
     }
 

@@ -1948,6 +1948,18 @@ public sealed class PhaseReplay : IDisposable
                 figures.Add(new Measurement(
                     $"{id}.effective",
                     panel.Effective?.ToString(CultureInfo.InvariantCulture) ?? "none"));
+
+                // The other half of 3.6's trigger, frozen beside the count it was dropped next to.
+                // A panel carrying an interval and no session count is the state this fixture could
+                // not have told apart from a correct one: the effective count moves with the rows
+                // and the session count does not, so an expectation over the first alone passes on
+                // a build that discards the second.
+                figures.Add(new Measurement(
+                    $"{id}.sessions",
+                    panel.Sessions?.ToString(CultureInfo.InvariantCulture) ?? "none"));
+                figures.Add(new Measurement(
+                    $"{id}.minimumSessions",
+                    panel.MinimumSessions?.ToString(CultureInfo.InvariantCulture) ?? "none"));
             }
         }
 
