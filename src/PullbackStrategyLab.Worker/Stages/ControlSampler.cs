@@ -78,9 +78,11 @@ public sealed class ControlSampler
 
         IReadOnlyList<StoredSetup> setups = SetupReader.Read(connection, asOf);
         var flagged = new HashSet<string>(setups.Select(s => s.Ticker), StringComparer.Ordinal);
-        IReadOnlyList<ControlMatching.Candidate> pool = Pool(connection, asOf, drawnAt, flagged, _options.SessionZone);
-        IReadOnlyList<ControlMatching.Candidate> moodPool = MoodPool(connection, asOf, drawnAt, _options.SessionZone);
-        var figures = Figures(connection, asOf, drawnAt, _options.SessionZone);
+        var source = new StoredFigures(connection);
+        IReadOnlyList<ControlMatching.Candidate> pool = Pool(source, connection, asOf, flagged, _options.SessionZone);
+        IReadOnlyList<ControlMatching.Candidate> moodPool = MoodPool(source, connection, asOf, _options.SessionZone);
+        IReadOnlyDictionary<string, ControlMatching.Candidate> figures =
+            source.Candidates(asOf, _options.SessionZone);
 
         int loose = 0;
         int tight = 0;
@@ -150,74 +152,9 @@ public sealed class ControlSampler
     /// any number a reader could see.
     /// </summary>
     private static IReadOnlyList<ControlMatching.Candidate> Pool(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, IReadOnlySet<string> flagged,
+        ISessionFigures source, SqliteConnection connection, DateOnly asOf, IReadOnlySet<string> flagged,
         string sessionZone) =>
-        [.. Figures(connection, asOf, drawnAt, sessionZone).Values.Where(c => !flagged.Contains(c.Ticker))];
-
-    /// <summary>
-    /// Every name's matched figures on the night, bounded on the end of the as-of date.
-    ///
-    /// <b>The end of the date rather than the run instant, and the difference is not pedantry.</b>
-    /// TierClassifier writes the ladder grade as a <i>later observation</i> of the same session
-    /// rather than updating the row IndicatorEngine wrote, which is what 2.4 decided. Bounded on the
-    /// run instant, this read takes the engine's row and every grade comes back null, so the tight
-    /// set's ladder filter compares null to null, excludes nothing, and draws exactly the loose set.
-    /// It did: the first run of this stage produced identical loose and tight sets for all three
-    /// fixture setups, and the two figures agreeing is not something a count would have shown.
-    /// `IndicatorDailyReader` bounds on the end of the date for the same reason, and this follows it.
-    ///
-    /// The liquidity floor is applied here rather than in the pool, because the subject of a draw
-    /// has to be readable on the same terms as its candidates: a setup matched against a pool
-    /// filtered differently from itself is matched on a dimension nobody stated.
-    /// see: A reader's signature does not establish point-in-time; the query does
-    /// </summary>
-    private static IReadOnlyDictionary<string, ControlMatching.Candidate> Figures(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, string sessionZone)
-    {
-        var figures = new Dictionary<string, ControlMatching.Candidate>(StringComparer.Ordinal);
-
-        // Read once for the session rather than once per name. The mood is a property of the
-        // session, which is the whole reason it could not be a dimension inside one night, so a
-        // lookup per row would issue one query per candidate: the tight pool spans every session
-        // sharing the mood, so that is a query per name per session and it grows with the record.
-        string? mood = Mood(connection, asOf);
-
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
-              FROM indicator_daily i
-             WHERE i.as_of = @as_of
-               AND i.computed_at <= @drawn_at
-               AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
-                                     WHERE c.ticker = i.ticker AND c.as_of = i.as_of
-                                       AND c.computed_at <= @drawn_at)
-             ORDER BY i.ticker
-            """;
-        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@drawn_at", StoreText.EndOfSession(asOf, sessionZone));
-
-        using SqliteDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            decimal turnover = reader.IsDBNull(1) ? 0m : StoreText.StorageTextToPrice(reader.GetString(1));
-
-            if (turnover < Core.Detection.LongPullbackRules.LiquidityFloor)
-            {
-                continue;
-            }
-
-            figures[reader.GetString(0)] = new ControlMatching.Candidate(
-                reader.GetString(0),
-                turnover,
-                reader.IsDBNull(2) ? 0m : StoreText.StorageTextToPrice(reader.GetString(2)),
-                reader.IsDBNull(3) ? null : reader.GetString(3),
-                asOf,
-                mood);
-        }
-
-        return figures;
-    }
+        [.. source.Candidates(asOf, sessionZone).Values.Where(c => !flagged.Contains(c.Ticker))];
 
     /// <summary>
     /// The candidates the tight set may draw from: every session at or before the as-of that
@@ -251,9 +188,9 @@ public sealed class ControlSampler
     /// be drawn from, not a constant quietly added here.
     /// </summary>
     private static IReadOnlyList<ControlMatching.Candidate> MoodPool(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset drawnAt, string sessionZone)
+        ISessionFigures source, SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
-        if (Mood(connection, asOf) is not string mood)
+        if (source.Mood(asOf) is not string mood)
         {
             // The night has no label, so no session can be said to share it. An unlabelled night
             // draws no tight controls rather than drawing from every session: matching on an unknown
@@ -288,7 +225,7 @@ public sealed class ControlSampler
             IReadOnlySet<string> flaggedThen = FlaggedOn(connection, session);
 
             foreach (ControlMatching.Candidate candidate in
-                Figures(connection, session, drawnAt, sessionZone).Values)
+                source.Candidates(session, sessionZone).Values)
             {
                 if (!flaggedThen.Contains(candidate.Ticker))
                 {
@@ -318,18 +255,6 @@ public sealed class ControlSampler
 
         return flagged;
     }
-
-    /// <summary>
-    /// One session's market-mood label, or null where the night was never labelled.
-    ///
-    /// <b>Read as a value and never compared against a named one.</b> Nothing in this stage asks
-    /// which mood a session is in; it asks whether two sessions carry the same one. The decision
-    /// that the label filters nothing in the baseline is about the baseline choosing stocks, and
-    /// this is the measurement choosing what to compare them against.
-    /// see: The market-mood label is recorded on every setup and filters nothing in the baseline
-    /// </summary>
-    private static string? Mood(SqliteConnection connection, DateOnly asOf) =>
-        RegimeReader.Read(connection, asOf)?.Label;
 
     private static int Insert(
         SqliteConnection connection,

@@ -32,7 +32,27 @@ public sealed class IndexBarReader
         return Read(connection, symbol, asOf, sessions);
     }
 
-    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string symbol, DateOnly asOf, int sessions)
+    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string symbol, DateOnly asOf, int sessions) =>
+        Read(connection, symbol, asOf, sessions, null);
+
+    /// <summary>
+    /// The same, observed at or before an instant the caller states rather than the session's own
+    /// end of day.
+    ///
+    /// <b>A reconstructed session cannot use the session's own instant and this is why.</b> The
+    /// four-argument form bounds `observed_at` on the end of the as-of date, which is right for a
+    /// forward night: the lab saw the bar that evening. A backfill takes a symbol's whole history in
+    /// one evening, so every index bar of 2024 in this store was observed in 2026 and a 2024 session
+    /// bounded on its own instant reads **nothing at all** rather than reading something stale.
+    /// `DailyBarReader` already takes this argument for exactly that reason and the calibration walk
+    /// already passes it; the trackers were the half that had no way to be asked.
+    ///
+    /// Passing null keeps the session's own end, so every existing caller is unchanged and the
+    /// forward night's bound is still the one it always had.
+    /// see: A calibration run reconstructs against current membership and computes its indicators in memory
+    /// </summary>
+    public static IReadOnlyList<StoredDailyBar> Read(
+        SqliteConnection connection, string symbol, DateOnly asOf, int sessions, DateTimeOffset? observedBefore)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
@@ -56,7 +76,11 @@ public sealed class IndexBarReader
             """;
         command.Parameters.AddWithValue("@symbol", symbol);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue(
+            "@observed_before",
+            observedBefore is DateTimeOffset instant
+                ? StoreText.TimestampToStorageText(instant)
+                : StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
         command.Parameters.AddWithValue("@sessions", sessions);
 
         var bars = new List<StoredDailyBar>();
