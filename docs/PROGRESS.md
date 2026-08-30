@@ -7828,3 +7828,55 @@ Measured:   **Ruled before any evidence was spent, which is the only time it cou
 Owed:       The draw itself, at 3.6, with the two instruments beside it. Until it is built, the
             tight comparison on the panel is still the within-night one, and any figure taken from
             it says so.
+
+## 3.14 — 2026-08-30 — phase-3-tight-set-and-instruments — the interval tier reaches uneven nights, and the restatement that had not moved with the code
+
+Not a checkpoint entry. Discharges the obligation raised at 3.14 and due at 3.6, which is the first
+of the two instruments 3.6 needs before it can be read.
+
+Found:      **The independent restatement still carried the arithmetic 3.14 replaced.**
+            `tools/derive-indicators.py --interval` computed the effective count as
+            `rows / design * serial`, where the shipped code has computed
+            `Clamp(independent / design * serial, rows)` since 3.14, `independent` being the night
+            count times the harmonic mean of the pair counts. The two are the same number exactly
+            when every night carries the same count, and every scenario in
+            `fixtures/interval-cases.json` did, so the restatement and the code agreed over the
+            whole file while carrying different formulas. That is the obligation's own claim
+            confirmed from the other side: it named the fixture and the defect was in the
+            restatement as well.
+
+Built:      **`pairsByNight`**, an optional per-night list overriding the scalar, read the same way
+            by `IntervalCases` and by the restatement, with a refusal in both when its length does
+            not match the series. A count that lined up with the wrong night would pair a mean with
+            another night's weight silently, which is the shape of fault the scenario exists to
+            catch.
+
+            **Two scenarios, both reusing `many-names-a-night-moving-apart`'s series verbatim** so
+            the pair counts are the only thing that differs and the mean and bounds are identical to
+            the even case by construction. `nights-that-differ-in-pair-count` alternates eighty and
+            five pairs over forty nights, which is the case the 3.14 record names.
+            `a-few-nights-too-thin-to-say` puts five one-pair nights among nights of eighty, where
+            the design effect skips them for having no degrees of freedom while the harmonic mean
+            counts them: the two discounts read the same series through different populations of
+            nights, which no uniform series can reach.
+
+Measured:   **The shipped code and the restatement agree to every place printed.**
+            `nights-that-differ-in-pair-count` reads 1,700 rows and **376** effective;
+            `a-few-nights-too-thin-to-say` reads 2,805 rows and **294** effective. Fourteen
+            `DERIVED` expectations, tagged 3.14 because they verify 3.14's repair and were carried
+            to the first pass that could produce them.
+
+Verified:   **Proved by restoring the old arithmetic in the restatement alone.** With
+            `rows / design * serial` back, the two new scenarios read **1,700** and **2,805**
+            against the shipped 376 and 294, a factor of 4.5 and 9.5. **The two even scenarios read
+            3,200 and 345 either way**, unchanged to the digit, which is the whole finding: the
+            population the fixture held could not distinguish the two formulas, and the population
+            it now holds separates them by an order of magnitude.
+
+            `fixture-replay` reported the fourteen figures as unexamined before the expectations
+            were added, naming each one, which is the widening guard doing its job.
+
+Owed:       **3.14's frozen-only permit is spent and removed**, so the permits fall from ten to
+            nine and BUILD_PLAN's two derived figures fall with them. The obligation row is removed
+            and the table is fifty-eight. One instrument remains at 3.6, `Estimate.Nights` reaching
+            the panel, and the draw the 3.3 ruling leaves owed.
