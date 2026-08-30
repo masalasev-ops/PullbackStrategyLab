@@ -89,6 +89,26 @@ public static class MeasurementParameters
     public const int MinimumEffectiveObservations = 262;
 
     /// <summary>
+    /// How many sessions band 1 needs before it is allowed to answer, which is the other half of
+    /// checkpoint 3.6's trigger.
+    ///
+    /// <b>Derived rather than authored, because it is not a second judgement.</b> It is twice the
+    /// block length, which is the floor <see cref="PairedInterval.Of"/> already enforces: a moving
+    /// block bootstrap with nothing to resample cannot produce an interval at all. Writing twenty
+    /// here as a literal would put the same number in two places and let them drift, and the one
+    /// that governs is the bootstrap's.
+    ///
+    /// <b>It is a separate condition from the effective count and not a weaker form of it.</b> The
+    /// two are settled by different things: sessions are what the bootstrap needs before an interval
+    /// exists, observations are what the decision needs before the interval means anything, and
+    /// neither substitutes for the other. A fortnight of very wide nights reaches the minimum sample
+    /// before it reaches twenty sessions, and a year of thin ones does the reverse. A panel
+    /// reporting one of them and calling it the trigger is reporting half a condition.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// </summary>
+    public const int MinimumSessions = BootstrapBlockSessions * 2;
+
+    /// <summary>
     /// How many names a session needs before its cross-section is used to measure dispersion.
     ///
     /// A thin session's mean is mostly one of its own names, so removing it removes part of the

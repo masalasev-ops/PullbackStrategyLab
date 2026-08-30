@@ -1182,3 +1182,33 @@ Why:  The obligation is discharged. `fixtures/interval-cases.json` now carries a
 Was:  The 2.11 row ending at "nothing in phase 4 may assume a trade will ever fire until the second quantity is found. Recorded at 3.14".
 Now:  The same row carrying the result of the hunt of 2026-08-30: that there is no second wrong quantity in the sense the row assumes, that the long side has two and the short side none that any single relaxation reaches, and that the premise the two sides fail the same way is what breaks.
 Why:  The 2.11 ruling of 2026-08-29 left the row waiting on the identification of a second wrong quantity. The hunt was run over the 602 calibration sessions and the answer is that the framing was wrong rather than that a quantity was found. Recorded on the row because the row is where the next reader looks, with the figures in the PROGRESS entry of the same date. No threshold moves and the once stays unspent.
+
+### 2026-08-30 — ARCHITECTURE.html — cites The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+Was:  **Loose controls** match on liquidity and daily-range decile only. Comparing against these measures the whole funnel, thrust scan included.<br>**Tight controls** also match on the trend ladder and market mood. Comparing against these isolates the pullback checks, and answers the sharper question: is this pattern worth anything beyond simply owning stocks in uptrends?
+Now:  The same two sentences with the session each set draws from named, followed by a paragraph stating that the tight set reaches across sessions, that the loose set does not, and what the asymmetry costs.
+Why:  The document described a dimension the code did not have and could not have had: within one night the mood is a property of the session, so every candidate carries the same one and matching on it excludes nothing. The operator ruled the dimension is kept and made real, so the description now says which sessions each set draws from, which is the thing that changed.
+
+### 2026-08-30 — ARCHITECTURE.html — cites The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+Was:  Draws matched control stocks nightly, loose and tight, five per set by deterministic nearest neighbour, before the cap so they answer for the flagged population rather than the kept sixty
+Now:  The same, plus: The loose set draws from the setup's own session; the tight set draws from any session at or before it sharing the market mood, and each drawn row records the session it came from
+Why:  The catalogue entry described a nightly draw with no session dimension, which is no longer what the stage does.
+
+### 2026-08-30 — ARCHITECTURE.html — cites The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+Was:  ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the flagging setup's session, signed by that setup's direction and expressed in the control's own range.
+Now:  ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the control's own session, signed by the flagging setup's direction and expressed in the control's own range.
+Why:  "From the flagging setup's session" was true while every draw was within the night and became false the moment the tight set could reach an earlier one. Left standing it would have described a ten-day return measured from the wrong fortnight, which is not a shape any figure downstream could have shown.
+
+### 2026-08-30 — SCHEMA.md — cites The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+Was:  Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cost.
+Now:  The same, plus a sentence saying the grain is unchanged after the tight set was allowed to reach across sessions, because where a name qualifies on several sessions the nearest is drawn and the others are not.
+Why:  The grain reads as obvious and stopped being so. A tight pool holds a name once per session, so without the one-row-per-name rule a set of five could have been one name five times, which would have inherited exactly the idiosyncratic move five per set exists to avoid.
+
+### 2026-08-30 — SCHEMA.md — cites The minimum sample is 262 effective observations, ratified at two points and 90% power
+Was:  A `scoreboard` column table with no `n_sessions` and no `n_minimum_sessions` row.
+Now:  Both rows, and a paragraph saying why the session count is stored beside the effective count rather than derived on the page.
+Why:  Checkpoint 3.6 fires on two conditions and the store held one of them. The session count was computed on every night, discarded by the builder, and reached a reader only inside `withheld_because`, which is null the moment an interval exists.
+
+### 2026-08-30 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  A weekly section ending at the scoreboard paragraph, with no step for a merge that carries a migration.
+Now:  A paragraph stating both halves of the decision point's trigger as band 1 now renders them, and a new section "After a merge that carries a migration" giving the order: merge, then migrate, the same day, before the next slot.
+Why:  The one fault nothing in the harness can catch, because every check takes its subject from the source, the documents, the fixture, or a store the check builds, and the running lab is in none of those. It cost the night of 2026-08-28 and this branch carries two more migrations.

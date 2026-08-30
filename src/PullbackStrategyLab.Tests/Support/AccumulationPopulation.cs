@@ -126,7 +126,8 @@ public sealed class AccumulationPopulation : IDisposable
         using SqliteConnection connection = _connections.OpenReadOnly();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT figure, low, high, n_rows, n_effective, withheld_because
+            SELECT figure, low, high, n_rows, n_effective, withheld_because, n_sessions,
+                   n_minimum_sessions
               FROM scoreboard
              WHERE panel = @panel AND direction = @direction
             """;
@@ -142,7 +143,9 @@ public sealed class AccumulationPopulation : IDisposable
                 reader.IsDBNull(2) ? null : reader.GetString(2),
                 reader.GetInt32(3),
                 reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                reader.IsDBNull(5) ? null : reader.GetString(5))
+                reader.IsDBNull(5) ? null : reader.GetString(5),
+                reader.IsDBNull(6) ? null : reader.GetInt32(6),
+                reader.IsDBNull(7) ? null : reader.GetInt32(7))
             : null;
     }
 
@@ -291,7 +294,9 @@ public sealed class AccumulationPopulation : IDisposable
                             Execute(connection, transaction,
                                 """
                                 INSERT INTO control_setup
-                                VALUES (@cid, @sid, @ct, @set, '{}', @rank, @obs)
+                                    (control_id, setup_id, control_ticker, control_set,
+                                     match_quality, rank, drawn_at, control_as_of)
+                                VALUES (@cid, @sid, @ct, @set, '{}', @rank, @obs, @cas)
                                 ON CONFLICT (control_id) DO NOTHING
                                 """,
                                 ("@cid", $"{setupId}-{set}-{control}"),
@@ -299,7 +304,12 @@ public sealed class AccumulationPopulation : IDisposable
                                 ("@ct", control),
                                 ("@set", set),
                                 ("@rank", rank),
-                                ("@obs", Observed));
+                                ("@obs", Observed),
+                                // This population authors its controls on the setup's own session,
+                                // for both sets. It is a population for exercising the measurement
+                                // path past the flag, not the draw, and the cross-session tight set
+                                // is asserted where it is built rather than here.
+                                ("@cas", PhaseReplay.Session(session)));
                         }
                     }
                 }
@@ -352,5 +362,6 @@ public sealed class AccumulationPopulation : IDisposable
 
     /// <summary>One band 1 panel as the store holds it.</summary>
     public sealed record Panel(
-        string Figure, string? Low, string? High, int Rows, int? Effective, string? WithheldBecause);
+        string Figure, string? Low, string? High, int Rows, int? Effective, string? WithheldBecause,
+        int? Sessions = null, int? MinimumSessions = null);
 }

@@ -49,7 +49,7 @@ public static class LabScoreboard
         // date, and the repair this checkpoint adds is exactly the operation that does.
         command.CommandText = """
             SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum,
-                   withheld_because
+                   withheld_because, n_sessions, n_minimum_sessions
               FROM scoreboard
              WHERE computed_at <= @computed_before
                AND as_of = (SELECT MAX(as_of)
@@ -74,7 +74,9 @@ public static class LabScoreboard
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
                 reader.IsDBNull(7) ? "population not recorded" : reader.GetString(7),
                 reader.IsDBNull(8) ? null : reader.GetInt32(8),
-                reader.IsDBNull(9) ? null : reader.GetString(9));
+                reader.IsDBNull(9) ? null : reader.GetString(9),
+                reader.IsDBNull(10) ? null : reader.GetInt32(10),
+                reader.IsDBNull(11) ? null : reader.GetInt32(11));
 
             if (panel.Direction is null)
             {
@@ -118,6 +120,10 @@ public sealed record ScoreboardResponse(
 ///
 /// <c>Minimum</c> is what it has to reach, and is null on every panel no checkpoint fires on.
 ///
+/// <c>Sessions</c> and <c>MinimumSessions</c> are the other half of that trigger and travel beside
+/// the first, because the checkpoint fires on both and a wire carrying one of them would let a page
+/// render half a condition as though it were the whole one.
+///
 /// <c>WithheldBecause</c> is why a panel shows no figure, which is a different question from
 /// whether the minimum is reached and is settled by a different thing: the interval needs
 /// sessions, the decision needs evidence, and the two can disagree.
@@ -132,4 +138,6 @@ public sealed record PanelResponse(
     int? Effective,
     string Population,
     int? Minimum,
-    string? WithheldBecause);
+    string? WithheldBecause,
+    int? Sessions,
+    int? MinimumSessions);

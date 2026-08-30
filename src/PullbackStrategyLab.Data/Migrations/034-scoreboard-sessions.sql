@@ -1,0 +1,42 @@
+-- 034  scoreboard.n_sessions, scoreboard.n_minimum_sessions
+--
+-- Half of checkpoint 3.6's trigger, which until now reached neither the store nor the screen.
+--
+-- 3.6 fires on two conditions and BUILD_PLAN says both are needed because they are settled by
+-- different things: at least twenty sessions, which is what the block bootstrap needs before an
+-- interval exists at all, and at least 262 effective observations, which is what the decision
+-- needs. No number of rows substitutes for a session and no number of sessions substitutes for the
+-- evidence. BUILD_PLAN also says the panel is what fires the checkpoint, because it shows both
+-- every night, and a trigger a reader cannot see is a date in disguise.
+--
+-- It showed one. `PairedInterval.Estimate` has carried `Nights` since the interval was written,
+-- `ScoreboardBuilder` read five of its six fields and dropped that one, this table had no column
+-- for it, and the page rendered the row count, the effective count and the minimum. The session
+-- count appeared only inside `withheld_because`, in prose, and that column is null the moment an
+-- interval exists. So the panel could not tell twenty sessions from two hundred at exactly the
+-- point the difference starts to matter: against the process a ten-session overlapping label
+-- creates, the interval clears zero 3.0% of the time at twenty nights and 11.7% at two hundred and
+-- forty, and a reader with no session count in front of them cannot tell which of those they are
+-- looking at.
+-- see: The interval is a studentised moving-block bootstrap over paired differences, and the effective sample is measured
+--
+-- The minimum is stored beside the count rather than looked up on the page, on exactly the grounds
+-- `n_minimum` already is: the panel is read back as it stood, and a minimum that moved after a
+-- night was recorded would silently restate what that night's reading meant. Two minimums rather
+-- than one, because the two conditions are separate statements and a single column could not say
+-- which of them a night had reached.
+-- see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+--
+-- Both null on every panel no checkpoint fires on, which is every band 0 and band 2 row, on the
+-- same terms `n_minimum` is: a minimum on every panel would read as a threshold each of them is
+-- held to.
+--
+-- Existing rows are left null rather than backfilled. The two scoreboard dates in the live store
+-- were both withheld with no series at all, so their true session count is nought and writing it
+-- would be this migration computing a figure rather than carrying one. The builder writes the
+-- column from the next run forward, and a null reads as "this panel was built before the count
+-- existed", which is what it was.
+
+ALTER TABLE scoreboard ADD COLUMN n_sessions INTEGER NULL;
+
+ALTER TABLE scoreboard ADD COLUMN n_minimum_sessions INTEGER NULL;

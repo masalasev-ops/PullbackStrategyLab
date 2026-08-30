@@ -7965,3 +7965,171 @@ Owed:        The counterfactual counts above are arithmetic over recorded check 
              re-run of the detectors, so they say what the recorded conjunction would have admitted
              and not what a detector with different thresholds would have flagged. Any threshold
              actually spent is re-measured by a calibration re-run, as 3.0(c) did for the geometry.
+
+## 3.14 — 2026-08-30 — phase-3-decision-point-instruments — the half of 3.6's trigger that reached neither the store nor the screen
+
+Not a checkpoint entry. It discharges the obligation raised at 3.14 and due at 3.6, which is the
+instrument 3.6 is read on rather than 3.6 itself.
+
+**Headed 3.14 rather than 3.6, and that half is mechanical.** `Schedule.HasLanded` reads this file's
+headings, so a heading naming 3.6 would record the decision point as landed when what landed is one
+of the two things owed before it can be read, and it would fail the obligation this entry raises
+below, which is due at 3.6. That is the reasoning the 3.15 carried-rulings entry gives for naming
+4.1 nowhere. The work is the 3.14 row's, so the entry is 3.14's.
+
+Found:      **The trigger is two conditions and the panel reported one, in the words of the whole.**
+            3.6 fires on at least twenty sessions **and** at least 262 effective observations, per
+            direction and per control set, and BUILD_PLAN says both are needed because they are
+            settled by different things: twenty sessions is what the block bootstrap needs before an
+            interval exists at all, 262 observations is what the decision needs, and neither
+            substitutes for the other.
+
+            `PanelView.Reached` compared the effective count alone and the page then rendered "the
+            minimum sample is reached". A fortnight of very wide nights reaches 262 observations
+            before it reaches twenty sessions, so the page could have announced the project's own
+            decision point on a panel the bootstrap had refused to give an interval to. **That is
+            the sixth failure shape**: every count correct, every store row right, and the sentence
+            on the surface false. It is a sharper fault than the one 3.14 rowed, which was a number
+            being absent rather than a false statement standing in its place.
+
+Built:      **The session count reaches the store, the wire and the page.** Migration 034 adds
+            `n_sessions` and `n_minimum_sessions` to `scoreboard`. `ScoreboardBuilder` writes them
+            on band 1 and nowhere else, on the same terms `n_minimum` is set: a minimum on every
+            panel would read as a threshold each of them is held to. Both branches write it, and the
+            withheld branch matters more, because it is the branch a reader watches for the whole of
+            the wait and the one on which `withheld_because` used to be the only place the count
+            appeared at all.
+
+            **`MeasurementParameters.MinimumSessions` is derived rather than authored.** It is twice
+            the block length, which is the floor `PairedInterval.Of` already enforces. Writing twenty
+            here as a literal would put one number in two places and let them drift, and the one that
+            governs is the bootstrap's.
+
+            **`Reached` now requires both, `ReachedSessions` and `ReachedObservations` answer each
+            half, and `ShortOf` names which half is missing.** The last is not decoration: a reader
+            told only that a panel is below the minimum goes to wait for evidence, and if what is
+            short is sessions then no amount of evidence closes it, because a night of eighty pairs
+            moves the session count by one whatever it carries.
+
+Verified:   **Proved red before green by reverting the property rather than by reading it.**
+            Restoring `Reached => ReachedObservations` fails
+            `Evidence_alone_does_not_reach_the_trigger_when_the_sessions_are_short` with
+            `Assert.False() Failure`, and exactly one test of the eight in that class fails, which is
+            the one holding the property. Restored before anything else was done.
+
+            **Three surface claims, read off the rendered page rather than off the store.** The
+            stubbed scoreboard now carries a panel at 900 effective observations over 5 sessions,
+            which is the case the old property got wrong outright, and the page has to say "short of
+            15 more session(s)" on it. The other two hold that the count states the sessions beside
+            the rows and the effective observations, and that the reached sentence names both
+            conditions rather than one.
+
+            **Nine tests, and the store half is separate from the view half on purpose.** A build
+            that computed the session count and discarded it would pass every view test in the file,
+            because each of them constructs its own panel;
+            `Every_band_one_panel_records_the_session_count_it_was_built_over` runs the real fill and
+            the real build over the closed-horizon population and reads the column back.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **582 tests**, up from 560.
+
+            Eight `DERIVED` expectations at checkpoint 3.6, being the session count and its floor on
+            each of the four band 1 panels, restated by `tools/derive-indicators.py --accumulation`
+            from the population's stated shape rather than read back from the run. Every setup in
+            that population has all four horizons written, so every authored night closes and
+            contributes one night to the difference series: **24 sessions against a floor of 20**.
+            That is a different claim from `accumulation.nights`, which says how many nights were
+            authored; this one says none of them was lost on the way to the series the interval was
+            taken over.
+
+            `store.schemaVersion` moves 33 to 34 here and 34 to 35 with the entry below.
+
+## 3.3 — 2026-08-30 — phase-3-decision-point-instruments — the tight control set reaches across sessions, in code
+
+Not a checkpoint entry. It executes the draw the operator's ruling of 2026-08-30 left owed, which is
+the second obligation due at 3.6. Headed 3.3 for the reason the entry above gives.
+
+Built:      **The tight set draws from any session at or before the setup's that carries the same
+            market mood. The loose set stays within the night.** `ControlSampler.MoodPool` selects
+            those sessions and, on each of them, the names that cleared the liquidity floor and were
+            not flagged **on that session**. Asking tonight's flagged question of a pool spanning two
+            years would err in both directions: it would drop names that were ordinary on the
+            session being drawn from and admit names that were flagged on it, and the second turns a
+            setup into its own control.
+            (see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night)
+
+            **Migration 035 adds `control_setup.control_as_of`, and without it the change would have
+            been silently wrong.** `ForwardReturnFiller` read a control's session off the setup it
+            was drawn against, and its own comment said why: a control's session is the session it
+            was drawn for. That was true under the within-night rule and false the moment the tight
+            set could reach an earlier one. Left alone, a tight control drawn three months back would
+            have had its ten-day return measured from the setup's night: a real return of a real
+            stock over a real window, and the wrong window, which no figure downstream could have
+            shown. The ATR it is expressed in moved with it, in the same query. Existing rows are
+            backfilled from their setup, which states what was already true of every draw made under
+            the old rule rather than inferring anything from prose.
+
+            **One row per name, however many sessions it qualifies on.** The tight pool holds a name
+            once per session, so a set of five could have been one name five times. Five per set
+            exists so a comparison does not inherit one name's idiosyncratic move, and that set would
+            have inherited it while looking like five.
+
+            **`match_quality` records the mood and the reach.** `marketMood` reads "same" on the
+            tight set and "not matched" on the loose one, and `sessionsApart` records how far the
+            draw went. The distance is the price the ruling accepted, so it is a value on every row
+            rather than an argument to be had again later.
+
+            **An unlabelled night draws no tight controls.** No session can be said to share a mood
+            that was never recorded, and matching on an unknown is the comparison true by
+            construction that this whole change removes.
+
+Found:      **The test written to guard the mood dimension did not guard it, and its comment claimed
+            it did.** The mood is excluded twice, once when `MoodPool` selects sessions and once when
+            `ControlMatching` compares candidates. Deleting the clause in `ControlMatching` left all
+            seven sampler tests green, because the pool handed in had already excluded the rows. The
+            comment read "This is the one that fails if the mood filter is removed", which was false,
+            and a false claim of that shape is what this corpus keeps finding inside the instrument
+            built to catch the last one.
+
+            **Fixed by putting the guard where the property is decided and saying which is which.**
+            `ControlMatching` holds the dimension, because it is the one implementation of what a
+            comparison is made of and the recorded "same" has to be true because it was checked
+            rather than because the caller promised it. `MoodPool`'s SQL filter is a cost measure,
+            since a pool of every session ever recorded would otherwise be loaded to be thrown away.
+            Both are kept, the redundancy is stated in the source, and
+            `ControlMatchingTests.A_tight_draw_excludes_a_candidate_from_a_session_carrying_a_different_mood`
+            hands a mixed pool straight to the matcher. The sampler test's comment now says it is not
+            the guard, and says what it does hold, which is that the two halves are wired together.
+
+Verified:   **Proved red before green against the guard that holds the property, not the one that
+            looked like it.** Removing the mood clause fails that test with `Assert.Single() Failure:
+            The collection contained 2 items`, the two being a nearer candidate on the wrong mood
+            that distance alone prefers. The first attempt at this proof passed with the clause
+            gone, which is how the finding above was made.
+
+            Twelve tests across the two classes. The seeded store puts one eligible unflagged name on
+            the setup's own night and four on an earlier same-mood session, so five is reachable only
+            by reaching, and it puts the nearest names of all on a different-mood session and on a
+            later one, so distance alone would take exactly the rows the two filters exist to
+            exclude.
+
+Owed:       **The golden fixture cannot exercise the reach, and the expectations say so rather than
+            implying otherwise.** It holds one market day, so the only session a tight draw can reach
+            is the setup's own and `sessionsApart` is nought on every fixture row. The six
+            `controls.*.nearest` expectations hold the recorded shape of a draw and are silent about
+            the behaviour the ruling added. Rowed as a carried obligation due at 3.6, priced against
+            the same capture the whole-market liquidity floor already waits on, rather than
+            discharged by authoring a second population into the replay, which would put authored
+            rows into a fixture whose figures are reported as captured.
+            (see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it)
+
+Carried:    One new row, the fixture reach above. Two rows leave the table, being the two that were
+            due at 3.6, so it reads fifty-seven.
+
+            **The live store is now two migrations behind the build and must be migrated before the
+            next nightly run.** That is the seventh failure shape CLAUDE.md states, and it cost the
+            night of 2026-08-28: migrations 031 and 032 landed, `data/live` was never migrated, four
+            stages died and the lab flagged nothing. The guard 3.12 built means the stages now refuse
+            before opening the store and name both versions rather than dying on a missing column, so
+            the fault is loud, but a refusal still costs the night. `tools/migrate` closes it.
+
+            **This session committed code and may not sign it off.**

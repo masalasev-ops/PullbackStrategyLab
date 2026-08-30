@@ -38,7 +38,9 @@ public sealed record PanelView(
     int? Effective,
     string Population,
     int? Minimum,
-    string? WithheldBecause)
+    string? WithheldBecause,
+    int? Sessions = null,
+    int? MinimumSessions = null)
 {
     /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
     public string Title => Name switch
@@ -148,19 +150,109 @@ public sealed record PanelView(
             string counted =
                 $"n {rows} rows, {effective.ToString("N0", CultureInfo.InvariantCulture)} effective";
 
-            return Minimum is int minimum
-                ? $"{counted} of {minimum.ToString("N0", CultureInfo.InvariantCulture)} needed"
+            if (Minimum is int minimum)
+            {
+                counted += $" of {minimum.ToString("N0", CultureInfo.InvariantCulture)} needed";
+            }
+
+            // The session count, beside the other two rather than instead of them. It is the second
+            // half of the trigger and it was computed and dropped from the day the interval was
+            // written: `PairedInterval.Estimate` carried it, the builder read five of six fields,
+            // the store had no column, and this line rendered two numbers. The only place it
+            // appeared was inside the withheld sentence, which is null the moment an interval
+            // exists, so the count vanished exactly when it started to decide how much the interval
+            // was worth.
+            return Sessions is int sessions
+                ? $"{counted}, over {sessions.ToString("N0", CultureInfo.InvariantCulture)} session(s)"
+                    + (MinimumSessions is int floor
+                        ? $" of {floor.ToString("N0", CultureInfo.InvariantCulture)} needed"
+                        : string.Empty)
                 : counted;
         }
     }
 
     /// <summary>
-    /// Whether the effective count has reached the minimum, which is what 3.6 fires on.
+    /// Whether this panel has reached the trigger, which is <b>both</b> conditions and not either
+    /// of them.
     ///
-    /// Null where the panel carries no minimum, and null is not false: "this panel answers no
+    /// <b>It read one of the two until this was repaired, and it said so in the words of the
+    /// whole.</b> 3.6 fires on at least twenty sessions <b>and</b> at least 262 effective
+    /// observations, BUILD_PLAN says both are needed because they are settled by different things,
+    /// and this property compared the effective count alone and then rendered "the minimum sample
+    /// is reached". A fortnight of very wide nights reaches the minimum sample before it reaches
+    /// twenty sessions, so the page could have announced the trigger on a panel whose interval the
+    /// bootstrap had refused to produce at all.
+    ///
+    /// Null where the panel carries neither minimum, and null is not false: "this panel answers no
     /// question a checkpoint waits on" and "it waits and has not arrived" are different sentences.
+    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
-    public bool? Reached => Minimum is int minimum && Effective is int effective
+    /// <remarks>
+    /// <b>A panel missing one of the two counts is never "reached", and that is deliberate rather
+    /// than incidental.</b> Every row written before migration 034 carries a minimum and no session
+    /// count, and falling back to whichever half is present would reproduce the exact defect this
+    /// property was repaired for: a legacy row above 262 observations would announce the trigger on
+    /// evidence alone. Every such row in the live store reads nought effective today, so the case is
+    /// hypothetical, and "hypothetical" is how each of the shapes in CLAUDE.md's list started. The
+    /// panel still reads "not yet an answer" rather than falling silent, because that is true of it.
+    /// </remarks>
+    public bool? Reached => Minimum is null && MinimumSessions is null
+        ? null
+        : ReachedObservations == true && ReachedSessions == true;
+
+    /// <summary>Whether the evidence condition is met, on its own.</summary>
+    public bool? ReachedObservations => Minimum is int minimum && Effective is int effective
         ? effective >= minimum
         : null;
+
+    /// <summary>Whether the session condition is met, on its own.</summary>
+    public bool? ReachedSessions => MinimumSessions is int floor && Sessions is int sessions
+        ? sessions >= floor
+        : null;
+
+    /// <summary>
+    /// Which half of the trigger is still short, in words, on the panel.
+    ///
+    /// <b>Naming the half is the point of having two counts rather than one.</b> "Below the minimum
+    /// sample" sends a reader to wait for evidence, and if what is actually short is sessions then
+    /// no amount of evidence closes it: a night of eighty pairs moves the effective count and moves
+    /// the session count by one whatever it carries. A reader told only that the trigger has not
+    /// fired cannot tell which of the two they are waiting on, which is the same defect the
+    /// withheld sentence was repaired for one branch up.
+    /// </summary>
+    public string? ShortOf
+    {
+        get
+        {
+            if (Reached is not bool reached || reached)
+            {
+                return null;
+            }
+
+            List<string> shortfalls = [];
+
+            if (ReachedSessions == false && Sessions is int sessions && MinimumSessions is int floor)
+            {
+                shortfalls.Add(
+                    $"{(floor - sessions).ToString("N0", CultureInfo.InvariantCulture)} more session(s)");
+            }
+
+            if (ReachedObservations == false && Effective is int effective && Minimum is int minimum)
+            {
+                shortfalls.Add(
+                    $"{(minimum - effective).ToString("N0", CultureInfo.InvariantCulture)} more effective observation(s)");
+            }
+
+            // A panel whose counts are both met and which still does not read as reached is one
+            // recorded before the session count existed. Saying so is better than saying nothing:
+            // the alternative is a panel that is not an answer and gives no reason, which is the
+            // fault the withheld sentence was repaired for one branch up.
+            if (shortfalls.Count == 0 && ReachedSessions is null)
+            {
+                return "a session count, which this panel was recorded before the store kept";
+            }
+
+            return shortfalls.Count == 0 ? null : string.Join(" and ", shortfalls);
+        }
+    }
 }

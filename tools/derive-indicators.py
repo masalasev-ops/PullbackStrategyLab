@@ -1962,7 +1962,16 @@ def controls_main(argv):
     The rule, in words: from the names that cleared the liquidity floor on the night and were not
     flagged, take the five nearest on turnover and daily range, measured as a fraction of the
     subject's own figure, with ticker as the tiebreak. The tight set first drops every candidate
-    whose trend ladder differs from the subject's.
+    whose trend ladder differs from the subject's, and every candidate from a session whose market
+    mood differs.
+
+    The mood clause restates a rule this fixture cannot exercise, and that is worth stating rather
+    than leaving to be inferred from a figure. The tight set draws from any session at or before the
+    setup's that shares the mood label; the golden fixture holds one market day, so the only session
+    it can reach is the setup's own and every tight row comes back nought sessions apart. The
+    expectations below therefore hold that the recorded shape is right and say nothing about the
+    reach. What holds the reach is ControlMatchingTests and ControlSamplerTests, over authored
+    stores with several sessions in them.
 
     Two edges, both of which the shipped stage got wrong on its first run:
 
@@ -2039,9 +2048,13 @@ def controls_main(argv):
 
             if picked:
                 best = picked[0]
-                print('  controls.%s.%s.nearest {"liquidity":"%s","dailyRange":"%s","ladderGrade":"%s"}'
-                      % (setup_id, name, q(best[2]), q(best[3]), "same" if tight else (
-                          figures[best[1]]["grade"] or "ungraded")))
+                print('  controls.%s.%s.nearest {"liquidity":"%s","dailyRange":"%s",'
+                      '"ladderGrade":"%s","marketMood":"%s","sessionsApart":"%s"}'
+                      % (setup_id, name, q(best[2]), q(best[3]),
+                         "same" if tight else (figures[best[1]]["grade"] or "ungraded"),
+                         "same" if tight else "not matched",
+                         # One session in the store, so every draw is the setup's own session.
+                         0))
 
     return 0
 
@@ -2147,6 +2160,27 @@ def accumulation_main(argv):
     # One panel per direction per control set, and every one of them has to carry an interval once
     # the control outcomes exist. Nought here is the state the defect produced.
     print("  accumulation.band1.%-32s %d" % ("panelsWithAnInterval", directions * sets))
+
+    # The session count each band 1 panel is built over, and the floor it is read against. This is
+    # the second half of checkpoint 3.6's trigger and it reached neither the store nor the screen
+    # until 034: `PairedInterval.Estimate` carried it, `ScoreboardBuilder` read five of its six
+    # fields, and the panel rendered the row count and the effective count.
+    #
+    # Restated rather than read back. Every setup in this population has all four horizons written,
+    # so every authored night closes and contributes exactly one night to the difference series;
+    # the count is the authored night count and nothing else. That is a different claim from
+    # `accumulation.nights`, which says how many nights were authored: this one says none of them
+    # was lost between the population and the series the interval was taken over.
+    #
+    # The floor is twice the block length, which is the bootstrap's own precondition rather than a
+    # second authored number, and the block length is the scoring horizon.
+    block_sessions = 10
+    for direction in ("long", "short"):
+        for control_set in ("loose", "tight"):
+            stem = "%s.%s" % (direction, control_set)
+            print("  accumulation.band1.%-32s %d" % (stem + ".sessions", nights))
+            print("  accumulation.band1.%-32s %d"
+                  % (stem + ".minimumSessions", block_sessions * 2))
 
     return 0
 
