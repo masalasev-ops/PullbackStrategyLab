@@ -1319,6 +1319,31 @@ public sealed class CheckProofTests
         Assert.Contains("neither an open obligation nor a settled reason", problem, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Every_permit_the_fixture_actually_holds_survives_4_1_landing()
+    {
+        // The property BUILD_PLAN states, asserted over the real file rather than over an authored
+        // one. Its "one blocks, and it blocks mechanically rather than by judgement" was true of
+        // nine permits resting on an obligation due at 4.1: the first CI run after 4.1's PROGRESS
+        // entry would have turned red nine times over, and 4.1's own done condition 2 is that
+        // `tools/ci.*` is green.
+        //
+        // `hasLanded` answers true for everything, which is stronger than naming 4.1 and is the
+        // point: no permit the fixture holds may depend on any checkpoint being unlanded. A permit
+        // that goes back to resting on an obligation fails here on the commit that does it rather
+        // than on the commit that lands the checkpoint, which is months later and belongs to
+        // somebody else.
+        FixtureReplayCheck.ExpectationFile fixture = FixtureReplayCheck.ReadExpectations();
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+
+        Assert.Empty(FixtureReplayCheck.DoneConditionSevenProblems(
+            fixture.Expectations,
+            fixture.FrozenOnly ?? [],
+            schedule.Obligations,
+            _ => true,
+            schedule.Landed));
+    }
+
     // ---- an out-of-scope coverage item names what ends it -----------------------------------
 
     // The obligation raised at 1.12 and due at 2.2. An out-of-scope architecture claim has always

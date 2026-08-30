@@ -419,9 +419,22 @@ public sealed partial class StatedCountsCheck
     /// </summary>
     private static int InWords(string text, string before, string after)
     {
+        // Whitespace-tolerant across the span it matches, which is the corpus's own rule for a grep
+        // over markdown and which this did not obey. Every literal space in `before` and `after`
+        // matches any run of whitespace, so a sentence the prose happens to wrap reads the same as
+        // one that fits on a line. It failed on exactly that: the permit sentence was rewrapped and
+        // "names seven frozen-only checkpoints" put the number at the start of the next line, so
+        // the pattern found nothing and the claim it feeds could not be made at all.
+        static string Loose(string literal) =>
+            string.Join(@"\s+", literal.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Regex.Escape))
+            + (literal.EndsWith(' ') ? @"\s+" : string.Empty);
+
         Match match = Regex.Match(
             text,
-            Regex.Escape(before) + @"(?<n>[a-z-]+)" + Regex.Escape(after),
+            (before.StartsWith(' ') ? @"\s+" : string.Empty) + Loose(before)
+                + @"(?<n>[a-z-]+)"
+                + (after.StartsWith(' ') ? @"\s+" : string.Empty) + Loose(after),
             RegexOptions.CultureInvariant);
         Assert.True(match.Success, $"No word appears between {before} and {after}.");
 
@@ -479,8 +492,13 @@ public sealed partial class StatedCountsCheck
                 : null;
     }
 
+    // `nought` and `none` are here because a count this registry reads can legitimately reach
+    // zero, and until the permits were discharged none ever had. A table that cannot say zero
+    // forces the prose into a number, or forces the claim to be dropped at exactly the moment the
+    // thing it counts is finished, which is when the count is most worth stating.
     private static readonly IReadOnlyDictionary<string, int> NumberWords = new Dictionary<string, int>(StringComparer.Ordinal)
     {
+        ["nought"] = 0, ["none"] = 0,
         ["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6,
         ["seven"] = 7, ["eight"] = 8, ["nine"] = 9, ["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12,
         ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,

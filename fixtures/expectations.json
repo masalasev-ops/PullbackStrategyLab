@@ -1696,6 +1696,14 @@
    "note": "Detector rows only. The authored cases are counted nowhere near this figure."
   },
   {
+   "id": "clock.sessionEndUtc",
+   "tier": "DERIVED",
+   "value": "2026-08-25T03:59:59Z",
+   "checkpoint": "1.2",
+   "producedBy": "an independent resolution of the same IANA identifier through CPython's zoneinfo, computed outside the solution by tools/derive-indicators.py --session",
+   "note": "Checkpoint 1.2's figure, being the clock abstraction resolving an IANA identifier rather than a fixed offset. The last instant of 2026-08-24 in America/New_York, in UTC. The two implementations read the same tzdata by different code paths in different runtimes, which is what the tier claims and all it claims: it cannot catch tzdata itself being wrong, and it does catch the lookup failing or silently answering in UTC. That last one is the case worth having, because it is what InvariantGlobalization does and CLAUDE.md names it as the setting that silently breaks IANA lookup. The date is inside daylight saving, so the offset is -4 and a build that had fallen back to UTC would read 2026-08-24T23:59:59Z here."
+  },
+  {
    "id": "clusters.clustered",
    "tier": "FROZEN",
    "value": "114",
@@ -8365,6 +8373,22 @@
    "producedBy": "an independent computation of both scores from their definitions, outside the solution, by tools/derive-indicators.py --regime"
   },
   {
+   "id": "runlog.distinctStages",
+   "tier": "FROZEN",
+   "value": "19",
+   "checkpoint": "1.1",
+   "producedBy": "the replay itself, recorded to detect change",
+   "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely."
+  },
+  {
+   "id": "runlog.entries",
+   "tier": "DERIVED",
+   "value": "24",
+   "checkpoint": "1.1",
+   "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run",
+   "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24."
+  },
+  {
    "id": "scan.decliner.hits",
    "tier": "FROZEN",
    "value": "30",
@@ -9984,19 +10008,9 @@
  ],
  "frozenOnly": [
   {
-   "checkpoint": "1.1",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
-  },
-  {
-   "checkpoint": "1.2",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
-  },
-  {
    "checkpoint": "1.11",
-   "obligation": "3.10",
-   "why": "landed without contributing an expectation. Recorded at 3.10, when fixture-replay first asked the question of a checkpoint that contributed nothing. Whether this checkpoint could have contributed one has not been established, and establishing it is the obligation rather than this note."
+   "settled": "a rehearsal executed by a person across two machines, whose mechanical steps the rehearsal job already runs on every push",
+   "why": "landed without contributing an expectation, and the reason is established rather than owed. Its deliverable is RUNBOOK's \"Moving the store to another machine\" executed end to end on a second machine, all ten steps, with the counts matched and the result recorded in PROGRESS. That is a procedure performed by a person across two machines, and no replayed market day performs a procedure: the fixture replays the nightly pipeline, and the move is not in it. Its mechanical steps are exercised rather than left unheld, by the rehearsal job on ubuntu-latest which runs the whole pipeline and then the store copy on a case-sensitive filesystem on every push, and that is a runner backing rather than a fixture expectation. The one step nothing can automate is step 6, copying appsettings.Secrets.json, which is a human act and is itself the carried obligation raised at 1.11 against the real move."
   },
   {
    "checkpoint": "2.1",

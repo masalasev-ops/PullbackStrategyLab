@@ -312,6 +312,49 @@ def derive_chart(bars, width, height):
     }
 
 
+def session_main(argv):
+    """The session zone's end of day for one session date, in UTC.
+
+    The independent half of `clock.sessionEndUtc`, which is checkpoint 1.2's figure. The lab
+    resolves the IANA identifier through its own clock abstraction on .NET; this resolves the same
+    identifier through CPython's zoneinfo, which reads the same tzdata by a different code path in
+    a different runtime. That is what makes the expectation DERIVED rather than a second copy of
+    the same arithmetic: what it can catch is the lookup failing or silently answering in UTC,
+    which is what `InvariantGlobalization` does and is why CLAUDE.md names that setting.
+
+    End of session is the last instant of the session's own calendar day in the session zone,
+    stated to the second, which is how the store's own bounds are written.
+    """
+    from zoneinfo import ZoneInfo
+
+    if len(argv) < 1:
+        print("usage: derive-indicators.py --session <as-of> [iana-zone]", file=sys.stderr)
+        return 2
+
+    as_of = datetime.date.fromisoformat(argv[0])
+    zone_id = argv[1] if len(argv) > 1 else "America/New_York"
+    zone = ZoneInfo(zone_id)
+
+    local_end = datetime.datetime(
+        as_of.year, as_of.month, as_of.day, 23, 59, 59, tzinfo=zone)
+    utc_end = local_end.astimezone(datetime.timezone.utc)
+
+    offset = local_end.utcoffset()
+    hours = offset.total_seconds() / 3600 if offset is not None else 0.0
+
+    print(f"session date       {as_of.isoformat()}")
+    print(f"zone               {zone_id}")
+    print(f"offset that day    {hours:+.2f} hours, {local_end.tzname()}")
+    print(f"clock.sessionEndUtc {utc_end.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+
+    if hours == 0.0 and zone_id != "UTC":
+        print("\nthe zone resolved to UTC, which is what a failed IANA lookup looks like",
+              file=sys.stderr)
+        return 1
+
+    return 0
+
+
 def chart_main(argv):
     store, as_of, ticker = argv[0], argv[1], argv[2]
     sessions, width, height = int(argv[3]), int(argv[4]), int(argv[5])
@@ -2682,6 +2725,9 @@ def main(argv):
 
     if len(argv) > 1 and argv[1] == "--signals":
         return signals_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--session":
+        return session_main(argv[2:])
 
     if len(argv) > 1 and argv[1] == "--chart":
         return chart_main(argv[2:])

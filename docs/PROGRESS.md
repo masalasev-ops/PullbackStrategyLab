@@ -8408,3 +8408,80 @@ Carried:    **Nothing new, and the obligation raised at 3.10 stays open against 
             rather than nine.** It is not repointed and its due checkpoint is unchanged.
 
             **This session committed code and may not sign it off.**
+
+## 3.10 — 2026-08-30 — phase-4-permit-discharge — the last three permits, and a matcher that could not cross a line break
+
+Not a checkpoint entry. It discharges the remainder of the obligation raised at 3.10 and due at 4.1,
+which the entry above discharged six of. Headed 3.10 for the reason that entry gives.
+
+Found:      **1.1 and 1.2 could have contributed, and nothing had asked.** Both landed before the
+            fixture existed and both are cross-cutting wiring, which is why they read as unmeasurable:
+            the replay uses the clock and the run logger on every stage and measured neither. 1.1's
+            figure is `run_log`, whose sole writer is RunLogger and which is 1.1's own deliverable.
+            1.2's is the session zone, resolved through the clock abstraction from an IANA identifier.
+
+            **1.11 could not, and the reason is not that it is infrastructure.** Its deliverable is
+            RUNBOOK's move procedure executed end to end on a second machine, and no replayed market
+            day performs a procedure. Its mechanical steps are held rather than unheld, by the
+            `rehearsal` job on `ubuntu-latest` that runs the pipeline and then the store copy on a
+            case-sensitive filesystem on every push, which is a runner backing. The one step nothing
+            can automate is copying `appsettings.Secrets.json`, which is the obligation raised at 1.11
+            against the real move and is unaffected.
+
+            **A count this registry reads had never reached zero, and the word table could not say
+            it.** `stated-counts` writes small counts out in words and its table starts at one, so the
+            claim about permits still resting on an obligation became unstatable at exactly the moment
+            the answer was nought. A registry that cannot say zero forces the prose into a digit or
+            forces the claim to be dropped when the thing it counts is finished, which is when the
+            count is most worth having. `nought` and `none` are in the table.
+
+            **And `InWords` could not cross a line break.** It joined its two literals with
+            `Regex.Escape`, so every space in them was a literal space. Rewrapping the permit sentence
+            put "seven" at the start of the next line and the pattern matched nothing at all: not a
+            wrong number, no claim. **That is the first rule in CLAUDE.md's Verification section, in
+            the check that reads the most prose of any in the roster**, and it is the same defect
+            `carried-obligations` was repaired for at 3.14. Every literal space now matches a run of
+            whitespace.
+
+Built:      **Three figures, and the count that is over invocations rather than stages.**
+            `clock.sessionEndUtc` is `DERIVED`, restated outside the solution by
+            `tools/derive-indicators.py --session`, which resolves the same IANA identifier through
+            CPython's `zoneinfo`: a second reader of the same tzdata in a different runtime rather
+            than a second copy of the arithmetic. What it catches is the lookup failing or silently
+            answering in UTC, which is what `InvariantGlobalization` does and which CLAUDE.md names as
+            the setting that silently breaks IANA lookup. Nothing in the fixture would have moved if
+            it had been flipped on.
+
+            `runlog.entries` is `DERIVED` at **24**, and the derivation is the half worth stating. The
+            harness tabulates **21** stage invocations in `PhaseReplayResult.Stages`; the logger wrote
+            24. The difference is the two calibration detector runs and the withheld-scoreboard rerun,
+            none of which the harness's own list records, so a missing run entry on a path that list
+            does not cover is exactly what this figure sees and the list cannot. `runlog.distinctStages`
+            is `FROZEN` at 19 beside it, for a stage vanishing from the pipeline entirely.
+
+Verified:   **The new test was proved red by putting one permit back rather than by reading it.**
+            `Every_permit_the_fixture_actually_holds_survives_4_1_landing` reads the committed fixture
+            and the committed obligations table and answers `hasLanded` true for everything, which is
+            stronger than naming 4.1: no permit may depend on any checkpoint being unlanded. Reverting
+            1.11 to the open shape fails it; restored, it passes. **It fails on the commit that
+            reopens a permit rather than on the commit that lands 4.1**, which is months later and
+            belongs to somebody else.
+
+            The whitespace repair has no separate test and does not need one: BUILD_PLAN now wraps the
+            sentence `stated-counts` reads, so reverting the matcher turns the check red against the
+            committed document. That is the permanent proof the rule asks for rather than a
+            break-and-revert done by hand.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **587 tests**, up from 586.
+
+            Permits: **seven held, seven settled, nought open**, down from nine held and nine open.
+            Expectations: **1,325**, up from 1,322, of which 796 are independently produced.
+
+            The obligation raised at 3.10 is **discharged in full**. Two checkpoints took 2.1(d)'s
+            route and seven were settled.
+
+Carried:    **Nothing new, and one row leaves the table**, being the obligation raised at 3.10. The
+            obligations due at 4.1 fall from twenty-nine to twenty-eight, and the group BUILD_PLAN
+            calls the one that blocks mechanically is now empty.
+
+            **This session committed code and may not sign it off.**
