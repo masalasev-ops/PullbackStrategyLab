@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Data;
 
 namespace PullbackStrategyLab.Worker.Stages;
@@ -48,6 +49,32 @@ public interface ISessionFigures
     /// empty distribution is worse than no threshold.
     /// </summary>
     bool MarketCapExempt { get; }
+
+    /// <summary>
+    /// Every name's control-matching figures for one session, keyed by ticker, already past the
+    /// liquidity floor.
+    ///
+    /// <b>Bulk rather than one call per name, and that is not an optimisation.</b>
+    /// <see cref="Indicators"/> answers per ticker, which is right for a detector walking a night's
+    /// members once. `ControlSampler` reads a whole session's pool and reads it again for every
+    /// earlier session sharing the mood, so a per-ticker seam here would issue a read per name per
+    /// session and grow with the record. The stage's own comment says exactly that, which is why it
+    /// held its own single query until this seam gained a method shaped like the question it asks.
+    ///
+    /// The liquidity floor is applied here rather than by the caller, because the subject of a draw
+    /// has to be readable on the same terms as its candidates: a setup matched against a pool
+    /// filtered differently from itself is matched on a dimension nobody stated.
+    /// </summary>
+    IReadOnlyDictionary<string, ControlMatching.Candidate> Candidates(DateOnly asOf, string sessionZone);
+
+    /// <summary>
+    /// One session's market-mood label, or null where the session carries none.
+    ///
+    /// Read as a value and never compared against a named one. Nothing asks which mood a session is
+    /// in; the tight draw asks whether two sessions carry the same one.
+    /// see: The market-mood label is recorded on every setup and filters nothing in the baseline
+    /// </summary>
+    string? Mood(DateOnly asOf);
 }
 
 /// <summary>
@@ -77,6 +104,63 @@ public sealed class StoredFigures : ISessionFigures
         SecurityReader.MarketCap(_connection, ticker, asOf);
 
     public bool MarketCapExempt => false;
+
+    /// <summary>
+    /// One session's pool, from `indicator_daily`, bounded on the end of the as-of date.
+    ///
+    /// <b>The end of the date rather than the run instant, and the difference is not pedantry.</b>
+    /// TierClassifier writes the ladder grade as a <i>later observation</i> of the same session
+    /// rather than updating the row IndicatorEngine wrote, which is what 2.4 decided. Bounded on the
+    /// run instant, this read takes the engine's row and every grade comes back null, so the tight
+    /// set's ladder filter compares null to null, excludes nothing, and draws exactly the loose set.
+    /// It did: the first run of ControlSampler produced identical loose and tight sets for all three
+    /// fixture setups, and the two figures agreeing is not something a count would have shown.
+    /// `IndicatorDailyReader` bounds on the end of the date for the same reason, and this follows it.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    public IReadOnlyDictionary<string, ControlMatching.Candidate> Candidates(DateOnly asOf, string sessionZone)
+    {
+        var figures = new Dictionary<string, ControlMatching.Candidate>(StringComparer.Ordinal);
+        string? mood = Mood(asOf);
+
+        using SqliteCommand command = _connection.CreateCommand();
+        command.CommandText = """
+            SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
+              FROM indicator_daily i
+             WHERE i.as_of = @as_of
+               AND i.computed_at <= @drawn_at
+               AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
+                                     WHERE c.ticker = i.ticker AND c.as_of = i.as_of
+                                       AND c.computed_at <= @drawn_at)
+             ORDER BY i.ticker
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@drawn_at", StoreText.EndOfSession(asOf, sessionZone));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            decimal turnover = reader.IsDBNull(1) ? 0m : StoreText.StorageTextToPrice(reader.GetString(1));
+
+            if (turnover < Core.Detection.LongPullbackRules.LiquidityFloor)
+            {
+                continue;
+            }
+
+            figures[reader.GetString(0)] = new ControlMatching.Candidate(
+                reader.GetString(0),
+                turnover,
+                reader.IsDBNull(2) ? 0m : StoreText.StorageTextToPrice(reader.GetString(2)),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                asOf,
+                mood);
+        }
+
+        return figures;
+    }
+
+    public string? Mood(DateOnly asOf) => RegimeReader.Read(_connection, asOf)?.Label;
 }
 
 /// <summary>
@@ -106,11 +190,49 @@ public sealed class CalibrationFigures : ISessionFigures
     /// <summary>Every session date the store holds for a name, read once and counted from.</summary>
     private readonly Dictionary<string, DateOnly[]> _sessions = new(StringComparer.Ordinal);
 
-    public CalibrationFigures(SqliteConnection connection, DateTimeOffset computedAt, DateTimeOffset observedBefore)
+    /// <summary>
+    /// Each ranked session's pool and mood, assembled at <see cref="Rank"/> time from the windows the
+    /// caller is already holding.
+    ///
+    /// <b>Retained for every ranked session rather than for the current one, because the tight draw
+    /// reaches backwards.</b> A tight control may be drawn from any earlier session sharing the
+    /// mood, so a pool discarded when the next session is ranked is a pool the draw cannot reach.
+    /// That makes the memory this holds proportional to the range walked, which is a real cost of
+    /// the reach and is reported rather than hidden: a run over hundreds of sessions holds hundreds
+    /// of pools. Bounding it would be a lookback, and a lookback is a new authored number that the
+    /// decision naming the reach deliberately does not have.
+    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// </summary>
+    private readonly Dictionary<DateOnly, IReadOnlyDictionary<string, ControlMatching.Candidate>> _pools = [];
+
+    /// <summary>Each ranked session's mood, computed from the ladder counts that session's ranking saw.</summary>
+    private readonly Dictionary<DateOnly, string?> _moods = [];
+
+    /// <summary>
+    /// The indicators computed at <see cref="Rank"/> time, for the session being ranked.
+    ///
+    /// One session at a time, because the detector walks a session immediately after it is ranked
+    /// and asks for exactly these. Without it every name's averages would be computed twice per
+    /// session, once to build the pool and once to detect, and that arithmetic is the dominant cost
+    /// of a calibration run rather than a rounding on it.
+    /// </summary>
+    private readonly Dictionary<string, StoredIndicators?> _ranked = new(StringComparer.Ordinal);
+
+    private DateOnly _rankedSession;
+
+    /// <summary>The trackers the mood is scored over, supplied rather than assumed.</summary>
+    private readonly IReadOnlyList<string> _indexSymbols;
+
+    public CalibrationFigures(
+        SqliteConnection connection,
+        DateTimeOffset computedAt,
+        DateTimeOffset observedBefore,
+        IReadOnlyList<string>? indexSymbols = null)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _computedAt = computedAt;
         _observedBefore = observedBefore;
+        _indexSymbols = indexSymbols ?? [];
     }
 
     /// <summary>
@@ -176,6 +298,8 @@ public sealed class CalibrationFigures : ISessionFigures
     {
         ArgumentNullException.ThrowIfNull(windows);
 
+        BuildPool(asOf, windows);
+
         var candidates = new List<ScanEngine.Candidate>();
 
         foreach ((string ticker, IReadOnlyList<StoredDailyBar> bars) in windows)
@@ -226,6 +350,15 @@ public sealed class CalibrationFigures : ISessionFigures
     {
         ArgumentNullException.ThrowIfNull(bars);
 
+        // The ranking pass computed these for the session it is about to be asked about, so the
+        // second computation is served rather than repeated. Keyed on the session as well as the
+        // name: a stale entry from the previous session would be a figure from the wrong day, which
+        // is worse than the work it saves.
+        if (asOf == _rankedSession && _ranked.TryGetValue(ticker, out StoredIndicators? ranked))
+        {
+            return ranked;
+        }
+
         if (bars.Count < IndicatorEngine.WarmupSessions || bars[^1].BarDate != asOf)
         {
             return null;
@@ -259,6 +392,106 @@ public sealed class CalibrationFigures : ISessionFigures
             ? [.. forTicker.Where(h => h.AsOf >= windowStart && h.AsOf <= asOf)]
             : [];
     }
+
+    /// <summary>
+    /// One session's pool and mood, assembled from the windows the caller already holds.
+    ///
+    /// <b>The ladder counts are the ranking's, not a second tally.</b> Every name's grade comes from
+    /// <see cref="TierClassifier.Grade"/> through <see cref="Indicators"/>, which is the same call
+    /// the detector makes, and the two counts fall out of the same pass that builds the pool. The
+    /// nightly path counts them with a `GROUP BY` over `indicator_daily` and arrives at the same two
+    /// numbers; what differs is where the grades live, which is the whole seam.
+    ///
+    /// <b>The trackers are read from the store, because index bars are backfilled and a
+    /// reconstructed session has them.</b> That is the half of the mood that needs no
+    /// reconstruction at all: `index_bar` holds SPY, QQQ and IWM for every session in the range,
+    /// observed later than the sessions themselves like every other backfilled bar, so the read is
+    /// bounded on the run's own instant for the reason the calibration entry gives.
+    /// </summary>
+    private void BuildPool(DateOnly asOf, IReadOnlyDictionary<string, IReadOnlyList<StoredDailyBar>> windows)
+    {
+        _ranked.Clear();
+        _rankedSession = asOf;
+
+        var pool = new Dictionary<string, ControlMatching.Candidate>(StringComparer.Ordinal);
+        int rising = 0;
+        int falling = 0;
+
+        foreach ((string ticker, IReadOnlyList<StoredDailyBar> bars) in windows)
+        {
+            StoredIndicators? figures = Indicators(ticker, asOf, bars);
+            _ranked[ticker] = figures;
+
+            if (figures is null)
+            {
+                continue;
+            }
+
+            if (figures.LadderGrade == TierClassifier.Rising)
+            {
+                rising++;
+            }
+            else if (figures.LadderGrade == TierClassifier.Falling)
+            {
+                falling++;
+            }
+
+            if (figures.DollarVolumeMedian < Core.Detection.LongPullbackRules.LiquidityFloor)
+            {
+                continue;
+            }
+
+            pool[ticker] = new ControlMatching.Candidate(
+                ticker, figures.DollarVolumeMedian, figures.AverageDailyRange,
+                figures.LadderGrade, asOf, null);
+        }
+
+        string? mood = MarketMood.Of(
+            Trackers(asOf), asOf, RegimeLabeler.HistorySessions, rising, falling).Label;
+
+        // The mood is a property of the session, so it is stamped onto every candidate of that
+        // session rather than looked up beside them. Built after the pass because the breadth score
+        // needs the counts the pass produces.
+        _pools[asOf] = pool.ToDictionary(
+            e => e.Key, e => e.Value with { MarketMood = mood }, StringComparer.Ordinal);
+        _moods[asOf] = mood;
+    }
+
+    /// <summary>The three trackers' windows for one session, as the mood scoring wants them.</summary>
+    private IReadOnlyList<MarketMood.Tracker> Trackers(DateOnly asOf)
+    {
+        var trackers = new List<MarketMood.Tracker>();
+
+        foreach (string symbol in _indexSymbols)
+        {
+            IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(
+                _connection, symbol, asOf, RegimeLabeler.HistorySessions, _observedBefore);
+
+            trackers.Add(new MarketMood.Tracker(
+                [.. bars.Select(b => b.AdjustedClose)],
+                bars.Count == 0 ? default : bars[^1].BarDate));
+        }
+
+        return trackers;
+    }
+
+    /// <summary>
+    /// One ranked session's pool, or nothing where that session was never ranked.
+    ///
+    /// <b>Nothing, rather than a read from the store.</b> A session this run did not rank has no
+    /// reconstructed figures anywhere, and falling back on `indicator_daily` would answer with rows
+    /// the nightly lab wrote for a different population, silently mixing a reconstructed draw with a
+    /// forward one. Empty is the honest answer and the caller counts it.
+    /// </summary>
+    public IReadOnlyDictionary<string, ControlMatching.Candidate> Candidates(DateOnly asOf, string sessionZone) =>
+        _pools.TryGetValue(asOf, out IReadOnlyDictionary<string, ControlMatching.Candidate>? pool)
+            ? pool
+            : new Dictionary<string, ControlMatching.Candidate>(StringComparer.Ordinal);
+
+    public string? Mood(DateOnly asOf) => _moods.GetValueOrDefault(asOf);
+
+    /// <summary>Every session this run ranked, which is what a reconstructed draw may reach across.</summary>
+    public IReadOnlyCollection<DateOnly> RankedPools => _pools.Keys;
 
     /// <summary>
     /// How many sessions of this name the store holds, counted from a list read once.

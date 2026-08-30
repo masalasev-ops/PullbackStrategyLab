@@ -238,10 +238,10 @@ public sealed class ControlSamplerTests : IDisposable
     /// </summary>
     private void SeedRuling()
     {
-        Mood(SameMoodEarlier, RegimeLabeler.RiskOn);
-        Mood(OtherMoodEarlier, RegimeLabeler.RiskOff);
-        Mood(Tonight, RegimeLabeler.RiskOn);
-        Mood(After, RegimeLabeler.RiskOn);
+        Mood(SameMoodEarlier, MarketMood.RiskOn);
+        Mood(OtherMoodEarlier, MarketMood.RiskOff);
+        Mood(Tonight, MarketMood.RiskOn);
+        Mood(After, MarketMood.RiskOn);
 
         // The subject, and the one unflagged name its own night holds.
         Name("SUBJ", Tonight, turnover: 100_000_000m, range: 2.0m);

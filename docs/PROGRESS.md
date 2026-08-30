@@ -8483,5 +8483,107 @@ Measured:   `tools/ci.ps1` green, 28 steps, **587 tests**, up from 586.
 Carried:    **Nothing new, and one row leaves the table**, being the obligation raised at 3.10. The
             obligations due at 4.1 fall from twenty-nine to twenty-eight, and the group BUILD_PLAN
             calls the one that blocks mechanically is now empty.
+## 3.3 — 2026-08-30 — phase-3-reconstructed-read — the mood scoring extracted, and a tracker read that returned nothing
+
+Not a checkpoint entry. It is the first of the three answers the operator gave on 2026-08-30, and it
+is what makes a reconstructed tight draw reachable at all. Headed 3.3 because the draw is 3.3's.
+
+Found:      **`ControlSampler` could be reached for the loose set and not for the tight, and the
+            blocker was the mood.** The tight set matches on the trend ladder and the market mood.
+            Turnover, daily range and the ladder grade are all on `StoredIndicators` and
+            `CalibrationFigures` already computes all three, so those were never the obstacle. The
+            mood was: `MoodPool` read `regime_daily`, a session the lab was not running has no row
+            there, and `RegimeLabeler` could not supply one because its second input is a
+            `GROUP BY` over `indicator_daily.ladder_grade` and that is the table the evidence rule
+            forbids writing for such a session.
+
+            **And the half that looked available was not.** The mood's other input is the three
+            trackers, and `index_bar` is backfilled, so the data is there. The reader is not:
+            `IndexBarReader.Read` binds `observed_at` to the end of the as-of date, which is right
+            for a forward night and returns **nothing at all** for a 2024 session whose bars were
+            observed in 2026. Not a stale answer, no answer. Left alone, every tracker on every
+            reconstructed session reads unmeasured, the index score falls to 0 by the rule that says
+            "none of nothing was above" is not "none of three was above", and the mood is `mixed`
+            across the whole of history whatever the market did. That is the same trap SCHEMA
+            already describes for `daily_bar`, in the one reader that had no way to be told.
+
+Built:      **`MarketMood` in Core, and one scoring implementation.** The three pure scorers, the
+            three labels and the two breadth thresholds move there, and `MarketMood.Of` composes
+            them from the tracker windows and the two ladder counts. `RegimeLabeler` keeps where its
+            counts come from, which is the seam, and delegates everything downstream of them.
+            `CalibrationFigures` computes a session's mood at `Rank` time from the counts that pass
+            already produces and the trackers read on the run's own instant.
+
+            **`ISessionFigures` gains `Candidates` and `Mood`, and `ControlSampler` runs off them.**
+            Bulk rather than per name, and that is not an optimisation: the stage reads a whole
+            session's pool and reads it again for every earlier session sharing the mood, so a
+            per-ticker seam would issue a read per name per session. The stage's own comment said
+            exactly that, which is why it had kept its own query.
+
+            **`IndexBarReader.Read` gains the observed-before overload `DailyBarReader` already
+            had.** Passing null keeps the session's own end, so every existing caller is unchanged.
+
+            **The indicators computed at `Rank` time are cached for that session**, keyed on the
+            session as well as the name. Without it every name's averages would be computed twice
+            per session, once to build the pool and once to detect, and that arithmetic is the
+            dominant cost of a calibration run rather than a rounding on it.
+
+Verified:   **The nightly output is unchanged, and the fixture is what says so.** Seven `DERIVED`
+            expectations cover the stage over a real market day, being both scores, both raw counts,
+            the trackers measured and above, and the label. Proved by moving `BreadthUpper` from 1.5
+            to 1.9: four expectations fail, `regime.breadthScore` and the three frozen
+            `regime_breadth_score` signals. Restored before anything else was done.
+
+            **The reconstructed path is exercised rather than inferred.** `MarketMoodTests` is new
+            and is there for the eighth failure shape: extracting the scoring so both paths share it
+            and then testing only the path that already worked would leave the new one asserted by
+            nothing. One test seeds a session both readers can see and asserts they agree **at
+            `risk_on` with three trackers measured**, because two paths that both read nothing agree
+            on `mixed` having measured nothing at all. The other holds the tracker bound directly:
+            over a backfilled store the four-argument read is empty, the five-argument read is not,
+            and the mood computed from the first is `mixed` with nought measured.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **589 tests**, up from 587.
+
+Carried:    **One new row, and it is a cost rather than a defect.** `CalibrationFigures` retains a
+            pool per ranked session, because a tight draw reaches backwards and a pool discarded
+            when the next session is ranked is a pool the draw cannot reach. That makes both the
+            memory and the nearest-neighbour search proportional to the range walked. Over the 602
+            sessions the calibration store holds it is roughly 1.2 million candidates and a draw per
+            subject against all of them, which does not run in any useful time. **Bounding it inside
+            the stage would be a lookback, and the decision naming the reach deliberately has none**,
+            so what is owed is the reconstructed read's own session range, stated as the population
+            the figures are computed over rather than added as a constant here. Due at the
+            reconstructed read.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-30 — phase-3-reconstructed-read — the delisted list, counted
+
+Not a checkpoint entry. It answers the operator's second question of 2026-08-30 with one vendor call
+and no history fetched.
+
+Measured:   **`GET exchange-symbol-list/US?delisted=1` returns 59,826 rows, of which 32,851 are
+            common stock.** By exchange, 10,592 are NASDAQ, 9,425 PINK, 5,391 NYSE, 2,726 OTCGREY
+            and the rest smaller venues. **On NASDAQ and NYSE alone the figure is 15,983**, and
+            adding NYSE MKT, NYSE ARCA, AMEX and BATS takes it to 16,558.
+
+            At roughly 4,197 spare calls a night against the 5,000 ceiling, and 1 call per ticker
+            regardless of depth: **NASDAQ and NYSE common stock is about 3.8 nights of backfill**,
+            the major venues about 3.9, and every delisted common stock about 7.8.
+
+Not         **How many have a bar inside the backfill window, which is what was asked.** The
+answered:   response carries `Code`, `Name`, `Country`, `Exchange`, `Currency`, `Type` and `Isin`
+            and **no delisting date**, so which of them traded inside any window is not answerable
+            from it. Establishing that per name is a history fetch, which is the purchase rather
+            than the quotation. Every figure above is therefore an upper bound on the names worth
+            fetching and a lower bound on nothing.
+
+            **Two calls were spent rather than one**, and the first bought nothing: it was written
+            to an unset path variable, returned 200 with a zero-byte body, and had to be repeated.
+            Recorded because a call spent is a call spent.
+
+Not         **No history was fetched and nothing was written to any store.** The response sits in a
+claimed:    scratch directory outside the repository. Whether the purchase is worth making is the
+            operator's, and the survivorship premise the forward-only decision rests on is a fact
+            about this store rather than about the vendor.

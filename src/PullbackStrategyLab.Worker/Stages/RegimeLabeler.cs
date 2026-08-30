@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
@@ -27,18 +28,13 @@ public sealed class RegimeLabeler
 {
     public const string Name = "regime";
 
-    /// <summary>Both scores at +1.</summary>
-    public const string RiskOn = "risk_on";
-
-    /// <summary>Anything in between, which is most nights.</summary>
-    public const string Mixed = "mixed";
-
-    /// <summary>Both scores at -1.</summary>
-    public const string RiskOff = "risk_off";
-
-    /// <summary>The average each tracker is measured against.</summary>
-    public const int IndexAveragePeriod = 21;
-
+    /// <summary>
+    /// The scoring lives in <see cref="MarketMood"/>, and this stage is the nightly reader of it.
+    ///
+    /// What is here is where the two counts come from, being a query against the latest observation
+    /// of each name's session. What is there is everything downstream of those counts, because a
+    /// calibration walk has the same arithmetic to do over counts it holds in memory.
+    /// </summary>
     /// <summary>
     /// Sessions of tracker history read. The engine's warm-up, so the 21-day average here is seeded
     /// where every other average in the lab is seeded rather than wherever the window happened to
@@ -47,12 +43,6 @@ public sealed class RegimeLabeler
     /// see: The averages are one implementation, computed nightly and drawn on demand
     /// </summary>
     public const int HistorySessions = IndicatorEngine.WarmupSessions;
-
-    /// <summary>Above this ratio of long-ladder names to short-ladder names, breadth scores +1.</summary>
-    public const decimal BreadthUpper = 1.5m;
-
-    /// <summary>Below this ratio, breadth scores -1.</summary>
-    public const decimal BreadthLower = 0.67m;
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -81,7 +71,7 @@ public sealed class RegimeLabeler
 
         RegimeResult result = Label(asOf);
 
-        Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.IndexesAbove} of {result.IndexesMeasured} tracker(s) above their {IndexAveragePeriod}-day average");
+        Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.IndexesAbove} of {result.IndexesMeasured} tracker(s) above their {MarketMood.IndexAveragePeriod}-day average");
         Console.WriteLine($"{Name}: {result.LongLadderCount} rising, {result.ShortLadderCount} falling");
         Console.WriteLine($"{Name}: index {result.IndexScore:+0;-0;0}, breadth {result.BreadthScore:+0;-0;0}, label {result.Label}");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
@@ -94,94 +84,34 @@ public sealed class RegimeLabeler
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, "regime_daily");
 
-        int above = 0;
-        int measured = 0;
+        // The trackers as this path reads them, handed to the one scoring implementation. The
+        // measurability rule lives there rather than here, because a reconstructed session reads
+        // the same index bars and has to apply the same rule to them.
+        var trackers = new List<MarketMood.Tracker>();
 
         foreach (string symbol in _options.IndexSymbols)
         {
             IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(connection, symbol, asOf, HistorySessions);
 
-            if (bars.Count < HistorySessions || bars[^1].BarDate != asOf)
-            {
-                // A tracker without a full window is not measured, rather than measured as below.
-                // Counting it as below would move the score toward risk-off on exactly the nights
-                // the data is thin, which is a bias rather than a missing value.
-                continue;
-            }
-
-            measured++;
-            decimal average = Averages.Exponential([.. bars.Select(b => b.AdjustedClose)], IndexAveragePeriod);
-
-            if (bars[^1].AdjustedClose > average)
-            {
-                above++;
-            }
+            trackers.Add(new MarketMood.Tracker(
+                [.. bars.Select(b => b.AdjustedClose)],
+                bars.Count == 0 ? default : bars[^1].BarDate));
         }
 
         (int longLadder, int shortLadder) = LadderCounts(connection, asOf);
 
-        int indexScore = IndexScore(above, measured);
-        int breadthScore = BreadthScore(longLadder, shortLadder);
-        string label = LabelFor(indexScore, breadthScore);
+        MoodScore scored = MarketMood.Of(trackers, asOf, HistorySessions, longLadder, shortLadder);
 
-        int written = Insert(connection, asOf, indexScore, breadthScore, label, longLadder, shortLadder, above);
+        int written = Insert(
+            connection, asOf, scored.IndexScore, scored.BreadthScore, scored.Label,
+            scored.LongLadderCount, scored.ShortLadderCount, scored.IndexesAbove);
         RunSummary summary = run.Complete(RunOutcome.Clean);
 
         return new RegimeResult(
-            asOf, measured, above, longLadder, shortLadder, indexScore, breadthScore, label,
+            asOf, scored.IndexesMeasured, scored.IndexesAbove, scored.LongLadderCount,
+            scored.ShortLadderCount, scored.IndexScore, scored.BreadthScore, scored.Label,
             written, summary.RowsWritten, RunOutcome.Clean);
     }
-
-    /// <summary>
-    /// +1 when every tracker closed above its own average, -1 when none did, 0 otherwise.
-    ///
-    /// Pure, and it takes how many were measured rather than assuming three. With no tracker
-    /// measurable the answer is 0 and not -1: "none of nothing was above" is not the same statement
-    /// as "none of three was above", and scoring it -1 would read a missing feed as a falling market.
-    /// </summary>
-    public static int IndexScore(int above, int measured)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(above);
-        ArgumentOutOfRangeException.ThrowIfNegative(measured);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(above, measured);
-
-        if (measured == 0)
-        {
-            return 0;
-        }
-
-        return above == measured ? 1 : above == 0 ? -1 : 0;
-    }
-
-    /// <summary>
-    /// +1 above 1.5, -1 below 0.67, 0 between, on the ratio of rising names to falling ones.
-    ///
-    /// With no falling names the ratio is undefined and the answer is +1 rather than a division by
-    /// zero: every name that laddered at all laddered upward, which is the strongest reading of the
-    /// score there is. With neither the answer is 0, because nothing laddered either way.
-    /// </summary>
-    public static int BreadthScore(int longLadder, int shortLadder)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(longLadder);
-        ArgumentOutOfRangeException.ThrowIfNegative(shortLadder);
-
-        if (shortLadder == 0)
-        {
-            return longLadder == 0 ? 0 : 1;
-        }
-
-        decimal ratio = (decimal)longLadder / shortLadder;
-        return ratio > BreadthUpper ? 1 : ratio < BreadthLower ? -1 : 0;
-    }
-
-    /// <summary>The label from the sum, which is why the three states buffer themselves.</summary>
-    public static string LabelFor(int indexScore, int breadthScore) =>
-        (indexScore + breadthScore) switch
-        {
-            2 => RiskOn,
-            -2 => RiskOff,
-            _ => Mixed,
-        };
 
     private static (int Long, int Short) LadderCounts(SqliteConnection connection, DateOnly asOf)
     {

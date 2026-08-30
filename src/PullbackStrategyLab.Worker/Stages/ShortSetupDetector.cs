@@ -174,7 +174,7 @@ public sealed class ShortSetupDetector
         IReadOnlyList<DateOnly> warmup = CalibrationFigures.SessionsBefore(
             connection, from, ShortPullbackRules.ThrustWindowSessions, observedBefore);
 
-        var source = new CalibrationFigures(connection, _clock.UtcNow, observedBefore);
+        var source = new CalibrationFigures(connection, _clock.UtcNow, observedBefore, _options.IndexSymbols);
 
         int recorded = 0;
         int passedAll = 0;
