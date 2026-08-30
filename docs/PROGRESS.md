@@ -7429,3 +7429,230 @@ Verified:   Proved red before green against the naive implementation: `Assert.Eq
             over `["3.12", "3.13", "3.14", "2.11"]` returns "2.11". The report reads phase 3 again.
 
             **This session committed code and may not sign it off.**
+
+## 3.14 — 2026-08-29 — phase-3-final-signoff — correction: the permits were nine and the entry said eight
+
+Written by the 3.15 sign-off about the entry of 2026-08-29, "the clause that governed no row, and a
+repair that raised what it repaired". A record is corrected by a new dated entry rather than edited,
+so this is that entry.
+
+Corrects:   Its `Measured` block reads "**The eight permits, up from seven at 3.13.** 1.1, 1.2, 1.11,
+            2.1, 2.12, 3.7, 3.10 and 3.13, every one naming the obligation raised at 3.10 and due at
+            4.1." **The fixture held nine.** The enumeration omits 3.14's own permit, which
+            `e62f9d0` added in the same commit that wrote the sentence. BUILD_PLAN, edited in that
+            same commit, says nine and says it twice.
+
+            The figure is wrong in the direction that understates what has to be discharged before
+            4.1, which is the reading the paragraph exists to give.
+
+Why it      **It is the defect that entry documents, one number along.** Its own `Found` block says
+matters:    of 3.13: "It said seven frozen-only permits where the fixture holds eight, in the commit
+            that added the eighth." The correction and the recurrence are in the same commit.
+
+            Every other stale count in that pass was caught. Fifty-eight over fifty-nine obligation
+            rows got a dated entry and a derived claim; BUILD_PLAN's permit figure got two
+            `stated-counts` claims reading `frozenOnly` out of the fixture. This is the one count
+            that was neither derived nor corrected, and the reason is structural rather than
+            careless: `stated-counts` exempts records, because an entry states what was measured on
+            a date. So the guard that checkpoint added covers the spec and cannot reach the record
+            stating the same number.
+
+            Not a defect in the guard. A record is history and the exemption is right. What it means
+            is that a figure in a record is carried by the writer alone, which is the argument for
+            stating the population in the same breath rather than for another check.
+            (see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything)
+
+Now:        Ten, as of 3.15, which takes a permit of its own. 1.1, 1.2, 1.11, 2.1, 2.12, 3.7, 3.10,
+            3.13, 3.14 and 3.15, every one naming the obligation raised at 3.10 and due at 4.1.
+
+Not         **The test count.** That entry states "28 steps, 557 tests, up from 548 by the nine this
+corrected:  checkpoint adds", which was true at `e62f9d0` and was overtaken by the single test each
+            of `b6b769a` and `6840c3b` added. The tree that merged is 559 by eleven. A dated
+            measurement that was true when taken is history rather than an error, which is the same
+            rule that exempts it from `stated-counts`, so it stands and 3.15 states its own figure
+            and where it moved from.
+
+## 3.15 — 2026-08-29 — phase-3-final-signoff — the phase signs off, and the guard that will not let a sign-off raise an obligation
+
+Phase sign-off, covering 3.8 through 3.14. Dated in the session zone; the report's own stamp is UTC
+and reads 2026-08-30, which is the same instant and the distinction 3.9(c) and 3.12(b) settled.
+
+**Fresh session, no commits of any kind to this repository before the pass.** Its commits are this
+entry, the one above it, three `CHANGELOG` entries, a paragraph move in `CLAUDE.md`, four sentences
+in `BUILD_PLAN.md` and one `frozenOnly` permit in `fixtures/expectations.json`. Nothing under `/src`,
+and nothing that runs in a night.
+
+**The permit is named rather than left for a reader to classify.** It is not a document and it is not
+shipped code: it is the artefact done condition seven requires of every landed checkpoint, and 3.14
+made this checkpoint one that gets asked. Writing it is not optional and not a judgement, and a
+sign-off that declined it would fail its own second done condition. The reading taken is that an
+entry recording why a checkpoint has no expectation is part of the record rather than part of the
+build. If a later session judges otherwise the remedy is a re-sign by a fresh session, and this
+paragraph is here so that judgement has something to work from rather than having to reconstruct
+what was committed.
+
+Verified:   Reproduced before reading the record, on `main` at `b8e73a1`, the merge of PR #10.
+            `tools/ci.ps1` green, **28 steps, 559 tests**. `tools/verify-phase.ps1` **GREEN**: **126
+            claims**, 76 passed, 0 failed, 50 out of scope, **0 unexamined**; coverage examined
+            **4,490** across 23 checks with **0 unexamined**; **1,300 expectations**, 1,299 matched,
+            0 differed, 1 void, **772 independent**, 0 changed since the last commit; inputs 68
+            `CAPTURED` and 97 `AUTHORED`.
+
+            **Those figures come from `b8e73a15d3bf289a1d0fcec77521e303e895fb1d`, working tree
+            clean, generated 2026-08-30 03:24:59Z**, and the report says so itself.
+
+            Run first on the branch at `6840c3b` before the merge, and the figures are identical to
+            the digit, which is what a merge that moves no content predicts and is stated because it
+            was checked rather than assumed.
+
+            **The Windows wrapper was the thing that ran it**, not a bash invoked by hand. It
+            printed `verify-phase: using C:\Program Files\Git\bin\bash.exe`, having rejected
+            `C:\Windows\system32\bash.exe` and the `WindowsApps` alias. On this machine
+            `Get-Command bash` answers with the first of those and Git for Windows is not on the
+            path at all, so the version on `main` before 3.14 would have exited 1 having run
+            nothing. 3.14(f) is the reason the gate ran, and it is recorded here because the
+            previous sign-off quoted an earlier run's artifacts after exactly that no-op.
+
+            **Two of 3.14's repairs are visible in the output rather than asserted.** `lastLanded`
+            reads 3.14 where the old expression returned 2.11. `fixture-replay` reports
+            "checkpoints asked done condition seven 38, of those carrying an independently produced
+            expectation 29", where the same run had read 29 of 29 with eight landed checkpoints
+            carrying no verification and named in no column. The FROZEN tier reads 528 total, 527
+            matched and 1 void, all three accounted, where the void row had been listed under a red
+            heading on a green page.
+
+            **The lab, which neither gate reaches.** `data/live` reads `user_version` **33** from
+            bytes 60 to 63 of the file header, against `033-corrected-check.sql` as the highest
+            migration this build carries, so nothing is owed to the store and the guard 3.12 built
+            has nothing to refuse. `data/live/logs/nightly-2026-08-29.log` records the `ceiling`
+            slot clean at 08:00, which is the only slot a Saturday schedules; the nightly slots are
+            weekdays and none is missing.
+            (see: Every phase ends in a generated phase report, not in a page somebody looks at)
+
+Broke:      Three things, because reading has not been sufficient in this corpus and the sharpest
+            finding below came out of the first.
+
+            **The wrapper's refusal, twice.** `PullbackStrategyLab__Bash` pointed at
+            `C:\Windows\System32\cmd.exe` exits **3** with the named message on the error stream,
+            which is 3.14(f)'s repair reaching a code that was unreachable before it. Pointed at
+            `C:\Program Files\Git\bin\git.exe` it exits 3 reporting "could not read
+            tools/verify-phase from the repository root". The two messages differ, and that is what
+            exposed the finding: the first is wrong.
+
+            **The effective-observation baseline.** Reverting `Clamp(independent / design * serial,
+            rows)` to `Clamp(rows / design * serial, rows)` fails
+            `An_uneven_series_is_worth_its_harmonic_mean_rather_than_its_row_count` at **Expected
+            214, Actual 965**, which is 3.14(c)'s central pair of figures reproduced by removing the
+            thing it guards rather than read off its record. Reverted and the line restored before
+            anything else was done.
+
+            **The arithmetic behind it was worked rather than accepted.** `independent / design`
+            reduces to `n * within / observedVariance`, and at the design effect's floor to `n`
+            times the harmonic mean of the pair counts, which is the independence answer. The old
+            expression carried a spurious factor of the arithmetic mean over the harmonic one, which
+            is the 4.5 between the two figures. The `Clamp` upper bound cannot be exceeded, because
+            the harmonic mean never exceeds the arithmetic one.
+
+Found:      **Five, none of which reopens the phase.** Each was checked against the stopping rule
+            and none breaks a check or fails a done condition, so all five are carried.
+
+            **One, `CLAUDE.md` filed the eighth failure shape above the seventh.** The eighth opened
+            by listing "the seventh a subject the corpus never points at", six lines before the
+            reader met it, and the seventh's "The six above are all faults in something the corpus
+            wrote" described seven paragraphs. Repaired here, because it is a document and moving
+            two blocks changes no word of either. Nothing guards it: `stated-counts` reads this file
+            for the seven done conditions and the lifecycle table's five, three and one, and reads
+            nothing about the shapes. An ordinal sequence a spec states about its own contents is
+            the same kind of number, and the claim is owed.
+
+            **Two, the permit count in 3.14's record.** Corrected in the entry above.
+
+            **Three, `recheck` accepts two `--as-of` flags that disagree.** Proved by running it:
+            `recheck --check cluster --as-of 2026-08-27 --as-of 2026-08-28` reports "as of
+            2026-08-28" and exits 0. `Arguments.Parse` overwrites `named` with no duplicate guard,
+            where two positionals and a positional disagreeing with a named one are both refused.
+            3.13(c) built that parser and named the risk: guessing is how a repair runs against the
+            wrong night. `--check` and `--expect` repeat silently on the same footing, so what is
+            owed is one rule rather than a third named exception, which is the reasoning that
+            produced the declared arity in the first place.
+
+            **Four, the refusal a corrected row carries cannot name its check.** `Candidates`
+            selects `corrected_at` and not `corrected_check`, so once a second check enters
+            `SetupChecks.RecordedNotRequired` a row corrected for one refuses a recompute of the
+            other with "already corrected at", reading as though the other had been done, and that
+            row keeps a null-valued verdict permanently. 3.13(b) added the column so the check's
+            name would stop being prose inside `corrected_because`, and scoped `Restore` onto it;
+            the refusal path was not scoped. It carries weight because restore-then-rerun is the
+            remedy 3.14 records for the two wrong live rows.
+
+            **Five, and it is the one worth the sign-off's name: `stated-counts` pins the obligation
+            counts as literals where the permit counts are read from the document.** The carried
+            obligations table's own total and the count due at 4.1 are `59` and `31` in
+            `StatedCountsCheck.cs`, with the prose pinned beside them by `Assert.Contains`. Six
+            lines below, the permit claims call `InWords(buildPlan, ...)` and read their figure out
+            of BUILD_PLAN, so the number lives in one place.
+
+            **The consequence is not stylistic and it bound this pass.** Adding or repointing a row
+            in the obligations table is therefore a source edit. A session that commits code may not
+            sign it off and a session whose only commits are documents may, so **a sign-off session
+            cannot raise a carried obligation without disqualifying itself**. This one could not,
+            extended three existing rows instead, and recorded a ruling it was not able to execute.
+            The better shape is already in the file, six lines away, written by the same checkpoint.
+
+Ruled:      **The `ForwardDispersion` obligation raised at 3.11 is repointed from 4.1 to the
+            operator.** 3.14 named it for the sign-off to decide without re-deriving it, and the
+            reasoning is short: the dispersion behind the 262-observation minimum is measured over
+            every name with history, where the minimum governs flagged setups that have cleared a
+            hard volatility selection, so the figure understates. 3.6 fires on that number. A due
+            point at 4.1 sits behind the checkpoint that spends it, which is the shape 3.14 spent
+            its whole classification section arguing against. Its twin raised at 3.5 says the same
+            thing from the other side and is already due at the operator, and both are rulings on
+            one quantity rather than repairs.
+
+            **Recorded and not executed**, which is finding five biting. Executing it moves the
+            due-at-4.1 count from 31 to 30, the classification's third group from 24 to 23, the
+            section heading, and the two literals, and the literals are code. It is carried below
+            with finding five, in that order, because the second unblocks the first.
+            (see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+
+Measured:   **The seven done conditions, each with what met it.** One, the deliverable is this
+            entry, the correction above it and the disposition of every finding, and it exists.
+            Two, `tools/ci.*` green at 28 steps and **559 tests**, recorded here; 3.14's record
+            states 557, which was true at `e62f9d0` and was overtaken by one test each in `b6b769a`
+            and `6840c3b`. Three, no new store write. Four, no new numeric constant is stated in a
+            doc, and every decision name cited here and in the three CHANGELOG entries resolves,
+            none of them to an entry under "Previously decided", which has a live subject as of
+            3.14. Five, the matrix runs the suite on both runners. Six, this entry. Seven,
+            **amended, and named as an amendment here**: this checkpoint contributes no fixture
+            expectation and takes a permit stating its reason, on the footing 3.13 and 3.14
+            established. A sign-off adds no stage to the replayed pipeline and no behaviour to
+            freeze, so there is no figure a market day could be replayed to produce.
+
+            **What this signs off, and what it does not.** It signs off that 3.8 through 3.14 hold
+            and meet their done conditions, which is a claim about code, documents and a fixture and
+            is what `tools/verify-phase` was built to answer. **It does not say phase 4 may start.**
+            Three things gate that and none is a defect in what is being signed off: 3.6 has not
+            happened and BUILD_PLAN says phase 4 should not start without its answer; two
+            obligations collect themselves at 4.1 and turn the first run after its entry red, now
+            ten times over rather than nine; and 2.11's ruling leaves the funnel passing a median of
+            nought candidates a night, so nothing built in phase 4 may assume a trade will ever
+            fire.
+            (see: A phase branch merges on CI green, and the sign-off reviews what is already on the default branch)
+
+Carried:    **Nothing new is added to the obligations table and three rows are extended**, for the
+            reason finding five gives.
+
+            Findings three and four join the 3.14 row on `recheck --expect`, **due at 4.6**, which
+            already names that stage's command line as its subject.
+
+            Finding one's missing claim and finding five join the rows they belong to, **due at
+            4.1**: the doc-comment row raised at 3.12 takes the wrapper's mislabelled rejection, and
+            the cosmetic row raised at 3.13 takes the second shipping of the stacked `<summary>`
+            block, which is the point at which the question becomes whether a one-line scan should
+            hold the shape.
+
+            The `ForwardDispersion` repoint is **due at the operator** and waits on finding five.
+
+            **A handoff prompt for the five was written to `/prompts`** and is gitignored, so
+            everything in it that the corpus will later cite is in this entry or in BUILD_PLAN
+            already, which is the rule that folder rests on.

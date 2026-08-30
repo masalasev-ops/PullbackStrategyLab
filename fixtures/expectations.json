@@ -9808,6 +9808,11 @@
   ],
   "frozenOnly": [
     {
+      "checkpoint": "3.15",
+      "obligation": "3.10",
+      "why": "landed without contributing an expectation, and like 3.13 and 3.14 the reason is established rather than owed. It is the phase sign-off: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, two rulings the plan asked it to take, and the document repairs those produce. The golden fixture replays the nightly pipeline, and a sign-off adds no stage to it and no behaviour to freeze: there is no figure a market day could be replayed to produce, because the checkpoint's whole output is a reading of what already ran. Its document repairs are held by `stated-counts`, which now derives BUILD_PLAN's permit figure from this file, so the count below and the sentence naming it cannot part again. 3.7, the previous phase sign-off, is in this list on the same footing and was permitted retrospectively at 3.10; this one states its reason at the time it lands, which is what the obligation asks for."
+    },
+    {
       "checkpoint": "3.14",
       "obligation": "3.10",
       "why": "landed without contributing an expectation, and like 3.13 the reason is established rather than owed. Its eleven deliverables are the permit guard in fixture-replay, the cluster recompute's key, the effective-observation baseline, surface-claims' scan declaration, the two CI entry points' data root, the Windows wrapper's bash choice, the clearing list in tools/verify-phase, the phase report's rendering of a voided row, the due-point pattern in carried-obligations, the checkpoint pointer, and a document pass. The golden fixture replays the nightly pipeline: nine of the eleven are the verification harness or the tools that run it rather than stages in it, the recompute is a hand-run repair no night invokes, and the document pass produces no figure. The one that touches a replayed figure is the effective-observation baseline, and it is unchanged over an even series by construction, which is the only kind the fixture can express: that gap is the row raised at 3.14 and due at 3.6, and an expectation added before it is closed would assert the case that already agreed. All eleven are held by behavioural tests, every one proved red before green by removing the thing it guards."
