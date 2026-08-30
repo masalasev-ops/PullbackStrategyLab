@@ -7744,6 +7744,21 @@ Verified:   **Proved red before green against the count that had been stale.** R
 
             `tools/ci.ps1` green, 28 steps, **560 tests**, up from 559 by the parse proof.
 
+            `tools/verify-phase.ps1` **GREEN**: 126 claims, 76 passed, 0 failed, 50 out of scope,
+            **0 unexamined**; coverage examined **4,505** across 23 checks with 0 unexamined; 1,300
+            expectations, 1,299 matched, 1 void, 0 changed since the last commit. From
+            `44ec68ee2697f3c9351a4bdb54537d1c169cff3a`, working tree clean, generated 2026-08-30
+            05:25:33Z, which is the state this entry's other figures were taken on and one commit
+            behind the tree that carries this paragraph. **Examined rises by four**, the four being
+            the count due at 4.1 now examined in two places rather than one and the operator's table
+            examined at all for the first time. The wrapper printed `verify-phase: using
+            C:\Program Files\Git\usr\bin\bash.exe`, so 3.14(f)'s rejection of the System32 launcher
+            is doing its work rather than being assumed.
+
+            **`price-storage-form`'s eighteen columns are still out of scope and now close at 4.6**,
+            which is the point of the reconciliation: the claim did not become examined, it stopped
+            naming a checkpoint that would have failed the run the moment 4.1 landed.
+
 Carried:    **Nothing new, and one row's shape is worth naming.** The classification section no longer
             promises that nothing in it moves, because two rows moved under rulings that named them
             and a promise a later session has to break is worse than a count. The twenty-three
