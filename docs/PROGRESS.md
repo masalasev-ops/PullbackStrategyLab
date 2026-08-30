@@ -7772,3 +7772,59 @@ Carried:    **Nothing new, and one row's shape is worth naming.** The classifica
             yet.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-30 — phase-3-tight-set-and-instruments — the tight control set reaches across sessions, ruled by the operator
+
+Not a checkpoint entry. The obligation raised at 3.3, due at 3.5 and repointed to the operator at
+that checkpoint, has been open since. It was put to them on 2026-08-30 and answered.
+
+Asked:      Whether the tight control set may draw from neighbouring sessions carrying the same
+            market mood. The tight set is declared to match on the trend ladder **and the market
+            mood**, and within one night the second cannot be a dimension: the mood is a property of
+            the session, so every candidate that night carries the same one and matching on it
+            excludes nothing. `ControlSampler` leaves it out rather than performing a comparison
+            true by construction. Two readings: make the dimension real by reaching across sessions,
+            or drop it and say the tight set differs from the loose one by the trend ladder alone.
+
+Ruled:      **The tight set draws from any session sharing the market mood. The loose set stays
+            within the night.** The dimension is kept and made real rather than dropped.
+
+            **The cost is accepted rather than discovered later.** A setup and its tight controls
+            may now come from different sessions, so the market factor common to one night no longer
+            cancels between them and the difference series carries whatever moved between those
+            sessions on top of the idiosyncratic term the comparison is for. That is a matched
+            dimension bought with a comparison across time. It is taken because the alternative is a
+            tight set that differs from the loose set by the trend ladder alone, which is a weaker
+            question than the one the scoreboard says it asks. The loose set staying within the
+            night keeps a within-night comparison on the panel beside the across-session one, which
+            is what makes the cost readable.
+
+            Recorded as a decision, because a later session could reasonably choose the other
+            reading and the difference would be invisible in the number
+            (see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night).
+            It does not supersede the decision above it: that one names the matched dimensions and
+            the nightly cadence and never said the tight set was confined to the night, which was an
+            implementation fact rather than a decided one. Its five citations stand.
+
+What it     **The row leaves the operator for 3.6.** The judgement is closed and what remains is the
+changes:    draw, which is a build session's work: `ControlSampler`'s candidate population, the mood
+            dimension in `match_quality`, and the ARCHITECTURE sentence describing the tight set as
+            a within-night comparison. It joins the two instruments already due at 3.6, so all three
+            things 3.6 needs before it can be read now sit at 3.6.
+
+            **The operator's list is nine again**, having been ten earlier the same day. Two rows
+            moved in opposite directions: `ForwardDispersion` arrived from 4.1 under the 3.15
+            sign-off's ruling, and this one left. Both movements are named in the section, because a
+            count that returns to where it started reads as nothing having happened.
+
+Measured:   **Ruled before any evidence was spent, which is the only time it could be.** The live
+            store holds two scoreboard dates, 2026-08-27 and 2026-08-28, and band 1 on the later one
+            reads `n_effective` 0 against `n_minimum` 262 on both sides and both control sets,
+            withheld because "40 setup(s) flagged and none has closed its 10-session horizon yet, so
+            there is no series to take an interval over". No interval has ever been taken over the
+            old definition, so none is discarded and no accumulation is spent twice. Read from
+            `data/live` read-only; nothing in this pass writes to the running store.
+
+Owed:       The draw itself, at 3.6, with the two instruments beside it. Until it is built, the
+            tight comparison on the panel is still the within-night one, and any figure taken from
+            it says so.

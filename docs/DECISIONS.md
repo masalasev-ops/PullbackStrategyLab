@@ -55,6 +55,17 @@ Asserted over the gate list rather than per gate, so a check admitted in phase 6
 **Matched control populations are drawn nightly, loose and tight**
 Flagged setups returning 2% is not a result if everything returned 2%. The loose set matches on liquidity and daily range and measures the whole funnel. The tight set also matches on the trend ladder and market mood, isolating the pullback checks from simply owning stocks in uptrends. The tight comparison is the one that can embarrass the project, which is why it is on the scoreboard.
 
+**The tight control set draws from any session sharing the market mood, and the loose set stays within the night**
+Ruled by the operator on 2026-08-30. The decision above declares that the tight set matches on the trend ladder **and the market mood**, and nothing had ever implemented the second half, because within one night it cannot be implemented: the mood is a property of the session, so every candidate on a given night carries the same one and matching on it excludes nothing. The draw left it out rather than performing a comparison that is true by construction, on the grounds that a dimension which always matches reads in the record as a dimension that was checked.
+
+**So the choice was to make the dimension real or to drop it**, and the dimension is kept. The tight set may reach into other sessions carrying the same mood label, which is what makes the mood a filter rather than a formality.
+
+**What it costs is stated rather than left to be discovered.** The tight comparison stops being a within-night comparison. A setup and its tight controls may now come from different sessions, so the market factor common to one night no longer cancels between them, and the difference series carries whatever moved between those sessions on top of the idiosyncratic term the comparison is for. That is the trade: a matched dimension bought with a comparison across time. It is taken because the alternative is a tight set that differs from the loose set by the trend ladder alone, which is a weaker question than the one the scoreboard says it asks.
+
+**The loose set is unchanged and stays within the night.** It matches on liquidity and daily range, both properties of the name rather than of the session, so it has nothing to gain from reaching across sessions and would pay the same cost for it. Keeping one set within the night also keeps a within-night comparison on the scoreboard beside the across-session one, which is what makes the cost above readable rather than assumed.
+
+**Ruled before the evidence accumulates, which is the only time it could be.** A tight set whose definition changes after a series has been accumulated spends that accumulation twice. At the ruling the live store held two scoreboard dates and no setup had closed its ten-session horizon, so no interval had ever been taken over the old definition and none is discarded.
+
 **The win-rate ceiling is computed from the outcome distribution, never assumed**
 A give-up point at half a daily range sits 0.8 standard deviations away, so a coin flip with that stop wins about 20% of the time and the observed 25% is mostly geometry. What matters is the gap between achieved and the computed bound: a wide gap means selection has room, a narrow one means the stop is the binding constraint and the loop should point at execution instead.
 
