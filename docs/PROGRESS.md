@@ -9124,3 +9124,61 @@ Carried:    **One row added, at 5.3**: the market-capitalisation sweep, scoped a
             is the intended way round.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-3-delisted-night-one — night one of the delisted purchase, and a commit subject that named the wrong phase
+
+Not a checkpoint entry. It records one night of a purchase that takes about four, and corrects the
+subject line of the commit that built it. Nothing here is evidence and none of it moves 3.6.
+
+Corrected:  **The commit `b509036` reads `Phase 4 / 3.3` and should read `Phase 3 / 3.3`.** The
+            convention is `Phase {phase} / {checkpoint}`, the checkpoint it names is 3.3, and 3.3 is
+            a phase 3 checkpoint. Phase 4 has not started: its build plan is owed to the operator
+            for approval and `PROGRESS.md` records no 4.x checkpoint. The branch was named
+            `phase-4-delisted-history` for the same wrong reason, that the work came out of rulings
+            **about** phase 4 rather than work **in** it. The commit is merged, so the subject is
+            not rewritten: rewriting `main` to fix a subject line is the worse of the two trades,
+            and this entry is the correction. **It is the second time this convention has been
+            broken**, after 3.7, which is the instance CLAUDE.md's own paragraph counts against the
+            argument for leaving it as prose rather than as a check.
+
+Measured:   **Night one: 5,000 calls, the whole of the 2026-08-31 UTC ceiling, and it stopped on
+            the budget rather than overrunning it.** `delisted-list` spent 5 and recorded 15,998
+            securities out of 59,920 rows on the list, of which 16,000 are common stock on NASDAQ or
+            NYSE and two already had a security row. `backfill --delisted` spent 4,995 of 4,995
+            remaining, fetched 4,995 names of the 15,998 selected, wrote 238,025 bars and completed
+            **partial**, which is the designed outcome for every night but the last.
+
+            **Of the 4,995 names bought, 830 had a bar inside the three-year window and 4,165 had
+            none.** That is 16.6% over the alphabetically first third of the list, and the names
+            that did trade averaged 287 bars, which is about 1.1 years of the 3-year window. If the
+            rate holds over the rest, the purchase adds **roughly 2,600 names** that traded in the
+            window and are absent from every reconstructed night today, against 2,005 current
+            members. **The rate is a reading of one third of the list and not a projection anything
+            is built on**, and the 4,165 empty answers are the reason the list's own count was only
+            ever an upper bound: it carries no delisting date, so which names traded inside a window
+            is answerable only by fetching.
+
+            **Nothing tradable moved.** `universe_member` is 2,085 rows and 2,005 current members,
+            unchanged; `universe_snapshot` holds no delisted name on any night; `IndicatorEngine`
+            and `ScanEngine` both scope to `UniverseSnapshotReader.Members`, so the nightly's cost
+            and its population are untouched by 15,998 new securities and 238,025 new bars. The
+            store is 343 MB.
+
+            **The evening's own budget was not touched.** The ceiling is a UTC day and the nightly
+            runs after 00:00 UTC, so tonight's job falls on 2026-09-01 and starts from a full 5,000.
+
+Not         **The purchase is not complete and no figure is restated by it.** 11,003 names remain,
+claimed:    about 2.6 nights at the roughly 4,200 the ceiling leaves after the evening's stages. No
+            reconstructed read has been re-run over the new bars and no band 1 figure changes until
+            one is, which is a separate act with its own record.
+
+            **This closes one of the three reconstructions and only that one.** Membership for a
+            reconstructed night is still today's for the survivors; what has changed is that the
+            names that left are no longer simply absent.
+
+Carried:    **Nights two, three and four are operator actions after the evening's slots**, two
+            commands each, and the procedure is in `RUNBOOK.md` under "The delisted purchase, spread
+            across nights". A night is done when `backfill --delisted` reports clean rather than
+            partial.
+
+            **This session committed code and may not sign it off.**
