@@ -243,7 +243,31 @@ public static class PairedInterval
     /// of information, and nothing on the surface would say so.
     /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
     /// </summary>
-    public static int EffectiveObservations(IReadOnlyList<Night> series)
+    public static int EffectiveObservations(IReadOnlyList<Night> series) => Disperse(series).Effective;
+
+    /// <summary>
+    /// The two discounts behind <see cref="EffectiveObservations"/>, exposed separately.
+    ///
+    /// <b>Because "262 needed, 65 held" does not say which discount spent them.</b> A panel can be
+    /// short on rows, short on nights, repeating itself across nights, or carrying pairs that all
+    /// move together within a night, and the repair is different in every case. The figure alone
+    /// reads as thinness and the first three of those are thinness; the fourth is not.
+    ///
+    /// <b>The same arithmetic and not a second reading of it.</b> `EffectiveObservations` returns
+    /// this record's <paramref name="Effective"/> and computes nothing of its own. A diagnostic that
+    /// re-derives the figure it explains is free to drift from it, and the explanation would go on
+    /// sounding right while describing a computation nobody runs.
+    ///
+    /// <paramref name="IndependentRows"/> is the row count the series would carry if the nights were
+    /// independent of each other, which is the nights times the harmonic mean of the pair counts.
+    /// <paramref name="Serial"/> is the across-night discount and <paramref name="Design"/> the
+    /// within-night one, null where nothing in the series can say.
+    /// </summary>
+    public sealed record Dispersion(
+        int Rows, int Nights, decimal IndependentRows, decimal Serial, decimal? Design, int Effective);
+
+    /// <inheritdoc cref="Dispersion"/>
+    public static Dispersion Disperse(IReadOnlyList<Night> series)
     {
         ArgumentNullException.ThrowIfNull(series);
 
@@ -262,7 +286,7 @@ public static class PairedInterval
             // Too short for either discount to be measurable. A night counts as one, which is the
             // reading that cannot overstate. It is meaningless for the first fortnight and says so
             // by climbing from nothing rather than by being withheld.
-            return Math.Min(rows, nights);
+            return new Dispersion(rows, nights, independent, 1m, null, Math.Min(rows, nights));
         }
 
         decimal mean = series.Average(n => n.MeanDifference);
@@ -284,7 +308,7 @@ public static class PairedInterval
         {
             // Every night identical. There is one observation here however many nights there are,
             // and saying so is the honest answer rather than the flattering one.
-            return 1;
+            return new Dispersion(rows, nights, independent, 0m, null, 1);
         }
 
         decimal rho = sumProducts / sumSquares;
@@ -297,10 +321,12 @@ public static class PairedInterval
 
         if (DesignEffect(series, sumSquares / (nights - 1)) is not decimal design || design <= 0m)
         {
-            return Clamp(nights * serial, rows);
+            return new Dispersion(
+                rows, nights, independent, serial, null, Clamp(nights * serial, rows));
         }
 
-        return Clamp(independent / design * serial, rows);
+        return new Dispersion(
+            rows, nights, independent, serial, design, Clamp(independent / design * serial, rows));
     }
 
     /// <summary>
