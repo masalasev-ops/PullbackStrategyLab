@@ -103,6 +103,23 @@ public sealed record UniverseOptions
 
     /// <summary>The vendor's own word for the only instrument type that survives the filter.</summary>
     public string SecurityType { get; init; } = "Common Stock";
+
+    /// <summary>
+    /// The venues the delisted purchase covers. It bounds one one-time operation and nothing
+    /// nightly: the listed universe is screened on price and liquidity rather than on venue, and
+    /// this list is not applied to it.
+    ///
+    /// <b>Two venues rather than every venue, and the gap is the whole reason it exists.</b> The
+    /// delisted list holds 32,851 common stocks and 15,983 of them are NASDAQ or NYSE, so covering
+    /// the rest costs about four extra nights of the ceiling. What those nights buy is the delisted
+    /// history of venues the current universe holds 30 names on out of 2,005: 9,425 delisted names
+    /// on PINK for 14 members, and a comparable ratio on AMEX, OTCQX, NYSE ARCA and BATS. A name
+    /// there could in principle have cleared the price and liquidity floors while it traded, so
+    /// this is a bound on the purchase and not a claim that nothing was missed, which is why the
+    /// venues are configured rather than compiled in.
+    /// see: Delisted daily history is bought so a reconstructed walk is not confined to survivors
+    /// </summary>
+    public IReadOnlyList<string> DelistedExchanges { get; init; } = ["NASDAQ", "NYSE"];
 }
 
 /// <summary>

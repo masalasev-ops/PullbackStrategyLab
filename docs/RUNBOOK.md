@@ -39,6 +39,37 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 
 **There is no split-history step, and there was never any code for one.** The table used to carry a second per-name pass for the full split history of every survivor, a second N calls. It was dropped at the 1.12 sign-off after the review found that the vendor client has only the bulk per-date splits endpoint and the per-ticker daily-history endpoint: nothing anywhere fetches one name's splits, so the step described work that had no implementation and the obligation raised at 1.9 was never a matter of spending calls. What it would have bought is the history of splits from before the lab started running. Nothing depends on that. Splits arrive nightly from the bulk endpoint, so every split from the first night onward is recorded; and the one thing that would read older splits, a detector run over stored history, goes to `calibration_setup` at 2.11 rather than to `setup`, where survivorship bias already rules those rows out as evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history). If a reason to want it appears later, it arrives as a checkpoint that builds the endpoint, captures a fixture input for it and states its expectations, like any other ingestion path.
 
+### The delisted purchase, spread across nights
+
+**What it buys and why.** The daily history of every name the exchange has delisted, one call each. A reconstructed walk runs today's members over yesterday's dates, so a name that traded in 2024 and was delisted in 2025 is absent from every night it actually traded on; buying its bars puts it in the same store as the survivors, where the walk finds it on the dates its bars say it traded. The reason it is bought now rather than later is that phases 5 and 6 are built and tested against stored history (see: Delisted daily history is bought so a reconstructed walk is not confined to survivors).
+
+**Two verbs, and the order is not a preference.** `daily_bar` has a foreign key to `security`, so the names have to be recorded before their bars can be stored.
+
+| Order | Command | Calls |
+|---|---|---|
+| 1 | `delisted-list` | 5 |
+| 2 | `backfill --delisted` | one per name not yet fetched, until the ceiling stops it |
+
+**Size, measured rather than estimated, and measured before any history was bought.** The delisted
+list returned 59,826 rows on 2026-08-30, of which 32,851 are common stock and 15,983 of those are on
+NASDAQ or NYSE. At about 4,197 spare calls a night against the 5,000 ceiling and one call per ticker
+regardless of depth, that is **about 3.8 nights**. Two bounds produce it and both are configuration
+rather than code: the security type, which is the same filter the nightly universe uses, and
+`Universe.DelistedExchanges`, which is the larger of the two. Covering every venue instead costs
+about four more nights and buys the delisted history of places the current universe holds 30 names
+on out of 2,005.
+
+**It is charged against the daily ceiling, unlike the one-time backfill above, and that is what spreads it.** It takes whatever the evening's stages left, stops on the budget rather than overrunning it, and the next night resumes from `history_refetch`. So it is run **after** the night's own slots, never before, and it is run again each night until `backfill --delisted` reports nought selected.
+
+**What each night should print, and what to do if it does not.**
+
+- `delisted-list: N delisted name(s), M of type Common Stock, K newly recorded`. K falls to nought once the list has been read; the run is still worth its five calls each night, because a name delisted today is new to the list tomorrow.
+- `backfill --delisted: C delisted name(s) recorded, A already fetched on an earlier night`, then the usual selected/fetched line and `partial` or `clean` with the night's spend. **Partial is the expected outcome until the last night**: it means the ceiling stopped the run, not that anything failed.
+- `C` at nought with `delisted-list` having recorded names means the lister did not run or its transaction did not commit. The fetch buys nothing in that case rather than failing on every insert, which is deliberate.
+- The night's spend is in the run log like every other stage's, which is where "how much did this cost" is answered rather than from the console.
+
+**It never makes a delisted name tradable.** The lister writes `security` and nothing else, so no delisted name reaches `universe_member`, a plan or an order. If one ever does, that is a defect in the universe builder rather than in this procedure.
+
 ---
 
 ## Daily operation

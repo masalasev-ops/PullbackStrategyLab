@@ -23,6 +23,24 @@ public interface IMarketDataVendor
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Every instrument the exchange has <b>de</b>listed, same endpoint, same price, one query
+    /// parameter apart. It is a separate method rather than a flag because the two return
+    /// different populations and nothing should be able to ask for one and read the other: the
+    /// listed call feeds the tradable universe and the delisted call feeds nothing that trades.
+    ///
+    /// <b>What it is for is the survivorship hole, and only the calibration half of it.</b> A
+    /// reconstructed run walks today's members over yesterday's dates, so a name that has since
+    /// been delisted is absent from every historical night it actually traded on. Buying those
+    /// names' daily history puts them in the same store as the survivors, where a walk can find
+    /// them on the dates their bars say they traded.
+    /// see: Delisted daily history is bought so a reconstructed walk is not confined to survivors
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorSymbol>>> GetDelistedSymbolListAsync(
+        string exchange,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// The whole market's closing prices for one date, in one request. Priced per market day,
     /// so twenty sessions costs twenty times one day and six hundred would be ruinous.
     ///

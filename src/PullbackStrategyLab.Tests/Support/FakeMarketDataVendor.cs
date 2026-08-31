@@ -11,6 +11,7 @@ namespace PullbackStrategyLab.Tests.Support;
 public sealed class FakeMarketDataVendor : IMarketDataVendor
 {
     private readonly List<VendorSymbol> _symbols = [];
+    private readonly List<VendorSymbol> _delisted = [];
     private readonly Dictionary<DateOnly, List<VendorDailyBar>> _bars = [];
     private readonly Dictionary<DateOnly, List<VendorCorporateAction>> _actions = [];
 
@@ -28,9 +29,20 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
 
     public int SymbolListRequests { get; private set; }
 
+    /// <summary>Separately counted, because the two lists are different populations at the same price.</summary>
+    public int DelistedListRequests { get; private set; }
+
     public FakeMarketDataVendor Listing(string ticker, string type = "Common Stock", string name = "")
     {
         _symbols.Add(new VendorSymbol(ticker, name.Length == 0 ? ticker : name, "NASDAQ", type));
+        return this;
+    }
+
+    /// <summary>A name the exchange has removed. It never appears in the listed symbol list.</summary>
+    public FakeMarketDataVendor Delisted(
+        string ticker, string type = "Common Stock", string name = "", string exchange = "NASDAQ")
+    {
+        _delisted.Add(new VendorSymbol(ticker, name.Length == 0 ? ticker : name, exchange, type));
         return this;
     }
 
@@ -144,6 +156,22 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
 
         SymbolListRequests++;
         return Task.FromResult(VendorResult<IReadOnlyList<VendorSymbol>>.Delivered((IReadOnlyList<VendorSymbol>)_symbols));
+    }
+
+    public Task<VendorResult<IReadOnlyList<VendorSymbol>>> GetDelistedSymbolListAsync(
+        string exchange,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(EodhdClient.SymbolListCost))
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorSymbol>>.OutOfBudget());
+        }
+
+        DelistedListRequests++;
+        return Task.FromResult(VendorResult<IReadOnlyList<VendorSymbol>>.Delivered((IReadOnlyList<VendorSymbol>)_delisted));
     }
 
     public Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetBulkEndOfDayAsync(

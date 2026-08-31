@@ -88,9 +88,36 @@ public sealed class EodhdClient : IMarketDataVendor
             return VendorResult<IReadOnlyList<VendorSymbol>>.OutOfBudget();
         }
 
+        return await SymbolListAsync(exchange, query: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<VendorResult<IReadOnlyList<VendorSymbol>>> GetDelistedSymbolListAsync(
+        string exchange,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exchange);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(SymbolListCost))
+        {
+            return VendorResult<IReadOnlyList<VendorSymbol>>.OutOfBudget();
+        }
+
+        // The same endpoint and the same price. `delisted=1` is the whole difference, and the
+        // response has the same shape, which is why the capture switch keys on the endpoint
+        // prefix and needs no arm of its own.
+        return await SymbolListAsync(exchange, query: "delisted=1", cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<VendorResult<IReadOnlyList<VendorSymbol>>> SymbolListAsync(
+        string exchange,
+        string? query,
+        CancellationToken cancellationToken)
+    {
         SymbolRow[] rows = await GetAsync<SymbolRow[]>(
             $"exchange-symbol-list/{Uri.EscapeDataString(exchange)}",
-            query: null,
+            query,
             cancellationToken).ConfigureAwait(false) ?? [];
 
         IReadOnlyList<VendorSymbol> symbols = rows
