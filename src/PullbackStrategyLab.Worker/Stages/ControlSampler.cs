@@ -72,15 +72,44 @@ public sealed class ControlSampler
     public ControlResult Draw(DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "control_setup");
+        var source = new StoredFigures(connection);
+        return Draw(connection, source, asOf, SubjectTables.Evidence, reach: null);
+    }
+
+    /// <summary>
+    /// The same draw over either population, on a connection the caller owns.
+    ///
+    /// <b><paramref name="reach"/> is the sessions a tight draw may reach across, and it is the
+    /// caller's rather than this stage's.</b> Null means every session the seam can answer for,
+    /// which is what a forward night has always done. A reconstructed read passes the range it is
+    /// computed over, because that range is the population its figures are stated against and not a
+    /// lookback. **No bound is added here**: this stage's own source says the fix for its cost is a
+    /// decision about how far back a control may be drawn from rather than a constant added
+    /// quietly, and that decision has not been taken.
+    /// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
+    /// </summary>
+    public ControlResult Draw(
+        SqliteConnection connection,
+        ISessionFigures source,
+        DateOnly asOf,
+        SubjectTables tables,
+        IReadOnlySet<DateOnly>? reach)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(tables);
+
+        using RunScope run = _runLogger.Begin(connection, Name, tables.Control);
 
         DateTimeOffset drawnAt = _clock.UtcNow;
 
-        IReadOnlyList<StoredSetup> setups = SetupReader.Read(connection, asOf);
+        IReadOnlyList<StoredSetup> setups = tables.IsEvidence
+            ? SetupReader.Read(connection, asOf)
+            : SetupReader.ReadCalibration(connection, asOf);
         var flagged = new HashSet<string>(setups.Select(s => s.Ticker), StringComparer.Ordinal);
-        var source = new StoredFigures(connection);
         IReadOnlyList<ControlMatching.Candidate> pool = Pool(source, connection, asOf, flagged, _options.SessionZone);
-        IReadOnlyList<ControlMatching.Candidate> moodPool = MoodPool(source, connection, asOf, _options.SessionZone);
+        IReadOnlyList<ControlMatching.Candidate> moodPool =
+            MoodPool(source, connection, asOf, _options.SessionZone, tables, reach);
         IReadOnlyDictionary<string, ControlMatching.Candidate> figures =
             source.Candidates(asOf, _options.SessionZone);
 
@@ -119,7 +148,7 @@ public sealed class ControlSampler
 
                     foreach (ControlMatching.Draw draw in drawn)
                     {
-                        int written = Insert(connection, transaction, setup.SetupId, set, draw, drawnAt);
+                        int written = Insert(connection, transaction, setup.SetupId, set, draw, drawnAt, tables);
 
                         if (isTight)
                         {
@@ -188,7 +217,8 @@ public sealed class ControlSampler
     /// be drawn from, not a constant quietly added here.
     /// </summary>
     private static IReadOnlyList<ControlMatching.Candidate> MoodPool(
-        ISessionFigures source, SqliteConnection connection, DateOnly asOf, string sessionZone)
+        ISessionFigures source, SqliteConnection connection, DateOnly asOf, string sessionZone,
+        SubjectTables tables, IReadOnlySet<DateOnly>? reach)
     {
         if (source.Mood(asOf) is not string mood)
         {
@@ -200,8 +230,28 @@ public sealed class ControlSampler
 
         var sessions = new List<DateOnly>();
 
-        using (SqliteCommand command = connection.CreateCommand())
+        // <b>Which sessions share the mood is the seam's answer, not `regime_daily`'s.</b> A forward
+        // night has a stored label per session and the query below is what reads them. A
+        // reconstructed session has none and may not be given one, so its mood lives only in the
+        // figures the walk computed: reading the table there returns the two forward nights the lab
+        // has actually run, which share no mood with a 2026-05 session and produce an empty pool.
+        //
+        // That is what it did. The first 60-session read drew 46,295 loose controls and **nought**
+        // tight ones, and every tight panel came back withheld at nought nights: not a wrong
+        // interval, no interval, on the half the whole ruling was about.
+        if (reach is not null)
         {
+            foreach (DateOnly session in reach.Where(d => d <= asOf).OrderBy(d => d))
+            {
+                if (string.Equals(source.Mood(session), mood, StringComparison.Ordinal))
+                {
+                    sessions.Add(session);
+                }
+            }
+        }
+        else
+        {
+            using SqliteCommand command = connection.CreateCommand();
             command.CommandText = """
                 SELECT as_of FROM regime_daily
                  WHERE as_of <= @as_of AND label = @label
@@ -222,7 +272,15 @@ public sealed class ControlSampler
 
         foreach (DateOnly session in sessions)
         {
-            IReadOnlySet<string> flaggedThen = FlaggedOn(connection, session);
+            // The caller's range, where it gave one. A session outside it is not a session this
+            // read is computed over, so a control drawn from it would be a row from a population
+            // the figures do not name.
+            if (reach is not null && !reach.Contains(session))
+            {
+                continue;
+            }
+
+            IReadOnlySet<string> flaggedThen = FlaggedOn(connection, session, tables);
 
             foreach (ControlMatching.Candidate candidate in
                 source.Candidates(session, sessionZone).Values)
@@ -238,12 +296,13 @@ public sealed class ControlSampler
     }
 
     /// <summary>The names either detector flagged on one session, which may not be controls for it.</summary>
-    private static IReadOnlySet<string> FlaggedOn(SqliteConnection connection, DateOnly session)
+    private static IReadOnlySet<string> FlaggedOn(
+        SqliteConnection connection, DateOnly session, SubjectTables tables)
     {
         var flagged = new HashSet<string>(StringComparer.Ordinal);
 
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT ticker FROM setup WHERE as_of = @as_of";
+        command.CommandText = $"SELECT ticker FROM {tables.Setup} WHERE as_of = @as_of";
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(session));
 
         using SqliteDataReader reader = command.ExecuteReader();
@@ -262,19 +321,32 @@ public sealed class ControlSampler
         string setupId,
         string controlSet,
         ControlMatching.Draw draw,
-        DateTimeOffset drawnAt)
+        DateTimeOffset drawnAt,
+        SubjectTables tables)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
-        command.CommandText = """
-            INSERT INTO control_setup
-                (control_id, setup_id, control_ticker, control_set, match_quality, rank, drawn_at,
-                 control_as_of)
-            VALUES (@control_id, @setup_id, @control_ticker, @control_set, @match_quality, @rank,
-                    @drawn_at, @control_as_of)
-            ON CONFLICT (control_id) DO NOTHING
-            """;
+        // Two literal statements rather than an interpolated table name, so `writer-ownership` can
+        // see both writes and attribute both to this stage. An interpolated name matches nothing in
+        // its scan, which is a check narrowing itself silently.
+        command.CommandText = tables.IsEvidence
+            ? """
+                INSERT INTO control_setup
+                    (control_id, setup_id, control_ticker, control_set, match_quality, rank, drawn_at,
+                     control_as_of)
+                VALUES (@control_id, @setup_id, @control_ticker, @control_set, @match_quality, @rank,
+                        @drawn_at, @control_as_of)
+                ON CONFLICT (control_id) DO NOTHING
+              """
+            : """
+                INSERT INTO calibration_control_setup
+                    (control_id, setup_id, control_ticker, control_set, match_quality, rank, drawn_at,
+                     control_as_of)
+                VALUES (@control_id, @setup_id, @control_ticker, @control_set, @match_quality, @rank,
+                        @drawn_at, @control_as_of)
+                ON CONFLICT (control_id) DO NOTHING
+              """;
 
         command.Parameters.AddWithValue("@control_id", $"{setupId}-{controlSet}-{draw.Ticker}");
         command.Parameters.AddWithValue("@setup_id", setupId);

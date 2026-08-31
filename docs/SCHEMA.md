@@ -264,6 +264,31 @@ Same shape as `setup`, in a separate table that no downstream component reads. R
 
 Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by `direction`** · Read by nobody
 
+### `calibration_control_setup`
+Grain: control draw. The matched controls of a reconstructed setup, drawn by the same sampler.
+
+Same shape as `control_setup` and pointed at `calibration_setup` by its foreign key, so a reconstructed control cannot be hung off an evidence setup and an evidence control cannot be hung off a reconstructed one. Nothing downstream reads it (see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store).
+
+*Two tables rather than a `source` column on `control_setup`, and that is the safety property rather than a preference. A column would put reconstructed rows one predicate away from every read the scoreboard makes, and the rows are real draws over real names: nothing about their shape says which population they came from. Separate tables make the mixing impossible to write rather than merely wrong, on the same grounds `calibration_setup` is a table rather than a flag.*
+
+Insert ControlSampler · UNIQUE (`setup_id`, `control_set`, `control_ticker`)
+
+### `calibration_forward_return`
+Grain: subject + kind + horizon. What a reconstructed setup and its controls did next.
+
+| Column | Type | Note |
+|---|---|---|
+| `subject_id`, `subject_kind`, `horizon_days` | TEXT / TEXT / INTEGER | PK |
+| `intended_date`, `actual_date` | TEXT | |
+| `return_signed` | TEXT | signed by the setup's direction, as on the evidence side |
+| `mfe_atr`, `mae_atr` | TEXT | **nullable here and NOT NULL on the evidence side** |
+| `excursions_absent_because` | TEXT | why the two above are null, on every row that has none |
+| `filled_at` | TEXT | |
+
+*The excursions are the one shape difference and it is deliberate. They are expressed in the subject's own ATR, `indicator_daily` holds no row for a session the lab was not running, and the calibration walk computes its averages in memory and discards them, so there is no ATR to express them in. Approximating one from daily bars is the stand-in the anchored clause of `reached-ceiling` already refuses by name. Null with the reason on the row rather than nought, because coalescing an undefined excursion to nought is a defect the evidence side already carries as an obligation raised at 3.5 and is not worth shipping twice.*
+
+Insert ForwardReturnFiller · PK (`subject_id`, `subject_kind`, `horizon_days`) · Read by nobody
+
 ### `detector_error`
 Grain: date + ticker + direction. What a detector could not decide, rather than what it skipped.
 

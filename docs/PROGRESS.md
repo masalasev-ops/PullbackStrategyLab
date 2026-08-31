@@ -8587,3 +8587,104 @@ Not         **No history was fetched and nothing was written to any store.** The
 claimed:    scratch directory outside the repository. Whether the purchase is worth making is the
             operator's, and the survivorship premise the forward-only decision rests on is a fact
             about this store rather than about the vendor.
+
+## 3.3 — 2026-08-31 — phase-3-reconstructed-read-run — the paired reconstructed read, at two windows that disagree
+
+Not a checkpoint entry. It is the third of the operator's answers of 2026-08-30, and it produces a
+reading of the strategy that is not evidence and does not move 3.6.
+
+Built:      **`SubjectTables` names the two populations, and one stage fills either.**
+            `ForwardReturnFiller` was already correct for a reconstructed subject: it bounds bars on
+            the fill instant and takes the latest observation. Only the table names tied it to the
+            evidence store. `ControlSampler` takes the seam, the tables and the reach the caller is
+            computed over. Migration 036 adds `calibration_control_setup` and
+            `calibration_forward_return`, pointed at `calibration_setup` by foreign key so the two
+            populations cannot be joined by accident.
+            (see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store)
+
+            **Excursions are null on the reconstructed side with the reason on the row.** They are
+            expressed in the subject's own ATR, a reconstructed session has no `indicator_daily` row
+            and may not be given one, and the walk computes its averages in memory and discards
+            them. Approximating one from daily bars is the stand-in the anchored clause of
+            `reached-ceiling` already refuses by name, and coalescing to nought is a defect the
+            evidence side already carries as an obligation raised at 3.5.
+
+Found:      **Three defects, each of which produced a number that looked like an answer.**
+
+            **The tight draw returned nought rows and every tight panel read withheld.**
+            `MoodPool` asked `regime_daily` which sessions share a mood, and a reconstructed session
+            has no row there: the table holds the two forward nights the lab has actually run. The
+            first 60-session read drew 46,295 loose controls and **nought** tight ones, and four
+            panels came back withheld at nought nights. Not a wrong interval, no interval, on the
+            half the whole ruling was about. The sessions now come from the seam.
+
+            **The short gate filter matched nothing.** `check_results` is a JSON array of
+            `{name, passed, value, note}` and the filter was a `LIKE` written against an object
+            shape. Every short panel read withheld at nought nights, which is indistinguishable from
+            a side with no evidence. Read with `json_each` now.
+
+            **Parameterising the two inserts made two writes invisible to `writer-ownership`.** Its
+            scan reads `INSERT INTO <name>` as literal text, so `INSERT INTO {tables.ForwardReturn}`
+            matches nothing: the writes found fell from 35 to 33 and two stores silently lost their
+            declared writer. **The floor caught it and the floor is the only thing that could have.**
+            Both inserts are written out per table, which is a verification property rather than a
+            style: what is shared is the arithmetic, and these are two spellings of where the answer
+            is put.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **592 tests**, up from 589.
+
+            **Two rungs, and the evidence store untouched at both**, asserted by a row count before
+            and after rather than by reading the code: `setup` 117, `control_setup` 1,170,
+            `forward_return` 483, unchanged across both runs. Both ran against a `VACUUM INTO` copy
+            of the live store, so the running lab was never opened for writing at all.
+
+            **60 sessions, 2026-05-29 to 2026-08-24, 161.1s**, pool 1,809 at its widest, 92,590
+            controls drawn, 550,098 outcomes filled. **120 sessions, 2026-03-04 to 2026-08-24,
+            302.5s**, 175,090 controls, 880,506 outcomes.
+
+            **The wall clock is not quadratic in the range and the projection said it would be.**
+            Doubling the range took 1.9 times as long, not four. Recorded because the decision to
+            run the second rung was taken on the measured time, and the reasoning that produced the
+            projection was wrong.
+
+            | panel | 60 sessions | 120 sessions |
+            |---|---|---|
+            | long/loose | **-0.0161 [-0.0282, -0.0059]**, 428 eff | -0.0015 [-0.0167, +0.0202], 460 eff |
+            | long/tight | -0.0161 [-0.0699, +0.0264], 65 eff | -0.0063 [-0.0383, +0.0195], 68 eff |
+            | short/loose, gate as it stands | +0.0025 [-0.0678, +0.0358], 57 eff | +0.0041 [-0.0321, +0.0319], 162 eff |
+            | short/tight, gate as it stands | +0.0318 [-0.1027, +0.0950], 64 eff | +0.0152 [-0.0541, +0.0650], 88 eff |
+            | short/loose, gate set aside | -0.0082 [-0.0272, +0.0142], 253 eff | -0.0003 [-0.0171, +0.0132], 285 eff |
+            | short/tight, gate set aside | +0.0120 [-0.0719, +0.0586], 30 eff | +0.0089 [-0.0386, +0.0396], 28 eff |
+
+            Every figure is over its own range and both are stated. Long is a **ceiling** and short
+            is a **floor**, per side, because the universe is today's.
+
+Read:       **The two rungs do not agree, and that is the finding rather than something to average.**
+            `long/loose` is the only panel clearing 262 effective observations at both rungs. At 60
+            sessions its interval is **[-0.0282, -0.0059]**, which excludes nought on the negative
+            side: flagged long setups underperformed their matched controls by about 1.6% over ten
+            sessions. At 120 the same panel is **[-0.0167, +0.0202]**, which spans nought. A result
+            present at one rung and absent at the other is not a result.
+
+            **Every tight panel fails the minimum at both rungs, and adding sessions barely moved
+            it**: long/tight 65 then 68, short/tight 30 then 28 with the gate set aside. The tight
+            comparison is the one 3.6 turns on, and its effective count is limited by the pairing
+            rather than by the number of sessions, so a longer range is not what closes it.
+
+            **The short bracket is ambiguous at both ends.** With `reached-ceiling` as it stands the
+            short side has 106 rows at 60 and 260 at 120; with the gate set aside it has 3,017 and
+            5,837. Every one of those intervals spans nought. The deferred clause is bracketed rather
+            than guessed and the bracket does not decide anything.
+
+Not         **No third rung was run.** Both rungs being ambiguous on the tight side is the answer,
+claimed:    and extending until something appears is the thing this design exists to avoid. **Nothing
+            here is evidence and nothing moves 3.6**, which still fires on forward accumulation. The
+            long side's negative reading at 60 is over a universe that excludes the names that
+            delisted, so the honest figure is lower still; the short side's is over a universe
+            missing the names that fell furthest, so its honest figure is higher.
+
+Carried:    **Nothing new.** The range is the population and is stated beside every figure; no bound
+            was added to `ControlSampler` and the decision about how far a control may be drawn from
+            is still untaken.
+
+            **This session committed code and may not sign it off.**

@@ -73,6 +73,15 @@ public sealed class PointInTimeCheck
             // or panels deleted and rebuilt, which is what StampBoundTests does.
             ["control_setup"] = "drawn_at",
             ["forward_return"] = "filled_at",
+
+            // The reconstructed pair, on exactly the terms of the two above and not exempted for
+            // being calibration. A reconstructed read is still a read: its filler bounds bars on the
+            // fill instant and its sampler bounds the draw, and the whole reason those bounds are
+            // there is that a replay can hold draws made after the instant being answered for. The
+            // rows are not evidence; the reads that produce them obey the same rule.
+            // see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
+            ["calibration_control_setup"] = "drawn_at",
+            ["calibration_forward_return"] = "filled_at",
             ["ceiling_bound"] = "computed_at",
             ["scoreboard"] = "computed_at",
             ["setup"] = "corrected_at",

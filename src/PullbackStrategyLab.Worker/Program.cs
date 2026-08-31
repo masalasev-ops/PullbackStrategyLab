@@ -42,6 +42,7 @@ public static class Program
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
+        builder.Services.AddSingleton<ReconstructedRead>();
         builder.Services.AddSingleton<SectorResolver>();
         builder.Services.AddSingleton<ThemeClusterer>();
         builder.Services.AddSingleton<CheckRecomputer>();
@@ -105,6 +106,7 @@ public static class Program
                 ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
                 TierClassifier.Name => host.Services.GetRequiredService<TierClassifier>().Run(rest),
                 RegimeLabeler.Name => host.Services.GetRequiredService<RegimeLabeler>().Run(rest),
+                ReconstructedRead.Name => host.Services.GetRequiredService<ReconstructedRead>().Run(rest),
                 SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
                 ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
                 CheckRecomputer.Name => host.Services.GetRequiredService<CheckRecomputer>().Run(rest),
@@ -231,6 +233,7 @@ public static class Program
         ThemeClusterer.Name,
         CheckRecomputer.Name,
         RegimeLabeler.Name,
+        ReconstructedRead.Name,
         LongSetupDetector.Name,
         ShortSetupDetector.Name,
         SignalVectorizer.Name,
