@@ -9262,3 +9262,78 @@ Carried:    **One scope floor added**, `"BUILD_PLAN.md, 3.6 and 4.4, the clause 
             against the constant.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-3-delisted-complete — the purchase finished in a day, and the night it nearly cost
+
+Not a checkpoint entry. It records the completion of the delisted purchase, an operator instruction
+that changed how it was paid for, and a scheduling error of mine that damaged one night. Nothing
+here is evidence and none of it moves 3.6.
+
+Corrected:  **The entry of earlier today says "the evening's own budget was not touched, because the
+            ceiling is a UTC day and the nightly runs after 00:00 UTC". That is wrong.** The
+            schedule's first slot fires at 17:15 local, which is 21:15 UTC the **same** day. The
+            04:04Z rows in the run log that the claim was read off were manual reruns of a failed
+            evening, not the schedule. So the morning purchase and that evening's run shared one
+            allowance and the morning took all of it.
+
+            **What it cost, stated rather than summarised.** `universe-build` at 17:15 got 905 of
+            the 1,000 the first raised ceiling left it, screened **9 of the 20 sessions** it needs,
+            found no survivors, and wrote a **carried** snapshot for 2026-08-31: 2,005 rows with
+            `screen_carried = 1`. That is the designed fallback and the store records it honestly,
+            but the snapshot insert is `ON CONFLICT DO NOTHING`, so no rerun can replace it and
+            tonight's membership is Friday's screen for good. `actions` at 17:20 fetched **nothing**
+            and raised no rebuild demands; rerun by hand it found **8 splits and 367 dividends, 48
+            of them in the universe**, and `indicators` then satisfied all 48. Left alone, 48 names
+            would have carried averages computed across an unrecorded corporate action.
+
+            **The second figure I gave was wrong too.** I said the night needs about 800 calls, so
+            6,000 would cover it. `universe-build` alone is 2,005. The estimate came from
+            `ARCHITECTURE.html`'s "about seven times the expected nightly usage", corrected in this
+            commit.
+
+Measured:   **The purchase is complete: 15,998 names recorded and 15,998 fetched, none outstanding.**
+            736,190 bars written for the **2,515** of them that traded inside the three-year window.
+            `daily_bar` goes from 1,504,996 rows to 2,277,678 and the store from 343 MB to 408 MB.
+
+            **The reconstructed name pool roughly doubles.** 2,515 delisted names that traded in the
+            window, against 2,005 current members. Night one's extrapolation from its first third
+            was about 2,660 and the answer is 2,515, so the rate held.
+
+            **A night costs about 2,553 calls, measured from the run log rather than estimated**:
+            `universe-build` 2,005, `actions` 200, `daily-bars` 100, `sectors` 117 to 227,
+            `index-bars` 3, `backfill --rebuild` what the demands need. The 5,000 allowance is about
+            twice that, not the seven times the corpus claimed, and every statement about spare
+            capacity in this register was taken from the wrong figure.
+
+            **The three vendor endpoints this lab uses are priced correctly, checked against the
+            vendor's own counter rather than against the documentation.** Bulk end-of-day: 200
+            charged for two requests, 200 counted. Per-ticker history, ranged and unranged: 1
+            charged, 1 counted. The exchange symbol list: 5 charged, **1 counted**, so the model is
+            conservative on that one endpoint and nowhere optimistic.
+
+            **The vendor's counter and this lab's spend do not reconcile, and the difference is not
+            ours.** This lab was charged 17,377 today; the vendor counted 26,908 of a 100,000 daily
+            limit. The gap was about 8,400 before any of today's diagnostics and did not grow with
+            our usage, so it is a constant offset from something outside this repository rather than
+            an error in the cost model. Recorded and not chased.
+
+Not         **Nothing about the purchase is evidence and no figure moves because of it.** No
+claimed:    reconstructed read has been re-run over the new bars. The survivorship correction is a
+            fact about what the store now holds, not about any measurement taken from it.
+
+            **The carried snapshot is not recoverable and is not claimed to be.** 2026-08-31 reads
+            as a carried membership for ever, which is what `screen_carried` exists to say.
+
+            **The allowance was exceeded on the operator's explicit instruction**, drawing on the
+            vendor's own headroom rather than the project's 5,000. It was raised in
+            `appsettings.Secrets.json`, which is gitignored and machine-local, so nothing about it
+            was committed, and **it was removed once the purchase finished**. A guard raised and
+            left raised is a dead guard.
+
+Carried:    **The night's own log does not record the `actions` rerun.** It was run through the
+            worker directly rather than through `tools/nightly.ps1`, so the log still reads
+            `actions: partial, 0 calls` while the store holds the clean run. The store is right. A
+            rerun path that writes to the night's log is what is owed, and it is the same class of
+            fault as the slot diagnostics row already carried at 3.12.
+
+            **This session committed code and may not sign it off.**

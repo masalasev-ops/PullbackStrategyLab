@@ -50,16 +50,36 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 | 1 | `delisted-list` | 5 |
 | 2 | `backfill --delisted` | one per name not yet fetched, until the ceiling stops it |
 
-**Size, measured rather than estimated, and measured before any history was bought.** The delisted
-list returned 59,826 rows on 2026-08-30, of which 32,851 are common stock and 15,983 of those are on
-NASDAQ or NYSE. At about 4,197 spare calls a night against the 5,000 ceiling and one call per ticker
-regardless of depth, that is **about 3.8 nights**. Two bounds produce it and both are configuration
-rather than code: the security type, which is the same filter the nightly universe uses, and
+**It has been run and it is complete.** On 2026-08-31 the list recorded 15,998 names and all
+15,998 were fetched, writing 736,190 bars for the 2,515 of them that traded inside the three-year
+window. Nothing is outstanding. What is below is what to do when it is run again, which is what a
+name delisted after that date needs.
+
+**Size, measured rather than estimated.** The list returned 59,920 rows, of which 32,851 are common
+stock and about 16,000 of those are on NASDAQ or NYSE. One call per ticker regardless of depth, so
+the whole purchase is about 16,000 calls. Two bounds produce that and both are configuration rather
+than code: the security type, which is the same filter the nightly universe uses, and
 `Universe.DelistedExchanges`, which is the larger of the two. Covering every venue instead costs
-about four more nights and buys the delisted history of places the current universe holds 30 names
+about 17,000 more calls and buys the delisted history of places the current universe holds 30 names
 on out of 2,005.
 
+**How many nights it takes depends on the allowance, and the arithmetic here was wrong once.** It
+read "about 4,197 spare calls a night, so about 3.8 nights", taking the spare from
+`ARCHITECTURE.html`'s estimate that a night uses about 700. **A night measured from the run log
+costs about 2,553**, of which `universe-build` alone is 2,005, so under the 5,000 allowance the
+spare after an evening is about **2,450** and the purchase is about **six and a half nights**, not
+four. The purchase was finished in one day instead, on the operator's instruction and against the
+vendor's own headroom rather than the project's allowance.
+
 **It is charged against the daily ceiling, unlike the one-time backfill above, and that is what spreads it.** It takes whatever the evening's stages left, stops on the budget rather than overrunning it, and the next night resumes from `history_refetch`. So it is run **after** the night's own slots, never before, and it is run again each night until `backfill --delisted` reports nought selected.
+
+**"After the night's own slots" is the whole of it, and it was got wrong on the first run.** The
+allowance is counted per **UTC** day and the schedule's first slot fires at 17:15 local, which is
+21:15 UTC the **same** day. So a purchase run in the morning and an evening run eight hours later
+share one allowance, and the morning one takes all of it. On 2026-08-31 that left `universe-build`
+with nothing: it screened 9 of the 20 sessions it needs, found no survivors, and wrote a **carried**
+snapshot that no rerun can replace, and `actions` fetched no splits or dividends at all until it was
+rerun by hand. Run this after the evening, or on a day the evening does not need.
 
 **What each night should print, and what to do if it does not.**
 
