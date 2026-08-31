@@ -229,6 +229,57 @@ public static class ShortPullbackRules
     /// <summary>What `reached-ceiling` actually tested, recorded beside every one of its verdicts.</summary>
     public const string ClausesRun = "21-day and 50-day only; the anchored clause arrives at 4.4";
 
+    /// <summary>
+    /// Which clause set produced one stored `reached-ceiling` verdict, read from the row rather
+    /// than inferred from its date.
+    ///
+    /// <b>This is the seam 3.6 counts the short side's twenty sessions from, made readable.</b>
+    /// The check is a three-clause disjunction and the anchored clause needs VwapEngine, so every
+    /// short row recorded before 4.4 passed a gate that admits strictly fewer names than the
+    /// document describes. A passing verdict looks identical either way and the count reads as the
+    /// count the finished detector would have produced, so the row carries the clause set and this
+    /// is what reads it back. A note in a document does not reach somebody opening the store.
+    ///
+    /// <b>The date is not the discriminator and must not become one.</b> "Before 2026-09-xx" is a
+    /// fact about when the build landed rather than about what produced the row, and a row
+    /// recovered late, replayed, or written by a checkout that had not been updated would be
+    /// classified wrongly with nothing saying so. The clause record travels with the row.
+    ///
+    /// <b><see cref="CeilingClauses.Unrecorded"/> is the state that must never appear</b>, and it
+    /// is named rather than folded into one of the others so it can be asserted absent. An
+    /// evaluated verdict carrying no clause record is a row whose gate cannot be established at
+    /// all, which is worse than either answer.
+    /// </summary>
+    public static CeilingClauses ClauseSetOf(IEnumerable<CheckResult> results)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+
+        CheckResult? verdict = results.FirstOrDefault(
+            r => string.Equals(r.Name, "reached-ceiling", StringComparison.Ordinal));
+
+        if (verdict is null)
+        {
+            return CeilingClauses.NotFound;
+        }
+
+        // Value is null exactly when the check could not be evaluated, and its note then says why
+        // rather than which clauses ran. Tested first, so an unevaluated verdict is never read as
+        // a clause set it never reached.
+        if (verdict.Value is null)
+        {
+            return CeilingClauses.NotEvaluated;
+        }
+
+        if (string.Equals(verdict.Note, ClausesRun, StringComparison.Ordinal))
+        {
+            return CeilingClauses.TwoOfThree;
+        }
+
+        return string.IsNullOrWhiteSpace(verdict.Note)
+            ? CeilingClauses.Unrecorded
+            : CeilingClauses.WithTheAnchor;
+    }
+
     private static CheckResult NoReclaim(ShortEvidence e) =>
         e.ClosesBeyondFloor is not int beyond
             ? CheckResult.Unknown("no-reclaim", "no 50-day average over the bounce")
@@ -303,4 +354,41 @@ public static class ShortPullbackRules
         public DateOnly? ThrustSession { get; init; }
 
     }
+}
+
+/// <summary>
+/// The clause set one stored `reached-ceiling` verdict was produced by.
+///
+/// Four states rather than two, because "not the two-clause record" covers three different
+/// situations and only one of them is the finished gate.
+/// </summary>
+public enum CeilingClauses
+{
+    /// <summary>The row carries no `reached-ceiling` verdict at all, so it is not a short row.</summary>
+    NotFound,
+
+    /// <summary>
+    /// The check could not be evaluated: no 21-day or 50-day average, or no daily range, for the
+    /// session. Its note says why rather than which clauses ran, and it is neither gate.
+    /// </summary>
+    NotEvaluated,
+
+    /// <summary>
+    /// The 21-day and 50-day clauses only, which is the gate until VwapEngine arrives at 4.4.
+    /// A row in this state is not a session of the evidence 3.6 counts on the short side.
+    /// </summary>
+    TwoOfThree,
+
+    /// <summary>
+    /// An evaluated verdict recording a clause set other than the two-clause one, which is the
+    /// full disjunction once the anchored clause runs. The first short row in this state is the
+    /// first night of the short side's twenty.
+    /// </summary>
+    WithTheAnchor,
+
+    /// <summary>
+    /// An evaluated verdict with no clause record at all. A defect rather than a gate: the row's
+    /// own gate cannot be established from it, and it is named so it can be asserted absent.
+    /// </summary>
+    Unrecorded,
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Data;
@@ -142,14 +143,14 @@ public sealed class CalibrationTests
     }
 
     [Fact]
-    public void Every_short_row_says_which_clauses_of_reached_ceiling_actually_ran()
+    public void Every_short_row_reads_back_from_the_store_as_two_of_the_three_ceiling_clauses()
     {
-        // The seam 3.6 counts short's twenty sessions from, held in the data rather than in a
-        // sentence. `reached-ceiling` is a three-clause disjunction and the anchored clause needs
-        // VwapEngine, which arrives at 4.4, so every short row recorded before then passed a gate
-        // that admits strictly fewer names than the document describes. A passing verdict looks
-        // identical either way, so the row says which it was, and the first short row without this
-        // record is the first night of the short side's evidence.
+        // The seam 3.6 counts the short side's twenty sessions from, asserted where a later reader
+        // would meet it: parsed back out of the stored row rather than checked as a substring of
+        // the text that produced it. `reached-ceiling` is a three-clause disjunction and the
+        // anchored clause needs VwapEngine at 4.4, so a disjunction missing a disjunct is strictly
+        // harder to pass and every row here came from a narrower gate than the document describes.
+        // A passing verdict looks identical either way, which is why the row carries the answer.
         using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
         replay.Run();
 
@@ -164,7 +165,7 @@ public sealed class CalibrationTests
         while (reader.Read())
         {
             rows++;
-            Assert.Contains(ShortPullbackRules.ClausesRun, reader.GetString(0), StringComparison.Ordinal);
+            Assert.Equal(CeilingClauses.TwoOfThree, ShortPullbackRules.ClauseSetOf(Verdicts(reader.GetString(0))));
         }
 
         Assert.True(rows > 0, "the calibration run wrote no short row, so nothing here was asserted.");
@@ -173,6 +174,63 @@ public sealed class CalibrationTests
         // out-of-scope coverage item does: a narrowing with no end reads as permanent.
         Assert.Contains("4.4", ShortPullbackRules.ClausesRun, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void A_row_written_before_the_anchored_clause_is_distinguishable_from_one_written_after()
+    {
+        // The property the seam rests on, and the one no stored row can demonstrate yet because
+        // the anchored clause has run on no night. Both sides are stated here: the record the
+        // detector writes today, and a verdict recording any other clause set, which after 4.4 is
+        // the full disjunction. The two must not read alike, and the date must not be what
+        // separates them, because a row recovered late or replayed from an older checkout would
+        // then be classified by when it was written rather than by what produced it.
+        CheckResult[] beforeTheAnchor =
+        [
+            new("moves-enough", true, 0.06m),
+            new("reached-ceiling", true, 0.31m, ShortPullbackRules.ClausesRun),
+        ];
+
+        CheckResult[] afterTheAnchor =
+        [
+            new("moves-enough", true, 0.06m),
+            new("reached-ceiling", true, 0.31m, "21-day, 50-day and the anchored average"),
+        ];
+
+        Assert.Equal(CeilingClauses.TwoOfThree, ShortPullbackRules.ClauseSetOf(beforeTheAnchor));
+        Assert.Equal(CeilingClauses.WithTheAnchor, ShortPullbackRules.ClauseSetOf(afterTheAnchor));
+        Assert.NotEqual(
+            ShortPullbackRules.ClauseSetOf(beforeTheAnchor),
+            ShortPullbackRules.ClauseSetOf(afterTheAnchor));
+    }
+
+    [Fact]
+    public void A_ceiling_verdict_that_could_not_be_evaluated_is_neither_gate()
+    {
+        // Its note says why the check could not run rather than which clauses did, so reading the
+        // note first would classify it as the finished gate on the strength of not matching the
+        // two-clause record. The absent value is what separates them and is tested first.
+        CheckResult[] unevaluated =
+        [
+            CheckResult.Unknown("reached-ceiling", "no 21-day or 50-day average, or no daily range, for the session"),
+        ];
+
+        Assert.Equal(CeilingClauses.NotEvaluated, ShortPullbackRules.ClauseSetOf(unevaluated));
+        Assert.Equal(CeilingClauses.NotFound, ShortPullbackRules.ClauseSetOf([new("moves-enough", true, 0.06m)]));
+    }
+
+    [Fact]
+    public void An_evaluated_ceiling_verdict_with_no_clause_record_is_named_rather_than_guessed()
+    {
+        // The state that must never appear in the store, named so it can be asserted absent rather
+        // than folded into one of the two gates. A row whose gate cannot be established is worse
+        // than a row under either gate, because nothing about it says so.
+        CheckResult[] unrecorded = [new("reached-ceiling", true, 0.31m)];
+
+        Assert.Equal(CeilingClauses.Unrecorded, ShortPullbackRules.ClauseSetOf(unrecorded));
+    }
+
+    private static IReadOnlyList<CheckResult> Verdicts(string json) =>
+        JsonSerializer.Deserialize<List<CheckResult>>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
 
     [Fact]
     public void A_forward_night_still_fails_a_name_with_no_resolved_capitalisation()

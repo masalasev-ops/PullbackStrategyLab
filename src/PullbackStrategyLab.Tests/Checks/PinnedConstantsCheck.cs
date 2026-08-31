@@ -213,6 +213,17 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Cluster threshold",
             ParameterCell(architecture, "Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
             LongPullbackRules.ClusterThreshold == 2, "LongPullbackRules.ClusterThreshold"));
+        // Not a number, and pinned for the same reason the numbers are. Two rows of BUILD_PLAN say
+        // the short side's twenty sessions start at 4.4 and point at the constant the store records
+        // it in, so a reader can check the claim against the code rather than against the sentence
+        // making it. A citation to a symbol that has been renamed reads exactly like a live one.
+        pins.Add(Pin.Text("BUILD_PLAN.md, 3.6 and 4.4, the clause record the short seam is read from",
+            CountOf(buildPlan, "ShortPullbackRules.ClausesRun") >= 2,
+            ShortPullbackRules.ClausesRun.Contains("4.4", StringComparison.Ordinal)
+                && ShortPullbackRules.ClauseSetOf(
+                    [new CheckResult("reached-ceiling", true, 1m, ShortPullbackRules.ClausesRun)])
+                    == CeilingClauses.TwoOfThree,
+            "ShortPullbackRules.ClausesRun"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Squeeze test",
             ParameterCell(architecture, "Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
             ShortPullbackRules.SqueezeWindowSessions == 20 && AverageGap.Window == 20,
@@ -431,6 +442,20 @@ public sealed class PinnedConstantsCheck
 
     private static string PragmaText(string schema, string pragma) =>
         PragmaCell(schema, pragma).Trim('`', ' ');
+
+    /// <summary>How many times a document names something. Two rows have to, so one is not enough.</summary>
+    private static int CountOf(string document, string needle)
+    {
+        int count = 0;
+        int at = document.IndexOf(needle, StringComparison.Ordinal);
+        while (at >= 0)
+        {
+            count++;
+            at = document.IndexOf(needle, at + needle.Length, StringComparison.Ordinal);
+        }
+
+        return count;
+    }
 
     private sealed record Pin(string What, bool Holds, string Detail)
     {

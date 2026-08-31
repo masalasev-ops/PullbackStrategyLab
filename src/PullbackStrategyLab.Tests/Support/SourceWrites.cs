@@ -33,7 +33,29 @@ public static partial class SourceWrites
     [GeneratedRegex(@"ON\s+CONFLICT[\s\S]{0,400}?DO\s+UPDATE", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex UpsertTail();
 
-    [GeneratedRegex(@"^\s*(?:public|internal|private|protected|sealed|static|abstract|partial|file|\s)*\b(?:class|record|struct|interface)\s+(?<name>\w+)", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// A type declaration at the start of a line: horizontal indent, then whole modifiers, then the
+    /// keyword and the name.
+    ///
+    /// <b>Every quantifier here matches something no other quantifier in the pattern can</b>, and
+    /// that is the whole of why it is written this way. It read
+    /// <c>^\s*(?:public|...|\s)*\b(?:class|...)</c>, where <c>\s*</c> and the <c>\s</c> branch of
+    /// the alternation both match the same whitespace, so a run of blank lines not ending in a type
+    /// keyword can be divided between them in exponentially many ways and the engine tries them
+    /// all. Comments are stripped before this runs, which is what turns a comment-heavy corpus into
+    /// long runs of blank lines and made the input worst-case rather than unusual.
+    ///
+    /// <b>122 seconds over 97 files, against 74 milliseconds for this pattern</b>, over the same
+    /// input and producing the same 254 names in the same order. It runs twice per process, so it
+    /// was four minutes of every check that reads a store write and four minutes of the suite, or
+    /// about twelve minutes of a twenty-minute CI run.
+    ///
+    /// The rule it is an instance of: no two quantifiers in one pattern may match the same
+    /// character. Found on 2026-08-31 by timing a CI run rather than by reading the pattern,
+    /// because it looks ordinary and its cost is invisible until the input has long whitespace
+    /// runs in it.
+    /// </summary>
+    [GeneratedRegex(@"^[ \t]*(?:(?:public|internal|private|protected|sealed|static|abstract|partial|file)[ \t]+)*(?:class|record|struct|interface)[ \t]+(?<name>\w+)", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex TypeDeclaration();
 
     public static IReadOnlyList<SourceWrite> InProductionSource { get; } = Read(RepositoryLayout.ProductionSourceFiles);

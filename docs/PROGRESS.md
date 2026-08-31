@@ -9182,3 +9182,83 @@ Carried:    **Nights two, three and four are operator actions after the evening'
             partial.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-3-short-clause-seam — the short seam made readable, and twelve minutes of CI that were one regex
+
+Not a checkpoint entry. Two rows, one reader, and a defect in the verification harness found by
+timing it. Nothing here is evidence and none of it moves 3.6.
+
+Built:      **`ShortPullbackRules.ClauseSetOf` reads a stored row's clause set back off the row.**
+            `reached-ceiling` is a three-clause disjunction whose anchored clause needs VwapEngine
+            at 4.4, so a disjunction missing a disjunct is strictly harder to pass and every short
+            row recorded before then came from a narrower detector than the document describes. The
+            record was already written on every verdict; what was missing is that nothing read it
+            back, so the fact was reachable only by matching a sentence. `CeilingClauses` names four
+            states rather than two, because "not the two-clause record" covers an unevaluated
+            verdict, the finished gate, and a verdict carrying no record at all, and only one of
+            those is the finished gate. **`Unrecorded` is named so it can be asserted absent**: a
+            row whose gate cannot be established is worse than a row under either gate.
+
+            **The date is deliberately not the discriminator.** A row recovered late, replayed, or
+            written by a checkout that had not been updated would be classified by when it was
+            written rather than by what produced it. The clause record travels with the row.
+
+Measured:   **All thirty short rows in the live store read back as `TwoOfThree`**, over 2026-08-27
+            and 2026-08-28, and no long row carries a `reached-ceiling` verdict at all. Read
+            through the discriminator rather than by matching the note's text.
+
+            **`tools/ci.ps1` green at 28 steps and 615 tests, in 147 seconds.** The previous run of
+            the same script over the same tree took about twenty minutes.
+
+            **Twelve of those twenty minutes were one regular expression.** `SourceWrites` matched
+            type declarations with `^\s*(?:public|...|\s)*\b(?:class|...)`, where `\s*` and the
+            `\s` branch of the alternation match the same whitespace, so a run of blank lines not
+            ending in a type keyword can be divided between them in exponentially many ways and the
+            engine tries them all. Comments are stripped before it runs, which is what turns a
+            comment-heavy corpus into long runs of blank lines and made the input worst-case rather
+            than unusual. **122 seconds over 97 files against 74 milliseconds for the replacement,
+            over the same input, producing the same 254 names in the same order.** It ran twice per
+            process, so `check-writer-ownership` was 5m45s for one test, `check-bar-append-only` was
+            4m03s for one test, and the suite paid it once more. Both checks together now take 244
+            milliseconds.
+
+            **It was found by timing a CI run and not by reading the pattern**, which is the part
+            worth keeping: the pattern looks ordinary, the two checks it slowed are correct, every
+            count they report is right, and nothing in the corpus was wrong. What was wrong was the
+            cost of asking, and no check measures that. The rule the fix is an instance of is that
+            no two quantifiers in one pattern may match the same character, and it is recorded at
+            the pattern rather than here.
+
+Corrected:  **3.6's row and 4.4's row both name the start of the short side's count**, say the
+            nights before it are not counted toward short's gate, and say **the long side is
+            unaffected and its count stands**, which neither said before. Both point at
+            `ShortPullbackRules.ClausesRun`, and `pinned-constants` holds the citation in both
+            directions, so the claim is checkable against the code rather than against the sentence
+            making it.
+
+            **4.4's row said the seam is "the first night without that record", and it is not.**
+            That made the absence of a record the marker, which is exactly what would make a defect
+            indistinguishable from the finished gate. The seam is the first row recording the full
+            disjunction, and 4.4 owes the seam a new record rather than none.
+
+            **Both rows say nothing is disabled, and name the three stages.** ShortSetupDetector
+            keeps flagging, ControlSampler keeps drawing, ForwardReturnFiller keeps filling, on
+            every night between now and 4.4, because short's evidence cannot be reconstructed and a
+            night not recorded is gone. "Nothing is turned off" without naming them is the sentence
+            a later session reads as permission to stop one while the gate waits.
+
+Not         **No threshold moved, no stage was disabled and no stored row was rewritten.** The
+claimed:    clause record is what the detector already wrote; nothing was backfilled with a clause
+            set it did not have, and
+            `Correcting_another_check_does_not_backfill_a_short_row_with_a_clause_set_it_did_not_have`
+            is what says so, over a real correction rather than over a scan.
+
+            **The CI figure is a measurement of this machine on this tree**, not a claim about the
+            runners. The same fix applies there and the same arithmetic should, but neither has been
+            observed.
+
+Carried:    **One scope floor added**, `"BUILD_PLAN.md, 3.6 and 4.4, the clause record the short
+            seam is read from": 1` under `pinned-constants`, for the pin holding the two rows
+            against the constant.
+
+            **This session committed code and may not sign it off.**

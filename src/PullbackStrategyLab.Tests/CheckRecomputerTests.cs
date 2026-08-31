@@ -473,6 +473,44 @@ public sealed class CheckRecomputerTests : IDisposable
     /// carries the rest through unchanged.
     /// </summary>
     [Fact]
+    public void Correcting_another_check_does_not_backfill_a_short_row_with_a_clause_set_it_did_not_have()
+    {
+        // The half of the seam that a correction could silently erase. Every short row carries the
+        // clause set its `reached-ceiling` verdict actually ran, and 3.6 counts the short side's
+        // twenty sessions from the first row that records the full disjunction. A recomputation
+        // that rewrote the whole verdict array from a fresh detector run would stamp today's
+        // clause set onto a row produced under a different one, and after 4.4 that would move the
+        // seam backwards over every row anybody happened to correct.
+        //
+        // The recomputer replaces the one verdict it was asked for and maps the rest through
+        // untouched, so the property holds by construction. This is the test that says so, and it
+        // is a short row rather than the long one beside it because the clause record only exists
+        // on this side.
+        Night(OnTheNight, "AAA", "BBB");
+        Setup(
+            "AAA",
+            SetupDirection.Short,
+            new CheckResult("moves-enough", true, 0.06m),
+            new CheckResult("reached-ceiling", true, 0.31m, ShortPullbackRules.ClausesRun),
+            new CheckResult("cluster", false, null));
+
+        Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT check_results FROM setup WHERE ticker = 'AAA'";
+        List<CheckResult> results = JsonSerializer.Deserialize<List<CheckResult>>(
+            (string)command.ExecuteScalar()!, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+        // The cluster verdict moved, which is what was asked for. The clause record did not.
+        Assert.Equal(2m, results[2].Value);
+        Assert.Equal(CeilingClauses.TwoOfThree, ShortPullbackRules.ClauseSetOf(results));
+        Assert.Equal(
+            new CheckResult("reached-ceiling", true, 0.31m, ShortPullbackRules.ClausesRun),
+            results[1]);
+    }
+
+    [Fact]
     public void Every_other_verdict_on_a_corrected_row_is_carried_through_unchanged()
     {
         Night(OnTheNight, "AAA", "BBB");
