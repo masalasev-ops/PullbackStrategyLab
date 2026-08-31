@@ -26,6 +26,28 @@ public sealed class UniverseBuilder
     public const string Name = "universe-build";
 
     /// <summary>
+    /// The delisted half of the symbol list, recorded as securities and as nothing else.
+    ///
+    /// <b>It writes `security` rows and never a `universe_member` or a `universe_snapshot` row.</b>
+    /// `security` is one row per listed instrument ever, which a delisted name is; membership is
+    /// the tradable set, which a delisted name is not. Nothing about this run makes a name
+    /// tradable, and the two tables staying apart is what keeps that true.
+    ///
+    /// <b>It exists because `daily_bar` has a foreign key to `security`.</b> The delisted backfill
+    /// buys bars for names the universe has never held, and without a row here every one of those
+    /// inserts fails on the constraint. Found by a test rather than by a night: the constraint is
+    /// real, it fires on the first bar, and it would have turned the first night of the purchase
+    /// into a run that spent its calls and stored nothing.
+    ///
+    /// <b>`first_seen` is the date this list was read, and that is weaker than it is elsewhere.</b>
+    /// For a listed name it is the date the lab first observed it trading. For a delisted one the
+    /// vendor publishes no delisting date, so the honest reading of the column is "first observed
+    /// in a symbol list", which is what SCHEMA already says it is.
+    /// see: Delisted daily history is bought so a reconstructed walk is not confined to survivors
+    /// </summary>
+    public const string DelistedName = "delisted-list";
+
+    /// <summary>
     /// How far back to walk looking for trading days. The window is twenty sessions and a
     /// month of calendar days comfortably contains that, holidays included. Walking further
     /// would cost a bulk request per extra day for nothing.
@@ -68,6 +90,79 @@ public sealed class UniverseBuilder
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
+    }
+
+    public async Task<int> RunDelistedAsync(string[] args, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        DateOnly asOf = args.Length > 0
+            ? DateOnly.ParseExact(args[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+            : _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
+
+        DelistedListResult result = await RecordDelistedAsync(asOf, cancellationToken).ConfigureAwait(false);
+
+        Console.WriteLine($"{DelistedName}: as of {asOf:yyyy-MM-dd}");
+        Console.WriteLine($"{DelistedName}: {result.Listed} delisted name(s), {result.OfTheType} of type "
+            + $"{_options.Universe.SecurityType} on {string.Join(" or ", _options.Universe.DelistedExchanges)}, "
+            + $"{result.RowsWritten} newly recorded");
+        Console.WriteLine($"{DelistedName}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
+
+        return result.Outcome == RunOutcome.Failed ? 1 : 0;
+    }
+
+    public async Task<DelistedListResult> RecordDelistedAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        // Charged against the ceiling, like the backfill it feeds and unlike the one-time
+        // whole-universe run. Five calls a night is not what needs guarding; what needs guarding
+        // is that this and the fetch behind it never run before the evening's own stages.
+        using RunScope run = _runLogger.Begin(connection, DelistedName, CallCounting.AgainstTheDailyCeiling, "security");
+
+        VendorResult<IReadOnlyList<VendorSymbol>> removed = await _vendor
+            .GetDelistedSymbolListAsync(_options.Vendor.Exchange, run, cancellationToken).ConfigureAwait(false);
+
+        if (removed.BudgetExhausted)
+        {
+            RunSummary stopped = run.Complete(RunOutcome.Partial);
+            return new DelistedListResult(asOf, 0, 0, stopped.RowsWritten, stopped.CallsUsed, RunOutcome.Partial);
+        }
+
+        IReadOnlyList<VendorSymbol> all = removed.Require();
+
+        // Type first, then venue. Both are bounds on a one-time purchase priced per name, and the
+        // venue one is the larger of the two: the type filter takes 59,826 to 32,851 and the venue
+        // filter takes 32,851 to about 15,983, which is four nights of the ceiling.
+        var venues = new HashSet<string>(_options.Universe.DelistedExchanges, StringComparer.OrdinalIgnoreCase);
+
+        VendorSymbol[] wanted = [.. all
+            .Where(sym => !string.IsNullOrWhiteSpace(sym.Ticker))
+            .Where(sym => string.Equals(sym.Type, _options.Universe.SecurityType, StringComparison.OrdinalIgnoreCase))
+            .Where(sym => venues.Contains(sym.Exchange))
+            .GroupBy(sym => sym.Ticker, StringComparer.Ordinal)
+            .Select(g => g.First())
+            .OrderBy(sym => sym.Ticker, StringComparer.Ordinal)];
+
+        using (SqliteTransaction transaction = connection.BeginTransaction())
+        {
+            foreach (VendorSymbol symbol in wanted)
+            {
+                // The same insert the listed path makes, doing nothing on conflict, so a name
+                // that was delisted and relisted keeps the earlier row rather than acquiring a
+                // later first_seen from this run.
+                UpsertSecurity(connection, transaction, symbol, asOf);
+            }
+
+            transaction.Commit();
+        }
+
+        RunSummary summary = run.Complete(RunOutcome.Clean);
+
+        return new DelistedListResult(
+            asOf, all.Count, wanted.Length, summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
     }
 
     public async Task<UniverseBuildResult> BuildAsync(DateOnly asOf, CancellationToken cancellationToken = default)
@@ -379,6 +474,19 @@ public sealed record UniverseBuildResult(
     int Survivors,
     int Added,
     int Removed,
+    int RowsWritten,
+    int CallsUsed,
+    RunOutcome Outcome);
+
+/// <summary>
+/// One reading of the delisted symbol list. <c>Listed</c> is the whole list as the vendor
+/// published it and <c>OfTheType</c> is what survived the security-type filter, reported
+/// separately because the gap between them is what the filter saved at one call a name.
+/// </summary>
+public sealed record DelistedListResult(
+    DateOnly AsOf,
+    int Listed,
+    int OfTheType,
     int RowsWritten,
     int CallsUsed,
     RunOutcome Outcome);

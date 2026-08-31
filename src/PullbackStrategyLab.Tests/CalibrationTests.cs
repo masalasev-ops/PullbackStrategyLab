@@ -142,6 +142,39 @@ public sealed class CalibrationTests
     }
 
     [Fact]
+    public void Every_short_row_says_which_clauses_of_reached_ceiling_actually_ran()
+    {
+        // The seam 3.6 counts short's twenty sessions from, held in the data rather than in a
+        // sentence. `reached-ceiling` is a three-clause disjunction and the anchored clause needs
+        // VwapEngine, which arrives at 4.4, so every short row recorded before then passed a gate
+        // that admits strictly fewer names than the document describes. A passing verdict looks
+        // identical either way, so the row says which it was, and the first short row without this
+        // record is the first night of the short side's evidence.
+        using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
+        replay.Run();
+
+        using SqliteConnection connection = replay.OpenStore();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT check_results FROM calibration_setup WHERE direction = @direction";
+        command.Parameters.AddWithValue("@direction", SetupDirection.Short);
+
+        int rows = 0;
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            rows++;
+            Assert.Contains(ShortPullbackRules.ClausesRun, reader.GetString(0), StringComparison.Ordinal);
+        }
+
+        Assert.True(rows > 0, "the calibration run wrote no short row, so nothing here was asserted.");
+
+        // And the record has to name the checkpoint that ends it, on the same grounds an
+        // out-of-scope coverage item does: a narrowing with no end reads as permanent.
+        Assert.Contains("4.4", ShortPullbackRules.ClausesRun, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_forward_night_still_fails_a_name_with_no_resolved_capitalisation()
     {
         // The exemption's other side, and the one that would be silent. A default that leaked into

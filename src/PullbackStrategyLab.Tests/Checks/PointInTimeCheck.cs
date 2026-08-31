@@ -181,6 +181,18 @@ public sealed class PointInTimeCheck
             "NamesFor asks which signals are already frozen for one setup, which is what makes a rerun write "
             + "nothing. It is a question about what is in the store, it takes no date because it is not answering "
             + "for one, and bounding it would let a rerun write a second copy of a signal it had already frozen."),
+        new("HistoryBackfill.cs", "LEFT JOIN universe_member m ON m.ticker = s.ticker",
+            "ReadDelistedSecurities asks which securities the universe has never held, so the delisted fetch "
+            + "knows what it may buy. It is a question about the store's contents rather than about a night: "
+            + "sector_resolved_at is a lazily resolved attribute of the instrument and has nothing to do with "
+            + "whether the name was ever a member, and bounding it would make every delisted name invisible "
+            + "until something resolved its sector, which for a delisted name nothing ever will."),
+        new("HistoryBackfill.cs", "SELECT DISTINCT ticker FROM history_refetch;",
+            "ReadRefetchedTickers asks which names a backfill of any mode has already taken, which is what lets "
+            + "a purchase spread across nights ask for each name once. Bounding it on the as-of would hide every "
+            + "refetch made after that date and buy the same history again at one call a name, which is the "
+            + "opposite of the property the read exists for. The other statement in this file that answers for a "
+            + "night is DailyBarReader.Latest, which takes the observed instant and bounds on it."),
     ];
 
     /// <summary>A statement exempted by a fragment of its own text, with the reason.</summary>

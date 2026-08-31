@@ -27,6 +27,10 @@ One row per listed instrument, ever. Grain: ticker.
 
 Insert UniverseBuilder · Update SectorResolver (`sector`, `industry`, `market_cap`, `sector_resolved_at` only)
 
+**A row here says the instrument existed, never that it trades.** UniverseBuilder writes one for every survivor of the nightly screen, and one for every name the exchange has delisted, which is the second mode of the same stage and the same insert. Membership is `universe_member` and is written from the screen alone, so a delisted name has a row here and none there, for ever. That gap is exactly what the delisted backfill selects on, and `daily_bar`'s foreign key to this table is why the two verbs are ordered rather than independent (see: Delisted daily history is bought so a reconstructed walk is not confined to survivors).
+
+**`first_seen` is weaker for a delisted name than for a listed one**, and the column's own note is the honest reading: the date it was first observed in a symbol list. For a survivor that is the night the lab first saw it trading. For a delisted name the vendor publishes no delisting date, so it is the night the delisted list was first read, which is a fact about the lab rather than about the instrument.
+
 ### `universe_member`
 Current tradable set. Grain: ticker.
 
@@ -105,6 +109,8 @@ Insert DailyBarIngestor
 **The row is written even when nothing changed.** The fact anybody downstream needs is that the series was looked at, not that it moved, and those are different facts (see: A rebuild is satisfied by a recorded refetch, not by inferring one from what changed).
 
 **This is what satisfies a rebuild demand.** IndicatorEngine reads the latest refetch of a ticker at or before the as-of date and treats every demand observed at or before it as accounted for.
+
+**And it is what the delisted purchase resumes from.** A name is finished when it has a row here, including a name whose history came back empty, so a run spread across nights asks for each name once and never again. It is deliberately not a second list of what is done: a copy can disagree with what it copies, and this is the record the fetch itself writes (see: Delisted daily history is bought so a reconstructed walk is not confined to survivors).
 
 ### `index_bar`
 Grain: symbol + date + `observed_at`. SPY, QQQ, IWM. Same shape and the same terms as `daily_bar`: **append-only, never deleted, never updated**, a correction arriving as a new row with a later `observed_at`, and reads taking the latest observation at or before the as-of date.

@@ -9025,3 +9025,102 @@ Carried:    **The tenth operator question is closed**, naming the decision above
             day.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-4-delisted-history — the delisted purchase built, and three rows brought in line with what is true
+
+Not a checkpoint entry. It executes the operator's rulings of 2026-08-31 and buys nothing yet: the
+mechanism is built, tested and merged, and the first night's fetch is a separate act with its own
+record. Nothing here is evidence and none of it moves 3.6.
+
+Built:      **The delisted purchase, in two verbs, because the store's own constraint says so.**
+            `delisted-list` reads the vendor's delisted symbol list and records the names as
+            securities and as no membership at all; `backfill --delisted` buys their daily history.
+            `daily_bar` has a foreign key to `security`, `security` is written by UniverseBuilder
+            and `daily_bar` by DailyBarIngestor, so one stage doing both would be a second writer of
+            a table it does not own. Found by a test rather than by a night: the first run of a
+            single-verb design failed the constraint on its first bar, which on a real night would
+            have spent its calls and stored none of what it bought.
+            (see: Delisted daily history is bought so a reconstructed walk is not confined to survivors)
+
+            **The fetch takes its list from the store rather than from the endpoint**, and that is a
+            safety property rather than a saved call. The set it can buy is then the same set the
+            store can hold: a night where the lister did not run buys nothing and reports nought
+            selected, instead of failing one insert at a time. A delisted name is a security the
+            universe has never held, which is exact because the listed path writes a security row
+            only for a screen survivor and every survivor is offered membership, so a departed
+            member keeps its row with a removal date and is excluded.
+            `A_name_the_universe_once_held_is_not_bought_as_a_delisted_one` is what holds that,
+            because it is a property of the other stage's writes rather than of this one's.
+
+            **It is charged against the daily ceiling although it is one-time work**, which is what
+            spreads it across nights. It takes what the evening's stages left, stops on
+            `BudgetExhausted` rather than overrunning, and the next night resumes from
+            `history_refetch`, which already carries a row per ticker per refetch including for a
+            name whose history came back empty. Nothing keeps a second list of what is done.
+
+            **Two bounds, both configuration, and the venue one decides the size.** The type filter
+            is the nightly universe's own. `Universe.DelistedExchanges` defaults to NASDAQ and NYSE.
+
+Measured:   **The purchase is 15,983 names and about 3.8 nights, and both bounds were measured
+            before anything was bought.** From the delisted list read on 2026-08-30: 59,826 rows,
+            32,851 common stock, 15,983 of those on NASDAQ or NYSE, at about 4,197 spare calls a
+            night against the 5,000 ceiling and one call per ticker regardless of depth. Covering
+            every venue is about 7.8 nights, and the extra four buy the delisted history of venues
+            the current universe holds 30 names on out of 2,005.
+
+            **Every short row in the live store already says which clauses of `reached-ceiling`
+            ran.** Thirty short rows over 2026-08-27 and 2026-08-28, all thirty carrying
+            "21-day and 50-day only; the anchored clause arrives at 4.4". The seam the short side's
+            count starts from is therefore in the data and was already there; what was missing is
+            that nothing named it as the seam and no test held it.
+
+            **`tools/ci.ps1` green at 28 steps and 611 tests**, up from 600. Ten of the eleven are
+            the delisted purchase and its bounds, and one is the clause record.
+
+Corrected:  **3.6's row fires per direction, as the decision it cites already said.** The gate holds
+            for the direction concerned and band 1 is never pooled, so a long-side answer licenses
+            nothing on the short side. The row read as four panels all clearing. One gate read
+            twice, not two gates: no checkpoint is added and no threshold moves.
+            (see: 3.6 gates what may be admitted, not what may be built)
+            (see: Long and short are never pooled into one figure)
+
+            **Short's twenty sessions start at 4.4, named on both rows.** `reached-ceiling` is a
+            three-clause disjunction running two until VwapEngine computes the anchored average, so
+            a short night recorded now comes from a gate narrower than the document describes.
+            Nothing is turned off: short keeps flagging and recording, because a night not recorded
+            cannot be reconstructed. `Every_short_row_says_which_clauses_of_reached_ceiling_actually_ran`
+            holds the record and requires it to name the checkpoint that ends it.
+
+            **The reach obligation is restated rather than closed.** It described a draw that was
+            reversed on 2026-08-31, so its subject is now the within-night restriction. The gap did
+            not change with the subject: the fixture holds one market day, both designs produce
+            `sessionsApart` nought over it, and what is missing is regression detection over the
+            replayed pipeline rather than verification. Same price, same closing condition.
+
+            **5.3 records what its harness can never screen**, and its acceptance test is scoped to
+            selection. Nothing screens an execution variant instead.
+
+            **The ten obligations due before the baseline freezes carry that reason on their own
+            rows**, and 5.1's done condition puts their discharge first.
+
+Not         **No history has been bought and no vendor call has been spent by this work.** The two
+claimed:    verbs have run against fake vendors and authored stores only. What the first night
+            actually costs and finds is not knowable from here, because the list carries no
+            delisting date, so 15,983 is an upper bound on the names worth fetching and a lower
+            bound on nothing.
+
+            **This closes one of the three reconstructions and not the other two.** The
+            market-capitalisation clause stays exempt and is now rowed at 5.3 with its narrowing
+            criterion; restated bars stay restated; no minute bars exist for any night before
+            capture begins, at any price.
+
+Carried:    **One row added, at 5.3**: the market-capitalisation sweep, scoped and deliberately not
+            started, with the narrowing criterion named as the short gate set after 4.4 and the
+            reason it cannot be today's. The table is fifty-eight rows.
+
+            **`reached-ceiling` records that a third clause is coming and nothing yet fails when it
+            arrives.** The test added here asserts the record is present on every short row and that
+            it names 4.4. When 4.4 lands the record has to change, and that test then fails, which
+            is the intended way round.
+
+            **This session committed code and may not sign it off.**

@@ -230,6 +230,267 @@ public sealed class DailyBarIngestorTests : IDisposable
         Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
     }
 
+    // ---- the delisted purchase -----------------------------------------------------------
+    //
+    // The survivorship hole, bought in two verbs because the store's own constraint says so:
+    // `daily_bar` references `security`, `security` is written by the universe builder, and
+    // `daily_bar` by the ingestor. So `delisted-list` records the names and `backfill --delisted`
+    // buys their history, and the second reads what the first wrote.
+    //
+    // Four properties make it safe to leave running across nights: it buys the names the exchange
+    // removed rather than the ones it still lists, it never buys a name the universe has held, it
+    // stops on the ceiling instead of spending the evening's budget, and it resumes from the
+    // record the fetch itself writes rather than from a copy of it.
+    // see: Delisted daily history is bought so a reconstructed walk is not confined to survivors
+
+    [Fact]
+    public async Task The_delisted_list_records_securities_and_no_membership()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE").Delisted("LEFT");
+
+        DelistedListResult result = await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        Assert.Equal(RunOutcome.Clean, result.Outcome);
+        Assert.Equal(2, result.Listed);
+        Assert.Equal(2, result.OfTheType);
+        Assert.Equal(1, vendor.DelistedListRequests);
+        Assert.Equal(0, vendor.SymbolListRequests);
+
+        // Recorded as instruments that existed, and as nothing that trades. The two tables
+        // staying apart is the whole of what stops a delisted name reaching a plan.
+        Assert.Equal(["AAA", "BBB", "GONE", "LEFT"], StoredSecurities());
+        Assert.Equal(["AAA", "BBB"], StoredMembers());
+    }
+
+    [Fact]
+    public async Task Only_the_configured_security_type_is_recorded()
+    {
+        // The list carries funds, warrants and preferred shares, and the reconstructed walk has
+        // no use for any of them. Filtered here rather than at the fetch, because a name with no
+        // security row cannot have bars stored at all and so can never cost a call.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE").Delisted("FUND", type: "ETF").Delisted("PREF", type: "PREFERRED STOCK");
+
+        DelistedListResult result = await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        Assert.Equal(3, result.Listed);
+        Assert.Equal(1, result.OfTheType);
+        Assert.Equal(["AAA", "BBB", "GONE"], StoredSecurities());
+    }
+
+    [Fact]
+    public async Task A_venue_the_purchase_does_not_cover_is_not_recorded()
+    {
+        // The larger of the two bounds on the purchase, and the one that decides how many nights
+        // it takes. The delisted list holds 32,851 common stocks and 15,983 of them are on the two
+        // venues the universe is 98% drawn from; the rest are four more nights of the ceiling for
+        // venues the universe holds 30 names on out of 2,005.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE").Delisted("PINKY", exchange: "PINK");
+
+        DelistedListResult result = await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        Assert.Equal(2, result.Listed);
+        Assert.Equal(1, result.OfTheType);
+        Assert.Equal(["AAA", "BBB", "GONE"], StoredSecurities());
+    }
+
+    [Fact]
+    public async Task The_delisted_run_buys_the_history_of_the_names_the_list_recorded()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE").Delisted("LEFT");
+        vendor.Bar(BarDate, "GONE", close: 10m, volume: 1_000);
+        vendor.Bar(BarDate, "LEFT", close: 20m, volume: 2_000);
+        await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        BackfillResult result = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(RunOutcome.Clean, result.Outcome);
+        Assert.Equal(2, result.Candidates);
+        Assert.Equal(0, result.AlreadyFetched);
+        Assert.Equal(2, result.Inserted);
+        Assert.Equal(["GONE", "LEFT"], vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task A_name_the_universe_once_held_is_not_bought_as_a_delisted_one()
+    {
+        // What the selection actually rests on, and it is a property of the other stage's
+        // writes rather than of this one's. A departed member keeps its membership row with a
+        // removal date, so it is excluded here; a name only the delisted list ever saw has no
+        // membership row at all. If the universe builder ever wrote a security row for a name
+        // it did not offer membership to, this is the test that would fail.
+        var vendor = new FakeMarketDataVendor();
+        Depart("BBB");
+
+        BackfillResult result = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(0, result.Candidates);
+        Assert.Empty(vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task A_night_where_the_list_did_not_run_buys_nothing_rather_than_failing_on_every_insert()
+    {
+        // The reason the selection is read from the store rather than from the vendor. Asking
+        // the endpoint would name the same tickers, and every bar bought for them would then
+        // fail the foreign key to `security`: a night that spent its calls and stored none of
+        // what it bought. Reading the store makes the set it can fetch the set it can hold.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE");
+        vendor.Bar(BarDate, "GONE", close: 10m, volume: 1_000);
+
+        BackfillResult result = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(RunOutcome.Clean, result.Outcome);
+        Assert.Equal(0, result.Candidates);
+        Assert.Empty(vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task A_name_an_earlier_night_fetched_is_not_bought_a_second_time()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE").Delisted("LEFT");
+        vendor.Bar(BarDate, "GONE", close: 10m, volume: 1_000);
+        vendor.Bar(BarDate, "LEFT", close: 20m, volume: 2_000);
+        await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        await Ingestor(vendor).BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+        vendor.HistoriesRequested.Clear();
+        _clock.Advance(TimeSpan.FromDays(1));
+
+        BackfillResult second = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(2, second.Candidates);
+        Assert.Equal(2, second.AlreadyFetched);
+        Assert.Equal(0, second.Selected);
+        Assert.Empty(vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task A_delisted_name_whose_history_comes_back_empty_is_not_asked_for_again()
+    {
+        // The case a "which tickers have bars" resume would get wrong every night for ever. A
+        // name delisted before the backfill window returns nothing, and nothing is the answer
+        // rather than a failure, so the row `history_refetch` carries is what stops the call
+        // repeating at one call a night.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("OLD");
+        await Builder(vendor).RecordDelistedAsync(BarDate);
+
+        BackfillResult first = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(1, first.Fetched);
+        Assert.Equal(0, first.Inserted);
+        Assert.Equal(["OLD"], vendor.HistoriesRequested);
+
+        vendor.HistoriesRequested.Clear();
+        _clock.Advance(TimeSpan.FromDays(1));
+        BackfillResult second = await Ingestor(vendor)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(1, second.AlreadyFetched);
+        Assert.Empty(vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task The_run_stops_on_the_ceiling_and_the_next_night_carries_on_from_there()
+    {
+        // What spreads the purchase over nights rather than over the evening's budget. Two
+        // calls are left on the first night, so the third name is refused, the run is partial,
+        // and the night after asks for exactly that name.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("AAG").Delisted("BBG").Delisted("CCG");
+        vendor.Bar(BarDate, "AAG", close: 10m, volume: 1_000);
+        vendor.Bar(BarDate, "BBG", close: 20m, volume: 2_000);
+        vendor.Bar(BarDate, "CCG", close: 30m, volume: 3_000);
+        await Builder(vendor).RecordDelistedAsync(BarDate);
+        _clock.Advance(TimeSpan.FromDays(1));
+
+        BackfillResult first = await Ingestor(vendor, dailyCallCeiling: 2)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(RunOutcome.Partial, first.Outcome);
+        Assert.Equal(3, first.Selected);
+        Assert.Equal(2, first.Fetched);
+        Assert.Equal(["AAG", "BBG"], vendor.HistoriesRequested);
+
+        vendor.HistoriesRequested.Clear();
+        _clock.Advance(TimeSpan.FromDays(1));
+
+        BackfillResult second = await Ingestor(vendor, dailyCallCeiling: 2)
+            .BackfillAsync(BackfillSelection.DelistedNames, [], BarDate);
+
+        Assert.Equal(RunOutcome.Clean, second.Outcome);
+        Assert.Equal(2, second.AlreadyFetched);
+        Assert.Equal(["CCG"], vendor.HistoriesRequested);
+    }
+
+    [Fact]
+    public async Task A_night_with_nothing_left_records_no_name_and_says_the_run_was_partial()
+    {
+        // The list is the lister's only request, so an exhausted budget stops it before it knows
+        // what it would have recorded. Partial rather than clean: no name was refused, and the
+        // run did not cover what it was asked for either.
+        var vendor = new FakeMarketDataVendor();
+        vendor.Delisted("GONE");
+
+        DelistedListResult result = await Builder(vendor, dailyCallCeiling: 2).RecordDelistedAsync(BarDate);
+
+        Assert.Equal(RunOutcome.Partial, result.Outcome);
+        Assert.Equal(0, result.Listed);
+        Assert.Equal(["AAA", "BBB"], StoredSecurities());
+    }
+
+    private UniverseBuilder Builder(FakeMarketDataVendor vendor, int dailyCallCeiling = 5000)
+    {
+        var options = Options.Create(new PullbackStrategyLabOptions
+        {
+            DataRoot = _root.Path,
+            DailyCallCeiling = dailyCallCeiling,
+        });
+
+        return new UniverseBuilder(vendor, _connections, new RunLogger(_clock, options), _clock, options);
+    }
+
+    private void Depart(string ticker)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "UPDATE universe_member SET removed_on = '2026-08-24' WHERE ticker = @t;";
+        command.Parameters.AddWithValue("@t", ticker);
+        command.ExecuteNonQuery();
+    }
+
+    private string[] StoredSecurities() => Column("SELECT ticker FROM security ORDER BY ticker;");
+
+    private string[] StoredMembers() =>
+        Column("SELECT ticker FROM universe_member WHERE removed_on IS NULL ORDER BY ticker;");
+
+    private string[] Column(string sql)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        var values = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            values.Add(reader.GetString(0));
+        }
+
+        return [.. values];
+    }
+
     private void Universe(params string[] tickers)
     {
         using SqliteConnection connection = _connections.OpenWrite();
