@@ -20,6 +20,15 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// uptrends.
 /// see: Matched control populations are drawn nightly, loose and tight
 ///
+/// <b>Both sets draw from the setup's own session, and the tight set matches on the trend ladder.</b>
+/// The market mood is a property of the session, so a within-night pool holds it fixed at the
+/// subject's own value on every row: it is controlled exactly, by construction, and there is nothing
+/// left for an exclusion to do. For one day, from 2026-08-30 to 2026-08-31, the tight set reached
+/// into other sessions sharing the mood label so that the dimension would exclude rows. What that
+/// cost was the cancellation the paired difference exists to produce, measured at about six sevenths
+/// of the tight comparison's effective sample, and the ruling was reversed.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
+///
 /// <b>At 18:26, before the cap at 18:28.</b> Controls answer for the flagged population rather than
 /// for the sixty that survived truncation, and drawing after the cap would compare the kept setups
 /// against controls for a different question.
@@ -73,27 +82,25 @@ public sealed class ControlSampler
     {
         using SqliteConnection connection = _connections.OpenWrite();
         var source = new StoredFigures(connection);
-        return Draw(connection, source, asOf, SubjectTables.Evidence, reach: null);
+        return Draw(connection, source, asOf, SubjectTables.Evidence);
     }
 
     /// <summary>
     /// The same draw over either population, on a connection the caller owns.
     ///
-    /// <b><paramref name="reach"/> is the sessions a tight draw may reach across, and it is the
-    /// caller's rather than this stage's.</b> Null means every session the seam can answer for,
-    /// which is what a forward night has always done. A reconstructed read passes the range it is
-    /// computed over, because that range is the population its figures are stated against and not a
-    /// lookback. **No bound is added here**: this stage's own source says the fix for its cost is a
-    /// decision about how far back a control may be drawn from rather than a constant added
-    /// quietly, and that decision has not been taken.
+    /// <b>One pool serves both sets, and that is the whole of the reversal.</b> The draw took a
+    /// `reach` argument for one day, naming the sessions a tight draw could cross into, and a
+    /// reconstructed read had to pass the range it was computed over so its figures kept their
+    /// population. Neither exists now: a control comes from the subject's own session on both sets,
+    /// so there is no range to state and no lookback to bound.
+    /// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
     /// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
     /// </summary>
     public ControlResult Draw(
         SqliteConnection connection,
         ISessionFigures source,
         DateOnly asOf,
-        SubjectTables tables,
-        IReadOnlySet<DateOnly>? reach)
+        SubjectTables tables)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(source);
@@ -108,8 +115,6 @@ public sealed class ControlSampler
             : SetupReader.ReadCalibration(connection, asOf);
         var flagged = new HashSet<string>(setups.Select(s => s.Ticker), StringComparer.Ordinal);
         IReadOnlyList<ControlMatching.Candidate> pool = Pool(source, connection, asOf, flagged, _options.SessionZone);
-        IReadOnlyList<ControlMatching.Candidate> moodPool =
-            MoodPool(source, connection, asOf, _options.SessionZone, tables, reach);
         IReadOnlyDictionary<string, ControlMatching.Candidate> figures =
             source.Candidates(asOf, _options.SessionZone);
 
@@ -131,15 +136,13 @@ public sealed class ControlSampler
 
                 foreach ((string set, bool isTight) in new[] { ("loose", false), ("tight", true) })
                 {
-                    // Two pools, and which one a set draws from is the whole of the ruling. The
-                    // loose set matches on liquidity and daily range, both properties of the name
-                    // rather than of the session, so it has nothing to gain from reaching across
-                    // nights and would pay the same cost for it. Keeping one set within the night
-                    // also keeps a within-night comparison on the scoreboard beside the
-                    // across-session one, which is what makes the cost readable rather than assumed.
-                    // see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+                    // One pool, the night's own, for both sets. What separates them is which
+                    // dimensions `Nearest` matches on rather than which rows it is handed: the
+                    // trend ladder varies across a night's pool and is what makes the tight set
+                    // tighter, and the market mood does not vary, which is what makes it controlled.
+                    // see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
                     IReadOnlyList<ControlMatching.Draw> drawn = ControlMatching.Nearest(
-                        subject, isTight ? moodPool : pool, MeasurementParameters.ControlsPerSet, isTight);
+                        subject, pool, MeasurementParameters.ControlsPerSet, isTight);
 
                     if (drawn.Count < MeasurementParameters.ControlsPerSet)
                     {
@@ -184,136 +187,6 @@ public sealed class ControlSampler
         ISessionFigures source, SqliteConnection connection, DateOnly asOf, IReadOnlySet<string> flagged,
         string sessionZone) =>
         [.. source.Candidates(asOf, sessionZone).Values.Where(c => !flagged.Contains(c.Ticker))];
-
-    /// <summary>
-    /// The candidates the tight set may draw from: every session at or before the as-of that
-    /// carries the same market mood, and on each of those sessions the names that cleared the
-    /// liquidity floor and were not flagged on that session.
-    ///
-    /// <b>This is what makes the mood a dimension rather than a formality.</b> Within one night the
-    /// mood is a property of the session, so matching on it excludes nothing; the tight set was
-    /// declared to match on the trend ladder and the mood and had only ever matched on the ladder.
-    /// The operator ruled the dimension is kept and made real.
-    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
-    ///
-    /// <b>Not flagged is decided on the candidate's own session, not on tonight's.</b> A control that
-    /// was itself a setup is not a control, and "was it flagged" is a question about the night it is
-    /// drawn from. Excluding tonight's flagged names from a pool spanning two years would exclude
-    /// the wrong rows in both directions: it would drop names that were ordinary on the session
-    /// being drawn from, and admit names that were flagged on it.
-    ///
-    /// <b>Bounded at the as-of and per session at that session's own end of day.</b> Every session in
-    /// the pool is at or before the setup's, so nothing here can see a bar the lab could not have
-    /// had; and each session's figures are read on the same terms the loose pool reads tonight's,
-    /// which is the end of that session's own day rather than the run instant, because TierClassifier
-    /// writes the ladder grade as a later observation of the same session.
-    /// see: A reader's signature does not establish point-in-time; the query does
-    ///
-    /// <b>It grows with the record and is not bounded by a lookback.</b> A lookback would be a new
-    /// authored number and the decision names none; the ruling says any session sharing the mood.
-    /// The pool is built once per night rather than per setup, the arithmetic is in memory and
-    /// costs no vendor call, and the live store gains one session a night. If this becomes the
-    /// stage's cost rather than a rounding, the fix is a decision about how far back a control may
-    /// be drawn from, not a constant quietly added here.
-    /// </summary>
-    private static IReadOnlyList<ControlMatching.Candidate> MoodPool(
-        ISessionFigures source, SqliteConnection connection, DateOnly asOf, string sessionZone,
-        SubjectTables tables, IReadOnlySet<DateOnly>? reach)
-    {
-        if (source.Mood(asOf) is not string mood)
-        {
-            // The night has no label, so no session can be said to share it. An unlabelled night
-            // draws no tight controls rather than drawing from every session: matching on an unknown
-            // is the comparison true by construction that this whole change exists to remove.
-            return [];
-        }
-
-        var sessions = new List<DateOnly>();
-
-        // <b>Which sessions share the mood is the seam's answer, not `regime_daily`'s.</b> A forward
-        // night has a stored label per session and the query below is what reads them. A
-        // reconstructed session has none and may not be given one, so its mood lives only in the
-        // figures the walk computed: reading the table there returns the two forward nights the lab
-        // has actually run, which share no mood with a 2026-05 session and produce an empty pool.
-        //
-        // That is what it did. The first 60-session read drew 46,295 loose controls and **nought**
-        // tight ones, and every tight panel came back withheld at nought nights: not a wrong
-        // interval, no interval, on the half the whole ruling was about.
-        if (reach is not null)
-        {
-            foreach (DateOnly session in reach.Where(d => d <= asOf).OrderBy(d => d))
-            {
-                if (string.Equals(source.Mood(session), mood, StringComparison.Ordinal))
-                {
-                    sessions.Add(session);
-                }
-            }
-        }
-        else
-        {
-            using SqliteCommand command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT as_of FROM regime_daily
-                 WHERE as_of <= @as_of AND label = @label
-                 ORDER BY as_of
-                """;
-            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-            command.Parameters.AddWithValue("@label", mood);
-
-            using SqliteDataReader reader = command.ExecuteReader();
-
-            while (reader.Read())
-            {
-                sessions.Add(StoreText.StorageTextToDate(reader.GetString(0)));
-            }
-        }
-
-        var pool = new List<ControlMatching.Candidate>();
-
-        foreach (DateOnly session in sessions)
-        {
-            // The caller's range, where it gave one. A session outside it is not a session this
-            // read is computed over, so a control drawn from it would be a row from a population
-            // the figures do not name.
-            if (reach is not null && !reach.Contains(session))
-            {
-                continue;
-            }
-
-            IReadOnlySet<string> flaggedThen = FlaggedOn(connection, session, tables);
-
-            foreach (ControlMatching.Candidate candidate in
-                source.Candidates(session, sessionZone).Values)
-            {
-                if (!flaggedThen.Contains(candidate.Ticker))
-                {
-                    pool.Add(candidate);
-                }
-            }
-        }
-
-        return pool;
-    }
-
-    /// <summary>The names either detector flagged on one session, which may not be controls for it.</summary>
-    private static IReadOnlySet<string> FlaggedOn(
-        SqliteConnection connection, DateOnly session, SubjectTables tables)
-    {
-        var flagged = new HashSet<string>(StringComparer.Ordinal);
-
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = $"SELECT ticker FROM {tables.Setup} WHERE as_of = @as_of";
-        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(session));
-
-        using SqliteDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            flagged.Add(reader.GetString(0));
-        }
-
-        return flagged;
-    }
 
     private static int Insert(
         SqliteConnection connection,

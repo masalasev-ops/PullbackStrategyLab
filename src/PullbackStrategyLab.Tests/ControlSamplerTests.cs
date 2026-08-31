@@ -12,30 +12,30 @@ using Xunit;
 namespace PullbackStrategyLab.Tests;
 
 /// <summary>
-/// The tight control set reaching across sessions, and the loose set staying within the night.
+/// Both control sets drawn within the night, and the trend ladder as the only thing separating them.
 ///
-/// <b>The dimension was declared and never implemented, and it could not be.</b> The tight set is
-/// declared to match on the trend ladder <b>and</b> the market mood. The mood is a property of the
-/// session, so within one night every candidate carries the same one and matching on it excludes
-/// nothing; the draw left it out rather than performing a comparison true by construction, on the
-/// grounds that a dimension which always matches reads in the record as a dimension that was
-/// checked. The choice was to make it real or to drop it, and the operator ruled on 2026-08-30 that
-/// it is kept: the tight set draws from any session sharing the mood, the loose set stays within
-/// the night.
-/// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+/// <b>The tight set reached across sessions for one day and this file is what held it.</b> The
+/// market mood is a property of the session, so within one night every candidate carries the
+/// subject's own and an equality clause on it excludes nobody. The ruling of 2026-08-30 read that
+/// invariance as a dimension that was never checked and made the mood vary by letting the tight set
+/// draw from other sessions sharing the label. The ruling of 2026-08-31 reads the same invariance
+/// as a perfect control and reverses the reach.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
 ///
-/// <b>What the ruling costs is asserted here as well as stated.</b> A setup and its tight controls
-/// may now come from different sessions, so the market factor common to one night no longer cancels
-/// between them. That is why the session a control was drawn from is recorded on its row and why
-/// its outcome is measured from that session: a tight control drawn from an earlier night whose
-/// ten-day return was measured from the setup's night would be a real return of a real stock over
-/// the wrong window, which is not a shape anything downstream could see.
+/// <b>What the reach cost is the cancellation the pairing exists to produce, and it was measured.</b>
+/// A paired difference removes the market factor common to a night by construction, which is the
+/// only reason a night is worth more than one observation. A control from another session does not
+/// share the subject's night, so its side of the difference carries a different market move: over
+/// identical rows and nights the tight comparison came back worth about a seventh of the loose one.
+///
+/// <b>The store below is seeded so a reach would be visible.</b> The earlier same-mood session holds
+/// names nearer the subject on both distances than anything on the night, so a draw that could leave
+/// the night would take them first. Nothing here passes because there was nowhere else to go.
 /// </summary>
 public sealed class ControlSamplerTests : IDisposable
 {
     private static readonly DateOnly Tonight = new(2026, 8, 27);
     private static readonly DateOnly SameMoodEarlier = new(2026, 8, 25);
-    private static readonly DateOnly OtherMoodEarlier = new(2026, 8, 26);
     private static readonly DateOnly After = new(2026, 8, 28);
 
     private const string Observed = "2026-01-01T00:00:00.000Z";
@@ -53,147 +53,143 @@ public sealed class ControlSamplerTests : IDisposable
     public void Dispose() => _root.Dispose();
 
     /// <summary>
-    /// The whole ruling in one run: the tight set reaches an earlier session sharing the mood, the
-    /// loose set does not leave the night, and every drawn row says which session it came from.
+    /// Every tight control is drawn from the subject's own session, and `control_as_of` says so on
+    /// every row.
     ///
-    /// <b>The pool is built so the answer cannot come out right by accident.</b> Tonight carries one
-    /// unflagged name, so a tight set confined to the night could draw at most one control. The
-    /// earlier same-mood session carries four more. Five is therefore reachable only by reaching,
-    /// and one is what the old draw would have produced.
+    /// <b>The invariant the column now carries, asserted rather than inferred.</b> `control_as_of`
+    /// arrived with migration 035 to record the session a control's outcome is measured from, which
+    /// stopped being the setup's when the reach landed and is the setup's again. The column stays,
+    /// because a fact worth stating is better stated than derived from a join, and because it is
+    /// what a returning reach would need. A column that is always equal to something else is one
+    /// nobody checks, so this checks it.
     /// </summary>
     [Fact]
-    public void The_tight_set_draws_from_an_earlier_session_sharing_the_mood()
+    public void A_tight_control_is_drawn_from_the_subjects_own_session()
     {
-        SeedRuling();
+        SeedNight();
 
         Sampler().Draw(Tonight);
 
         IReadOnlyList<StoredControl> tight = Controls("tight");
-        IReadOnlyList<StoredControl> loose = Controls("loose");
 
         Assert.Equal(MeasurementParameters.ControlsPerSet, tight.Count);
-        Assert.Contains(tight, c => c.AsOf == SameMoodEarlier);
+        Assert.All(tight, c => Assert.Equal(Tonight, c.AsOf));
 
-        // The loose set stays within the night, on every row without exception. It matches on
-        // liquidity and daily range, both properties of the name rather than of the session, so it
-        // has nothing to gain from reaching and would pay the same cost for it.
+        // The names the earlier session holds are nearer the subject than any of tonight's, so this
+        // is a set that a reach would have filled differently rather than one it could not reach.
+        Assert.DoesNotContain(tight, c => c.Ticker.StartsWith("EARLY", StringComparison.Ordinal));
+    }
+
+    /// <summary>The loose set is unchanged and stays within the night, as it always has.</summary>
+    [Fact]
+    public void A_loose_control_is_drawn_from_the_subjects_own_session()
+    {
+        SeedNight();
+
+        Sampler().Draw(Tonight);
+
+        IReadOnlyList<StoredControl> loose = Controls("loose");
+
         Assert.NotEmpty(loose);
         Assert.All(loose, c => Assert.Equal(Tonight, c.AsOf));
     }
 
     /// <summary>
-    /// A session carrying a different mood contributes nothing to the tight set, end to end.
+    /// The trend ladder is what makes the tight set tighter, and it is the only thing that does.
     ///
-    /// The other-mood session is seeded with names nearer the subject on liquidity and daily range
-    /// than any same-mood name, so a draw ignoring the mood would take them first: distance alone
-    /// prefers exactly the rows the dimension exists to exclude.
-    ///
-    /// <b>This is not the test that guards the dimension, and saying so is the point.</b> The mood
-    /// is excluded twice, once when `MoodPool` selects sessions and once when `ControlMatching`
-    /// compares candidates, and this route goes through both. Removing either one on its own leaves
-    /// this test green, which was measured rather than assumed: the clause in `ControlMatching` was
-    /// deleted and all seven tests in this class passed. The guard is
-    /// `ControlMatchingTests.A_tight_draw_excludes_a_candidate_from_a_session_carrying_a_different_mood`,
-    /// which hands a mixed pool straight to the matcher. What this test holds is that the two halves
-    /// are wired together, which no unit test of either half can say.
+    /// Tonight holds two names on the subject's grade and six on another, and the six are nearer on
+    /// both distances. The loose set takes five and the tight set takes the two, which is the whole
+    /// of what the tight set now asks: is the pattern worth anything beyond owning stocks in
+    /// uptrends. A tight set equal to the loose one would be the failure this asserts against, and it
+    /// is a failure that has shipped here before, when the ladder grade read null on every candidate.
     /// </summary>
     [Fact]
-    public void A_session_carrying_a_different_mood_contributes_no_tight_control()
+    public void The_trend_ladder_is_what_separates_the_tight_set_from_the_loose_one()
     {
-        SeedRuling();
+        Mood(Tonight, MarketMood.RiskOn);
+        Name("SUBJ", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising);
+        Name("RISE0", Tonight, 150_000_000m, 3.0m, TierClassifier.Rising);
+        Name("RISE1", Tonight, 160_000_000m, 3.1m, TierClassifier.Rising);
+
+        for (int i = 0; i < 6; i++)
+        {
+            Name($"FALL{i}", Tonight, 101_000_000m + (i * 100_000m), 2.01m, TierClassifier.Falling);
+        }
+
+        Flag("SUBJ", Tonight, "long");
 
         Sampler().Draw(Tonight);
 
-        Assert.DoesNotContain(Controls("tight"), c => c.AsOf == OtherMoodEarlier);
+        Assert.Equal(MeasurementParameters.ControlsPerSet, Controls("loose").Count);
+        Assert.Equal(2, Controls("tight").Count);
+        Assert.All(Controls("tight"), c => Assert.StartsWith("RISE", c.Ticker, StringComparison.Ordinal));
     }
 
     /// <summary>
-    /// Nothing is drawn from a session after the setup's, which is the point-in-time rule applied to
-    /// the dimension the ruling opened up.
+    /// A name flagged on the night is not a control for it, on either set.
     ///
-    /// The pool reaches backwards only. A control drawn from a later session would be an outcome
-    /// the lab could not have had on the night it is being compared for, and the whole reason the
-    /// pool is bounded at the as-of rather than merely filtered by mood.
+    /// A control that was itself a setup is not a control, and admitting one narrows every
+    /// comparison toward zero without changing a number a reader could see. The question used to
+    /// have to be asked of the session being drawn from rather than of tonight, because the pool
+    /// spanned sessions; within the night there is only one session it could be asked about and the
+    /// two readings coincide.
     /// </summary>
     [Fact]
-    public void No_tight_control_comes_from_a_session_after_the_setups_own()
+    public void A_name_flagged_on_the_night_is_not_a_control_for_it()
     {
-        SeedRuling();
+        SeedNight();
+        Flag("TONIGHT0", Tonight, "long");
 
         Sampler().Draw(Tonight);
 
-        Assert.All(Controls("tight"), c => Assert.True(c.AsOf <= Tonight,
-            $"a control was drawn from {c.AsOf}, which is after the setup's own session {Tonight}."));
+        Assert.DoesNotContain(Controls("tight"), c => c.Ticker == "TONIGHT0");
+        Assert.DoesNotContain(Controls("loose"), c => c.Ticker == "TONIGHT0");
     }
 
     /// <summary>
-    /// A name flagged on its own session is not a control for that session, and the question is
-    /// asked of the session drawn from rather than of tonight.
+    /// An unlabelled night draws its tight set like any other, where under the superseded ruling it
+    /// drew none.
     ///
-    /// <b>Both directions of the same error.</b> Asking tonight's question of a pool spanning two
-    /// years would drop names that were ordinary on the session being drawn from, and admit names
-    /// that were flagged on it. The second is the one that matters: a control that was itself a
-    /// setup narrows every comparison toward zero without changing a number a reader could see.
+    /// <b>The behaviour that changed direction, asserted in its new direction.</b> No session could
+    /// be said to share a mood that was never recorded, so a missing label emptied the tight pool
+    /// and a night whose regime stage failed lost its tight comparison. Within the night the label
+    /// is not what does the controlling: every candidate sat through the same session whether or not
+    /// anybody wrote the label down, so the mood is held fixed either way and the comparison stands.
     /// </summary>
     [Fact]
-    public void A_name_flagged_on_the_session_drawn_from_is_not_a_control_for_it()
+    public void A_night_with_no_mood_label_still_draws_its_tight_set()
     {
-        SeedRuling();
-
-        // Flagged on the earlier same-mood session and on no other. It stays eligible tonight,
-        // where it was not flagged, and must not be drawn from the session where it was.
-        Flag("EARLY0", SameMoodEarlier, "long");
+        SeedNight();
+        Execute("DELETE FROM regime_daily WHERE as_of = @d", ("@d", Session(Tonight)));
 
         Sampler().Draw(Tonight);
 
-        Assert.DoesNotContain(
-            Controls("tight"),
-            c => string.Equals(c.Ticker, "EARLY0", StringComparison.Ordinal) && c.AsOf == SameMoodEarlier);
+        Assert.Equal(MeasurementParameters.ControlsPerSet, Controls("tight").Count);
+        Assert.Equal(MeasurementParameters.ControlsPerSet, Controls("loose").Count);
+        Assert.All(Controls("tight"), c => Assert.Equal(Tonight, c.AsOf));
     }
 
     /// <summary>
-    /// A name qualifying on several sessions is drawn once, so a set of five is five names.
+    /// The match quality records the mood as matched on the tight set and nought sessions apart on
+    /// both, and the distance is computed rather than written as a constant.
     ///
-    /// Five per set exists so a comparison does not inherit one name's idiosyncratic move. A tight
-    /// set that took the same name from five adjacent sessions would inherit it while looking like
-    /// five, and the pool holds every qualifying name once per session, so nothing but this stops it.
+    /// <b>Nought is the answer and not the assumption.</b> `sessionsApart` is the field a reader
+    /// measures a reach by, so it is derived from the two dates on every row. A field that reported
+    /// its own premise would read the same whether the draw stayed within the night or not, which is
+    /// the shape of assertion this corpus keeps finding: right for as long as nothing moves.
     /// </summary>
     [Fact]
-    public void One_row_per_name_however_many_sessions_it_qualifies_on()
+    public void The_match_quality_records_the_mood_matched_and_nought_sessions_apart()
     {
-        SeedRuling();
-
-        Sampler().Draw(Tonight);
-
-        IReadOnlyList<StoredControl> tight = Controls("tight");
-
-        Assert.NotEmpty(tight);
-        Assert.Contains(tight, c => string.Equals(c.Ticker, "REPEAT", StringComparison.Ordinal));
-        Assert.Equal(tight.Count, tight.Select(c => c.Ticker).Distinct(StringComparer.Ordinal).Count());
-    }
-
-    /// <summary>
-    /// The mood is recorded as a matched dimension on the tight set and as unmatched on the loose
-    /// one, and the session distance the ruling paid for is recorded per row.
-    ///
-    /// <b>The distance is the price, so it is a value rather than an argument.</b> The decision
-    /// accepts a comparison across time in exchange for a matched dimension. How far across is a
-    /// measurement, and recording it per row is what lets a later session measure the cost instead
-    /// of re-arguing the trade.
-    /// </summary>
-    [Fact]
-    public void The_match_quality_records_the_mood_and_how_far_the_draw_reached()
-    {
-        SeedRuling();
+        SeedNight();
 
         Sampler().Draw(Tonight);
 
         foreach (StoredControl control in Controls("tight"))
         {
             Assert.Equal("same", control.MatchQuality["marketMood"]);
-            Assert.Equal(
-                Math.Abs(control.AsOf.DayNumber - Tonight.DayNumber).ToString(CultureInfo.InvariantCulture),
-                control.MatchQuality["sessionsApart"]);
+            Assert.Equal("same", control.MatchQuality["ladderGrade"]);
+            Assert.Equal("0", control.MatchQuality["sessionsApart"]);
         }
 
         foreach (StoredControl control in Controls("loose"))
@@ -203,73 +199,59 @@ public sealed class ControlSamplerTests : IDisposable
         }
     }
 
-    /// <summary>
-    /// An unlabelled night draws no tight controls rather than drawing from everywhere.
-    ///
-    /// No session can be said to share a mood that was never recorded, and matching on an unknown is
-    /// the comparison true by construction this whole change exists to remove. The loose set is
-    /// unaffected, because it never matched on the mood.
-    /// </summary>
+    /// <summary>Five per set is five names, which is what five is for.</summary>
     [Fact]
-    public void A_night_with_no_mood_label_draws_no_tight_controls()
+    public void A_set_of_five_is_five_different_names()
     {
-        SeedRuling();
-        Execute("DELETE FROM regime_daily WHERE as_of = @d", ("@d", Session(Tonight)));
+        SeedNight();
 
         Sampler().Draw(Tonight);
 
-        Assert.Empty(Controls("tight"));
-        Assert.NotEmpty(Controls("loose"));
+        foreach (string set in new[] { "loose", "tight" })
+        {
+            IReadOnlyList<StoredControl> drawn = Controls(set);
+
+            Assert.NotEmpty(drawn);
+            Assert.Equal(drawn.Count, drawn.Select(c => c.Ticker).Distinct(StringComparer.Ordinal).Count());
+        }
     }
 
     // ---- the store the tests above run against -------------------------------------------------
 
     /// <summary>
-    /// Three sessions and one flagged setup, arranged so the ruling is the only thing that can
-    /// produce the result.
+    /// One night carrying enough of its own, with nearer names on an earlier session and on a later
+    /// one so a draw that left the night would be visible.
     ///
-    /// Tonight is risk-on and carries one eligible unflagged name. The earlier session two days back
-    /// is also risk-on and carries four. The session in between is risk-off and carries names that
-    /// are <i>nearer</i> the subject than any risk-on name, so a draw that ignored the mood would
-    /// take them. A later session is risk-on as well, to hold the point-in-time bound.
-    ///
-    /// Every name carries the same ladder grade as the subject, so the ladder dimension excludes
-    /// nothing here and the mood is the only thing separating the pool.
+    /// Every name carries the subject's ladder grade, so the ladder excludes nothing here and the
+    /// session is the only thing that could separate the pool. The test that gives the ladder work
+    /// to do seeds its own store.
     /// </summary>
-    private void SeedRuling()
+    private void SeedNight()
     {
         Mood(SameMoodEarlier, MarketMood.RiskOn);
-        Mood(OtherMoodEarlier, MarketMood.RiskOff);
         Mood(Tonight, MarketMood.RiskOn);
         Mood(After, MarketMood.RiskOn);
 
-        // The subject, and the one unflagged name its own night holds.
-        Name("SUBJ", Tonight, turnover: 100_000_000m, range: 2.0m);
-        Name("TONIGHT0", Tonight, turnover: 140_000_000m, range: 2.8m);
+        Name("SUBJ", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising);
 
-        // Four on the earlier same-mood session, all further from the subject than the risk-off
-        // names below, so nothing here is drawn for being closest.
-        for (int i = 0; i < 4; i++)
-        {
-            Name($"EARLY{i}", SameMoodEarlier, turnover: 150_000_000m + (i * 10_000_000m), range: 3.0m);
-        }
-
-        // Nearest of all, and on the wrong mood. A draw ignoring the mood takes these first.
         for (int i = 0; i < 6; i++)
         {
-            Name($"WRONG{i}", OtherMoodEarlier, turnover: 101_000_000m + (i * 100_000m), range: 2.01m);
+            Name($"TONIGHT{i}", Tonight, 140_000_000m + (i * 10_000_000m), 2.8m, TierClassifier.Rising);
         }
 
-        // After the as-of, and nearest of anything. Only the bound keeps these out.
+        // Nearer the subject than anything on the night, on a session carrying the same mood label.
+        // These are exactly the rows the superseded ruling drew and this one must not.
         for (int i = 0; i < 6; i++)
         {
-            Name($"LATER{i}", After, turnover: 100_000_000m, range: 2.0m);
+            Name($"EARLY{i}", SameMoodEarlier, 100_100_000m + (i * 100_000m), 2.01m, TierClassifier.Rising);
         }
 
-        // The same name on several qualifying sessions, so the one-row-per-name property has a
-        // subject rather than holding vacuously.
-        Name("REPEAT", SameMoodEarlier, turnover: 160_000_000m, range: 3.1m);
-        Name("REPEAT", Tonight, turnover: 160_000_000m, range: 3.1m);
+        // Nearest of anything and after the as-of. Point in time kept these out before the reach was
+        // reversed and the night keeps them out now; both are worth asserting against.
+        for (int i = 0; i < 6; i++)
+        {
+            Name($"LATER{i}", After, 100_000_000m, 2.0m, TierClassifier.Rising);
+        }
 
         Flag("SUBJ", Tonight, "long");
     }
@@ -284,7 +266,7 @@ public sealed class ControlSamplerTests : IDisposable
             ("@d", Session(session)), ("@l", label));
 
     /// <summary>One name's figures on one session, above the liquidity floor and on one ladder grade.</summary>
-    private void Name(string ticker, DateOnly session, decimal turnover, decimal range)
+    private void Name(string ticker, DateOnly session, decimal turnover, decimal range, string ladder)
     {
         Execute(
             "INSERT INTO security VALUES (@t, @t, 'NASDAQ', 'Common Stock', '2020-01-01', "
@@ -295,12 +277,13 @@ public sealed class ControlSamplerTests : IDisposable
             INSERT INTO indicator_daily
                 (ticker, as_of, computed_at, ema_9, ema_21, ema_50, atr_14, adr_20,
                  dollar_volume_median_20, range_avg_20, ladder_grade)
-            VALUES (@t, @d, @obs, '1', '1', '1', '2.0', @adr, @dv, '2.0', 'rising')
+            VALUES (@t, @d, @obs, '1', '1', '1', '2.0', @adr, @dv, '2.0', @grade)
             ON CONFLICT DO NOTHING
             """,
             ("@t", ticker), ("@d", Session(session)), ("@obs", Observed),
             ("@adr", range.ToString(CultureInfo.InvariantCulture)),
-            ("@dv", turnover.ToString(CultureInfo.InvariantCulture)));
+            ("@dv", turnover.ToString(CultureInfo.InvariantCulture)),
+            ("@grade", ladder));
     }
 
     private void Flag(string ticker, DateOnly session, string direction) =>

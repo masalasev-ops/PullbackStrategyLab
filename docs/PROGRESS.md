@@ -8858,3 +8858,170 @@ Carried:    **One, and it is the operator's.** Whether the tight set keeps its a
             changed only by another decision.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-3-tight-set-returns-within-the-night — the reach reversed, and the prediction it half confirmed
+
+Not a checkpoint entry. It executes the operator's ruling of 2026-08-31, which supersedes the ruling
+of 2026-08-30 one day old. Nothing here is evidence and it does not move 3.6.
+
+Built:      **The reversal, as a decision rather than an edit.**
+            **The tight control set draws within the night, because a within-night draw controls the
+            market mood exactly** is authored beside its predecessor and the predecessor is moved to
+            "Previously decided" with its reasoning intact. Nothing is struck through. The reason is
+            the one this register already carries in another entry: within one session every name
+            carries the same market move, so the mood is a constant over that night's pool, and a
+            constant is the strongest control there is. **The superseded ruling read that invariance
+            as an absence of control and it is the presence of a perfect one.**
+            (see: The tight control set draws within the night, because a within-night draw controls the market mood exactly)
+
+            **`ControlSampler.MoodPool` and the `reach` argument are gone**, and one pool serves both
+            sets. What separates them is which dimensions `ControlMatching.Nearest` matches on rather
+            than which rows it is handed. The mood clause stays in `Nearest`: it holds on every row
+            and excludes nobody, and it is what makes the recorded "same" true because it was checked
+            rather than because the caller promised it. `sessionsApart` is now computed on both sets
+            rather than written as a literal nought on the loose one, because a field that reports
+            its own premise reads the same whether the draw stayed within the night or not.
+
+            **An unlabelled night now draws its tight set, where before it drew none.** No session
+            could be said to share a mood that was never recorded, so a missing label emptied the
+            tight pool and a night whose regime stage failed lost its tight comparison. Within the
+            night the label is not what does the controlling, the session is.
+
+            **`control_as_of` and migration 035 stay, with the invariant asserted instead.**
+            `A_tight_control_is_drawn_from_the_subjects_own_session` seeds an earlier same-mood
+            session holding names nearer the subject than anything on the night, so a draw that could
+            leave the night would take them, and fails if any tight row's `control_as_of` is not its
+            subject's session. SCHEMA records that the reach was tried, measured and reversed.
+
+            **`TightDrawDiagnosis` counts the night's own pool** rather than an accumulation across
+            sessions, and its `WithoutMood` equalling its drawable count is the decision's central
+            claim in a number.
+
+Found:      **The prediction was stated before the run and it half held.** It was that both discounts
+            would converge on the loose set's, taking long/tight from 65 to roughly 400 to 460 at 60
+            sessions. **The within-night discount converged and the across-night one did not**, and
+            long/tight came back at 275.
+
+            **The design effect converged, which says the reach was the whole of the within-night
+            clustering.** Long at 60 sessions went from 6.71 to 3.51 against the loose set's 3.40;
+            short with the gate set aside went from 13.25 to 4.41 against 2.80. Every pair on a night
+            had been carrying the same uncancelled market move and now none of them is.
+
+            **The across-night factor did not, and the residual is the ladder.** Long at 60 went from
+            0.1108 to 0.2463 against the loose set's 0.3718. The tight set draws from the same-grade
+            part of the night's pool, which is a median 104 distinct names a night against the loose
+            set's 234, so its control mean repeats itself between nights more than the loose one does.
+            That is a property of matching on the ladder and not of the reach, and by the standard
+            stated before the run, **the reach was the dominant cause and not the whole of it.**
+
+Measured:   `tools/ci.ps1` green, 28 steps, **600 tests**, unchanged. `ControlSamplerTests` was
+            rewritten rather than resized: five of its seven tests had the reach as their subject and
+            are replaced by five with the within-night draw as theirs, including the one that asserts
+            `control_as_of`. The test that a name qualifying on several sessions is drawn once left,
+            because within the night a pool holds each name once and the assertion would pass on an
+            empty premise; the property is still held in `ControlMatching`, where a pool spanning
+            sessions can still reach it, and a set of five being five different names is asserted in
+            its place.
+
+            **Both rungs against their own fresh `VACUUM INTO` copy of the live store**, evidence
+            untouched at both by a row count either side: `setup` 117, `control_setup` 1,170,
+            `forward_return` 483, unchanged.
+
+            **Every loose figure is identical to the run before the reversal**, to the last place, at
+            both rungs. The loose draw was not touched and its six panels prove it, which is what
+            makes the tight deltas below attributable to the change rather than to the day.
+
+            **The tight panels, before and after.**
+
+            | panel | across-night before → after | design effect before → after | effective before → after |
+            |---|---|---|---|
+            | long/tight, 60 | 0.1108 → **0.2463** | 6.71 → **3.51** | 65 → **275** |
+            | long/tight, 120 | 0.0800 → **0.1458** | 10.31 → **4.53** | 68 → **281** |
+            | short/tight, gate set aside, 60 | 0.1491 → **0.4008** | 13.25 → **4.41** | 30 → **241** |
+            | short/tight, gate set aside, 120 | 0.0871 → **0.1934** | 14.02 → **3.85** | 28 → **228** |
+            | short/tight, gate as it stands, 60 | 0.7975 → **0.9393** | 1.00 → **1.00** | 64 → **75** |
+            | short/tight, gate as it stands, 120 | 0.7487 → **1.0000** | 1.59 → **1.39** | 88 → **135** |
+
+            **The draw is unchanged in yield and the mood eliminates nobody, measured.** 97.0% of
+            long subjects and 97.8% of short still draw a full five at 60 sessions; every subject
+            short of five had no figures on its own night. The funnel now reads the night's pool
+            1,725 names, after the mood 1,725, after the ladder 596, drawable 596, and the count of
+            subjects whose drawable total differed once the mood clause was dropped is **nought**, of
+            5,750. Every tight row on both rungs is nought calendar days from its subject's session
+            and 100% of them are on it, on both sets.
+
+Read:       **Whether the tight comparison clears twenty sessions and 262 effective observations,
+            per direction and per rung, on reconstructed history.**
+
+            | panel | 60 sessions | 120 sessions |
+            |---|---|---|
+            | long/loose | 50 nights, 428 eff — **clears both** | 110 nights, 460 eff — **clears both** |
+            | long/tight | 50 nights, 275 eff — **clears both** | 110 nights, 281 eff — **clears both** |
+            | short/loose, gate set aside | 50 nights, 253 eff — sessions yes, sample **no**, short by 9 | 110 nights, 285 eff — **clears both** |
+            | short/tight, gate set aside | 50 nights, 241 eff — sessions yes, sample **no**, short by 21 | 110 nights, 228 eff — sessions yes, sample **no**, short by 34 |
+            | short/loose, gate as it stands | 45 nights, 57 eff — **no** | 99 nights, 162 eff — **no** |
+            | short/tight, gate as it stands | 45 nights, 75 eff — **no** | 99 nights, 135 eff — **no** |
+
+            **The long direction clears both conditions on both control sets at both rungs, and no
+            tight panel cleared anything before the reversal.** The short direction does not clear on
+            its tight set under either reading of `reached-ceiling`, and its gate-as-it-stands panels
+            are far from it on both sets.
+
+            **What the tight comparison then says, over reconstructed history and as a ceiling.** At
+            60 sessions long/tight is **-0.0151 [-0.0349, +0.0415]** and at 120 it is **+0.0046
+            [-0.0132, +0.0211]**. Both span nought. The long/loose panel excluded nought on the
+            negative side at 60 and spans it at 120, unchanged from before. **A comparison that now
+            has the sample to be read reads as nothing either way**, which is a different statement
+            from the one the corpus could make yesterday, when it had no sample at all.
+            (see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store)
+
+            **The forward schedule, recomputed, with the funnel adjustment applied rather than
+            noted.** Effective observations are linear in nights at a fixed pairing, so a panel's
+            effective per night is its figure over its nights. The reconstructed side produces more
+            subjects a night than the forward side does, so a forward night is worth less than a
+            reconstructed one, and the ratio is measured per direction rather than taken as a blanket
+            half: the long side runs 98.8 and 96.1 reconstructed subjects a night against the forward
+            side's **43.5**, which is 0.440 and 0.453; the short side runs 59.8 and 53.8 against
+            **15.0**, which is 0.251 and 0.279. The short adjustment is nearer a quarter than a half
+            and applying one figure to both directions would have flattered it.
+
+            | panel | recon eff/night, 60 | forward eff/night | nights to 262 | recon eff/night, 120 | forward eff/night | nights to 262 |
+            |---|---|---|---|---|---|---|
+            | long/loose | 8.56 | 3.77 | **70** | 4.18 | 1.89 | **139** |
+            | long/tight | 5.50 | 2.42 | **109** | 2.55 | 1.16 | **227** |
+            | short/loose, gate set aside | 5.06 | 1.27 | **207** | 2.59 | 0.72 | **363** |
+            | short/tight, gate set aside | 4.82 | 1.21 | **217** | 2.07 | 0.58 | **454** |
+            | short/loose, gate as it stands | 1.27 | 0.32 | **824** | 1.64 | 0.46 | **575** |
+            | short/tight, gate as it stands | 1.67 | 0.42 | **627** | 1.36 | 0.38 | **690** |
+
+            A session becomes a night once its ten-session horizon has elapsed, so the forward session
+            count is each figure plus about ten. **The long tight comparison is 119 to 237 forward
+            sessions from its minimum**, which at 252 trading sessions a year is about six months to
+            eleven. The same arithmetic under the reach put it at 458 to 932 nights, so the reversal
+            is worth a factor of about four on the schedule as well as on the figure.
+
+            **The adjustment is applied linearly and that is the conservative direction.** The design
+            effect grows with pairs per night, so a night with half the subjects carries more than
+            half the effective observations. Scaling linearly understates the forward figures, which
+            is the direction to be wrong in when the number decides how long to wait.
+
+Not         **Nothing here is evidence and nothing moves 3.6**, which still fires on forward
+claimed:    accumulation. The reconstructed figures are a ceiling on the long side and a floor on the
+            short, per side, because the universe is today's.
+
+            **The short side is not brought to its minimum by this and is not close.** Its tight
+            panel is 21 and 34 effective short at the two rungs with the gate set aside, and far
+            short under the gate as it stands, whose third clause does not run until 4.4. No figure
+            here changes that row.
+
+            **The residual across-night factor is attributed to the ladder on one measurement.** The
+            tight set draws from a median 104 distinct names a night against the loose set's 234, and
+            a narrower pool repeating between nights is the reading that fits. It is a reading of two
+            rungs rather than something asserted, and nothing is built on it.
+
+Carried:    **The tenth operator question is closed**, naming the decision above, and the carried
+            obligations table returns to fifty-seven rows with nine due at the operator. It was
+            raised on 2026-08-31 with the measurement that made it answerable and answered the same
+            day.
+
+            **This session committed code and may not sign it off.**

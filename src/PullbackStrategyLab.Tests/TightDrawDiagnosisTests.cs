@@ -21,9 +21,9 @@ namespace PullbackStrategyLab.Tests;
 ///
 /// <b>And the pool is arranged so the two could disagree.</b> A store where every subject draws its
 /// full five would let a prediction of five agree with a draw of five while measuring nothing, so
-/// two of the tests below starve the pool on a named dimension and one of them starves it on the
-/// dimension the other leaves alone.
-/// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
+/// the tests below starve the pool on the dimension that can starve it and show that the other one
+/// cannot.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
 /// </summary>
 public sealed class TightDrawDiagnosisTests : IDisposable
 {
@@ -55,13 +55,12 @@ public sealed class TightDrawDiagnosisTests : IDisposable
     [Fact]
     public void The_funnel_predicts_the_draw_where_the_pool_is_wide_enough()
     {
-        Mood(SameMoodEarlier, MarketMood.RiskOn);
         Mood(Tonight, MarketMood.RiskOn);
         Name("SUBJ", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising);
 
         for (int i = 0; i < 6; i++)
         {
-            Name($"EARLY{i}", SameMoodEarlier, 110_000_000m + (i * 1_000_000m), 2.1m, TierClassifier.Rising);
+            Name($"NIGHT{i}", Tonight, 110_000_000m + (i * 1_000_000m), 2.1m, TierClassifier.Rising);
         }
 
         Flag("SUBJ", Tonight);
@@ -73,26 +72,25 @@ public sealed class TightDrawDiagnosisTests : IDisposable
     }
 
     /// <summary>
-    /// The ladder grade starves the set, and the funnel names it rather than the mood.
+    /// The ladder grade starves the set, and the funnel names it as the only clause that can.
     ///
-    /// Every candidate shares the subject's mood and only two share its ladder grade, so the draw
-    /// gets two. The leave-one-out is what carries the finding: dropping the ladder would reach five
-    /// and dropping the mood would not, which is the whole difference between "the pool is thin" and
-    /// "this dimension is what thinned it".
+    /// Every candidate shares the subject's mood, because they sat through the same session, and
+    /// only two share its ladder grade, so the draw gets two. The leave-one-out carries the finding
+    /// in both directions: dropping the ladder reaches five, and dropping the mood changes nothing
+    /// at all.
     /// </summary>
     [Fact]
     public void The_funnel_names_the_ladder_where_the_ladder_is_what_eliminated()
     {
-        Mood(SameMoodEarlier, MarketMood.RiskOn);
         Mood(Tonight, MarketMood.RiskOn);
         Name("SUBJ", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising);
 
-        Name("RISE0", SameMoodEarlier, 110_000_000m, 2.1m, TierClassifier.Rising);
-        Name("RISE1", SameMoodEarlier, 120_000_000m, 2.2m, TierClassifier.Rising);
+        Name("RISE0", Tonight, 110_000_000m, 2.1m, TierClassifier.Rising);
+        Name("RISE1", Tonight, 120_000_000m, 2.2m, TierClassifier.Rising);
 
         for (int i = 0; i < 6; i++)
         {
-            Name($"FALL{i}", SameMoodEarlier, 101_000_000m + (i * 100_000m), 2.01m, TierClassifier.Falling);
+            Name($"FALL{i}", Tonight, 101_000_000m + (i * 100_000m), 2.01m, TierClassifier.Falling);
         }
 
         Flag("SUBJ", Tonight);
@@ -104,33 +102,36 @@ public sealed class TightDrawDiagnosisTests : IDisposable
         Assert.Equal(2, entry.DistinctNames);
 
         // Eight names shared the mood and two shared the ladder, so the ladder is the clause that
-        // did the eliminating and the leave-one-out says so in both directions.
+        // did the eliminating and the leave-one-out says so.
         Assert.Equal(8, entry.PoolAfterMood);
         Assert.Equal(2, entry.PoolAfterLadder);
         Assert.True(entry.WithoutLadder >= MeasurementParameters.ControlsPerSet);
-        Assert.True(entry.WithoutMood < MeasurementParameters.ControlsPerSet);
+        Assert.Equal(entry.DistinctNames, entry.WithoutMood);
     }
 
     /// <summary>
-    /// The mood starves the set, and the funnel names it rather than the ladder.
+    /// The mood eliminates nobody, on a night whose other sessions carry a different label and hold
+    /// the nearest names of all.
     ///
-    /// The mirror of the test above, over the same shape with the two dimensions swapped. Written
-    /// as a pair on purpose: a funnel that always blamed whichever dimension it was asked about
-    /// last would pass either one alone.
+    /// <b>The decision's central claim, asserted as a count.</b> Within the night the mood is a
+    /// constant, so the clause holds on every candidate and the pool after it is the pool before it.
+    /// The store is seeded with six nearer names on a risk-off session so that the previous ruling's
+    /// question is still on the table: those rows are excluded, and what excludes them is that they
+    /// are not on the subject's night rather than that their label differs.
     /// </summary>
     [Fact]
-    public void The_funnel_names_the_mood_where_the_mood_is_what_eliminated()
+    public void The_mood_eliminates_nobody_within_the_night()
     {
-        Mood(SameMoodEarlier, MarketMood.RiskOn);
         Mood(OtherMoodEarlier, MarketMood.RiskOff);
         Mood(Tonight, MarketMood.RiskOn);
         Name("SUBJ", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising);
 
-        Name("RIGHT0", SameMoodEarlier, 110_000_000m, 2.1m, TierClassifier.Rising);
-        Name("RIGHT1", SameMoodEarlier, 120_000_000m, 2.2m, TierClassifier.Rising);
+        for (int i = 0; i < 6; i++)
+        {
+            Name($"NIGHT{i}", Tonight, 110_000_000m + (i * 1_000_000m), 2.1m, TierClassifier.Rising);
+        }
 
-        // Nearer the subject than anything on the right mood, and on the same ladder grade. Only
-        // the mood keeps them out.
+        // Nearer the subject than anything on its own night, and on a session carrying another mood.
         for (int i = 0; i < 6; i++)
         {
             Name($"WRONG{i}", OtherMoodEarlier, 101_000_000m + (i * 100_000m), 2.01m, TierClassifier.Rising);
@@ -140,10 +141,10 @@ public sealed class TightDrawDiagnosisTests : IDisposable
 
         TightDrawDiagnosis.Entry entry = RunAndDiagnose();
 
-        Assert.Equal(2, Drawn("tight"));
-        Assert.Equal(2, entry.Predicted);
-        Assert.True(entry.WithoutMood >= MeasurementParameters.ControlsPerSet);
-        Assert.True(entry.WithoutLadder < MeasurementParameters.ControlsPerSet);
+        Assert.Equal(MeasurementParameters.ControlsPerSet, Drawn("tight"));
+        Assert.Equal(entry.PoolOnTheNight, entry.PoolAfterMood);
+        Assert.Equal(entry.DistinctNames, entry.WithoutMood);
+        Assert.Equal(6, entry.PoolOnTheNight);
     }
 
     /// <summary>
@@ -159,13 +160,12 @@ public sealed class TightDrawDiagnosisTests : IDisposable
     [Fact]
     public void Turnover_and_daily_range_exclude_nobody_from_a_tight_set()
     {
-        Mood(SameMoodEarlier, MarketMood.RiskOn);
         Mood(Tonight, MarketMood.RiskOn);
         Name("SUBJ", Tonight, 60_000_000m, 0.5m, TierClassifier.Rising);
 
         for (int i = 0; i < 5; i++)
         {
-            Name($"FAR{i}", SameMoodEarlier, 4_000_000_000m + (i * 1_000_000_000m), 40m, TierClassifier.Rising);
+            Name($"FAR{i}", Tonight, 4_000_000_000m + (i * 1_000_000_000m), 40m, TierClassifier.Rising);
         }
 
         Flag("SUBJ", Tonight);
@@ -179,12 +179,12 @@ public sealed class TightDrawDiagnosisTests : IDisposable
     // ---- the run -------------------------------------------------------------------------------
 
     /// <summary>
-    /// Observes every session the pool may reach, draws through `ControlSampler`, and returns the
-    /// one subject's funnel.
+    /// Observes the subject's own night, draws through `ControlSampler`, and returns the one
+    /// subject's funnel.
     ///
-    /// The sessions are observed oldest first and up to the subject's own, which is the population
-    /// `MoodPool` rebuilds per night. Observing a later one would give the diagnosis a pool the draw
-    /// never had.
+    /// The earlier sessions are observed too, so that a diagnosis counting anything but the night's
+    /// own pool would report a number the draw cannot produce and the prediction would disagree with
+    /// the rows written.
     /// </summary>
     private TightDrawDiagnosis.Entry RunAndDiagnose()
     {

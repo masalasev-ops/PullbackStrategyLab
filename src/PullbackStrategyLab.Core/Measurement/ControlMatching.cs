@@ -54,15 +54,15 @@ public static class ControlMatching
     /// uptrend, and a tight set that admits a different ladder at a distance is a loose set wearing
     /// the name.
     ///
-    /// <b>The market mood is a real dimension here as of 2026-08-30, and until then it was not.</b>
-    /// The mood is a property of the session, so within one night every candidate carries the same
-    /// one and matching on it excludes nothing. The draw left it out rather than performing a
-    /// comparison true by construction, because a dimension that always matches reads in the record
-    /// as a dimension that was checked. The operator ruled that the dimension is kept and made real:
-    /// the tight set draws from any session sharing the mood, the loose set stays within the night,
-    /// and what that costs is that a setup and its tight controls may come from different sessions,
-    /// so the market factor common to one night no longer cancels between them.
-    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// <b>The mood clause holds rather than excludes, and that is not the same as doing nothing.</b>
+    /// The pool a night hands this method is that night's own, so every candidate in it carries the
+    /// subject's mood and the clause never drops a row. It is kept because what it asserts is that
+    /// the recorded "same" is true, and because a caller that ever hands in a mixed pool must not
+    /// get a tight set out of it. For one day the draw reached into other sessions so the clause
+    /// would exclude rows; what that cost was the cancellation the paired difference exists for, and
+    /// the reach was reversed. A dimension held constant by the population is controlled exactly,
+    /// which is the strongest form of matching there is rather than the absence of it.
+    /// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
     ///
     /// <b>Comparing two moods is not branching on one.</b> Nothing here names a mood, prefers one,
     /// or behaves differently in any of them; the comparison is equality between the subject's
@@ -71,20 +71,18 @@ public static class ControlMatching
     /// those stocks against.
     /// see: The market-mood label is recorded on every setup and filters nothing in the baseline
     ///
-    /// <b>The mood is held here and narrowed in the caller, and which is which matters.</b> This
-    /// method is the one implementation of what a comparison is made of, so the dimension is
-    /// asserted here: the recorded "same" is true because it was checked rather than because the
-    /// caller promised it. `ControlSampler.MoodPool` also selects sessions by mood, and that is a
-    /// cost measure and not the guard, because a pool of every session ever recorded would be loaded
-    /// to be thrown away. The two are redundant on purpose and only one of them is proved by
-    /// `A_tight_draw_excludes_a_candidate_from_a_session_carrying_a_different_mood`, which passes a
-    /// mixed pool straight in. A test going through the sampler cannot fail when this clause is
-    /// removed, because the pool it was handed had already excluded the rows.
+    /// <b>The mood clause is proved by a unit test and cannot be proved through the sampler.</b>
+    /// `A_tight_draw_excludes_a_candidate_from_a_session_carrying_a_different_mood` passes a mixed
+    /// pool straight in, which is the only route that can fail when the clause is deleted. A test
+    /// going through `ControlSampler` cannot: the pool it hands over is one night's, so the rows the
+    /// clause would drop were never in it. That was true when the sampler narrowed by mood as a cost
+    /// measure and it is true now that it does not narrow at all, for the opposite reason.
     ///
-    /// <b>One row per name, however many sessions it qualifies on.</b> The tight pool holds a name
-    /// once per session, so without this a single ticker could take several of the five. Five per set
-    /// exists so the comparison does not inherit one name's idiosyncratic move, and a set holding one
-    /// name on five adjacent sessions would inherit it while looking like five.
+    /// <b>One row per name, and it is a guard rather than a live constraint.</b> A within-night pool
+    /// holds each name once, so nothing here can currently take the same ticker twice. It is kept
+    /// because five per set exists so the comparison does not inherit one name's idiosyncratic move,
+    /// and a pool that ever spans sessions again would offer the same name once per session and
+    /// inherit it while looking like five.
     /// </summary>
     public static IReadOnlyList<Draw> Nearest(
         Candidate subject,
@@ -147,15 +145,15 @@ public static class ControlMatching
                         ["ladderGrade"] = tight ? "same" : candidateGrade(s.Candidate),
 
                         // The mood is "same" on the tight set by construction, exactly as the ladder
-                        // grade is, and says so rather than being absent. What is not by
-                        // construction is how far the control had to reach to be that: the session
-                        // distance is the price the ruling accepted, and it is recorded per row so
-                        // it can be measured later rather than argued about.
+                        // grade is, and says so rather than being absent.
                         ["marketMood"] = tight ? "same" : "not matched",
-                        ["sessionsApart"] = tight
-                            ? Math.Abs(s.Candidate.AsOf.DayNumber - subject.AsOf.DayNumber)
-                                .ToString(CultureInfo.InvariantCulture)
-                            : "0",
+
+                        // Nought on every row of both sets while the draw stays within the night,
+                        // and computed rather than written as a constant. It is what a reader
+                        // measures the reach by if a reach ever returns, and a field that reported
+                        // its own assumption could not.
+                        ["sessionsApart"] = Math.Abs(s.Candidate.AsOf.DayNumber - subject.AsOf.DayNumber)
+                            .ToString(CultureInfo.InvariantCulture),
                     },
                     s.Candidate.AsOf)),
         ];

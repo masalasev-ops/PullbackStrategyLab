@@ -17,13 +17,17 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// is touched here, and nothing this class produces is read by any stage. It is a second reading of
 /// the pool the draw was handed, taken beside the draw.
 ///
-/// <b>Two of the four tight dimensions eliminate and two only rank, and the funnel says which.</b>
-/// The ladder grade and the market mood are equality clauses in <see cref="ControlMatching.Nearest"/>:
-/// a candidate differing on either is dropped. Turnover and daily range are distances that order
-/// the survivors and exclude nobody, so a pool size "after turnover" is the pool size before it.
-/// Turnover does eliminate once, and earlier: a name below the liquidity floor never enters the
-/// pool at all. That is a floor on membership rather than a matching dimension, and it is counted
-/// here as the pool it produces rather than as a stage of the match.
+/// <b>One of the four tight dimensions eliminates and three do not, and the funnel says which.</b>
+/// The trend ladder is an equality clause in <see cref="ControlMatching.Nearest"/> over a property
+/// of the name, so a night's pool holds all three grades and a candidate on the wrong one is
+/// dropped. The market mood is an equality clause over a property of the session, so within the
+/// night every candidate already carries the subject's own and it drops nobody: it is held exactly
+/// rather than enforced, and `WithoutMood` equalling `DistinctNames` on every row is the measured
+/// form of that. Turnover and daily range are distances that order the survivors and exclude
+/// nobody, so a pool size "after turnover" is the pool size before it. Turnover eliminates once and
+/// earlier, as the liquidity floor on pool membership, and that is counted here as the pool it
+/// produces rather than as a stage of the match.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
 ///
 /// <b>It predicts what the draw will write and the prediction is checked against what was written.</b>
 /// A counting pass that re-states a filter can drift from the filter, which is the shape this corpus
@@ -31,37 +35,25 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// of the funnel is a prediction of the drawn count, and <see cref="ReconstructedRead"/> compares it
 /// against the rows `ControlSampler` wrote, per subject. A disagreement is reported as a defect in
 /// this class rather than absorbed.
-/// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
 /// </summary>
 public sealed class TightDrawDiagnosis
 {
-    private const string Ungraded = "(ungraded)";
-    private const string Unlabelled = "(unlabelled)";
-
     private readonly List<Entry> _entries = [];
     private readonly Dictionary<DateOnly, string?> _moods = [];
-
-    // The accumulating tight pool, sliced the three ways a subject asks about it. Maintained
-    // incrementally as sessions are observed oldest first, so at any session the slices hold every
-    // reach session at or before it, which is exactly the population `ControlSampler.MoodPool`
-    // rebuilds per night.
-    private readonly Dictionary<(string Mood, string Ladder), Slice> _byMoodAndLadder = [];
-    private readonly Dictionary<string, Slice> _byMood = [];
-    private readonly Dictionary<string, Slice> _byLadder = [];
-    private readonly Slice _all = new();
 
     /// <summary>Every subject observed, with the pool it faced counted at each stage.</summary>
     public IReadOnlyList<Entry> Entries => _entries;
 
-    /// <summary>Each observed session's market mood, which is the dimension the pool is sliced on.</summary>
+    /// <summary>Each observed session's market mood, reported rather than used to select a pool.</summary>
     public IReadOnlyDictionary<DateOnly, string?> Moods => _moods;
 
     /// <summary>
-    /// One session in the reach: its candidates join the pool, then its subjects are counted
-    /// against the pool as it then stands.
+    /// One session: its subjects counted against the pool its own night offers them.
     ///
-    /// In that order, because `MoodPool` takes sessions at or <b>before</b> the as-of, so a night's
-    /// own unflagged names are available to its own tight draw.
+    /// <b>The night's pool and nothing before it.</b> That is the population `ControlSampler` draws
+    /// both sets from, so it is the population a funnel beside the draw has to count. This class
+    /// accumulated candidates across sessions for one day, while the tight draw could reach into
+    /// earlier ones, and the accumulator went when the reach did.
     /// </summary>
     public void Observe(
         SqliteConnection connection,
@@ -74,8 +66,7 @@ public sealed class TightDrawDiagnosis
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(tables);
 
-        string? mood = source.Mood(session);
-        _moods[session] = mood;
+        _moods[session] = source.Mood(session);
 
         IReadOnlyList<StoredSetup> setups = tables.IsEvidence
             ? SetupReader.Read(connection, session)
@@ -84,34 +75,22 @@ public sealed class TightDrawDiagnosis
         var flagged = new HashSet<string>(setups.Select(s => s.Ticker), StringComparer.Ordinal);
         IReadOnlyDictionary<string, ControlMatching.Candidate> figures = source.Candidates(session, sessionZone);
 
-        foreach (ControlMatching.Candidate candidate in figures.Values)
-        {
-            // Flagged on its own session, which is the session it would be drawn from. The same rule
-            // the pool itself holds, and for the same reason: whether a name was a setup is a
-            // question about the night the row comes from and not about tonight.
-            if (flagged.Contains(candidate.Ticker))
-            {
-                continue;
-            }
-
-            string moodKey = candidate.MarketMood ?? Unlabelled;
-            string ladderKey = candidate.LadderGrade ?? Ungraded;
-
-            Add(_all, candidate.Ticker);
-            Add(Slot(_byMood, moodKey), candidate.Ticker);
-            Add(Slot(_byLadder, ladderKey), candidate.Ticker);
-            Add(Slot(_byMoodAndLadder, (moodKey, ladderKey)), candidate.Ticker);
-        }
+        // A name flagged on the night is not a control for it. The same rule the pool itself holds,
+        // and within the night there is only one night it could be asked about.
+        ControlMatching.Candidate[] pool =
+            [.. figures.Values.Where(c => !flagged.Contains(c.Ticker))];
 
         foreach (StoredSetup setup in setups)
         {
-            _entries.Add(Count(setup, figures, mood));
+            _entries.Add(Count(setup, figures, pool));
         }
     }
 
-    /// <summary>The pool one subject faced, stage by stage, and with each eliminating dimension removed.</summary>
-    private Entry Count(
-        StoredSetup setup, IReadOnlyDictionary<string, ControlMatching.Candidate> figures, string? sessionMood)
+    /// <summary>The pool one subject faced, stage by stage, and with each equality clause removed.</summary>
+    private static Entry Count(
+        StoredSetup setup,
+        IReadOnlyDictionary<string, ControlMatching.Candidate> figures,
+        IReadOnlyList<ControlMatching.Candidate> pool)
     {
         if (!figures.TryGetValue(setup.Ticker, out ControlMatching.Candidate? subject))
         {
@@ -119,84 +98,50 @@ public sealed class TightDrawDiagnosis
             // on either set. `ControlSampler` counts this as two short sets and moves on; it is a
             // separate cause from a pool that eliminated everybody and is kept separate here.
             return new Entry(
-                setup.SetupId, setup.Ticker, setup.AsOf, setup.Direction, null, sessionMood,
-                NoFigures: true, PoolAllSessions: 0, PoolAfterMood: 0, PoolAfterLadder: 0,
+                setup.SetupId, setup.Ticker, setup.AsOf, setup.Direction, null, null,
+                NoFigures: true, PoolOnTheNight: pool.Count, PoolAfterMood: 0, PoolAfterLadder: 0,
                 DistinctNames: 0, Predicted: 0, WithoutMood: 0, WithoutLadder: 0);
         }
 
-        string ladderKey = subject.LadderGrade ?? Ungraded;
+        int Drawable(IEnumerable<ControlMatching.Candidate> candidates) => candidates.Count(
+            c => !string.Equals(c.Ticker, setup.Ticker, StringComparison.Ordinal));
 
-        if (sessionMood is not string mood)
-        {
-            // No label, so no session can be said to share it and the tight pool is empty by the
-            // rule `MoodPool` states. Counted as its own cause rather than as a mood that eliminated
-            // everything, because nothing was eliminated: nothing was ever eligible.
-            return new Entry(
-                setup.SetupId, setup.Ticker, setup.AsOf, setup.Direction, subject.LadderGrade, null,
-                NoFigures: false, PoolAllSessions: _all.Rows, PoolAfterMood: 0, PoolAfterLadder: 0,
-                DistinctNames: 0, Predicted: 0,
-                WithoutMood: Distinct(Slot(_byLadder, ladderKey), setup.Ticker),
-                WithoutLadder: 0);
-        }
+        // The two equality clauses, in the order `Nearest` applies them. Both compare against the
+        // subject's own value, so a null mood on an unlabelled night matches the null the candidates
+        // carry and the tight set is drawn as usual: within the night the label is not what does the
+        // controlling, the session is.
+        ControlMatching.Candidate[] afterMood =
+            [.. pool.Where(c => string.Equals(c.MarketMood, subject.MarketMood, StringComparison.Ordinal))];
 
-        Slice afterMood = Slot(_byMood, mood);
-        Slice afterLadder = Slot(_byMoodAndLadder, (mood, ladderKey));
-        int distinct = Distinct(afterLadder, setup.Ticker);
+        ControlMatching.Candidate[] afterLadder =
+            [.. afterMood.Where(c => string.Equals(c.LadderGrade, subject.LadderGrade, StringComparison.Ordinal))];
+
+        int distinct = Drawable(afterLadder);
 
         return new Entry(
-            setup.SetupId, setup.Ticker, setup.AsOf, setup.Direction, subject.LadderGrade, mood,
+            setup.SetupId, setup.Ticker, setup.AsOf, setup.Direction, subject.LadderGrade, subject.MarketMood,
             NoFigures: false,
-            PoolAllSessions: _all.Rows,
-            PoolAfterMood: afterMood.Rows,
-            PoolAfterLadder: afterLadder.Rows,
+            PoolOnTheNight: pool.Count,
+            PoolAfterMood: afterMood.Length,
+            PoolAfterLadder: afterLadder.Length,
             DistinctNames: distinct,
             Predicted: Math.Min(distinct, MeasurementParameters.ControlsPerSet),
-            WithoutMood: Distinct(Slot(_byLadder, ladderKey), setup.Ticker),
-            WithoutLadder: Distinct(afterMood, setup.Ticker));
+
+            // Each clause removed with the other kept, which is what names a dimension rather than
+            // showing that something eliminated. Dropping the mood leaves the count unchanged, and
+            // that equality is the assertion rather than a redundancy.
+            WithoutMood: Drawable(
+                pool.Where(c => string.Equals(c.LadderGrade, subject.LadderGrade, StringComparison.Ordinal))),
+            WithoutLadder: Drawable(afterMood));
     }
 
     /// <summary>
-    /// Names in a slice the draw could take, which is the distinct names less the subject.
+    /// One subject and the pool its own night offered it.
     ///
-    /// Distinct rather than rows, because `Nearest` keeps one row per name however many sessions it
-    /// qualifies on. A tight pool spanning a hundred sessions holds the same name a hundred times
-    /// and can still offer the draw fewer than five.
-    /// </summary>
-    private static int Distinct(Slice slice, string subjectTicker) =>
-        slice.Names.Count - (slice.Names.Contains(subjectTicker) ? 1 : 0);
-
-    private static void Add(Slice slice, string ticker)
-    {
-        slice.Rows++;
-        slice.Names.Add(ticker);
-    }
-
-    private static Slice Slot<TKey>(Dictionary<TKey, Slice> slices, TKey key) where TKey : notnull
-    {
-        if (!slices.TryGetValue(key, out Slice? slice))
-        {
-            slice = new Slice();
-            slices[key] = slice;
-        }
-
-        return slice;
-    }
-
-    private sealed class Slice
-    {
-        public int Rows;
-
-        public HashSet<string> Names { get; } = new(StringComparer.Ordinal);
-    }
-
-    /// <summary>
-    /// One subject and the pool it faced.
-    ///
-    /// <paramref name="PoolAllSessions"/> is every unflagged candidate over every reach session at
-    /// or before this one, which is the widest set anything could have been drawn from.
+    /// <paramref name="PoolOnTheNight"/> is every unflagged candidate on the subject's session,
+    /// which is the widest set anything could be drawn from.
     /// <paramref name="WithoutMood"/> and <paramref name="WithoutLadder"/> are the drawable names
-    /// with one equality clause removed and the other kept, which is what names the dimension doing
-    /// the eliminating rather than merely showing that something did.
+    /// with one equality clause removed and the other kept.
     /// </summary>
     public sealed record Entry(
         string SetupId,
@@ -206,7 +151,7 @@ public sealed class TightDrawDiagnosis
         string? LadderGrade,
         string? Mood,
         bool NoFigures,
-        int PoolAllSessions,
+        int PoolOnTheNight,
         int PoolAfterMood,
         int PoolAfterLadder,
         int DistinctNames,
