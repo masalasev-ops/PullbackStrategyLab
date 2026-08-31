@@ -8688,3 +8688,173 @@ Carried:    **Nothing new.** The range is the population and is stated beside ev
             is still untaken.
 
             **This session committed code and may not sign it off.**
+
+## 3.3 — 2026-08-31 — phase-3-tight-set-starvation — the tight set is not starving, and what spends its rows
+
+Not a checkpoint entry. It answers the operator's three questions of 2026-08-31 about why the tight
+comparison falls short of its minimum. It produces no evidence, moves no threshold, gate, matching
+rule or control definition, and does not move 3.6.
+
+Built:      **`TightDrawDiagnosis`, a funnel counted beside the draw rather than after it.** For
+            every subject it records the pool as it stood at each stage: every unflagged candidate
+            over every reach session at or before the subject's, then the same mood, then the same
+            ladder grade, then distinct names. It also records the count with each equality clause
+            removed and the other kept, which is what can name a dimension rather than only show
+            that something eliminated. It reads the pool the draw was handed, because the store
+            holds only the rows that survived.
+
+            **Its last stage is a prediction, and the run checks it against the rows written.** A
+            counting pass beside a filter can drift from the filter, which is the shape this corpus
+            has shipped four times. The prediction agreed with the draw on all 9,516 subjects at 60
+            sessions and all 17,982 at 120, nought disagreements.
+
+            **`PairedInterval.Dispersion` exposes the two discounts behind the effective count.**
+            `EffectiveObservations` now returns that record's `Effective` and computes nothing of
+            its own, so the explanation cannot describe a computation nobody runs. The extraction
+            changed no figure: every fixture expectation over the interval is unmoved.
+
+            **The reconstructed read reports control reuse and reach per set.** How many distinct
+            names a set drew on per night and over the range, and how far from the subject's own
+            session each row came, read back from `sessionsApart` in `match_quality`.
+
+Found:      **The premise did not survive, and that is the first answer.** The tight set is not
+            starving at the draw. Over 60 sessions **97.0%** of long subjects and **97.8%** of short
+            drew a full five; over 120, 97.0% and 98.1%. The distribution has nothing between: no
+            subject anywhere drew one, two, three or four. Every subject that came up short drew
+            **nought**, and every one of those had no figures on its own night, which is a name that
+            cannot be matched on figures it does not have rather than a pool that eliminated it.
+            **No subject in either run faced a pool that eliminated it.**
+
+            **So no dimension is doing the eliminating, and the funnel says how far from binding
+            they are.** The median long subject at 60 sessions faced 40,968 candidate rows over the
+            reach, 20,589 after the mood, 6,498 after the ladder grade, and **1,174 distinct names
+            against five wanted**. With the mood dropped the median is 1,211 names and with the
+            ladder dropped 1,913. Both clauses cut the pool hard and neither comes within two orders
+            of magnitude of starving it.
+
+            **Two of the four tight dimensions eliminate and two only rank.** The ladder grade and
+            the market mood are equality clauses in `ControlMatching.Nearest`. Turnover and daily
+            range are distances that order the survivors and exclude nobody, so a pool size "after
+            turnover" is the pool size before it. Turnover eliminates once and earlier, as the
+            liquidity floor on pool membership, and that is counted as the pool it produces rather
+            than as a stage of the match. Asserted rather than stated, by
+            `Turnover_and_daily_range_exclude_nobody_from_a_tight_set`.
+
+Measured:   `tools/ci.ps1` green, 28 steps, **600 tests**, up from 592.
+
+            **Both rungs against their own fresh `VACUUM INTO` copy of the live store**, and the
+            evidence store untouched at both, asserted by a row count before and after: `setup` 117,
+            `control_setup` 1,170, `forward_return` 483, unchanged. A copy per rung rather than one
+            reused, because a wider range draws different names for the same subject and a second
+            rung over the first one's store would leave a subject holding both draws.
+
+            **The mood distribution, which nothing had ever measured over history.** Over 60
+            sessions, 2026-05-29 to 2026-08-24: mixed 35, risk_on 25, risk_off nought. Over 120,
+            2026-03-04 to 2026-08-24: mixed 51, risk_on 51, risk_off 18. No label dominates either
+            window to the point of leaving the tight draw nothing to reach across, which is the
+            other way this could have gone.
+
+            **Where the controls came from, per set and per range.** The loose set draws **100%** on
+            the subject's own session in every panel of both runs, a mean nought days apart. The
+            tight set draws **18.0%** on it at 60 sessions and **13.0%** at 120, a mean **21.1** and
+            **28.1** calendar days away on the long side.
+
+            **The two discounts, over the same rows and the same nights.** At 60 sessions long/loose
+            and long/tight both hold 4,824 rows over 50 nights; at 120 both hold 10,254 over 110.
+            Every subject drawing five of each is why. What differs is the discount:
+
+            | panel | rows | nights | across-night | design effect | effective |
+            |---|---|---|---|---|---|
+            | long/loose, 60 | 4,824 | 50 | 0.3718 | 3.40 | 428 |
+            | long/tight, 60 | 4,824 | 50 | 0.1108 | 6.71 | 65 |
+            | long/loose, 120 | 10,254 | 110 | 0.1978 | 3.75 | 460 |
+            | long/tight, 120 | 10,254 | 110 | 0.0800 | 10.31 | 68 |
+            | short/loose, gate set aside, 60 | 3,017 | 50 | 0.2677 | 2.80 | 253 |
+            | short/tight, gate set aside, 60 | 3,017 | 50 | 0.1491 | 13.25 | 30 |
+            | short/loose, gate set aside, 120 | 5,837 | 110 | 0.1895 | 3.02 | 285 |
+            | short/tight, gate set aside, 120 | 5,837 | 110 | 0.0871 | 14.02 | 28 |
+
+            The 60-session long pair multiplies out exactly: the across-night factor is 3.36 times
+            worse on the tight set and the design effect 1.97 times worse, and 3.36 times 1.97 is
+            6.6, which is 428 over 65.
+
+Read:       **The tight set is not thin. Its rows carry less, and what makes them carry less is the
+            reach.** The tight comparison stops being a within-night comparison, so the market
+            factor common to one night stops cancelling between a setup and its controls. Every pair
+            on a night then carries the same uncancelled move, which is what a design effect
+            measures, and that move persists across overlapping ten-day windows, which is what the
+            across-night factor measures. Both discounts are worse on the tight set in every panel
+            of both runs.
+
+            **The two rungs separate the reach from everything else.** Between them the tight reach
+            grew from 21.1 to 28.1 calendar days and the tight design effect grew from 6.71 to
+            10.31, while the loose set stayed at nought days apart and its design effect barely moved,
+            3.40 to 3.75. Two points are two points; what they are consistent with is that the
+            discount tracks the reach rather than the range.
+
+            **The cost is the one the ruling of 2026-08-30 states, now with a number on it.** That
+            decision says outright that the market factor no longer cancels and that the difference
+            series carries whatever moved between those sessions. It was taken as a trade and the
+            trade was never priced. The price is that the tight comparison is worth about a seventh
+            of the loose one over identical rows.
+            (see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night)
+
+            **The arithmetic for forward accumulation, with its inputs.** The effective count is
+            linear in nights at a fixed pairing, so effective per night is the measured figure over
+            the measured nights, and the sessions needed is 262 divided by it:
+
+            | panel | effective a night, 60 | nights to 262 | effective a night, 120 | nights to 262 |
+            |---|---|---|---|---|
+            | long/loose | 428/50 = 8.56 | **31** | 460/110 = 4.18 | **63** |
+            | long/tight | 65/50 = 1.30 | **202** | 68/110 = 0.62 | **424** |
+            | short/loose, gate set aside | 253/50 = 5.06 | **52** | 285/110 = 2.59 | **102** |
+            | short/tight, gate set aside | 30/50 = 0.60 | **437** | 28/110 = 0.25 | **1,030** |
+
+            **Nights rather than sessions, and the difference is about ten.** A session becomes
+            a night in the series once its ten-session horizon has elapsed and its pairs can be
+            measured, which is why 60 sessions gave 50 nights and 120 gave 110. The forward session
+            count is each figure above plus about ten, and at these magnitudes that is a rounding on
+            every row but the first.
+
+            **Every figure in that table is a floor, and the direction is stated because it is not
+            the flattering one.** The reconstructed side produces 96 to 99 long subjects a night and
+            53 to 60 short; the two forward nights produced 43.5 long and 15 short. Fewer pairs a
+            night is fewer effective observations a night, so the forward figures are worse than
+            these, not better.
+
+            **Against twenty sessions, the tight condition is ten to fifty times away.** Band 1 asks
+            for at least twenty sessions **and** at least 262 effective observations, per direction
+            and per control set. The twenty is met at twenty. The 262 is met on the loose sets in
+            about 41 to 112 forward sessions and on the tight sets in about 212 to 1,040, which at
+            252 trading sessions a year is ten months to four years. **3.6 cannot fire on its tight
+            half on the schedule the plan assumes**, and no amount of waiting that anybody has
+            budgeted for changes that.
+            (see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+
+Not         **Nothing here is evidence and nothing moves 3.6**, which still fires on forward
+claimed:    accumulation. No threshold, gate, matching rule or control definition was changed, and
+            no bound was added to `ControlSampler`. **No third rung was run**: the question was why
+            the tight set falls short, and it is answered by the two already taken.
+
+            **The forward tight panel is not the reconstructed one and the difference runs both
+            ways.** A forward tight pool holds only the nights the lab has run, so early on its
+            controls come from the same or a neighbouring session and it should behave more like the
+            loose set; the two forward nights drew every one of their 117 subjects a full five
+            tight, all from within the two nights the store holds. That pushes the early figures up.
+            The funnel a forward night produces is under half the reconstructed one, which pushes
+            them down. Neither is measured, so the table above states what was measured and the two
+            corrections are named rather than applied.
+
+            **The short side under `reached-ceiling` as it stands is not projected.** Its pair rate
+            is governed by a clause that does not run until 4.4, and of 30 forward short setups
+            three passed the gate. A session count derived from that is a figure about a gate that
+            is about to change.
+            (see: Long and short are never pooled into one figure)
+
+Carried:    **One, and it is the operator's.** Whether the tight set keeps its across-session reach
+            now that the cost the ruling stated has been measured. Rowed in `BUILD_PLAN.md` due at
+            the operator, which takes that table to fifty-eight rows and the operator's own list to
+            ten. It is a ruling rather than a repair: the reach is a decision and a decision is
+            changed only by another decision.
+
+            **This session committed code and may not sign it off.**

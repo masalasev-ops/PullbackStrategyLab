@@ -119,6 +119,7 @@ public sealed class ReconstructedRead
 
         int pool = 0;
         int drawn = 0;
+        var diagnosis = new TightDrawDiagnosis();
 
         foreach (DateOnly session in warmup.Concat(range))
         {
@@ -136,6 +137,12 @@ public sealed class ReconstructedRead
             {
                 continue;
             }
+
+            // Beside the draw and reading the same pool, not after it and reading the store. What
+            // eliminated a candidate is a fact about the pool the draw was handed, and the store
+            // holds only the rows that survived.
+            diagnosis.Observe(
+                connection, source, session, SubjectTables.Calibration, _options.SessionZone);
 
             ControlResult result = _controls.Draw(
                 connection, source, session, SubjectTables.Calibration, reach);
@@ -173,7 +180,8 @@ public sealed class ReconstructedRead
 
         return new ReadResult(
             sessions, range[0], range[^1], range.Count, pool, drawn, filled.Written + filled.ControlsWritten,
-            panels, before, after, wall.Elapsed, Failed: false);
+            panels, before, after, wall.Elapsed, Failed: false,
+            diagnosis, TightDrawn(connection, range), Reuse(connection, range));
     }
 
     /// <summary>
@@ -204,6 +212,170 @@ public sealed class ReconstructedRead
 
         return dates;
     }
+
+    /// <summary>
+    /// How many tight controls each subject in the range actually got, nought included.
+    ///
+    /// A left join rather than a group over the control table, because a subject that drew nothing
+    /// has no row there and is exactly the subject the distribution is about. Counting only the
+    /// subjects that appear would report a yield over the subjects that had one.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    private IReadOnlyDictionary<string, int> TightDrawn(
+        SqliteConnection connection, IReadOnlyList<DateOnly> range)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT s.setup_id, COALESCE(c.drawn, 0)
+              FROM calibration_setup s
+              LEFT JOIN (SELECT setup_id, COUNT(*) AS drawn
+                           FROM calibration_control_setup
+                          WHERE control_set = 'tight' AND drawn_at <= @computed_at
+                          GROUP BY setup_id) c
+                ON c.setup_id = s.setup_id
+             WHERE s.as_of >= @from AND s.as_of <= @to
+            """;
+        command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(range[0]));
+        command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(range[^1]));
+        command.Parameters.AddWithValue(
+            "@computed_at", StoreText.TimestampToStorageText(_clock.UtcNow));
+
+        var drawn = new Dictionary<string, int>(StringComparer.Ordinal);
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            drawn[reader.GetString(0)] = reader.GetInt32(1);
+        }
+
+        return drawn;
+    }
+
+    /// <summary>
+    /// How many distinct names the two sets actually used, per night and over the range.
+    ///
+    /// <b>The count that separates a thin set from a repetitive one.</b> Five controls per subject
+    /// says nothing about how many different names those five came from across a night's subjects: a
+    /// night of a hundred subjects can hold five hundred control rows over five distinct names or
+    /// over four hundred. Where every subject is compared against nearly the same controls, every
+    /// paired difference on that night carries the same control term, the night's pairs move
+    /// together, and the design effect spends the row count. That is a fact about the pool a
+    /// dimension left, and no total of rows can show it.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    private IReadOnlyList<ReuseRow> Reuse(SqliteConnection connection, IReadOnlyList<DateOnly> range)
+    {
+        var perNight = new Dictionary<(string Direction, string Set), List<(int Names, int Subjects)>>();
+
+        using (SqliteCommand command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                SELECT s.direction, c.control_set,
+                       COUNT(DISTINCT c.control_ticker), COUNT(DISTINCT c.setup_id)
+                  FROM calibration_control_setup c
+                  JOIN calibration_setup s ON s.setup_id = c.setup_id
+                 WHERE s.as_of >= @from AND s.as_of <= @to AND c.drawn_at <= @computed_at
+                 GROUP BY s.direction, c.control_set, s.as_of
+                """;
+            Bind(command, range);
+
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                (string, string) key = (reader.GetString(0), reader.GetString(1));
+
+                if (!perNight.TryGetValue(key, out List<(int, int)>? nights))
+                {
+                    nights = [];
+                    perNight[key] = nights;
+                }
+
+                nights.Add((reader.GetInt32(2), reader.GetInt32(3)));
+            }
+        }
+
+        var overRange = new Dictionary<
+            (string Direction, string Set), (int Names, int Rows, double DaysApart, int SameSession)>();
+
+        using (SqliteCommand command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                SELECT s.direction, c.control_set, COUNT(DISTINCT c.control_ticker), COUNT(*),
+                       AVG(CAST(json_extract(c.match_quality, '$.sessionsApart') AS INTEGER)),
+                       SUM(CASE WHEN CAST(json_extract(c.match_quality, '$.sessionsApart') AS INTEGER) = 0
+                                THEN 1 ELSE 0 END)
+                  FROM calibration_control_setup c
+                  JOIN calibration_setup s ON s.setup_id = c.setup_id
+                 WHERE s.as_of >= @from AND s.as_of <= @to AND c.drawn_at <= @computed_at
+                 GROUP BY s.direction, c.control_set
+                """;
+            Bind(command, range);
+
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                overRange[(reader.GetString(0), reader.GetString(1))] = (
+                    reader.GetInt32(2),
+                    reader.GetInt32(3),
+                    reader.IsDBNull(4) ? 0d : reader.GetDouble(4),
+                    reader.IsDBNull(5) ? 0 : reader.GetInt32(5));
+            }
+        }
+
+        var rows = new List<ReuseRow>();
+
+        foreach (((string direction, string set), List<(int Names, int Subjects)> nights) in perNight)
+        {
+            (int names, int total, double apart, int sameSession) =
+                overRange.GetValueOrDefault((direction, set));
+
+            rows.Add(new ReuseRow(
+                direction, set, nights.Count,
+                Middle([.. nights.Select(n => n.Names)]),
+                Middle([.. nights.Select(n => n.Subjects)]),
+                names, total, apart, sameSession));
+        }
+
+        return [.. rows.OrderBy(r => r.Direction, StringComparer.Ordinal)
+            .ThenBy(r => r.Set, StringComparer.Ordinal)];
+    }
+
+    private void Bind(SqliteCommand command, IReadOnlyList<DateOnly> range)
+    {
+        command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(range[0]));
+        command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(range[^1]));
+        command.Parameters.AddWithValue(
+            "@computed_at", StoreText.TimestampToStorageText(_clock.UtcNow));
+    }
+
+    private static int Middle(int[] values)
+    {
+        Array.Sort(values);
+        return values.Length == 0 ? 0 : values[values.Length / 2];
+    }
+
+    /// <summary>
+    /// How many different names one set drew on, and how far from the subject it had to reach.
+    ///
+    /// <paramref name="MeanDaysApart"/> and <paramref name="SameSessionRows"/> are the price the
+    /// across-session ruling accepted, read back from the rows that paid it. A control on the
+    /// subject's own session shares that session's market move and the paired difference cancels
+    /// it; a control from another session does not, so the market factor stays in every pair on the
+    /// night and every pair on the night carries the same one.
+    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// </summary>
+    public sealed record ReuseRow(
+        string Direction,
+        string Set,
+        int Nights,
+        int MedianNamesPerNight,
+        int MedianSubjectsPerNight,
+        int NamesOverRange,
+        int Rows,
+        double MeanDaysApart,
+        int SameSessionRows);
 
     /// <summary>Whether the short side's tightest gate is applied as it stands or set aside.</summary>
     public enum ReachedCeiling
@@ -309,7 +481,10 @@ public sealed class ReconstructedRead
         PairedInterval.Estimate? estimate = PairedInterval.Of(
             nights, MeasurementParameters.BootstrapBlockSessions, MeasurementParameters.BootstrapDraws);
 
-        return new Panel(direction, set, ceiling, nights.Count, estimate);
+        // The discounts beside the figure they produced. A panel reading "262 needed, 65 held" is
+        // read as thinness, and thinness is one of four things it can be.
+        return new Panel(
+            direction, set, ceiling, nights.Count, estimate, PairedInterval.Disperse(nights));
     }
 
     private void Report(ReadResult result)
@@ -343,6 +518,7 @@ public sealed class ReconstructedRead
             {
                 Console.WriteLine($": withheld, {panel.Nights} night(s) against a floor of "
                     + $"{MeasurementParameters.MinimumSessions}; {bias}");
+                Console.WriteLine($"    {Discounts(panel)}");
                 continue;
             }
 
@@ -352,8 +528,11 @@ public sealed class ReconstructedRead
                 + $"{e.High:+0.0000;-0.0000;0.0000}], {e.Rows} row(s), {e.Nights} night(s), "
                 + $"{e.EffectiveObservations} effective of {MeasurementParameters.MinimumEffectiveObservations} needed, "
                 + $"over {result.SessionsCovered} session(s) {result.From:yyyy-MM-dd}..{result.To:yyyy-MM-dd}");
+            Console.WriteLine($"    {Discounts(panel)}");
             Console.WriteLine($"    {bias}, RECONSTRUCTED, not evidence, does not move 3.6");
         }
+
+        ReportDiagnosis(result);
 
         Console.WriteLine();
         Console.WriteLine($"{Name}: evidence store before {result.Before}");
@@ -361,9 +540,202 @@ public sealed class ReconstructedRead
         Console.WriteLine($"{Name}: evidence store untouched: {(result.Before == result.After ? "yes" : "NO")}");
     }
 
+    /// <summary>
+    /// Why the tight set came up short, per subject and per direction.
+    ///
+    /// <b>Measurement only.</b> Nothing here is read by any stage, no threshold moves, and the
+    /// figures are stated over the same range as the panels above them because they are figures
+    /// about the same population.
+    /// </summary>
+    private static void ReportDiagnosis(ReadResult result)
+    {
+        if (result.Diagnosis is not TightDrawDiagnosis diagnosis
+            || result.TightDrawn is not IReadOnlyDictionary<string, int> actual)
+        {
+            return;
+        }
+
+        string range = $"over {result.SessionsCovered} session(s) "
+            + $"{result.From:yyyy-MM-dd}..{result.To:yyyy-MM-dd}";
+
+        Console.WriteLine();
+
+        // <b>The mood distribution, because it is the dimension nothing had ever measured.</b> The
+        // tight pool is the sessions sharing the subject's label, so a window one label dominates
+        // gives the draw almost everything to reach across and a window that alternates gives it
+        // little. It became computable for a reconstructed session only when the scoring moved to
+        // Core, so no run before this one could have reported it.
+        var moods = diagnosis.Moods
+            .Where(m => m.Key >= result.From && m.Key <= result.To)
+            .GroupBy(m => m.Value ?? "(unlabelled)")
+            .OrderByDescending(g => g.Count())
+            .ToList();
+
+        Console.WriteLine($"{Name}: market mood {range}: "
+            + string.Join(", ", moods.Select(g => $"{g.Key} {g.Count()}")));
+
+        // The prediction against the rows written. A counting pass that re-states a filter can drift
+        // from the filter while still answering, so the drift is measured rather than assumed away.
+        var checkable = diagnosis.Entries.Where(e => actual.ContainsKey(e.SetupId)).ToList();
+        int disagreed = checkable.Count(e => e.Predicted != actual[e.SetupId]);
+
+        foreach (ReuseRow row in result.Reuse ?? [])
+        {
+            Console.WriteLine($"{Name}: CONTROL REUSE {row.Direction}/{row.Set} {range}: median "
+                + $"{row.MedianNamesPerNight} distinct name(s) a night serving a median "
+                + $"{row.MedianSubjectsPerNight} subject(s), {row.NamesOverRange} distinct name(s) "
+                + $"over the whole range in {row.Rows} row(s); mean {row.MeanDaysApart:F1} calendar "
+                + $"day(s) from the subject's own session, {row.SameSessionRows} row(s) on it "
+                + $"({(row.Rows == 0 ? 0m : (decimal)row.SameSessionRows * 100 / row.Rows):F1}%)");
+        }
+
+        Console.WriteLine($"{Name}: diagnosis checked against the rows written on "
+            + $"{checkable.Count} subject(s), {disagreed} disagreement(s)"
+            + (disagreed == 0 ? "" : " — THE DIAGNOSIS BELOW IS NOT THE DRAW"));
+
+        foreach (string direction in new[] { SetupDirection.Long, SetupDirection.Short })
+        {
+            var entries = diagnosis.Entries
+                .Where(e => e.Direction == direction && e.AsOf >= result.From && e.AsOf <= result.To)
+                .ToList();
+
+            if (entries.Count == 0)
+            {
+                Console.WriteLine($"{Name}: TIGHT YIELD {direction}: no subject {range}");
+                continue;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"{Name}: TIGHT YIELD {direction}, {entries.Count} subject(s) {range}");
+
+            // The distribution, not the total. Read from the rows written rather than from the
+            // prediction, so the figure is what the draw did.
+            for (int drawn = MeasurementParameters.ControlsPerSet; drawn >= 0; drawn--)
+            {
+                int held = entries.Count(e => actual.GetValueOrDefault(e.SetupId, 0) == drawn);
+                Console.WriteLine($"    drew {drawn}: {held} subject(s), "
+                    + $"{(decimal)held * 100 / entries.Count:F1}% of {entries.Count}");
+            }
+
+            // The funnel over every subject that had figures, in a fixed order, not only over the
+            // ones that came up short. Reporting it only for the short subjects would leave the
+            // pool sizes unstated in the case where nothing came up short, which is the case where
+            // the reader most needs to see how wide the pool was.
+            var faced = entries.Where(e => !e.NoFigures && e.Mood is not null).ToList();
+
+            if (faced.Count > 0)
+            {
+                Console.WriteLine($"    funnel, median over {faced.Count} subject(s) with figures: "
+                    + $"all reach sessions {Median(faced, e => e.PoolAllSessions)} row(s) "
+                    + $"-> same mood {Median(faced, e => e.PoolAfterMood)} "
+                    + $"-> same ladder {Median(faced, e => e.PoolAfterLadder)} "
+                    + $"-> distinct names {Median(faced, e => e.DistinctNames)}, against "
+                    + $"{MeasurementParameters.ControlsPerSet} wanted");
+                Console.WriteLine("    turnover and daily range eliminate nobody: they are distances "
+                    + "that order the survivors. Turnover eliminates once and earlier, as the "
+                    + "liquidity floor on pool membership.");
+                Console.WriteLine($"    mood dropped, ladder kept: median {Median(faced, e => e.WithoutMood)} "
+                    + $"name(s); ladder dropped, mood kept: median {Median(faced, e => e.WithoutLadder)} name(s)");
+            }
+
+            var shortOfFive = entries
+                .Where(e => actual.GetValueOrDefault(e.SetupId, 0) < MeasurementParameters.ControlsPerSet)
+                .ToList();
+
+            if (shortOfFive.Count == 0)
+            {
+                Console.WriteLine("    every subject drew five; no dimension eliminated anybody");
+                continue;
+            }
+
+            int noFigures = shortOfFive.Count(e => e.NoFigures);
+            int unlabelled = shortOfFive.Count(e => !e.NoFigures && e.Mood is null);
+            var eliminated = shortOfFive.Where(e => !e.NoFigures && e.Mood is not null).ToList();
+
+            Console.WriteLine($"    short of five: {shortOfFive.Count}, of which {noFigures} had no "
+                + $"figures on their own night, {unlabelled} sat on an unlabelled session, and "
+                + $"{eliminated.Count} faced a pool that eliminated them");
+
+            if (eliminated.Count == 0)
+            {
+                continue;
+            }
+
+            // The funnel, in a fixed order, over the subjects a pool eliminated. Medians rather
+            // than means, because one subject on a huge pool would carry the average past every
+            // other subject in the group.
+            Console.WriteLine($"    funnel, median over those {eliminated.Count}: "
+                + $"all reach sessions {Median(eliminated, e => e.PoolAllSessions)} row(s) "
+                + $"-> same mood {Median(eliminated, e => e.PoolAfterMood)} "
+                + $"-> same ladder {Median(eliminated, e => e.PoolAfterLadder)} "
+                + $"-> distinct names {Median(eliminated, e => e.DistinctNames)}");
+            int withoutMood = eliminated.Count(e => e.WithoutMood >= MeasurementParameters.ControlsPerSet);
+            int withoutLadder = eliminated.Count(e => e.WithoutLadder >= MeasurementParameters.ControlsPerSet);
+
+            Console.WriteLine($"    with the mood dropped and the ladder kept: median "
+                + $"{Median(eliminated, e => e.WithoutMood)} name(s), {withoutMood} of "
+                + $"{eliminated.Count} would reach five");
+            Console.WriteLine($"    with the ladder dropped and the mood kept: median "
+                + $"{Median(eliminated, e => e.WithoutLadder)} name(s), {withoutLadder} of "
+                + $"{eliminated.Count} would reach five");
+
+            string verdict = withoutMood == withoutLadder
+                ? "neither dimension alone accounts for it"
+                : withoutMood > withoutLadder
+                    ? "the market mood is the dimension doing the eliminating"
+                    : "the ladder grade is the dimension doing the eliminating";
+
+            Console.WriteLine($"    {verdict}, {range}");
+
+            foreach (TightDrawDiagnosis.Entry sample in eliminated
+                .OrderBy(e => e.DistinctNames)
+                .ThenBy(e => e.SetupId, StringComparer.Ordinal)
+                .Take(8))
+            {
+                Console.WriteLine($"      {sample.AsOf:yyyy-MM-dd} {sample.Ticker} "
+                    + $"ladder {sample.LadderGrade ?? "(ungraded)"} mood {sample.Mood}: "
+                    + $"{sample.PoolAllSessions} -> {sample.PoolAfterMood} -> {sample.PoolAfterLadder} "
+                    + $"-> {sample.DistinctNames} distinct, drew {actual.GetValueOrDefault(sample.SetupId, 0)}, "
+                    + $"without mood {sample.WithoutMood}, without ladder {sample.WithoutLadder}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// What a panel spent its rows on, which is the half of "262 needed, 65 held" the figure omits.
+    ///
+    /// A panel short of the minimum is read as thin. It can instead be repeating itself across
+    /// nights, or carrying pairs that all move together within a night, and those are different
+    /// findings with different repairs. Reported for every panel including a withheld one, because
+    /// a withheld panel is exactly the one a reader wants the reason for.
+    /// </summary>
+    private static string Discounts(Panel panel)
+    {
+        PairedInterval.Dispersion d = panel.Dispersion;
+        string design = d.Design is decimal effect
+            ? effect.ToString("F2", CultureInfo.InvariantCulture)
+            : "not measurable";
+
+        return $"discounts: {d.Rows} row(s) over {d.Nights} night(s), {d.IndependentRows:F1} were the "
+            + $"nights independent of each other; across-night factor {d.Serial:F4}, within-night "
+            + $"design effect {design}, leaving {d.Effective} effective";
+    }
+
+    private static int Median(
+        IReadOnlyList<TightDrawDiagnosis.Entry> entries, Func<TightDrawDiagnosis.Entry, int> of)
+    {
+        int[] values = [.. entries.Select(of).Order()];
+        return values.Length == 0 ? 0 : values[values.Length / 2];
+    }
+
     /// <summary>One panel of the reconstructed read.</summary>
     public sealed record Panel(
-        string Direction, string Set, ReachedCeiling Ceiling, int Nights, PairedInterval.Estimate? Estimate);
+        string Direction,
+        string Set,
+        ReachedCeiling Ceiling,
+        int Nights,
+        PairedInterval.Estimate? Estimate,
+        PairedInterval.Dispersion Dispersion);
 
     /// <summary>
     /// The evidence store's row counts, which this pass must not move.
@@ -408,7 +780,10 @@ public sealed class ReconstructedRead
         EvidenceCounts Before,
         EvidenceCounts After,
         TimeSpan Wall,
-        bool Failed)
+        bool Failed,
+        TightDrawDiagnosis? Diagnosis = null,
+        IReadOnlyDictionary<string, int>? TightDrawn = null,
+        IReadOnlyList<ReuseRow>? Reuse = null)
     {
         public static ReadResult Empty(int sessions, TimeSpan wall) =>
             new(sessions, default, default, 0, 0, 0, 0, [],
