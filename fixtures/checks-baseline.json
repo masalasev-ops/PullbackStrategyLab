@@ -198,8 +198,8 @@
   "point-in-time": {
    "scopes": {
     "public reads on the store's readers": 28,
-    "statements selecting from a stamped table": 57,
-    "stamped tables the check knows about": 14,
+    "statements selecting from a stamped table": 63,
+    "stamped tables the check knows about": 16,
     "directions of the future-dated case": 2
    },
    "context": [
@@ -285,10 +285,10 @@
   },
   "writer-ownership": {
    "scopes": {
-    "stores declared in SCHEMA.md": 37,
-    "stores a migration has created": 23,
-    "writes found in the shipped source": 35,
-    "declared writers whose store and component both exist": 32,
+    "stores declared in SCHEMA.md": 39,
+    "stores a migration has created": 27,
+    "writes found in the shipped source": 37,
+    "declared writers whose store and component both exist": 34,
     "operations with more than one writer, where SCHEMA states the disjointness": 6
    },
    "context": [

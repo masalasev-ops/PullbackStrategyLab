@@ -9834,10 +9834,10 @@
   {
    "id": "store.schemaVersion",
    "tier": "DERIVED",
-   "value": "35",
+   "value": "36",
    "checkpoint": "3.12",
    "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 035-control-session.sql, and a store the runner has taken all the way reads that number in user_version, so a fully migrated store reads 35. Independent of MigrationRunner.LatestVersion, which reads the same files through the assembly's resources.",
-   "note": "What the guard added at 3.12 compares a store against. On 2026-08-28 the live store read 30 against this number and four stages died on a column it had not got. Moved from 32 to 33 at 3.13, which added 033-corrected-check.sql, from 33 to 34 by 034-scoreboard-sessions.sql, which gives the scoreboard the session count and its floor, and from 34 to 35 by 035-control-session.sql, which records the session a control was drawn from: the figure is the highest migration number this build carries, so it moves whenever a migration lands and the old value no longer holds because the file it named is no longer the last one. Kept at checkpoint 3.12 rather than reattributed, because the expectation asserts the guard 3.12 built rather than the migration that last moved its value. A store at 34 is now behind the build, which is the state every stage refuses, and the live store is one of them until tools/migrate is run against it."
+   "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine."
   },
   {
    "id": "tiers.falling",

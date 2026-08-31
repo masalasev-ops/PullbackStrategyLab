@@ -77,6 +77,9 @@ public sealed class ForwardReturnFiller
     {
         ArgumentNullException.ThrowIfNull(args);
 
+        // The nightly command line is unchanged and still fills the evidence store. A reconstructed
+        // pass is reached through `Fill(asOf, SubjectTables.Calibration)` by the read that owns it,
+        // never from here, so no flag on this stage can point it at the other population.
         DateOnly asOf = args.Length > 0
             ? DateOnly.ParseExact(args[0], "yyyy-MM-dd", CultureInfo.InvariantCulture)
             : _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
@@ -102,15 +105,28 @@ public sealed class ForwardReturnFiller
     /// One fill pass. Every setup whose horizon has elapsed and whose outcome is not already
     /// recorded gets a row; everything else is left for a later night.
     /// </summary>
-    public FillResult Fill(DateOnly asOf)
+    public FillResult Fill(DateOnly asOf) => Fill(asOf, SubjectTables.Evidence);
+
+    /// <summary>
+    /// The same pass over either population, selected by the tables rather than by a flag.
+    ///
+    /// <b>The evidence path is the default overload above and is unchanged.</b> Everything here
+    /// reads a table name off <paramref name="tables"/> where it read a literal before, and the
+    /// arithmetic between the two is the same object code: a reconstructed outcome that disagreed
+    /// with an evidence one would be a fact about which overload was called.
+    /// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
+    /// </summary>
+    public FillResult Fill(DateOnly asOf, SubjectTables tables)
     {
+        ArgumentNullException.ThrowIfNull(tables);
+
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "forward_return");
+        using RunScope run = _runLogger.Begin(connection, Name, tables.ForwardReturn);
 
         DateTimeOffset filledAt = _clock.UtcNow;
 
-        IReadOnlyList<Subject> setups = Subjects(connection, asOf, filledAt);
-        IReadOnlyList<Subject> controls = ControlSubjects(connection, asOf, filledAt);
+        IReadOnlyList<Subject> setups = Subjects(connection, asOf, filledAt, tables);
+        IReadOnlyList<Subject> controls = ControlSubjects(connection, asOf, filledAt, tables);
 
         int written = 0;
         int notYetElapsed = 0;
@@ -171,7 +187,7 @@ public sealed class ForwardReturnFiller
                         acrossAHoliday++;
                     }
 
-                    int rows = Insert(connection, transaction, subject, horizon, intended, outcome, filledAt);
+                    int rows = Insert(connection, transaction, subject, horizon, intended, outcome, filledAt, tables);
 
                     if (isControl)
                     {
@@ -204,22 +220,40 @@ public sealed class ForwardReturnFiller
     /// point-in-time: the question is what the lab can measure today.
     /// </summary>
     private static IReadOnlyList<Subject> Subjects(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt)
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt, SubjectTables tables)
     {
         var subjects = new List<Subject>();
 
+        // <b>Two literal statements rather than an interpolated table name.</b> `point-in-time`
+        // reads the shipped source for statements selecting from a stamped table and asserts each
+        // bounds its stamp. An interpolated name matches nothing, so parameterising this read made
+        // two statements invisible: the scan fell from 57 to 55 and the floor caught it. Written
+        // out, both are read and both are held to the bound.
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT s.setup_id, s.as_of, s.ticker, s.direction, i.atr_14
-              FROM setup s
-              LEFT JOIN indicator_daily i
-                ON i.ticker = s.ticker AND i.as_of = s.as_of
-               AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
-                                     WHERE c.ticker = i.ticker AND c.as_of = i.as_of
-                                       AND c.computed_at <= @filled_at)
-             WHERE s.as_of <= @as_of
-             ORDER BY s.setup_id
-            """;
+        command.CommandText = tables.ExcursionsAvailable
+            ? """
+                SELECT s.setup_id, s.as_of, s.ticker, s.direction, i.atr_14
+                  FROM setup s
+                  LEFT JOIN indicator_daily i
+                    ON i.ticker = s.ticker AND i.as_of = s.as_of
+                   AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
+                                         WHERE c.ticker = i.ticker AND c.as_of = i.as_of
+                                           AND c.computed_at <= @filled_at)
+                 WHERE s.as_of <= @as_of
+                 ORDER BY s.setup_id
+              """
+            : """
+                SELECT s.setup_id, s.as_of, s.ticker, s.direction, i.atr_14
+                  FROM calibration_setup s
+                  LEFT JOIN indicator_daily i
+                    ON i.ticker = s.ticker AND i.as_of = s.as_of
+                   AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
+                                         WHERE c.ticker = i.ticker AND c.as_of = i.as_of
+                                           AND c.computed_at <= @filled_at)
+                 WHERE s.as_of <= @as_of
+                 ORDER BY s.setup_id
+              """;
+
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
 
@@ -275,26 +309,43 @@ public sealed class ForwardReturnFiller
     /// see: A reader's signature does not establish point-in-time; the query does
     /// </summary>
     private static IReadOnlyList<Subject> ControlSubjects(
-        SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt)
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt, SubjectTables tables)
     {
         var subjects = new List<Subject>();
 
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT c.control_id, COALESCE(c.control_as_of, s.as_of), c.control_ticker, s.direction,
-                   i.atr_14
-              FROM control_setup c
-              JOIN setup s ON s.setup_id = c.setup_id
-              LEFT JOIN indicator_daily i
-                ON i.ticker = c.control_ticker
-               AND i.as_of = COALESCE(c.control_as_of, s.as_of)
-               AND i.computed_at = (SELECT MAX(d.computed_at) FROM indicator_daily d
-                                     WHERE d.ticker = i.ticker AND d.as_of = i.as_of
-                                       AND d.computed_at <= @filled_at)
-             WHERE s.as_of <= @as_of
-               AND c.drawn_at <= @filled_at
-             ORDER BY c.control_id
-            """;
+        command.CommandText = tables.ExcursionsAvailable
+            ? """
+                SELECT c.control_id, COALESCE(c.control_as_of, s.as_of), c.control_ticker, s.direction,
+                       i.atr_14
+                  FROM control_setup c
+                  JOIN setup s ON s.setup_id = c.setup_id
+                  LEFT JOIN indicator_daily i
+                    ON i.ticker = c.control_ticker
+                   AND i.as_of = COALESCE(c.control_as_of, s.as_of)
+                   AND i.computed_at = (SELECT MAX(d.computed_at) FROM indicator_daily d
+                                         WHERE d.ticker = i.ticker AND d.as_of = i.as_of
+                                           AND d.computed_at <= @filled_at)
+                 WHERE s.as_of <= @as_of
+                   AND c.drawn_at <= @filled_at
+                 ORDER BY c.control_id
+              """
+            : """
+                SELECT c.control_id, COALESCE(c.control_as_of, s.as_of), c.control_ticker, s.direction,
+                       i.atr_14
+                  FROM calibration_control_setup c
+                  JOIN calibration_setup s ON s.setup_id = c.setup_id
+                  LEFT JOIN indicator_daily i
+                    ON i.ticker = c.control_ticker
+                   AND i.as_of = COALESCE(c.control_as_of, s.as_of)
+                   AND i.computed_at = (SELECT MAX(d.computed_at) FROM indicator_daily d
+                                         WHERE d.ticker = i.ticker AND d.as_of = i.as_of
+                                           AND d.computed_at <= @filled_at)
+                 WHERE s.as_of <= @as_of
+                   AND c.drawn_at <= @filled_at
+                 ORDER BY c.control_id
+              """;
+
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
 
@@ -362,6 +413,18 @@ public sealed class ForwardReturnFiller
         return path;
     }
 
+    /// <summary>
+    /// One outcome row, into whichever table the pass owns.
+    ///
+    /// <b>The excursions are the one thing the two populations do not share.</b> On the evidence
+    /// side they are expressed in the subject's own ATR, read from `indicator_daily` on its own
+    /// session. A reconstructed session has no such row and may not be given one, and the
+    /// calibration walk computes its averages in memory and discards them, so there is no ATR to
+    /// express them in. They are written null with the reason on the row rather than approximated
+    /// from daily bars, which is the stand-in `reached-ceiling`'s anchored clause already refuses by
+    /// name, and rather than coalesced to nought, which is a defect the evidence side already
+    /// carries as an obligation raised at 3.5 and is not worth shipping twice.
+    /// </summary>
     private static int Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -369,7 +432,8 @@ public sealed class ForwardReturnFiller
         int horizon,
         DateOnly intended,
         ForwardOutcome.Outcome outcome,
-        DateTimeOffset filledAt)
+        DateTimeOffset filledAt,
+        SubjectTables tables)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -377,14 +441,34 @@ public sealed class ForwardReturnFiller
         // Never revised. A horizon that has elapsed has one answer, and a restated bar arriving
         // later corrects the market's record rather than licensing a rewrite of an outcome already
         // acted on. The key refuses the second write rather than this method remembering to.
-        command.CommandText = """
-            INSERT INTO forward_return
-                (subject_id, subject_kind, horizon_days, intended_date, actual_date,
-                 return_signed, mfe_atr, mae_atr, filled_at)
-            VALUES (@subject_id, @subject_kind, @horizon_days, @intended_date, @actual_date,
-                    @return_signed, @mfe_atr, @mae_atr, @filled_at)
-            ON CONFLICT (subject_id, subject_kind, horizon_days) DO NOTHING
-            """;
+        // <b>Two literal statements rather than one interpolated table name, and that is a
+        // verification property rather than a style.</b> `writer-ownership` reads the shipped source
+        // for `INSERT INTO <name>` and attributes each write to the type enclosing it. An
+        // interpolated name matches nothing at all, so parameterising this insert made two writes
+        // invisible to the check: the scan fell from 35 to 33 and the floor under it caught the
+        // narrowing. Written out, the check sees both tables, attributes both to this stage, and
+        // reconciles both against SCHEMA in the direction that matters.
+        //
+        // What is not duplicated is the arithmetic. `ForwardOutcome`, the bar path and the signing
+        // are one implementation over both populations; these are two spellings of where the answer
+        // is put, and the store's own key refuses a second write either way.
+        command.CommandText = tables.ExcursionsAvailable
+            ? """
+                INSERT INTO forward_return
+                    (subject_id, subject_kind, horizon_days, intended_date, actual_date,
+                     return_signed, mfe_atr, mae_atr, filled_at)
+                VALUES (@subject_id, @subject_kind, @horizon_days, @intended_date, @actual_date,
+                        @return_signed, @mfe_atr, @mae_atr, @filled_at)
+                ON CONFLICT (subject_id, subject_kind, horizon_days) DO NOTHING
+              """
+            : """
+                INSERT INTO calibration_forward_return
+                    (subject_id, subject_kind, horizon_days, intended_date, actual_date,
+                     return_signed, mfe_atr, mae_atr, excursions_absent_because, filled_at)
+                VALUES (@subject_id, @subject_kind, @horizon_days, @intended_date, @actual_date,
+                        @return_signed, NULL, NULL, @absent, @filled_at)
+                ON CONFLICT (subject_id, subject_kind, horizon_days) DO NOTHING
+              """;
 
         command.Parameters.AddWithValue("@subject_id", subject.SubjectId);
         command.Parameters.AddWithValue("@subject_kind", subject.Kind);
@@ -392,14 +476,27 @@ public sealed class ForwardReturnFiller
         command.Parameters.AddWithValue("@intended_date", StoreText.DateToStorageText(intended));
         command.Parameters.AddWithValue("@actual_date", StoreText.DateToStorageText(outcome.ActualDate));
         command.Parameters.AddWithValue("@return_signed", StoreText.RatioToStorageText(outcome.ReturnSigned));
-        command.Parameters.AddWithValue(
-            "@mfe_atr", StoreText.RatioToStorageText(outcome.MaximumFavourableExcursion ?? 0m));
-        command.Parameters.AddWithValue(
-            "@mae_atr", StoreText.RatioToStorageText(outcome.MaximumAdverseExcursion ?? 0m));
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
+
+        if (tables.ExcursionsAvailable)
+        {
+            command.Parameters.AddWithValue(
+                "@mfe_atr", StoreText.RatioToStorageText(outcome.MaximumFavourableExcursion ?? 0m));
+            command.Parameters.AddWithValue(
+                "@mae_atr", StoreText.RatioToStorageText(outcome.MaximumAdverseExcursion ?? 0m));
+        }
+        else
+        {
+            command.Parameters.AddWithValue("@absent", ExcursionsAbsent);
+        }
 
         return command.ExecuteNonQuery();
     }
+
+    /// <summary>Why a reconstructed row carries no excursions, recorded on the row rather than in prose.</summary>
+    public const string ExcursionsAbsent =
+        "no ATR for a reconstructed session: indicator_daily holds no row for a night the lab was not "
+        + "running, and the calibration walk computes its averages in memory and discards them";
 
     /// <summary>
     /// One thing owed an outcome. <c>Kind</c> is the subject's own rather than a constant supplied
