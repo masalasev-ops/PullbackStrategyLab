@@ -89,6 +89,23 @@ Ruled by the operator on 2026-08-31, superseding **The tight control set draws f
 
 **Ruled before the evidence accumulates, which is again the only time it could be.** The superseded ruling stood for one day and no forward night ran under it. The live store holds two scoreboard dates, both drawn before it, no setup has closed its ten-session horizon, and no interval has ever been taken over either definition. Nothing accumulated is discarded and nothing is spent twice.
 
+**3.6 gates what may be admitted, not what may be built**
+Ruled by the operator on 2026-08-31. `BUILD_PLAN.md` said that phase 4 should not start without 3.6's answer. That is corrected: 3.6 gates admitting a variant, changing a rule and spending a holdout window. It does not gate constructing the apparatus that would do any of those things.
+
+**The apparatus is rule-agnostic, and that is the whole reason.** VariantAdmitter, VariantScorer, ReplayHarness, HoldoutRegistry and the phase 6 loop are machinery for testing **any** rule against evidence. If the baseline turns out to have no edge, they are precisely the instrument you would use to find one that does, and holding them back until the baseline is vindicated makes the project's recovery from a negative answer depend on work nobody had started. RiskGate, PaperBroker and PositionManager are needed whichever rule wins. **Optimising noise is tuning the baseline; it is not building the apparatus**, and the two were read as one sentence.
+
+**What still waits, named rather than implied.** Until band 1 reports both conditions for the direction concerned: no variant is admitted, no rule is changed, and no holdout window is spent. Band 1 reports per direction and per control set and is never pooled, so a long-side answer licenses nothing on the short side.
+(see: Long and short are never pooled into one figure)
+
+**It is enforced by gates the checkpoints already carry, not by anyone remembering.** VariantAdmitter writes a version's target and minimum sample at creation and never again, AcceptanceGate writes only status and resolution date and cannot touch a target, and a spent holdout window is recorded with its date range and cannot be re-spent. A rule that depended on a session recalling this decision would be the shape this corpus refuses; these three already exist as done conditions and each one refuses on its own.
+(see: Targets and minimum samples are written at creation and are immutable)
+(see: Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight)
+
+**The baseline is still frozen at 5.1 and this does not touch that.** Registering V0 freezes it, and editing it afterwards closes every open version as unresolved and starts a new generation. That is why the measurement defects phase 3 carries fall due before 5.1 rather than whenever somebody gets to them: a figure repaired after the freeze costs the accumulated variant record.
+(see: An approved proposal creates a new version from zero, and a running version is never edited)
+
+**What is given up by this, said outright.** If band 1 eventually reports that the pattern has nothing in it, the phase 4, 5 and 6 code will have been written against a baseline that failed. That work is not wasted, because none of it encodes the baseline's thresholds: the caps, the fill model, the variant machinery and the research loop are all indifferent to which rule they carry. What would be wasted is any tuning of the baseline done before the answer, which is what this decision continues to forbid.
+
 **The win-rate ceiling is computed from the outcome distribution, never assumed**
 A give-up point at half a daily range sits 0.8 standard deviations away, so a coin flip with that stop wins about 20% of the time and the observed 25% is mostly geometry. What matters is the gap between achieved and the computed bound: a wide gap means selection has room, a narrow one means the stop is the binding constraint and the loop should point at execution instead.
 
