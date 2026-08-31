@@ -11,12 +11,13 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// implementation, and its own doc names the two places it could disagree with itself: which
 /// dimensions count, and how ties break. Both are here.
 ///
-/// <b>It exists because the route through the sampler cannot hold them.</b> The mood is excluded
-/// twice on that route, once when the pool selects sessions and once when this class compares
-/// candidates, so deleting the clause here leaves every sampler test green. That was measured
-/// rather than reasoned about: the clause was removed and all seven passed. A pool handed in
-/// directly is the only subject that can tell the two apart.
-/// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+/// <b>It exists because the route through the sampler cannot hold them.</b> Deleting the mood
+/// clause leaves every sampler test green, and that was measured rather than reasoned about: the
+/// clause was removed and all seven passed. It was true when the sampler narrowed its pool by mood,
+/// which excluded the same rows a second time, and it is true now that the pool is one night's,
+/// which never contains them. A pool handed in directly is the only subject that can tell the two
+/// apart, and it is the reason this file outlived the reach that prompted it.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
 /// </summary>
 public sealed class ControlMatchingTests
 {

@@ -194,14 +194,15 @@ public sealed class CalibrationFigures : ISessionFigures
     /// Each ranked session's pool and mood, assembled at <see cref="Rank"/> time from the windows the
     /// caller is already holding.
     ///
-    /// <b>Retained for every ranked session rather than for the current one, because the tight draw
-    /// reaches backwards.</b> A tight control may be drawn from any earlier session sharing the
-    /// mood, so a pool discarded when the next session is ranked is a pool the draw cannot reach.
-    /// That makes the memory this holds proportional to the range walked, which is a real cost of
-    /// the reach and is reported rather than hidden: a run over hundreds of sessions holds hundreds
-    /// of pools. Bounding it would be a lookback, and a lookback is a new authored number that the
-    /// decision naming the reach deliberately does not have.
-    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// <b>Retained for every ranked session rather than for the current one, and the draw is no
+    /// longer why.</b> It was kept per session because a tight control could be drawn from any
+    /// earlier session sharing the mood, so a discarded pool was a pool the draw could not reach.
+    /// The draw now stays within the night and needs one. What still needs all of them is the
+    /// diagnosis, which counts a night's pool against the draw made from it, and the mood series the
+    /// reconstructed read reports, both of which read sessions the walk has passed. The memory is
+    /// proportional to the range walked either way and is reported rather than hidden: a run over
+    /// hundreds of sessions holds hundreds of pools.
+    /// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
     /// </summary>
     private readonly Dictionary<DateOnly, IReadOnlyDictionary<string, ControlMatching.Candidate>> _pools = [];
 

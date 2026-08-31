@@ -22,11 +22,12 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store
 ///
 /// <b>The range is the population and it is stated beside every figure.</b> A reconstructed read
-/// covers a stated number of recent sessions; the draw is quadratic in that range, because a tight
-/// control may be drawn from any earlier session sharing the mood. Stating the range once at the top
-/// would let a figure be copied out of the report without it, and the range is what says how far
-/// back the survivorship exposure reaches. It is not a lookback: no bound is added to
-/// `ControlSampler`, whose own source says that fix is a decision nobody has taken.
+/// covers a stated number of recent sessions, and the range is what says how far back the
+/// survivorship exposure reaches. Stating it once at the top would let a figure be copied out of
+/// the report without it. It was also quadratic in the range for one day, while a tight control
+/// could be drawn from any earlier session sharing the mood; both sets draw within the night again,
+/// so the walk is linear and a session's draw depends on no other session.
+/// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
 ///
 /// <b>Survivorship runs opposite ways on the two sides and each figure says which.</b> The universe
 /// is today's, so the long side is measured over disproportionately the winners and its figure is a
@@ -103,7 +104,7 @@ public sealed class ReconstructedRead
             return ReadResult.Empty(sessions, wall.Elapsed);
         }
 
-        var reach = new HashSet<DateOnly>(range);
+        var inRange = new HashSet<DateOnly>(range);
         DateTimeOffset observedBefore = _clock.UtcNow;
 
         // The warm-up the ranking needs behind the first session read, on the same terms the
@@ -133,8 +134,11 @@ public sealed class ReconstructedRead
 
             source.Rank(session, windows);
 
-            if (!reach.Contains(session))
+            if (!inRange.Contains(session))
             {
+                // A warm-up session is ranked so the checks behind the first read session have their
+                // thrust window, and it has no subjects of its own. Nothing is drawn from it either,
+                // which used to need saying and no longer does: a draw cannot leave its own night.
                 continue;
             }
 
@@ -145,7 +149,7 @@ public sealed class ReconstructedRead
                 connection, source, session, SubjectTables.Calibration, _options.SessionZone);
 
             ControlResult result = _controls.Draw(
-                connection, source, session, SubjectTables.Calibration, reach);
+                connection, source, session, SubjectTables.Calibration);
 
             drawn += result.Loose + result.Tight;
             pool = Math.Max(pool, result.Pool);
@@ -359,12 +363,14 @@ public sealed class ReconstructedRead
     /// <summary>
     /// How many different names one set drew on, and how far from the subject it had to reach.
     ///
-    /// <paramref name="MeanDaysApart"/> and <paramref name="SameSessionRows"/> are the price the
-    /// across-session ruling accepted, read back from the rows that paid it. A control on the
-    /// subject's own session shares that session's market move and the paired difference cancels
-    /// it; a control from another session does not, so the market factor stays in every pair on the
-    /// night and every pair on the night carries the same one.
-    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// <paramref name="MeanDaysApart"/> and <paramref name="SameSessionRows"/> measured the price
+    /// the across-session ruling accepted and now assert that it is not being paid. A control on the
+    /// subject's own session shares that session's market move and the paired difference cancels it;
+    /// a control from another session does not, so the market factor stays in every pair on the
+    /// night and every pair carries the same one. Both figures should read nought days apart and
+    /// every row on the session on both sets, and they are reported rather than assumed because a
+    /// number that only ever confirms is the one nobody notices going wrong.
+    /// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
     /// </summary>
     public sealed record ReuseRow(
         string Direction,
@@ -621,21 +627,27 @@ public sealed class ReconstructedRead
             // ones that came up short. Reporting it only for the short subjects would leave the
             // pool sizes unstated in the case where nothing came up short, which is the case where
             // the reader most needs to see how wide the pool was.
-            var faced = entries.Where(e => !e.NoFigures && e.Mood is not null).ToList();
+            var faced = entries.Where(e => !e.NoFigures).ToList();
 
             if (faced.Count > 0)
             {
                 Console.WriteLine($"    funnel, median over {faced.Count} subject(s) with figures: "
-                    + $"all reach sessions {Median(faced, e => e.PoolAllSessions)} row(s) "
+                    + $"the night's pool {Median(faced, e => e.PoolOnTheNight)} name(s) "
                     + $"-> same mood {Median(faced, e => e.PoolAfterMood)} "
                     + $"-> same ladder {Median(faced, e => e.PoolAfterLadder)} "
-                    + $"-> distinct names {Median(faced, e => e.DistinctNames)}, against "
+                    + $"-> drawable {Median(faced, e => e.DistinctNames)}, against "
                     + $"{MeasurementParameters.ControlsPerSet} wanted");
                 Console.WriteLine("    turnover and daily range eliminate nobody: they are distances "
                     + "that order the survivors. Turnover eliminates once and earlier, as the "
                     + "liquidity floor on pool membership.");
+
+                // The mood clause dropping nobody is the decision's central claim, so it is stated
+                // as a count and as the number of rows where it did not hold rather than as prose.
+                int moodExcluded = faced.Count(e => e.WithoutMood != e.DistinctNames);
+
                 Console.WriteLine($"    mood dropped, ladder kept: median {Median(faced, e => e.WithoutMood)} "
-                    + $"name(s); ladder dropped, mood kept: median {Median(faced, e => e.WithoutLadder)} name(s)");
+                    + $"name(s), differing from the drawable count on {moodExcluded} subject(s); "
+                    + $"ladder dropped, mood kept: median {Median(faced, e => e.WithoutLadder)} name(s)");
             }
 
             var shortOfFive = entries
@@ -650,11 +662,16 @@ public sealed class ReconstructedRead
 
             int noFigures = shortOfFive.Count(e => e.NoFigures);
             int unlabelled = shortOfFive.Count(e => !e.NoFigures && e.Mood is null);
-            var eliminated = shortOfFive.Where(e => !e.NoFigures && e.Mood is not null).ToList();
+
+            // An unlabelled night draws its tight set like any other now, so it is counted beside
+            // the others rather than excluded from them. Under the superseded ruling it emptied the
+            // tight pool and was its own cause.
+            var eliminated = shortOfFive.Where(e => !e.NoFigures).ToList();
 
             Console.WriteLine($"    short of five: {shortOfFive.Count}, of which {noFigures} had no "
-                + $"figures on their own night, {unlabelled} sat on an unlabelled session, and "
-                + $"{eliminated.Count} faced a pool that eliminated them");
+                + $"figures on their own night and {eliminated.Count} faced a pool that eliminated "
+                + $"them. {unlabelled} sat on an unlabelled session, which is no longer a cause of "
+                + "its own and is reported so that stays visible");
 
             if (eliminated.Count == 0)
             {
@@ -665,10 +682,10 @@ public sealed class ReconstructedRead
             // than means, because one subject on a huge pool would carry the average past every
             // other subject in the group.
             Console.WriteLine($"    funnel, median over those {eliminated.Count}: "
-                + $"all reach sessions {Median(eliminated, e => e.PoolAllSessions)} row(s) "
+                + $"the night's pool {Median(eliminated, e => e.PoolOnTheNight)} name(s) "
                 + $"-> same mood {Median(eliminated, e => e.PoolAfterMood)} "
                 + $"-> same ladder {Median(eliminated, e => e.PoolAfterLadder)} "
-                + $"-> distinct names {Median(eliminated, e => e.DistinctNames)}");
+                + $"-> drawable {Median(eliminated, e => e.DistinctNames)}");
             int withoutMood = eliminated.Count(e => e.WithoutMood >= MeasurementParameters.ControlsPerSet);
             int withoutLadder = eliminated.Count(e => e.WithoutLadder >= MeasurementParameters.ControlsPerSet);
 
@@ -693,8 +710,8 @@ public sealed class ReconstructedRead
                 .Take(8))
             {
                 Console.WriteLine($"      {sample.AsOf:yyyy-MM-dd} {sample.Ticker} "
-                    + $"ladder {sample.LadderGrade ?? "(ungraded)"} mood {sample.Mood}: "
-                    + $"{sample.PoolAllSessions} -> {sample.PoolAfterMood} -> {sample.PoolAfterLadder} "
+                    + $"ladder {sample.LadderGrade ?? "(ungraded)"} mood {sample.Mood ?? "(unlabelled)"}: "
+                    + $"{sample.PoolOnTheNight} -> {sample.PoolAfterMood} -> {sample.PoolAfterLadder} "
                     + $"-> {sample.DistinctNames} distinct, drew {actual.GetValueOrDefault(sample.SetupId, 0)}, "
                     + $"without mood {sample.WithoutMood}, without ladder {sample.WithoutLadder}");
             }

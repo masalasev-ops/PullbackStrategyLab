@@ -286,14 +286,16 @@ public sealed class ForwardReturnFiller
     /// in the subject's own range, so borrowing the setup's would state the control's path in units
     /// of a different stock's volatility.
     ///
-    /// <b>The date is the control's own and no longer the setup's, and that sentence used to run the
-    /// other way.</b> It read "joined through `setup` rather than carrying a date of its own,
-    /// because a control's session is the session it was drawn for", which was true while every
-    /// draw was within the night and became false when the tight set was allowed to reach across
-    /// sessions. A tight control drawn from a session three months earlier would otherwise have had
-    /// its ten-day return measured from the setup's night: a real return of a real stock over a real
-    /// window, and the wrong window, which is not a shape anything downstream could have seen.
-    /// see: The tight control set draws from any session sharing the market mood, and the loose set stays within the night
+    /// <b>The date is the control's own, which is again the setup's on every row, and the column is
+    /// kept anyway.</b> This read "joined through `setup` rather than carrying a date of its own,
+    /// because a control's session is the session it was drawn for" until the tight set was allowed
+    /// to reach across sessions, and the reach was reversed a day later. Read from the row rather
+    /// than from the join because the two agreeing is a fact worth stating: a tight control drawn
+    /// from a session three months earlier would have had its ten-day return measured from the
+    /// setup's night, a real return of a real stock over the wrong window, and nothing downstream
+    /// could have seen it. `A_tight_control_is_drawn_from_the_subjects_own_session` is what now
+    /// holds the two together.
+    /// see: The tight control set draws within the night, because a within-night draw controls the market mood exactly
     ///
     /// `COALESCE` because every row drawn before migration 035 carries the setup's own date and the
     /// migration backfills exactly that. The fallback is belt and braces for a row written between
