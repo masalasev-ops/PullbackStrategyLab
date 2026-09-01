@@ -18,12 +18,26 @@
     read off the two numbers in the band. A stage that needs a column the store has not got fails
     with a message naming the column, and every night it fails is a night that produces nothing.
 *@
-@if (Model.SchemaBehind)
+@if (Model.SchemaMismatch && !Model.StoreAhead)
 {
     <p class="down">
         The store is at schema @Model.SchemaVersion and this build needs @Model.SchemaVersionExpected.
         Stages that read a column the store has not got will fail. Run <code>tools/migrate</code>, then
         rerun the night's stages for their own date.
+    </p>
+}
+@if (Model.StoreAhead)
+{
+    @* The other direction, and it needs the other act. A store ahead of the build means an older
+       binary is reading columns whose meaning has moved, so a migration is not owed and running one
+       would not help. The checkout is what has to change. Program.WhyTheStoreCannotBeRead already
+       says this; until 4.2 the band collapsed both directions into one label and sent the operator
+       to run a migration that was not owed. *@
+    <p class="down">
+        The store is at schema @Model.SchemaVersion and this build was written against
+        @Model.SchemaVersionExpected, so the store is <b>ahead</b> of the build reading it. Do not run
+        <code>tools/migrate</code>: it has nothing to apply. This checkout is older than the store and
+        is what has to change.
     </p>
 }
 

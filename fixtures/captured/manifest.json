@@ -478,6 +478,13 @@
       "query": "filter=General::Sector,General::Industry,Highlights::MarketCapitalization",
       "capturedAt": "2026-08-28T04:12:37.098Z",
       "bytes": 85
+    },
+    {
+      "file": "intraday-AAPL.json",
+      "endpoint": "intraday/AAPL.US",
+      "query": "interval=1m\u0026from=1787630400\u0026to=1787716800",
+      "capturedAt": "2026-09-01T05:02:31.820Z",
+      "bytes": 137323
     }
   ]
 }

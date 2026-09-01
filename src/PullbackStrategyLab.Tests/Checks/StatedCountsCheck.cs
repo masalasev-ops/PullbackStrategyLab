@@ -491,7 +491,6 @@ public sealed partial class StatedCountsCheck
         return end < 0 ? text[start..] : text[start..end];
     }
 
-    /// <summary>Reads the number the prose states between two fixed phrases, so the claim is parsed rather than assumed.</summary>
     /// <summary>
     /// The number named in words between two phrases, because this corpus writes small counts out.
     ///
@@ -593,6 +592,11 @@ public sealed partial class StatedCountsCheck
         ["sixty"] = 60, ["seventy"] = 70, ["eighty"] = 80, ["ninety"] = 90,
     };
 
+    /// <summary>
+    /// The number the prose states in digits between two fixed phrases, so a claim is parsed rather
+    /// than assumed. The digit form beside <see cref="InWords"/>'s word form, because this corpus
+    /// writes small counts out and large ones as numerals.
+    /// </summary>
     private static int StatedBetween(string text, string before, string after)
     {
         Match match = Regex.Match(

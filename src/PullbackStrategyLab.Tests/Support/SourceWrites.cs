@@ -99,7 +99,8 @@ public static partial class SourceWrites
                 EnclosingType(types, index),
                 table,
                 operation,
-                isDelete));
+                isDelete,
+                StatementFrom(text, index)));
 
         foreach (Match match in Insert().Matches(text))
         {
@@ -135,6 +136,44 @@ public static partial class SourceWrites
         return end < 0 ? text[index..] : text[index..end];
     }
 
+    /// <summary>
+    /// The columns an UPDATE assigns, read from its own SET clause.
+    ///
+    /// For the one caller whose exception has to be narrower than a table: `bar-append-only` admits
+    /// exactly one update against a bar table, and admitting it by table alone would admit every
+    /// update against that table. A statement is the unit the property is about, so the exception is
+    /// read from the statement.
+    ///
+    /// Everything from SET to the first WHERE, split on commas, taking the name left of each `=`. It
+    /// returns nothing for a write that is not an update and nothing for one whose statement was not
+    /// captured, so a caller comparing against an expected column fails closed rather than admitting
+    /// a write it could not read.
+    /// </summary>
+    public static IReadOnlyList<string> ColumnsAssignedBy(SourceWrite write)
+    {
+        ArgumentNullException.ThrowIfNull(write);
+
+        Match set = SetClause().Match(write.Statement);
+
+        if (!set.Success)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. set.Groups["assignments"].Value
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(a => a.Split('=', 2)[0].Trim())
+                .Where(c => c.Length > 0 && c.All(ch => char.IsLetterOrDigit(ch) || ch == '_')),
+        ];
+    }
+
+    [GeneratedRegex(
+        @"\bSET\s+(?<assignments>.*?)(?:\bWHERE\b|\bRETURNING\b|$)",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex SetClause();
+
     private static string EnclosingType(IReadOnlyList<Match> types, int index)
     {
         string enclosing = "(none)";
@@ -158,7 +197,8 @@ public sealed record SourceWrite(
     string Type,
     string Table,
     StoreOperation Operation,
-    bool IsDelete)
+    bool IsDelete,
+    string Statement = "")
 {
     public override string ToString() =>
         $"{File}:{Line}  {Type} {(IsDelete ? "DELETE" : Operation.ToString().ToUpperInvariant())} {Table}";

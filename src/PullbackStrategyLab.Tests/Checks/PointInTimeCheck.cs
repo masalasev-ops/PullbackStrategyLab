@@ -51,6 +51,7 @@ public sealed class PointInTimeCheck
         {
             ["daily_bar"] = "observed_at",
             ["index_bar"] = "observed_at",
+            ["intraday_bar"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -120,6 +121,10 @@ public sealed class PointInTimeCheck
             ["indicator_rebuild"] =
                 "requested_at and rebuilt_at are the two ends of a demand rather than observations of the "
                 + "market. The demand is state: it is raised, and it is satisfied.",
+            ["intraday_fetch"] =
+                "observed_at is when one night's minute-bar fetch ran and what it reached, which is "
+                + "operational on the same terms as run_log. Nothing computes a figure about the market "
+                + "from it: the bars it counts are in intraday_bar, which is stamped and bounded.",
         };
 
     /// <summary>

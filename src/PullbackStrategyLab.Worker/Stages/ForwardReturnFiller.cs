@@ -516,7 +516,6 @@ public sealed class ForwardReturnFiller
     }
 }
 
-/// <summary>What one fill pass did.</summary>
 /// <summary>
 /// What one fill pass did, per subject kind.
 ///

@@ -9,18 +9,29 @@
 # scheduler happened to start it, which is not a property anybody should have to reason about at
 # three in the morning.
 #
-# Every run records the commit it ran from. The job runs from a working tree, so what it executes
-# changes when the branch does; refusing on a branch mismatch was considered and rejected, because
-# it would stop accumulation exactly when phase 3 merges to main and nothing would say why. Logging
-# the commit removes the silence without adding a way to fail.
+# Every run records the commit it ran from, and refuses to run from a branch unless told to.
+#
+# The job runs from a working tree, so what it executes changes when the branch does. Logging the
+# commit was the first answer and it was not enough: the log is a file nobody opens, so the branch
+# was recorded on three separate occasions and read on none of them. On 2026-08-28 every slot of one
+# night ran from `phase-3-measurement` at six different commits and the lab flagged nothing. The
+# guard refuses instead, and it carries the escape the first attempt lacked, which is why that
+# attempt was removed: -AllowBranch is an explicit act by an operator who means it, so the refusal
+# cannot stop accumulation on the day a phase merges.
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('universe', 'actions', 'bars', 'rebuild', 'index', 'indicators', 'scans',
-                 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
+                 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap', 'intraday',
                  'forward', 'scoreboard', 'ceiling', 'snapshot')]
-    [string]$Slot
+    [string]$Slot,
+
+    # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
+    # tree on a branch for as long as the merge takes, and a guard with no way through would stop the
+    # night's accumulation for exactly that window. Naming the switch is the operator saying they
+    # know where the tree is.
+    [switch]$AllowBranch
 )
 
 $ErrorActionPreference = 'Stop'
@@ -54,6 +65,12 @@ $slots = @{
     'seal'       = @(@('vectorize'), @('journal'))
     'controls'   = @(, @('controls'))
     'cap'        = @(, @('cap'))
+    # The one unrecoverable slot. Minute bars publish two to three hours after the close, so
+    # this runs at 20:30 for the session that has just closed, and resolves the setups flagged
+    # on the evening before it. A night this does not run is a session of minute bars that
+    # cannot be bought back at any price, which is why it is scheduled rather than left to
+    # be run by hand.
+    'intraday'   = @(, @('intraday-bars'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
@@ -109,6 +126,30 @@ try {
 } catch { }
 
 Write-Line ("slot {0} starting, {1} at {2}, store {3}" -f $Slot, $branch, $commit, $dataRoot)
+
+# The tree is this repository's production checkout, and the ref is a property of the tree that
+# nothing else in this corpus can see. `tools/ci.*` reads the source, the documents and a store it
+# builds; `tools/verify-phase` reads those and the golden fixture. Neither can tell which ref
+# produced the tree it is reading, and both are green on a branch by design, so a night run from a
+# half-finished branch is green everywhere and wrong in the one place that matters.
+#
+# It refuses rather than warning, because a warning goes in the log and the log is what failed three
+# times. A refusal exits non-zero, which the scheduler surfaces.
+if ($branch -ne 'main' -and -not $AllowBranch) {
+    Write-Line ("  refusing: the tree is on '{0}' and not on main. The nightly runs from this repository's" -f $branch)
+    Write-Line "  production checkout, so a slot dispatched from a branch runs whatever that branch happens to hold."
+    Write-Line "  Return the tree to main, or pass -AllowBranch if you mean to run from this one."
+    exit 4
+}
+
+# A ref nothing could read is not a ref that says main. `git` missing, or a tree that is not a
+# repository, both land here, and both are states where the guard cannot do its job: it says so
+# rather than passing.
+if ($branch -eq 'unknown' -and -not $AllowBranch) {
+    Write-Line "  refusing: the tree's branch could not be read, so this slot cannot confirm it runs from main."
+    Write-Line "  Pass -AllowBranch if you mean to run from a checkout git cannot describe."
+    exit 4
+}
 
 $env:PullbackStrategyLab__DataRoot = $dataRoot
 

@@ -99,6 +99,28 @@ public interface IMarketDataVendor
         DateOnly to,
         ICallBudget budget,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// One ticker's minute bars over a window of instants. The only unrecoverable request the lab
+    /// makes: the vendor's minute history reaches back a bounded number of days and a session not
+    /// captured inside it cannot be bought afterwards at any price.
+    ///
+    /// <b>The window is instants rather than dates</b>, because a session is a span of instants in a
+    /// named zone and a date is not. Asking by date would put the boundary in this method, where it
+    /// would be applied against whatever the vendor thinks a day is.
+    ///
+    /// It answers with whatever the vendor holds for that window, including bars outside the regular
+    /// session where the vendor carries them. Nothing is filtered here: an extended-hours minute is
+    /// as unrecoverable as a regular one, so the caller stores every bar and labels each with the
+    /// session it fell in rather than dropping the ones it does not currently read.
+    /// see: Minute bars are fetched for every flagged setup, not only the planned ones
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorIntradayBar>>> GetIntradayAsync(
+        string ticker,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -172,6 +194,28 @@ public sealed record VendorDailyBar(
     /// </summary>
     public decimal DollarVolume => Close * Volume;
 }
+
+/// <summary>
+/// One minute bar as the vendor publishes it. Prices are decimal on arrival, like every other price
+/// in the lab.
+///
+/// <b>The stamp is the instant the bar opened, in UTC.</b> The vendor sends a UNIX timestamp and a
+/// formatted string beside it; only the timestamp is read, because the string carries no offset and
+/// two readers would have to agree about which zone it was written in. Storing the instant means a
+/// bar either side of a daylight-saving change needs no special case.
+///
+/// There is no adjusted close. The vendor publishes minute bars raw, which is what they should be:
+/// these are the prices a trade actually gets, and the geometry already keeps the two bases apart
+/// for exactly this reason.
+/// </summary>
+public sealed record VendorIntradayBar(
+    string Ticker,
+    DateTimeOffset OpenedAt,
+    decimal Open,
+    decimal High,
+    decimal Low,
+    decimal Close,
+    long Volume) : IntradayBarReader.Vendored;
 
 /// <summary>
 /// What the fundamentals lookup returns. Three facts, any of which the vendor may not have.

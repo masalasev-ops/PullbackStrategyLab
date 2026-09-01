@@ -46,6 +46,54 @@ public static class SessionBoundaries
     public static readonly TimeOnly LastInstantOfDay = new(23, 59, 59, 999);
 
     /// <summary>
+    /// When the regular session opens and closes, local to the trading zone.
+    ///
+    /// <b>These are facts about the exchange rather than authored parameters</b>, on the same footing
+    /// as the zone above: nobody chose 09:30 and nothing about the strategy would change if the
+    /// exchange moved it. They are not in the authored-parameters table for that reason, and they are
+    /// pinned against the sentence in ARCHITECTURE that states the session's length.
+    ///
+    /// <b>They arrive at 4.2 because the minute bars do.</b> Until then no shipped constant held
+    /// either boundary: the two times lived in a test comment, in test inline data, in an OPEN cell
+    /// and in a storage estimate, which is four statements of one fact and no definition of it. A
+    /// stored minute has to say whether it fell inside the regular session, because that decides the
+    /// day's high and low, decides whether the open is a gap or the first print of an extended
+    /// session, and moves any average taken across the day.
+    /// </summary>
+    public static readonly TimeOnly RegularSessionOpen = new(9, 30);
+
+    /// <summary>
+    /// The close. Exclusive as a bound on a minute bar's opening stamp: the bar opening at 15:59 is
+    /// the session's last and the bar opening at 16:00 is after it, so the regular session is 390
+    /// bars and not 391. Six hours and a thirty-minute remainder, which is the arithmetic every
+    /// hourly grid has to answer for.
+    /// </summary>
+    public static readonly TimeOnly RegularSessionClose = new(16, 0);
+
+    /// <summary>
+    /// How many minutes the regular session runs, derived rather than stated so the two boundaries
+    /// stay the only place the fact lives.
+    /// </summary>
+    public static int RegularSessionMinutes =>
+        (int)(RegularSessionClose.ToTimeSpan() - RegularSessionOpen.ToTimeSpan()).TotalMinutes;
+
+    /// <summary>
+    /// Whether a minute bar opening at <paramref name="instant"/> falls inside the regular session of
+    /// <paramref name="sessionDate"/>.
+    ///
+    /// Both boundaries are resolved through <see cref="At"/> rather than compared as wall times, so a
+    /// session on a day the zone changes offset is bounded by the instants that session actually had
+    /// rather than by a clock reading that skipped or repeated an hour.
+    /// </summary>
+    public static bool IsRegularSession(DateTimeOffset instant, DateOnly sessionDate, string ianaZoneId)
+    {
+        DateTimeOffset open = At(sessionDate, RegularSessionOpen, ianaZoneId);
+        DateTimeOffset close = At(sessionDate, RegularSessionClose, ianaZoneId);
+
+        return instant >= open && instant < close;
+    }
+
+    /// <summary>
     /// The instant at which <paramref name="localTime"/> occurs on <paramref name="sessionDate"/> in
     /// <paramref name="ianaZoneId"/>.
     ///

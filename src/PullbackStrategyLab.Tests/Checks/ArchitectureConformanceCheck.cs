@@ -892,6 +892,32 @@ public sealed partial class ArchitectureConformanceCheck
     private static string Shipped(params string[] segments) =>
         RepositoryLayout.Read(Path.Combine([RepositoryLayout.Source, .. segments]));
 
+    /// <summary>
+    /// Whether the minute-bar fetch can say what it did not get.
+    ///
+    /// The condition ARCHITECTURE names is a day with no intraday prices, and what it asks for is
+    /// that such a day be visible afterwards: no trades resolved, and the setups of that night
+    /// excluded from scoring rather than scored as though they had chosen to pass. What the stage
+    /// owes at 4.2 is the record that makes that possible, which is three separate things and not
+    /// one. A name the vendor holds nothing for is counted rather than throwing. The count asked for
+    /// is stored beside the count answered, so a name never reached is distinguishable from a name
+    /// that answered with nothing. And a row is written whatever happened, because a night with no
+    /// row is a night nobody ran.
+    ///
+    /// Read from the source rather than run, and the behavioural half is
+    /// <c>IntradayFetcherTests.A_name_the_vendor_holds_nothing_for_is_counted_rather_than_failing_the_night</c>
+    /// together with the ceiling case beside it.
+    /// </summary>
+    private static bool TheFetchCountsWhatItCouldNotGet()
+    {
+        string fetcher = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "IntradayFetcher.cs"));
+
+        return fetcher.Contains("empties++", StringComparison.Ordinal)
+            && fetcher.Contains("RecordFetch(", StringComparison.Ordinal)
+            && fetcher.Contains("names.Count, fetched, empties", StringComparison.Ordinal);
+    }
+
     private static Claim AssertFailureBehaviour(string condition)
     {
         string engine = RepositoryLayout.Read(
@@ -901,6 +927,12 @@ public sealed partial class ArchitectureConformanceCheck
 
         return condition switch
         {
+            "Intraday prices unavailable for a day" => TheFetchCountsWhatItCouldNotGet()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "IntradayFetcher counts a name the vendor holds nothing for rather than failing the night, records the count it asked for beside the count it answered so the shortfall is a join rather than an edit, and writes a fetch row whatever the outcome")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the fetch no longer distinguishes a name with no minutes from a name it never reached, so a session with no resolvable trades is indistinguishable from a session nobody fetched"),
+
             "Unprocessed corporate action" => engine.Contains("blocked++", StringComparison.Ordinal)
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
                 : Claim.Failed("Failure behaviour", condition, "IndicatorEngine no longer refuses on an open demand"),

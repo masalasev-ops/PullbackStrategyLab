@@ -474,6 +474,26 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
+        // 15a. The minute bars, which run at 20:30 for the session that has just closed and resolve
+        //      the setups flagged on the evening before it.
+        //
+        //      <b>Over this fixture it asks for nothing, and that is the expectation rather than a
+        //      gap.</b> The fixture holds one market day and its setups are flagged on that same
+        //      day, so no session before it flagged anything and no plan was live in it. The stage
+        //      records a fetch of nothing rather than skipping, because a night with no row is
+        //      indistinguishable from a night the scheduler never fired. A fixture that grows a
+        //      second session turns these four figures into a real fetch without any edit here,
+        //      which is what makes them worth freezing now.
+        IntradayFetchResult minutes = new IntradayFetcher(Vendor, _connections, Logger(), _clock, _options)
+            .FetchAsync(AsOf).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(IntradayFetcher.Name, minutes.CallsUsed, minutes.RowsWritten, minutes.Outcome.ToStorageText()));
+        Record("intraday.requested", minutes.Requested);
+        Record("intraday.fetched", minutes.Fetched);
+        Record("intraday.empty", minutes.Empty);
+        Record("intraday.barsWritten", minutes.BarsWritten);
+        Record("intraday.pairedWithPriorSession", minutes.SetupAsOf is null ? 0 : 1);
+
         // 16. The forward fill, which is the one stage that reads bars dated after its subject's
         //     own date. Over the fixture it fills what the single captured night can support: the
         //     as-of is the last session the fixture holds, so no horizon has elapsed and the honest

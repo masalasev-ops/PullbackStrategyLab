@@ -14,8 +14,16 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
     private readonly List<VendorSymbol> _delisted = [];
     private readonly Dictionary<DateOnly, List<VendorDailyBar>> _bars = [];
     private readonly Dictionary<DateOnly, List<VendorCorporateAction>> _actions = [];
+    private readonly List<VendorIntradayBar> _minutes = [];
 
     public List<DateOnly> DatesRequested { get; } = [];
+
+    /// <summary>
+    /// Which name was asked for over which window on the intraday endpoint. The window matters as
+    /// much as the name: a fetch aligned to the wrong session returns real bars of a real day and
+    /// nothing downstream could tell.
+    /// </summary>
+    public List<(string Ticker, DateTimeOffset From, DateTimeOffset To)> IntradayRequested { get; } = [];
 
     /// <summary>
     /// Which action types were actually asked for, and on what date. A stage that started
@@ -238,6 +246,48 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
         // name whose sector is genuinely blank.
         return Task.FromResult(VendorResult<VendorFundamentals?>.Delivered(
             Fundamentals.TryGetValue(ticker, out VendorFundamentals? found) ? found : null));
+    }
+
+    /// <summary>
+    /// States one minute bar. The stamp is an instant, because that is what the vendor sends and
+    /// what the store keeps: a test that stated a wall time would be choosing a zone by accident.
+    /// </summary>
+    public FakeMarketDataVendor Minute(
+        string ticker, DateTimeOffset openedAt, decimal open, decimal high, decimal low, decimal close, long volume)
+    {
+        _minutes.Add(new VendorIntradayBar(ticker, openedAt, open, high, low, close, volume));
+        return this;
+    }
+
+    /// <summary>A flat minute, where the four prices are the same and only the volume differs.</summary>
+    public FakeMarketDataVendor Minute(string ticker, DateTimeOffset openedAt, decimal price, long volume = 100) =>
+        Minute(ticker, openedAt, price, price, price, price, volume);
+
+    public Task<VendorResult<IReadOnlyList<VendorIntradayBar>>> GetIntradayAsync(
+        string ticker,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(EodhdClient.IntradayCost))
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorIntradayBar>>.OutOfBudget());
+        }
+
+        // The window is recorded as well as answered, on the same grounds the dates are: a stage
+        // that asked for the wrong day would return plausible bars and nothing else would notice.
+        IntradayRequested.Add((ticker, from, to));
+
+        IReadOnlyList<VendorIntradayBar> minutes = _minutes
+            .Where(b => string.Equals(b.Ticker, ticker, StringComparison.Ordinal)
+                        && b.OpenedAt >= from && b.OpenedAt < to)
+            .OrderBy(b => b.OpenedAt)
+            .ToArray();
+
+        return Task.FromResult(VendorResult<IReadOnlyList<VendorIntradayBar>>.Delivered(minutes));
     }
 
     public Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(

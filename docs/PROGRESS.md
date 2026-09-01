@@ -9467,3 +9467,122 @@ Carried:    **One new, due at 4.16.** A setup whose thrust has not pulled back y
             **Nothing else moved.** The other fifty-eight rows keep the due points the 2026-08-31
             repointing gave them, and the 4.6 classification is that decision's input rather than a
             second exercise of it.
+## 4.2 — 2026-09-01 — phase-4-intraday-fetcher — the minute bars, and the offset that decides whose they are
+
+The first checkpoint of phase 4, and the first stage since the phase 3 sign-off. It leads the phase
+because a minute bar not captured on its own evening cannot be bought later, where a page or a check
+can be built any evening.
+
+Built:      **`IntradayFetcher`, migration 037, and the reader.** `intraday_bar` is grained on ticker
+            and minute with `observed_at` in the key, so a vendor correction is a new row on the same
+            terms as the daily and index bars. Prices are TEXT, volume INTEGER. Three columns describe
+            the series rather than the prices, and each is there because it moves an answer:
+            `interval_code`, `session_window` and `price_basis`. `session_date` is stored rather than
+            derived, because it is what the point-in-time assertion is made against and an assertion
+            resting on a value the reader recomputes is an assertion about the reader.
+            `intraday_fetch` records what one night asked for, answered and could not reach.
+
+            **The pairing is a type that refuses.** `Pairing.Of` cannot be constructed from a session
+            at or before its own, so a fetch aimed at the flagging session throws rather than
+            returning nothing. It is a decision rather than a mechanism because both readings are
+            coherent and the wrong one is invisible: a fetch aligned to the setup's own session
+            returns real bars, of a real day, for a real name, stores cleanly, costs the same, and
+            produces a resolver that answers every plan from the prices the plan was computed from.
+            Authored as (see: Minute bars are fetched for the session a plan was live in, never the
+            session it was written on) so 4.5 and SessionReplayClock cite it rather than restating it.
+
+            **Extended-hours minutes are stored and labelled, not dropped.** A minute outside the
+            regular session is exactly as unrecoverable as one inside it, so the writer stores
+            everything the vendor holds and the reader bounds. That needed the first shipped
+            constants for the regular session's two boundaries; they are in `SessionBoundaries` with
+            the session's length derived from them rather than stated beside them.
+
+            **`bar-append-only`'s tripwire is paid.** It was written to fail the moment `intraday_bar`
+            was created, which is what it did, and its message said the exception had to be stated by
+            name and by column rather than the check being loosened. It now is: one exception by
+            table, column and component, read from the statement's own SET clause, so
+            `UPDATE intraday_bar SET vwap_session` passes at 4.4 and an update touching a price fails
+            with the rest. `SourceWrites` carries each write's statement for it.
+
+Measured:   **The vendor's minute history reaches the fixture's resolving session, and the answer is
+            recorded with its date.** One live call on 2026-09-01 for `intraday/AAPL.US` over
+            2026-08-25 returned **959 bars**, so the fixture's minute-bar day is 2026-08-25 and the
+            forward-pair consequence the plan named does not arise. What one call establishes about
+            the horizon is a lower bound and is stated as one: **seven calendar days as at
+            2026-09-01**, being the age of the session that answered. It decays daily.
+
+            **Two things the capture settled that were reasoning until then.** The response carries
+            **390 bars between 09:30 and 16:00**, which is the session length this checkpoint derives
+            rather than states, confirmed against a real day. And it carries **569 more outside them**,
+            from 04:00 to 19:59 Eastern, which is 59% of the response: a stage that filtered to the
+            regular session would have discarded that share of an input nothing can re-buy.
+
+            **The minute-bar budget row was wrong in both directions.** It read 300, priced on the
+            capped sixty, where the population is every distinct flagged name. The three nights the
+            evidence store holds, 2026-08-27 to 2026-08-31, flagged 44, 73 and 83 names, so the row
+            is **220 to 415** at 5 calls each and the nightly total moves from 2,803 to 4,003 to
+            **2,723 to 4,118**. A name flagged both ways is one request, which is why the population
+            is distinct names rather than setups.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **635 tests**, from 631. `tools/verify-phase.ps1`
+            GREEN: **126 claims, 78 passed, 0 failed, 48 out of scope, 0 unexamined**, coverage
+            examined 4,975, **1,330 expectations** of which 1 void, inputs CAPTURED 69 and AUTHORED
+            120. The out-of-scope count was read against the ceiling before the commit and needs no
+            raise: it **falls** from 50 to 48, this being the first checkpoint of the phase and so the
+            first to retire claims rather than add them.
+
+            **The report was NOT GREEN on the run before this one, and the reason is worth the line.**
+            Recording 4.2 in this file is what makes it landed, and the report scopes every claim
+            against what has landed, so writing the entry moved the failure-behaviour row for a day
+            with no intraday prices from out of scope to owed, and nothing asserted it. That is the
+            report working rather than failing: a claim deferred to a checkpoint stops being deferred
+            the moment that checkpoint lands, and a deferral cannot outlive its own due point in
+            silence. Asserted now, against the three things the stage owes that condition rather than
+            against the condition itself, which no single stage can answer.
+
+            **Five DERIVED expectations, and what they are is the fixture's own honesty.** The fixture
+            holds one market day and its setups are flagged on it, so no session before it flagged
+            anything and no plan was live in the session the bars would be for. The stage asks for
+            nothing and records that it asked for nothing, which is the first-night state rather than
+            a gap. Every one of the five turns into a real fetch the day the fixture gains a second
+            market day, with no edit to the replay.
+
+Found:      **A dangling citation passed `decision-resolves`.** The code cited a decision that did not
+            exist and the check was green, because the citation scan takes its file list from the git
+            index and the file was untracked. That is the documented behaviour and the reasoning
+            behind it is sound; the half nobody wrote down is that a build session's new files are
+            invisible in both directions, so the check runs green over exactly the files most likely
+            to carry an unresolved citation. Staging caught it here only because the staging happened
+            first. Rowed rather than fixed, and the row names the population rather than the incident.
+
+            **`writer-ownership` attributed this checkpoint's inserts to a nested record**, because it
+            reads the nearest type declaration above a write rather than the type whose braces enclose
+            it. That is the row raised at 3.13 and carried to 4.6, and it now has a subject: with
+            `Pairing` declared above them, both inserts were attributed to `Pairing` and the check
+            reported that IntradayFetcher issues no statement SCHEMA declares for it. The declaration
+            was moved and the placement is recorded as forced rather than stylistic, in the file. The
+            repair is in the check and stays at 4.6.
+
+Discharged: **Two of the three obligations due here.** `tools/nightly.ps1` refuses to dispatch a slot
+            from a tree that is not on `main`, exiting 4 without running a stage, with `-AllowBranch`
+            as the operator's escape. Proved by running it on this branch: it refused and no stage
+            ran. The escape is what the 3.6 attempt lacked and was removed for. And the status band no
+            longer states positively that the schema agrees when the read surface did not answer, nor
+            collapses a store ahead of the build into a store behind it: `Down` carries an unknown
+            version rather than nought, and `StoreAhead` says which way a mismatch runs, because the
+            two need different acts from the operator and `Program.WhyTheStoreCannotBeRead` already
+            drew the distinction the band was throwing away.
+
+Carried:    **One new, due at 4.6**: `decision-resolves` reading the git index rather than the working
+            tree, with the cheap interim named in the row, being that the check reports how many
+            files it did not examine so its green states its own coverage.
+
+            **One restated and repointed to 4.6**, being the 3.13 row whose two other halves this
+            checkpoint discharged. Its third names `ControlSampler.Figures` executed twice per draw
+            beside a dead `drawnAt`; there is no `Figures` member in that file, both callers are
+            handed one `ISessionFigures` constructed once, and `drawnAt` is read where it is passed.
+            Repointed rather than struck, because removing a row on the grounds that a session could
+            not find its subject is the one act this corpus never permits.
+
+            **The obligations table is fifty-eight rows**, from fifty-nine: two discharged here, one
+            added, and one repointed. Eighteen fall due at 4.6, none at 4.2.
