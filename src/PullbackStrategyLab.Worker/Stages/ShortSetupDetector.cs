@@ -336,6 +336,7 @@ public sealed class ShortSetupDetector
 
         PullbackGeometry.Pullback? bounce = null;
         int? closesBeyond = null;
+        DateOnly? anchorSession = null;
 
         if (thrust is not null)
         {
@@ -344,8 +345,8 @@ public sealed class ShortSetupDetector
 
             if (thrustIndex >= 0)
             {
-                bounce = PullbackGeometry.Of(
-                    shaped, thrustIndex, ScanSpans.SessionsFor(thrust.Scan), isLong: false);
+                int span = ScanSpans.SessionsFor(thrust.Scan);
+                bounce = PullbackGeometry.Of(shaped, thrustIndex, span, isLong: false);
 
                 if (bounce is not null && figures is not null)
                 {
@@ -354,8 +355,14 @@ public sealed class ShortSetupDetector
                     closesBeyond = PullbackGeometry.ClosesBeyondFloor(
                         shaped, bounce, IndicatorEngine.FloorSeries(shaped, isLong: false), isLong: false);
                 }
+
+                anchorSession = AnchorSessionOf(bars, thrust.Scan, thrust.AsOf);
             }
         }
+
+        decimal? anchored = anchorSession is DateOnly anchor
+            ? source.AnchoredAveragePrice(ticker, asOf, anchor)
+            : null;
 
         decimal? dailyRange = figures is null || figures.AverageDailyRange == 0m
             ? null
@@ -389,6 +396,17 @@ public sealed class ShortSetupDetector
                 : Math.Min(
                     Math.Abs(last.AdjustedClose - figures.EmaMedium),
                     Math.Abs(last.AdjustedClose - figures.EmaLong)) / ceilingRange,
+            // The third disjunct, in the same units as the two above it and guarded the same way.
+            // Null where there is no anchor, no level for it, or no range to express the distance
+            // in, and each of the three leaves the clause not run rather than run at nought.
+            DistanceToAnchoredRanges =
+                anchored is not decimal level || dailyRange is not decimal anchorRange || anchorRange == 0m
+                ? null
+                : Math.Abs(last.AdjustedClose - level) / anchorRange,
+            // Which of the two absences this row has, where it has one. A reconstructed session can
+            // never be anchored and a forward one becomes anchorable as the store accumulates, so
+            // the verdict records the two under different clause sets.
+            Reconstructed = source.Reconstructed,
             // Absent where the thrust has not bounced yet, rather than computed on a bounce of no
             // bars. With the extreme on the last session the trigger and the stop are the same price
             // and the give-up distance is zero, which clears every threshold written as a maximum.
@@ -423,6 +441,44 @@ public sealed class ShortSetupDetector
     /// <summary>Whether the thrust has yet to bounce, which is a real state and not a shape.</summary>
     private static bool NoBounceYet(PullbackGeometry.Pullback? bounce) =>
         bounce is null || bounce.PullbackBars == 0;
+
+    /// <summary>
+    /// Which session the ceiling clause's level is anchored at: the swing high the thrust fell from.
+    ///
+    /// <b>One implementation, read by two components at different hours.</b> The detector needs it
+    /// at 18:20 to ask for a level, and VwapEngine needs it at 21:00 to compute one, and the two
+    /// have to name the same session or the level answers a question nobody asked. It takes the
+    /// scan and the session from the setup row rather than re-resolving the thrust, because those
+    /// two columns exist for exactly this: `gainer` and `gapper` flag one session where `leader` and
+    /// `laggard` flag twenty, so a swing found without knowing which scan flagged the move is a
+    /// swing searched over the wrong span.
+    ///
+    /// A session and not a price. The level itself is a volume-weighted average over that session's
+    /// minutes forward, which is the one thing this class cannot compute.
+    /// see: The anchored average price is anchored at the swing the thrust ran from
+    /// </summary>
+    public static DateOnly? AnchorSessionOf(
+        IReadOnlyList<StoredDailyBar> bars, string thrustScan, DateOnly thrustSession)
+    {
+        ArgumentNullException.ThrowIfNull(bars);
+        ArgumentException.ThrowIfNullOrWhiteSpace(thrustScan);
+
+        int thrustIndex = IndexOf(bars, thrustSession);
+
+        if (thrustIndex < 0)
+        {
+            return null;
+        }
+
+        PullbackGeometry.Bar[] shaped = [.. bars.Select(Shape)];
+        int span = ScanSpans.SessionsFor(thrustScan);
+        PullbackGeometry.Pullback? bounce = PullbackGeometry.Of(shaped, thrustIndex, span, isLong: false);
+
+        return bounce is not null
+            && PullbackGeometry.SwingIndexOf(shaped, bounce, span, isLong: false) is int swing
+            ? bars[swing].BarDate
+            : null;
+    }
 
     private static decimal Factor(StoredDailyBar bar) => bar.Close == 0m ? 1m : bar.AdjustedClose / bar.Close;
 

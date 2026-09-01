@@ -10040,3 +10040,189 @@ Verified:   `tools/ci.ps1` green at 28 steps and **668 tests**, from 658. `tools
 
 Carried:    Two discharged and none raised, so the obligations table falls from 58 to **56**. None
             falls due at 4.1. Eighteen still fall due at 4.6.
+
+## 4.4 — 2026-09-01 — phase-4-vwap-engine — the anchored level given an anchor, and the clause that cannot run on a store this shallow
+
+The fifth checkpoint of phase 4. It answers question 3, builds the level `reached-ceiling` has been
+missing since 2.7, and takes the re-measurement the 2.11 obligation has been waiting for since
+2026-08-30.
+
+**It amends its own done condition.** The row named seven things and stated each narrowly: the grid
+was "settled here" without saying as what, the store was to be gained without saying what the anchor
+is, and the re-measurement was named without its terms. The amended row states each against what the
+file says after the edit, and it is said here rather than left in a diff because the next reader
+would otherwise see a condition and a run that met it.
+
+Built:      **`HourlyGrid`, and question 3 answered as a named decision.** The grid anchors to the
+            session open, so the regular session is six complete hourly bars and a closing remainder
+            of half an hour, and **the remainder is not an hourly bar and cannot trigger the exit**.
+            The rule turns on a close and a close is only the close of the thing it closes; a level
+            held for thirty minutes has not been held for an hour. The rejected alternative is on the
+            record with the decision: a clock-anchored grid puts the stub at 09:30 to 10:00, the
+            least representative half hour of the session and the one where a short's bounce most
+            often looks like it has broken back above a level and has not. Both figures are derived
+            from `SessionBoundaries` rather than written beside it, so the grid follows if the
+            exchange moves a boundary. Question 3's OPEN row is filled and nine remain.
+
+            **`anchored_vwap`, `vwap_run`, migration 039 and `VwapEngine`.** The anchor was a phrase
+            until now: nothing said which bar the swing high was, which minute inside it, or what the
+            average was taken over, so three sessions computing it would all have produced plausible
+            prices and no two would have had to agree. It is the extreme of the swing the flagged
+            move ran from, at the minute that extreme traded in, averaged over typical price weighted
+            by shares. `PullbackGeometry.SwingIndexOf` finds it from the same bars and the same
+            thrust span the rest of the geometry reads, and the span matters: `gainer` and `gapper`
+            flag one session where `leader` and `laggard` flag twenty, so a swing searched without
+            the scan is a swing searched over the wrong window.
+
+            **`ShortSetupDetector.AnchorSessionOf` is one implementation read by two components four
+            hours apart.** The detector asks for a level at 18:20 and the engine computes one at
+            21:00, and if the two named different sessions the level would answer a question nobody
+            asked.
+
+            **The seam records four clause sets rather than two.** Before this the check said the
+            anchored clause had not been built. It now says the full disjunction ran, or that the
+            store could not reach the swing, or that the row is a reconstructed session for which no
+            minute bar exists. Those are three different facts about identical-looking passing
+            verdicts, and only the first is a session of the evidence 3.6 counts. `ClauseSetOf`
+            matches each by name and **an unrecognised note now fails closed**: it read "the
+            two-clause note, else anything non-empty is the finished gate", which was correct while
+            there were two records and became a trap the moment there was a third.
+
+Measured:   **The 2026-08-30 short-funnel measurement was reproduced figure for figure**, which is
+            what makes the two comparable and is the first thing the re-measurement owed. Over
+            `calibration_setup` in `data/live`, read-only, the same **602 sessions from 2024-04-01 to
+            2026-08-24**, **32,533 rows flagged long** and **16,917 flagged short**, `cluster`
+            excluded from every conjunction, a session producing none counted as nought. Every gate's
+            reached, passed and removed matched, medians included: long flags a median of **47.5** a
+            night and short **14.5**, and every one of the 16,917 short rows carried the two-clause
+            record. Long and short are reported separately throughout and no figure covers both.
+            (see: Long and short are never pooled into one figure)
+
+            **The after could not be measured and its ceiling could, and the difference is the whole
+            finding.** A re-run of the walk with the clause enabled would produce the identical
+            funnel, because the level needs minute bars from the swing forward and no minute bar
+            exists for a session in 2024. That is not a purchase anybody has declined: **the vendor's
+            1-minute history reaches 2026-05-05 as at 2026-09-01**, established by one call for
+            `intraday/AAPL.US` returning 78,662 bars across 82 sessions, so the first 525 of the 602
+            sessions cannot be anchored at any price. An identical funnel would have read as evidence
+            that the clause changes nothing, which is why `CalibrationFigures` returns null and
+            records a clause set of its own rather than approximating from daily bars.
+
+            **So what is stated is the envelope, over the identical population and terms.** A
+            disjunction gains a disjunct, so the third clause can only widen the gate, and its
+            maximum is that every row reaching `reached-ceiling` is admitted. Short side, 602
+            sessions, calibration rows:
+
+            | gate | as run, 2 of 3 clauses | at the third clause's maximum |
+            |---|---|---|
+            | `reached-ceiling` | 432 reached, **9** passed, 2.08% | 432 reached, **432** passed, 100% |
+            | `no-reclaim` | 9 reached, 9 passed, 100.00% | 432 reached, 431 passed, 99.77% |
+            | `exit-tight` | 9 reached, **0** passed, 0.00% | 431 reached, **4** passed, 0.93% |
+            | survivors | **0**, median nought a night | **4**, median nought a night, on 4 nights of 602 |
+
+            **The deferred clause was never what emptied the short funnel.** Its most favourable
+            possible effect moves the survivor count from 0 to 4 over two and a half years and leaves
+            the median at nought on every night. Stated as a reading rather than as a measurement:
+            the measurement is the table.
+
+            **And the binding gate is `exit-tight`, which is the second thing the envelope settles.**
+            The 2026-08-30 entry recorded that short's `exit-tight` was "starved rather than strict,
+            and nothing is known about it": 9 rows reached it, none passed, and the one-sided 95%
+            upper bound on its rate given 0 of 9 was 28.3%. With the ceiling clause admitting
+            everything, **431 rows reach it and 4 pass, 0.93%**, against the long side's **1.51% over
+            1,981**. That is the first figure for short's `exit-tight` that is not a sample of nine,
+            and it is comparable to long's rather than worse. The counterfactual counts are
+            arithmetic over recorded check results rather than a re-run of the detectors, on exactly
+            the terms the 2026-08-30 counterfactuals were.
+
+            **The effective observations a night are unmoved and that is the answer rather than an
+            omission.** Band 1 counts effective observations over every flagged setup, a setup row is
+            written for every name examined whether or not it passes, and the clause changes no
+            verdict before `reached-ceiling`. So the figure 3.6 turns on is untouched by this
+            checkpoint in either direction.
+
+            **The measured form is purchasable and priced.** 77 of the 602 sessions fall inside the
+            vendor's minute reach; 160 short rows reach `reached-ceiling` in them across **87
+            distinct names**, and the vendor charges per request rather than per session with a
+            120-day window, so one request each is **435 vendor calls**, under a tenth of a day's
+            ceiling. It is not spent here: the envelope bounds what it could show, and nothing in the
+            bound turns on which of the 432 the clause would actually have admitted. **No threshold
+            is proposed.**
+
+Found:      **Building the clause is not the same as running it, and BUILD_PLAN said it was.** The
+            3.6 row read that short's twenty-session count begins on the first night the anchored
+            clause runs, "which is 4.4". The clause runs only where the store holds minutes back to
+            that row's own swing; `IntradayFetcher` buys one session a night per flagged name and a
+            swing sits three to twenty-seven sessions back; and on the night this landed the store
+            held **no minute bars at all**. A count started at 4.4 would have been a count of nights
+            the clause ran on nothing. The seam was already read off the rows rather than off a date,
+            which is what makes the mistake survivable, and the sentence now says so.
+
+            **The constraint is the store and not the vendor**, which is worth the separate line
+            because it decides what fixing it costs. The probe above establishes 82 sessions in one
+            request, and the vendor's own 422 states the per-request window as 120 days, so widening
+            the fetch is free in vendor calls and expensive only in rows. Carried rather than taken,
+            because it is a decision about the fetch.
+
+            **The phase report mapped VwapEngine to 3.6, and the mapping rule was the defect rather
+            than the row.** `Schedule.CheckpointFor` read the whole BUILD_PLAN row, which includes the
+            done condition, and a done condition names the components its checkpoint **reads**. 3.6's
+            says the anchored clause needs the average VwapEngine computes, so the component resolved
+            to a checkpoint parked on months of accumulation: building it would not have brought its
+            claim into scope, and the deferral would have outlived its own subject in silence. It
+            reads the deliverable cell now, which is the cell that says what a checkpoint builds. The
+            same fault is already guarded one level up, and its comment states it in the same words:
+            a component placed against the checkpoint that complained about it rather than the one
+            that builds it.
+
+            **RUNBOOK's nightly table has never scheduled the 21:00 slot the catalogue gives this
+            component.** VwapEngine has sat in the catalogue at 21:00 since phase 1 and the operator's
+            table had no row for it, so a stage was catalogued and unschedulable. `NightlyOrderTests`
+            found it the moment the stage joined the replay, which is the check working: it fails a
+            replay stage the table does not schedule, in both directions.
+
+            **`intraday_bar.vwap_session` is written every night and no document names a reader.**
+            That is the shape 4.3 found for `spread_snapshot` and closed by naming entry slippage at
+            the capture. Carried rather than closed here, and the row says the two ways out: a reader
+            is named, or the column stops being written. It is weaker than 4.3's case because this
+            costs no vendor call, and it is not nothing, because a column written nightly that
+            nothing reads is one a later session takes for evidence.
+
+            **The day's high and low are not stored, though the catalogue's description names them.**
+            They are `MAX(high)` and `MIN(low)` over the session's stored minutes, so a column would
+            be a second statement of something already in the store that could disagree with it,
+            which is the ruling WatchlistPublisher took at 4.1 for the same reason. Neither average is
+            recoverable that way: both need the whole run in order and the anchored one needs a swing
+            nothing else resolves.
+
+Discharged: **The 2.11 obligation, by measurement rather than by note.** The row is removed from the
+            obligations table, and what remains is the once-only threshold adjustment, which already
+            has its own row in the operator's table and is better informed than it was: the hold
+            ruled on 2026-08-30 was until 4.4, the condition is met, and the answer the hold was
+            waiting for is that the deferred clause could not have been what emptied the funnel.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **696 tests**, from 668. `tools/verify-phase.ps1`
+            GREEN: **128 claims, 84 passed, 0 failed, 44 out of scope, 0 unexamined**, coverage
+            examined 5,396, **1,390 expectations** of which 1 is void, inputs CAPTURED 70 and
+            AUTHORED 133. Read against the ceiling of 52 before the commit and it needs no raise: the
+            count **falls** from 45 to 44, because VwapEngine's catalogue claim stops being deferred
+            and is asserted, which is the mapping repair above showing up as a number.
+
+            **Twelve DERIVED expectations, every one predicted before the run and every prediction
+            held.** Six say the engine paired with no prior session and therefore priced nothing,
+            which is the fixture's first-night state rather than a gap and turns into real figures the
+            day the fixture gains a second market day. Six count the clause set every stored short row
+            records, read back through the same function a later session would use rather than
+            counted as the detector writes it. Two of those carry the property:
+            `ceiling.unrecorded` at nought is this checkpoint's done condition, and
+            `ceiling.withTheAnchor` moving off nought is the seam 3.6 counts from. The five buckets
+            are exhaustive over the population beside them, so they add to it, and a set of counts
+            that does not add up leaves a state nobody reports.
+
+            Three existing expectations moved and each moved for a stated reason:
+            `store.schemaVersion` 38 to 39 by migration 039, and `runlog.distinctStages` 21 to 22 with
+            `runlog.entries` 26 to 27 by a stage joining the replayed night.
+
+Carried:    **Two raised and one discharged, so the obligations table falls from 58 to 57.** The two
+            are the fetch window, due at 4.5, and the session average's missing reader, due at 4.7.
+            None falls due at 4.4. Eighteen still fall due at 4.6.

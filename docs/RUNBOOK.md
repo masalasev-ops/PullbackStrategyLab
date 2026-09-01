@@ -117,6 +117,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:30 | plans per variant | 0 |
 | 18:40 | `publish-watchlist`, which writes nothing. It reports what the page would show, so a night that was never capped is noticed here rather than by somebody opening a browser | 0 |
 | 20:30 | `intraday-bars`, one request per distinct flagged name, at 5 calls each. Not the capped sixty: a variant that selects a name the baseline passed on must still be resolvable, and a name whose minutes were never bought is one no variant can ever be scored on | 220 to 415 |
+| 21:00 | `vwap`, over the minutes the fetch stored half an hour earlier. It spends no vendor call: the session average annotates each stored minute with the average as it stood at that minute, and the anchored average is priced for every short setup whose swing the store can reach back to. An anchor out of reach is a row with a reason rather than a silence, and `anchors_asked` against `anchors_priced` is the state of the third ceiling clause on the night | 0 |
 | 21:00 | session replay, fills, positions | 0 |
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |

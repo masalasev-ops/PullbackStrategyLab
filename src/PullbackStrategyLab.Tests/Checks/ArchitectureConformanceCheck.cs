@@ -1370,6 +1370,9 @@ public sealed partial class ArchitectureConformanceCheck
     public sealed class Schedule
     {
         private readonly Dictionary<string, string> _rows = [];
+
+        /// <summary>The deliverable cell of each row, which is what says what a checkpoint builds.</summary>
+        private readonly Dictionary<string, string> _deliverables = [];
         private readonly HashSet<string> _landed = new(StringComparer.Ordinal);
         private readonly List<Obligation> _obligations = [];
 
@@ -1447,8 +1450,19 @@ public sealed partial class ArchitectureConformanceCheck
                 foreach (Match row in CheckpointRow().Matches(buildPlan[start..end]))
                 {
                     string checkpoint = row.Groups["checkpoint"].Value;
+                    string rest = row.Groups["rest"].Value;
+
                     schedule._rows[checkpoint] = schedule._rows.GetValueOrDefault(checkpoint, string.Empty)
-                        + " " + row.Groups["rest"].Value.ToUpperInvariant();
+                        + " " + rest.ToUpperInvariant();
+
+                    // The deliverable cell alone, which is the one that says what a checkpoint
+                    // builds. The cell after it is the done condition and it names components this
+                    // checkpoint reads rather than components it makes, which is the same fault the
+                    // obligations bound above guards one level up: a component placed against the
+                    // checkpoint that complained about it rather than the one that builds it.
+                    schedule._deliverables[checkpoint] =
+                        schedule._deliverables.GetValueOrDefault(checkpoint, string.Empty)
+                        + " " + rest.Split('|')[0].ToUpperInvariant();
                 }
             }
 
@@ -1514,15 +1528,27 @@ public sealed partial class ArchitectureConformanceCheck
         public bool HasLanded(string checkpoint) => _landed.Contains(checkpoint);
 
         /// <summary>
-        /// The checkpoint whose row names this component, earliest first. Earliest because a
-        /// later checkpoint mentioning a component is refining it rather than introducing it,
+        /// The checkpoint whose <b>deliverable</b> names this component, earliest first. Earliest
+        /// because a later checkpoint naming a component is refining it rather than introducing it,
         /// and the question here is when it first has to exist.
+        ///
+        /// <b>The deliverable cell and not the whole row, corrected at 4.4.</b> It read the row,
+        /// which includes the done condition, and a done condition names the components its
+        /// checkpoint <i>reads</i>. So VwapEngine resolved to 3.6, whose condition says the anchored
+        /// clause needs the average VwapEngine computes, rather than to 4.4, which builds it and
+        /// which every other document names. The claim then sat out of scope closing at a checkpoint
+        /// parked on months of accumulation, so building the component would not have brought it
+        /// into scope and the deferral would have outlived its own subject in silence.
+        ///
+        /// It is the same fault the obligations bound in <see cref="Read"/> already guards one level
+        /// up, and its comment states it in the same words: a component placed against the
+        /// checkpoint that complained about it rather than the one that builds it.
         /// </summary>
         public string? CheckpointFor(string component)
         {
             string needle = component.ToUpperInvariant();
 
-            return _rows
+            return _deliverables
                 .Where(r => r.Value.Contains(needle, StringComparison.Ordinal))
                 .Select(r => r.Key)
                 .OrderBy(Order)

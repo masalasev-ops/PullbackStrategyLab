@@ -545,6 +545,42 @@ public sealed class PhaseReplay : IDisposable
         Record("spread.unquoted", spreads.Unquoted);
         Record("spread.pairedWithPriorSession", spreads.SetupAsOf is null ? 0 : 1);
 
+        // 15c. The two averages, at 21:00 over the minutes the fetch stored at 20:30. Over this
+        //      fixture it prices nothing for the same reason the two stages above ask for nothing,
+        //      and the anchor figures are what make that readable: `anchorsAsked` against
+        //      `anchorsPriced` is the state of the third ceiling clause on any night, and both being
+        //      nought here says the night had no anchors rather than that it could not reach them.
+        VwapRunResult vwap = new VwapEngine(_connections, Logger(), _clock, _options).Compute(AsOf);
+
+        stages.Add(new StageRun(VwapEngine.Name, 0, vwap.RowsWritten, vwap.Outcome.ToStorageText()));
+        Record("vwap.names", vwap.Names);
+        Record("vwap.sessionsPriced", vwap.SessionsPriced);
+        Record("vwap.barsAnnotated", vwap.BarsAnnotated);
+        Record("vwap.anchorsAsked", vwap.AnchorsAsked);
+        Record("vwap.anchorsPriced", vwap.AnchorsPriced);
+        Record("vwap.pairedWithPriorSession", vwap.SetupAsOf is null ? 0 : 1);
+
+        // The seam, read off the rows the detectors wrote rather than off the constant that names
+        // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause
+        // set it records is the thing 3.6 counts the short side's twenty sessions by. The engine
+        // above reached no anchor, so nothing here is the full disjunction; a fixture that grows a
+        // second market day and a stored minute turns the last of these five off nought with no
+        // edit to this file, which is what makes them worth freezing now.
+        using (SqliteConnection verdicts = _connections.OpenReadOnly())
+        {
+            CeilingClauses[] sets = [.. CeilingVerdicts(verdicts, SetupReader.SetupTable)];
+
+            // The five buckets are exhaustive over the population above, so the four below plus the
+            // unevaluated ones add to it. A set of counts that does not add up leaves a state
+            // nobody is reporting, which is how a fifth clause record would arrive unseen.
+            Record("ceiling.shortRowsWithAVerdict", sets.Length);
+            Record("ceiling.unrecorded", sets.Count(c => c == CeilingClauses.Unrecorded));
+            Record("ceiling.notEvaluated", sets.Count(c => c == CeilingClauses.NotEvaluated));
+            Record("ceiling.twoOfThree", sets.Count(c => c == CeilingClauses.TwoOfThree));
+            Record("ceiling.anchorUnavailable", sets.Count(c => c == CeilingClauses.AnchorUnavailable));
+            Record("ceiling.withTheAnchor", sets.Count(c => c == CeilingClauses.WithTheAnchor));
+        }
+
         // And the sampling state the missed-snapshot behaviour turns on, read back through the
         // reader rather than counted here. One pass has run, so the session is degraded and not
         // complete, and it is not unsampled: three booleans that are the whole of the three cases.
@@ -1988,6 +2024,41 @@ public sealed class PhaseReplay : IDisposable
     }
 
     private static readonly JsonSerializerOptions ClauseJson = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// The clause set every stored short row's `reached-ceiling` verdict records, read back through
+    /// the same function a later session would use.
+    ///
+    /// Parsed out of the stored JSON rather than counted as the detector writes it, because the
+    /// property is about what a reader of the store can establish and not about what the writer
+    /// intended. A row whose note failed to serialise would look identical on the writing side.
+    /// </summary>
+    private static IEnumerable<CeilingClauses> CeilingVerdicts(SqliteConnection connection, string table)
+    {
+        SqliteIdentifier.Validate(table);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"SELECT check_results FROM {table} WHERE direction = @direction";
+        command.Parameters.AddWithValue("@direction", SetupDirection.Short);
+
+        var sets = new List<CeilingClauses>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            IReadOnlyList<CheckResult> results = JsonSerializer.Deserialize<List<CheckResult>>(
+                reader.GetString(0), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+            CeilingClauses set = ShortPullbackRules.ClauseSetOf(results);
+
+            if (set != CeilingClauses.NotFound)
+            {
+                sets.Add(set);
+            }
+        }
+
+        return sets;
+    }
 
     private static IReadOnlyList<Measurement> CataloguePlacementFigures()
     {
