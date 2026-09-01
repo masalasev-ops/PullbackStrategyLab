@@ -27,6 +27,27 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-01 — BUILD_PLAN.md — cites Long and short are never pooled into one figure
+Was:  The 2.11 operator row ended: "What the row waits on is now a judgement rather than a search, and the figures it needs are in the entry of 2026-08-30".
+Now:  The same, followed by a dated paragraph recording the re-measurement of 4.4: both figures above were taken with `reached-ceiling` running two of its three clauses; given the third its maximum, 431 short rows reach `exit-tight` and 4 pass at 0.93% against the long side's 1.51% over 1,981, both over the same 602 calibration sessions; the funnel still ends at 4 survivors, median nought a night; the once is still unspent and no threshold is proposed.
+Why:  The row's live reading was that short's funnel dies three gates upstream of where the long one does, and it rested on a 0-of-9 sample taken under a gate running two clauses of three. The re-measurement refutes it: the rates are comparable between the sides and what the short side is short of is rows reaching the gate. The row is the operator's live decision row, so pointing it at superseded figures is pointing the decision at the wrong quantity.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  3.6's row read "**Short's twenty-session count begins on the first night the anchored clause runs, and the nights before it are not counted toward the short side's gate.**"
+Now:  The same with "against minutes covering that row's own swing" inside the condition, followed by a sentence saying the condition is a property of the store rather than a checkpoint and naming what reads it: `vwap_run.anchors_priced` per night and `ShortPullbackRules.ClauseSetOf` per row.
+Why:  The condition was correct and the sentence carrying it did not say what "runs" means, which is the reading that put "which is 4.4" there in the first place. A start condition that has to be read out of the paragraphs after it is one the next session restates from the sentence alone.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  4.4's row read "**Short's twenty-session count for 3.6 begins on the first night the third clause runs, and the nights before it are explicitly not counted; the long side's count is unaffected and stands.**", and its seam sentence ended at "the first row recording the full disjunction is the seam."
+Now:  The condition carries "against minutes covering that row's own swing, which is not the night this checkpoint lands, because building the clause is not running it", and the seam sentence is followed by one naming the reported figures: `vwap_run.anchors_asked` and `anchors_priced` written every night and printed by the run line, and the clause-set counts carried as derived fixture expectations.
+Why:  3.6 and 4.4 have to carry the same condition or the next reader takes whichever they open first, and 4.4 is the row a reader arrives at believing the checkpoint starts the count. The second half is the same rule one level down: a start condition is observable or it is declared, and this one is observable.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Minute bars are fetched for the session a plan was live in, never the session it was written on
+Was:  4.5's done condition opened "A test proves the resolver cannot see a later minute than the one it is evaluating."
+Now:  The same, preceded by the fetch window stated as a storage question: the unit of 959 bars per name per session with its population, the 44-to-83 distinct flagged names a night with theirs, the note that the window is a one-off per name because `IntradayBarReader.IsStoredUnchanged` writes nothing for a bar already held, and four options with their first-fill row counts and their consequence for short's start condition. No window is proposed and no bytes are stated.
+Why:  The obligation raised at 4.4 falls due here and says the decision is about the fetch and about storage. The vendor charges per request rather than per session, so no option costs more in calls than another and the question is entirely how many rows the operator wants to keep, which makes it theirs. Stating the options with their counts is what a due point can deliver; choosing one is not.
+
+
 ### 2026-09-01 — ARCHITECTURE.html — cites The hourly grid anchors to the session open, and the closing stub is not an hourly bar
 Was:  `<tr><td>Short exit, the hourly close <b>OPEN</b></td><td>An hourly bar closing back above the 50-day average</td><td>4.4</td><td>The store holds minute bars and no hourly bar. An hourly bar has to be aggregated, and where the hour boundaries fall changes the answer: a session opening at 09:30 gives different bars on a 09:30 grid than on a 10:00 one, and the rule turns on a close</td></tr>`
 Now:  The same row, no longer OPEN, stating the grid as anchored to the session open with six complete hourly bars and a closing remainder that is not one, with the review point set to the execution family and the rejected clock-anchored alternative on the page.
