@@ -465,6 +465,13 @@ Supersedes **A split records a rebuild demand that is stamped rather than cleare
 **Minute bars are fetched for every flagged setup, not only the planned ones**
 Otherwise a version selecting a name the baseline passed on cannot be resolved, and the missing cases are exactly the disagreements.
 
+**Minute bars are fetched for the session a plan was live in, never the session it was written on**
+The stage runs at 20:30 because minute bars publish two to three hours after the close, while detection runs at 18:20 and the plan is written at 18:30, both for the *next* session. So on the evening of session N the bars stored are session N's, and the setups they resolve are the ones flagged on the evening of N-1. Pairing a session with the setups flagged on it would resolve a plan against the prices it was computed from, which is the point-in-time rule inside a single day rather than across days.
+
+It is a decision rather than a mechanism because both readings are coherent and the wrong one is invisible. A fetch aimed at the flagging session returns real bars, of a real day, for a real name; it stores cleanly, costs the same, and produces a resolver that answers every plan. Nothing downstream could tell, and the resulting fill would be an entry taken at a price the entry level was derived from.
+
+Asserted fail-closed rather than by convention. The pairing is a type that refuses to be constructed from a session at or before its own, on the grounds that no fill and cannot-pair are different answers and only the second should stop a night. The first night has no prior evening, so it fetches nothing and records that it fetched nothing, which is a third answer again and is why the fetch writes a row whatever happens.
+
 **The vendor screener endpoint is not used**
 It cannot express three averages in a specific order, cannot express the pullback shape at all, and using it would leave no stored history to compute forward returns from. The local store is the measurement system, so it is not optional.
 

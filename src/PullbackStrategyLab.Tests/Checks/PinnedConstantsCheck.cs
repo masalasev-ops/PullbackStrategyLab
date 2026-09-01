@@ -109,6 +109,13 @@ public sealed class PinnedConstantsCheck
             BudgetCost(architecture, "Splits, bulk"), EodhdClient.BulkSplitCost, "EodhdClient.BulkSplitCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, dividends, cost",
             BudgetCost(architecture, "Dividends, bulk"), EodhdClient.BulkDividendCost, "EodhdClient.BulkDividendCost"));
+        // The minute bars, added at 4.2. It is the second largest consumer in the table and the one
+        // whose cost is not one: the vendor prices intraday above the per-ticker daily endpoint, so
+        // a budget that charged it one would under-count a full night's minute fetch by four fifths.
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, minute bars, cost",
+            BudgetCost(architecture, "Minute bars for every flagged setup"),
+            EodhdClient.IntradayCost,
+            "EodhdClient.IntradayCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, cost",
             BudgetCost(architecture, "Index bars"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, calls a night",

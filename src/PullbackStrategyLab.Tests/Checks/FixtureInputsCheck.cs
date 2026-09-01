@@ -101,6 +101,7 @@ public sealed class FixtureInputsCheck
         "exchange-symbol-list",
         "eod-bulk-last-day",
         "eod",
+        "intraday",
     ];
 
     [Fact]

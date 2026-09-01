@@ -193,7 +193,8 @@
     "SCHEMA.md, store configuration, synchronous": 1,
     "SCHEMA.md, the three index symbols": 1,
     "RUNBOOK.md, the snapshots kept against the configured default": 1,
-    "BUILD_PLAN.md, 3.6 and 4.4, the clause record the short seam is read from": 1
+    "BUILD_PLAN.md, 3.6 and 4.4, the clause record the short seam is read from": 1,
+    "ARCHITECTURE.html, data budget, minute bars, cost": 1
    }
   },
   "point-in-time": {

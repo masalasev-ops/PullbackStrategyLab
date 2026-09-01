@@ -39,6 +39,7 @@ public sealed partial class BarAppendOnlyCheck
         SourceWrite[] mutations = SourceWrites.InProductionSource
             .Where(w => bars.Contains(w.Table))
             .Where(w => w.IsDelete || w.Operation == StoreOperation.Update)
+            .Where(w => !IsTheDeclaredAnnotation(w))
             .ToArray();
 
         SourceWrite[] inserts = SourceWrites.InProductionSource
@@ -99,14 +100,63 @@ public sealed partial class BarAppendOnlyCheck
             + "dropping and re-inserting it loses every observation the store held, and the rows it writes back "
             + "carry whatever stamp the rebuild gives them rather than the one the lab actually saw.");
 
-        // A deliberate tripwire. SCHEMA declares one legitimate update against a bar table:
-        // VwapEngine writing vwap_session on intraday_bar at phase 4. When that table is
-        // created this assertion fails, which forces the exception to be written into the
-        // check by name and by column rather than the check being loosened until it passes.
-        Assert.True(!created.Contains("intraday_bar"),
-            "intraday_bar now exists. SCHEMA declares Update VwapEngine on vwap_session only, so this check needs that "
-            + "one exception stated by name and by column. Widening it to allow any update against intraday_bar would "
-            + "give away the property the check exists to hold.");
+        // The tripwire that stood here until 4.2 has been paid, and what replaced it is below:
+        // `IsTheDeclaredAnnotation`, one exception named by table, by column and by component. It
+        // fired the moment `intraday_bar` was created by migration 037, which is what it was written
+        // to do, and the point of firing on creation rather than on the first update was to force
+        // the exception to be stated before anything could be written against the table.
+        //
+        // What the exception may never become is "updates against intraday_bar are allowed". The
+        // assertion below is the guard on the guard: the one permitted statement sets vwap_session
+        // and nothing else, so an update touching a price on this table is a mutation like any other
+        // and fails with the rest.
+        Assert.True(
+            DeclaredAnnotation.Table == "intraday_bar"
+            && DeclaredAnnotation.Column == "vwap_session"
+            && DeclaredAnnotation.Component == "VwapEngine",
+            "The one declared update against a bar table has been widened. SCHEMA declares Update VwapEngine on "
+            + "intraday_bar.vwap_session only, and this check carries that exception by table, by column and by "
+            + "component. Any change here is a change to what the check holds and belongs in SCHEMA first.");
+    }
+
+    /// <summary>
+    /// The one update SCHEMA declares against a bar table: VwapEngine writing the session average
+    /// price onto a minute bar at 4.4.
+    ///
+    /// <b>It is an annotation rather than a mutation of a bar, which is why it is admissible at
+    /// all.</b> The hard rule is that a vendor correction arrives as a new row and no stored bar is
+    /// ever edited. `vwap_session` is computed locally from the bars themselves and was never
+    /// anything the vendor sent, so writing it rewrites nothing the lab observed. Every price, the
+    /// volume and the stamp stay exactly as they were stored.
+    ///
+    /// Named by table, by column and by component, so the exception cannot quietly widen into
+    /// "updates against this table are fine". A statement that sets anything else on this table is
+    /// a mutation and fails.
+    /// </summary>
+    public static (string Table, string Column, string Component) DeclaredAnnotation =>
+        ("intraday_bar", "vwap_session", "VwapEngine");
+
+    /// <summary>
+    /// Whether a write is that one declared annotation, read from the statement rather than from the
+    /// file it sits in.
+    ///
+    /// The column has to appear in the statement and no other column may be assigned by it. A scan
+    /// that admitted any update from the declared component would be admitting a component, and the
+    /// property this check holds is about statements.
+    /// </summary>
+    private static bool IsTheDeclaredAnnotation(SourceWrite write)
+    {
+        if (write.IsDelete
+            || write.Operation != StoreOperation.Update
+            || !string.Equals(write.Table, DeclaredAnnotation.Table, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        IReadOnlyList<string> assigned = SourceWrites.ColumnsAssignedBy(write);
+
+        return assigned.Count == 1
+            && string.Equals(assigned[0], DeclaredAnnotation.Column, StringComparison.Ordinal);
     }
 
     /// <summary>One destructive statement in a migration, with the migration that carries it.</summary>

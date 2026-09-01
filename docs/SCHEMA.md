@@ -125,9 +125,35 @@ Grain: ticker + minute. Phase 4. Fetched for every flagged setup, not only plann
 | Column | Type |
 |---|---|
 | `ticker`, `bar_ts`, `open`,`high`,`low`,`close`, `volume` | |
+| `ticker`, `bar_ts` | TEXT. The stamp is the instant the bar opened, in UTC |
+| `session_date` | TEXT. Which trading session the minute belongs to, stored rather than derived |
+| `interval_code` | TEXT. `1m`, and the CHECK admits nothing else |
+| `session_window` | TEXT. `regular` or `extended`, per bar |
+| `price_basis` | TEXT. `raw`, because a minute bar is what a trade actually gets |
+| `open`, `high`, `low`, `close` | TEXT holding a decimal, never REAL |
+| `volume` | INTEGER |
 | `vwap_session` | TEXT, written by VwapEngine |
+| `observed_at` | TEXT. In the key, so a vendor correction is a new row |
 
-Insert IntradayFetcher · Update VwapEngine (`vwap_session` only)
+Insert IntradayFetcher · Update VwapEngine (`vwap_session` only) · PK (`ticker`, `bar_ts`, `observed_at`)
+
+**Extended-hours minutes are stored, not dropped.** A minute outside the regular session is exactly as unrecoverable as one inside it, so the fetch takes whatever the vendor holds for the day and every bar carries the window it fell in. A reader bounds on `session_window` and nothing has to be re-bought when a later question wants the other half.
+
+### `intraday_fetch`
+Grain: session + observation. Phase 4. What one night's fetch did, written whatever the outcome.
+
+| Column | Type |
+|---|---|
+| `session_date` | TEXT. The session the bars are for, not the evening the fetch ran on |
+| `setup_as_of` | TEXT. The session whose setups those bars resolve, always strictly earlier |
+| `requested`, `fetched`, `empty`, `bars_written` | INTEGER |
+| `outcome` | TEXT. `clean`, `partial` or `failed` |
+| `stopped_because` | TEXT NULL. Why a partial stopped where it did |
+| `observed_at` | TEXT |
+
+Insert IntradayFetcher · PK (`session_date`, `observed_at`)
+
+**A night with no row here is a night nobody ran**, which is a different fact from a night that ran and asked for nothing, and the two are only distinguishable because the stage writes a row either way. **The shortfall is recorded here rather than on the setup rows**: `setup.degraded_because` is written once by the detector that inserts the row, `setup` has one declared writer per operation, and an update from this stage would be a second writer on rows the corpus forbids rewriting. Which names went unfetched is `requested` against `fetched`, which is a join rather than an edit.
 
 ### `spread_snapshot`
 Grain: ticker + snapshot time. Phase 4. **Unrecoverable if missed.** The only intraday job.

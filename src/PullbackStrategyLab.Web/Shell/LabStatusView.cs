@@ -39,7 +39,19 @@ public sealed record LabStatusView(
     /// what was wrong.
     /// </summary>
     public static LabStatusView Down(string why) =>
-        new(false, why, "unreachable", 0, 0, null, null, null, 0, 0, 0, 0, null, null, null, null);
+        new(false, why, "unreachable", UnknownVersion, UnknownVersion, null, null, null, 0, 0, 0, 0, null, null, null, null);
+
+    /// <summary>
+    /// The version fields when nothing answered, which is not nought.
+    ///
+    /// Nought is a schema version a store could legitimately be at, and the two fields were both
+    /// nought here, so an unreachable band computed a mismatch of nought against nought and stated
+    /// positively that the store was fine. The class of fault that stops the read surface answering
+    /// is exactly the class this band exists to report, so the fallback was asserting the negative
+    /// of the thing it could not see. Minus one is not a version anything can be at, and
+    /// <see cref="VersionsKnown"/> is what reads it.
+    /// </summary>
+    public const int UnknownVersion = -1;
 
     public string SessionText => Session ?? "no session recorded";
 
@@ -50,6 +62,9 @@ public sealed record LabStatusView(
     public string CallsText => string.Create(
         CultureInfo.InvariantCulture, $"{CallsUsed:N0} of {DailyCallCeiling:N0}");
 
+    /// <summary>Whether both version fields are real, as against the unreachable state's placeholder.</summary>
+    public bool VersionsKnown => SchemaVersion != UnknownVersion && SchemaVersionExpected != UnknownVersion;
+
     /// <summary>
     /// Whether the store is at a version other than the one the running build was written against.
     ///
@@ -57,13 +72,28 @@ public sealed record LabStatusView(
     /// read and there was nothing to read it against. On 2026-08-28 it said 30 while the build
     /// needed 32, four stages died on a column the store had not got, and the band carried the
     /// figure that would have said so all night.
+    ///
+    /// <b>It answers "there is a mismatch" and no longer answers which way.</b> Read as one flag it
+    /// was true in both directions while its name said one of them, so a build older than its store
+    /// reported as a build newer than its store and sent the operator to run a migration that is not
+    /// owed. <see cref="StoreAhead"/> is the other direction, and the band says which.
     /// </summary>
-    public bool SchemaBehind => Store == "ready" && SchemaVersion != SchemaVersionExpected;
+    public bool SchemaMismatch => Store == "ready" && VersionsKnown && SchemaVersion != SchemaVersionExpected;
+
+    /// <summary>
+    /// The store is at a later version than the build reading it, which needs a different act from
+    /// the operator: not a migration, but a checkout. `Program.WhyTheStoreCannotBeRead` already drew
+    /// the distinction and gave the two cases different messages; the band collapsed it into one
+    /// label, which is a correct answer lost on the surface that carries it.
+    /// </summary>
+    public bool StoreAhead => SchemaMismatch && SchemaVersion > SchemaVersionExpected;
 
     public string StoreText => Store switch
     {
-        "ready" => string.Create(CultureInfo.InvariantCulture,
+        "ready" when VersionsKnown => string.Create(CultureInfo.InvariantCulture,
             $"schema {SchemaVersion} of {SchemaVersionExpected} · {UniverseMembers:N0} names · {BarsStored:N0} bars"),
+        "ready" => string.Create(CultureInfo.InvariantCulture,
+            $"schema unknown · {UniverseMembers:N0} names · {BarsStored:N0} bars"),
         "no-store" => "no store yet, run tools/migrate",
         _ => "unreachable",
     };

@@ -115,14 +115,14 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |
 | 18:40 | publish watchlist | 0 |
-| 20:30 | minute bars for flagged setups | 300 |
+| 20:30 | `intraday-bars`, one request per distinct flagged name, at 5 calls each. Not the capped sixty: a variant that selects a name the baseline passed on must still be resolvable, and a name whose minutes were never bought is one no variant can ever be scored on | 220 to 415 |
 | 21:00 | session replay, fills, positions | 0 |
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |
 | 21:50 | `scoreboard`, the three bands, every panel with its own count | 0 |
 | 22:00 | `snapshot-db`, the night's copy, which is the recovery path | 0 |
-| **total** | | **~2,803 against a 5,000 ceiling** |
+| **total** | | **~2,723 against a 5,000 ceiling** |
 
 **`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
@@ -146,11 +146,20 @@ logs to `<data root>/logs/nightly-YYYY-MM-DD.log` and records the commit it ran 
 that log's first entry, since the job runs from a working tree and what it executes changes when the
 branch does.
 
-**The ref the job runs from is `main`, as of 2026-08-29.** It is not configured anywhere: the slot
-script runs whatever the working tree is checked out to, and the tree is on `main` because PR #8
-merged at `6661f2d` and the tree was returned to it. Nothing enforces this and nothing should
-pretend to, so the check is the log: the first line of every night's entry names the branch and the
-commit, and a night that ran from something else says so in its own record.
+**The ref the job runs from is `main`, and as of 4.2 the script refuses to run from anything else.**
+It is still not configured anywhere: the slot script runs whatever the working tree is checked out
+to. What changed is that it now reads the ref before it dispatches and exits 4 without running a
+stage when the tree is not on `main`, printing which branch it found. `-AllowBranch` is the escape,
+and it is the reason the guard is safe to have: a phase that merges leaves the tree on a branch for
+as long as the merge takes, and a guard with no way through would stop the night's accumulation for
+exactly that window. That is why the first attempt at this, written at 3.6, was removed rather than
+given a switch.
+
+**The log stays and is no longer the only thing.** The first line of every night's entry still names
+the branch and the commit, and a night that ran from something else still says so in its own record.
+What the three instances below establish is that nobody reads it: the branch was recorded on each
+occasion and read on none, and the third was found by a review typing `git status`. A refusal exits
+non-zero, which the scheduler surfaces, where a line in a file surfaces nothing.
 
 **It has now been on a branch three times, the second cost a night, and the third happened inside
 the pass that closed the second.** Before `6f27926` the job ran from `phase-3-corrections`. Every

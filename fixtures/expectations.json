@@ -8375,17 +8375,17 @@
   {
    "id": "runlog.distinctStages",
    "tier": "FROZEN",
-   "value": "19",
+   "value": "20",
    "checkpoint": "1.1",
-   "producedBy": "the replay itself, recorded to detect change",
+   "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
    "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely."
   },
   {
    "id": "runlog.entries",
    "tier": "DERIVED",
-   "value": "24",
+   "value": "25",
    "checkpoint": "1.1",
-   "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run",
+   "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
    "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24."
   },
   {
@@ -9834,9 +9834,9 @@
   {
    "id": "store.schemaVersion",
    "tier": "DERIVED",
-   "value": "36",
-   "checkpoint": "3.12",
-   "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 035-control-session.sql, and a store the runner has taken all the way reads that number in user_version, so a fully migrated store reads 35. Independent of MigrationRunner.LatestVersion, which reads the same files through the assembly's resources.",
+   "value": "37",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 037-intraday-bar.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.2, which is the first checkpoint to add a migration since the phase 3 sign-off.",
    "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine."
   },
   {
@@ -10004,6 +10004,46 @@
    "value": "2002",
    "checkpoint": "1.3",
    "producedBy": "an independent screen over the captured symbol list, bulk day and bulk actions, computed outside the solution by tools/derive-indicators.py --universe"
+  },
+  {
+   "id": "intraday.requested",
+   "tier": "DERIVED",
+   "value": "0",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the fixture before it was run, then run. The fixture holds one market day and its setups are flagged on that same day, so no session before it flagged anything, no plan was live in the session the bars would be for, and the pairing the stage refuses to form is the only one available. So the stage asks for nothing and records that it asked for nothing. A fixture that gains a second market day turns every one of these into a real fetch with no edit to the replay.",
+   "note": "how many names were asked for"
+  },
+  {
+   "id": "intraday.fetched",
+   "tier": "DERIVED",
+   "value": "0",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the fixture before it was run, then run. The fixture holds one market day and its setups are flagged on that same day, so no session before it flagged anything, no plan was live in the session the bars would be for, and the pairing the stage refuses to form is the only one available. So the stage asks for nothing and records that it asked for nothing. A fixture that gains a second market day turns every one of these into a real fetch with no edit to the replay.",
+   "note": "how many answered"
+  },
+  {
+   "id": "intraday.empty",
+   "tier": "DERIVED",
+   "value": "0",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the fixture before it was run, then run. The fixture holds one market day and its setups are flagged on that same day, so no session before it flagged anything, no plan was live in the session the bars would be for, and the pairing the stage refuses to form is the only one available. So the stage asks for nothing and records that it asked for nothing. A fixture that gains a second market day turns every one of these into a real fetch with no edit to the replay.",
+   "note": "how many returned no minutes"
+  },
+  {
+   "id": "intraday.barsWritten",
+   "tier": "DERIVED",
+   "value": "0",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the fixture before it was run, then run. The fixture holds one market day and its setups are flagged on that same day, so no session before it flagged anything, no plan was live in the session the bars would be for, and the pairing the stage refuses to form is the only one available. So the stage asks for nothing and records that it asked for nothing. A fixture that gains a second market day turns every one of these into a real fetch with no edit to the replay.",
+   "note": "how many bars were stored"
+  },
+  {
+   "id": "intraday.pairedWithPriorSession",
+   "tier": "DERIVED",
+   "value": "0",
+   "checkpoint": "4.2",
+   "producedBy": "derived by hand from the fixture before it was run, then run. The fixture holds one market day and its setups are flagged on that same day, so no session before it flagged anything, no plan was live in the session the bars would be for, and the pairing the stage refuses to form is the only one available. So the stage asks for nothing and records that it asked for nothing. A fixture that gains a second market day turns every one of these into a real fetch with no edit to the replay.",
+   "note": "1 where the fetch paired with an earlier flagged session, 0 where none existed. The one figure here that is about the pairing rule rather than about the count, and the one that would move first if the offset were ever inverted"
   }
  ],
  "frozenOnly": [

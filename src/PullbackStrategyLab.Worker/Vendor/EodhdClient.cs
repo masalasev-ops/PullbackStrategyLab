@@ -58,6 +58,16 @@ public sealed class EodhdClient : IMarketDataVendor
     /// </summary>
     public const int FundamentalsCost = 1;
 
+    /// <summary>
+    /// One ticker's minute bars for one window. Five, not one: the vendor prices intraday above the
+    /// per-ticker daily endpoint, and the data budget's minute-bar row is built on this figure.
+    ///
+    /// It is what makes the minute-bar row the second largest consumer in the lab, so under-counting
+    /// it by four would let a night overrun the ceiling by four fifths of that row without the
+    /// counter noticing, which is the accounting error the ceiling exists to catch.
+    /// </summary>
+    public const int IntradayCost = 5;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
@@ -213,6 +223,70 @@ public sealed class EodhdClient : IMarketDataVendor
         return VendorResult<IReadOnlyList<VendorDailyBar>>.Delivered(bars);
     }
 
+    public async Task<VendorResult<IReadOnlyList<VendorIntradayBar>>> GetIntradayAsync(
+        string ticker,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (!budget.TryCountCalls(IntradayCost))
+        {
+            return VendorResult<IReadOnlyList<VendorIntradayBar>>.OutOfBudget();
+        }
+
+        // The window is sent as UNIX seconds, which is the vendor's own unit and carries its zone
+        // with it. Formatting the boundary as a local date string would put the session's definition
+        // in a query parameter and let the vendor decide where a day starts.
+        IntradayBarRow[] rows = await GetAsync<IntradayBarRow[]>(
+            $"intraday/{Uri.EscapeDataString(ticker)}.{Uri.EscapeDataString(_options.Vendor.Exchange)}",
+            query: $"interval={MinuteInterval}&from={from.ToUnixTimeSeconds()}&to={to.ToUnixTimeSeconds()}",
+            cancellationToken).ConfigureAwait(false) ?? [];
+
+        var bars = new List<VendorIntradayBar>(rows.Length);
+
+        foreach (IntradayBarRow row in rows)
+        {
+            if (row.Timestamp is not long stamp)
+            {
+                // A row the vendor published with no stamp is a bar with no place in a series.
+                // Skipped rather than given the previous bar's minute, which would put volume that
+                // traded at an unknown time onto a minute that has its own.
+                continue;
+            }
+
+            // A minute with no trades comes back with nulls in the four price fields rather than
+            // being absent, and it is not a bar: storing it as four zeros would make the day's low
+            // nought on every quiet name. Volume of zero with real prices is a real bar and stays.
+            if (row.Open is not decimal open || row.High is not decimal high
+                || row.Low is not decimal low || row.Close is not decimal close)
+            {
+                continue;
+            }
+
+            bars.Add(new VendorIntradayBar(
+                ticker,
+                DateTimeOffset.FromUnixTimeSeconds(stamp),
+                open,
+                high,
+                low,
+                close,
+                (long)(row.Volume ?? 0m)));
+        }
+
+        return VendorResult<IReadOnlyList<VendorIntradayBar>>.Delivered(bars);
+    }
+
+    /// <summary>
+    /// The interval the lab asks for, in the vendor's own vocabulary. One minute is the finest the
+    /// vendor offers and the only one this lab stores: a coarser bar cannot be refined afterwards
+    /// and a session captured at five minutes is a session captured wrong for ever.
+    /// </summary>
+    public const string MinuteInterval = "1m";
+
     public async Task<VendorResult<VendorFundamentals?>> GetFundamentalsAsync(
         string ticker,
         ICallBudget budget,
@@ -328,6 +402,10 @@ public sealed class EodhdClient : IMarketDataVendor
             else if (response.Endpoint.StartsWith("eod/", StringComparison.Ordinal))
             {
                 JsonSerializer.Deserialize<HistoryBarRow[]>(response.Body, Json);
+            }
+            else if (response.Endpoint.StartsWith("intraday/", StringComparison.Ordinal))
+            {
+                JsonSerializer.Deserialize<IntradayBarRow[]>(response.Body, Json);
             }
             else
             {
@@ -583,6 +661,43 @@ public sealed class EodhdClient : IMarketDataVendor
 
         /// <summary>Decimal for the same reason the bulk row's is: the vendor publishes some as fractional.</summary>
         public decimal Volume { get; init; }
+    }
+
+    /// <summary>
+    /// One minute bar as the intraday endpoint sends it.
+    ///
+    /// <b>Every field is nullable, and that is the shape rather than caution.</b> The vendor emits a
+    /// row for a minute in which nothing traded, with nulls in the four price fields, so a
+    /// non-nullable decimal would refuse the whole response over a quiet minute on one name. That is
+    /// the lesson the fundamentals row already carries one field along, where a capitalisation of the
+    /// string "NA" took the sector walk down: the shape that matters is the one nobody asked for.
+    ///
+    /// <b>Only the timestamp is read for the stamp.</b> `datetime` is a formatted string with no
+    /// offset in it, so reading it would require agreeing a zone with the vendor by convention.
+    /// `gmtoffset` is declared here rather than dropped, so a response that started carrying a
+    /// non-zero one is visible in a captured fixture rather than silently reinterpreted.
+    ///
+    /// Volume is decimal for the same reason the daily rows' is: the vendor publishes some as
+    /// fractional, and a long would refuse the response rather than the field.
+    /// </summary>
+    private sealed record IntradayBarRow
+    {
+        public long? Timestamp { get; init; }
+
+        [JsonPropertyName("gmtoffset")]
+        public int? GmtOffset { get; init; }
+
+        public string? Datetime { get; init; }
+
+        public decimal? Open { get; init; }
+
+        public decimal? High { get; init; }
+
+        public decimal? Low { get; init; }
+
+        public decimal? Close { get; init; }
+
+        public decimal? Volume { get; init; }
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
+using PullbackStrategyLab.Web.Shell;
 using Xunit;
 
 namespace PullbackStrategyLab.Tests;
@@ -194,4 +195,61 @@ public sealed class LabStatusTests : IDisposable
         Assert.Equal(MigrationRunner.LatestVersion, status.SchemaVersionExpected);
         Assert.Equal(status.SchemaVersionExpected, status.SchemaVersion);
     }
+
+    /// <summary>
+    /// The band when the read surface did not answer, which used to state positively that the store
+    /// was fine.
+    ///
+    /// `Down` built the view with both version fields at nought, and the mismatch flag was
+    /// `SchemaVersion != SchemaVersionExpected`, so nought against nought said no mismatch. The
+    /// class of fault that stops the read surface answering is exactly the class the line exists to
+    /// report, so the fallback asserted the negative of the thing it could not see. It was latent
+    /// only because the status read happened to select no column a recent migration had added; 4.2
+    /// adds the first migration since the phase 3 sign-off, which is why the row fell due here.
+    /// </summary>
+    [Fact]
+    public void An_unreachable_band_says_the_versions_are_unknown_rather_than_that_they_agree()
+    {
+        LabStatusView down = LabStatusView.Down("the read surface is not answering");
+
+        Assert.False(down.VersionsKnown);
+        Assert.False(down.SchemaMismatch);
+        Assert.False(down.StoreAhead);
+        Assert.Equal(LabStatusView.UnknownVersion, down.SchemaVersion);
+        Assert.Equal(LabStatusView.UnknownVersion, down.SchemaVersionExpected);
+    }
+
+    /// <summary>
+    /// A store ahead of its build is not a store behind it, and the two need different acts.
+    ///
+    /// `Program.WhyTheStoreCannotBeRead` has always distinguished them: a store behind the build is
+    /// repaired by `tools/migrate`, and a store ahead of it means an older binary is reading columns
+    /// whose meaning has moved, so the checkout is what has to change. The band collapsed both into
+    /// one label named for one of them, which is a correct answer discarded by the surface that
+    /// carries it.
+    /// </summary>
+    [Theory]
+    [InlineData(30, 32, false)]
+    [InlineData(37, 36, true)]
+    public void The_band_says_which_way_a_schema_mismatch_runs(int store, int build, bool ahead)
+    {
+        LabStatusView view = Band(store, build);
+
+        Assert.True(view.SchemaMismatch);
+        Assert.Equal(ahead, view.StoreAhead);
+    }
+
+    [Fact]
+    public void Matching_versions_are_not_a_mismatch_in_either_direction()
+    {
+        LabStatusView view = Band(37, 37);
+
+        Assert.False(view.SchemaMismatch);
+        Assert.False(view.StoreAhead);
+        Assert.Contains("schema 37 of 37", view.StoreText, StringComparison.Ordinal);
+    }
+
+    /// <summary>A band over a reachable store at the two versions given, and nothing else stated.</summary>
+    private static LabStatusView Band(int store, int build) =>
+        new(true, null, "ready", store, build, null, null, null, 0, 0, 0, 5000, null, null, null, null);
 }
