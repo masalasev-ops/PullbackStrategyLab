@@ -9736,3 +9736,89 @@ Corrects:   **The 4.2 entry above records the runners passing, and two checks we
 Carried:    One raised and one discharged, so the obligations table still reads **58**: the quota-day
             row is gone and the population row is new. Eighteen fall due at 4.6, one at 4.7, and none
             at 4.3.
+
+## 4.3 — 2026-09-01 — phase-4-inverted-job-and-vendor-facts — the instrument that was green over nothing, and two facts about the vendor
+
+Two things owed by the 4.3 sign-off and taken before 4.14, neither of which builds anything: one
+repairs a runner job that could not tell two states apart, and one moves a finding out of the
+checkpoint that happened to make it.
+
+Built:      **`tools/slot-log-verdict.ps1`, and both runner jobs now read it.** It answers what a
+            slot's log says about a stage in **three** values rather than two. `empty` is no stage
+            produced output at all, either because none was dispatched or because the one dispatched
+            wrote nothing the log kept. `missing` is a stage produced output and the wanted pattern is
+            not in it, which is the defect the real job exists to catch. `ok` is both. It always exits
+            0, so the verdict is the output and each caller decides what it means, which is what lets
+            one predicate serve a job requiring `ok` and a job requiring `empty` and `missing` from two
+            deliberately produced runs.
+
+            **It is one file rather than the same fifteen lines in two jobs**, on the rule that a
+            boundary computed two ways is worse than either way. The two jobs are the only place in
+            the corpus where the same question is asked of the same artefact for opposite reasons, so
+            they are exactly where the two copies would have drifted.
+
+            **The inverted job now produces both failing conditions instead of reasoning about one.**
+            The empty case comes from running the slot **without** `-AllowBranch`, which is the
+            condition that caused the false green: a runner is never on `main`, so the 4.2 tree guard
+            refuses and no stage is dispatched. The wrong-output case comes from running it **with**
+            `-AllowBranch` and asking for a pattern no stage writes. The job requires each verdict by
+            name, and requires the two to differ, which is the property in one line.
+
+Measured:   **Every verdict was produced and read rather than argued for.** The refusal log was
+            generated on this branch by the guard itself, at no vendor cost, and the three other
+            shapes were built from the slot script's own line formats:
+
+              refusal, wanted = the real message           empty: no line dispatching universe-build
+              dispatched, wanted = a message nothing writes missing: 1 line and none matched
+              dispatched, wanted = the real message        ok: 1 line and the pattern is among them
+              dispatched but silent                        empty: dispatched and wrote nothing
+
+            **And the old assertion was run against both logs to show what it could not see.** `the
+            log lacks a message no stage has ever written` returned True on the refusal log and True
+            on the dispatched log. One value, two states, which is why the job stayed green while the
+            job it guards was red on both runs of PR #27.
+
+Found:      **An inverted test whose assertion holds over the empty case is green over nothing**, and
+            this one was inside the instrument built to prevent greens over nothing. The corpus names
+            that shape more often than any other and every previous instance was a check narrowing its
+            own scope; this one never had the scope its name implied. Stating it at the step, which is
+            what the previous commit did, is not enough: the next reader sees a green and a comment,
+            and the green is the thing they act on.
+
+            **The distinction that fixes it is not "did the assertion fire" but "was there anything to
+            assert about".** A log with no stage output answers every question about what it lacks,
+            so the first thing a reader of a slot log has to establish is that a stage spoke at all.
+            That is why the verdict has three values, and why the empty case names itself rather than
+            being folded into the failure it looks like.
+
+Recorded:   **Two facts about the vendor, moved out of 4.3 and into where they will be read.**
+            ARCHITECTURE gains "What each vendor endpoint carries", a row per endpoint saying whether
+            it returns a book. **`real-time/` does not**, established by probe on 2026-09-01 rather
+            than from documentation, and it is the negative result worth keeping: it is the endpoint
+            whose name most suggests a quote, and had it been the only intraday route the capture 4.3
+            exists for would have been impossible on this vendor. **`us-quote-delayed` is the only one
+            that does.** Every other endpoint the lab reads returns traded prices, and no interval
+            makes a trade into a quote, so an input needing to know what an order **would** pay has one
+            route and finer bars are not a substitute. It is a property of the vendor rather than a
+            choice this lab made, which is why it is recorded where a later checkpoint choosing an
+            intraday input reads instead of inside the checkpoint that found out.
+
+            **And the two-instant property is now an input to 4.7 rather than a note at 4.3.** The
+            vendor stamps a quote's two sides separately: on the capture of 2026-09-01 AAPL's bid was
+            stamped 16:28:26 Eastern and its ask 16:28:58, **32 seconds apart**. That is one name on
+            one response and it is cited as one everywhere it appears, with its date: nothing here
+            measures how far apart the two sides usually are, and a rate generalised from a single
+            observation would be a figure stated over a population it was never computed on. What the
+            one observation establishes is that the gap is not always nought, which is all a consumer
+            needs to know it must decide something. 4.7's row now carries that decision, because a
+            fraction of a figure taken across a gap is a fraction of something that need not have
+            existed at any instant, and charging it, widening it or refusing it are three different
+            models. It rests on nothing new: `spread_snapshot` already holds both stamps and the lag
+            from the older of them, which 4.3 stored for exactly this.
+
+Corrects:   **`CLAUDE.md`'s repository layout listed six of the nine files in `tools/`.**
+            `verify-phase.ps1` and `nightly.ps1` both arrived in phase 3 and neither was added, so the
+            block described a directory that had not existed for two phases while the paragraph under
+            it cites the block as current. Corrected here with `slot-log-verdict.ps1` beside them.
+
+Carried:    Nothing raised and nothing discharged. The obligations table still reads **58**.

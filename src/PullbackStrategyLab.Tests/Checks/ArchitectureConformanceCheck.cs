@@ -467,6 +467,12 @@ public sealed partial class ArchitectureConformanceCheck
         ["What each tier of change can be replayed against"] = "5.3",
         ["What the pack contains"] = "6.4",
         ["Model budget"] = "6.5",
+        ["What each vendor endpoint carries"] =
+            "what the vendor returns from each route, established by probe and capture rather than by "
+            + "reading the code. No check can assert it: the subject is the vendor, and the one thing a "
+            + "test could confirm is that the lab still calls the endpoints named, which is the half that "
+            + "was never in doubt. It is placed here as a permanent exemption rather than deferred, "
+            + "because nothing will close it",
         ["Data budget"] = "read by pinned-constants and stated-counts, cost and cadence per row",
         ["Authored parameters"] = "read by pinned-constants, one pin per row that has a code constant",
     };

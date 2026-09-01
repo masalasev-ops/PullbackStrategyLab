@@ -45,7 +45,10 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
 /docs             ARCHITECTURE.html  SCHEMA.md  BUILD_PLAN.md
                   DECISIONS.md  PROGRESS.md  CHANGELOG.md  RUNBOOK.md
                   SCREENS.html
-/tools            ci.ps1  ci.sh  verify-phase  snapshot-db  migrate
+/tools            ci.ps1  ci.sh  verify-phase  verify-phase.ps1  snapshot-db  migrate
+                  nightly.ps1  the slot dispatcher the scheduler calls, not run by CI
+                  slot-log-verdict.ps1  what a slot log says about a stage, read by the
+                  two runner jobs so one predicate serves both
                   derive-indicators.py  one-time verification aid, not run by CI
 /fixtures         captured  the golden fixture's inputs, verbatim vendor responses
                   with a manifest naming the endpoint, query and instant of each

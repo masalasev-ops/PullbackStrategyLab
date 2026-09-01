@@ -1013,6 +1013,26 @@ tr:hover td{background:#f4f2ec}
 <p><b>The dividend row is the reason the two columns are separate,</b> and it is worth keeping the history. It read 20 a night at a cost of 100 because the request ran weekly, and the 20 was an amortised figure that could pin nothing. Splitting the columns made the weekly cadence legible, and legible is what made it obviously wrong: a corporate action blocks calculation, and an action nobody has observed blocks nothing.</p>
 <p>One-time backfill is about 7,000 calls over two days: 3,000 for full price history at one call per ticker, 3,000 for split history, and 1,000 of minute bars to calibrate the fill model.</p>
 
+<h3 id="what-each-vendor-endpoint-carries">What each vendor endpoint carries</h3>
+
+<p><b>This table exists because 4.3 nearly could not be built, and the reason was a fact about the vendor nobody had written down.</b> The spread capture is one of the two unrecoverable inputs and the whole checkpoint rests on a bid and an ask being purchasable at all. The obvious route did not carry them. Which endpoints return a book, and which return prices only, is a property of the vendor rather than a choice this lab made, so it is recorded here where the next checkpoint choosing an intraday input reads rather than inside the checkpoint that happened to find out.</p>
+
+<table>
+<tr><th style="width:190px">Endpoint</th><th style="width:150px">Carries a book</th><th>What it returns</th></tr>
+<tr><td><code>us-quote-delayed</code></td><td><b>Yes</b></td><td>The only one that does. <code>bidPrice</code>, <code>askPrice</code>, a size for each side, a <b>separate stamp for each side</b>, and the last trade with its own stamp. Takes a comma-separated batch and is priced per ticker, so batching saves round trips and not calls. Delayed, and the delay is not corrected for anywhere: each row carries the stamps it was built from (see: A delayed quote records its own lag rather than being corrected for it)</td></tr>
+<tr><td><code>real-time/{ticker}</code></td><td><b>No</b></td><td>Open, high, low, close, volume, previous close and change. <b>Neither side of the book, at any subscription.</b> Established by probe on 2026-09-01 rather than read from documentation, and it is the negative result worth keeping: it is the endpoint whose name most suggests it would carry a quote, and had it been the only intraday route the spread capture would have been impossible on this vendor</td></tr>
+<tr><td><code>intraday/{ticker}</code></td><td><b>No</b></td><td>Minute bars: open, high, low, close, volume, raw. A traded price is not a quote and no interval makes it one, so an input needing a spread cannot be assembled from this however fine the bars</td></tr>
+<tr><td><code>eod/{ticker}</code>, <code>eod-bulk-last-day/</code></td><td><b>No</b></td><td>Daily bars, per ticker and whole market. Adjusted close on the per-ticker route</td></tr>
+<tr><td><code>fundamentals/{ticker}</code></td><td><b>No</b></td><td>Sector, industry, market capitalisation</td></tr>
+<tr><td><code>exchange-symbol-list/</code></td><td><b>No</b></td><td>Listed instruments, and delisted ones under a query parameter</td></tr>
+</table>
+
+<p><b>So a quote has exactly one route and every price endpoint is a trade endpoint.</b> That is the sentence a later checkpoint needs: an input that has to know what an order would pay, rather than what an order did pay, has one place to get it, and no amount of finer bars substitutes.</p>
+
+<p><b>And a quote's two sides are stamped separately, which makes a spread a figure across two instants.</b> On the capture of 2026-09-01, AAPL's bid was stamped 16:28:26 Eastern and its ask 16:28:58, <b>32 seconds apart</b>. That is one name on one response and it is stated as one, not as a rate: nothing here measures how far apart the two sides usually are, and a figure generalised from a single observation would be exactly the kind of claim this corpus keeps finding stated over a population it was never computed on. What the single observation does establish is that the gap is not always zero, which is all a consumer needs to know that it must decide something.</p>
+
+<p><b>It is an input to the fill model at 4.7 rather than a note about the capture at 4.3.</b> A spread computed from a bid and an ask taken half a minute apart is not the spread that existed at either instant, and it is not obviously the spread that existed at any moment in between; on a name whose book moved between the two stamps it can be wider or narrower than anything a trader could have crossed. 4.7 applies a fraction of that figure as entry slippage, so 4.7 is where it has to be decided what the fraction is being applied to and what happens to a row whose two sides are far enough apart to be describing different markets. The store already carries what that decision needs: both stamps, and the lag from the older of them.</p>
+
 <h4>The three ways to blow it, all avoidable</h4>
 <ul>
 <li><b>Computing averages through the provider's API</b> rather than locally. About 45,000 calls a day for arithmetic that is one recursive loop over data you already hold.</li>
