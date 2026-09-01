@@ -10346,3 +10346,169 @@ Verified:   `tools/ci.ps1` green at 28 steps and **696 tests**, unchanged from 4
 Carried:    Nothing new. The obligations table is unchanged at 57 rows, since this pass raises none
             and discharges none: the fetch window is stated at its due checkpoint rather than
             discharged, and the decision it asks for is still the operator's.
+
+## 4.15 — 2026-09-01 — phase-4-decisions — the ten answers, and the tripwire that had to be paid rather than lowered
+
+The fifth checkpoint of phase 4 and the second that builds nothing. Its deliverable is recording
+rather than eliciting: the eleven questions were put to the operator on 2026-08-31, before the
+phase's first commit, and the answers arrived today. One was taken at 4.4 because it was that
+checkpoint's own and blocking. The other ten are here.
+
+Recorded:   **Ten answers, nine named decisions, ten filled rows.** The count differs because the
+            long trail's answer closes two rows rather than one: the trail's own mechanics, and the
+            long side's other side of the comparison, which asked what ends a long position beyond
+            the trail. The answer to the second is that the trail *is* the trigger and the fixed
+            give-up point still stands beside it, so both directions now name what ends a position
+            where before only the short side did (see: Long and short are never pooled into one
+            figure).
+
+            **The nine, with what each settles.** Entry slippage is the whole captured spread, the
+            wrong way, on both sides, on the reasoning that a resting order entering on a traded
+            price crosses the book and that being too pessimistic understates edge, which is the safe
+            direction for a lab asking whether edge exists at all. Exit slippage is charged on the
+            same terms, because pricing one end of the trade flatters every R figure by half the
+            round trip in the direction that manufactures edge. A gap fills at the open of the
+            session's first regular minute bar and is not slipped again, since the gap is the adverse
+            move. The trigger is touched rather than closed through. The long trail is read on the
+            daily close, active from entry, filling at the next open. The short trim is 15% of the
+            planned position, once, at 3R. Trimming into support is dropped. A stop-out is noise at
+            +1R on the direction-signed ten-day return, and cause of loss is two questions rather
+            than one ordered list. The order prices come from the final pullback session's minutes,
+            with the give-up point 0.1 ADR beyond its extreme.
+
+            **Three numbers are arbitrary within a defensible range and every one of them says so on
+            its own row**, being the 15% trim, the 0.1 ADR offset and the 1R noise boundary. That is
+            the whole of why they are recorded rather than simply used: an arbitrary number that does
+            not say it is arbitrary is the one a later session defends, and the form around each of
+            the three is not arbitrary at all. The trim is a fraction of the planned position rather
+            than of the remainder, which makes it a fixed share count computable at plan time and
+            keeps it immutable with the rest of the plan; a fraction of the remainder is a decaying
+            ladder that never exits and makes R accounting depend on how many times it has fired. The
+            offset is a fraction of ADR so it is scale-free, and the same both ways so neither side
+            carries one the other does not. The boundary is in R because R is the unit every other
+            figure here is denominated in and a percentage is not comparable across names of
+            different volatility.
+
+            **One row is filled as dropped rather than as answered.** Support is defined nowhere in
+            this corpus, so any definition would have been authored now rather than recovered, and
+            the choice was between inventing a level and removing the clause. It is removed, because
+            phase 5 exists to screen a rule variant against evidence and a support definition belongs
+            there carrying its own stated level, where it can be paired; baked into the baseline it
+            cannot be told apart from the rest of the rule set and every figure the baseline produces
+            would carry an invented number nobody could isolate. **Recorded as dropped, with the
+            reason**, because a clause removed and a clause forgotten read identically and the next
+            session restores the second.
+
+            **Two things the entry-slippage decision states that it does not model**, on the grounds
+            that a symmetric rule reads as though the two sides were treated alike. Short borrow cost
+            beyond the assumed rate is not modelled, so that side is understated by an amount nothing
+            here measures. And the spread charged is a proxy: `spread_snapshot` is captured twice a
+            session rather than at the fill, and the vendor stamps a quote's two sides separately, 32
+            seconds apart on the one measurement taken, so a stored `spread_bps` need not be a spread
+            that existed at any instant. A fraction of a figure taken across a gap is charged as
+            though it existed at a moment. That is a stated approximation rather than an unnoticed
+            one, and what 4.7 still owes is not this choice but what happens to a row whose two sides
+            are far enough apart to describe different markets.
+
+            **Precedence is stated as two questions rather than as one ordered list**, which is the
+            part of the loss-cause answer that changes the shape rather than the number. A gap loss
+            is a gap loss first, because that names *how* the loss occurred; noise against failed
+            classifies *what happened afterwards*, among the losses that were not gaps. Written as
+            one ranked list, the case that satisfies two causes at once looks like a collision to be
+            broken by precedence, and it is not: it is one loss answering two questions. The
+            classifier is asked to record both rather than collapse them.
+
+Built:      **Nothing runs differently.** No stage, no store, no page. What changed is nine entries
+            in `DECISIONS.md`, ten rows of ARCHITECTURE's authored-parameters table, the fill model,
+            the management comparison table's exit-rule row, eight BUILD_PLAN rows, one test file and
+            one registry claim.
+
+            **ARCHITECTURE's completeness sentence is back, in the words it was removed in.** It came
+            out at 3.8 because the table did not have the completeness it asserted, and the rows
+            rather than the sentence were the defect. Nought rows are open now. It returns verbatim
+            on purpose: a claim reworded on return is a different claim, and the test holding it reads
+            that string.
+
+Paid:       **The tripwire in `AuthoredParametersTests` fired, and it had to be paid rather than
+            lowered.** It asserted that at least six rows were marked OPEN, stated in advance so that
+            a sweep finding none would mean the marker had changed shape rather than that the rows
+            had been filled. That is the right worry and the floor stopped being an instrument for it
+            the moment the rows were legitimately filled: at nought open rows the two cases it exists
+            to separate look identical, so lowering the six to nought would have left a test that
+            passes over a table it can no longer read. **It is replaced by a permanent authored
+            case**: a table in the document's own markup carrying one open row and one filled one,
+            which the two predicates are run against, on the rule that a test proving a check works
+            must be permanent rather than a break-and-revert done once by hand. The subject of the
+            file inverts with it, from "the claim stays out while rows are open" to "the claim is in
+            and no row is open", and the mutual exclusion is now asserted in both directions: a row
+            reopened without the sentence coming out turns the suite red.
+
+            **The second test in that file passed by comparing nothing and now does not.** Every open
+            row naming a real checkpoint is vacuous over a table with no open rows, which is the
+            defect 3.10 counted separately from a pass. The authored table carries a row whose review
+            point is "Soon", and the test asserts that it is found.
+
+Found:      **`stated-counts` derived one side of a claim and hard-coded the other.** The claim
+            registered at 4.4 reads BUILD_PLAN's count of open parameter rows against the count
+            derived from the table, and the commit that added it said it was registered so the number
+            could not drift again. The derived side was derived; the stated side was the C# literal
+            `10`. A count derived on one side and typed on the other still needs a person to
+            remember, and nothing would have failed had the literal stayed wrong. Filling the rows is
+            what forced the number to move and is what showed it. It reads BUILD_PLAN's own sentence
+            now, so the document that states the count is the document that has to be edited to
+            change it.
+
+            **And the rowed git-index defect showed itself again, on this checkpoint's own new
+            file.** `tools/ci.ps1` was green at 28 steps over a tree in which
+            `tools/derive-authored-parameters.py` was untracked, and `decision-resolves` takes its
+            file list from the git index, so the file was invisible to it. The moment it was staged
+            the check went red on two citations: the tool reads citation markers, so it spells the
+            marker, and its own occurrences read as citations of nothing. The marker is assembled
+            from parts now with a comment saying why, on the precedent of the two build-order rows
+            that name a component by description. Nothing is wrong with the check and the row stays
+            where it is, due at 4.6; what this adds is a second instance, and the first one where
+            the invisible file was written by the checkpoint that ran the green build.
+
+            **The scope-rename guard did its job in the same commit.** Renaming the claim turned
+            `check-coverage` red in both directions at once: a scope with no floor, and a floor
+            naming a scope the run no longer produced. The baseline is renamed in the same commit,
+            which is the procedure that guard exists to force.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **698 tests**, from 696. The two are the net of the
+            authored-parameters file going from two tests to four. `tools/verify-phase.ps1` GREEN:
+            **128 claims, 84 passed, 0 failed, 44 out of scope, 0 unexamined**, coverage examined
+            **5,492**, **1,394 expectations** of which 1 is void, inputs CAPTURED 70 and AUTHORED 133,
+            expectations changed since the last commit 0. Read on a clean tree at `8abefc2`, which is
+            this checkpoint's first commit and carries every edit it makes; the block you are reading
+            lands in the second, so the figures name the tree they were produced on.
+
+            **The out-of-scope count is unchanged at 44 against the ceiling of 52, and that is the
+            answer rather than an omission.** The register is keyed on rows and tables, so only a new
+            row in a claim table or a new table moves it. This checkpoint edits the cells of ten rows
+            that already exist and adds neither, and the authored-parameters table is placed as read
+            by `pinned-constants` rather than yielding a claim per row, so a filled row gains no
+            verdict of its own. `pinned-constants` still reports 29 rows with no code constant yet,
+            unchanged, because none of the ten gained a constant here: the components they govern
+            arrive at 4.7, 4.8, 4.10 and 4.16.
+
+            **Four DERIVED expectations, every one predicted before the replay was run and every
+            prediction held.** `authored.open` at nought carries the property and the three beside it
+            are the population it was computed over: 45 rows, 45 filled, and 11 whose basis cites a
+            decision by name. Nought open means nothing without the count it was nought out of, since
+            a parser reading no rows reports nought too, which is why the total is recorded with it
+            and why the check that reads this table refuses a row count below twenty-five. The
+            eleven citing rows are the ten answered here and the hourly grid answered at 4.4; the
+            thirty-four below them predate the practice and are not expected to move. Restated
+            independently by `tools/derive-authored-parameters.py`, which reads the table with a
+            different language's HTML parser rather than with a regex and splits rows from the markup
+            rather than through the C# helper, so it shares no code with the figures under test. It
+            also resolves every decision name the table cites, 12 of them, against `DECISIONS.md`,
+            because a citation added in the same pass that adds the decision is the one most likely
+            to be a paraphrase of it.
+
+Carried:    Nothing raised and nothing discharged. The obligations table is unchanged at 57 rows.
+            **What 4.15 does not settle, stated so it is not read as settled**: when the trail takes
+            over from the fixed stop, which is a mechanism rather than an authored value and stays
+            4.8's; and what the fill model does with a spread whose two sides are far enough apart to
+            describe different markets, which stays 4.7's. Neither is an authored parameter, so
+            neither reopens a row.
