@@ -10203,8 +10203,9 @@ Discharged: **The 2.11 obligation, by measurement rather than by note.** The row
 
 Verified:   `tools/ci.ps1` green at 28 steps and **696 tests**, from 668. `tools/verify-phase.ps1`
             GREEN: **128 claims, 84 passed, 0 failed, 44 out of scope, 0 unexamined**, coverage
-            examined 5,396, **1,390 expectations** of which 1 is void, inputs CAPTURED 70 and
-            AUTHORED 133. Read against the ceiling of 52 before the commit and it needs no raise: the
+            examined **5,416**, **1,390 expectations** of which 1 is void, inputs CAPTURED 70 and
+            AUTHORED 133, on a clean tree at the checkpoint's second commit. It read 5,396 on the
+            first, and the twenty are the `stated-counts` scope that commit registered. Read against the ceiling of 52 before the commit and it needs no raise: the
             count **falls** from 45 to 44, because VwapEngine's catalogue claim stops being deferred
             and is asserted, which is the mapping repair above showing up as a number.
 
