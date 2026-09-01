@@ -9709,6 +9709,30 @@ Found:      **A batch is charged whole, so the pass abandoned budget it could ha
             of its own rather than in the list of stages a night does not run, which would have said
             something false about the schedule to buy a green run.
 
+Corrects:   **The 4.2 entry above records the runners passing, and two checks were red.** PR #27's
+            `a failing stage is logged by the slot script` job failed on both of its runs and 4.2 was
+            merged anyway, against the rule that CI green is the condition for a merge. The entry
+            said the suite passed on both runners, which it did; what it did not say, and should
+            have, is that the two slot-diagnostics jobs are checks on that pull request too and one
+            of them was failing. **This entry is the correction and the fix is in it**, on the rule
+            that a record is corrected by a new dated entry naming what it corrects.
+
+            **The cause is 4.2's own tree guard, and it is the guard working.** `tools/nightly.ps1`
+            refuses a slot dispatched from a tree that is not on `main`. A runner is never on `main`:
+            it checks out the branch under test. So the guard exited 4 before `universe-build` ran,
+            nothing wrote to stderr, and the job failed saying the slot script was discarding a
+            message no stage had produced. The switch that answers it is `-AllowBranch`, which 4.2
+            added for exactly this and did not then give to the workflow that needed it. All three
+            invocations now carry it.
+
+            **The inverted job passed through the whole regression and that is the finding.** It
+            exists to prove the real job's assertions are wired to the step's exit code, and it does
+            that by asserting the log lacks a message no stage ever writes. That is true of a refusal
+            log as well as of a real one, so the job cannot tell a stage that ran from a stage that
+            never started. It is doing its stated work and its subject is narrower than a reader would
+            take it for; the comment at the step now says so rather than the switch being added
+            silently.
+
 Carried:    One raised and one discharged, so the obligations table still reads **58**: the quota-day
             row is gone and the population row is new. Eighteen fall due at 4.6, one at 4.7, and none
             at 4.3.
