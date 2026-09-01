@@ -52,6 +52,15 @@ public sealed class PointInTimeCheck
             ["daily_bar"] = "observed_at",
             ["index_bar"] = "observed_at",
             ["intraday_bar"] = "observed_at",
+            ["spread_snapshot"] = "observed_at",
+
+            // The pass row is here rather than in NotAnObservation beside `intraday_fetch`, which it
+            // otherwise resembles, and the difference is that something reads it to decide an answer.
+            // Whether a session was sampled at all is what the spread reader refuses on, so "sampled,
+            // as far as the lab could know by this date" is a point-in-time question and a replay
+            // that saw a pass recorded after the instant it is answering would refuse differently
+            // from the night itself. `intraday_fetch` is exempt because nothing reads it that way.
+            ["spread_pass"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -253,7 +262,7 @@ public sealed class PointInTimeCheck
             typeof(DailyBarReader), typeof(IndexBarReader), typeof(IndicatorDailyReader),
             typeof(ScanHitReader), typeof(SetupReader), typeof(SetupSignalReader),
             typeof(SecurityReader), typeof(CorporateActionReader), typeof(UniverseSnapshotReader),
-            typeof(RegimeReader),
+            typeof(RegimeReader), typeof(SpreadSnapshotReader),
         ];
 
         int readsExamined = 0;
@@ -350,10 +359,47 @@ public sealed class PointInTimeCheck
                 + "returning nothing rather than bounding anything.");
         }
 
+        // 4. The run log's stamp, which is read by two windows with different edges. A truncation to
+        //    a date computes the vendor's quota day, which is correct for the budget read and wrong
+        //    for the session read, and the two are indistinguishable once written that way. 3.12
+        //    repaired the wrong one and left the right one, which is why no guard could exist until
+        //    4.3 named the quantity: the pattern would have failed a correct use on the first file
+        //    it read. Both windows now bound between two instants and the truncation is in nothing.
+        //    It reads statements rather than file text, which is the difference between the property
+        //    and a phrase: both files below carry the old expression in a comment explaining what it
+        //    got wrong, and a scan over the source would fail on the record of the defect rather
+        //    than on the defect.
+        int runLogStatements = 0;
+
+        foreach (string file in RepositoryLayout.ProductionSourceFiles)
+        {
+            string source = RepositoryLayout.Read(file);
+
+            foreach (string statement in Statements(source))
+            {
+                if (!SelectsFrom(statement, "run_log"))
+                {
+                    continue;
+                }
+
+                runLogStatements++;
+
+                if (statement.Contains("substr(started_at", StringComparison.OrdinalIgnoreCase))
+                {
+                    failures.Add(
+                        $"{Path.GetFileName(file)} truncates run_log.started_at to a date. That computes a vendor "
+                        + "quota day, which is what VendorQuotaDay is for, and it is not a session night, which is "
+                        + "what SessionBoundaries is for. Both bound between two instants so the two reads cannot be "
+                        + "mistaken for each other.");
+                }
+            }
+        }
+
         coverage
             .Examined("public reads on the store's readers", readsExamined)
             .Examined("statements selecting from a stamped table", stampedStatements)
             .Examined("stamped tables the check knows about", Stamped.Count)
+            .Examined("statements reading the run log", runLogStatements)
             // The four exemption counts are context and carry no floor, deliberately. A floor is a
             // minimum, so flooring an exemption count fails the run when an exemption is *removed*,
             // which is what fixing the gap under it looks like. Narrowing stays silent and
@@ -375,7 +421,13 @@ public sealed class PointInTimeCheck
                     "DailyBarIngestorTests.A_read_sees_the_figure_that_had_been_observed_by_its_as_of_date_and_not_the_correction",
                     "the same session is read from both sides of a correction's instant and gives two figures. "
                     + "That is what a bound does; the scan is what says every statement written by hand beside a "
-                    + "reader has one, which is the half four unbounded queries were on the wrong side of"));
+                    + "reader has one, which is the half four unbounded queries were on the wrong side of"))
+            .Scan("the run log's stamp is never truncated to a date",
+                CheckCoverage.Backing.Test(
+                    "VendorQuotaDayTests.The_two_spends_of_one_evening_land_in_the_quota_days_they_belong_to",
+                    "two spends on one evening, one before the UTC date rolls and one after, are counted into "
+                    + "two quota days and read back as one session. That is the property; this scan is what "
+                    + "says the expression that used to answer both questions is in no file"));
 
         // Calibration mode reconstructs against membership as it stands today, deliberately, which
         // is why its rows go to a table nothing downstream reads. It is out of scope by design

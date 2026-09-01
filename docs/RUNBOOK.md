@@ -98,7 +98,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 
 | Time (ET) | Stage | Calls |
 |---|---|---|
-| during session | spread snapshots, two passes | 120 |
+| 10:15 | `spreads` `after_open`, the capped names in batches, at 1 call each. Past the opening auction, whose quotes describe an event rather than a name, and inside the first hour, where a trigger most often fires | 60 |
+| 15:45 | `spreads` `before_close`, the same names again. Late enough to catch a book that widened through the day and outside the closing auction. **The two sessions this lab runs inside**, and the only slots here that fire while the market is open | 60 |
 | 17:15 | `universe-build`, the symbol list and then the screening window, being one bulk end-of-day request per session until twenty sessions have been screened | ~2,005 |
 | 17:20 | `actions`, splits bulk. One invocation covers both halves | 100 |
 | 17:20 | `actions`, dividends bulk. Nightly since 2026-08-25: weekly left a stock computing for up to four sessions on a series that had already moved | 100 |

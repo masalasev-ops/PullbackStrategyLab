@@ -121,6 +121,26 @@ public interface IMarketDataVendor
         DateTimeOffset to,
         ICallBudget budget,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delayed quotes for a batch of names, both sides of the book. The lab's second unrecoverable
+    /// request: a spread not sampled inside its own session is gone in the same way a minute bar is,
+    /// and unlike the minute bar there is no window at all in which it can be re-asked for.
+    /// see: Spread is captured intraday from day one
+    ///
+    /// <b>It takes a list and it is priced per name.</b> The batch is a saving in round trips and
+    /// not in calls, which is the one place in this interface where a request and a call are not the
+    /// same unit in the same direction, so the method takes the list rather than a ticker and the
+    /// budget is charged for the whole of it before the request is made.
+    ///
+    /// <b>The answer may be shorter than the question.</b> A name the vendor did not mention is
+    /// absent from the result rather than present with nulls, because a name it answered with no bid
+    /// is evidence about that name and a name it never mentioned is not.
+    /// </summary>
+    Task<VendorResult<IReadOnlyList<VendorQuote>>> GetQuotesAsync(
+        IReadOnlyList<string> tickers,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -216,6 +236,41 @@ public sealed record VendorIntradayBar(
     decimal Low,
     decimal Close,
     long Volume) : IntradayBarReader.Vendored;
+
+/// <summary>
+/// One name's quote as the vendor publishes it: both sides of the book, their sizes, and a stamp
+/// for each side.
+///
+/// <b>Every field but the ticker is nullable and none is defaulted.</b> A missing bid is the vendor
+/// saying it holds no bid, and a zero would say the market is bid at nothing, which clears every
+/// threshold written as a minimum. The same argument the geometry columns already make about a stop
+/// distance of nought, one table over.
+/// see: A gate handed an absent or degenerate quantity fails rather than passing
+///
+/// <b>The two stamps are separate because the vendor sends them separately, and they differ.</b> On
+/// the capture of 2026-09-01 the two sides of AAPL's book were 32 seconds apart. A single stamp
+/// would have to pick one side or invent a midpoint, and both choices are invisible afterwards.
+/// </summary>
+public sealed record VendorQuote(
+    string Ticker,
+    decimal? Bid,
+    decimal? Ask,
+    long? BidSize,
+    long? AskSize,
+    DateTimeOffset? BidAt,
+    DateTimeOffset? AskAt,
+    decimal? LastTrade,
+    DateTimeOffset? LastTradeAt)
+{
+    /// <summary>
+    /// Whether both sides are present and form a book a trade could cross.
+    ///
+    /// A crossed or locked market, where the bid is at or above the ask, is excluded here rather
+    /// than stored as a negative or zero spread. It is a real state of a real feed and it is not a
+    /// cost of entry, so it is recorded as a quote the pass could not use and named as one.
+    /// </summary>
+    public bool IsUsable => Bid is decimal bid && Ask is decimal ask && ask > bid && bid > 0m;
+}
 
 /// <summary>
 /// What the fundamentals lookup returns. Three facts, any of which the vendor may not have.

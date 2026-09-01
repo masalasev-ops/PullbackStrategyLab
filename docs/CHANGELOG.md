@@ -1387,3 +1387,47 @@ Why:  The row was priced on the capped sixty and the population is every flagged
 Was:  "**The ref the job runs from is `main`, as of 2026-08-29.** It is not configured anywhere… Nothing enforces this and nothing should pretend to, so the check is the log." And the nightly table's 20:30 row read "minute bars for flagged setups | 300", with a total of ~2,803.
 Now:  The script refuses to dispatch from a tree that is not on `main` and exits 4 without running a stage, with `-AllowBranch` as the operator's escape. The log stays and is no longer the only thing. The 20:30 row names `intraday-bars` and its population, at 220 to 415, and the total reads ~2,723.
 Why:  The obligation raised at 3.12 and repointed to 4.2. "Nothing should pretend to" was written when the log was the whole answer, and the three instances recorded beside it establish that nobody reads the log: the branch was recorded on each occasion and read on none. A refusal exits non-zero, which the scheduler surfaces. The escape is what the 3.6 attempt lacked and was removed for, so it is written into the switch rather than argued about again.
+
+### 2026-09-01 — SCHEMA.md — cites Spread is captured intraday from day one
+Was:  ```
+### `spread_snapshot`
+Grain: ticker + snapshot time. Phase 4. **Unrecoverable if missed.** The only intraday job.
+
+| Column | Type |
+|---|---|
+| `ticker`, `snapshot_ts`, `bid`, `ask`, `spread_bps` | |
+
+Insert SpreadSnapshotter
+```
+Now:  A full column table with types and notes, the reader named as entry slippage at 4.7, the three stamps and the nullability rule stated, plus a new `spread_pass` entry.
+Why:  It was the one store in this document whose reader was neither named nor recorded absent, and a capture spending 120 unrecoverable calls a session on an input nothing consumes is one nobody can justify. The five column names carried no types, so nothing said that the prices are TEXT and `spread_bps` is not, and nothing said which columns may be null, which is the whole shape of a table whose subject is a book the vendor may not have.
+
+### 2026-09-01 — ARCHITECTURE.html — cites A delayed quote records its own lag rather than being corrected for it
+Was:  A failure-behaviour table with no row for a missed snapshot.
+Now:  `<tr><td>A spread snapshot is missed</td><td><b>Three different outcomes, and they are not one condition with three sizes.</b> ...`
+Why:  The corpus called a missed snapshot unrecoverable in two places and gave no failure condition anywhere, so one pass missed, both missed and some names missed had one word between them. They are three facts with different grains and different answers, and the third is per name where the first two are per session.
+
+### 2026-09-01 — ARCHITECTURE.html — cites Two spread samples a session, not one and not three
+Was:  `<tr><td><b>SpreadSnapshotter</b></td><td>Twice per session</td><td>Bid-ask spread twice a session. The only intraday job, and unrecoverable if missed</td></tr>`
+Now:  The row states 10:15 and 15:45, what each sample is for, and why two rather than one or three.
+Why:  "Twice per session" is the count and not the design. The two times were stated nowhere in the corpus, so a later session could have chosen any pair and nothing would have said the choice had been made once already.
+
+### 2026-09-01 — ARCHITECTURE.html — cites The vendor is EODHD, and the endpoint mix is what the call budget is built on
+Was:  `<tr><td>Spread snapshots</td><td>120</td><td>1</td><td>twice a session</td><td>60 names, twice a session. Unrecoverable later</td></tr>`
+Now:  The same three figures with the derivation stated and the batch pricing named: the capped sixty at one call each, twice, on an endpoint that takes a batch and prices it per name.
+Why:  The note restated the figures rather than deriving them, and it did not say that this is the one row in the table where a request and a call are not the same unit in the same direction. A budget charging a batch as one request would let a single call spend sixty and report one.
+
+### 2026-09-01 — RUNBOOK.md — cites Spread is captured intraday from day one
+Was:  `| during session | spread snapshots, two passes | 120 |`
+Now:  Two rows at 10:15 and 15:45, each naming its verb, its pass argument and its 60.
+Why:  "During session" is not a time an operator can schedule against, and the schedule table is what the seventeen registered tasks were built from. The two rows are also the only ones in this table that fire while the market is open, which is worth reading at the point somebody registers them.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Minute bars are fetched for the session a plan was live in, never the session it was written on
+Was:  | 4.3 | SpreadSnapshotter, twice per session | The only intraday job, 120 calls, and failure to capture is unrecoverable and logged as such, which is 4.2's argument applied to the second unrecoverable input. **The two clock times are stated**, being the whole of the sampling design and stated nowhere today. **It reads the capped setups `SetupCapper` already writes**, not the watchlist: it runs inside session N over the names flagged on the evening of N−1, whose plans are live in the session it is running in, and the watchlist arrives at 4.1 after this row in any case, so a component reading a page rather than a store would breach the read surface. **Failure behaviour gains a row for a missed snapshot**, which the corpus calls unrecoverable twice and gives no failure condition. **And the row names the reader this capture is built for**, because there is not one today: a repo-wide search for the store, its column and its component across the solution, the tools and the fixtures returns nothing, and SCHEMA names readers where they exist and says "read by nobody" outright elsewhere. If the answer to the entry-slippage question is a form other than the spread, this stage is spending 120 unrecoverable calls a session on an input nothing consumes, and the row says which reader instead. Discharges the obligation due here, being that a second intraday job makes the vendor's UTC quota day and the session night two quantities that must stop sharing one expression |
+Now:  The row as it stands, naming the reader, the endpoint, the two clock times, the derivation of the 120, the three failure cases, the trimmed batch and the obligation it discharges.
+Why:  The row asked for the two times and the reader and could not state either, since neither existed when it was written. It also assumed the capture was possible on this vendor, which a probe of the real-time endpoint disproved before any of it was built.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Averages are computed locally, never through the vendor's technical endpoint
+Was:  | 3.12 | **Two different quantities are computed by the same expression, and after 3.12 repaired one of them nothing distinguishes them.** The phase 3 sign-off found `LabStatus.LatestRun` grouping a night on `substr(started_at, 1, 10)`, the stored UTC day, where the lab's night crosses it; 3.12 repaired that read to bound in the session zone. What is left is that `RunLogger.CallsUsedOn` truncates the same column with the same expression and is **correct**, because the vendor's quota day is a UTC day and not a session. So the two methods, a few lines apart, use one expression for two quantities, and the only thing telling them apart is a comment on each. A guard cannot close this: 3.10(c)'s hunts an appended `T23:59:59.999Z` literal and a `TimeSpan.Zero` constructor, a third pattern for `substr` would fail `CallsUsedOn` on the first file it read, and `point-in-time` cannot separate them either because the old expression did bound the stamp, on the wrong calendar. **The decision owed is about the quantity, not the syntax**: whether the vendor quota day is a distinct quantity that should stop sharing the expression and carry a name of its own, at which point a guard becomes possible and the sign-off after this one is not asked to rediscover why there is none **Repointed from 4.1 to 4.3 on 2026-08-31**, because the quota day becomes contended when a second intraday job starts spending against it. | 4.3 |
+Now:  removed
+Why:  Discharged at 4.3. `VendorQuotaDay` names the window the ceiling is counted over, both reads bound between two instants rather than truncating the stamp, and `point-in-time` now carries the guard the row said would become possible once the quantity had a name.

@@ -68,6 +68,40 @@ public sealed class EodhdClient : IMarketDataVendor
     /// </summary>
     public const int IntradayCost = 5;
 
+    /// <summary>
+    /// One name's delayed quote, carrying both sides of the book. One, and the vendor prices it per
+    /// <b>ticker</b> rather than per request even though the endpoint takes a batch, so a hundred
+    /// names in one call is a hundred calls and the saving is in requests alone.
+    ///
+    /// That distinction is the whole reason this constant exists separately from the request count.
+    /// A budget that charged a batch as one would let a single request spend sixty and report one,
+    /// which is the accounting error the ceiling exists to catch, arriving from the direction the
+    /// other endpoints cannot produce.
+    /// </summary>
+    public const int UsQuoteCost = 1;
+
+    /// <summary>
+    /// The endpoint that carries a bid and an ask.
+    ///
+    /// <b>It is not the real-time endpoint, and that was established rather than assumed.</b> A
+    /// probe of <c>real-time/AAPL.US</c> on 2026-09-01 answered with open, high, low, close, volume,
+    /// previous close and change, and no side of the book at all; the spread this lab is built to
+    /// capture is not derivable from any of them. This path answers with <c>bidPrice</c>,
+    /// <c>askPrice</c>, their sizes and a stamp for each side, which is what the store's columns are.
+    /// </summary>
+    public const string UsQuotePath = "us-quote-delayed";
+
+    /// <summary>
+    /// How many names go in one request. The vendor documents no maximum, so this is the lab's own
+    /// bound rather than the vendor's: a request naming every capped name at once would put the
+    /// whole pass on one response, and a single unreadable body would cost the session its spread
+    /// where sixty small ones cost it one name.
+    ///
+    /// It changes no cost. The price is per ticker, so batching buys fewer round trips and nothing
+    /// else, which is why the figure can be chosen for robustness rather than for the budget.
+    /// </summary>
+    public const int UsQuoteBatchSize = 20;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
@@ -281,6 +315,85 @@ public sealed class EodhdClient : IMarketDataVendor
     }
 
     /// <summary>
+    /// Delayed quotes for a batch of names, both sides of the book with a stamp on each.
+    ///
+    /// <b>The budget is charged per name and the request is made once.</b> Both facts are the
+    /// vendor's and neither is inferable from the other, so the count is taken before the call and
+    /// the whole batch is refused together where the ceiling cannot cover it. Charging on arrival
+    /// would spend calls the ceiling had already said no to.
+    ///
+    /// <b>A name the vendor omits from the answer comes back absent rather than as an empty quote.</b>
+    /// The caller asked for a set and got a map, and the difference between the two is the fact the
+    /// pass records: a name quoted with nulls and a name the vendor never mentioned are different
+    /// answers, and only the first is evidence about the name.
+    /// </summary>
+    public async Task<VendorResult<IReadOnlyList<VendorQuote>>> GetQuotesAsync(
+        IReadOnlyList<string> tickers,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(tickers);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (tickers.Count == 0)
+        {
+            return VendorResult<IReadOnlyList<VendorQuote>>.Delivered([]);
+        }
+
+        if (!budget.TryCountCalls(UsQuoteCost * tickers.Count))
+        {
+            return VendorResult<IReadOnlyList<VendorQuote>>.OutOfBudget();
+        }
+
+        string symbols = string.Join(
+            ',',
+            tickers.Select(t => $"{t}.{_options.Vendor.Exchange}"));
+
+        QuoteEnvelope? envelope = await GetAsync<QuoteEnvelope>(
+            UsQuotePath,
+            query: $"s={Uri.EscapeDataString(symbols)}",
+            cancellationToken).ConfigureAwait(false);
+
+        var quotes = new List<VendorQuote>(tickers.Count);
+
+        foreach (string ticker in tickers)
+        {
+            string key = $"{ticker}.{_options.Vendor.Exchange}";
+
+            if (envelope?.Data is null || !envelope.Data.TryGetValue(key, out QuoteRow? row) || row is null)
+            {
+                // The vendor did not mention this name. Not a quote with nothing in it, and the
+                // caller has to be able to tell the two apart, so nothing is added for it.
+                continue;
+            }
+
+            quotes.Add(new VendorQuote(
+                ticker,
+                row.BidPrice,
+                row.AskPrice,
+                row.BidSize,
+                row.AskSize,
+                FromMilliseconds(row.BidTime),
+                FromMilliseconds(row.AskTime),
+                row.LastTradePrice,
+                FromMilliseconds(row.LastTradeTime)));
+        }
+
+        return VendorResult<IReadOnlyList<VendorQuote>>.Delivered(quotes);
+    }
+
+    /// <summary>
+    /// The quote stamps arrive as milliseconds since the epoch, where every other stamp this vendor
+    /// sends is seconds. Converted here, once, rather than at each of the three call sites: a stamp
+    /// read on the wrong unit lands in 1970 or fifty thousand years out, and both are obvious in a
+    /// row and neither is obvious in a diff.
+    /// </summary>
+    private static DateTimeOffset? FromMilliseconds(long? epochMilliseconds) =>
+        epochMilliseconds is long value && value > 0
+            ? DateTimeOffset.FromUnixTimeMilliseconds(value)
+            : null;
+
+    /// <summary>
     /// The interval the lab asks for, in the vendor's own vocabulary. One minute is the finest the
     /// vendor offers and the only one this lab stores: a coarser bar cannot be refined afterwards
     /// and a session captured at five minutes is a session captured wrong for ever.
@@ -406,6 +519,10 @@ public sealed class EodhdClient : IMarketDataVendor
             else if (response.Endpoint.StartsWith("intraday/", StringComparison.Ordinal))
             {
                 JsonSerializer.Deserialize<IntradayBarRow[]>(response.Body, Json);
+            }
+            else if (response.Endpoint.StartsWith(UsQuotePath, StringComparison.Ordinal))
+            {
+                JsonSerializer.Deserialize<QuoteEnvelope>(response.Body, Json);
             }
             else
             {
@@ -698,6 +815,42 @@ public sealed class EodhdClient : IMarketDataVendor
         public decimal? Close { get; init; }
 
         public decimal? Volume { get; init; }
+    }
+
+    /// <summary>
+    /// The quote endpoint answers with an envelope keyed by symbol rather than with an array, which
+    /// is the one shape difference between it and every other endpoint the lab reads.
+    /// </summary>
+    private sealed record QuoteEnvelope
+    {
+        public Dictionary<string, QuoteRow>? Data { get; init; }
+    }
+
+    /// <summary>
+    /// One name's quote. Every field is nullable, because the vendor carries a name it has no
+    /// current book for and answers with the fields it has: a null bid is the vendor saying it has
+    /// no bid, which is a fact worth storing rather than a parse failure.
+    ///
+    /// The three time fields are milliseconds since the epoch, unlike every other stamp this vendor
+    /// sends.
+    /// </summary>
+    private sealed record QuoteRow
+    {
+        public decimal? BidPrice { get; init; }
+
+        public decimal? AskPrice { get; init; }
+
+        public long? BidSize { get; init; }
+
+        public long? AskSize { get; init; }
+
+        public long? BidTime { get; init; }
+
+        public long? AskTime { get; init; }
+
+        public decimal? LastTradePrice { get; init; }
+
+        public long? LastTradeTime { get; init; }
     }
 
     /// <summary>

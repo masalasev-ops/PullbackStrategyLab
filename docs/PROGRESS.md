@@ -9586,3 +9586,129 @@ Carried:    **One new, due at 4.6**: `decision-resolves` reading the git index r
 
             **The obligations table is fifty-eight rows**, from fifty-nine: two discharged here, one
             added, and one repointed. Eighteen fall due at 4.6, none at 4.2.
+
+## 4.3 — 2026-09-01 — phase-4-spread-snapshotter — the spread capture, and the reader it was missing
+
+The second checkpoint of phase 4 and the second of the two unrecoverable captures. It is the harder
+of them: a minute bar can be bought for some days after its session, and a quote cannot be bought at
+all once the instant has passed, because the vendor publishes no history of the book.
+
+Built:      **`SpreadSnapshotter`, migration 038, and `SpreadSnapshotReader`.** `spread_snapshot` is
+            grained on ticker, session, pass and observation, append-only on the same terms as the bar
+            tables. Prices are TEXT. `spread_bps` is REAL, which is the first entry in
+            `PriceStorageFormCheck.Exempt` and belongs there under the second clause of the same rule:
+            it is a ratio and not money, and the two prices it is computed from are TEXT in its own
+            row. `spread_pass` records what one pass did, whatever it did.
+
+            **The reader is named at the capture rather than discovered at the consumer.** Entry
+            slippage at 4.7, in SCHEMA at the table and in the stage's own summary. Until this
+            checkpoint `spread_snapshot` was the one store SCHEMA declared with no reader anywhere in
+            the solution, and a capture spending 120 unrecoverable calls a session on an input nothing
+            consumes is one nobody can justify. Nothing here computes a slippage figure.
+
+            **The two clock times are 10:15 and 15:45, with what each is for beside them.** The first
+            is past the opening auction, whose quotes describe an event rather than a name, and inside
+            the first hour, where a pullback trigger most often fires. The second is late enough to
+            catch a book that widened through the day, which is the property that decides whether a
+            tight stop is meaningful, and outside the closing auction. Two and not one, and two and
+            not three, is recorded as a decision rather than left in a stage.
+
+            **The 120 is derived and not stated:** the capped sixty at one call each, twice, pinned
+            against `NightlyCap.Total * SpreadSnapshotter.Samples.Count * EodhdClient.UsQuoteCost`.
+
+            **It reads the capped setups from the store and carries the offset the minute bars
+            settled**, through the same `Pairing` type rather than a second copy of the rule: it runs
+            inside session N over the names capped on the evening of N-1.
+
+            **The three shortfalls have three answers.** One pass missed is degraded, both missed and
+            the reader refuses, some names missed is partial with the count. All three are legible
+            only because a pass writes a row whatever it did, so a session nobody sampled is absence
+            rather than a quiet result.
+
+            **The quota-day obligation raised at 3.12 is discharged.** `VendorQuotaDay` names the
+            window the ceiling is counted over, `RunLogger.CallsUsedOn` takes one and bounds between
+            two instants, and the truncating expression is in no shipped statement. `point-in-time`
+            carries the guard the row said would become possible once the quantity had a name, as the
+            scan "the run log's stamp is never truncated to a date". The guard reads statements rather
+            than file text, because both files carry the old expression in a comment explaining what
+            it got wrong and a scan over the source would have failed on the record of the defect.
+
+Measured:   **The endpoint had to be established, and the obvious answer was wrong.** A probe of
+            `real-time/AAPL.US` on 2026-09-01 answered with open, high, low, close, volume, previous
+            close and change, and **no side of the book at all**. Had that been the only route, the
+            capture this checkpoint exists for would have been impossible on this vendor. The route
+            that carries it is `us-quote-delayed`, confirmed live the same day: `bidPrice`, `askPrice`,
+            their sizes, and a stamp for each side. **It is a batch endpoint priced per ticker**, which
+            is the one place in the budget table where a request and a call are not the same unit in
+            the same direction.
+
+            **The two sides carry different stamps and the difference is real.** On the AAPL probe the
+            bid was stamped 16:28:26 Eastern and the ask 16:28:58, 32 seconds apart. A spread is
+            therefore a figure taken across two instants, so both stamps are stored and the lag is
+            measured from the older of them.
+
+            **The captured response holds the case a live pass has to tell apart, and it is captured
+            rather than authored.** Thirty-one names asked for, **thirty answered**, and the absent one
+            is MUZ, the same fund trust whose fundamentals response took the sector walk down on
+            2026-08-27. A name the vendor never mentioned and a name it quoted with one side are
+            different facts, and only the second is evidence about the name.
+
+            **The spreads it holds run from 0.9 basis points on NVDA to 327 on IESC**, over the thirty
+            names quoted on both sides on that one response of 2026-09-01. That range is the decision's
+            own argument made concrete: a give-up point a third of a percent away is not a tight stop
+            on a name whose round trip costs three, and the two ends of it are three hundred times
+            apart on the same afternoon.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **658 tests**, from 635. `tools/verify-phase.ps1`
+            GREEN: **127 claims, 80 passed, 0 failed, 47 out of scope, 0 unexamined**, coverage
+            examined 5,162, **1,371 expectations** of which 1 void, inputs CAPTURED 70 and AUTHORED
+            133. The out-of-scope count was read against the ceiling of 52 before the commit and needs
+            no raise: it **falls** from 48 to 47, because writing this entry is what makes 4.3 landed
+            and the report scopes every claim against what has landed. Two claims were deferred to
+            this checkpoint, the catalogue's SpreadSnapshotter row and the failure-behaviour row for a
+            missed snapshot, and both became owed and passed in the same run. It read 49 with the code
+            in and this entry out, which is the honest intermediate state rather than a mistake: a
+            component that exists and is not recorded as built is exactly what out of scope means.
+
+            **AUTHORED moved from 120 to 133 and the reason is this checkpoint's tests, not the
+            fixture.** That figure counts synthetic vendors built in the suite plus gate cases, and
+            `SpreadSnapshotterTests` constructs thirteen of the first. CAPTURED moved by one, which is
+            the quote response.
+
+            **Forty-one DERIVED expectations, and thirty-three of them say something.** Five are the
+            pass over the fixture, which asks for nothing for the same reason the minute fetch does:
+            one market day, setups flagged on it, no earlier session whose plans were live in it.
+            Three are the sampling state the missed-snapshot behaviour turns on. **The other
+            thirty-three are the arithmetic over the captured quotes**, because the pass asks for
+            nothing and so exercises neither the parse, the two-sided test nor the basis-point
+            computation, and freezing five zeros would have been regression detection called
+            verification. They are derived by a Python restatement that reads the same bytes with a
+            different language's JSON reader, takes its names from the manifest's own query rather
+            than from the answer, and shares no code with the reader under test.
+
+Found:      **A batch is charged whole, so the pass abandoned budget it could have spent.** With a
+            fixed batch of twenty asked against a remainder of fifteen, `TryCountCalls` refuses the
+            whole request and the stage stops with fifteen calls unspent and fifteen buyable spreads
+            gone for good. Found by its own ceiling test rather than by review, and fixed here rather
+            than rowed: the last batch is trimmed to what the remainder pays for. A recoverable input
+            could have afforded the rounding and this one cannot.
+
+            **The two intraday captures take different populations, and nobody chose that.** Minute
+            bars are bought for every flagged name, on the reasoning that a version selecting a name
+            the baseline passed on must still be resolvable. Spreads are captured for the capped sixty,
+            which is what the budget was built on and what this checkpoint built to. Both inputs are
+            unrecoverable and the argument does not distinguish them. Rowed at 4.7, where the slippage
+            model first has to say what an uncapped name is charged, rather than at 5.1 where it bites,
+            because every session between the two is a session whose uncapped spreads are gone. The
+            cost of closing it is 26 to 92 calls a session on a nightly total of 2,723 to 4,118.
+
+            **The replay's stage order and the RUNBOOK's wall clock disagree about this stage, and
+            both are right.** It runs at 10:15 and 15:45, so on a day's clock it precedes every evening
+            stage in that table; what it samples is the previous evening's cap, so in one night's
+            pipeline it follows the cap it reads. The ordering test carries that as a named exemption
+            of its own rather than in the list of stages a night does not run, which would have said
+            something false about the schedule to buy a green run.
+
+Carried:    One raised and one discharged, so the obligations table still reads **58**: the quota-day
+            row is gone and the population row is new. Eighteen fall due at 4.6, one at 4.7, and none
+            at 4.3.

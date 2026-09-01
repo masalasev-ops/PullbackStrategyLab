@@ -116,6 +116,17 @@ public sealed class PinnedConstantsCheck
             BudgetCost(architecture, "Minute bars for every flagged setup"),
             EodhdClient.IntradayCost,
             "EodhdClient.IntradayCost"));
+        // The spreads, added at 4.3. The cost is one and the endpoint takes a batch, which is the
+        // one place in this table where a request and a call are not the same unit in the same
+        // direction: a budget charging a batch as one request would let a single call spend sixty
+        // and report one, which is the accounting error the ceiling exists to catch arriving from
+        // the direction no other endpoint can produce.
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, spread snapshots, cost",
+            BudgetCost(architecture, "Spread snapshots"), EodhdClient.UsQuoteCost, "EodhdClient.UsQuoteCost"));
+        pins.Add(Pin.Number("ARCHITECTURE.html, data budget, spread snapshots, calls a night",
+            int.Parse(new string(BudgetCell(architecture, "Spread snapshots", 1).Where(char.IsDigit).ToArray()), CultureInfo.InvariantCulture),
+            NightlyCap.Total * SpreadSnapshotter.Samples.Count * EodhdClient.UsQuoteCost,
+            "NightlyCap.Total * SpreadSnapshotter.Samples.Count * EodhdClient.UsQuoteCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, cost",
             BudgetCost(architecture, "Index bars"), EodhdClient.DailyHistoryCost, "EodhdClient.DailyHistoryCost"));
         pins.Add(Pin.Number("ARCHITECTURE.html, data budget, index bars, calls a night",

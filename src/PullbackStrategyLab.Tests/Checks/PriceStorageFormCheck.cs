@@ -31,12 +31,20 @@ public sealed partial class PriceStorageFormCheck
     /// <summary>
     /// Columns allowed REAL affinity, by table and column, each with the reason.
     ///
-    /// Empty today, and stated as a list rather than left implicit so the first entry has to be
-    /// argued for in a diff. CLAUDE.md's rule has a second clause, that statistics are double, so
-    /// a genuine statistic column belongs here with SCHEMA.md declaring it. A price never does.
+    /// Stated as a list rather than left implicit so each entry has to be argued for in a diff.
+    /// CLAUDE.md's rule has a second clause, that statistics are double, so a genuine statistic
+    /// column belongs here with SCHEMA.md declaring it. A price never does.
+    ///
+    /// It was empty until 4.3, and the first entry is the one the rule's second clause was written
+    /// for: the whole table around it is money in TEXT and this one column is not money at all.
     /// </summary>
     public static IReadOnlyDictionary<string, string> Exempt { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
+        ["spread_snapshot.spread_bps"] =
+            "basis points of the mid, which is a ratio and not a money value. The two prices it is "
+            + "computed from are TEXT in the same row, so nothing here crosses the boundary: the "
+            + "decimal quantities stay decimal and the derived statistic is a double, which is the "
+            + "second clause of the same rule. SCHEMA.md declares it REAL at the column and says why.",
     };
 
     private readonly ITestOutputHelper _output;

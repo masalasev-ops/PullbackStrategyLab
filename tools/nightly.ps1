@@ -43,6 +43,14 @@ $dataRoot = Join-Path $repository 'data\live'
 # The slots, and the verbs each runs in order. Two verbs in one slot means the second reads what
 # the first writes, which is why they are a slot rather than two entries a minute apart.
 $slots = @{
+    # The two intraday slots, and they run inside the session rather than after it. They are the
+    # only slots in this map that fire while the market is open, which is what makes them
+    # unrecoverable in a harder sense than the minute bars: a quote has no history to buy back, so a
+    # pass that does not fire is a sample that never existed. The two are separate slots rather than
+    # one with two verbs, because the whole point of them is that they happen five and a half hours
+    # apart.
+    'spread-open'  = @(, @('spreads', 'after_open'))
+    'spread-close' = @(, @('spreads', 'before_close'))
     'universe'   = @(, @('universe-build'))
     'actions'    = @(, @('actions'))
     'bars'       = @(, @('daily-bars'))

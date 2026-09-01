@@ -80,6 +80,7 @@ public sealed partial class ArchitectureConformanceCheck
     public static IReadOnlyDictionary<string, string> FailureBehaviourCheckpoints { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Intraday prices unavailable for a day"] = "4.2",
+        ["A spread snapshot is missed"] = "4.3",
         ["Price gaps past the give-up point"] = "4.7",
         ["A short could not have been borrowed"] = "4.7",
         ["Unprocessed corporate action"] = "1.6",
@@ -354,6 +355,14 @@ public sealed partial class ArchitectureConformanceCheck
                     + "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning, "
                     + "and the scan asks only that the run scope still exposes what is left and that both "
                     + "detectors still call the reader"))
+            .Scan("Failure behaviour: A spread snapshot is missed",
+                CheckCoverage.Backing.Test(
+                    "SpreadSnapshotterTests.A_session_nobody_sampled_refuses_rather_than_answering_with_nothing",
+                    "the case the other two are told apart from, and the only one of the three a scan could "
+                    + "never see: a store with no pass row at all is read and the reader throws. Beside it "
+                    + "A_session_sampled_once_is_degraded_and_says_which_pass_it_has and "
+                    + "A_pass_stopped_by_the_ceiling_is_partial_and_says_how_far_it_got exercise the other two, "
+                    + "so the scan is left holding only that the stage still writes a pass row on every path"))
             .Scan("Failure behaviour: A comparison has no control outcomes",
                 CheckCoverage.Backing.Test(
                     "ForwardReturnFillerTests.A_control_draw_produces_forward_returns_of_kind_control",
@@ -908,6 +917,32 @@ public sealed partial class ArchitectureConformanceCheck
     /// <c>IntradayFetcherTests.A_name_the_vendor_holds_nothing_for_is_counted_rather_than_failing_the_night</c>
     /// together with the ceiling case beside it.
     /// </summary>
+    /// <summary>
+    /// The three shortfalls have three answers, and the scan holds the half the behavioural tests
+    /// cannot: that the stage writes a pass row on <b>every</b> path out of the method, which is
+    /// what makes a session nobody sampled readable as absence rather than as a quiet result.
+    ///
+    /// The three answers themselves are exercised by tests and named as this scan's backing, on the
+    /// rule that a source scan finding a pattern is not evidence the behaviour exists.
+    /// </summary>
+    private static bool TheThreeShortfallsAreToldApart()
+    {
+        string snapshotter = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "SpreadSnapshotter.cs"));
+        string reader = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "SpreadSnapshotReader.cs"));
+
+        // Two RecordPass calls: the first-night path and the ordinary one. A path that returned
+        // without one would be a session that ran and left no trace of running.
+        int passRowsWritten = snapshotter.Split("RecordPass(").Length - 1;
+
+        return passRowsWritten >= 3
+            && reader.Contains("ThrowIfNothingWasSampled", StringComparison.Ordinal)
+            && reader.Contains("IsDegraded", StringComparison.Ordinal)
+            && reader.Contains("IsComplete", StringComparison.Ordinal)
+            && snapshotter.Contains("RunOutcome.Partial", StringComparison.Ordinal);
+    }
+
     private static bool TheFetchCountsWhatItCouldNotGet()
     {
         string fetcher = RepositoryLayout.Read(
@@ -932,6 +967,12 @@ public sealed partial class ArchitectureConformanceCheck
                     "IntradayFetcher counts a name the vendor holds nothing for rather than failing the night, records the count it asked for beside the count it answered so the shortfall is a join rather than an edit, and writes a fetch row whatever the outcome")
                 : Claim.Failed("Failure behaviour", condition,
                     "the fetch no longer distinguishes a name with no minutes from a name it never reached, so a session with no resolvable trades is indistinguishable from a session nobody fetched"),
+
+            "A spread snapshot is missed" => TheThreeShortfallsAreToldApart()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a pass writes a spread_pass row whatever it did, so a session nobody sampled is absence rather than a quiet result; the reader refuses an unsampled session, reports one pass as degraded and two as complete, and a pass stopped short is partial with the count")
+                : Claim.Failed("Failure behaviour", condition,
+                    "one of the three shortfalls no longer has its own answer, so a session sampled nought times is indistinguishable from one whose names had no book, and a fill can be charged no slippage on a session nobody measured"),
 
             "Unprocessed corporate action" => engine.Contains("blocked++", StringComparison.Ordinal)
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")
