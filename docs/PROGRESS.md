@@ -10332,6 +10332,17 @@ Rowed:      **The fetch window is stated at 4.5 as a storage question, with row 
             derived from the table by `stated-counts` rather than stated in prose, so nothing needed
             reconciling by hand.
 
+Verified:   `tools/ci.ps1` green at 28 steps and **696 tests**, unchanged from 4.4 because this pass
+            adds no test. `tools/verify-phase.ps1` GREEN: **128 claims, 84 passed, 0 failed, 44 out of
+            scope, 0 unexamined**, coverage examined **5,417**, **1,390 expectations** of which 1 is
+            void, inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0.
+            Read on a clean tree at `9b34d1d`, which is this pass's first commit and carries every
+            edit it makes; the entry you are reading lands in the second, so the figures name the tree
+            they were produced on rather than the tree they sit in. The examined count moves by one
+            from 4.4's 5,416, being a scope that reads the corpus growing with it, and no floor moves.
+            The out-of-scope count is unchanged at 44 against the ceiling of 52: this pass adds no
+            claim, since it adds no row to a claim table and no table.
+
 Carried:    Nothing new. The obligations table is unchanged at 57 rows, since this pass raises none
             and discharges none: the fetch window is stated at its due checkpoint rather than
             discharged, and the decision it asks for is still the operator's.
