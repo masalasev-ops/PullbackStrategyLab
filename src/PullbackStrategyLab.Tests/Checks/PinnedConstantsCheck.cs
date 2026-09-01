@@ -232,16 +232,33 @@ public sealed class PinnedConstantsCheck
             ParameterCell(architecture, "Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
             LongPullbackRules.ClusterThreshold == 2, "LongPullbackRules.ClusterThreshold"));
         // Not a number, and pinned for the same reason the numbers are. Two rows of BUILD_PLAN say
-        // the short side's twenty sessions start at 4.4 and point at the constant the store records
-        // it in, so a reader can check the claim against the code rather than against the sentence
-        // making it. A citation to a symbol that has been renamed reads exactly like a live one.
+        // where the short side's twenty sessions start and point at the function that reads it off a
+        // stored row, so a reader can check the claim against the code rather than against the
+        // sentence making it. A citation to a symbol that has been renamed reads exactly like a live
+        // one.
+        //
+        // <b>It pointed at ShortPullbackRules.ClausesRun until 4.4 and points at ClauseSetOf now.</b>
+        // That constant is the record written before the anchored clause existed; nothing writes it
+        // any more and its text is frozen, because it is the discriminator for every calibration row
+        // already in the store. What a reader needs is the function that turns a stored note into a
+        // clause set, and the property worth pinning is that the four sets stay four.
         pins.Add(Pin.Text("BUILD_PLAN.md, 3.6 and 4.4, the clause record the short seam is read from",
-            CountOf(buildPlan, "ShortPullbackRules.ClausesRun") >= 2,
-            ShortPullbackRules.ClausesRun.Contains("4.4", StringComparison.Ordinal)
-                && ShortPullbackRules.ClauseSetOf(
+            CountOf(buildPlan, "ShortPullbackRules.ClauseSetOf") >= 2,
+            ShortPullbackRules.ClauseSetOf(
                     [new CheckResult("reached-ceiling", true, 1m, ShortPullbackRules.ClausesRun)])
-                    == CeilingClauses.TwoOfThree,
-            "ShortPullbackRules.ClausesRun"));
+                    == CeilingClauses.TwoOfThree
+                && new[]
+                {
+                    ShortPullbackRules.ClausesRun,
+                    ShortPullbackRules.ClausesRunWithTheAnchor,
+                    ShortPullbackRules.ClausesRunWithoutTheAnchor,
+                    ShortPullbackRules.ClausesRunInReconstruction,
+                }
+                .Select(note => ShortPullbackRules.ClauseSetOf(
+                    [new CheckResult("reached-ceiling", true, 1m, note)]))
+                .Distinct()
+                .Count() == 4,
+            "ShortPullbackRules.ClauseSetOf"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Squeeze test",
             ParameterCell(architecture, "Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
             ShortPullbackRules.SqueezeWindowSessions == 20 && AverageGap.Window == 20,

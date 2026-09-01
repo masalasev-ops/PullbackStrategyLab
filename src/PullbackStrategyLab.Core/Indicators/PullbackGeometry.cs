@@ -47,12 +47,7 @@ public static class PullbackGeometry
             return null;
         }
 
-        // Where the flagged move began. A one-session scan starts where it is flagged; a
-        // twenty-session scan started nineteen sessions earlier. Clamped at the window's own start
-        // rather than returning null, because a window that holds only part of the move still holds
-        // a real shape, and refusing it would drop exactly the names whose run began before the
-        // history the detector reads.
-        int thrustStart = Math.Max(0, thrustIndex - thrustSpanSessions + 1);
+        int thrustStart = ThrustStart(thrustIndex, thrustSpanSessions);
 
         // The origin is the close before the move, which is what the move is measured from. With
         // the move starting on the first bar of the window there is nothing before it, and its own
@@ -107,6 +102,69 @@ public static class PullbackGeometry
             : (isLong ? extreme - pullbackExtreme : pullbackExtreme - extreme) / move;
 
         return new Pullback(thrustIndex, extremeIndex, origin, extreme, pullbackExtreme, pullbackBars, retrace, trigger, stop);
+    }
+
+    /// <summary>
+    /// Where the flagged move began. A one-session scan starts where it is flagged; a
+    /// twenty-session scan started nineteen sessions earlier. Clamped at the window's own start
+    /// rather than returning null, because a window that holds only part of the move still holds a
+    /// real shape, and refusing it would drop exactly the names whose run began before the history
+    /// the detector reads.
+    ///
+    /// Extracted at 4.4 so <see cref="SwingIndexOf"/> reads the same start rather than a second copy
+    /// of the clamp. Two copies of this line would put a swing outside the move it belongs to on
+    /// exactly the names whose window is short, which is the population nobody looks at.
+    /// </summary>
+    private static int ThrustStart(int thrustIndex, int thrustSpanSessions) =>
+        Math.Max(0, thrustIndex - thrustSpanSessions + 1);
+
+    /// <summary>
+    /// Where the swing the move ran from sits: the high the thrust fell from on the short side, the
+    /// low it rose from on the long one.
+    ///
+    /// <b>This is the anchor, stated as an index into the same bars the rest of the geometry
+    /// reads.</b> The short check list asks whether the bounce reached "the declining average price
+    /// anchored to the last swing high", and until 4.4 the anchor was a phrase: nothing in the
+    /// corpus said which bar it was, so no two sessions computing it would have had to agree.
+    /// see: The anchored average price is anchored at the swing the thrust ran from
+    ///
+    /// <b>Searched from the start of the thrust to its extreme, inclusive of both.</b> The move
+    /// runs from the swing to the extreme by construction, so the swing cannot be after the extreme,
+    /// and a search over the whole window would find the bounce's own high on a name that has
+    /// already recovered past where it started. Ties take the earliest bar, because the anchor is
+    /// where the move began and a later equal high is a retest of it.
+    ///
+    /// The mirror is a parameter here as everywhere else in this class, so the long side's swing low
+    /// is the same arithmetic read the other way rather than a second method.
+    /// </summary>
+    public static int? SwingIndexOf(
+        IReadOnlyList<Bar> bars, Pullback pullback, int thrustSpanSessions, bool isLong)
+    {
+        ArgumentNullException.ThrowIfNull(bars);
+        ArgumentNullException.ThrowIfNull(pullback);
+        ArgumentOutOfRangeException.ThrowIfLessThan(thrustSpanSessions, 1);
+
+        int start = ThrustStart(pullback.ThrustIndex, thrustSpanSessions);
+
+        if (bars.Count == 0 || start < 0 || pullback.ExtremeIndex >= bars.Count || start > pullback.ExtremeIndex)
+        {
+            return null;
+        }
+
+        int swing = start;
+        for (int i = start; i <= pullback.ExtremeIndex; i++)
+        {
+            bool further = isLong
+                ? bars[i].Low < bars[swing].Low
+                : bars[i].High > bars[swing].High;
+
+            if (further)
+            {
+                swing = i;
+            }
+        }
+
+        return swing;
     }
 
     /// <summary>

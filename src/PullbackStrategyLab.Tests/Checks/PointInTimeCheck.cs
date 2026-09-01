@@ -54,6 +54,13 @@ public sealed class PointInTimeCheck
             ["intraday_bar"] = "observed_at",
             ["spread_snapshot"] = "observed_at",
 
+            // The anchored level is read by a gate, so "what the anchored average was, as far as
+            // the lab could know by this date" is a point-in-time question in the strictest sense:
+            // a replay seeing a level computed after the night it is answering would pass a clause
+            // the night itself could not have. `vwap_run` is not here, on the same grounds
+            // `intraday_fetch` is not: nothing reads it to decide an answer.
+            ["anchored_vwap"] = "observed_at",
+
             // The pass row is here rather than in NotAnObservation beside `intraday_fetch`, which it
             // otherwise resembles, and the difference is that something reads it to decide an answer.
             // Whether a session was sampled at all is what the spread reader refuses on, so "sampled,
@@ -134,6 +141,10 @@ public sealed class PointInTimeCheck
                 "observed_at is when one night's minute-bar fetch ran and what it reached, which is "
                 + "operational on the same terms as run_log. Nothing computes a figure about the market "
                 + "from it: the bars it counts are in intraday_bar, which is stamped and bounded.",
+            ["vwap_run"] =
+                "observed_at is when one night's averaging ran and what it reached, which is operational "
+                + "on the same terms as intraday_fetch above. Nothing computes a figure about the market "
+                + "from it: the levels it counts are in anchored_vwap, which is stamped and bounded.",
         };
 
     /// <summary>

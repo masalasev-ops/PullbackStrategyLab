@@ -98,16 +98,25 @@ public sealed class CheckCompletenessCheck
         // The one gate that runs narrower than the document words it. Recorded here rather than in
         // the PROGRESS entry alone, because a later session reading a passing `reached-ceiling` has
         // no other way to know which of its three clauses were tested.
+        //
+        // <b>It named 4.4 until 4.4 landed, and the reason it moved is not that the clause is
+        // missing.</b> VwapEngine computes the anchored level and `anchored_vwap` stores it. What
+        // narrows the gate now is that the level exists only where the store holds minute bars back
+        // to a row's own swing, and the fetch buys one session a night while a swing sits three to
+        // twenty-seven sessions back. So the deferral follows the obligation that closes it rather
+        // than resting at a checkpoint that has shipped.
         coverage.OutOfScope(
-            "clauses of the short reached-ceiling gate that cannot run yet",
+            "clauses of the short reached-ceiling gate the store cannot reach a level for",
             1,
             CheckCoverage.OutOfScopeReason.UntilCheckpoint(
-                "4.4",
-                "the third clause compares the price against the average price anchored to the last swing high, "
-                + "which is a volume-weighted average over minute bars and is what VwapEngine computes at 4.4. The "
-                + "check runs its 21-day and 50-day clauses until then. Approximating the anchored level from daily "
-                + "bars would put a plausible wrong number inside the check that decides whether the bounce reached "
-                + "its ceiling"));
+                "4.5",
+                "the third clause compares the price against the average price anchored to the swing the thrust ran "
+                + "from, which is a volume-weighted average over minute bars from that swing forward. VwapEngine "
+                + "computes it from 4.4 and IntradayFetcher buys one session a night, so a row whose swing sits "
+                + "further back than the store reaches records two clauses and says which. Widening that window is "
+                + "free in vendor calls and costly in rows, which is the fetch's decision and is carried to 4.5. "
+                + "Approximating the anchored level from daily bars would put a plausible wrong number inside the "
+                + "check that decides whether the bounce reached its ceiling"));
 
         if (setups.Count == 0)
         {

@@ -82,6 +82,11 @@ $slots = @{
     # cannot be bought back at any price, which is why it is scheduled rather than left to
     # be run by hand.
     'intraday'   = @(, @('intraday-bars'))
+    # 21:00, half an hour after the bars land, and it spends no vendor call. Its own slot rather
+    # than a second verb inside 'intraday', because the two have different failure consequences:
+    # a fetch that does not run loses minutes for ever, and an averaging that does not run can be
+    # rerun from the stored minutes any evening after.
+    'vwap'       = @(, @('vwap'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))

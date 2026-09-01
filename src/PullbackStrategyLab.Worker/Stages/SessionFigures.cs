@@ -51,6 +51,35 @@ public interface ISessionFigures
     bool MarketCapExempt { get; }
 
     /// <summary>
+    /// The declining average price anchored at <paramref name="anchorSession"/>, as the store holds
+    /// it at or before <paramref name="asOf"/>, or null where no such level exists.
+    ///
+    /// <b>The anchor is part of the question.</b> A level anchored at a different swing is not this
+    /// setup's quantity even for the same name on the same night, so a seam that answered "this
+    /// name's latest anchored level" would hand back a number for the wrong move with nothing
+    /// saying so.
+    ///
+    /// <b>Null is the ordinary answer and stays so for a long time.</b> VwapEngine computes a level
+    /// only where the store holds minute bars back to the anchor session, and the fetch buys one
+    /// session a night per flagged name, so most anchors are unreachable until the store has
+    /// accumulated them. `reached-ceiling` records which of the two it got rather than passing a
+    /// null into the arithmetic.
+    /// </summary>
+    decimal? AnchoredAveragePrice(string ticker, DateOnly asOf, DateOnly anchorSession);
+
+    /// <summary>
+    /// Whether this run reconstructs sessions the lab was not running for, in which case no minute
+    /// bar exists for any session in it and no anchored level ever will.
+    ///
+    /// <b>It is not the same absence a forward night can have.</b> A forward night with no level
+    /// becomes anchorable as the store accumulates minutes; a reconstructed 2024 session does not,
+    /// because the vendor holds minute bars for a bounded window and not for two years. The two are
+    /// recorded as different clause sets, on the same grounds `tradable-shortable` records its
+    /// market-cap exemption rather than passing a clause silently.
+    /// </summary>
+    bool Reconstructed { get; }
+
+    /// <summary>
     /// Every name's control-matching figures for one session, keyed by ticker, already past the
     /// liquidity floor.
     ///
@@ -104,6 +133,11 @@ public sealed class StoredFigures : ISessionFigures
         SecurityReader.MarketCap(_connection, ticker, asOf);
 
     public bool MarketCapExempt => false;
+
+    public decimal? AnchoredAveragePrice(string ticker, DateOnly asOf, DateOnly anchorSession) =>
+        AnchoredVwapReader.Latest(_connection, ticker, anchorSession, asOf)?.Value;
+
+    public bool Reconstructed => false;
 
     /// <summary>
     /// One session's pool, from `indicator_daily`, bounded on the end of the as-of date.
@@ -541,4 +575,24 @@ public sealed class CalibrationFigures : ISessionFigures
     public decimal? MarketCap(string ticker, DateOnly asOf) => null;
 
     public bool MarketCapExempt => true;
+
+    /// <summary>
+    /// Always null, and this is the structural fact 4.4 found rather than an unimplemented method.
+    ///
+    /// <b>A reconstructed session can never carry an anchored level.</b> The level is a
+    /// volume-weighted average over minute bars, the calibration walk runs from 2024-04-01, and
+    /// minute bars exist in this lab only from the night IntradayFetcher first ran. The vendor holds
+    /// them for a bounded window and not for two years, so this is not a purchase anybody has
+    /// declined; there is nothing to buy.
+    ///
+    /// <b>Which is why the re-measurement the 2.11 obligation asks for cannot be a re-run of this
+    /// walk.</b> Every calibration row would record the anchored clause as unreachable, the funnel
+    /// would come out identical to the two-clause one, and the identical answer would read as
+    /// evidence that the clause changes nothing. Returning null here rather than approximating from
+    /// daily bars is what keeps that from happening quietly.
+    /// see: A calibration run reconstructs against current membership and computes its indicators in memory
+    /// </summary>
+    public decimal? AnchoredAveragePrice(string ticker, DateOnly asOf, DateOnly anchorSession) => null;
+
+    public bool Reconstructed => true;
 }

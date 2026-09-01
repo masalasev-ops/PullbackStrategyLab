@@ -353,6 +353,28 @@ R is the move divided by the stop, and range units normalise the stop against th
 **The market-mood label is recorded on every setup and filters nothing in the baseline**
 Baking it in now would be an untested assumption. Adding it later as a version is a measurement. Both raw scores are stored beside the label so a later proposal can use the continuous form rather than the three buckets.
 
+**The hourly grid anchors to the session open, and the closing stub is not an hourly bar**
+The short exit triggers on an hourly bar closing back above the 50-day average. The store holds minute bars and no hourly bar, so the bars have to be aggregated, and where the boundaries fall changes which closes exist. The regular session is `SessionBoundaries.RegularSessionMinutes` long, which does not divide by an hour, so every grid over it leaves a remainder and the only question was where the remainder sits.
+
+Anchored to the open, the session is six complete hourly bars and a closing remainder of half an hour. **That remainder is not an hourly bar and cannot trigger the rule.** The rule turns on a close, and a close is only the close of the thing it closes: a level held for the last thirty minutes of a session has not been held for an hour, so reading the remainder as an hourly close would fire the exit on a bar the rule never described.
+
+Nothing is lost by excluding it. The session close is already its own signal and is handled by the exit rules that read a session rather than an hour, and this rule exists to catch the thesis breaking **during** the day rather than at the bell. What would be lost by including it is the meaning of the word: a rule whose bars are sometimes sixty minutes and sometimes thirty compares two different quantities under one name, and the shorter one is systematically noisier.
+
+**The alternative was anchoring to the clock**, on hour boundaries at 10:00, 11:00 and so on. It is rejected because it puts the remainder at the front. The stub would then be 09:30 to 10:00, the least representative half hour of the session, carrying the opening auction and the widest quotes of the day, and it is precisely where a short's bounce most often looks like it has broken back above a level and has not. A grid that makes its shortest and noisiest bar the first one has put the stub where it does the most damage, and a rule reading it would exit good positions on the open.
+
+The two boundaries are `SessionBoundaries.RegularSessionOpen` and `RegularSessionClose`, shipped at 4.2 with the minute bars. `HourlyGrid` derives the grid from them and restates neither, so the session's definition lives in one file.
+
+**The anchored average price is anchored at the swing the thrust ran from**
+The short side's `reached-ceiling` asks whether price came back within half a daily range of "the declining average price anchored to the last swing high". Until 4.4 that anchor was a phrase: nothing said which bar the swing high was, which minute inside it, or what the average was taken over, so three sessions computing the level would all have produced plausible prices and no two would have had to agree. The clause decides the gate that takes the short funnel from 432 rows to 9, so the level is not a detail of it.
+
+**The anchor is the extreme of the swing the flagged move ran from**, being the highest high between the start of the thrust span and the thrust's own extreme, earliest on a tie. `PullbackGeometry.SwingIndexOf` computes it from the same bars and the same span the rest of the geometry reads, so the anchor cannot drift from the move it belongs to. The span matters: `gainer` and `gapper` flag one session where `leader` and `laggard` flag twenty, so a swing searched without the scan is a swing searched over the wrong window. The mirror is a parameter, so a long-side anchor is the swing low over the same span rather than a second rule.
+
+**The moment is a minute, not a session.** The level is a volume-weighted average from the anchor forward, and starting it at the session open rather than at the minute the high traded in would average in the part of the day before the event the level is named for. `anchored_vwap.anchor_ts` holds it, so the level can be reconstructed from the stored minutes by somebody who does not know which component wrote it.
+
+**And the average is over typical price, being high, low and close over three, weighted by shares.** That is what a volume-weighted average price means everywhere it is drawn; weighting the close alone gives a different number under the same name, and a gate comparing today's close against the level would move with the convention while nothing said so.
+
+**Where the store cannot reach the anchor the clause does not run, and the verdict says so.** The level is never approximated from daily bars, which is the refusal this check has carried since 2.7: a daily-bar stand-in produces a number that looks like the real thing inside the check deciding whether a bounce reached its ceiling. `reached-ceiling` records three clause sets rather than two, so a row that could not be anchored stays distinguishable from one written before anchoring existed and from one that ran the full disjunction (see: A gate handed an absent or degenerate quantity fails rather than passing).
+
 ## How changes are judged
 
 **Versions select from one shared nightly candidate list rather than each re-scanning**

@@ -219,14 +219,22 @@ public static class ShortPullbackRules
     }
 
     /// <summary>
-    /// Two of the document's three clauses. The third arrives at 4.4 and is not approximated.
+    /// The document's three clauses, as a disjunction over the nearest of three levels.
     ///
     /// The document says the price is within half a daily range of the 21-day average, of the 50-day
     /// average, <b>or</b> of the declining average price anchored to the last swing high. That third
-    /// level is a volume-weighted average over minute bars from the swing high forward, and
-    /// VwapEngine is what computes it. Until then this check runs its two average clauses and the
-    /// setup record says which ran, because a later session reading a passing `reached-ceiling` has
-    /// no other way to know it was narrower than the document describes.
+    /// level is a volume-weighted average over minute bars from the swing high forward, VwapEngine
+    /// computes it at 4.4, and it is what <see cref="ShortEvidence.DistanceToAnchoredRanges"/>
+    /// carries.
+    ///
+    /// <b>Three notes rather than two, because the anchored clause can be absent for two unlike
+    /// reasons.</b> Before 4.4 it had not been built, and every verdict said so. After 4.4 it is
+    /// built and still has nothing to read whenever the store holds no minutes back to the swing:
+    /// the fetch buys one session a night per flagged name and a swing three to twenty-seven
+    /// sessions back is inside the vendor's reach and outside the store's. Those are different facts
+    /// about the same passing verdict, and folding them into one note would make a row that could
+    /// not be anchored indistinguishable from one written before anchoring existed, which is exactly
+    /// the reading 3.6 counts sessions by.
     ///
     /// Not approximated from daily bars, deliberately. A daily-bar stand-in produces a number that
     /// looks like the real thing inside the check that decides whether the bounce reached its
@@ -242,15 +250,62 @@ public static class ShortPullbackRules
                 "no 21-day or 50-day average, or no daily range, for the session");
         }
 
+        // The nearest of the levels that were computable, which is what a disjunction over
+        // distances is. The anchored clause widens the gate when it runs and never narrows it, so a
+        // row that could not be anchored is judged on strictly less than the document describes and
+        // its note is what says so.
+        decimal nearest = e.DistanceToAnchoredRanges is decimal anchored
+            ? Math.Min(distance, anchored)
+            : distance;
+
         return new CheckResult(
             "reached-ceiling",
-            distance <= CeilingReachRanges,
-            distance,
-            ClausesRun);
+            nearest <= CeilingReachRanges,
+            nearest,
+            e.DistanceToAnchoredRanges is not null ? ClausesRunWithTheAnchor
+                : e.Reconstructed ? ClausesRunInReconstruction
+                : ClausesRunWithoutTheAnchor);
     }
 
-    /// <summary>What `reached-ceiling` actually tested, recorded beside every one of its verdicts.</summary>
+    /// <summary>
+    /// What `reached-ceiling` tested on every verdict written before 4.4, when the anchored clause
+    /// did not exist.
+    ///
+    /// <b>Nothing writes it any more and its text is frozen.</b> It is the discriminator for the
+    /// 49,450 calibration rows already in the store, so changing a byte of it would reclassify every
+    /// one of them as a gate nobody can name. Kept as a constant rather than a literal inside
+    /// <see cref="ClauseSetOf"/> for the same reason it always was: the read and the write have to
+    /// be one string.
+    /// </summary>
     public const string ClausesRun = "21-day and 50-day only; the anchored clause arrives at 4.4";
+
+    /// <summary>The full disjunction, which is the gate the document describes.</summary>
+    public const string ClausesRunWithTheAnchor = "21-day, 50-day and the anchored average";
+
+    /// <summary>
+    /// The two average clauses, where the anchored clause is built and had no level for this name
+    /// and session.
+    ///
+    /// It reads as the same gate <see cref="ClausesRun"/> describes and is a different fact: that
+    /// one is a clause nobody had written, this one is a clause with nothing to read. A row carrying
+    /// it becomes anchorable the moment the store holds minutes back to its swing, where a row
+    /// carrying the other never will.
+    /// </summary>
+    public const string ClausesRunWithoutTheAnchor =
+        "21-day and 50-day; no anchored average for this name and session";
+
+    /// <summary>
+    /// The two average clauses, in a reconstructed walk, where no anchored level can ever exist.
+    ///
+    /// <b>Not the same absence as the one above and the difference is permanence.</b> A forward row
+    /// with no level becomes anchorable as the store accumulates minutes. A reconstructed 2024
+    /// session does not: the vendor holds minute bars for a bounded window and not for two years, so
+    /// there is nothing to buy. Recorded rather than folded in, on the same grounds
+    /// <see cref="ClausesRunWithoutTheCap"/> is: a count read off these rows is a count under a gate
+    /// that is narrower than the document by an amount nothing will close.
+    /// </summary>
+    public const string ClausesRunInReconstruction =
+        "21-day and 50-day; a reconstructed session has no minute bars, so the anchored clause cannot run";
 
     /// <summary>
     /// Which clause set produced one stored `reached-ceiling` verdict, read from the row rather
@@ -293,14 +348,30 @@ public static class ShortPullbackRules
             return CeilingClauses.NotEvaluated;
         }
 
+        // Matched against each clause record by name rather than by elimination. It read "the
+        // two-clause note, else anything non-empty is the finished gate" until 4.4, which was
+        // correct while there were two records and became a trap the moment a third existed: a
+        // verdict that could not be anchored would have read as the full disjunction, and 3.6 would
+        // have started the short side's twenty sessions on a night the anchored clause ran on
+        // nothing. An unrecognised note now fails closed rather than being read as the widest gate.
         if (string.Equals(verdict.Note, ClausesRun, StringComparison.Ordinal))
         {
             return CeilingClauses.TwoOfThree;
         }
 
-        return string.IsNullOrWhiteSpace(verdict.Note)
-            ? CeilingClauses.Unrecorded
-            : CeilingClauses.WithTheAnchor;
+        if (string.Equals(verdict.Note, ClausesRunWithTheAnchor, StringComparison.Ordinal))
+        {
+            return CeilingClauses.WithTheAnchor;
+        }
+
+        if (string.Equals(verdict.Note, ClausesRunWithoutTheAnchor, StringComparison.Ordinal))
+        {
+            return CeilingClauses.AnchorUnavailable;
+        }
+
+        return string.Equals(verdict.Note, ClausesRunInReconstruction, StringComparison.Ordinal)
+            ? CeilingClauses.AnchorImpossible
+            : CeilingClauses.Unrecorded;
     }
 
     private static CheckResult NoReclaim(ShortEvidence e) =>
@@ -360,6 +431,29 @@ public static class ShortPullbackRules
         /// <summary>Distance to whichever of the two averages is nearer, in daily ranges.</summary>
         public decimal? DistanceToNearestAverageRanges { get; init; }
 
+        /// <summary>
+        /// Distance to the declining average price anchored at the swing the thrust ran from, in
+        /// daily ranges, or null where no such level could be reached.
+        ///
+        /// <b>Null is the ordinary state and stays so for a long time.</b> The level is a
+        /// volume-weighted average over minute bars from the swing forward, and the store buys one
+        /// session a night per flagged name, so a swing more than a session or two back has no
+        /// minutes behind it until the store has accumulated them. Null and nought are the usual
+        /// distinction: nought would say the bounce is exactly at the level.
+        /// see: A gate handed an absent or degenerate quantity fails rather than passing
+        /// </summary>
+        public decimal? DistanceToAnchoredRanges { get; init; }
+
+        /// <summary>
+        /// Whether this run reconstructs sessions the lab was not running for, in which case the
+        /// anchored clause cannot run at all rather than merely having no level tonight.
+        ///
+        /// False by default, so a caller that forgets it records the recoverable absence rather than
+        /// the permanent one. That is the safe direction: a forward row wrongly marked permanent
+        /// would tell a later reader the clause will never run on it.
+        /// </summary>
+        public bool Reconstructed { get; init; }
+
         public decimal? StopDistanceRanges { get; init; }
 
         public int? ClusterCount { get; init; }
@@ -403,15 +497,34 @@ public enum CeilingClauses
     TwoOfThree,
 
     /// <summary>
-    /// An evaluated verdict recording a clause set other than the two-clause one, which is the
-    /// full disjunction once the anchored clause runs. The first short row in this state is the
-    /// first night of the short side's twenty.
+    /// An evaluated verdict recording the full disjunction, which is the gate the document
+    /// describes. The first short row in this state is the first night of the short side's twenty.
     /// </summary>
     WithTheAnchor,
 
     /// <summary>
-    /// An evaluated verdict with no clause record at all. A defect rather than a gate: the row's
-    /// own gate cannot be established from it, and it is named so it can be asserted absent.
+    /// The anchored clause is built and had no level for this name and session, so the verdict ran
+    /// the same two clauses <see cref="TwoOfThree"/> did.
+    ///
+    /// Not the same state, because the reasons differ in what closes them: this one closes when the
+    /// store holds minutes back to the row's own swing, and that one never closes at all. A row here
+    /// is not a session of the evidence 3.6 counts either.
+    /// </summary>
+    AnchorUnavailable,
+
+    /// <summary>
+    /// The row comes from a reconstructed walk, for which no anchored level can ever exist.
+    ///
+    /// The third of the three ways a verdict can run two clauses, and the only one nothing will
+    /// close. `AnchorUnavailable` waits on the store; `TwoOfThree` waited on the build and no longer
+    /// happens; this one waits on minute bars the vendor does not hold and never will.
+    /// </summary>
+    AnchorImpossible,
+
+    /// <summary>
+    /// An evaluated verdict whose note is not one of the clause records this code writes, including
+    /// the empty note. A defect rather than a gate: the row's own gate cannot be established from
+    /// it, and it is named so it can be asserted absent.
     /// </summary>
     Unrecorded,
 }

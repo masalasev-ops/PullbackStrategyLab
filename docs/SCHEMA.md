@@ -155,6 +155,47 @@ Insert IntradayFetcher · PK (`session_date`, `observed_at`)
 
 **A night with no row here is a night nobody ran**, which is a different fact from a night that ran and asked for nothing, and the two are only distinguishable because the stage writes a row either way. **The shortfall is recorded here rather than on the setup rows**: `setup.degraded_because` is written once by the detector that inserts the row, `setup` has one declared writer per operation, and an update from this stage would be a second writer on rows the corpus forbids rewriting. Which names went unfetched is `requested` against `fetched`, which is a join rather than an edit.
 
+### `anchored_vwap`
+Grain: ticker + anchor + through-session + observation. Phase 4. The declining average price the short side's `reached-ceiling` clause reads.
+
+| Column | Type |
+|---|---|
+| `ticker` | TEXT |
+| `anchor_session` | TEXT. The session the swing sits in |
+| `anchor_ts` | TEXT NULL. The minute inside it the extreme traded in, UTC. Null where no level could be priced |
+| `anchor_kind` | TEXT. `swing-high` or `swing-low`, and the CHECK admits nothing else |
+| `through_session` | TEXT. The last session the average includes |
+| `setup_as_of` | TEXT. The evening whose setup named the anchor |
+| `value` | TEXT NULL holding a decimal, never REAL |
+| `bars`, `volume` | INTEGER. What the figure was computed over |
+| `absent_because` | TEXT NULL. Why a row carries no value |
+| `observed_at` | TEXT. In the key, so a recomputation after a vendor correction is a new row |
+
+Insert VwapEngine · PK (`ticker`, `anchor_session`, `through_session`, `observed_at`)
+
+**The anchor is two columns and a kind, because until 4.4 it was a phrase.** ARCHITECTURE asks whether the bounce reached "the declining average price anchored to the last swing high", and nothing said which bar the swing high was, which minute inside it, or what the average was taken over. Three sessions computing that level would all have produced plausible prices and no two would have had to agree. `anchor_session` is the swing the thrust ran from, resolved from the same geometry the detector reads through `ShortSetupDetector.AnchorSessionOf`; `anchor_ts` is the minute inside it the high actually traded in, taken from the stored minutes and earliest on a tie; `anchor_kind` names what was measured rather than which detector asked, so a long-side anchor would read `swing-low` on the same terms (see: The anchored average price is anchored at the swing the thrust ran from).
+
+**`through_session` is the half that is easy to lose.** An anchored average is a level as at a moment and the moment is the last session it includes. The engine runs at 21:00 on minutes the fetch landed at 20:30, and those minutes are for the session before that evening, so a level a detector reads on the evening of N is computed through N−1 by construction. That is point-in-time clean and it is not the same number as a level through N, so the column says which rather than leaving a reader to date it from `observed_at`.
+
+**A row with no value is the ordinary case and is a row rather than a silence.** `IntradayFetcher` buys one session a night per flagged name and a swing sits three to twenty-seven sessions back, so most anchors are inside the vendor's reach and outside the store's. `absent_because` separates the reasons, and a night that anchored nothing stays distinguishable from a night nobody ran. `bars` and `volume` are on every row because a volume-weighted average over eleven minutes of a thin name carries the same name and none of the authority (see: A gate handed an absent or degenerate quantity fails rather than passing).
+
+### `vwap_run`
+Grain: session + observation. Phase 4. What one night's engine did, written whatever the outcome, on the same terms `intraday_fetch` records the fetch.
+
+| Column | Type |
+|---|---|
+| `session_date` | TEXT. The session the minutes are for |
+| `setup_as_of` | TEXT. The evening whose setups named the anchors, always strictly earlier |
+| `names`, `sessions_priced`, `bars_annotated` | INTEGER |
+| `anchors_asked`, `anchors_priced` | INTEGER. Two figures, because the gap between them is the state of the third clause |
+| `outcome` | TEXT. `clean`, `partial` or `failed` |
+| `stopped_because` | TEXT NULL |
+| `observed_at` | TEXT |
+
+Insert VwapEngine · PK (`session_date`, `observed_at`)
+
+**An anchor out of the store's reach does not make the run partial.** Nothing was asked of the vendor and nothing failed; the rows say what could not be reached and `anchors_asked` against `anchors_priced` is the figure. A run that called that partial would report every night as partial until the store had accumulated years of minutes, which is a signal that means nothing.
+
 ### `spread_snapshot`
 Grain: ticker + session + pass + observation. Phase 4. **Unrecoverable if missed.** The only intraday job.
 

@@ -27,6 +27,46 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-01 — ARCHITECTURE.html — cites The hourly grid anchors to the session open, and the closing stub is not an hourly bar
+Was:  `<tr><td>Short exit, the hourly close <b>OPEN</b></td><td>An hourly bar closing back above the 50-day average</td><td>4.4</td><td>The store holds minute bars and no hourly bar. An hourly bar has to be aggregated, and where the hour boundaries fall changes the answer: a session opening at 09:30 gives different bars on a 09:30 grid than on a 10:00 one, and the rule turns on a close</td></tr>`
+Now:  The same row, no longer OPEN, stating the grid as anchored to the session open with six complete hourly bars and a closing remainder that is not one, with the review point set to the execution family and the rejected clock-anchored alternative on the page.
+Why:  Question 3 of the eleven, answered. It is 4.4's own and blocking there, so it is recorded at 4.4 rather than carried to 4.15 with the other ten. Nine rows stay OPEN and the completeness sentence stays absent.
+
+### 2026-09-01 — ARCHITECTURE.html — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  **The third clause does not run until 4.4**, because an anchored average price is a volume-weighted average over minute bars from the swing high forward and VwapEngine is what computes it. Until then the check runs its two average clauses and is narrower than this line describes, which the setup record says outright rather than leaving to be inferred from a passing verdict. Approximating the anchored level from daily bars would put a number that looks like the real thing inside the check that decides whether a bounce reached its ceiling.
+Now:  The clause runs from 4.4, with the anchor named as the swing the flagged move ran from at the minute the extreme traded in, the average stated as typical price weighted by shares, and the condition on it stated: it runs where the store can reach the anchor and not otherwise. Four clause records rather than two, and what separates them.
+Why:  The clause exists now, so a sentence saying it does not run was current-state text that had stopped being current. The condition is the finding: building the clause is not the same as running it, because the fetch buys one session a night and a swing sits three to twenty-seven sessions back.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  **Short's twenty-session count begins on the first night the anchored clause runs, which is 4.4, and the nights before it are not counted toward the short side's gate.**
+Now:  The same without "which is 4.4", followed by the reason: 4.4 builds the clause and building it is not running it, the store held no minute bars at all on the night it landed, and the seam is read off the rows rather than off a date.
+Why:  The clause phrase and the checkpoint identifier were two claims in one sentence and only the first was true. A count started at 4.4 would have been a count of nights the clause ran on nothing, which is the reading the stored clause record exists to prevent.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  The 3.6 row's seam sentence naming `ShortPullbackRules.ClausesRun` as the constant every verdict records its clause set in.
+Now:  The same sentence naming `ShortPullbackRules.ClauseSetOf` as what reads it back, and stating that there are four clause sets from 4.4 with only one of them a session of the evidence the condition counts.
+Why:  `ClausesRun` is the record written before the clause existed and nothing writes it any more; its text is frozen because it is the discriminator for the 49,450 calibration rows already stored. Pointing a reader at it would point them at the one record the store stops gaining.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The hourly grid anchors to the session open, and the closing stub is not an hourly bar
+Was:  4.4's done condition: values matching an independent calculation on a fixture day, the anchored average gaining a store, the short count beginning here, the seam owing a verdict recording a different clause set, the re-measurement on the terms of 2026-08-30, the hourly grid settled, and the report's mapping corrected.
+Now:  The same seven, each stated against what the file will say after the edit: the grid as a named decision with its rejected alternative and derived from `SessionBoundaries`, with the test that a 15:30 bar cannot close and a 14:30 bar can; question 3's row filled with the other ten open; the store declared with its writer and the anchor stated in terms the store holds, with the test that anchored and session differ where the anchor is not the open; the count beginning on the first night the clause runs rather than at this checkpoint; the re-measurement reported before and after with the delta per gate, the median a night per direction and the effective observations per night, proposing no threshold.
+Why:  The row's condition was narrower than the work it names, which this corpus calls its most common defect. Amended by the checkpoint it governs, which the PROGRESS entry says in those words.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 2.11 obligation row, due at 4.4, reading that the third disjunct does not run and that the row is discharged by a re-measurement of the short funnel with all three clauses running.
+Now:  The same row recording the re-measurement as taken, with the envelope it produced, the reason a re-run of the walk could not produce the measured form, the price of the purchasable window, and the due point moved to the operator for the threshold decision alone.
+Why:  The measurement was the discharge and it is done. What remains is the once-only threshold adjustment, which is the operator's and was never this checkpoint's to take.
+
+### 2026-09-01 — RUNBOOK.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  A nightly table with no 21:00 row before "session replay, fills, positions".
+Now:  A `vwap` row at 21:00 stating that it spends no vendor call, what each of the two averages is, and that an anchor out of reach is a row with a reason.
+Why:  The catalogue has scheduled VwapEngine at 21:00 since phase 1 and RUNBOOK's table did not carry it, so a stage was catalogued and unschedulable. `NightlyOrderTests` fails a replay stage the table does not schedule, which is what caught it.
+
+### 2026-09-01 — SCHEMA.md — cites The anchored average price is anchored at the swing the thrust ran from
+Was:  No `anchored_vwap` and no `vwap_run` section. The anchored average price existed in ARCHITECTURE as a phrase and in this document not at all.
+Now:  Two sections, with `anchored_vwap` declaring Insert VwapEngine and stating the anchor as a session, a minute and a kind, and `vwap_run` recording what one night's engine did.
+Why:  An addition rather than a replacement, recorded because the absence was the defect: a level a gate reads with no declared owner is a level any component could have written.
+
 ### 2026-08-25 — CLAUDE.md — cites The store contains no absolute paths
 Was:  A checks table with no `store-portability` row.
 Now:  `| store-portability | No row in a populated store carries an absolute path, so the store stays a directory that can be copied |`

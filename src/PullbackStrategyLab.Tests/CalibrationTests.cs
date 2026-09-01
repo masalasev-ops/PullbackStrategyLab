@@ -143,14 +143,20 @@ public sealed class CalibrationTests
     }
 
     [Fact]
-    public void Every_short_row_reads_back_from_the_store_as_two_of_the_three_ceiling_clauses()
+    public void Every_short_row_reads_back_from_the_store_as_a_gate_the_anchor_can_never_reach()
     {
         // The seam 3.6 counts the short side's twenty sessions from, asserted where a later reader
         // would meet it: parsed back out of the stored row rather than checked as a substring of
-        // the text that produced it. `reached-ceiling` is a three-clause disjunction and the
-        // anchored clause needs VwapEngine at 4.4, so a disjunction missing a disjunct is strictly
-        // harder to pass and every row here came from a narrower gate than the document describes.
-        // A passing verdict looks identical either way, which is why the row carries the answer.
+        // the text that produced it. `reached-ceiling` is a three-clause disjunction and a
+        // disjunction missing a disjunct is strictly harder to pass, so every row here came from a
+        // narrower gate than the document describes. A passing verdict looks identical either way,
+        // which is why the row carries the answer.
+        //
+        // <b>It read TwoOfThree until 4.4 and reads AnchorImpossible now, and the change is the
+        // finding rather than a rename.</b> TwoOfThree said the clause had not been built, which
+        // stopped being true the moment it was. What is true of a calibration row is that no minute
+        // bar exists for a session in 2024 and none can be bought, so this row will never be
+        // anchored: not "not yet" but "not ever", which is the distinction the state exists to make.
         using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
         replay.Run();
 
@@ -165,14 +171,17 @@ public sealed class CalibrationTests
         while (reader.Read())
         {
             rows++;
-            Assert.Equal(CeilingClauses.TwoOfThree, ShortPullbackRules.ClauseSetOf(Verdicts(reader.GetString(0))));
+            Assert.Equal(CeilingClauses.AnchorImpossible, ShortPullbackRules.ClauseSetOf(Verdicts(reader.GetString(0))));
         }
 
         Assert.True(rows > 0, "the calibration run wrote no short row, so nothing here was asserted.");
 
-        // And the record has to name the checkpoint that ends it, on the same grounds an
-        // out-of-scope coverage item does: a narrowing with no end reads as permanent.
-        Assert.Contains("4.4", ShortPullbackRules.ClausesRun, StringComparison.Ordinal);
+        // And the narrowing says why it is permanent rather than naming a checkpoint that ends it.
+        // An out-of-scope item names the checkpoint that closes it because most of them close; this
+        // one closes on minute bars for 2024 that the vendor does not hold, so a checkpoint here
+        // would be a date nobody could meet.
+        Assert.Contains(
+            "no minute bars", ShortPullbackRules.ClausesRunInReconstruction, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -193,7 +202,7 @@ public sealed class CalibrationTests
         CheckResult[] afterTheAnchor =
         [
             new("moves-enough", true, 0.06m),
-            new("reached-ceiling", true, 0.31m, "21-day, 50-day and the anchored average"),
+            new("reached-ceiling", true, 0.31m, ShortPullbackRules.ClausesRunWithTheAnchor),
         ];
 
         Assert.Equal(CeilingClauses.TwoOfThree, ShortPullbackRules.ClauseSetOf(beforeTheAnchor));
