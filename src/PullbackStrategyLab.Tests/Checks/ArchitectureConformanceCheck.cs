@@ -377,6 +377,34 @@ public sealed partial class ArchitectureConformanceCheck
                     + "the dispatch passes. The test resolves each advertised name against the dispatch, which "
                     + "is exactly the gap between registered and reachable"));
 
+        // The catalogue read against the build order in the direction nothing asked before 4.14.
+        //
+        // The claim above runs one way: every component a phase says it builds is one the catalogue
+        // describes. The reverse is the one that was missing, and P4 was building an auditor of a
+        // thing no phase built: PlanBuilder, VariantResolver and SessionReplayClock each carry a
+        // nightly slot in the catalogue and appeared in no Builds row at all.
+        //
+        // <b>It is a scope with a floor rather than a claim per component.</b> A claim per component
+        // would double the catalogue's contribution to the register to say a second thing about the
+        // same rows, and CLAUDE.md's rule is that a check states a floor under each scope it names.
+        // So the property fails the run outright and the number it examined is reported beside it.
+        //
+        // A screen is excluded because a Builds cell names screens in prose, as "watchlist page",
+        // and NamesIn takes only single tokens. That exclusion is what the count is of, so it is
+        // stated rather than left in the predicate.
+        string[] catalogueTypes =
+            [.. componentNames.Where(n => !n.Contains(' ', StringComparison.Ordinal))];
+
+        HashSet<string> namedByAPhase =
+        [
+            .. buildOrder.SelectMany(row => Schedule.NamesIn(row[1])),
+        ];
+
+        string[] unplaced = [.. catalogueTypes.Where(n => !namedByAPhase.Contains(n)).Order(StringComparer.Ordinal)];
+
+        coverage.Examined("catalogued components a phase's Builds row names", catalogueTypes.Length - unplaced.Length);
+        coverage.Context("catalogued screens, named in a Builds row as prose rather than as a token", componentNames.Length - catalogueTypes.Length);
+
         foreach (IGrouping<string, Claim> table in claims.GroupBy(c => c.Table, StringComparer.Ordinal))
         {
             coverage.Examined($"claims in {table.Key}", table.Count(c => c.Verdict is Pass or Fail));
@@ -406,6 +434,12 @@ public sealed partial class ArchitectureConformanceCheck
         }
 
         coverage.Report();
+
+        Assert.True(unplaced.Length == 0,
+            "The catalogue describes " + string.Join(", ", unplaced)
+            + " and no phase's Builds row names them, so the document describes components the build order "
+            + "never builds. Name each in the phase that builds it. This is the direction nothing asked "
+            + "before 4.14, and it is how P4 came to build an auditor of a thing no phase built.");
 
         Claim[] failed = [.. claims.Where(c => c.Verdict == Fail)];
         Assert.True(failed.Length == 0,

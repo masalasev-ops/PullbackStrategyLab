@@ -9822,3 +9822,110 @@ Corrects:   **`CLAUDE.md`'s repository layout listed six of the nine files in `t
             it cites the block as current. Corrected here with `slot-log-verdict.ps1` beside them.
 
 Carried:    Nothing raised and nothing discharged. The obligations table still reads **58**.
+
+## 4.14 — 2026-09-01 — phase-4-corpus-corrections — the five corrections, and an estimate stated before the run rather than after it
+
+The third checkpoint of phase 4 and the first that builds nothing. ARCHITECTURE and CHANGELOG, clean
+edits with prior text recorded, plus the one check extension correction (a) asks for.
+
+Measured:   **The out-of-scope projection was re-derived before any edit was made, and the run matched
+            it exactly.** This checkpoint is named in the plan as the one that reads the count against
+            the ceiling of 52, and it inherited a band of 51 to 54 that was built when the corrections
+            were six. That band had already missed twice. Re-deriving it rather than carrying it
+            forward is what this entry is mostly about.
+
+            **The register is keyed on rows and tables, not on sentences.** A claim table yields one
+            claim per row and every table in the document yields one placement claim whatever it
+            holds, so exactly two edits move the count: a new row in a claim table, and a new table.
+            Against that: (a) and (b) edit the cells of Build order rows that already exist, so the
+            table yields the claim per phase it always did; (a)'s reverse assertion is a coverage
+            scope with a floor rather than a claim; (c) edits `fig` blocks, which are not tables;
+            (d) removes a sentence from a prose block; (e) edits cells of two tables that are exempt
+            by checkpoint and stay exempt. **Expected move: nought. Expected count: 47.**
+
+            **Read after: 128 claims, 81 passed, 0 failed, 47 out of scope, 0 unexamined.** The
+            ceiling of 52 is not raised and nothing about this run argues for raising it.
+
+            **Why the old band missed is the same shape twice, one level apart.** It rested on "a
+            document edit adds a claim before its component lands", which is true of a new row and a
+            new table and of nothing else. The plan had already diagnosed one instance, that the data
+            budget is read by `pinned-constants` and enters no claim register, and treated it as a
+            fact about that row rather than as a fact about the register. The generalisation is the
+            correction: **an edit moves the count only where it moves a row or a table.** The one
+            confirmed data point in the other direction is 4.3's own new table, which moved it 127 to
+            128, by exactly one.
+
+Built:      **(a) Six catalogued components appeared in no phase's Builds row, not three.** Each of
+            the three the plan named carries a nightly slot and was absent, so P4 as written built an
+            auditor of a thing no phase built. The both-directions assertion added here found three
+            more the plan's reading by hand had not: `WatchlistPublisher`, which is genuinely built at
+            4.1 and named nowhere, and the two detectors, which P2's cell named collectively as "both
+            detectors" and which are now named individually. **That is the entire argument for
+            asserting a property rather than reading it**, made by the assertion on the day it was
+            written: a careful pass over the same two tables found half of what was there.
+
+            The assertion is a **scope with a floor** rather than a claim per component, which is what
+            the row said it would be. A claim per component would have doubled the catalogue's
+            contribution to the register to say a second thing about the same rows. The floor is 44
+            against 47 placed, and it is what stops the property passing vacuously: `unplaced` is
+            empty when the catalogue parses to nothing, so the assertion alone cannot tell "all
+            placed" from "none read". The seven screens are context, because a Builds cell names a
+            screen in prose and the name extractor takes single tokens only.
+
+            **(b)** The P4 ordering sentence now matches the recorded order, with both reasons on the
+            page: the two captures lead because they are unrecoverable, and the watchlist still
+            arrives before the trading machinery, which is what the original sentence was protecting.
+
+            **(c) 56 figures were expected and 56 were masked.** Figure 10 fell from 30 numbers to 4
+            and Figure 11 from 42 to 12. The remainders are the authored caps and one checkpoint
+            identifier, `6.8`, and were checked individually rather than assumed: an authored
+            parameter stays a number and a measured quantity is masked, so `n of 4` and
+            `n,nnn of 5,000` are both correct in the same sentence. **The count needed no
+            explanation, which is the only reason it is worth having stated it first.** Figure 10's
+            caption gains the sentence Figure 11's already had, that the figures are illustrative
+            rather than measured, which is why `690 of 5,000` was readable as a fact.
+
+            **(d)** The superseded sentence saying phase 4 should not start without 3.6's answer now
+            cites the decision that superseded it. BUILD_PLAN's companion had been corrected on
+            2026-08-31 and this had not, so two current-state documents disagreed about whether the
+            phase was gated.
+
+            **(e)** Four causes becomes four causes plus `unclassified`, in the taxonomy table, the
+            pack contents, the catalogue and the scoreboard's loss-share panel. **A taxonomy whose
+            every row is always assignable cannot show that it is missing a cause**, which is this
+            corpus's recurring shape arriving in a document rather than in a check: an instrument
+            with no way to report its own gap. And **"never triggered" is not a closed loss**. It was
+            a fifth row in a table grained on `trade`, describing a setup that opened no position, so
+            there is no trade, no realised risk and no exit for the row to be about. It is evidence
+            about the trigger rule, it is worth having, and it is counted against the flagged
+            population where the setups are.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **658 tests**, unchanged, this checkpoint adding
+            assertions to an existing check rather than tests. `tools/verify-phase.ps1` GREEN:
+            **128 claims, 81 passed, 0 failed, 47 out of scope, 0 unexamined**, coverage examined
+            5,241 from 5,180, **1,375 expectations** of which 1 void, inputs CAPTURED 70 and AUTHORED
+            133. **The out-of-scope count was read against the ceiling of 52 before the commit, as
+            this checkpoint's row requires, and against a figure written down before the edits rather
+            than compared to afterwards.**
+
+            **Done condition seven was argued past and the check refused it, correctly.** The
+            paragraph that stood here said this checkpoint moves no stage, so the pipeline produces
+            what it produced yesterday, and that the floored placement scope was verification enough.
+            `fixture-replay` failed the moment this entry made 4.14 landed: the condition asks each
+            checkpoint for at least one `DERIVED` or `CONFIRMED` expectation or an open obligation
+            permitting its absence, and a scope floor is neither. The reasoning was the shape the
+            condition exists to refuse — a checkpoint deciding for itself that it is the exception —
+            and it was written by the session that had just spent the checkpoint arguing that
+            properties should be asserted rather than read.
+
+            **Four DERIVED expectations, and the one that carries the property is
+            `catalogue.unplacedInAnyBuildsRow`.** It reads nought and it read 6 before this
+            checkpoint. The three beside it, 54 catalogue rows, 47 types and 7 screens, are the
+            population it was computed over and are stated with it rather than left to be inferred:
+            nought unplaced means nothing without the count it was nought out of, because a parser
+            that read no rows reports nought too. They are figures about the document rather than
+            about the fixture's data, on the precedent `store.schemaVersion` sets by counting
+            migration files, and they are derived by a Python restatement that reads the same two
+            tables and shares no code with the check.
+
+Carried:    Nothing raised and nothing discharged. The obligations table still reads **58**.

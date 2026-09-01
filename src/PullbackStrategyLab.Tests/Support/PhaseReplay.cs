@@ -14,6 +14,7 @@ using PullbackStrategyLab.Web.Shell;
 using PullbackStrategyLab.Worker.Vendor;
 
 using PullbackStrategyLab.Core.Time;
+using PullbackStrategyLab.Tests.Checks;
 
 namespace PullbackStrategyLab.Tests.Support;
 
@@ -646,6 +647,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(GalleryFigures());
 
         measurements.AddRange(StoreIntegrityFigures());
+        measurements.AddRange(CataloguePlacementFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -1916,6 +1918,51 @@ public sealed class PhaseReplay : IDisposable
                 MigrationRunner.ForeignKeyViolations(read).Length.ToString(CultureInfo.InvariantCulture)),
             new Measurement("store.observationsAfterTheAsOf",
                 ObservationsLaterThan(read, _clock.UtcNow).ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    /// <summary>
+    /// The catalogue read against the build order, which is what 4.14 built and is the one figure
+    /// that checkpoint produces.
+    ///
+    /// <b>It is a figure about the document rather than about the fixture's data</b>, on the
+    /// precedent <c>store.schemaVersion</c> already sets: that one counts the migration files and
+    /// this one counts the rows of two tables. What makes both worth freezing is the same thing,
+    /// that they move for one reason and the reason is legible in the diff.
+    ///
+    /// <b>The one that carries the property is `unplaced`.</b> The other three are the population it
+    /// was computed over, stated beside it rather than left to be inferred, because a count of nought
+    /// unplaced means nothing without the count it was nought out of: a parser that read no rows
+    /// would report nought unplaced too, and that is the shape this whole corpus keeps finding.
+    /// </summary>
+    private static IReadOnlyList<Measurement> CataloguePlacementFigures()
+    {
+        string architecture = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Docs, "ARCHITECTURE.html"));
+
+        IReadOnlyList<IReadOnlyList<string>> catalogue =
+            HtmlTable.BodyRowsUnder(architecture, "Component catalogue");
+        IReadOnlyList<IReadOnlyList<string>> buildOrder =
+            HtmlTable.BodyRowsUnder(architecture, "Build order");
+
+        string[] types =
+            [.. catalogue.Select(r => r[0]).Where(n => !n.Contains(' ', StringComparison.Ordinal))];
+
+        HashSet<string> named =
+            [.. buildOrder.SelectMany(row => ArchitectureConformanceCheck.Schedule.NamesIn(row[1]))];
+
+        int unplaced = types.Count(n => !named.Contains(n));
+
+        return
+        [
+            new Measurement("catalogue.components",
+                catalogue.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("catalogue.componentTypes",
+                types.Length.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("catalogue.screens",
+                (catalogue.Count - types.Length).ToString(CultureInfo.InvariantCulture)),
+            new Measurement("catalogue.unplacedInAnyBuildsRow",
+                unplaced.ToString(CultureInfo.InvariantCulture)),
         ];
     }
 
