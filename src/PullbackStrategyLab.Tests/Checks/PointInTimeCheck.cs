@@ -68,6 +68,14 @@ public sealed class PointInTimeCheck
             // that saw a pass recorded after the instant it is answering would refuse differently
             // from the night itself. `intraday_fetch` is exempt because nothing reads it that way.
             ["spread_pass"] = "observed_at",
+
+            // The plan is read to decide an answer, which is what puts it here rather than beside
+            // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
+            // standing at an old session that saw a plan written after it would resolve a fill the
+            // night itself could not have. The plan is immutable and keyed on the setup, so the
+            // bound will rarely exclude a row today; that is a fact about the writer rather than a
+            // property of the read.
+            ["trade_plan"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -145,6 +153,10 @@ public sealed class PointInTimeCheck
                 "observed_at is when one night's averaging ran and what it reached, which is operational "
                 + "on the same terms as intraday_fetch above. Nothing computes a figure about the market "
                 + "from it: the levels it counts are in anchored_vwap, which is stamped and bounded.",
+            ["plan_run"] =
+                "observed_at is when one evening's plan stage ran and what it refused, which is operational "
+                + "on the same terms as vwap_run above. Nothing computes a figure about the market from it: "
+                + "the plans it counts are in trade_plan, which is stamped and bounded.",
         };
 
     /// <summary>

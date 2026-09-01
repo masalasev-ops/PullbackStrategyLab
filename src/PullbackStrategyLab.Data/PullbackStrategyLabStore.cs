@@ -42,6 +42,7 @@ public static class PullbackStrategyLabStore
         services.AddSingleton<RunLogger>();
         services.AddSingleton<DailyBarReader>();
         services.AddSingleton<SetupReader>();
+        services.AddSingleton<TradePlanReader>();
         services.AddSingleton<SetupSignalReader>();
         return services;
     }

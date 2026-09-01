@@ -10512,3 +10512,185 @@ Carried:    Nothing raised and nothing discharged. The obligations table is unch
             4.8's; and what the fill model does with a spread whose two sides are far enough apart to
             describe different markets, which stays 4.7's. Neither is an authored parameter, so
             neither reopens a row.
+
+## 4.16 — 2026-09-01 — phase-4-planbuilder — the committed instruction, and the size that belongs to it
+
+The seventh checkpoint of phase 4 and the first since 4.4 that builds a stage. `trade_plan` has been
+declared in SCHEMA since the phase was planned, the catalogue has slotted PlanBuilder at 18:30 since
+phase 1 and the runbook reserved the slot, and no checkpoint built it: as written the phase built
+PlanAudit, an auditor of a thing it never built.
+
+Decided:    **The plan carries its own size, and RiskGate reduces or blocks it but never recomputes
+            it.** Recorded as a named decision, which is what the row asked for: three places in the
+            corpus answered it differently and none of them was wrong on its own terms. The
+            vocabulary calls a plan a committed instruction naming this many shares. The catalogue
+            gave sizing to the component that runs on trigger in the following session. 4.1's
+            watchlist renders no share count and its comment said it was waiting for that component.
+
+            **What settles it is that the plan is locked before the open and published at 18:40.** A
+            size that arrives ten hours later is not a committed instruction, and the page that
+            publishes the plan would carry a column it could not fill. Beside that, recomputing at
+            trigger would leave `plan_audit` comparing two runs of one formula rather than an
+            intention against an outcome, and the only difference such a comparison can ever show is
+            a bug in the second run.
+
+            **A reduction keeps the plan's give-up price**, which is the half that is easy to get
+            wrong later. Recomputing the distance from a reduced size would change R for the same
+            trade, and R is the unit expectancy, the ceiling gap, the variant comparison and the loss
+            classification are all denominated in. A trade that risked less than planned is a trade
+            that risked less than planned, and `risk_intended` beside `risk_realised` is what says so.
+
+            The catalogue row and the two watchlist comments naming 4.6 as the source of a share
+            count are corrected in the same commit.
+
+Built:      **`PositionSizing` in Core, `trade_plan` and `plan_run` in migration 040, `PlanBuilder`
+            and `TradePlanReader`.** The arithmetic is pure and in Core on the footing `NightlyCap`
+            already sets, so the rounding is assertable over every distance rather than over the ones
+            a fixture happened to produce. $100,000 at 0.75% is a $750 budget; the share count is
+            that budget over the give-up distance in money, rounded **down**.
+
+            **Down rather than to nearest, and the plan stores both figures.** Rounding up would put
+            more than the budget at stake on exactly the trades least able to carry it, being the
+            widest stops. The plan records `risk_budget` beside `risk_at_stake`, so a $7 distance
+            reads as 107 shares risking $749 of a $750 budget rather than as one number that hides
+            which. It is the shape `position` already declares with `risk_intended` beside
+            `risk_realised`.
+
+            **The give-up distance is a price and not a ratio**, stated because the store holds the
+            ratio and not the price. `stop_distance_ranges` is the distance in daily ranges, which is
+            what `exit-tight` and the cap rank on; dividing a risk budget by it would produce a share
+            count in the wrong unit that still looks like a number.
+
+            **`live_session` is a column rather than an inference**, so 4.5's fail-closed assertion
+            reads a stored fact. Deriving it means stepping a calendar over weekends, which is the
+            shape that made `intended_date` differ across every weekend in the forward-return table.
+
+            **Refusals are counted in `plan_run` by reason and are not rows of their own.** A capped
+            candidate gets no plan for one of three reasons, and two of them are already in `setup`,
+            so a per-setup refusal table would be a second statement that could disagree with the
+            first with nothing reading both. That is the ruling WatchlistPublisher took over a
+            watchlist table and VwapEngine took over the day's high and low. What is not derivable
+            from `setup` is the count for a night, since one reason depends on the risk budget as
+            well as on the row, so the counts are stored one column per reason: a single `refused`
+            total would let the reason that is a defect hide inside the reason that is arithmetic.
+
+Read:       **2.11's row can be read two ways about this stage, and the reading taken is recorded
+            rather than assumed.** That row settled for phase 4 that "the plan is written against
+            flagged setups rather than passing ones, which is what 4.1 renders in any case". Read as
+            a statement about PlanBuilder it means a committed instruction for every flagged name,
+            including ones a gate refused. Read as a statement about what the phase is designed
+            around, which the clause after it is, it means the surfaces and the records cover the
+            flagged population rather than assuming the passing one is non-empty.
+
+            **The second reading is taken, on three grounds**: 4.16's own row says one plan per
+            capped candidate, the catalogue says per version per candidate, and a plan is an
+            instruction to trade, so writing one for a setup the lab has already declined would put
+            RiskGate in the position of blocking every order the lab ever placed. **The first reading
+            is not obviously wrong**, and the ambiguity is in the stage's own comment so the next
+            session finds a choice rather than an assumption.
+
+            **The consequence is that this stage plans nothing on almost every night**, which is the
+            finding rather than a fault and is the same finding every checkpoint from here to 4.13
+            will report. `capped_out` is written only by SetupCapper and only over rows that passed
+            every gating check, so at a median of nought candidates a night there is nothing to plan.
+            The run row says which of three shapes of nothing a night was, on the same three-way
+            ladder WatchlistPublisher reads: nothing flagged, nothing carrying a cap decision, or a
+            cap that ran and kept nobody.
+
+Found:      **The obligation discharged here is narrower than it looks, and the path into it is
+            closed one stage earlier.** The 3.15 row says a setup whose thrust has not pulled back
+            yet is stored with a trigger and a give-up price at the same price, and that PlanBuilder
+            would be the first component to read the pair as a size. The clause is written and
+            tested. But such a row carries a **null** give-up distance, `exit-tight` fails outright
+            on a null, so the row never passes every check, never receives a cap decision and never
+            reaches this stage. So the refusal is defence in depth against a fault that cannot
+            currently occur rather than a fix for one that was occurring. Stated here, in the stage,
+            in 4.16's row and in the expectation's own note, because a guard whose subject is
+            unreachable reads exactly like a guard that is doing something.
+
+            **The obligation had two halves and only one of them is 4.16's.** The other is that the
+            detectors go on writing both prices while nulling the two distances beside them, so the
+            store contradicts `SCHEMA.md`'s own declaration that both prices are absent where the
+            setup has none. Nothing downstream reads a setup's price pair as a trade any more,
+            because what a trade is placed from is the plan, so the harm is contained rather than
+            removed. Raised as its own row rather than discharged with the half above.
+
+            **A plan's live session is the next weekday and nothing here knows whether that weekday
+            trades.** No holiday calendar exists anywhere in the corpus, the store holds bars for
+            sessions that have happened, and 18:30 on the evening before is too early for the next
+            session's bars to answer it. Inventing one would be authoring a market calendar rather
+            than recording one, which is the ruling 4.15 took over the support definition. The
+            consequence is bounded and is a plan that does not fire rather than one that fires on the
+            wrong day: about nine evenings a year, which at a median of nought candidates a night is
+            currently nothing and stops being nothing when the thresholds move. Rowed, due at 4.5.
+
+            **`stated-counts` caught the three counts the new row moves**, which is the registry
+            doing what it was built for: the obligations total, the count due at 4.6 stated in two
+            places, and the classification table's own group. All four figures are derived from the
+            table rather than restated.
+
+Discharged: **The 3.15 equal-price obligation, in the half 4.16 owes**, by the clause and the
+            authored case that exercises it. Its writer half is raised as a new row due at 4.6, on
+            the reading that section already gives: a record defect with no checkpoint that obviously
+            owns it lands at the next one that plausibly cares.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **714 tests**, from 698. Sixteen of them are
+            `PlanBuilderTests`, one of which is a source scan named as one, and the rest are the
+            existing files unchanged.
+
+            `tools/verify-phase.ps1` GREEN: **128 claims, 85 passed, 0 failed, 43 out of scope, 0
+            unexamined**, coverage examined **5,601**, **1,399 expectations** of which 1 is void,
+            inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0. Read on
+            a clean tree at `0ecfd8e`, which carries every edit this checkpoint makes; the block you
+            are reading lands in the next commit.
+
+            **The out-of-scope count falls from 44 to 43 and one claim moves from deferred to
+            passed**, which is this checkpoint's catalogue row arriving. `Schedule.CheckpointFor`
+            reads a checkpoint's deliverable cell, 4.16's names PlanBuilder, and recording 4.16 here
+            is what makes it landed, so the component's catalogue claim comes into scope on the same
+            commit that builds it. That is the mapping repair 4.4 made showing up a second time as a
+            number rather than as an argument.
+
+            **Five DERIVED expectations, every one predicted before the replay was run and every
+            prediction held**, and every one of them is nought. `plans.candidates` is the population
+            the other four were computed over and it is nought for the reason the funnel is: no setup
+            of the fixture's day passed every gating check, so SetupCapper wrote no cap decision and
+            this stage had nothing to plan. The night is recorded as never capped rather than as
+            capped and empty. They were derived from the fixture's own committed cap figures rather
+            than from a run, which fixes all five without executing the stage, and they turn into
+            real counts the day the fixture holds a night with a candidate in it.
+
+            **`plans.refusedEqualPrices` is nought for a second reason and the note says which.** The
+            fixture does hold a row with the degenerate geometry; it never arrives here, because
+            `exit-tight` refuses the null distance such a row carries. So this figure is not evidence
+            the guard works, and the guard is asserted over an authored candidate instead.
+
+            Three existing expectations moved and each moved for a stated reason:
+            `store.schemaVersion` 39 to 40 by migration 040, and `runlog.distinctStages` 22 to 23
+            with `runlog.entries` 27 to 28 by a stage joining the replayed night.
+
+            **Three guards fired on this checkpoint's own work and all three were paid rather than
+            loosened.** `point-in-time` refused two stamped tables it did not know about, which is
+            why `trade_plan` is now in `Stamped` with its reads bounded and a behavioural test that a
+            plan observed after the as-of is invisible, and `plan_run` is in `NotAnObservation` beside
+            `vwap_run`. `carried-obligations` refused the 4.16 due point until this entry existed,
+            which is the mechanism working: recording a checkpoint is what makes it landed.
+            `surface-claims` refused a sentence in this checkpoint's own BUILD_PLAN row, and the
+            sentence was **wrong** rather than merely undeclared: it read "plans are written for
+            capped candidates rather than for passing ones", which is false, since a capped candidate
+            is a passing one by construction. It was written before the capper's population had been
+            read and survived into the row after the code was corrected. The reverse read caught it.
+
+            **`surface-claims`' calibration constant fell from 16 to 15 and the reason is a corpus
+            that shrank rather than a pattern that narrowed.** 4.16's row carried "the watchlist
+            published at 18:40 renders a share count per row" as one of three conflicting readings,
+            and settling the question removed the sentence. Produced by running the reverse read at
+            this commit: 16 before, 15 after, and the difference is exactly that sentence. The
+            exemption naming the old row's other half is dead for the same reason and is replaced by
+            one naming the sentence that took its place, which is a claim that a column is **absent**
+            and is the one shape this check cannot assert against a page.
+
+Carried:    **Three raised and one discharged, so the obligations table rises from 57 to 59.** The
+            three are the detectors' price pair due at 4.6, the live session's missing holiday
+            calendar due at 4.5, and the watchlist's absent share-count column due at 4.11. Nineteen
+            now fall due at 4.6, from eighteen.

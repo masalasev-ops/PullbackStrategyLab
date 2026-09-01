@@ -114,7 +114,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:25 | `vectorize`, the signal freeze, then `journal`, which seals the night | 0 |
 | 18:26 | `controls`, loose and tight per flagged setup, before the cap | 0 |
 | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
-| 18:30 | plans per variant | 0 |
+| 18:30 | `plans`, one committed instruction per capped candidate: trigger, give-up point and a share count. PlanBuilder sizes and the size is the plan's; RiskGate may reduce or block it at trigger and never recomputes it. A candidate with no trade geometry gets no plan and the run row counts the refusal by reason. One plan per candidate today and per variant per candidate from 5.1 | 0 |
 | 18:40 | `publish-watchlist`, which writes nothing. It reports what the page would show, so a night that was never capped is noticed here rather than by somebody opening a browser | 0 |
 | 20:30 | `intraday-bars`, one request per distinct flagged name, at 5 calls each. Not the capped sixty: a variant that selects a name the baseline passed on must still be resolvable, and a name whose minutes were never bought is one no variant can ever be scored on | 220 to 415 |
 | 21:00 | `vwap`, over the minutes the fetch stored half an hour earlier. It spends no vendor call: the session average annotates each stored minute with the average as it stood at that minute, and the anchored average is priced for every short setup whose swing the store can reach back to. An anchor out of reach is a row with a reason rather than a silence, and `anchors_asked` against `anchors_priced` is the state of the third ceiling clause on the night | 0 |

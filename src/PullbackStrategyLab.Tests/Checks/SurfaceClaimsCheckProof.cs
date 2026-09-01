@@ -53,9 +53,19 @@ public sealed class SurfaceClaimsCheckProof
         // A sweep expecting a non-zero count states that count in advance. Sixteen when the pattern
         // was tightened at 4.1, from a looser one that matched thirty-four of which half were prose.
         // A lower bound rather than an equality, because the corpus grows.
-        Assert.True(examined >= 16,
-            $"The reverse read matched {examined} sentence(s), fewer than the 16 it matched when the pattern "
-            + "was calibrated. A pattern that stopped matching would report nothing missing and read as green.");
+        //
+        // <b>Fifteen from 4.16, and the one that went is the reason it moved rather than the pattern
+        // narrowing.</b> 4.16's own row carried "the watchlist published at 18:40 renders a share
+        // count per row" as one of three conflicting readings of where a share count comes from.
+        // That checkpoint settled the question, the row was rewritten around the answer, and the
+        // sentence went with it. Produced by running this method over the corpus at that commit:
+        // 16 before, 15 after, and the difference is exactly that sentence. The old figure no longer
+        // holds because the sentence it counted no longer exists, which is a corpus that shrank by
+        // one claim rather than a pattern that stopped seeing one.
+        Assert.True(examined >= 15,
+            $"The reverse read matched {examined} sentence(s), fewer than the 15 it matched when the pattern "
+            + "was recalibrated at 4.16. A pattern that stopped matching would report nothing missing and read "
+            + "as green.");
     }
 
     [Fact]

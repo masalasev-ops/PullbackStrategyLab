@@ -70,7 +70,7 @@ public sealed record WatchlistView(
 /// <summary>
 /// One published candidate: what would be entered, where it would give up, and how far that is.
 ///
-/// <b>No share count.</b> The mockup draws one and RiskGate sizes at 4.6, so the column has no
+/// <b>No share count.</b> The mockup draws one and PlanBuilder sizes at 4.16, so the column has no
 /// source at 4.1. It is absent rather than rendered empty, because a blank column reads as a figure
 /// the lab computed and got nothing for.
 /// </summary>

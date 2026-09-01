@@ -8375,18 +8375,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "22",
+      "value": "23",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "27",
+      "value": "28",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16."
     },
     {
       "id": "scan.decliner.hits",
@@ -9834,10 +9834,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "39",
+      "value": "40",
       "checkpoint": "4.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16."
     },
     {
       "id": "tiers.falling",
@@ -10556,6 +10556,46 @@
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
       "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move"
+    },
+    {
+      "id": "plans.candidates",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.16",
+      "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
+      "note": "capped candidates on the fixture's night, being rows carrying capped_out = 0. It is the population the four figures below were computed over, and it is nought for the reason the funnel is: no setup of this day passed every gating check, so SetupCapper wrote no cap decision. The night is recorded as never capped rather than as capped and empty, which is the same three-way reading WatchlistPublisher takes over the same rows."
+    },
+    {
+      "id": "plans.planned",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.16",
+      "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
+      "note": "plans written. Nought out of nought candidates, so this figure carries no property on its own and is stated with the population above rather than alone. It becomes a real count the day the fixture holds a night with a candidate in it, with no edit to the replay."
+    },
+    {
+      "id": "plans.refusedAbsentGeometry",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.16",
+      "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
+      "note": "capped candidates refused for a null trigger or give-up price. Nought here because there are no candidates, not because the shape is absent from the fixture: the fixture does hold a row with the degenerate geometry, and it never reaches this stage."
+    },
+    {
+      "id": "plans.refusedEqualPrices",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.16",
+      "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
+      "note": "capped candidates refused for a trigger and a give-up point at the same price, which is the 3.15 obligation's shape. Nought, and the reason is worth the line: `exit-tight` fails outright on the null give-up distance such a row carries, so it never passes every check, never carries a cap decision and never arrives here. The clause is defence in depth and is asserted over an authored candidate instead, because no captured night can produce one."
+    },
+    {
+      "id": "plans.refusedBelowOneShare",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.16",
+      "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
+      "note": "capped candidates whose give-up distance is wider than the whole risk budget. The one refusal of the three that depends on the budget as well as on the row, which is why the counts are stored per reason rather than derived from `setup` later."
     }
   ],
   "frozenOnly": [

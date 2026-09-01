@@ -510,7 +510,25 @@ public sealed class PhaseReplay : IDisposable
         Record("cap.shortKept", capped.ShortKept);
         Record("cap.cappedOut", capped.CappedOut);
 
-        // 15a. The minute bars, which run at 20:30 for the session that has just closed and resolve
+        // 15a. The plans, one committed instruction per capped candidate, at 18:30.
+        //
+        //      <b>The fixture's own candidates are what this runs over, and none of them is a
+        //      trade.</b> The funnel passes a median of nought a night, so a stage planning only
+        //      passing rows would write nothing here and nothing on a live night; plans are written
+        //      for capped candidates, which the fixture has. The refusal counts are the figures
+        //      worth freezing: they say how many of the night's candidates carried no trade geometry
+        //      and, separately, how many carried a trigger and a give-up point at the same price,
+        //      which is the shape the 3.15 obligation named and 4.16 discharges.
+        PlanRunResult plans = new PlanBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
+
+        stages.Add(new StageRun(PlanBuilder.Name, 0, plans.RowsWritten, plans.Outcome.ToStorageText()));
+        Record("plans.candidates", plans.Candidates);
+        Record("plans.planned", plans.Planned);
+        Record("plans.refusedAbsentGeometry", plans.RefusedAbsentGeometry);
+        Record("plans.refusedEqualPrices", plans.RefusedEqualPrices);
+        Record("plans.refusedBelowOneShare", plans.RefusedBelowOneShare);
+
+        // 15b. The minute bars, which run at 20:30 for the session that has just closed and resolve
         //      the setups flagged on the evening before it.
         //
         //      <b>Over this fixture it asks for nothing, and that is the expectation rather than a
@@ -530,7 +548,7 @@ public sealed class PhaseReplay : IDisposable
         Record("intraday.barsWritten", minutes.BarsWritten);
         Record("intraday.pairedWithPriorSession", minutes.SetupAsOf is null ? 0 : 1);
 
-        // 15b. The spreads, which run inside the session rather than after it and carry the same
+        // 15c. The spreads, which run inside the session rather than after it and carry the same
         //      offset as the minute bars. Over this fixture the pass asks for nothing for exactly
         //      the reason the fetch above does: one market day, setups flagged on it, no earlier
         //      session whose plans were live in it. Recorded rather than skipped, and the row it
