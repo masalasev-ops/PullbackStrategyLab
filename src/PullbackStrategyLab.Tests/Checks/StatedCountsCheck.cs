@@ -23,6 +23,16 @@ public sealed partial class StatedCountsCheck
 
     public StatedCountsCheck(ITestOutputHelper output) => _output = output;
 
+    /// <summary>
+    /// A row of ARCHITECTURE's authored-parameters table whose parameter name carries the OPEN mark.
+    ///
+    /// Anchored on the row opening and the first cell, so a later cell mentioning the word in prose
+    /// is not counted. That matters here: the paragraph above the table and several Basis cells use
+    /// "OPEN" in a sentence, and a bare search for the mark reads them as rows.
+    /// </summary>
+    [GeneratedRegex(@"<tr><td>[^<]*<b>OPEN</b>", RegexOptions.CultureInvariant)]
+    private static partial Regex OpenParameterRow();
+
     [GeneratedRegex(@"^\s*(?<n>\d+)\.\s", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex NumberedItem();
 
@@ -106,6 +116,20 @@ public sealed partial class StatedCountsCheck
         claims.Add(new Claim("CLAUDE.md, three records", 3, KindCount(lifecycle, "record"), "lifecycle rows marked record"));
         claims.Add(new Claim("CLAUDE.md, one artefact", 1, KindCount(lifecycle, "artefact"), "lifecycle rows marked artefact"));
         claims.Add(new Claim("The corpus is eight documents plus one artefact", 9, lifecycle.Count, "rows of the lifecycle table"));
+
+        // BUILD_PLAN.md, the authored parameters still open, over the table itself.
+        //
+        // <b>Registered at 4.4 because it had just been wrong in three documents at once.</b> The
+        // table carried eleven OPEN rows and 4.4 filled one, and the row, the CHANGELOG entry and
+        // the PROGRESS entry all said nine remained. Nothing derived it, so a count stated three
+        // times was one out and no check could see it. It is a count a spec states about another
+        // document's contents rather than its own, which is why it was never registered; the rule is
+        // about numbers a spec states, and the document being counted is not what makes it stale.
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the authored parameters left open after 4.4",
+            Stated: 10,
+            Derived: OpenParameterRow().Matches(architecture).Count,
+            Derivation: "rows of the authored-parameters table marked OPEN"));
 
         // ARCHITECTURE.html, the component count over the catalogue itself.
         IReadOnlyList<IReadOnlyList<string>> catalogue = HtmlTable.BodyRowsUnder(architecture, "Component catalogue");

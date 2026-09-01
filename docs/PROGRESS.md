@@ -10062,7 +10062,7 @@ Built:      **`HourlyGrid`, and question 3 answered as a named decision.** The g
             least representative half hour of the session and the one where a short's bounce most
             often looks like it has broken back above a level and has not. Both figures are derived
             from `SessionBoundaries` rather than written beside it, so the grid follows if the
-            exchange moves a boundary. Question 3's OPEN row is filled and nine remain.
+            exchange moves a boundary. Question 3's OPEN row is filled and **ten** remain, not nine. The table carried eleven OPEN rows: the six ARCHITECTURE already marked and the five added when phase 4 was planned. Nothing derived that number, so a count stated in three places was one out and no check could see it, which is why the count is registered with `stated-counts` in the same commit.
 
             **`anchored_vwap`, `vwap_run`, migration 039 and `VwapEngine`.** The anchor was a phrase
             until now: nothing said which bar the swing high was, which minute inside it, or what the
