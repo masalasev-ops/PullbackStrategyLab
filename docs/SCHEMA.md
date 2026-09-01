@@ -699,12 +699,52 @@ Declared at store level. Columns owed at their checkpoint.
 | Store | Grain | Writer |
 |---|---|---|
 | `trade_plan` | setup + variant | Insert PlanBuilder. **Never updated after its session date** (see: The plan is written before the session and is immutable after publication) |
+| `plan_run` | session + observation | Insert PlanBuilder. What one evening's plan stage did, with its refusals counted by reason |
 | `order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
 | `fill` | fill id | Insert PaperBroker |
 | `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding is visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
 | `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |
 | `trade` | trade id | Insert TradeJournal. Result in R, borrow cost on shorts |
 | `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |
+
+### The plan, and the size it carries
+
+Built at 4.16, and the columns are the ones that checkpoint owes rather than the whole eventual
+shape.
+
+| Column | Form | Why |
+|---|---|---|
+| `setup_id` | TEXT, the key | One plan per capped candidate. A second write is refused by the key rather than by the stage remembering to check |
+| `as_of` | TEXT | The evening the plan was written on |
+| `live_session` | TEXT | The session it is live in, stored rather than derived |
+| `trigger_price`, `give_up_price`, `give_up_distance` | TEXT | Prices, and the distance between them in money |
+| `shares` | INTEGER, `> 0` | The size, which is PlanBuilder's and not RiskGate's |
+| `equity`, `risk_fraction`, `risk_budget` | TEXT | What the size was computed from, so a plan can be re-derived without knowing which constants were in force |
+| `risk_at_stake` | TEXT | What the rounded share count actually risks, at or below `risk_budget` |
+
+**There is no variant column and the grain above is not wrong.** Columns are owed at their
+checkpoint, and there is one baseline and no versions, so the key at 4.16 is the setup alone. 5.1
+adds the fan-out. A variant column now would hold one value and would give the key nothing to refuse.
+
+**`live_session` is a column rather than an inference**, because deriving it means stepping a
+calendar forward over weekends, which is the shape that made `intended_date` differ across every
+weekend in the forward-return table. 4.5 asserts that a plan is never resolved against a session at
+or before its own date, and it should be reading a stored fact.
+
+**`risk_budget` sits beside `risk_at_stake` so the rounding is visible.** The share count rounds
+down, so a plan risks at or below the budget it was sized from. One column would state either a
+number no trade will ever lose or an outcome with no way to tell rounding from a different rule. It
+is the shape `position` already declares with `risk_intended` beside `risk_realised`.
+
+**A refused candidate is not a row here, and `plan_run` counts it instead.** A capped candidate gets
+no plan because its geometry is absent, because its trigger and give-up point are the same price, or
+because the risk budget cannot buy one share. The first two are already in `setup`, so a per-setup
+refusal table would be a second statement that could disagree with the first, which is the ruling
+WatchlistPublisher took over a watchlist table and VwapEngine took over the day's high and low. The
+third is not derivable from `setup` alone, since it depends on the budget, and none of the three is
+derivable as a *count for a night* without replaying the stage. So the counts are stored, one column
+per reason: a single `refused` total would let the reason that is a defect hide inside the reason
+that is ordinary arithmetic.
 
 ## Research — phases 5 and 6
 

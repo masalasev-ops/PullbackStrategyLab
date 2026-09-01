@@ -42,6 +42,7 @@ public static class Program
         builder.Services.AddSingleton<SpreadSnapshotter>();
         builder.Services.AddSingleton<VwapEngine>();
         builder.Services.AddSingleton<WatchlistPublisher>();
+        builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
@@ -108,6 +109,7 @@ public static class Program
                 SpreadSnapshotter.Name => host.Services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
                 VwapEngine.Name => host.Services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
                 WatchlistPublisher.Name => host.Services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
+                PlanBuilder.Name => host.Services.GetRequiredService<PlanBuilder>().Run(rest),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),

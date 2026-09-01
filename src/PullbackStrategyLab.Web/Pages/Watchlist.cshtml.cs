@@ -12,7 +12,7 @@ namespace PullbackStrategyLab.Web.Pages;
 /// would act on are.
 ///
 /// <b>Plans do not exist yet and the page does not pretend they do.</b> `trade_plan` arrives at 4.16
-/// and share counts need RiskGate's sizing at 4.6, so each row shows the trigger, the give-up price
+/// and share counts arrive with PlanBuilder at 4.16, so each row shows the trigger, the give-up price
 /// and the distance the detector computed, and no share count at all. A column drawn with a number
 /// nothing produced is the one thing that cannot be told from a working screen later.
 ///

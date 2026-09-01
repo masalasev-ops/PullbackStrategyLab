@@ -364,6 +364,21 @@ Nothing is lost by excluding it. The session close is already its own signal and
 
 The two boundaries are `SessionBoundaries.RegularSessionOpen` and `RegularSessionClose`, shipped at 4.2 with the minute bars. `HourlyGrid` derives the grid from them and restates neither, so the session's definition lives in one file.
 
+**The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it**
+PlanBuilder computes the share count at 18:30 from the risk budget and the plan's own give-up distance, and writes it on the plan. RiskGate at trigger may reduce that count to fit a cap, or block the order outright, and it never computes a size of its own.
+
+Three places in this corpus answered it differently, which is what made it a decision rather than a mechanism. The vocabulary calls a plan a committed instruction naming this many shares. The catalogue gives sizing to the component that runs on trigger in the following session. The watchlist built at 4.1 renders no share count and says it is waiting for that component.
+
+**The plan is locked before the open and published at 18:40, so a size has to exist by then.** A plan whose size arrives ten hours later is not a committed instruction, and the page that publishes it would have a column it could not fill.
+
+**Recomputing at trigger would make `plan_audit` compare two of this lab's own numbers.** That component exists to hold a planned stop against an executed one, which is an intention against an outcome. If the size were derived twice from the same inputs, the comparison would be between two runs of one formula, and the only difference it could ever show is a bug in the second run.
+
+**A reduction keeps the plan's give-up price.** Recomputing the distance from a reduced size would change R for the same trade, and R is the unit every downstream figure is denominated in: expectancy, the ceiling gap, the variant comparison and the loss classification all divide by it. A trade that risked less than planned is a trade that risked less than planned, and that is what `risk_intended` beside `risk_realised` is for.
+
+**Every reduction records the cap that caused it.** A size that arrives smaller than the plan's with no reason is indistinguishable from a sizing bug, and the caps are the one thing a comparison between versions must be able to attribute.
+
+**What 4.16 does not settle**, so it does not read as settled: RiskGate does not exist until 4.6, so the half of this that says nothing recomputes a size is held by a source scan naming its one caller rather than by a behavioural test. The scan cannot see a component that reimplements the division instead of calling the function. The behavioural half arrives with the component that could break it.
+
 **The anchored average price is anchored at the swing the thrust ran from**
 The short side's `reached-ceiling` asks whether price came back within half a daily range of "the declining average price anchored to the last swing high". Until 4.4 that anchor was a phrase: nothing said which bar the swing high was, which minute inside it, or what the average was taken over, so three sessions computing the level would all have produced plausible prices and no two would have had to agree. The clause decides the verdict of the gate 423 of the 432 short calibration rows that reach it are refused by, so the level is not a detail of it.
 

@@ -119,9 +119,13 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 "what the scoreboard is for, in a sentence about a person's use of it rather than about its contents",
             ["not in a page somebody looks at"] =
                 "the name of a decision, appearing wherever that decision is cited. A citation is not a claim",
-            ["And it states whether a plan carries a share count"] =
-                "a plan is a store row rather than a surface, and the three places that disagree are documents. "
-                + "The screen the count would appear on is what 4.16 has to settle, and its row says so",
+            ["The watchlist has no share count column and the plan now carries a size"] =
+                "a statement that a column is absent, which is the one shape this check cannot assert against a "
+                + "rendered page: the claim file holds text a page must carry, and there is no text to look for. "
+                + "It replaces the exemption 4.16 made dead, which read that a plan is a store row rather than a "
+                + "surface and that 4.16 had to settle which screen the count appears on. It did settle it, the "
+                + "row was rewritten around the answer, and the sentence the exemption named no longer exists. "
+                + "What is owed is the column itself, which is a row due at 4.11",
             ["this scoreboard also shows decile curves and win rates"] =
                 "the reason a resampling scheme was not adopted, which is an argument about a statistic rather "
                 + "than a statement that a page carries one",

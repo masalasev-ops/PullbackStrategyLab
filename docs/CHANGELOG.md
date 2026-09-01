@@ -27,6 +27,37 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-01 — ARCHITECTURE.html — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  The catalogue gave PlanBuilder "One committed plan per version per candidate", and RiskGate's gloss opened "**One piece of code sizes every position and blocks anything over the limits.**"
+Now:  PlanBuilder builds one committed plan per capped candidate, sized there, and per version per candidate from 5.1. RiskGate applies every limit and blocks, does not size, may reduce the plan's count to fit a cap or block the order, and records which cap bound.
+Why:  Sizing was given to two components by two documents and neither said so. The catalogue's line put it at trigger, the vocabulary put it on the plan, and 4.1's page rendered no share count while waiting for the first. The plan is locked before the open and published at 18:40, so the size has to exist by then; and a size recomputed at trigger would leave `plan_audit` comparing two runs of one formula. The version wording stays as a forward statement rather than being deleted, because 5.1 does add the fan-out.
+
+### 2026-09-01 — SCHEMA.md — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  The Trading section declared `trade_plan` and nothing else about it, with no `plan_run` and no column table.
+Now:  `plan_run` declared beside it with PlanBuilder as its writer, and a column table for `trade_plan` under a new heading, stating the key, the stored live session, the size and the four figures the size was computed from, plus why there is no variant column, why `risk_budget` sits beside `risk_at_stake`, and why a refused candidate is a count rather than a row.
+Why:  Columns are owed at their checkpoint and 4.16 is the checkpoint. The three paragraphs are the decisions the shape encodes: a grain that will gain a variant, a rounding that must stay visible, and a refusal counted rather than duplicated from `setup`, which is the ruling WatchlistPublisher and VwapEngine both took over a second copy of something the store already held.
+
+### 2026-09-01 — RUNBOOK.md — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  | 18:30 | plans per variant | 0 |
+Now:  The same slot naming `plans` as the verb, stating what the stage writes, that PlanBuilder sizes and RiskGate may reduce or block, that a candidate with no trade geometry gets no plan and the run row counts the refusal by reason, and that it is one plan per candidate today and per variant per candidate from 5.1.
+Why:  The row named no stage, so `NightlyOrderTests` parsed no verb out of it and the schedule it reconciles the replay against had a hole exactly where the replay was about to gain a stage. The check fails a replay stage the table does not schedule, in both directions, and it would have failed on this commit.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  4.16's row ended with the three readings of whether a plan carries a share count, and a clause asking the row to say which holds and, if a size were written twice, which is authoritative.
+Now:  The first reading, recorded as a named decision: the plan carries the count, PlanBuilder computes it, RiskGate may reduce or block and never recomputes, a reduction keeps the plan's give-up price, and every reduction records the cap. Plus the rounding stated, the population named as capped candidates with 2.11's other reading addressed, every done condition named over an authored population, and the half of the decision no test can reach until 4.6 named as a scan.
+Why:  The row asked a question and this checkpoint answers it. The population clause is there because 2.11's sentence can be read as saying the opposite and a build session would otherwise take the reading it happened to open first. The scan clause is there because "nothing recomputes a size" cannot be exercised while the component that could break it does not exist, and a source scan offered as the property is the defect this corpus has shipped four times.
+
+### 2026-09-01 — BUILD_PLAN.md — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  The 3.15 obligation row, due at 4.16, naming both halves: that the detectors store a trigger and a give-up price that are equal and non-null on a thrust that has not pulled back, and that PlanBuilder is the first component to read the pair as a size.
+Now:  Removed, and a new row raised at 4.16 carrying the half that is left, being what the detectors write, due at 4.6. 4.16's own row records that the discharge is narrower than it looks: `exit-tight` fails on the null give-up distance such a row carries, so it never becomes a candidate and never reaches the stage that refuses it.
+Why:  Discharging both halves would have closed a row on work that was not done. The consumer half is delivered and tested; the writer half is untouched and is now contained rather than removed, since nothing downstream reads a setup's price pair as a trade. Stating that the guard's subject is currently unreachable is the point: a guard nothing can reach reads exactly like a guard doing something.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The plan is written before the session and is immutable after publication
+Was:  "### What the eighteen due at 4.6 are", opening "Eighteen of the fifty-seven rows above fall due at 4.6", with the classification's "Landed there" group at 11 and the sentence "**The eleven that landed there are the finding**".
+Now:  Nineteen of the fifty-eight, the group at 12, and the sentence naming the twelfth and where it came from.
+Why:  4.16 raises a row that lands at 4.6 for exactly the reason that section describes, and every one of the four figures is derived from the table by `stated-counts` rather than restated, so the sentence and the table cannot part.
+
+
 ### 2026-09-01 — ARCHITECTURE.html — cites Entry slippage is the whole captured spread, symmetric between the directions
 Was:  The authored-parameters intro read "Every value chosen rather than derived, with the basis for each and the point at which it should be revisited. A value changes only by the same route as anything else: a proposal, a stated mechanism, and a paired test."
 Now:  The same with "Nothing here is left open." back between the two sentences, in the words it was removed in.
