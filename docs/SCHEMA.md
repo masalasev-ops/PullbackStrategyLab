@@ -682,6 +682,19 @@ Declared at store level. Columns owed at their checkpoint.
 
 ## Cross-cutting
 
+### Components that own no table
+
+**Not every component writes.** A component whose work is to establish something about rows another
+component wrote would, by writing, become the second writer of the thing it is about, and
+`writer-ownership` would be reconciling a table against two owners. Recorded here rather than left
+as an absence, because a store missing from this document and a component that deliberately owns
+none are indistinguishable from the outside, and the first is a defect.
+
+| Component | Why it owns none |
+|---|---|
+| SetupJournal | It seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. A component enforcing immutability by writing would be the second writer of the thing it protects |
+| WatchlistPublisher | **Ruled at 4.1**, having been the one phase-4 component with no store anywhere in this document. The two answers were a `watchlist` table freezing what was shown, or none and a page that projects the setups. The second holds: `setup` already carries `rank` and `capped_out`, every read of it is bounded on when its rows were observed, and a replay of an evening therefore returns the list that evening showed, corrections and all. A stored copy would be a second statement of one night, and it could disagree with the rows it was copied from with nothing reading both to notice. The stage runs at 18:40 to report what would be on the page, which is the only moment a night that was never capped is noticed without somebody opening a browser |
+
 ### `run_log`
 Grain: run id. Every stage writes a start and an end entry here, so it is delivered at checkpoint 1.1 rather than with the research machinery.
 

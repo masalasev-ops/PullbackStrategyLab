@@ -9929,3 +9929,114 @@ Verified:   `tools/ci.ps1` green at 28 steps and **658 tests**, unchanged, this 
             tables and shares no code with the check.
 
 Carried:    Nothing raised and nothing discharged. The obligations table still reads **58**.
+
+## 4.1 — 2026-09-01 — phase-4-watchlist — the watchlist page, the clause a gate failed on, and the direction surface-claims never read
+
+The fourth checkpoint of phase 4 and the first screen since 3.5. It depends on none of the ten open
+answers, which is why it runs while 4.15 waits.
+
+Built:      **The watchlist page, over the read surface and with no new endpoint.** `/setups/{asOf}`
+            already returns rank and the cap flag, so the watchlist is that answer filtered to
+            `capped_out = 0`, ordered by rank and split into two panels. A second endpoint returning
+            the same rows in another shape would be two definitions of one night.
+
+            **A row the cap cut is dropped and a row that failed a gate is greyed**, which are
+            different facts: the first was never a candidate and the second is a candidate the lab
+            looked at and rejected. The greyed row names each failing check and, where the gate has
+            more than one clause, which clause fell over.
+
+            **No share count and no conflict banner.** Sizing is RiskGate's at 4.6 and the banner
+            needs an open position at 4.7, so both are absent rather than drawn empty: a column with
+            no source reads as a figure the lab computed and got nothing for.
+
+            **`WatchlistPublisher` owns no table, ruled here rather than at 4.15.** The two answers
+            were a `watchlist` table freezing what was shown, or none and a page that projects the
+            setups. The second holds: `setup` carries `rank` and `capped_out`, every read of it is
+            bounded on observation, and a replay of an evening therefore returns the list that
+            evening showed, corrections included. A stored copy would be a second statement of one
+            night that could disagree with the rows it came from, with nothing reading both to
+            notice. SCHEMA records the absence beside SetupJournal's, in a section that did not
+            exist: a store missing from that document and a component that deliberately owns none
+            were indistinguishable, and the first is a defect. The stage runs at 18:40 and reports
+            what the page would show, which is where a night that was never capped is noticed.
+
+            **It was moved off 4.15 because 4.15 is gated on ten operator answers and none of them
+            bears on this**, so a page would otherwise have waited on an unrelated question.
+
+Found:      **The status band deferred a field to a checkpoint that landed two phases ago.** It
+            rendered "not until 2.5" for the market mood through the whole of phase 3, with
+            RegimeLabeler built and labelling every night. That is a deferral outliving its own due
+            point, which the phase report refuses for a claim and which nothing refused for a screen,
+            and it is worse than an ordinary deferral because the checkpoint that would have filled
+            it is not coming back. The mood reads the night's label now, and a guard fails any band
+            field waiting on a checkpoint `PROGRESS` records.
+
+            **`CheckReading` said "of four clauses" for a gate that tests two.** The long `tradable`
+            checks turnover and price; only `tradable-shortable` has four. It is a count restated in
+            a display helper, which is the defect that file's own summary already argues against one
+            line up, about thresholds, and it survived because the sentence was true of the gate
+            whoever wrote it had in mind. The count is derived from the gate's clause list now.
+
+            **The page's "nothing published" and the shell's "not built" read identically**, and a
+            test caught it. Every unbuilt screen says "Nothing here yet", so a built page reusing the
+            phrase reports itself as unbuilt on the one surface a person reads, and the test that
+            asserts a landed screen has stopped waiting would have passed on a page claiming it never
+            arrived. The two states have different words now.
+
+Discharged: **Which clause of a multi-clause gate failed, raised at 2.9.** `CheckResult` carries a
+            verdict and a number per clause, and the four multi-clause gates supply them: `tradable`
+            two, `tradable-shortable` four, `dip-shape` and `bounce-shape` two each. Null rather than
+            an empty list on a single-clause gate, because "this gate has no clauses" and "this gate
+            is its own clause" are different statements. The capitalisation clause records an
+            exemption as a pass with **no value** rather than a pass with a number it did not read,
+            so a calibration row and a nightly row differ by something a query can select on.
+
+            **Asserted against the store rather than the record.** A type gaining a property proves
+            nothing about the evidence: the detector serialises what it evaluated, the read surface
+            deserialises it back, and either end could drop the field with no test of the type
+            noticing. `ClauseResultTests` runs a detector and reads the clause values out of
+            `check_results`.
+
+            **The row predicted the fix would move the `setup.*` and `check.*` expectations at 2.6,
+            2.7 and 2.11, and it moved none of them.** The stored JSON gained a field and every
+            expectation over those rows records a derived figure rather than the JSON. The prediction
+            was reasonable and wrong, and why it was wrong is the part worth keeping: an expectation
+            is moved only by a change to what it measures, and none of them measured the shape. That
+            is also why this checkpoint owes the fixture three new figures rather than none.
+
+            **The direction `surface-claims` does not reconcile, raised at 3.12 and named at 3.7.**
+            It now reads the corpus back against the claim file: every sentence claiming something
+            appears on a surface is declared, or exempted by name with the reason it is not one.
+            **It found two claims held by nothing** — that band 1 shows its raw and effective counts,
+            and that every scoreboard panel shows its own count — which is what the row said would be
+            there, and one claim deferred to this checkpoint that had come due.
+
+            **Two things about building it are worth the lines.** The first pattern matched
+            thirty-four sentences of which half were prose holding a surface word and a verb by
+            coincidence, and a scope answered by its own exemption list measures the exemption list;
+            requiring the verb within thirty characters of the surface brings it to sixteen, and the
+            floor was lowered with that reasoning recorded rather than left where it stood. And the
+            reverse read **passed on its first run**, which is the shape this session has now found
+            four times, so the proof beside it removes one declaration and requires that claim's own
+            sentence to surface. Written as an ask rather than a name: it picks whichever declared
+            claim the removal makes undeclared, so a test naming a claim that later stops matching
+            cannot keep passing while proving nothing.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **668 tests**, from 658. `tools/verify-phase.ps1`
+            GREEN: **128 claims, 83 passed, 0 failed, 45 out of scope, 0 unexamined**, coverage
+            examined 5,277, **1,378 expectations** of which 1 void, inputs CAPTURED 70 and AUTHORED
+            133. Out of scope was read against the ceiling of 52 before the commit and **falls from
+            47 to 45**, the two being the watchlist's own catalogue claim and the surface claim that
+            had been deferred to this checkpoint and came due.
+
+            **Three DERIVED expectations, and the first derivation of them was wrong.** It assumed
+            one long setup and one short, read off `detect.long.recorded` and `detect.short.recorded`,
+            which count what one detector run recorded rather than what the night holds; the store
+            holds three. The arithmetic settles the split without another query, because a long setup
+            contributes four clause verdicts and a short six, so fourteen is two longs and one short.
+            Thirty gates, six carrying a clause list, fourteen clause verdicts. The third is the one
+            that carries the property: it was nought before this checkpoint and no expectation in the
+            fixture could have seen the shape change.
+
+Carried:    Two discharged and none raised, so the obligations table falls from 58 to **56**. None
+            falls due at 4.1. Eighteen still fall due at 4.6.

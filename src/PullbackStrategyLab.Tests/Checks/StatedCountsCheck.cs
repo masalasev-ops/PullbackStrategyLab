@@ -164,60 +164,19 @@ public sealed partial class StatedCountsCheck
         int dueAtTheWatchlist = obligations.Count(
             r => r.Count > 2 && r[2].Trim().Equals("4.1", StringComparison.Ordinal));
 
-        // The table's own total and the count due at 4.1, both read out of the document.
+        // <b>The 4.1 classification stated four of these figures and states none now</b>, because
+        // 4.1 discharged both its rows and the pile is nought. Its section is a record of what the
+        // two were rather than a classification of what is left, so there is no count in it to
+        // derive, and the claims that read it are removed rather than pointed at a sentence written
+        // to keep them passing. The same four figures are asserted of the 4.6 pile below, which was
+        // registered in the commit that wrote it for exactly this reason: a second classification
+        // existed before the first one emptied, so nothing was lost when it did.
         //
-        // They were the literals 59 and 31 until 3.15, and that is the sign-off's fifth finding:
-        // six lines below, the permit claims call InWords and read their figure out of BUILD_PLAN,
-        // so the number lives in one place and moving it is a document edit. These two were pinned
-        // here instead, which made adding or repointing an obligation row a source edit. A session
-        // that commits code may not sign it off, so a sign-off session could not touch the
-        // obligations table without disqualifying itself: 3.15 ruled a repoint and recorded that it
-        // could not execute it, for exactly that reason.
-        //
-        // The opening sentence states both figures, so one match pins the shape of the sentence as
-        // well as the numbers in it.
-        Match opening = OpeningSentence().Match(buildPlan);
-        Assert.True(opening.Success,
-            "BUILD_PLAN.md's classification section no longer opens with \"<count> of the <total> rows above fall "
-            + "due at 4.1\", which is the sentence both obligation figures are read from.");
-
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the carried obligations table's own total",
-            FromWordsOrFail(opening.Groups["total"].Value),
-            obligations.Count,
-            "rows of the carried obligations table"));
-
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the obligations due at 4.1, stated in its opening sentence",
-            FromWordsOrFail(opening.Groups["due"].Value),
-            dueAtTheWatchlist,
-            "rows of the carried obligations table falling due at 4.1"));
-
-        // The heading states the same count a third time, and it is the anchor the classification
-        // table is read from, so it is matched rather than spelled out.
-        Match heading = ClassificationHeading().Match(buildPlan);
-        Assert.True(heading.Success,
-            "BUILD_PLAN.md has no \"### What the <count> due at 4.1 are\" heading, which is both a stated count "
-            + "and the anchor the classification table is read from.");
-
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the obligations due at 4.1, stated in its heading",
-            FromWordsOrFail(heading.Groups["due"].Value),
-            dueAtTheWatchlist,
-            "rows of the carried obligations table falling due at 4.1"));
-
-        IReadOnlyList<IReadOnlyList<string>> groups =
-            MarkdownTable.BodyRowsAfter(buildPlan, heading.Value);
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups the pile is classified into",
-            3,
-            groups.Count,
-            "rows of the classification table"));
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups add up to the pile they classify",
-            dueAtTheWatchlist,
-            groups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
-            "the classification's own three counts, summed"));
+        // `dueAtTheWatchlist` stays as the assertion that the pile really is empty, which is the one
+        // thing worth saying about it and is not a stated count.
+        Assert.True(dueAtTheWatchlist == 0,
+            $"{dueAtTheWatchlist} obligation row(s) fall due at 4.1, which PROGRESS records as landed with both of "
+            + "its rows discharged. Either a row was repointed there after the fact, or the discharge did not happen.");
 
         // BUILD_PLAN.md, the same three figures for the 4.6 pile.
         //

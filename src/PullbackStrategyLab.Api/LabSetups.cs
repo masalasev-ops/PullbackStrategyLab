@@ -185,7 +185,9 @@ public sealed class LabSetups
             setup.Agreement,
             setup.AgreementNote,
             setup.DegradedBecause,
-            [.. checks.Select(c => new SetupCheckView(c.Name, c.Passed, c.Value, c.Note))],
+            [.. checks.Select(c => new SetupCheckView(
+                c.Name, c.Passed, c.Value, c.Note,
+                [.. c.FailedClauses.Select(f => f.Name)]))],
             candles);
     }
 }
@@ -227,7 +229,20 @@ public sealed record SetupView(
     IReadOnlyList<SetupCandle> Candles);
 
 /// <summary>One check's verdict, with the number it turned on.</summary>
-public sealed record SetupCheckView(string Name, bool Passed, decimal? Value, string? Note);
+/// <summary>
+/// One check's verdict on the wire, and the clauses it failed on where it has more than one.
+///
+/// <b>The failing clauses rather than every clause</b>, because that is the question the watchlist
+/// asks: a greyed row wants to say which of `tradable-shortable`'s four floors it missed. The full
+/// clause list with every number is in the store and reaches a threshold experiment through
+/// `check_results`, which is where a distribution is computed rather than read off a screen.
+/// </summary>
+public sealed record SetupCheckView(
+    string Name,
+    bool Passed,
+    decimal? Value,
+    string? Note,
+    IReadOnlyList<string> FailedClauses);
 
 /// <summary>One session in a thumbnail, on the adjusted basis.</summary>
 public sealed record SetupCandle(string Date, decimal Open, decimal High, decimal Low, decimal Close);

@@ -46,10 +46,33 @@ public static class LabStatus
             CountRows(connection, "daily_bar", null),
             callsUsed,
             dailyCallCeiling,
-            MarketMood: null,
+            MarketMood: MoodOfLatestSession(connection),
             PositionsOpen: null,
             ShortPositionsOpen: null,
             RiskAtStake: null);
+    }
+
+    /// <summary>
+    /// The market mood for the session the store is current to, or null where that night was never
+    /// labelled.
+    ///
+    /// <b>It has a source as of 4.1 and had one since 2.5.</b> The band rendered "not until 2.5" for
+    /// every night RegimeLabeler had already labelled, which is a deferral outliving its own due
+    /// point on a surface: the same fault the report's out-of-scope rule exists to stop, arriving
+    /// where no report looks. A field waiting on a landed checkpoint is worse than one waiting on an
+    /// unlanded one, because the checkpoint that would have filled it is not coming back.
+    ///
+    /// Null still means the night was not labelled, which is a real state and different again from
+    /// "this is not built yet". The band shows the first as a dash with a reason and would show the
+    /// second with a checkpoint, and it can no longer show the second for this field at all.
+    /// </summary>
+    private static string? MoodOfLatestSession(SqliteConnection connection)
+    {
+        string? session = LatestSession(connection);
+
+        return session is null
+            ? null
+            : RegimeReader.Read(connection, StoreText.StorageTextToDate(session))?.Label;
     }
 
     /// <summary>

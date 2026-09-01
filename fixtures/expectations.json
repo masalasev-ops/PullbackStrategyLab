@@ -10404,6 +10404,30 @@
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
       "note": "catalogued types no phase's Builds row names. This is the one that carries the property and the three above are the population it was computed over: nought unplaced means nothing without the count it was nought out of, since a parser reading no rows reports nought too. It read 6 before 4.14, of which the plan had found 3 by hand"
+    },
+    {
+      "id": "clauses.gatesRecorded",
+      "tier": "DERIVED",
+      "value": "30",
+      "checkpoint": "4.1",
+      "producedBy": "derived by hand from the rules before the replay was run, then run, and the first derivation was wrong in a way worth keeping. It assumed one long setup and one short, read off detect.long.recorded and detect.short.recorded, which count what one detector run recorded rather than what the night holds; the store holds three. The arithmetic settles the split without another query: the four multi-clause gates carry two, two, four and two clauses, so a long setup contributes four clause verdicts and a short six, and fourteen is two longs and one short. Thirty gates over three setups at ten checks each, and six of them carry a clause list, which is two per setup.",
+      "note": "every check verdict the night stored, both sides"
+    },
+    {
+      "id": "clauses.gatesCarryingClauses",
+      "tier": "DERIVED",
+      "value": "6",
+      "checkpoint": "4.1",
+      "producedBy": "derived by hand from the rules before the replay was run, then run, and the first derivation was wrong in a way worth keeping. It assumed one long setup and one short, read off detect.long.recorded and detect.short.recorded, which count what one detector run recorded rather than what the night holds; the store holds three. The arithmetic settles the split without another query: the four multi-clause gates carry two, two, four and two clauses, so a long setup contributes four clause verdicts and a short six, and fourteen is two longs and one short. Thirty gates over three setups at ten checks each, and six of them carry a clause list, which is two per setup.",
+      "note": "of those, the ones that recorded a clause list. The population beside the figure below"
+    },
+    {
+      "id": "clauses.verdictsRecorded",
+      "tier": "DERIVED",
+      "value": "14",
+      "checkpoint": "4.1",
+      "producedBy": "derived by hand from the rules before the replay was run, then run, and the first derivation was wrong in a way worth keeping. It assumed one long setup and one short, read off detect.long.recorded and detect.short.recorded, which count what one detector run recorded rather than what the night holds; the store holds three. The arithmetic settles the split without another query: the four multi-clause gates carry two, two, four and two clauses, so a long setup contributes four clause verdicts and a short six, and fourteen is two longs and one short. Thirty gates over three setups at ten checks each, and six of them carry a clause list, which is two per setup.",
+      "note": "clause verdicts stored across the night. The figure that carries the property: it was nought before 4.1 and no expectation could have seen the shape change"
     }
   ],
   "frozenOnly": [

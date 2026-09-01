@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +33,7 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// well laid out, or any good. A claim whose surface arrives later names the checkpoint that builds
 /// it and is counted out of scope, so the number falls as checkpoints land rather than resting.
 /// </summary>
-public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<LabApiClient>>
+public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<LabApiClient>>
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -56,6 +57,134 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
         string Why);
 
     private sealed record ClaimFile(string Tier, IReadOnlyList<Claim> Claims);
+
+    /// <summary>
+    /// The declared claims, read from the committed file. Exposed so the proof beside this check can
+    /// run the reverse read with them and without them, which is the whole of what it proves.
+    /// </summary>
+    internal static IReadOnlyList<Claim> DeclaredClaims() =>
+        JsonSerializer.Deserialize<ClaimFile>(
+            File.ReadAllText(Path.Combine(RepositoryLayout.Root, "fixtures", "surface-claims.json")), Json)
+            ?.Claims ?? [];
+
+    /// <summary>
+    /// The documents the reverse read covers, and the sentence shapes it treats as a claim about a
+    /// surface.
+    ///
+    /// <b>Narrow on purpose.</b> A sentence claims something reaches a person only if it names a
+    /// surface and says something appears on it, so both halves are required. A pattern on the verb
+    /// alone matches every sentence in the corpus about what a store records, and a check that
+    /// matched everything would be answered by an exemption list rather than by a claim file.
+    /// </summary>
+    private static readonly string[] Corpus =
+    [
+        "docs/ARCHITECTURE.html", "docs/SCHEMA.md", "docs/BUILD_PLAN.md",
+        "CLAUDE.md", "docs/DECISIONS.md", "docs/RUNBOOK.md",
+    ];
+
+    /// <summary>
+    /// A surface named, and something said to appear on it within thirty characters of naming it.
+    ///
+    /// <b>The proximity is what makes this a pattern rather than a sieve.</b> Asking only that a
+    /// sentence contain a surface word somewhere and a visibility verb somewhere matched thirty-four
+    /// sentences, of which half were prose that happened to hold both: "the one thing that was
+    /// prose" and "belongs to a check" are not claims about a screen. A list of exemptions that long
+    /// would be the check being answered by its exemptions, which is the shape it exists to refuse.
+    /// </summary>
+    [GeneratedRegex(@"(screen|page|band|panel|gallery|card|watchlist|scoreboard|journal)[^.]{0,30}?\b(shows|show|renders|render|displays|is shown|are shown)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ClaimsSomethingAppearsOnASurface();
+
+    [GeneratedRegex(@"<[^>]+>", RegexOptions.CultureInvariant)]
+    private static partial Regex Markup();
+
+    [GeneratedRegex(@"(?<=[.!?])\s+", RegexOptions.CultureInvariant)]
+    private static partial Regex Sentences();
+
+    /// <summary>
+    /// Sentences the pattern matches that are not claims about a surface, each with the reason.
+    ///
+    /// Keyed by a fragment that identifies the sentence rather than by the whole of it, so an
+    /// editorial change to the words does not silently drop the exemption and re-admit the sentence
+    /// under a name nobody reads. A fragment that stops matching turns the sentence back into an
+    /// undeclared claim, which is the direction this list should fail in.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> ExemptSentences { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["figures shown are illustrative rather than measured"] =
+                "a caption on a mockup saying its own figures are not real, which is the opposite of a claim that "
+                + "something appears on a live page. Both screen descriptions carry it as of 4.14",
+            ["It is the page you would show someone"] =
+                "what the scoreboard is for, in a sentence about a person's use of it rather than about its contents",
+            ["not in a page somebody looks at"] =
+                "the name of a decision, appearing wherever that decision is cited. A citation is not a claim",
+            ["And it states whether a plan carries a share count"] =
+                "a plan is a store row rather than a surface, and the three places that disagree are documents. "
+                + "The screen the count would appear on is what 4.16 has to settle, and its row says so",
+            ["this scoreboard also shows decile curves and win rates"] =
+                "the reason a resampling scheme was not adopted, which is an argument about a statistic rather "
+                + "than a statement that a page carries one",
+            ["the journal that shows the pair to a person at 4.11"] =
+                "already deferred as a declared claim under its own name, and this is the same sentence read "
+                + "from the decision that states it rather than from the document the claim names",
+            ["reports what the page would show"] =
+                "what the publish-watchlist stage prints in a log, which is a statement about a stage and not "
+                + "about a rendered page. Written at 4.1, in RUNBOOK and again in BUILD_PLAN's row, and the key "
+                + "is the fragment the two share: the first version of this entry quoted one of them whole and "
+                + "the check caught the other on the same day, which is the reverse read working on this "
+                + "session's own prose",
+            ["the scoreboard's loss-share panel shows the four causes"] =
+                "the loss-share panel is band 2's and the fifth category it names arrives with LossClassifier at "
+                + "4.10, so the surface cannot carry it yet. It is deferred rather than exempt in spirit, and it "
+                + "is here rather than in the claim file because the sentence is about what the taxonomy holds "
+                + "rather than about what the page draws",
+        };
+
+    /// <summary>
+    /// Every corpus sentence that claims something reaches a surface, read back against the claim
+    /// file. Returns how many were examined and which are declared nowhere.
+    ///
+    /// A sentence counts as declared when a claim's own sentence appears inside it, which is the
+    /// relation the claim file already has to the corpus: a claim quotes the phrase it is about.
+    /// </summary>
+    internal static (int Examined, string[] Undeclared) CorpusSentencesClaimingVisibility(
+        IReadOnlyList<Claim> claims)
+    {
+        var undeclared = new List<string>();
+        int examined = 0;
+
+        foreach (string document in Corpus)
+        {
+            string text = Markup().Replace(
+                RepositoryLayout.Read(Path.Combine(RepositoryLayout.Root, document)), " ");
+
+            foreach (string sentence in Sentences().Split(text))
+            {
+                string one = string.Join(' ', sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+                if (one.Length == 0 || !ClaimsSomethingAppearsOnASurface().IsMatch(one))
+                {
+                    continue;
+                }
+
+                examined++;
+
+                bool declared = claims.Any(c => one.Contains(
+                    string.Join(' ', c.Sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
+                    StringComparison.OrdinalIgnoreCase));
+
+                bool exempt = ExemptSentences.Keys.Any(k => one.Contains(k, StringComparison.Ordinal));
+
+                if (!declared && !exempt)
+                {
+                    undeclared.Add($"{document}: {(one.Length > 150 ? one[..150] + "..." : one)}");
+                }
+            }
+        }
+
+        return (examined, [.. undeclared]);
+    }
 
     [Fact]
     [Trait("check", "surface-claims")]
@@ -84,10 +213,23 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
             failures.AddRange(Missing(claim, html));
         }
 
+        // The direction that was missing until 4.1, raised at 3.12 and named at 3.7 before that.
+        //
+        // Everything above reconciles the claim file against the pages: a declared claim whose
+        // surface has stopped carrying it fails. Nothing reconciled the corpus against the claim
+        // file, so a sentence claiming something is shown was guarded only if somebody remembered
+        // to declare it. Both of the claims 3.11 exercised were true of the pages and held by
+        // nothing, and 3.12 added them by reading the commits rather than by anything failing.
+        // That is the defect this check exists for, one level up: an assertion whose subject set is
+        // whatever a person put in it.
+        (int candidates, string[] undeclared) = CorpusSentencesClaimingVisibility(file.Claims);
+
         coverage
             .Examined("claims of visibility declared in the corpus", file.Claims.Length())
             .Examined("of those whose surface exists and was rendered and read", live.Length)
+            .Examined("corpus sentences claiming visibility, read back against the claim file", candidates)
             .Context("surfaces rendered", rendered.Count)
+            .Context("sentences exempted from the reverse read, each with its reason", ExemptSentences.Count)
             .NoSourceScan(
                 "it renders each page through the host and compares what came back against the text the "
                 + "corpus claims is on it. Neither side is the shipped source: one is a rendered response and "
@@ -106,6 +248,13 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
         }
 
         coverage.Report();
+
+        Assert.True(undeclared.Length == 0,
+            $"{undeclared.Length} corpus sentence(s) claim something reaches a surface and are declared in "
+            + "no claim in fixtures/surface-claims.json, so nothing asserts them against the page they are "
+            + "about: " + string.Join(" | ", undeclared)
+            + " Declare each with the surface it is about, or name it in ExemptSentences with the reason "
+            + "it is not a claim about a surface.");
 
         Assert.True(live.Length > 0,
             "No live claims were read at all, which means the claim file stopped parsing and this "
@@ -238,7 +387,19 @@ public sealed class SurfaceClaimsCheck : IClassFixture<WebApplicationFactory<Lab
     private const string Night = """
         {
           "asOf": "2026-08-24", "failedCheck": null, "flagged": 1,
-          "long": [],
+          "long": [
+            { "setupId": "2026-08-24-AAPL-long", "ticker": "AAPL", "direction": "long",
+              "rank": 1, "cappedOut": false, "passedAll": false,
+              "triggerPrice": 37.67, "stopPrice": 36.42, "stopDistanceRanges": 0.50,
+              "agreement": null, "agreementNote": null, "degradedBecause": null,
+              "checks": [
+                { "name": "tradable", "passed": false, "value": 9849921234.0, "note": null,
+                  "failedClauses": ["price"] },
+                { "name": "moves-enough", "passed": true, "value": 0.068, "note": null,
+                  "failedClauses": [] }
+              ],
+              "candles": [] }
+          ],
           "short": [
             { "setupId": "2026-08-24-INTC-short", "ticker": "INTC", "direction": "short",
               "rank": null, "cappedOut": null, "passedAll": false,

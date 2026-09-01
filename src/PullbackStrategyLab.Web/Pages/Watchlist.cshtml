@@ -2,17 +2,97 @@
 @using PullbackStrategyLab.Web.Shell
 @model WatchlistModel
 @*
-    The empty state, which is the whole page until 4.1. It names what will fill it and
-    which checkpoint fills it, because an empty page that says so is honest and a page of
-    invented rows is not.
+    The morning screen: last night's published candidates, long and short in divided panels.
+
+    Two panels and never one list with a direction column, on the rule the whole corpus is built
+    around. A pooled figure on this screen would be the first one anybody read.
+
+    Nothing here is stubbed. Where a column has no source yet the column is absent rather than
+    blank, and the note under the panels says which checkpoint gives it one.
 *@
 <h1>@Model.Item.Title</h1>
 <p class="lede">@Model.Item.What.</p>
 
-<div class="empty-state">
-    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
-    <p>The shell, its navigation, the status band and the shared chart component are what
-       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
-       invented data reads as a working screen and is the one thing that cannot be told apart
-       from the real one later.</p>
-</div>
+@if (Model.Watchlist.DegradedBecause is string degraded)
+{
+    <p class="down">
+        This night ran degraded: @degraded. Every candidate below was flagged on inputs that were
+        already incomplete, which is a property of the night rather than of any one name.
+    </p>
+}
+
+@if (Model.Watchlist.Nothing is string nothing)
+{
+    @* "No candidates tonight" and "this page is not built" are different facts and the words have
+       to be different too. Every unbuilt screen in this shell says "Nothing here yet", so a built
+       page reusing that sentence would report itself as unbuilt on the one surface a person reads,
+       and the test that asserts a landed screen has stopped waiting would pass on a page that
+       claims it never arrived. *@
+    <div class="empty-state">
+        <p><b>No candidates published.</b> @nothing.</p>
+        <p>The screen is built and this night has nothing on it. A night that published none is an
+           ordinary outcome of the cap and the gates, and it is not the same as a page waiting for a
+           checkpoint: those say so in the words above, and this one does not.</p>
+    </div>
+}
+else
+{
+    <p class="lede">Session @Model.Watchlist.AsOf, @Model.Watchlist.Published published of the night's flagged setups.</p>
+
+    <div class="row">
+        @{
+            void Panel(string title, string kind, IReadOnlyList<WatchlistRowView> rows)
+            {
+                <div class="col" style="flex:1">
+                    <h2>@title <span class="pill">@rows.Count</span></h2>
+                    @if (rows.Count == 0)
+                    {
+                        <p class="muted">The cap published nothing on this side tonight.</p>
+                    }
+                    else
+                    {
+                        <table class="watchlist @kind">
+                            <tr>
+                                <th>Rank</th><th>Ticker</th><th>Trigger</th><th>Give up</th>
+                                <th>Distance</th><th>Failed</th>
+                            </tr>
+                            @foreach (WatchlistRowView row in rows)
+                            {
+                                <tr class="@(row.Greyed ? "greyed" : null)">
+                                    <td>@row.RankLabel</td>
+                                    <td><a href="/chart/@row.Ticker">@row.Ticker</a></td>
+                                    <td>@row.Price(row.TriggerPrice)</td>
+                                    <td>@row.Price(row.StopPrice)</td>
+                                    <td>@row.Price(row.StopDistanceRanges)</td>
+                                    <td>
+                                        @if (row.Failures.Count == 0)
+                                        {
+                                            <span class="pass">all pass</span>
+                                        }
+                                        else
+                                        {
+                                            @* The failing check, and which of its clauses fell over
+                                               where it has more than one. A row greyed for
+                                               tradable-shortable said nothing about which of four
+                                               floors it missed until 4.1. *@
+                                            @string.Join(", ", row.Failures.Select(f => f.Label))
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    }
+                </div>
+            }
+        }
+        @{ Panel("Long", "long", Model.Watchlist.Long); }
+        @{ Panel("Short", "short", Model.Watchlist.Short); }
+    </div>
+
+    <p class="muted">
+        <b>No share count, and no conflict banner yet.</b> Sizing is RiskGate's and arrives at
+        <b>4.6</b>; the conflict banner needs an open position to conflict with and arrives at
+        <b>@WatchlistView.ConflictArrivesAt</b>. Both are absent rather than drawn empty, because a
+        column with no source reads as a figure the lab computed and got nothing for.
+    </p>
+}
