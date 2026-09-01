@@ -10372,6 +10372,38 @@
       "checkpoint": "4.3",
       "producedBy": "derived by hand from the captured bytes and then run. tools reads fixtures/captured/us-quote-delayed.json with a different language\u2019s JSON reader, takes the names from the manifest\u2019s own query rather than from the answer, and computes the spread as basis points of the mid of the two quoted sides. It shares no code with the reader under test. The response was captured on 2026-09-01 for the thirty-one tickers the fixture already holds fundamentals for.",
       "note": "basis points of the mid"
+    },
+    {
+      "id": "catalogue.components",
+      "tier": "DERIVED",
+      "value": "54",
+      "checkpoint": "4.14",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "rows in the component catalogue"
+    },
+    {
+      "id": "catalogue.componentTypes",
+      "tier": "DERIVED",
+      "value": "47",
+      "checkpoint": "4.14",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "of those, the ones that are a type rather than a screen"
+    },
+    {
+      "id": "catalogue.screens",
+      "tier": "DERIVED",
+      "value": "7",
+      "checkpoint": "4.14",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "of those, the ones a Builds cell names in prose, which the token extractor cannot see"
+    },
+    {
+      "id": "catalogue.unplacedInAnyBuildsRow",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.14",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "catalogued types no phase's Builds row names. This is the one that carries the property and the three above are the population it was computed over: nought unplaced means nothing without the count it was nought out of, since a parser reading no rows reports nought too. It read 6 before 4.14, of which the plan had found 3 by hand"
     }
   ],
   "frozenOnly": [

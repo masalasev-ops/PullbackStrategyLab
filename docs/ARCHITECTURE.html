@@ -460,14 +460,15 @@ tr:hover td{background:#f4f2ec}
 </div>
 
 <h3 id="why-each-loss-happened">Why each loss happened</h3>
-<p>One demoralising number becomes four actionable ones. Every closed loss is classified automatically from data the lab already holds.</p>
+<p>One demoralising number becomes four actionable ones. Every closed loss is classified automatically from data the lab already holds, and a loss the rules cannot place is <b>recorded as <code>unclassified</code> rather than forced into the nearest bucket</b>: a taxonomy with no such category makes its own coverage unreadable, because a cause that is always assigned can never be shown to be missing one.</p>
 <table>
 <tr><th style="width:170px">Cause</th><th style="width:280px">How it is detected</th><th>What it points at</th></tr>
 <tr><td>Noise stop-out</td><td>Stopped out, but the ten-day follow-up shows the move happened anyway</td><td>Execution. Entry timing or stop placement, not the filter</td></tr>
 <tr><td>Failed setup</td><td>Stopped out and the follow-up is flat or against you</td><td>The filter. This is the bucket selection changes can actually reduce</td></tr>
 <tr><td>Gap loss</td><td>Loss larger than one unit of risk</td><td>Selection. Liquidity floor, or avoiding earnings dates inside the window</td></tr>
-<tr><td>Never triggered</td><td>No trade, but the setup still has a follow-up</td><td>The trigger rule. Evidence about entries you are missing</td></tr>
+<tr><td><code>unclassified</code></td><td>Nothing above fits. Written as a value rather than left null, and it is a real category</td><td>The taxonomy itself. A share that grows is the four causes failing to cover what the lab is seeing, which is a finding about the classifier rather than about the trades</td></tr>
 </table>
+<p><b>"Never triggered" was a fifth row here and is not a loss.</b> A setup that never triggered opened no position, so there is no trade, no realised risk and no exit: it is evidence about the trigger rule and about entries the lab is missing, and it is worth having. What it cannot be is a row in a table grained on <code>trade</code>, because the thing it would describe does not exist. It is counted where the setups are, against the flagged population that produced it, and the scoreboard's loss-share panel shows the four causes and <code>unclassified</code>, which is what its shares now sum over.</p>
 <p>A 25% win rate where most losses are failed setups is a filter problem worth solving. The same 25% where most are noise stop-outs on stocks that then ran is an execution problem, and no amount of filter improvement will touch it. The system cannot tell you which without this classification.</p>
 
 <h3 id="the-ceiling-computed-rather-than-assumed">The ceiling, computed rather than assumed</h3>
@@ -679,7 +680,7 @@ tr:hover td{background:#f4f2ec}
 <table>
 <tr><th style="width:190px">Section</th><th style="width:300px">Contents</th><th>Why it changes the answer</th></tr>
 <tr><td>Population</td><td>Count, date span, regime mix, setups per night, long against short</td><td>Stops the model reasoning about a period whose shape it cannot see</td></tr>
-<tr><td>Loss taxonomy</td><td>The four causes with counts</td><td>Turns one number into four, each with a different owner</td></tr>
+<tr><td>Loss taxonomy</td><td>The four causes and <code>unclassified</code>, with counts</td><td>Turns one number into four, each with a different owner</td></tr>
 <tr><td>Ceiling gap</td><td>Achieved win rate against the computed bound</td><td>Says whether selection has room left or the stop is the binding constraint</td></tr>
 <tr><td>Signal conditionals</td><td>Each shown signal in deciles against forward return, best and worst excursion, with sample counts</td><td>The actual evidence. Without it the model is speculating</td></tr>
 <tr><td>Multiple comparison</td><td>How many signals were screened and the corrected threshold</td><td>Thirty signals guarantee a spurious winner. The pack has to say so</td></tr>
@@ -723,22 +724,22 @@ tr:hover td{background:#f4f2ec}
 
 <div class="fig">
 <div class="col" style="gap:12px">
-  <div class="box b5" style="min-width:640px"><span class="bt">Status band, spans both panels</span><span class="bs">Date &nbsp;·&nbsp; market mood &nbsp;·&nbsp; positions open 3 of 4, shorts 1 of 2 &nbsp;·&nbsp; total risk at stake 2.1% of 3% &nbsp;·&nbsp; nightly job clean or degraded &nbsp;·&nbsp; calls used 690 of 5,000</span></div>
+  <div class="box b5" style="min-width:640px"><span class="bt">Status band, spans both panels</span><span class="bs">Date &nbsp;·&nbsp; market mood &nbsp;·&nbsp; positions open n of 4, shorts n of 2 &nbsp;·&nbsp; total risk at stake n.n% of 3% &nbsp;·&nbsp; nightly job clean or degraded &nbsp;·&nbsp; calls used n,nnn of 5,000</span></div>
   <div class="row" style="gap:14px">
     <div class="col" style="flex:1">
-      <div class="box b2" style="min-width:310px"><span class="bt">LONG &nbsp;<span class="pill pl">buy</span> &nbsp;— 14 flagged</span><span class="bs">Ranked. Each row: ticker, chart thumbnail, trigger, give-up price, distance in % and in ADR units, share count, check strip</span></div>
-      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">SMCI &nbsp; 37.67 → 36.42</span><span class="bs">3.4% &nbsp;·&nbsp; 0.50 ADR &nbsp;·&nbsp; 789 sh &nbsp;·&nbsp; that check–that check pass, that check fail</span></div>
-      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">CRWV &nbsp; 112.40 → 109.10</span><span class="bs">2.9% &nbsp;·&nbsp; 0.43 ADR &nbsp;·&nbsp; 227 sh &nbsp;·&nbsp; all pass</span></div>
+      <div class="box b2" style="min-width:310px"><span class="bt">LONG &nbsp;<span class="pill pl">buy</span> &nbsp;— nn flagged</span><span class="bs">Ranked. Each row: ticker, chart thumbnail, trigger, give-up price, distance in % and in ADR units, share count, check strip</span></div>
+      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">SMCI &nbsp; nn.nn → nn.nn</span><span class="bs">n.n% &nbsp;·&nbsp; n.nn ADR &nbsp;·&nbsp; nnn sh &nbsp;·&nbsp; that check–that check pass, that check fail</span></div>
+      <div class="box b2" style="min-width:310px"><span class="bid">row</span><span class="bt">CRWV &nbsp; nnn.nn → nnn.nn</span><span class="bs">n.n% &nbsp;·&nbsp; n.nn ADR &nbsp;·&nbsp; nnn sh &nbsp;·&nbsp; all pass</span></div>
     </div>
     <div class="col" style="flex:1">
-      <div class="box b4" style="min-width:310px"><span class="bt">SHORT &nbsp;<span class="pill ps">sell</span> &nbsp;— 6 flagged</span><span class="bs">Same columns, plus assumed borrow cost and the market-cap borrow proxy</span></div>
-      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">XYZ &nbsp; 41.20 → 42.55</span><span class="bs">3.3% &nbsp;·&nbsp; 0.48 ADR &nbsp;·&nbsp; 341 sh &nbsp;·&nbsp; that check–that check pass</span></div>
-      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">ABC &nbsp; 18.05 → 18.70</span><span class="bs">3.6% &nbsp;·&nbsp; 0.52 ADR &nbsp;·&nbsp; 610 sh &nbsp;·&nbsp; that check fail, shown greyed</span></div>
+      <div class="box b4" style="min-width:310px"><span class="bt">SHORT &nbsp;<span class="pill ps">sell</span> &nbsp;— n flagged</span><span class="bs">Same columns, plus assumed borrow cost and the market-cap borrow proxy</span></div>
+      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">XYZ &nbsp; nn.nn → nn.nn</span><span class="bs">n.n% &nbsp;·&nbsp; n.nn ADR &nbsp;·&nbsp; nnn sh &nbsp;·&nbsp; that check–that check pass</span></div>
+      <div class="box b4" style="min-width:310px"><span class="bid">row</span><span class="bt">ABC &nbsp; nn.nn → nn.nn</span><span class="bs">n.n% &nbsp;·&nbsp; n.nn ADR &nbsp;·&nbsp; nnn sh &nbsp;·&nbsp; that check fail, shown greyed</span></div>
     </div>
   </div>
   <div class="box b4" style="min-width:640px;border-left:3px solid var(--l4)"><span class="bt">Conflict banner, only when it applies</span><span class="bs">A name flagged on one side while a position is open on the other. Never blocked automatically, always surfaced</span></div>
 </div>
-<p class="figcap"><b>Figure 10.</b> The two panels are divided by colour, header and count, matching the check colours in the check lists. The status band spans both because the position cap and total risk are account-wide, and it shows the short sub-cap as its own figure rather than folding it into the total.</p>
+<p class="figcap"><b>Figure 10.</b> <b>The figures shown are illustrative rather than measured</b>, as on Figure 11: the page renders its empty state until a night fills it, and every live value here is drawn in the shape it will take rather than in a number somebody could copy. The two panels are divided by colour, header and count, matching the check colours in the check lists. The status band spans both because the position cap and total risk are account-wide, and it shows the short sub-cap as its own figure rather than folding it into the total.</p>
 </div>
 <div class="key">
 <div class="k">Ranked</div><div class="v"><b>By give-up distance in daily-range units, tightest first,</b> with ticker alphabetical as the tiebreak so the order is deterministic. The mechanism: R is the move divided by the stop, and expressing the stop in daily-range units normalises it against that stock's own noise, so a 0.30 setup earns more R per unit of noise risk than a 0.48 one for the same move. It is the only ranking available with a stated mechanism rather than a preference.<br><br>This ranking is load-bearing beyond the screen, because the nightly cap truncates by it. It is an authored choice and an obvious early proposal target once the conditional tables exist. Setups that failed a check still appear, greyed, with the failing check named.</div>
@@ -765,17 +766,17 @@ tr:hover td{background:#f4f2ec}
 
 <div class="fig">
 <div class="col" style="gap:14px">
-  <div class="box b5" style="min-width:660px"><span class="bid">band 0 — health</span><span class="bt">Nights recorded 214 &nbsp;·&nbsp; degraded 3 &nbsp;·&nbsp; last clean run yesterday &nbsp;·&nbsp; calls 690 of 5,000 &nbsp;·&nbsp; setups on file 8,140</span><span class="bs">Reads red if degraded nights exceed 5% of the record, because excluded nights are not missing at random</span></div>
+  <div class="box b5" style="min-width:660px"><span class="bid">band 0 — health</span><span class="bt">Nights recorded nnn &nbsp;·&nbsp; degraded n &nbsp;·&nbsp; last clean run yesterday &nbsp;·&nbsp; calls n,nnn of 5,000 &nbsp;·&nbsp; setups on file n,nnn</span><span class="bs">Reads red if degraded nights exceed 5% of the record, because excluded nights are not missing at random</span></div>
 
-  <div class="box b2" style="min-width:660px"><span class="bid">band 1 — is there anything here at all?</span><span class="bt">Flagged against control, 10-day forward return, long and short shown separately</span><span class="bs">vs loose controls &nbsp;+2.9% &nbsp;[+1.4, +4.4] &nbsp;·&nbsp; vs tight controls &nbsp;+1.1% &nbsp;[−0.3, +2.5] &nbsp;·&nbsp; n = 3,180<br>Reads green when the lower bound clears zero. The tight comparison is the honest one and it is expected to be the smaller of the two</span></div>
+  <div class="box b2" style="min-width:660px"><span class="bid">band 1 — is there anything here at all?</span><span class="bt">Flagged against control, 10-day forward return, long and short shown separately</span><span class="bs">vs loose controls &nbsp;+n.n% &nbsp;[+n.n, +n.n] &nbsp;·&nbsp; vs tight controls &nbsp;+n.n% &nbsp;[−n.n, +n.n] &nbsp;·&nbsp; n = n,nnn<br>Reads green when the lower bound clears zero. The tight comparison is the honest one and it is expected to be the smaller of the two</span></div>
 
-  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — does the ranking rank?</span><span class="bt">Mean forward return by rank decile, plus the ceiling gap</span><span class="bs">A downward slope from decile 1 to decile 10 means the ordering carries information. A flat line means the rank is decorative and the nightly cap is truncating at random<br>Ceiling gap: achieved win rate 24% against a computed bound of 47%, so selection still has room</span></div>
+  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — does the ranking rank?</span><span class="bt">Mean forward return by rank decile, plus the ceiling gap</span><span class="bs">A downward slope from decile 1 to decile 10 means the ordering carries information. A flat line means the rank is decorative and the nightly cap is truncating at random<br>Ceiling gap: achieved win rate nn% against a computed bound of nn%, so selection still has room</span></div>
 
-  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — where the losses come from</span><span class="bt">Loss causes as a share, plotted over time</span><span class="bs">Noise stop-out 38% &nbsp;·&nbsp; failed setup 44% &nbsp;·&nbsp; gap loss 6% &nbsp;·&nbsp; never triggered 12%<br>Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved. They are different wins and this is the only place that separates them</span></div>
+  <div class="box b2" style="min-width:660px"><span class="bid">band 2 — where the losses come from</span><span class="bt">Loss causes as a share, plotted over time</span><span class="bs">Noise stop-out nn% &nbsp;·&nbsp; failed setup nn% &nbsp;·&nbsp; gap loss n% &nbsp;·&nbsp; unclassified n%<br>Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved. They are different wins and this is the only place that separates them</span></div>
 
-  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — is the loop learning?</span><span class="bt">Proposal outcomes by pack version</span><span class="bs">v1: 9 proposals, 2 met target, 1 abstained &nbsp;·&nbsp; v2: 11, 4 met, 2 abstained &nbsp;·&nbsp; v3: 8, 4 met, 3 abstained<br>This is the project's stated success criterion made visible, from <b>6.8</b>. A rising hit rate across versions is the result. A version that never abstains is a warning, not a triumph</span></div>
+  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — is the loop learning?</span><span class="bt">Proposal outcomes by pack version</span><span class="bs">v1: n proposals, n met target, n abstained &nbsp;·&nbsp; v2: nn, n met, n abstained &nbsp;·&nbsp; v3: n, n met, n abstained<br>This is the project's stated success criterion made visible, from <b>6.8</b>. A rising hit rate across versions is the result. A version that never abstains is a warning, not a triumph</span></div>
 
-  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — the signal library</span><span class="bt">Signals held, admitted, rejected, and how many discriminate</span><span class="bs">31 held &nbsp;·&nbsp; 12 admitted since launch &nbsp;·&nbsp; 7 rejected at the correlation limit &nbsp;·&nbsp; 9 separate outcomes beyond the corrected threshold<br>Alongside it, mean outcome spread among twin pairs over time. That number falling as signals are added is the cleanest evidence the library is genuinely improving</span></div>
+  <div class="box b6" style="min-width:660px"><span class="bid">band 3 — the signal library</span><span class="bt">Signals held, admitted, rejected, and how many discriminate</span><span class="bs">nn held &nbsp;·&nbsp; nn admitted since launch &nbsp;·&nbsp; n rejected at the correlation limit &nbsp;·&nbsp; n separate outcomes beyond the corrected threshold<br>Alongside it, mean outcome spread among twin pairs over time. That number falling as signals are added is the cleanest evidence the library is genuinely improving</span></div>
 </div>
 <p class="figcap"><b>Figure 11.</b> Four bands, none of them denominated in money. <b>Bands 0, 1 and 2 arrive at 3.5 and band 3 at 6.8</b>, and the figures shown are illustrative rather than measured: the page renders its empty state until the outcomes accumulate behind it. Band 1 asks whether the pattern exists. Band 2 asks whether the lab can sort it. Band 3 asks whether the research loop is adding anything. Each panel carries the condition under which it reads badly, because a scoreboard that can only show good news is decoration.</p>
 </div>
@@ -821,7 +822,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>PlanAudit</b></td><td>On exit</td><td>Records planned against executed on every trade</td></tr>
 <tr><td><b>TradeJournal</b></td><td>On exit</td><td>Closes trades and states the result in R</td></tr>
 <tr><td><b>ForwardReturnFiller</b></td><td>Nightly 21:30</td><td>Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not, and on every control drawn against one</td></tr>
-<tr><td><b>LossClassifier</b></td><td>Nightly 21:35</td><td>Classifies every loss into one of four causes</td></tr>
+<tr><td><b>LossClassifier</b></td><td>Nightly 21:35</td><td>Classifies every closed loss into one of four causes, or <code>unclassified</code> where none fits</td></tr>
 <tr><td><b>CeilingCalculator</b></td><td>Weekly</td><td>Computes the win-rate ceiling from the outcome distribution, per direction and from the path rather than the terminal return, so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach</td></tr>
 <tr><td><b>VariantScorer</b></td><td>Nightly 21:40</td><td>Differences each version against the baseline, night by night</td></tr>
 <tr><td><b>TwinPairFinder</b></td><td>Weekly</td><td>Finds near-identical setups that behaved differently</td></tr>
@@ -914,7 +915,7 @@ tr:hover td{background:#f4f2ec}
 <td>A web shell with routing, navigation and one shared chart component, so no later checkpoint invents its own. Then daily charts with the three averages and the daily range for any stock, drawn from your own stored prices. You compare one against a chart you already trust.</td>
 <td>Indicator values for the fixture's 30 tickers diffed against frozen expectations. Every component named in the catalogue asserted to exist and be registered. Every limit in the parameters table asserted against its config value. Anything it cannot examine listed as unexamined.</td></tr>
 
-<tr><td><b>P2</b></td><td>ScanEngine, TierClassifier, SectorResolver, ThemeClusterer, RegimeLabeler, both detectors, SignalVectorizer, SetupCapper, setup inspector, LabSetups</td>
+<tr><td><b>P2</b></td><td>ScanEngine, TierClassifier, SectorResolver, ThemeClusterer, RegimeLabeler, LongSetupDetector, ShortSetupDetector, SignalVectorizer, SetupCapper, setup inspector, LabSetups</td>
 <td>Last night's flagged setups, both directions, as a gallery of marked-up charts showing which checks passed and which failed. You page through by keyboard and record agree or disagree per setup. This is where the strategy actually transfers into code.</td>
 <td>Fixture setups diffed check by check, so a change to any gate shows up as a named difference rather than a count. The ten long and ten short check names asserted to exist in the detectors. Your agreement rate reported as a number.</td></tr>
 
@@ -922,11 +923,11 @@ tr:hover td{background:#f4f2ec}
 <td>The same gallery with follow-up returns filling in behind it, plus the scoreboard's first two bands live against matched controls. <b>This is the project's own decision point.</b></td>
 <td>Forward returns and control draws diffed against the fixture, including the holiday case. The computed ceiling recomputed and compared. Confirms `setup` is still empty of anything reconstructed from history.</td></tr>
 
-<tr><td><b>P4</b></td><td>Watchlist page first, then IntradayFetcher, SpreadSnapshotter, VwapEngine, TriggerResolver, RiskGate, PaperBroker, PositionManager, PlanAudit, TradeJournal, LossClassifier, trade journal page</td>
-<td>The watchlist is built before the trading machinery on purpose, so every checkpoint after it lands on a screen you already have. Then simulated trades, each with an intraday chart showing trigger, fill, give-up point and exit, plus planned against executed and the classified loss cause.</td>
+<tr><td><b>P4</b></td><td>IntradayFetcher, SpreadSnapshotter, WatchlistPublisher, watchlist page, VwapEngine, PlanBuilder, TriggerResolver, SessionReplayClock, RiskGate, PaperBroker, PositionManager, PlanAudit, TradeJournal, LossClassifier, trade journal page</td>
+<td><b>The two captures come first, and the watchlist still arrives before the trading machinery.</b> Minute bars and spreads exist only from the night capture begins and a screen can be built any evening, so the phase opens on the two unrecoverable inputs; the watchlist is third, which keeps what the original ordering was protecting, that every checkpoint after it lands on a screen you already have. Then simulated trades, each with an intraday chart showing trigger, fill, give-up point and exit, plus planned against executed and the classified loss cause.</td>
 <td>The fixture gains a session of minute bars, so fills, stops, gap losses and the contention case are diffed rather than eyeballed. Order provenance asserted. Realised risk against intended risk reported per position.</td></tr>
 
-<tr><td><b>P5</b></td><td>VariantScorer, VariantAdmitter, ReplayHarness, HoldoutRegistry, research ledger page</td>
+<tr><td><b>P5</b></td><td>VariantResolver, VariantScorer, VariantAdmitter, ReplayHarness, HoldoutRegistry, research ledger page</td>
 <td>Hand-written versions in both families scoring nightly against the baseline, with the difference series visible and the holdout register showing what has been spent, both on the research ledger at <b>5.5</b>. Still no AI anywhere.</td>
 <td>The harness re-run of the baseline's own rule must reproduce the baseline's historical selections exactly. If it does not, the harness and the live detector disagree and every replay result is worthless.</td></tr>
 
@@ -943,7 +944,7 @@ tr:hover td{background:#f4f2ec}
 <p>Roughly 35 to 45 focused coding sessions with both sides and the research machinery, so about fourteen weeks at three evenings a week. The calendar is not set by the code. Phase 3 needs three months of running before phase 5 has anything to score, and phase 5 needs a few months more before proposals settle. Expect the loop to close once around month seven. Anything faster is measuring noise.</p>
 
 <div class="rule"><b class="lab">The cheapest way to find out whether any of this is worth doing</b>
-<p>Phase 3 answers the project's own question before the trading and research layers exist, rather than after the whole build. If flagged stocks behave no differently from comparable unflagged ones, the pattern has nothing in it and everything downstream would be optimising noise. If the achieved win rate already sits at the computed ceiling, selection has no room and the loop should be pointed at execution instead. Either answer is worth having before phase 4 starts.</p></div>
+<p>Phase 3 answers the project's own question before the trading and research layers exist, rather than after the whole build. If flagged stocks behave no differently from comparable unflagged ones, the pattern has nothing in it and everything downstream would be optimising noise. If the achieved win rate already sits at the computed ceiling, selection has no room and the loop should be pointed at execution instead. Either answer is worth having, and phase 4 does not wait for it (see: 3.6 gates what may be admitted, not what may be built).</p></div>
 
 <h3 id="running-on-windows-and-macos">Running on Windows and macOS</h3>
 

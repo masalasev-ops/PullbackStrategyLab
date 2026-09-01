@@ -19,8 +19,12 @@
         "claims in The phase report": 3,
         "claims in Running on Windows and macOS": 6,
         "claims in The procedure": 10,
-        "claims in Tables in the document": 12
-      }
+        "claims in Tables in the document": 12,
+        "catalogued components a phase's Builds row names": 44
+      },
+      "context": [
+        "catalogued screens, named in a Builds row as prose rather than as a token"
+      ]
     },
     "bar-append-only": {
       "scopes": {
