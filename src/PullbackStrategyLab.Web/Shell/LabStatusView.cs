@@ -104,4 +104,50 @@ public sealed record LabStatusView(
     /// are different statements.
     /// </summary>
     public static string Awaiting(string checkpoint) => "not until " + checkpoint;
+
+    /// <summary>
+    /// The checkpoint each band field waits on, for the fields that have no source yet.
+    ///
+    /// <b>Declared rather than written into the markup</b>, so a test can read them. The band said
+    /// "not until 2.5" for the mood through the whole of phase 3, with RegimeLabeler built and
+    /// labelling every night: a deferral that outlived its own due point, on a surface, where the
+    /// report's out-of-scope rule cannot see it. `WebShellTests` now fails a field waiting on a
+    /// checkpoint PROGRESS records as landed, which is the same guard the report applies to a claim.
+    ///
+    /// A field with a source is not in here, and that is the whole of how the list stays honest: it
+    /// shrinks as checkpoints land, and a field that gained a source and kept its entry would fail
+    /// the same test.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> AwaitedBy { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Open"] = "4.7",
+            ["Shorts"] = "4.7",
+            ["Risk at stake"] = "4.7",
+        };
+
+    /// <summary>
+    /// Positions open, or the checkpoint that will give the field a source.
+    ///
+    /// <b>Never a nought.</b> A nought positions-open is a fact about the account and reads
+    /// identically to a component that does not exist, and those are different things: the first
+    /// says the lab holds nothing tonight and the second says the lab cannot hold anything at all.
+    /// The `position` table arrives at 4.7 and until then this field has no source, so it says so.
+    ///
+    /// <b>And the cap it will be shown against is not rendered either, deliberately.</b> Four
+    /// positions, two shorts and 3% are authored values stated in two of ARCHITECTURE's tables and
+    /// held by no code constant anywhere; 4.6 is the checkpoint that pins them, against RiskGate,
+    /// which is the component that applies them. Writing the first copy of a cap into a view would
+    /// put a limit's only code home in the display layer, where the one that drifts is the one
+    /// nothing enforces. The band shows the figure and its cap together from 4.7, or neither.
+    /// </summary>
+    public string PositionsText => PositionsOpen?.ToString(CultureInfo.InvariantCulture)
+        ?? Awaiting(AwaitedBy["Open"]);
+
+    public string ShortPositionsText => ShortPositionsOpen?.ToString(CultureInfo.InvariantCulture)
+        ?? Awaiting(AwaitedBy["Shorts"]);
+
+    public string RiskText => RiskAtStake is decimal risk
+        ? risk.ToString("0.00'%'", CultureInfo.InvariantCulture)
+        : Awaiting(AwaitedBy["Risk at stake"]);
 }

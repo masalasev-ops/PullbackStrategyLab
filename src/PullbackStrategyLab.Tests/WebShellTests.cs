@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using PullbackStrategyLab.Tests.Checks;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Web;
 using PullbackStrategyLab.Web.Shell;
@@ -130,7 +131,15 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// property of the source that anything here can read: an empty state is a perfectly ordinary
     /// page, and the difference is whether a checkpoint says it should still be one.
     /// </summary>
-    private static IReadOnlyList<string> Landed { get; } = ["/setups", "/scoreboard"];
+    /// <summary>
+    /// The screens that are filled rather than empty states.
+    ///
+    /// <b>The watchlist joined at 4.1</b>, which is what its own empty state had said since 1.8. A
+    /// page that arrived and kept its "nothing here yet" would pass the test below by claiming to be
+    /// unbuilt, which is the same shape as a status-band field waiting on a landed checkpoint: an
+    /// honest placeholder outliving the thing it was standing in for.
+    /// </summary>
+    private static IReadOnlyList<string> Landed { get; } = ["/setups", "/scoreboard", "/watchlist"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -193,11 +202,15 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         Assert.Contains("clean", html, StringComparison.Ordinal);
         Assert.Contains("690 of 5,000", html, StringComparison.Ordinal);
 
-        // Market mood and the position caps do not exist before phases 2 and 4. The checkpoint
-        // that fills each, never a zero: a zero reads as "none open" where the truth is
-        // "positions are not a thing yet".
-        Assert.Contains("not until 2.5", html, StringComparison.Ordinal);
+        // The position fields do not exist before 4.7 and say so, never as a zero: a zero reads as
+        // "none open" where the truth is "positions are not a thing yet".
         Assert.Contains("not until 4.7", html, StringComparison.Ordinal);
+
+        // And the mood no longer does. It said "not until 2.5" through the whole of phase 3 with
+        // RegimeLabeler labelling every night, which is a deferral outliving its own due point on a
+        // surface. The stub answers with no mood, so this band shows the other real state.
+        Assert.DoesNotContain("not until 2.5", html, StringComparison.Ordinal);
+        Assert.Contains("night not labelled", html, StringComparison.Ordinal);
         Assert.DoesNotContain("The read surface is not answering", html, StringComparison.Ordinal);
     }
 
@@ -256,6 +269,58 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public void A_band_field_with_no_source_is_told_apart_from_one_whose_answer_is_nought()
+    {
+        // The conflation this corpus keeps finding, on the one surface where it is invisible to
+        // every check that reads a store: a nought positions-open is a fact about the account and a
+        // component that does not exist is not, and both would render as "0".
+        LabStatusView notBuilt = Band(positionsOpen: null, shortPositionsOpen: null, riskAtStake: null);
+        LabStatusView genuinelyEmpty = Band(positionsOpen: 0, shortPositionsOpen: 0, riskAtStake: 0m);
+
+        Assert.Equal("not until 4.7", notBuilt.PositionsText);
+        Assert.Equal("not until 4.7", notBuilt.ShortPositionsText);
+        Assert.Equal("not until 4.7", notBuilt.RiskText);
+
+        Assert.Equal("0", genuinelyEmpty.PositionsText);
+        Assert.Equal("0", genuinelyEmpty.ShortPositionsText);
+        Assert.Equal("0.00%", genuinelyEmpty.RiskText);
+
+        // Stated as a property rather than left to the six assertions above: no field renders the
+        // same text in both states, which is the whole of what "distinguishable" means here.
+        Assert.NotEqual(notBuilt.PositionsText, genuinelyEmpty.PositionsText);
+        Assert.NotEqual(notBuilt.ShortPositionsText, genuinelyEmpty.ShortPositionsText);
+        Assert.NotEqual(notBuilt.RiskText, genuinelyEmpty.RiskText);
+    }
+
+    [Fact]
+    public void No_band_field_waits_on_a_checkpoint_that_has_already_landed()
+    {
+        // The band said "not until 2.5" for the market mood through the whole of phase 3, with
+        // RegimeLabeler built and labelling every night. That is a deferral outliving its own due
+        // point, which the phase report refuses for a claim and which nothing refused for a screen.
+        // A field waiting on a landed checkpoint is worse than one waiting on an unlanded one: the
+        // checkpoint that would have filled it is not coming back.
+        var landed = ArchitectureConformanceCheck.Schedule.Read();
+
+        string[] stale =
+        [
+            .. LabStatusView.AwaitedBy
+                .Where(field => landed.HasLanded(field.Value))
+                .Select(field => $"{field.Key} waits on {field.Value}")
+                .Order(StringComparer.Ordinal),
+        ];
+
+        Assert.True(stale.Length == 0,
+            "The status band defers a field to a checkpoint PROGRESS already records: "
+            + string.Join(", ", stale)
+            + ". Either the field has a source now and should read it, or the checkpoint named is wrong.");
+    }
+
+    private static LabStatusView Band(int? positionsOpen, int? shortPositionsOpen, decimal? riskAtStake) =>
+        new(true, null, "ready", 38, 38, "2026-08-31", "spreads", "clean", 100, 1000, 10, 5000,
+            "neutral", positionsOpen, shortPositionsOpen, riskAtStake);
 
     [Fact]
     public void The_navigation_holds_five_screens_and_no_two_share_a_path()

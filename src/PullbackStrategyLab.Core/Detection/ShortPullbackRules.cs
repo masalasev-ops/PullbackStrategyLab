@@ -130,7 +130,23 @@ public static class ShortPullbackRules
             "tradable-shortable",
             passes,
             volume,
-            e.MarketCapExempt ? ClausesRunWithoutTheCap : null);
+            e.MarketCapExempt ? ClausesRunWithoutTheCap : null)
+        {
+            // The four, each with the number it turned on. The capitalisation clause records its
+            // own exemption as a pass with no value rather than as a pass with a number it did not
+            // read, so a calibration row and a nightly row are told apart by the value being absent
+            // and not by the note beside them.
+            Clauses =
+            [
+                new ClauseResult("liquidity", volume >= LiquidityFloor, volume),
+                new ClauseResult("price", close > PriceFloor, close),
+                new ClauseResult(
+                    "market capitalisation",
+                    e.MarketCapExempt || e.MarketCap > MarketCapFloor,
+                    e.MarketCapExempt ? null : e.MarketCap),
+                new ClauseResult("listing age", listed >= MinimumSessionsListed, listed),
+            ],
+        };
     }
 
     /// <summary>
@@ -192,7 +208,14 @@ public static class ShortPullbackRules
             "bounce-shape",
             rightLength && shallowEnough,
             bounce.RetraceDepth,
-            $"{bounce.PullbackBars} bar(s)");
+            $"{bounce.PullbackBars} bar(s)")
+        {
+            Clauses =
+            [
+                new ClauseResult("length", rightLength, bounce.PullbackBars),
+                new ClauseResult("recovery", shallowEnough, bounce.RetraceDepth),
+            ],
+        };
     }
 
     /// <summary>

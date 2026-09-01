@@ -648,6 +648,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
+        measurements.AddRange(ClauseFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -1935,6 +1936,59 @@ public sealed class PhaseReplay : IDisposable
     /// unplaced means nothing without the count it was nought out of: a parser that read no rows
     /// would report nought unplaced too, and that is the shape this whole corpus keeps finding.
     /// </summary>
+    /// <summary>
+    /// What the night's stored checks record about their clauses, which is what 4.1 added.
+    ///
+    /// <b>Read out of the store rather than off the evaluated results.</b> A record gaining a
+    /// property proves nothing about the evidence: the detector serialises what it evaluated and the
+    /// read surface deserialises it back, and either end could drop the field with no test of the
+    /// type noticing. These figures come from `check_results` as it was written.
+    ///
+    /// The one that carries the property is the count of clause verdicts. The two beside it are the
+    /// population: a gate count with no clause count cannot tell "every gate recorded its clauses"
+    /// from "every gate recorded an empty list".
+    /// </summary>
+    private IReadOnlyList<Measurement> ClauseFigures()
+    {
+        using SqliteConnection read = _connections.OpenReadOnly();
+        using SqliteCommand command = read.CreateCommand();
+        command.CommandText = "SELECT check_results FROM setup WHERE as_of = @as_of";
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+
+        int gates = 0;
+        int withClauses = 0;
+        int clauseVerdicts = 0;
+
+        using (SqliteDataReader rows = command.ExecuteReader())
+        {
+            while (rows.Read())
+            {
+                foreach (CheckResult result in
+                    JsonSerializer.Deserialize<CheckResult[]>(rows.GetString(0), ClauseJson) ?? [])
+                {
+                    gates++;
+
+                    if (result.Clauses is not { Count: > 0 } clauses)
+                    {
+                        continue;
+                    }
+
+                    withClauses++;
+                    clauseVerdicts += clauses.Count;
+                }
+            }
+        }
+
+        return
+        [
+            new Measurement("clauses.gatesRecorded", gates.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("clauses.gatesCarryingClauses", withClauses.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("clauses.verdictsRecorded", clauseVerdicts.ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
+
+    private static readonly JsonSerializerOptions ClauseJson = new(JsonSerializerDefaults.Web);
+
     private static IReadOnlyList<Measurement> CataloguePlacementFigures()
     {
         string architecture = RepositoryLayout.Read(

@@ -73,6 +73,9 @@ $slots = @{
     'seal'       = @(@('vectorize'), @('journal'))
     'controls'   = @(, @('controls'))
     'cap'        = @(, @('cap'))
+    # 18:40. It writes nothing: the page projects the setups, and this slot is where a night
+    # that capped nothing, or was never capped at all, is noticed without opening a browser.
+    'watchlist'  = @(, @('publish-watchlist'))
     # The one unrecoverable slot. Minute bars publish two to three hours after the close, so
     # this runs at 20:30 for the session that has just closed, and resolves the setups flagged
     # on the evening before it. A night this does not run is a session of minute bars that

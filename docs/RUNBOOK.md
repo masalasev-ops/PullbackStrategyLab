@@ -115,7 +115,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:26 | `controls`, loose and tight per flagged setup, before the cap | 0 |
 | 18:28 | `cap`, the night truncated to sixty by rank | 0 |
 | 18:30 | plans per variant | 0 |
-| 18:40 | publish watchlist | 0 |
+| 18:40 | `publish-watchlist`, which writes nothing. It reports what the page would show, so a night that was never capped is noticed here rather than by somebody opening a browser | 0 |
 | 20:30 | `intraday-bars`, one request per distinct flagged name, at 5 calls each. Not the capped sixty: a variant that selects a name the baseline passed on must still be resolvable, and a name whose minutes were never bought is one no variant can ever be scored on | 220 to 415 |
 | 21:00 | session replay, fills, positions | 0 |
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |

@@ -46,7 +46,11 @@
     <div><b>Store</b>@Model.StoreText</div>
     <div><b>Last run</b>@Model.LastRunText</div>
     <div><b>Calls today</b>@Model.CallsText</div>
-    <div><b>Mood</b>@(Model.MarketMood ?? LabStatusView.Awaiting("2.5"))</div>
-    <div><b>Open</b>@(Model.PositionsOpen?.ToString() ?? LabStatusView.Awaiting("4.7"))</div>
-    <div><b>Risk at stake</b>@(Model.RiskAtStake?.ToString("0.00'%'") ?? LabStatusView.Awaiting("4.7"))</div>
+    @* Mood has a source as of 4.1 and had one since 2.5. A null here means the night was not
+       labelled, which is a real state and not a component that does not exist, so it reads as a
+       dash with its reason rather than as a checkpoint. *@
+    <div><b>Mood</b>@(Model.MarketMood ?? "night not labelled")</div>
+    <div><b>Open</b>@Model.PositionsText</div>
+    <div><b>Shorts</b>@Model.ShortPositionsText</div>
+    <div><b>Risk at stake</b>@Model.RiskText</div>
 </div>

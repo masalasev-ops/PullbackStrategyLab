@@ -90,11 +90,46 @@ public sealed class CheckReadingTests
     }
 
     [Fact]
-    public void A_multi_clause_gate_says_the_number_is_one_clause_of_several()
+    public void A_multi_clause_gate_says_the_number_is_one_clause_of_several_and_counts_them_itself()
     {
-        // Four clauses, one recorded value. The screen must not imply the number is the verdict.
-        Assert.Contains("of four clauses", CheckReading.Of("tradable-shortable", 5m)!.Against!, StringComparison.Ordinal);
-        Assert.Contains("of four clauses", CheckReading.Of("tradable", 5m)!.Against!, StringComparison.Ordinal);
+        // The count comes from the gate's own clause list rather than from a phrase in the helper.
+        // It read "of four clauses" for both of these until 4.1 and the long gate tests two, which
+        // is a count restated in a display helper: the same defect as a threshold restated in one,
+        // and it survived because the sentence was true of the gate somebody had in mind.
+        CheckResult shortable = ShortPullbackRules
+            .Evaluate(new ShortPullbackRules.ShortEvidence
+            {
+                Close = 100m,
+                MedianDollarVolume = 9_000_000_000m,
+                MarketCap = 5_000_000_000m,
+                SessionsListed = 500,
+            })
+            .Single(c => c.Name == "tradable-shortable");
+
+        CheckResult tradable = LongPullbackRules
+            .Evaluate(new LongPullbackRules.LongEvidence
+            {
+                Close = 100m,
+                MedianDollarVolume = 9_000_000_000m,
+            })
+            .Single(c => c.Name == "tradable");
+
+        Assert.Equal(4, shortable.Clauses!.Count);
+        Assert.Equal(2, tradable.Clauses!.Count);
+
+        Assert.Contains("of 4 clauses", CheckReading.OfResult(shortable)!.Against!, StringComparison.Ordinal);
+        Assert.Contains("of 2 clauses", CheckReading.OfResult(tradable)!.Against!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_gate_asked_without_its_clauses_states_no_count_rather_than_a_wrong_one()
+    {
+        // The old two-argument form is still what a stored row's value reaches this through, and a
+        // count nobody supplied is not a count. It says the number is the one recorded and stops.
+        string against = CheckReading.Of("tradable-shortable", 5m)!.Against!;
+
+        Assert.Contains("this is the one recorded", against, StringComparison.Ordinal);
+        Assert.DoesNotContain("clauses", against, StringComparison.Ordinal);
     }
 
     [Fact]

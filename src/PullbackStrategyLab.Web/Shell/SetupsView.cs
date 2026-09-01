@@ -113,7 +113,12 @@ public sealed record SetupCardView(
 }
 
 /// <summary>One check's verdict on a card, with the number it turned on.</summary>
-public sealed record SetupCheckRowView(string Name, bool Passed, decimal? Value, string? Note)
+public sealed record SetupCheckRowView(
+    string Name,
+    bool Passed,
+    decimal? Value,
+    string? Note,
+    IReadOnlyList<string> FailedClauses)
 {
     /// <summary>
     /// The number the check turned on, or the note where there was none.

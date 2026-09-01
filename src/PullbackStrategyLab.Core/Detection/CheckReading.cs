@@ -17,11 +17,17 @@ namespace PullbackStrategyLab.Core.Detection;
 /// usually looks: the number on the screen would keep agreeing with itself while the rule moved.
 /// Every figure below resolves to the same constant the gate compares against.
 ///
-/// <b>A multi-clause gate says which clause its number belongs to.</b> `tradable-shortable` tests
-/// four things and records one, so the screen names the one it recorded rather than implying the
-/// number is the whole verdict. What it cannot yet say is which clause failed when the gate fails,
-/// because <see cref="CheckResult"/> carries a single value; that is recorded as an obligation
-/// rather than solved by inventing a second number here.
+/// <b>A multi-clause gate says which clause its number belongs to, and which one it fell over.</b>
+/// `tradable-shortable` tests four things and records one as its headline number, so the screen
+/// names the one it recorded rather than implying the number is the whole verdict. Which clause
+/// failed was the 2.9 obligation and is answered at 4.1: <see cref="CheckResult.Clauses"/> carries a
+/// verdict and a number per clause, and <see cref="OfResult"/> reads them.
+///
+/// <b>The clause count is derived from the result and never written here.</b> It said "of four
+/// clauses" for the long `tradable` as well as the short one, and the long gate tests two. A count
+/// restated in a display helper is the same defect as a threshold restated in one, which the
+/// paragraph above is already about; it went unnoticed because both sentences were true of the gate
+/// somebody had in mind.
 /// </summary>
 public static class CheckReading
 {
@@ -40,7 +46,19 @@ public static class CheckReading
     /// note says what was absent, which the caller shows instead.
     /// see: A gate handed an absent or degenerate quantity fails rather than passing
     /// </summary>
-    public static Reading? Of(string checkName, decimal? value)
+    public static Reading? Of(string checkName, decimal? value) => Of(checkName, value, clauses: null);
+
+    /// <summary>
+    /// The reading for a whole result, which is the form a screen wants: it carries the clause list,
+    /// so the count in the text is the gate's own rather than a number typed beside it.
+    /// </summary>
+    public static Reading? OfResult(CheckResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return Of(result.Name, result.Value, result.Clauses);
+    }
+
+    private static Reading? Of(string checkName, decimal? value, IReadOnlyList<ClauseResult>? clauses)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(checkName);
 
@@ -49,15 +67,21 @@ public static class CheckReading
             return null;
         }
 
+        // "of N clauses this is the one recorded", where N is what the gate actually tested. Absent
+        // where the caller passed no clause list, because a count nobody supplied is not a count.
+        string OfClauses() => clauses is null
+            ? "this is the one recorded"
+            : $"of {clauses.Count} clauses this is the one recorded";
+
         return checkName switch
         {
             "tradable" => new Reading(
                 $"{Money(number)} median daily turnover",
-                $"floor {Money(LongPullbackRules.LiquidityFloor)}, of four clauses this is the one recorded"),
+                $"floor {Money(LongPullbackRules.LiquidityFloor)}, {OfClauses()}"),
 
             "tradable-shortable" => new Reading(
                 $"{Money(number)} median daily turnover",
-                $"floor {Money(ShortPullbackRules.LiquidityFloor)}, of four clauses this is the one recorded"),
+                $"floor {Money(ShortPullbackRules.LiquidityFloor)}, {OfClauses()}"),
 
             "moves-enough" => new Reading(
                 $"{Percent(number)} typical daily range",

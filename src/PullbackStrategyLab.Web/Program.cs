@@ -349,7 +349,8 @@ public sealed class LabApiClient
         s.Agreement,
         s.AgreementNote,
         s.DegradedBecause,
-        [.. s.Checks.Select(c => new SetupCheckRowView(c.Name, c.Passed, c.Value, c.Note))],
+        [.. s.Checks.Select(c => new SetupCheckRowView(
+            c.Name, c.Passed, c.Value, c.Note, c.FailedClauses ?? []))],
         [.. s.Candles.Select(c => new Candle(
             DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
             c.Open, c.High, c.Low, c.Close))]);
@@ -391,7 +392,8 @@ public sealed class LabApiClient
         IReadOnlyList<SetupCheckPayload> Checks,
         IReadOnlyList<SetupCandlePayload> Candles);
 
-    private sealed record SetupCheckPayload(string Name, bool Passed, decimal? Value, string? Note);
+    private sealed record SetupCheckPayload(
+        string Name, bool Passed, decimal? Value, string? Note, IReadOnlyList<string>? FailedClauses);
 
     private sealed record SetupCandlePayload(string Date, decimal Open, decimal High, decimal Low, decimal Close);
 

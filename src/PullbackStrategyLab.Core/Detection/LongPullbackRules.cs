@@ -80,7 +80,18 @@ public static class LongPullbackRules
     private static CheckResult Tradable(LongEvidence e) =>
         e.MedianDollarVolume is not decimal volume || e.Close is not decimal close
             ? CheckResult.Unknown("tradable", "no indicator row or no bar for the session")
-            : new CheckResult("tradable", volume >= LiquidityFloor && close > PriceFloor, volume);
+            : new CheckResult("tradable", volume >= LiquidityFloor && close > PriceFloor, volume)
+            {
+                // Two clauses, not four. The long gate tests turnover and price; the short one adds
+                // capitalisation and listing age. The reading beside this check said "of four
+                // clauses" for both until 4.1, which is a count restated in a display helper rather
+                // than derived from the gate, and it was wrong for this one.
+                Clauses =
+                [
+                    new ClauseResult("liquidity", volume >= LiquidityFloor, volume),
+                    new ClauseResult("price", close > PriceFloor, close),
+                ],
+            };
 
     private static CheckResult MovesEnough(LongEvidence e) =>
         e.AverageDailyRange is not decimal adr
@@ -114,7 +125,17 @@ public static class LongPullbackRules
             "dip-shape",
             rightLength && shallowEnough,
             pullback.RetraceDepth,
-            $"{pullback.PullbackBars} bar(s)");
+            $"{pullback.PullbackBars} bar(s)")
+        {
+            // The bar count lived in the note beside a value that is the retrace, so a failing
+            // dip-shape could not say which of the two it failed on. Both are clauses now and both
+            // carry their own number.
+            Clauses =
+            [
+                new ClauseResult("length", rightLength, pullback.PullbackBars),
+                new ClauseResult("depth", shallowEnough, pullback.RetraceDepth),
+            ],
+        };
     }
 
     private static CheckResult HeldFloor(LongEvidence e) =>

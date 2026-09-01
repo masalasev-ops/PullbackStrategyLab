@@ -13,7 +13,46 @@ public sealed record CheckResult(string Name, bool Passed, decimal? Value, strin
 {
     /// <summary>A check that could not be evaluated at all. Not a pass, and not silently absent.</summary>
     public static CheckResult Unknown(string name, string why) => new(name, false, null, why);
+
+    /// <summary>
+    /// The clauses a multi-clause gate tested, each with its own verdict, or null on a gate that has
+    /// only itself to answer for.
+    ///
+    /// <b>This is the 2.9 obligation, discharged at 4.1.</b> `tradable-shortable` tests liquidity,
+    /// price, market capitalisation and listing age and recorded one number, so a failing verdict
+    /// told a reader nothing about which of the four it failed on. The screen could already say
+    /// which clause the number came from and could not say which clause the gate fell over, which is
+    /// the question a person actually asks in front of a greyed row.
+    ///
+    /// <b>Null rather than an empty list on a single-clause gate</b>, so the stored JSON gains a
+    /// field only on the gates that have something to say. An empty array on every check would be a
+    /// shape change on rows where nothing changed, and it would read as "this gate has no clauses"
+    /// where the truth is "this gate is its own clause".
+    ///
+    /// The value per clause is the half that makes it useful rather than decorative: a threshold
+    /// experiment moves one clause's floor, and the distribution it needs is that clause's numbers
+    /// over the rows that failed it, which a single recorded value could never supply.
+    /// see: Failed checks are recorded rather than discarded
+    /// </summary>
+    public IReadOnlyList<ClauseResult>? Clauses { get; init; }
+
+    /// <summary>
+    /// The clauses this gate failed on, in the order it tests them. Empty on a pass, and empty on a
+    /// gate that records no clauses, which are different states and are told apart by
+    /// <see cref="Clauses"/> being null.
+    /// </summary>
+    public IReadOnlyList<ClauseResult> FailedClauses =>
+        Clauses is null ? [] : [.. Clauses.Where(c => !c.Passed)];
 }
+
+/// <summary>
+/// One clause of a multi-clause gate: what it tests, whether it held, and the number it turned on.
+///
+/// <b>Named rather than numbered</b>, on the same grounds every component is: "the second clause"
+/// needs a lookup and half the time the lookup does not happen, where "market capitalisation" is the
+/// thing itself. The names are what a screen shows and what a later threshold experiment selects on.
+/// </summary>
+public sealed record ClauseResult(string Name, bool Passed, decimal? Value = null);
 
 /// <summary>
 /// The two directions, as the store constrains them and as every reader compares them.
