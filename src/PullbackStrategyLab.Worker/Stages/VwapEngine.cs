@@ -20,9 +20,18 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// but the last, which is the point-in-time fault written into a column.
 ///
 /// <b>The anchored average is the third clause of `reached-ceiling`</b>, deferred since 2.7 and the
-/// gate that takes the short funnel from 432 rows to 9. It is anchored at the swing the thrust ran
-/// from, which `ShortSetupDetector.AnchorSessionOf` names and this stage prices.
+/// disjunct 423 of the 432 short calibration rows reaching that gate are refused for want of. It is
+/// anchored at the swing the thrust ran from, which `ShortSetupDetector.AnchorSessionOf` names and
+/// this stage prices.
 /// see: The anchored average price is anchored at the swing the thrust ran from
+///
+/// <b>It is not what empties the short funnel, and 4.4 measured that rather than assuming it.</b>
+/// Given the clause its maximum, so that every one of those 432 rows is admitted, the short funnel
+/// still ends at 4 survivors over the 602 calibration sessions, median nought a night. The gate that
+/// binds is `exit-tight`, at 0.93% over the 431 short rows that then reach it against 1.51% over
+/// 1,981 long rows on the same sessions: a comparable per-row rate, so what the short side is short
+/// of is rows reaching the gate rather than a gate set too strict. This stage still has to be right,
+/// and the reason is the verdict it decides rather than a funnel it was never going to refill.
 ///
 /// <b>It reads the store and does not fetch, and that is a decision with a cost.</b> The vendor
 /// holds minute bars well past any anchor this lab would ask about: one call on 2026-09-01 for

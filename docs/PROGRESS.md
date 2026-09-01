@@ -10227,3 +10227,111 @@ Verified:   `tools/ci.ps1` green at 28 steps and **696 tests**, from 668. `tools
 Carried:    **Two raised and one discharged, so the obligations table falls from 58 to 57.** The two
             are the fetch window, due at 4.5, and the session average's missing reader, due at 4.7.
             None falls due at 4.4. Eighteen still fall due at 4.6.
+
+## 4.4 — 2026-09-01 — phase-4-record-corrections — the clause the corpus kept calling the cause, and a window that is a storage question
+
+A correction pass over what 4.4 measured, not a checkpoint. The measurement landed with 4.4 and three
+statements elsewhere in the corpus still carried the reading it refutes, one of them in the decision
+that authorises the clause and one in the stage that computes it.
+
+Corrected:  **Three statements, and the count was stated before the sweep rather than after it.** The
+            sweep looked for text naming the deferred third disjunct of `reached-ceiling` as what
+            empties the short funnel, over the specs, `DECISIONS.md` and the shipped source, and
+            predicted three in three files. Three were found and three were corrected, and the
+            reconciliation is below rather than a claim that the sweep returned what it looked for.
+
+            **`DECISIONS.md`, in the entry "The anchored average price is anchored at the swing the
+            thrust ran from".** It read that the clause "decides the gate that takes the short funnel
+            from 432 rows to 9". Corrected in place with a dated note, on the precedent of the
+            2026-08-26 note in the scans entry, because `DECISIONS.md` is a record and never appears
+            in `CHANGELOG.md`. **The decision itself is unchanged and no decision supersedes it**: what
+            was wrong is a motivation, and the one that survives is smaller and was already in the
+            line beside it, being that the level decides a verdict and three sessions computing it
+            differently would disagree about that verdict whatever binds downstream.
+
+            **`VwapEngine`'s own summary**, which said the same thing in the same words. It now names
+            the clause as the disjunct 423 of the 432 short calibration rows reaching that gate are
+            refused for want of, and carries the envelope beside it.
+
+            **`BUILD_PLAN.md`'s 2.11 operator row.** Not the same sentence and the same reading: its
+            live tail read short's `exit-tight` as 0 of the 9 rows that reached it and short's funnel
+            as dying three gates upstream of where the long one does, both taken under a gate running
+            two clauses of three. It is the operator's live decision row, so it was pointing a
+            decision at superseded figures. A dated paragraph appended, and the once stays unspent
+            because spending it is not this pass's to do.
+
+            **Not corrected, with the reason in each case.** `ARCHITECTURE.html` carries no such
+            statement; its `reached-ceiling` block describes the clause and attributes nothing.
+            `BUILD_PLAN.md`'s 2.11 narrative under "The nine that are the operator's, and what each
+            one blocks", the 3.6 and 4.4 rows, `ShortPullbackRules`, `CheckCompletenessCheck` and
+            `SessionFigures` were corrected when 4.4 landed and were read again here. `CHANGELOG.md`'s
+            prior text and the PROGRESS entries of 2026-08-30 and earlier are records: this entry is
+            what corrects them, and editing them would destroy the thing that makes the correction
+            legible.
+
+            **The figure and its population, stated once here.** Given the third clause its maximum,
+            admitting every one of the 432 short rows that reach `reached-ceiling`, the short funnel
+            ends at **4 survivors over the 602 calibration sessions**, median nought a night, on 4
+            nights of 602. The gate that binds is `exit-tight`, at **0.93% over the 431 short rows**
+            that then reach it, against **1.51% over 1,981 long rows** on the same sessions. The two
+            are stated side by side and never added, and neither is offered as covering both
+            directions (see: Long and short are never pooled into one figure).
+
+Restated:   **Short's twenty-session count begins on a property of the store, and both rows now say
+            so in the condition itself rather than in the paragraphs after it.** 3.6's row and 4.4's
+            both read that the count begins on the first night the anchored clause runs **against
+            minutes covering that row's own swing**. 4.4's adds that this is not the night the
+            checkpoint lands, because building the clause is not running it, which is the finding 4.4
+            recorded and the sentence it did not fully reach.
+
+            **The start is observed rather than declared, and what observes it already exists.**
+            `vwap_run.anchors_asked` and `anchors_priced` are written every night and printed by the
+            stage's run line, `ShortPullbackRules.ClauseSetOf` reads a stored verdict's clause set
+            back off the row, `CeilingClauseSeamTests` exercises all four sets through the detector
+            rather than through a hand-built note, and the fixture carries the count of each set as a
+            derived expectation with `ceiling.withTheAnchor` moving off nought as the seam. Both rows
+            name them, so a reader does not have to know this entry exists.
+
+Rowed:      **The fetch window is stated at 4.5 as a storage question, with row counts, and no window
+            is proposed.** The obligation raised at 4.4 falls due there. The vendor charges per
+            request rather than per session, so no option costs more in vendor calls than another and
+            the whole of the difference is rows kept, which makes the choice the operator's.
+
+            **The unit and its population.** 959 minute bars per name per session, being the one call
+            of 2026-09-01 for `intraday/AAPL.US` over 2026-08-25, 390 in the regular session and 569
+            outside it, and the mean of 959.3 over the 82 sessions of the same day's 78,662-bar probe.
+            It is one name and the most heavily traded on the exchange, so it is a **ceiling** on a
+            flagged name rather than a typical one: a minute bar exists only for a minute that traded.
+            The names are 44, 73 and 83 distinct flagged names over the three nights the evidence
+            store holds, 2026-08-27 to 2026-08-31.
+
+            **The window is a one-off per name and not a nightly multiplier**, because
+            `IntradayBarReader.IsStoredUnchanged` writes nothing for a bar the store already holds
+            unchanged, so once a name's window is filled the nightly cost returns to one session for
+            it. That is the fact that decides whether any of this is expensive, and it was not stated
+            anywhere before this pass.
+
+            **Four options, and their boundaries are derived rather than chosen.** A swing sits the
+            thrust span plus the 2-to-7-bar pullback back, so `gainer` and `gapper` put it 3 to 8
+            sessions back and `leader` and `laggard` 22 to 27. One session as built, 42,196 to 79,597
+            rows, and short's count never starts because the nearest swing sits 3 back. Eight
+            sessions, 337,568 to 636,776, which reaches the one-session scans' swings and none of the
+            twenty-session scans', so nights would carry short rows running the full disjunction
+            beside short rows that cannot: a population split inside one count rather than a start.
+            Twenty-seven sessions, 1,139,292 to 2,149,119, which reaches every swing on both scan
+            families so a filled name is anchorable whichever scan flagged it. The vendor's
+            per-request maximum of 120 calendar days, 82 sessions in the probe, 3,461,128 to
+            6,528,946 taken from the probe's own per-name total. **Nothing was fetched to answer this
+            and no byte figure is stated**, because none has been measured over a populated
+            `intraday_bar`.
+
+            **`intraday_bar.vwap_session`'s missing reader was already rowed at 4.4 and stays rowed.**
+            Due at 4.7, beside the reader 4.3 named for `spread_snapshot`, so the two are decided
+            together. Read again here rather than moved: the row names the shape, names its sibling
+            and names the two ways out, and the obligations table's own total and its 4.6 count are
+            derived from the table by `stated-counts` rather than stated in prose, so nothing needed
+            reconciling by hand.
+
+Carried:    Nothing new. The obligations table is unchanged at 57 rows, since this pass raises none
+            and discharges none: the fetch window is stated at its due checkpoint rather than
+            discharged, and the decision it asks for is still the operator's.
