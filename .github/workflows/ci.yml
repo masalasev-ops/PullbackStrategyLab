@@ -126,9 +126,16 @@ jobs:
             throw "The slot exited 0 with a stage that could not run."
           }
 
-          # The stage's own diagnostic, on stderr, which the defect discarded.
-          if ($text -notmatch 'No vendor token is configured') {
-            throw 'The log does not carry what universe-build wrote to stderr, so the slot script is discarding it again.'
+          # The stage's own diagnostic, on stderr, which the defect discarded. Asked through the
+          # shared verdict rather than as a bare -notmatch, because "the log lacks this string" is
+          # true of a log no stage contributed to, and that is the state the 4.2 tree guard put every
+          # runner into. This job then failed saying the slot script was discarding a message, which
+          # was false: nothing had written one.
+          $verdict = & pwsh -NoProfile -File tools/slot-log-verdict.ps1 `
+            -Log $log.FullName -Wanted 'No vendor token is configured'
+
+          if ($verdict -notmatch '^ok') {
+            throw "The slot log does not show universe-build's stderr surviving. Verdict: $verdict"
           }
 
           # And the line saying the slot stopped, which never ran because the pipeline above it threw.
@@ -194,40 +201,83 @@ jobs:
           PullbackStrategyLab__DataRoot: ${{ github.workspace }}/data/live
         run: dotnet run --project src/PullbackStrategyLab.Worker -- migrate
 
-      - name: an assertion that must fail takes the step with it
+      - name: each failing condition is produced and has to be caught
         shell: pwsh
         run: |
           $PSNativeCommandUseErrorActionPreference = $false
           $ErrorActionPreference = 'Continue'
 
-          # -AllowBranch for the reason the real job carries it. This job passed through the whole
-          # of the 4.2 regression, and that is worth stating rather than quietly fixing: its
-          # inverted assertion asks whether the log lacks a message no stage ever writes, which is
-          # true of a refusal log as well as of a real one. It proves the assertions are wired to
-          # the step's exit code and it cannot prove the stage ran.
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe -AllowBranch
-          $code = $LASTEXITCODE
-          $ErrorActionPreference = 'Stop'
+          # Two runs, because there are two ways the real job has to go red and until 4.3 this job
+          # could distinguish neither. It asserted that the log lacks a message no stage ever
+          # writes, which is true of a log no stage contributed to, so it stayed green through the
+          # whole of the 4.2 regression while the job it guards was red on both runs. An inverted
+          # test whose assertion holds over the empty case is green over nothing.
+          #
+          # So each condition is produced rather than reasoned about, and each must be caught by its
+          # own verdict.
 
-          $log = Get-ChildItem data/live/logs/nightly-*.log | Select-Object -First 1
-          $text = Get-Content $log.FullName -Raw
+          function Invoke-Slot {
+            param([switch]$AllowBranch)
 
-          # Deliberately false: the log cannot carry a message no stage ever wrote. The real job's
-          # assertions are the same shape, so if this one passes they prove nothing either.
-          $failed = $false
-          try {
-            if ($text -notmatch 'a message no stage has ever written') {
-              throw 'the inverted assertion fired, which is what it is here to do.'
+            Remove-Item data/live/logs/*.log -ErrorAction SilentlyContinue
+
+            if ($AllowBranch) {
+              & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe -AllowBranch
+            } else {
+              & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
             }
-          } catch {
-            $failed = $true
+
+            $code = $LASTEXITCODE
+            $log = Get-ChildItem data/live/logs/nightly-*.log -ErrorAction SilentlyContinue | Select-Object -First 1
+            $path = if ($null -eq $log) { 'nothing' } else { $log.FullName }
+
+            return @{ Code = $code; Path = $path }
           }
 
-          if (-not $failed) {
-            throw "The inverted assertion did not fire, so the real job's assertions cannot be trusted to either."
+          # 1. The empty case, produced by the condition that actually caused the false green: no
+          #    -AllowBranch, so the tree guard refuses on a runner, which is never on main. No stage
+          #    is dispatched and the log carries only what the script wrote about itself.
+          $refused = Invoke-Slot
+          $emptyVerdict = if ($refused.Path -eq 'nothing') { 'empty the slot wrote no log at all' } else {
+            & pwsh -NoProfile -File tools/slot-log-verdict.ps1 `
+              -Log $refused.Path -Wanted 'No vendor token is configured'
           }
 
-          Write-Output "the inverted assertion fired; the slot exited $code"
+          $ErrorActionPreference = 'Stop'
+          Write-Output "refusal run exited $($refused.Code), verdict: $emptyVerdict"
+
+          if ($emptyVerdict -notmatch '^empty') {
+            throw ("A slot that refused before dispatching any stage produced the verdict '$emptyVerdict'. " +
+              "It has to be 'empty': an assertion about what such a log lacks is true of every string, " +
+              "so a job reading it cannot tell a stage that ran from a stage that never started.")
+          }
+
+          $ErrorActionPreference = 'Continue'
+
+          # 2. The wrong-output case: the stage runs and writes its own message, and the pattern
+          #    asked for is one no stage writes. This is the shape the real job's assertions have,
+          #    so if it does not fire, they prove nothing either.
+          $ran = Invoke-Slot -AllowBranch
+          $missingVerdict = & pwsh -NoProfile -File tools/slot-log-verdict.ps1 `
+            -Log $ran.Path -Wanted 'a message no stage has ever written'
+
+          $ErrorActionPreference = 'Stop'
+          Write-Output "dispatched run exited $($ran.Code), verdict: $missingVerdict"
+
+          if ($missingVerdict -notmatch '^missing') {
+            throw ("A slot that dispatched a stage which wrote a message, asked for a pattern no stage " +
+              "writes, produced the verdict '$missingVerdict'. It has to be 'missing', or the real " +
+              "job's assertions cannot be trusted to fire on a message the script has dropped.")
+          }
+
+          # And the two verdicts have to be different, which is the property in one line: an
+          # instrument returning the same answer to both conditions is the instrument this job
+          # replaced.
+          if ($emptyVerdict.Split(' ')[0] -eq $missingVerdict.Split(' ')[0]) {
+            throw "Both conditions produced the same verdict, so the two are still indistinguishable."
+          }
+
+          Write-Output "both failing conditions were produced and each was caught by its own verdict"
           exit 0
 
   # The migration rehearsal, on a case-sensitive filesystem.
