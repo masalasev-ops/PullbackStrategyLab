@@ -10638,6 +10638,19 @@ Verified:   `tools/ci.ps1` green at 28 steps and **714 tests**, from 698. Sixtee
             `PlanBuilderTests`, one of which is a source scan named as one, and the rest are the
             existing files unchanged.
 
+            `tools/verify-phase.ps1` GREEN: **128 claims, 85 passed, 0 failed, 43 out of scope, 0
+            unexamined**, coverage examined **5,601**, **1,399 expectations** of which 1 is void,
+            inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0. Read on
+            a clean tree at `0ecfd8e`, which carries every edit this checkpoint makes; the block you
+            are reading lands in the next commit.
+
+            **The out-of-scope count falls from 44 to 43 and one claim moves from deferred to
+            passed**, which is this checkpoint's catalogue row arriving. `Schedule.CheckpointFor`
+            reads a checkpoint's deliverable cell, 4.16's names PlanBuilder, and recording 4.16 here
+            is what makes it landed, so the component's catalogue claim comes into scope on the same
+            commit that builds it. That is the mapping repair 4.4 made showing up a second time as a
+            number rather than as an argument.
+
             **Five DERIVED expectations, every one predicted before the replay was run and every
             prediction held**, and every one of them is nought. `plans.candidates` is the population
             the other four were computed over and it is nought for the reason the funnel is: no setup
