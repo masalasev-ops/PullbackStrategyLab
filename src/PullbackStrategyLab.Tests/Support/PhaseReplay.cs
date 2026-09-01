@@ -96,6 +96,41 @@ public sealed class PhaseReplay : IDisposable
     ];
 
     /// <summary>
+    /// The names the captured quote response was asked for, read out of the manifest's own query
+    /// rather than restated here, on the same grounds the fundamentals list is read from the
+    /// directory: a list in code goes stale in the direction nobody notices.
+    ///
+    /// It is the names <b>asked for</b> and not the names answered, deliberately. One of them is
+    /// missing from the response, which is the case a live pass has to tell from a name quoted with
+    /// no bid, and a list derived from the answer could not hold it.
+    /// </summary>
+    private IReadOnlyList<string> CapturedQuoteTickers()
+    {
+        using JsonDocument manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(_handler.Directory, "manifest.json")));
+
+        foreach (JsonElement response in manifest.RootElement.GetProperty("responses").EnumerateArray())
+        {
+            if (response.GetProperty("endpoint").GetString() != EodhdClient.UsQuotePath)
+            {
+                continue;
+            }
+
+            string query = response.GetProperty("query").GetString() ?? string.Empty;
+
+            return
+            [
+                .. query["s=".Length..]
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(symbol => symbol.Split('.')[0])
+                    .Order(StringComparer.Ordinal),
+            ];
+        }
+
+        return [];
+    }
+
+    /// <summary>
     /// A budget for a read that is not a stage's. The captured responses cost nothing to serve and
     /// charging them to a run entry would put figures in the run log for calls nobody made.
     /// </summary>
@@ -493,6 +528,55 @@ public sealed class PhaseReplay : IDisposable
         Record("intraday.empty", minutes.Empty);
         Record("intraday.barsWritten", minutes.BarsWritten);
         Record("intraday.pairedWithPriorSession", minutes.SetupAsOf is null ? 0 : 1);
+
+        // 15b. The spreads, which run inside the session rather than after it and carry the same
+        //      offset as the minute bars. Over this fixture the pass asks for nothing for exactly
+        //      the reason the fetch above does: one market day, setups flagged on it, no earlier
+        //      session whose plans were live in it. Recorded rather than skipped, and the row it
+        //      writes is what makes the sampling readable at all.
+        SpreadPassResult spreads = new SpreadSnapshotter(Vendor, _connections, Logger(), _clock, _options)
+            .SnapshotAsync(AsOf, SpreadSnapshotter.AfterOpenPass).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(SpreadSnapshotter.Name, spreads.CallsUsed, spreads.RowsWritten, spreads.Outcome.ToStorageText()));
+        Record("spread.requested", spreads.Requested);
+        Record("spread.answered", spreads.Answered);
+        Record("spread.quoted", spreads.Quoted);
+        Record("spread.unquoted", spreads.Unquoted);
+        Record("spread.pairedWithPriorSession", spreads.SetupAsOf is null ? 0 : 1);
+
+        // And the sampling state the missed-snapshot behaviour turns on, read back through the
+        // reader rather than counted here. One pass has run, so the session is degraded and not
+        // complete, and it is not unsampled: three booleans that are the whole of the three cases.
+        using (SqliteConnection sampled = _connections.OpenReadOnly())
+        {
+            SessionSampling sampling = SpreadSnapshotReader.SamplingOf(sampled, AsOf, AsOf);
+            Record("spread.passesRecorded", sampling.Passes.Count);
+            Record("spread.sessionIsUnsampled", sampling.IsUnsampled ? 1 : 0);
+            Record("spread.sessionIsDegraded", sampling.IsDegraded ? 1 : 0);
+        }
+
+        //      <b>And the arithmetic, over the captured quotes rather than over the pipeline.</b>
+        //      The pass above asks for nothing, so nothing in it exercises the parse, the two-sided
+        //      test or the basis-point computation, and freezing five zeros would be regression
+        //      detection called verification. The capture holds one real response for thirty-one
+        //      names, so the endpoint is read here the way the fundamentals are a few stages up:
+        //      every captured name, whatever it answered, including the one it did not answer for.
+        //      see: Fixture inputs record where they came from, and a path a live run exercises needs a captured one
+        IReadOnlyList<VendorQuote> quotes = Vendor
+            .GetQuotesAsync(CapturedQuoteTickers(), new UncountedBudget()).GetAwaiter().GetResult().Value ?? [];
+
+        Record("spread.captured.asked", CapturedQuoteTickers().Count);
+        Record("spread.captured.answered", quotes.Count);
+        Record("spread.captured.twoSided", quotes.Count(q => q.IsUsable));
+
+        foreach (VendorQuote quote in quotes.OrderBy(q => q.Ticker, StringComparer.Ordinal))
+        {
+            double? bps = SpreadSnapshotter.SpreadBasisPoints(quote);
+
+            RecordText(
+                $"spread.captured.{quote.Ticker}.bps",
+                bps is double value ? value.ToString("F3", CultureInfo.InvariantCulture) : "-");
+        }
 
         // 16. The forward fill, which is the one stage that reads bars dated after its subject's
         //     own date. Over the fixture it fills what the single captured night can support: the

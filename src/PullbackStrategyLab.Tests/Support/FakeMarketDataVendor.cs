@@ -290,6 +290,62 @@ public sealed class FakeMarketDataVendor : IMarketDataVendor
         return Task.FromResult(VendorResult<IReadOnlyList<VendorIntradayBar>>.Delivered(minutes));
     }
 
+    private readonly Dictionary<string, VendorQuote> _quotes = new(StringComparer.Ordinal);
+
+    /// <summary>Every batch the caller asked for, in order, so a test can assert the batching.</summary>
+    public List<string[]> QuoteBatchesRequested { get; } = [];
+
+    /// <summary>
+    /// States one name's book. Both stamps are given, and separately, because the vendor sends them
+    /// separately and a test that supplied one would be asserting against a shape the vendor has not
+    /// got.
+    /// </summary>
+    public FakeMarketDataVendor Quote(
+        string ticker,
+        decimal? bid,
+        decimal? ask,
+        DateTimeOffset? bidAt = null,
+        DateTimeOffset? askAt = null,
+        long? bidSize = 100,
+        long? askSize = 100,
+        decimal? lastTrade = null)
+    {
+        _quotes[ticker] = new VendorQuote(
+            ticker, bid, ask, bidSize, askSize, bidAt, askAt, lastTrade, askAt ?? bidAt);
+        return this;
+    }
+
+    public Task<VendorResult<IReadOnlyList<VendorQuote>>> GetQuotesAsync(
+        IReadOnlyList<string> tickers,
+        ICallBudget budget,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(tickers);
+        ArgumentNullException.ThrowIfNull(budget);
+
+        if (tickers.Count == 0)
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorQuote>>.Delivered((IReadOnlyList<VendorQuote>)[]));
+        }
+
+        // Priced per name and requested once, which is the one place a request and a call are not
+        // the same unit in this interface. The fake charges the same way the client does, or a test
+        // at the ceiling would prove nothing about the stage at the ceiling.
+        if (!budget.TryCountCalls(EodhdClient.UsQuoteCost * tickers.Count))
+        {
+            return Task.FromResult(VendorResult<IReadOnlyList<VendorQuote>>.OutOfBudget());
+        }
+
+        QuoteBatchesRequested.Add([.. tickers]);
+
+        // A name with no stated quote is absent from the answer rather than present with nulls,
+        // which is what the vendor does with a name it does not carry.
+        IReadOnlyList<VendorQuote> quotes =
+            [.. tickers.Where(_quotes.ContainsKey).Select(t => _quotes[t])];
+
+        return Task.FromResult(VendorResult<IReadOnlyList<VendorQuote>>.Delivered(quotes));
+    }
+
     public Task<VendorResult<IReadOnlyList<VendorDailyBar>>> GetDailyHistoryAsync(
         string ticker,
         DateOnly from,

@@ -78,7 +78,7 @@ public sealed class RunLogger
             command.ExecuteNonQuery();
         }
 
-        int callsAlreadyUsedToday = CallsUsedOn(connection, DateOnly.FromDateTime(startedAt.UtcDateTime));
+        int callsAlreadyUsedToday = CallsUsedOn(connection, VendorQuotaDay.Containing(startedAt));
         var baseline = tablesWritten.ToDictionary(t => t, t => CountRows(connection, t), StringComparer.Ordinal);
 
         return new RunScope(this, connection, runId, stage, startedAt, baseline, callsAlreadyUsedToday, counting);
@@ -113,15 +113,21 @@ public sealed class RunLogger
     }
 
     /// <summary>
-    /// Vendor calls already spent on a UTC date, summed across every stage. The ceiling is
+    /// Vendor calls already spent in one quota day, summed across every stage. The ceiling is
     /// a daily total rather than a per-stage allowance, so a stage cannot know its own
     /// budget without reading what the earlier stages spent.
     ///
-    /// The budget day is the UTC date because time is UTC in storage and the vendor's own
-    /// quota resets on a fixed daily boundary. Whether that boundary is exactly UTC
-    /// midnight is confirmed against the vendor at 1.3, when the first real call is made.
+    /// <b>It takes a <see cref="VendorQuotaDay"/> rather than a date, and that is the 3.12
+    /// obligation discharged at 4.3.</b> This read and <see cref="IncompleteStagesOf"/> answer two
+    /// different questions about the same column, and until 4.3 both truncated it with
+    /// <c>substr(started_at, 1, 10)</c>: the quota day correctly, because the vendor's allowance
+    /// resets on a UTC boundary, and the session night incorrectly, because the lab's night crosses
+    /// that boundary. 3.12 repaired the second and left one correct use of an expression no guard
+    /// could tell from an incorrect one. Now each quantity is a named window and each read is
+    /// bounded between its two instants, so the two statements differ in the parameter they take and
+    /// not in a comment above them, and the truncation appears nowhere in the shipped source.
     /// </summary>
-    public static int CallsUsedOn(SqliteConnection connection, DateOnly utcDate)
+    public static int CallsUsedOn(SqliteConnection connection, VendorQuotaDay quotaDay)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -129,10 +135,12 @@ public sealed class RunLogger
         command.CommandText = """
             SELECT COALESCE(SUM(calls_used), 0)
               FROM run_log
-             WHERE substr(started_at, 1, 10) = @utc_date
+             WHERE started_at >= @quota_day_start
+               AND started_at < @quota_day_end
                AND counts_against_ceiling = 1;
             """;
-        command.Parameters.AddWithValue("@utc_date", StoreText.DateToStorageText(utcDate));
+        command.Parameters.AddWithValue("@quota_day_start", StoreText.TimestampToStorageText(quotaDay.Start));
+        command.Parameters.AddWithValue("@quota_day_end", StoreText.TimestampToStorageText(quotaDay.End));
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 

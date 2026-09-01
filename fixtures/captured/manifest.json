@@ -485,6 +485,13 @@
       "query": "interval=1m\u0026from=1787630400\u0026to=1787716800",
       "capturedAt": "2026-09-01T05:02:31.820Z",
       "bytes": 137323
+    },
+    {
+      "file": "us-quote-delayed.json",
+      "endpoint": "us-quote-delayed",
+      "query": "s=AAPL.US,AMD.US,AMZN.US,BAC.US,CCL.US,COIN.US,CSCO.US,F.US,GOOGL.US,HOOD.US,IESC.US,INTC.US,JNJ.US,JPM.US,KO.US,LITE.US,META.US,MSFT.US,MUZ.US,NCLH.US,NVDA.US,PAYO.US,PFE.US,PG.US,PLTR.US,RIVN.US,SOFI.US,T.US,TSLA.US,WMT.US,XOM.US",
+      "capturedAt": "2026-09-01T12:36:09.381Z",
+      "bytes": 37023
     }
   ]
 }

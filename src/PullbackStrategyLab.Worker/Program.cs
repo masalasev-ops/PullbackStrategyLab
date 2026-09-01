@@ -39,6 +39,7 @@ public static class Program
         builder.Services.AddSingleton<IndicatorEngine>();
         builder.Services.AddSingleton<IndexIngestor>();
         builder.Services.AddSingleton<IntradayFetcher>();
+        builder.Services.AddSingleton<SpreadSnapshotter>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
@@ -102,6 +103,7 @@ public static class Program
                 DailyBarIngestor.BackfillName => host.Services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
                 IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
                 IntradayFetcher.Name => host.Services.GetRequiredService<IntradayFetcher>().RunAsync(rest).GetAwaiter().GetResult(),
+                SpreadSnapshotter.Name => host.Services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
@@ -231,6 +233,7 @@ public static class Program
         DailyBarIngestor.BackfillName,
         IndexIngestor.Name,
         IntradayFetcher.Name,
+        SpreadSnapshotter.Name,
         IndicatorEngine.Name,
         ScanEngine.Name,
         TierClassifier.Name,

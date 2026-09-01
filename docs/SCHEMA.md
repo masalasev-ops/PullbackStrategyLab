@@ -156,13 +156,50 @@ Insert IntradayFetcher · PK (`session_date`, `observed_at`)
 **A night with no row here is a night nobody ran**, which is a different fact from a night that ran and asked for nothing, and the two are only distinguishable because the stage writes a row either way. **The shortfall is recorded here rather than on the setup rows**: `setup.degraded_because` is written once by the detector that inserts the row, `setup` has one declared writer per operation, and an update from this stage would be a second writer on rows the corpus forbids rewriting. Which names went unfetched is `requested` against `fetched`, which is a join rather than an edit.
 
 ### `spread_snapshot`
-Grain: ticker + snapshot time. Phase 4. **Unrecoverable if missed.** The only intraday job.
+Grain: ticker + session + pass + observation. Phase 4. **Unrecoverable if missed.** The only intraday job.
+
+**Read by entry slippage at 4.7**, through `SpreadSnapshotReader`. Named here because until 4.3 this was the one store in this document whose reader was neither named nor recorded absent, and a capture spending 120 unrecoverable calls a session on an input nothing consumes is one nobody can justify. What fraction of the spread a fill is charged, and whether it is symmetric between the two directions, are 4.7's and nothing in the capture computes them.
+
+| Column | Type | Note |
+|---|---|---|
+| `ticker` | TEXT | |
+| `session_date` | TEXT | the session the sample is inside |
+| `setup_as_of` | TEXT | the evening whose capped names these are, always strictly earlier |
+| `pass` | TEXT | `after_open` or `before_close`. A name rather than an index, so a row says which sample it is without a lookup |
+| `snapshot_ts` | TEXT | when the lab asked |
+| `bid`, `ask` | TEXT NULL | prices. Null where the vendor carried no such side |
+| `bid_size`, `ask_size` | INTEGER NULL | |
+| `bid_ts`, `ask_ts` | TEXT NULL | what the vendor stamped **each side** at. They differ: on the capture of 2026-09-01 the two sides of AAPL's book were 32 seconds apart, so a spread is a figure across two instants and the store keeps both |
+| `last_trade`, `last_trade_ts` | TEXT NULL | what actually traded, which is what makes a quoted spread interpretable against a price somebody paid |
+| `spread_bps` | REAL NULL | basis points of the mid. A statistic and not money, which is the one column here the prices rule points the other way on |
+| `quote_lag_seconds` | INTEGER NULL | how stale the quote was when it was taken, measured from the **older** of the two sides |
+| `absent_because` | TEXT NULL | why a row carries no spread. Null on a usable two-sided book |
+| `observed_at` | TEXT | |
+
+Insert SpreadSnapshotter · PK (`ticker`, `session_date`, `pass`, `observed_at`)
+
+**Every price column is nullable, and that is the shape of the table rather than a concession.** A quote the vendor had no bid for, a name it answered with one side, and a name it never mentioned are three different facts, and a column forced to hold a number flattens all three into whatever the writer chose. A spread of nought is not a missing spread: it is a free entry, and it clears every threshold written as a maximum, which is the same argument the geometry columns make three tables down (see: A gate handed an absent or degenerate quantity fails rather than passing). A crossed or locked book, where the bid is at or above the ask, is recorded the same way and for the same reason.
+
+**The lag is recorded rather than corrected for.** The feed is delayed by design, so a sample asked for at 10:15 describes the book at about 10:00, and the delay is the vendor's to change. Subtracting a constant would make the design's assumption invisible and would leave a later reader unable to tell a normal sample from a stale one; the stamps make it a fact per row, and 4.7 can bound on it or exclude a row instead (see: A delayed quote records its own lag rather than being corrected for it).
+
+**Append-only, with the observation in the key**, on the same terms as the bar tables. A pass rerun for a session it already has takes a genuinely different quote, because the market moved between them, so it is a second observation and not a correction of the first.
+
+### `spread_pass`
+Grain: session + pass + observation. Phase 4. What one pass did, written whatever the outcome.
 
 | Column | Type |
 |---|---|
-| `ticker`, `snapshot_ts`, `bid`, `ask`, `spread_bps` | |
+| `session_date`, `setup_as_of`, `pass` | TEXT |
+| `requested`, `answered`, `quoted`, `unquoted`, `rows_written` | INTEGER |
+| `outcome` | TEXT. `clean`, `partial` or `failed` |
+| `stopped_because` | TEXT NULL |
+| `observed_at` | TEXT |
 
-Insert SpreadSnapshotter
+Insert SpreadSnapshotter · PK (`session_date`, `pass`, `observed_at`)
+
+**This row is the whole of how a missed snapshot is detectable.** A stage that never ran cannot record that it never ran, so absence is the only signal available, and absence is only readable because a pass that does run always writes. One row for a session is a session sampled once; two is the design; none is a hole no later call can fill. The three cases and what each does are in ARCHITECTURE's failure behaviour under "A spread snapshot is missed".
+
+**It is stamped and bounded, unlike `intraday_fetch`, which it otherwise resembles.** The difference is that something reads it to decide an answer: whether a session was sampled at all is what the spread reader refuses on, so "sampled, as far as the lab could know by this date" is a point-in-time question and a replay seeing a pass recorded after the instant it is answering would refuse differently from the night itself.
 
 ---
 

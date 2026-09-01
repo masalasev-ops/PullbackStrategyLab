@@ -37,6 +37,26 @@ public sealed class NightlyOrderTests
                 + "schedules it under Every week and the nightly table correctly does not name it",
         };
 
+    /// <summary>
+    /// Stages whose place in a day's clock and place in a night's pipeline are different, with the
+    /// reason. Their presence in the schedule is still asserted; only the ordering is exempt.
+    ///
+    /// <b>A separate list from <see cref="NotNightly"/>, deliberately.</b> That one holds stages a
+    /// night does not run, and putting an ordering exemption in it would say something false about
+    /// the schedule to buy a green run.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> OrderedByTheSessionOffset =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["spreads"] =
+                "it runs inside the session, at 10:15 and 15:45, so on a day's clock it comes before every "
+                + "evening stage in this table. What it samples is the names capped on the evening before, so "
+                + "in one night's pipeline it comes after the cap it reads. Both are true and they are "
+                + "statements about different days: the replay runs one logical night and RUNBOOK schedules "
+                + "one wall clock. see: Minute bars are fetched for the session a plan was live in, never the "
+                + "session it was written on",
+        };
+
     [Fact]
     public void The_replay_runs_the_stages_in_the_order_the_runbook_schedules_them()
     {
@@ -73,15 +93,18 @@ public sealed class NightlyOrderTests
                 continue;
             }
 
-            if (at < position)
+            if (at < position && !OrderedByTheSessionOffset.ContainsKey(stage))
             {
                 problems.Add(
                     $"the replay runs \"{stage}\" after \"{previous}\" and RUNBOOK schedules it before. A stage that "
                     + "reads what a later stage writes gets nothing, quietly.");
             }
 
-            position = at;
-            previous = stage;
+            if (!OrderedByTheSessionOffset.ContainsKey(stage))
+            {
+                position = at;
+                previous = stage;
+            }
         }
 
         Assert.True(problems.Count == 0,

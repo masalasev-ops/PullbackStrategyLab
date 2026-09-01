@@ -30,9 +30,11 @@ public static class LabStatus
 
         using SqliteConnection connection = connections.OpenReadOnly();
 
-        // The call budget counts against the UTC date, which is what the ceiling is enforced on,
-        // so the band shows the same day the stages are counting.
-        int callsUsed = RunLogger.CallsUsedOn(connection, DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
+        // The call budget counts against the vendor's quota day, which is what the ceiling is
+        // enforced on, so the band shows the same window the stages are counting. It is named as a
+        // quota day rather than as a UTC date because the run beside it is bounded on a session, and
+        // the two windows do not have the same edges.
+        int callsUsed = RunLogger.CallsUsedOn(connection, VendorQuotaDay.Containing(clock.UtcNow));
 
         return new StatusResponse(
             "ready",

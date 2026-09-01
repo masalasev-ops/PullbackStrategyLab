@@ -105,7 +105,13 @@ jobs:
           # powershell.exe explicitly, whatever this step's own shell is. The property under test
           # is Windows PowerShell's, and running the script under pwsh would assert it of an
           # interpreter no scheduled task uses.
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          # -AllowBranch, and it is not a formality. The tree guard added at 4.2 refuses a slot
+          # dispatched from anything but main, and a runner is never on main: it checks out the
+          # branch under test. Without the switch the guard exits 4 before universe-build runs,
+          # nothing writes to stderr, and this job fails saying the slot script is discarding a
+          # message no stage ever produced. The switch is the operator saying they know where the
+          # tree is, and a workflow that checked the branch out is exactly that.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe -AllowBranch
           $code = $LASTEXITCODE
 
           # Back on, so a genuine failure below is not swallowed by the line above.
@@ -142,7 +148,7 @@ jobs:
           # So both run and the job prints what each did, and the divergence is carried as an
           # obligation against the move rather than settled here.
           Remove-Item data/live/logs/*.log -ErrorAction SilentlyContinue
-          & pwsh -NoProfile -File tools/nightly.ps1 -Slot universe
+          & pwsh -NoProfile -File tools/nightly.ps1 -Slot universe -AllowBranch
           $pwshCode = $LASTEXITCODE
 
           $pwshLog = Get-ChildItem data/live/logs/nightly-*.log -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -194,7 +200,12 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $false
           $ErrorActionPreference = 'Continue'
 
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe
+          # -AllowBranch for the reason the real job carries it. This job passed through the whole
+          # of the 4.2 regression, and that is worth stating rather than quietly fixing: its
+          # inverted assertion asks whether the log lacks a message no stage ever writes, which is
+          # true of a refusal log as well as of a real one. It proves the assertions are wired to
+          # the step's exit code and it cannot prove the stage ran.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/nightly.ps1 -Slot universe -AllowBranch
           $code = $LASTEXITCODE
           $ErrorActionPreference = 'Stop'
 

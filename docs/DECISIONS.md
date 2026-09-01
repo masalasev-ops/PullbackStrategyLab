@@ -478,6 +478,16 @@ It cannot express three averages in a specific order, cannot express the pullbac
 **Spread is captured intraday from day one**
 It determines whether a tight stop is meaningful, and it is the one input that cannot be recovered later. Everything else can be re-queried.
 
+**A delayed quote records its own lag rather than being corrected for it**
+The vendor's quote feed is delayed, so a sample asked for at 10:15 describes the book at about 10:00, and both sides of it carry the vendor's own stamp. The stage stores those stamps and the difference between the older of them and the instant it asked, rather than shifting the sample time to compensate.
+
+It is a decision rather than a mechanism because the other reading is coherent and its failure is invisible. Subtracting a constant produces rows that look exactly like live ones, so a reader has no way to tell a normal sample from one taken while the feed was running late, and the design's assumption about the delay lives in a stage rather than in the data. Recording it makes the lag a fact per row that 4.7 can bound on or exclude, and it means a change to the vendor's delay shows up as a column moving rather than as every stored spread quietly describing a different minute.
+
+The lag is measured from the older of the two sides, because a spread is only as fresh as its stalest half: an ask stamped a second ago against a bid stamped four minutes ago is a four-minute-old spread whatever the ask says.
+
+**Two spread samples a session, not one and not three**
+One quote cannot be checked. A stale quote, a locked or crossed book and a one-off blowout all look like an ordinary row, and nothing on that row says which it was; two independent observations of one name on one day give the fill model something to disagree with, and the disagreement is itself the finding, because a name whose spread doubles across a session is a name no single figure describes. A third would cost sixty more unrecoverable calls every session for the life of the lab and would buy the shape of the intraday curve rather than a check on its level, which is not what a fill model charges. If the two turn out to disagree often enough that no level is usable, that is an argument for a third made from the record rather than ahead of it.
+
 **The runtime is .NET with C#, one codebase for both halves**
 The components most likely to produce a silently wrong answer are the trading and journal ones, and those benefit most from a compiler. Analysis can be pointed at the same store later without changing the application.
 

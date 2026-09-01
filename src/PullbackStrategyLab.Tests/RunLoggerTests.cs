@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
@@ -136,7 +137,7 @@ public sealed class RunLoggerTests : IDisposable
             today.Complete(RunOutcome.Clean);
         }
 
-        Assert.Equal(2, RunLogger.CallsUsedOn(connection, DateOnly.FromDateTime(Evening.UtcDateTime)));
+        Assert.Equal(2, RunLogger.CallsUsedOn(connection, VendorQuotaDay.Containing(Evening)));
 
         _clock.Advance(TimeSpan.FromDays(1));
         using RunScope tomorrow = logger.Begin(connection, "bulk-bars");
