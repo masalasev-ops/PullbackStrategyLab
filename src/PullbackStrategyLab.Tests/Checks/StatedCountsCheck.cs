@@ -125,9 +125,16 @@ public sealed partial class StatedCountsCheck
         // times was one out and no check could see it. It is a count a spec states about another
         // document's contents rather than its own, which is why it was never registered; the rule is
         // about numbers a spec states, and the document being counted is not what makes it stale.
+        // <b>The stated figure was a C# literal until 4.15, which is the same defect one level
+        // down.</b> The commit that registered this claim said it was registered so the count could
+        // not drift again, and it left the number it was comparing against typed into this file: a
+        // count derived on one side and hard-coded on the other still needs a person to remember.
+        // 4.15 filled the last ten rows, so the figure had to move, and moving it is what showed
+        // that nothing would have failed if it had not. It is read out of BUILD_PLAN's own sentence
+        // now, so the document that states it is the document that has to be edited.
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the authored parameters left open after 4.4",
-            Stated: 10,
+            "BUILD_PLAN.md, the authored parameters left open",
+            Stated: InWords(buildPlan, "and ", " rows of the authored-parameters table remain open"),
             Derived: OpenParameterRow().Matches(architecture).Count,
             Derivation: "rows of the authored-parameters table marked OPEN"));
 

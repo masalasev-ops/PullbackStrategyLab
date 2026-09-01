@@ -27,6 +27,52 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-01 — ARCHITECTURE.html — cites Entry slippage is the whole captured spread, symmetric between the directions
+Was:  The authored-parameters intro read "Every value chosen rather than derived, with the basis for each and the point at which it should be revisited. A value changes only by the same route as anything else: a proposal, a stated mechanism, and a paired test."
+Now:  The same with "Nothing here is left open." back between the two sentences, in the words it was removed in.
+Why:  The claim came out at 3.8 because the table did not have the completeness it asserted, and the rows rather than the sentence were the thing to fix. The last ten were filled here, so the condition the removal rested on no longer holds. It goes back in its original words on purpose: a claim reworded on return is a different claim, and the test that holds it reads this string.
+
+### 2026-09-01 — ARCHITECTURE.html — cites Trimming into support is dropped from the baseline rather than defined here
+Was:  Two paragraphs explaining that rows marked OPEN are values the strategy uses and the table does not yet state, that the claim cannot come back while any row is OPEN, and that a second group was added on 2026-08-31 when phase 4 was planned.
+Now:  The same reasoning, in the past tense where it is history and in the present where it is still a rule: the claim was removed at 3.8, eleven rows were opened, the hourly grid was answered at 4.4 and the other ten at 4.15, and the mutual exclusion between the claim and an OPEN row is now asserted in both directions. Plus what a reader of the filled table needs and could not otherwise see: three rows carry a number that is arbitrary within a defensible range and say so, and one is filled as dropped rather than answered.
+Why:  Both paragraphs were written while the rows were open and read as current state. Leaving them would have left a document describing its own table as incomplete on the page where it claims completeness. The three arbitrary numbers and the dropped row are stated in the prose as well as on the rows because they are the two things a filled table hides: a number nobody derived reads exactly like one somebody did, and a clause removed reads exactly like a clause forgotten.
+
+### 2026-09-01 — ARCHITECTURE.html — cites Exit slippage is charged on the same terms as entry slippage
+Was:  The fill model's first bullet: "Entry costs slightly more than the trigger. The order goes in while price is already moving, so it fills a little the wrong side of the number on the plan." No exit was priced anywhere, and the gap bullet stated only that the loss is not clamped.
+Now:  Entry costs the whole captured spread the wrong way on both sides, with the proxy stated; a second bullet prices exits on the same terms; and the gap bullet names its fill price as the open of the session's first regular minute bar, read from the store, not slipped again.
+Why:  An adverb is not a number and the model moved every R figure in the system through it. Pricing one end of the trade and not the other flatters every R figure by half the round trip, in the direction that manufactures edge, and the 4.3 capture measured spreads to 327 basis points, so the term can decide whether a trade was viable rather than trim a result. The gap price was the half of the sentence that stated what is not done to the number and never the number.
+
+### 2026-09-01 — ARCHITECTURE.html — cites The long trail is evaluated on the daily close and fills at the next open
+Was:  The management comparison table's exit-rule row: "Trail the 9-day average, let it run" long, and "Trim about 15% past 3R, trim into support, exit if an hourly bar closes back above the 50-day average" short.
+Now:  The long cell states the trail on the daily close filling at the next open, or the fixed give-up point, whichever is reached first. The short cell states a 15% trim of the planned position once at 3R and the hourly-close exit, and no longer names the support trim.
+Why:  "Let it run" is not an exit rule and the row is where the two sides are compared, so one side stated a mechanism and the other stated an intention. The support clause is dropped from the baseline rather than defined, so the cell that lists the short side's rules cannot go on listing it.
+
+### 2026-09-01 — ARCHITECTURE.html — cites The order prices are derived from the final pullback session's minutes, not from the screening geometry
+Was:  The ten OPEN rows of the authored-parameters table, each stating what was missing and naming the checkpoint that would close it: the long trail's mechanics, the short trim fraction, the support trim, entry slippage, the long side's exit trigger, trigger confirmation, the gap-through fill price, exit slippage, the loss-cause boundary, and the trigger and stop derivation with its four parts.
+Now:  Ten filled rows, each stating a value, a review point and a basis that cites the decision it comes from by name. The derivation row keeps its rejection of the screening geometry as an order price and its measured medians, and answers all four parts.
+Why:  This is 4.15's deliverable and the eleven questions were put to the operator on 2026-08-31, before the phase's first commit, so no checkpoint waited on availability. Each row cites rather than restates, because a value in a table and its reasoning in a decision are two places for one thing to drift; the citation is what makes them one.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Trimming into support is dropped from the baseline rather than defined here
+Was:  4.15's done condition ended "Done when every decision resolves and no phase-4 statement in ARCHITECTURE disagrees with SCHEMA or BUILD_PLAN".
+Now:  The same, preceded by what the sitting produced, stated against what the files say after the edit: ten answers landing as nine named decisions because the trail's answer closes two rows, three rows carrying an arbitrary number and saying so, one row filled as dropped with its reason, the completeness sentence returning, nought rows left open, and the tripwire in `AuthoredParametersTests` paid rather than lowered.
+Why:  A done condition narrower than its clause is the most common defect in this corpus, and this one named neither the count nor the tripwire it was always going to fire. The tripwire clause is the part worth having: the test asserted at least six rows were OPEN so a sweep finding none would mean the marker had changed, and at nought open rows that floor cannot separate the two cases it exists to separate.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The trigger is touched, not closed through
+Was:  Five rows stating that questions land at them: 4.5 opening on the resolver test, 4.7 saying entry slippage arrives there as a form and a number, 4.8 saying four of the eleven questions land there, 4.10 saying the boundary is a number there and a precedence rule with it, and 4.16 opening on being sixth and before anything that reads a plan.
+Now:  Each states that its question was answered at 4.15 and that the checkpoint builds against the answer, with the answer named and its decision cited. 4.8 keeps the one thing 4.15 does not settle, being when the trail takes over from the fixed stop, which is a mechanism rather than an authored value. 4.16's part (d) is named as answered: a setup with no pullback gets no plan, which it already carried as a defect.
+Why:  A row saying a question lands at it and a decision recording the answer are a disagreement, and 4.15's own done condition asks that no phase-4 statement disagree across the documents. Building against an answer and taking it are different work, and a build session reading "four of the eleven questions land here" would have taken them again.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The hourly grid anchors to the session open, and the closing stub is not an hourly bar
+Was:  4.4's done condition read "Question 3's OPEN row is filled, ARCHITECTURE's completeness sentence stays absent, and the other **ten** rows remain open."
+Now:  The same, saying the ten are still open when that checkpoint ends and naming 4.15 as where they were closed and where the count now lives.
+Why:  A done condition states what the file says after that checkpoint's edit, and it went on stating a count of the current document after another checkpoint moved it. `stated-counts` read the figure from this sentence, so leaving it would have been a live claim of ten against a table holding nought.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Trimming into support is dropped from the baseline rather than defined here
+Was:  4.13's row read "**And it states which authored-parameters rows are still OPEN**, rather than discovering them: ARCHITECTURE's completeness sentence cannot return while any row is OPEN, which is asserted rather than intended".
+Now:  The same clause with the exclusion stated in both directions, recording that 4.15 filled the last ten and the sentence returned there, so what the sign-off now asks is whether anything reopened one since.
+Why:  The row was written for a table with rows open and would have read at the sign-off as a question with an obvious nought answer. The question that is worth asking at a sign-off is the other one, and it is a different question rather than the same one shrunk.
+
+
 ### 2026-09-01 — BUILD_PLAN.md — cites Long and short are never pooled into one figure
 Was:  The 2.11 operator row ended: "What the row waits on is now a judgement rather than a search, and the figures it needs are in the entry of 2026-08-30".
 Now:  The same, followed by a dated paragraph recording the re-measurement of 4.4: both figures above were taken with `reached-ceiling` running two of its three clauses; given the third its maximum, 431 short rows reach `exit-tight` and 4 pass at 0.93% against the long side's 1.51% over 1,981, both over the same 602 calibration sessions; the funnel still ends at 4 survivors, median nought a night; the once is still unspent and no threshold is proposed.

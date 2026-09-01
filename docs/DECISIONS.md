@@ -377,6 +377,83 @@ The short side's `reached-ceiling` asks whether price came back within half a da
 
 **Where the store cannot reach the anchor the clause does not run, and the verdict says so.** The level is never approximated from daily bars, which is the refusal this check has carried since 2.7: a daily-bar stand-in produces a number that looks like the real thing inside the check deciding whether a bounce reached its ceiling. `reached-ceiling` records three clause sets rather than two, so a row that could not be anchored stays distinguishable from one written before anchoring existed and from one that ran the full disjunction (see: A gate handed an absent or degenerate quantity fails rather than passing).
 
+**Entry slippage is the whole captured spread, symmetric between the directions**
+The form was settled at 4.3 as the spread. The fraction is the whole of it, not half, on both sides.
+
+The trigger is a traded price and a resting order entering on it crosses the book, so half a spread would price a fill at the midpoint of a book the order did not get. The fill model's stated stance is pessimism on purpose, and being too pessimistic understates edge, which is the safe direction for a lab whose question is whether edge exists at all.
+
+**Short borrow cost is not modelled and the short side is understated by an amount nothing measures.** The assumed borrow rate is charged per calendar day held and is a separate line; what is absent is the cost of locating and holding the borrow itself, which varies by name and by day and which this lab buys no data for. It is recorded here rather than left out, because a symmetric slippage rule reads as though the two sides were treated alike and on this one term they are not.
+
+**The spread applied is a proxy, and the approximation is stated rather than unnoticed.** `spread_snapshot` is captured twice a session, not at the trigger, so the figure charged is not the spread that existed at the fill. Worse, the vendor stamps a quote's bid and its ask separately: on the capture of 2026-09-01 AAPL's two sides carried stamps 32 seconds apart, so a stored `spread_bps` need not be a spread that existed at any instant. Charging a fraction of a figure taken across a gap as though it existed at a moment is an approximation this decision takes deliberately. What 4.7 owes is not this choice but what happens to a row whose two sides are far enough apart to describe different markets.
+
+**Exit slippage is charged on the same terms as entry slippage**
+The whole spread, both directions, and the same figure for a trail exit as for a give-up exit.
+
+Pricing one end of the trade and not the other flatters every R figure by half the round trip, systematically and in the direction that manufactures edge. The lab exists to measure whether edge exceeds cost and the round trip is the cost, so an exit priced at nothing is not a conservative simplification but a thumb on the scale.
+
+**The size of what is being left out is measured rather than assumed small.** The 4.3 capture found spreads from 0.9 basis points to 327 on one afternoon. At the wide end the round trip is 6.5%, against which a stop a third of a percent out is not a tight stop at all, so the term is capable of deciding whether a trade was ever viable rather than trimming a result.
+
+A trail exit and a give-up exit are given the same treatment rather than two, because nothing in the corpus distinguishes the book one crosses on the way out by which rule sent the order.
+
+**A gap through a price fills at the session's first regular minute open, and is not slipped again**
+The open of the first regular-hours minute bar of the session, read from `intraday_bar` rather than from any session-open field.
+
+The loss is explicitly never clamped, so the gap is taken as it happened. Taking the worse of the open and the stop would price an adverse move that did not occur, which is pessimism past the point where it is still measuring something. Tying the price to the store's own first regular minute keeps it derivable from what the lab holds, on the same footing as every other price in the system, rather than resting on a field the vendor computes.
+
+**A gap fill does not additionally slip**, because the gap is the adverse move. Charging a spread on top would be charging twice for one crossing.
+
+This applies to an exit as much as to an entry, and it is the one exception to the rule above.
+
+**The trigger is touched, not closed through**
+For a long, a minute bar whose high reaches the trigger price. For a short, a minute bar whose low reaches it. No margin.
+
+The contention rule is stated as what resting orders do in a real account, and a resting order fills on a touch. A close-based reading would delay every fill to a minute boundary and would reorder which name wins contention, since the rule compares trigger times across names; the three readings of "the trigger traded" order the same session differently, which is why this is not a detail of the resolver (see: Plans are resting orders and fills go in time order when the caps bind).
+
+**Touch is the optimistic reading of whether a fill happened, and the slippage decision is what prices it.** The two are kept as separate questions on purpose: conflating them would hide a fill assumption inside a cost assumption, where neither could be varied without moving the other.
+
+**The long trail is evaluated on the daily close and fills at the next open**
+A daily close below the 9-day average ends the position, and the fill is at the next session's open. Active from entry, with no arming threshold.
+
+The 9-day average is a daily series, so an intraday touch of it exits on noise rather than on the rule the strategy states. Arming from entry needs no second parameter, and the fixed give-up point already governs the early part of the trade, so an arming threshold would be a rule nobody has described. Filling at the next open is free of lookahead and is the same mechanic as the gap answer above, so the trail and the give-up point behave alike on a gap rather than differently for no stated reason.
+
+**The exit is whichever of the fixed give-up point and the trail is reached first**, which is the long side's answer to the question the short side already had. The short side has a stated exit trigger, an hourly close back above the 50-day average, and the long side's "let it run" stated nothing; this is the same asymmetry the pooling rule addresses one level up (see: Long and short are never pooled into one figure).
+
+**The short trim is 15% of the planned position, once, at 3R**
+Fifteen per cent of the share count the plan was sized at, not of what remains, fired once when 3R is reached and not repeated at further levels.
+
+A fraction of the remainder is a decaying ladder that never fully exits, and it makes R accounting depend on how many times the rule has already fired. A fraction of the original is a fixed share count computable at plan time, which keeps it immutable with the rest of the plan (see: The plan is written before the session and is immutable after publication). Repeating levels would be a second rule set, and the document describes one.
+
+**The 15 is arbitrary and is recorded as such.** It is inherited from the strategy's own "about 15%" and nothing derives it. A later session reading this row should see a choice made inside a defensible range rather than a value with a basis.
+
+**Trimming into support is dropped from the baseline rather than defined here**
+The clause is removed. The short side keeps its trim at 3R and its exit on an hourly close back above the 50-day average.
+
+Support is defined nowhere in this corpus: not in the vocabulary, not in the signal library, not in SCHEMA. Any definition written now would be authored rather than recovered, so the choice was between inventing a level and dropping the clause.
+
+**It is dropped rather than defined because phase 5 is where a rule variant is tested against evidence.** A support definition belongs there as a named variant carrying its own stated level, where it can be screened and paired; baked into the baseline it cannot be told apart from the rest of the rule set, and every figure the baseline produces would carry an invented number nobody could isolate.
+
+Recorded as dropped, with the reason, so a later session reads a decision rather than an omission. Without this entry the clause's absence is indistinguishable from an oversight, and the next reader restores it.
+
+**A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list**
+A closed loss is noise when the direction-signed ten-day forward return from the trigger reaches +1R or better. Below that, the setup failed.
+
+The boundary is in R rather than in per cent, because R is the unit every other figure in the lab is denominated in and a percentage is not comparable across names of different volatility. 1R is the point at which the trade would have paid for the risk it took, which is the narrowest defensible reading of "the move happened anyway".
+
+**The 1 is arbitrary within a defensible range and is recorded as such**, on the same terms as the trim fraction.
+
+**Precedence is not a single ordered list, and stating it as one is what made it look like a conflict.** A gap loss is classified as a gap loss first, because that names *how* the loss occurred. Noise against failed setup names *what happened afterwards*, and it classifies the losses that were not gaps. The two answer different questions, so a gap loss that later recovers satisfies both without contradiction, and reporting them as one ranked list would hide that a loss has a mechanism and an aftermath.
+
+**The order prices are derived from the final pullback session's minutes, not from the screening geometry**
+`PullbackGeometry.Of` computes an entry level and a give-up point from daily bars and they are screening quantities feeding `trigger-near` and `exit-tight`. They are not the prices an order is placed at, and reading one as the other is how two different numbers silently become one.
+
+**The intraday floor is the lowest low of the final pullback session's regular-hours minute bars**, and the ceiling is that session's highest high on the short side. The document already rejects the low of the whole dip as an order reference under "Why the exit-tight check is the interesting one", where it is 5.6% against a cap of 3.4% and the trade fails the strategy's own risk rule; the final session's extreme is tighter than the dip's. It must be computable on the evening before, because the plan is locked before the open, which rules out anything reading the entry session's own minutes.
+
+**The give-up point sits one tenth of an ADR beyond that extreme, on both sides.** Above the bounce high for a short, below the pullback floor for a long. Expressed as a fraction of ADR so it is scale-free across names, and symmetric so neither side carries an offset the other does not. This closes the gap where the short check list says the give-up point is *above* the bounce high and the code puts it *at* the high, so the clause had no code and the offset had no value. **The 0.1 is arbitrary and is recorded as such**; the ADR form and the symmetry are not.
+
+**Where several scan hits fall inside the window, the thrust is the one with the extreme**: highest high for a long, lowest low for a short, ties broken by recency. The pullback is a retrace from an extreme, and both the give-up point and the anchored average price are measured from it, so a most-recent rule can anchor to a smaller hit and place both prices against the wrong level. The rule this replaces is most-recent-then-rank and is written nowhere, so what changes is an undocumented rule rather than an authored one.
+
+**A setup with no pullback gets no plan.** PlanBuilder writes nothing and records why, rather than sizing on a nought (see: A gate handed an absent or degenerate quantity fails rather than passing). This is the defect already carried against 4.16, where a setup whose thrust has not pulled back yet is stored with a trigger and a give-up point at the same price, and the answer is that it is not a value.
+
 ## How changes are judged
 
 **Versions select from one shared nightly candidate list rather than each re-scanning**

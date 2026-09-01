@@ -10524,6 +10524,38 @@
       "checkpoint": "4.4",
       "producedBy": "derived by hand before the replay was run, then run. The fixture's setups are written by the forward detectors against a store holding no minute bars, so every short row's `reached-ceiling` records the two average clauses with the anchored one unreached. The prediction was one short row reading anchorUnavailable and nothing in any other bucket. The five buckets are exhaustive over the population, so they add to it: a set of counts that does not add up leaves a state nobody is reporting.",
       "note": "of those, the ones that ran the full disjunction. The first short row in this state is the first night of the short side's twenty, so this figure moving off nought is the seam 3.6 counts from"
+    },
+    {
+      "id": "authored.rows",
+      "tier": "DERIVED",
+      "value": "45",
+      "checkpoint": "4.15",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
+      "note": "rows of the authored-parameters table"
+    },
+    {
+      "id": "authored.open",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.15",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
+      "note": "of those, the ones still marked OPEN. This is the one that carries the property and the three beside it are the population it was computed over: nought open means nothing without the count it was nought out of, since a parser reading no rows reports nought too. It read 11 before 4.4, 10 after it, and nought here, which is the state that lets ARCHITECTURE's completeness sentence back in."
+    },
+    {
+      "id": "authored.filled",
+      "tier": "DERIVED",
+      "value": "45",
+      "checkpoint": "4.15",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
+      "note": "of those, the ones stating a value. Nought open and 45 filled are the same fact twice only while the total holds, which is why both are recorded"
+    },
+    {
+      "id": "authored.citingADecision",
+      "tier": "DERIVED",
+      "value": "11",
+      "checkpoint": "4.15",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
+      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move"
     }
   ],
   "frozenOnly": [

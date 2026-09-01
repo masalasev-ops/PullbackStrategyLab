@@ -684,6 +684,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
+        measurements.AddRange(AuthoredParameterFigures());
         measurements.AddRange(ClauseFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
@@ -2058,6 +2059,41 @@ public sealed class PhaseReplay : IDisposable
         }
 
         return sets;
+    }
+
+    /// <summary>
+    /// The authored-parameters table's own shape, on the precedent the catalogue figures set at
+    /// 4.14: a figure about the document rather than about the fixture's data.
+    ///
+    /// <b>The property is `authored.open` and the three beside it are the population.</b> Nought
+    /// open rows means nothing on its own, because a parser that read no rows reports nought too,
+    /// which is why the total is recorded with it and why the check that reads this table refuses a
+    /// row count below twenty-five. The filled and the citing counts separate two different things
+    /// a filled row can be: one that states a value, and one that names the decision the value came
+    /// from. A row filled without a citation is the shape 4.15 exists to avoid, so it is counted.
+    /// </summary>
+    private static IReadOnlyList<Measurement> AuthoredParameterFigures()
+    {
+        string architecture = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Docs, "ARCHITECTURE.html"));
+
+        IReadOnlyList<IReadOnlyList<string>> rows =
+            HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
+
+        int open = rows.Count(r => r.Count > 0 && r[0].Contains("OPEN", StringComparison.Ordinal));
+        int citing = rows.Count(r => r.Count > 3 && r[3].Contains("(see: ", StringComparison.Ordinal));
+
+        return
+        [
+            new Measurement("authored.rows",
+                rows.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("authored.open",
+                open.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("authored.filled",
+                (rows.Count - open).ToString(CultureInfo.InvariantCulture)),
+            new Measurement("authored.citingADecision",
+                citing.ToString(CultureInfo.InvariantCulture)),
+        ];
     }
 
     private static IReadOnlyList<Measurement> CataloguePlacementFigures()
