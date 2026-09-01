@@ -10475,7 +10475,21 @@ Found:      **`stated-counts` derived one side of a claim and hard-coded the oth
             which is the procedure that guard exists to force.
 
 Verified:   `tools/ci.ps1` green at 28 steps and **698 tests**, from 696. The two are the net of the
-            authored-parameters file going from two tests to four.
+            authored-parameters file going from two tests to four. `tools/verify-phase.ps1` GREEN:
+            **128 claims, 84 passed, 0 failed, 44 out of scope, 0 unexamined**, coverage examined
+            **5,492**, **1,394 expectations** of which 1 is void, inputs CAPTURED 70 and AUTHORED 133,
+            expectations changed since the last commit 0. Read on a clean tree at `8abefc2`, which is
+            this checkpoint's first commit and carries every edit it makes; the block you are reading
+            lands in the second, so the figures name the tree they were produced on.
+
+            **The out-of-scope count is unchanged at 44 against the ceiling of 52, and that is the
+            answer rather than an omission.** The register is keyed on rows and tables, so only a new
+            row in a claim table or a new table moves it. This checkpoint edits the cells of ten rows
+            that already exist and adds neither, and the authored-parameters table is placed as read
+            by `pinned-constants` rather than yielding a claim per row, so a filled row gains no
+            verdict of its own. `pinned-constants` still reports 29 rows with no code constant yet,
+            unchanged, because none of the ten gained a constant here: the components they govern
+            arrive at 4.7, 4.8, 4.10 and 4.16.
 
             **Four DERIVED expectations, every one predicted before the replay was run and every
             prediction held.** `authored.open` at nought carries the property and the three beside it
