@@ -9337,3 +9337,133 @@ Carried:    **The night's own log does not record the `actions` rerun.** It was 
             fault as the slot diagnostics row already carried at 3.12.
 
             **This session committed code and may not sign it off.**
+## 3.15 — 2026-09-01 — phase-4-plan-and-questions — the phase 4 build plan, and eleven questions put before the first commit
+
+Not a checkpoint entry. It records the phase 4 build plan, the eleven strategy questions put to the
+operator in one sitting, two spec corrections that could not wait, one new carried obligation, and a
+ruling that reached `main` in August and never reached this record. Nothing here is evidence and none
+of it moves 3.6. The questions were put on the evening of 2026-08-31 and the pass finished after
+local midnight, which is why the two dates differ.
+
+Corrected:  **`e581ba4` made four rulings and two corrections and wrote no entry here.** It authored
+            the decision (see: 3.6 gates what may be admitted, not what may be built), fixed phase
+            4's order at 4.2, 4.3, 4.1, repointed the twenty-eight obligations parked at 4.1 to the
+            eight checkpoints whose work they bear on, and named the ten that share the deadline the
+            baseline freeze puts on them. It touched `BUILD_PLAN.md`, `CHANGELOG.md` and
+            `DECISIONS.md` and not `PROGRESS.md`. The commit message carries the reasoning and a
+            commit message is not this record: nothing reads it, and the next session to ask when
+            phase 4's order was fixed would have found the answer only by reading a diff. Recorded
+            here rather than corrected in place, because an append-only record is corrected by a new
+            dated entry.
+
+            **A figure I gave the operator did not survive re-derivation, and the population is the
+            reason.** I stated `exit-tight`'s median as 1.184 daily ranges with over 99% of stops
+            outside the cap, over a population that was not named and did not separate the two
+            directions. Restated below, per side, over the rows the figure is actually about.
+
+            **And the plan's own projection of the out-of-scope count was wrong in the safe
+            direction.** It estimated this pass would take the count from 50 to 51 or 52 against the
+            ceiling, and the count did not move: the data budget is read by `pinned-constants` and
+            not by `architecture-conformance`, so a budget row enters no claim register. The peak
+            moves to 4.14 and the phase 4 section says so.
+
+Asked:      **Eleven questions, put in one sitting on 2026-08-31, before the phase's first commit.**
+            Six were already OPEN rows in `ARCHITECTURE.html`; five were underspecified to the same
+            degree and the table did not admit them, so they were added as OPEN rows in this pass and
+            the questions went out against a document that admits all eleven. Three carry a measured
+            downstream consequence rather than a recommended value, which is the shape the operator
+            asked for: what the choice costs, not what to choose.
+
+            **The eleventh was withdrawn during the pass and restored.** It was withdrawn on the
+            ground that `PullbackGeometry.Of` already derives a trigger and a stop. That is true and
+            it is about a different population: those two columns feed `trigger-near` and
+            `exit-tight` and nothing that places an order, so reading the screening quantity as the
+            order price is the fifth failure shape with the code as the subject. An adversarial check
+            refuted the withdrawal two verifiers to one, on this corpus's own rejection of the low of
+            the dip as an order reference, on the execution variant family naming stop placement and
+            trigger definition as its own dimensions, and on the measurement below. Restored, in four
+            parts, as the OPEN row due at 4.16.
+
+Built:      **The Phase 4 section of `BUILD_PLAN.md`, rewritten.** Sixteen rows against thirteen, the
+            three added being the corpus corrections at 4.14, the decisions at 4.15 and PlanBuilder
+            at 4.16. Existing identifiers are not renumbered, because 4.1 to 4.13 are cited by number
+            in four places and `CheckCoverage.DeferralProblems` fails a deferral naming a checkpoint
+            that does not resolve, so the table's order is the build order and the number is an
+            identifier. Each row states the population it is verified over and what it settles, where
+            before they were one-line deliverables.
+
+            **PlanBuilder had no checkpoint in any phase and 4.9 built its auditor.** `SCHEMA.md`
+            declares `trade_plan` under Trading, the catalogue slots the component at 18:30 and
+            `RUNBOOK.md` reserves the slot. It is 4.16 and lands before anything that reads a plan.
+
+            **A rule the section states because the fix reads as an omission.**
+            `Schedule.CheckpointFor` answers when a component is owed with the earliest checkpoint
+            row whose text contains its name, so a row mentioning a component in passing brings its
+            claim forward to a checkpoint that does not build it, and the claim fails on the day that
+            checkpoint lands. Two rows name a component by description for that reason and say where
+            they do it. Found by writing the row that would have broken it: the draft of 4.2 named
+            PlanBuilder in the sentence explaining the session offset, which would have owed the
+            component at 4.2.
+
+            **A section classifying the sixteen obligations due at 4.6**, below the obligations table
+            beside the one that classifies 4.1's. Three groups: three block a 4.6 done condition,
+            four are 4.6's own subject and nine merely landed there. The nine are the finding, exactly
+            as twenty-three of twenty-nine were at 4.1. Nothing moves in this pass.
+
+            **Two edits to `ARCHITECTURE.html`.** The data budget gains a `universe-build` row with
+            its two cost components separated, and the total moves from about 798 to 2,803 to 4,003:
+            the largest consumer in the lab was missing from the one table that says what the lab
+            spends, and 4.2 sizes its own calls against that total. And five OPEN rows, with the
+            paragraph above the table recording why they arrived together.
+
+            **`stated-counts` gains six claims.** The obligations table's total read out of the new
+            4.6 section, the count due at 4.6 read twice, the three groups and their sum, and phase
+            4's own checkpoint count derived from its table. Registered in the commit that writes the
+            figures rather than after the first time one goes stale, which is what happened to the
+            operator's own heading and to the permit sentence.
+
+Measured:   **`exit-tight` over the calibration rows, per side, excluding the degenerate zeros.**
+            Long: median 1.313 daily ranges over 17,093 rows, 97.6% above the cap of 0.5. Short:
+            median 1.428 over 9,718 rows, 97.6% above. The excluded rows are the pre-031 flattened
+            noughts, 15,440 long and 7,199 short, which are the degenerate case rather than a stop
+            anyone placed and which pull a pooled median below what either side reads. Over the four
+            live nights since 031, `setup` reads 1.246 long over 68 rows and 1.077 short over 16.
+
+            **The equal pair is current behaviour, not history.** Of the `setup` rows written since
+            migration 031 whose `stop_distance_ranges` is absent, 41 long and 40 short, spanning
+            2026-08-28 to 2026-08-31, carry a `trigger_price` and a `stop_price` that are equal and
+            non-null. None carries both as null. The columns gained the ability to say absent at 031
+            and the writer never started using it.
+
+            **`spread_snapshot` has no reader anywhere in the repository.** A search for the store,
+            its column and its component across `src/`, `tools/` and `fixtures/` returns nothing, and
+            `SCHEMA.md` says "read by nobody" outright where that is the answer, so the silence is
+            not a convention. It is the measured consequence put beside the entry-slippage question.
+
+            **The session is 390 minutes and no shipped constant holds either boundary.** Six hours
+            and a thirty-minute remainder, so every hourly grid leaves a stub and the question is
+            which. 09:30 and 16:00 live in a test comment, test inline data, an OPEN cell and a
+            storage estimate; 4.4 introduces them to the codebase.
+
+            **The carried obligations table is fifty-nine rows.** Sixteen fall due at 4.6, nine at
+            the operator, eleven at 5.1, four at 6.8, three each at 4.2 and the move, two each at
+            4.1 and 4.11, and one each at 3.6, 4.3, 4.4, 4.8, 4.16, 5.2, 5.3, 6.1 and 6.5.
+
+Verified:   `tools/ci.ps1` green at 28 steps and **615 tests**, unchanged, this pass adding claims to
+            an existing check rather than test methods. `tools/verify-phase.ps1` GREEN: 126 claims,
+            76 passed, 0 failed, **50 out of scope**, **0 unexamined**, coverage examined 4,876,
+            inputs CAPTURED 68 and AUTHORED 107. The out-of-scope count was read against the ceiling
+            before the commit, as the pass was told to, and needs no raise.
+
+Carried:    **One new, due at 4.16.** A setup whose thrust has not pulled back yet is stored with a
+            trigger and a stop that are the same price, so two of its four geometry columns state a
+            quantity the corpus says it does not have. It breaches `SCHEMA.md`'s "Absent where the
+            setup has none", and the decision that covers it
+            (see: A gate handed an absent or degenerate quantity fails rather than passing) asserts
+            over the gate list rather than per column, so the gates obey it and the write does not.
+            Due at 4.16 because PlanBuilder is the first component that reads the pair as a size
+            rather than as a screening input.
+
+            **Nothing else moved.** The other fifty-eight rows keep the due points the 2026-08-31
+            repointing gave them, and the 4.6 classification is that decision's input rather than a
+            second exercise of it.

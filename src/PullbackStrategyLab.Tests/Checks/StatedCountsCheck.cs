@@ -60,6 +60,24 @@ public sealed partial class StatedCountsCheck
         RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex OperatorHeading();
 
+    /// <summary>
+    /// The same two sentences for the 4.6 pile, which is the second classification of the same
+    /// table and was written when phase 4 was planned.
+    ///
+    /// A second pair of patterns rather than one taking the checkpoint as a group, because the two
+    /// sections are read separately and a pattern matching either would let one section's figures
+    /// answer for the other's. That is the eighth failure shape in CLAUDE.md, which is a clause
+    /// applied to a population other than the one it governs, and this registry is not the place to
+    /// introduce it.
+    /// </summary>
+    [GeneratedRegex(@"(?<due>[A-Za-z][a-z-]*) of the (?<total>[a-z-]+) rows above fall due at 4\.6",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex RiskGateOpeningSentence();
+
+    [GeneratedRegex(@"^### What the (?<due>[a-z-]+) due at 4\.6 are[^\n]*",
+        RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex RiskGateClassificationHeading();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -200,6 +218,70 @@ public sealed partial class StatedCountsCheck
             dueAtTheWatchlist,
             groups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
             "the classification's own three counts, summed"));
+
+        // BUILD_PLAN.md, the same three figures for the 4.6 pile.
+        //
+        // The second classification of the same table, written when phase 4 was planned on
+        // 2026-08-31. It is registered in the same commit that writes it rather than after the
+        // first time it goes stale, which is what happened to the operator's heading below and to
+        // the permit sentence further down: both were prose counts of the same table that nothing
+        // read, and both were wrong by the time anyone looked.
+        int dueAtTheRiskGate = obligations.Count(
+            r => r.Count > 2 && r[2].Trim().Equals("4.6", StringComparison.Ordinal));
+
+        Match riskGateOpening = RiskGateOpeningSentence().Match(buildPlan);
+        Assert.True(riskGateOpening.Success,
+            "BUILD_PLAN.md's 4.6 classification section no longer opens with \"<count> of the <total> rows above "
+            + "fall due at 4.6\", which is the sentence its two obligation figures are read from.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the carried obligations table's own total, stated again at 4.6",
+            FromWordsOrFail(riskGateOpening.Groups["total"].Value),
+            obligations.Count,
+            "rows of the carried obligations table"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations due at 4.6, stated in its opening sentence",
+            FromWordsOrFail(riskGateOpening.Groups["due"].Value),
+            dueAtTheRiskGate,
+            "rows of the carried obligations table falling due at 4.6"));
+
+        Match riskGateHeading = RiskGateClassificationHeading().Match(buildPlan);
+        Assert.True(riskGateHeading.Success,
+            "BUILD_PLAN.md has no \"### What the <count> due at 4.6 are\" heading, which is both a stated count "
+            + "and the anchor its classification table is read from.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations due at 4.6, stated in its heading",
+            FromWordsOrFail(riskGateHeading.Groups["due"].Value),
+            dueAtTheRiskGate,
+            "rows of the carried obligations table falling due at 4.6"));
+
+        IReadOnlyList<IReadOnlyList<string>> riskGateGroups =
+            MarkdownTable.BodyRowsAfter(buildPlan, riskGateHeading.Value);
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the three groups the 4.6 pile is classified into",
+            3,
+            riskGateGroups.Count,
+            "rows of the 4.6 classification table"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the three groups add up to the 4.6 pile they classify",
+            dueAtTheRiskGate,
+            riskGateGroups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
+            "the 4.6 classification's own three counts, summed"));
+
+        // BUILD_PLAN.md, phase 4's own checkpoint count, stated in its preamble.
+        //
+        // The one phase whose section says how many checkpoints it has, because it is the one whose
+        // numbering stopped being its build order: three checkpoints were added on 2026-08-31 and
+        // took the next free identifiers rather than being inserted, so the preamble has to say how
+        // many rows there are for the reader to know none is missing. A count stated for that
+        // reason is exactly the kind this registry exists for.
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, phase 4's checkpoint count",
+            InWords(buildPlan, "The phase is ", " checkpoints"),
+            MarkdownTable.BodyRowsAfter(buildPlan, "## Phase 4 — Trading").Count,
+            "rows of the phase 4 table"));
 
         // BUILD_PLAN.md, the operator's own list, and the count nothing here derived.
         //
