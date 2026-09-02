@@ -30,7 +30,7 @@ param(
     [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
                  'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
-                 'forward',
+                 'trades', 'audit', 'forward',
                  'scoreboard',
                  'ceiling', 'snapshot')]
     [string]$Slot,
@@ -121,6 +121,17 @@ $slots = @{
     # give-up point alongside them, because the exit is whichever is reached first and that is a
     # comparison one component has to make.
     'manage'     = @(, @('manage'))
+
+    # 21:25, over the positions the slot above closed. It states each one's result in R after the
+    # borrow a short is charged for the calendar days it was held, which is the whole reason a trade
+    # is a row rather than a view over a position.
+    'trades'     = @(, @('trades'))
+
+    # 21:26, after the trades exist, because an audit points at one. It holds the plan against what
+    # happened in three pairs: the price each instruction named against the price it got, the plan's
+    # stop against where the trade ended, and the size the plan carried against the size the gate
+    # placed. It changes no result, which is what keeps it an audit.
+    'audit'      = @(, @('audit'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))

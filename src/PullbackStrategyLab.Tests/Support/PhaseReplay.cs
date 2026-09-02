@@ -660,6 +660,41 @@ public sealed class PhaseReplay : IDisposable
         Record("manage.closedInTheirOwnSession", managed.ClosedInTheirOwnSession);
         Record("manage.openAtEnd", managed.OpenAtEnd);
 
+        // 15h. The trades, at 21:25, over the positions the slot above closed.
+        //
+        //      <b>Nothing closed, so nothing was journalled.</b> `shortsCharged` is the figure worth
+        //      freezing hardest, because it is the one place a nought and a nought mean different
+        //      things: a short closed in the session it opened in was never held overnight and pays
+        //      no borrow, so a fixture that grows a same-day short leaves this at nought while
+        //      `shorts` moves, and one that grows an overnight short moves both.
+        TradeRunResult journalled =
+            new TradeJournal(_connections, Logger(), _clock, _options).Close(AsOf);
+
+        stages.Add(new StageRun(TradeJournal.Name, 0, journalled.RowsWritten, journalled.Outcome.ToStorageText()));
+        Record("trades.closedInSession", journalled.ClosedInSession);
+        Record("trades.journalled", journalled.Journalled);
+        Record("trades.longs", journalled.Longs);
+        Record("trades.shorts", journalled.Shorts);
+        Record("trades.shortsCharged", journalled.ShortsCharged);
+        Record("trades.trimmed", journalled.Trimmed);
+        Record("trades.armedExits", journalled.ArmedExits);
+
+        // 15i. The audit, at 21:26, over the trades the slot above wrote.
+        //
+        //      <b>Nothing was journalled, so nothing was audited.</b> `tradesRead` against `audited`
+        //      is the pair that says whether anything was refused: they differ on a rerun and on a
+        //      trade missing a fill at one end, which is refused rather than filled with noughts.
+        AuditRunResult audited =
+            new PlanAudit(_connections, Logger(), _clock, _options).Audit(AsOf);
+
+        stages.Add(new StageRun(PlanAudit.Name, 0, audited.RowsWritten, audited.Outcome.ToStorageText()));
+        Record("audit.tradesRead", audited.TradesRead);
+        Record("audit.audited", audited.Audited);
+        Record("audit.longs", audited.Longs);
+        Record("audit.shorts", audited.Shorts);
+        Record("audit.reducedByACap", audited.ReducedByACap);
+        Record("audit.gappedAtAnEnd", audited.GappedAtAnEnd);
+
         // The seam, read off the rows the detectors wrote rather than off the constant that names
         // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause
         // set it records is the thing 3.6 counts the short side's twenty sessions by. The engine

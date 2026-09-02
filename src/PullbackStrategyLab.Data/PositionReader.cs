@@ -164,6 +164,80 @@ public sealed class PositionReader
         return Read(command, asOf);
     }
 
+    /// <summary>
+    /// The positions closed in <paramref name="session"/>, as at <paramref name="asOf"/>.
+    ///
+    /// TradeJournal's read. A trade exists when a position closes, so the subject is the close
+    /// rather than the open, and a position opened weeks earlier belongs to the night it ended
+    /// in. The close has to be visible at the as-of as well as recorded, which the projection in
+    /// <see cref="Read"/> already enforces, so a row whose close this as-of could not have seen
+    /// comes back reading open and the caller drops it.
+    /// </summary>
+    public static IReadOnlyList<StoredPosition> ClosedIn(
+        SqliteConnection connection, DateOnly session, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT {Columns}
+              FROM position
+             WHERE status = 'closed'
+               AND closed_session = @session
+               AND observed_at <= @observed_before
+             ORDER BY closed_at, ticker
+            """;
+
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+        Bound(command, asOf);
+
+        return Read(command, asOf);
+    }
+
+    /// <summary>
+    /// Every fill belonging to a named set of positions, in the order they happened.
+    ///
+    /// <b>By position and not by session, because a trade's two ends are in different ones.</b>
+    /// <see cref="FillsOf"/> answers what one night priced, which is the night's own question. A
+    /// trade opened on Monday and closed on Friday has its entry in Monday's fills and its exit in
+    /// Friday's, and a reader that walked sessions to find both would be reconstructing a join.
+    /// </summary>
+    public static IReadOnlyList<StoredFill> FillsFor(
+        SqliteConnection connection, IReadOnlyCollection<string> positionIds, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(positionIds);
+
+        if (positionIds.Count == 0)
+        {
+            return [];
+        }
+
+        string slots = string.Join(", ", positionIds.Select((_, at) => $"@position{at}"));
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT fill_id, position_id, setup_id, session_date, ticker, direction, leg, filled_at,
+                   basis, resting_price, price, slippage, shares, spread_bps, spread_pass,
+                   quote_lag_seconds, straddle_seconds, observed_at
+              FROM fill
+             WHERE position_id IN ({slots})
+               AND observed_at <= @observed_before
+             ORDER BY filled_at, ticker, leg
+            """;
+
+        int slot = 0;
+
+        foreach (string positionId in positionIds)
+        {
+            command.Parameters.AddWithValue($"@position{slot++}", positionId);
+        }
+
+        Bound(command, asOf);
+
+        return MaterialiseFills(command);
+    }
+
     /// <summary>Every fill of one session, in the order they happened.</summary>
     public static IReadOnlyList<StoredFill> FillsOf(
         SqliteConnection connection, DateOnly sessionDate, DateOnly asOf)
@@ -184,6 +258,12 @@ public sealed class PositionReader
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         Bound(command, asOf);
 
+        return MaterialiseFills(command);
+    }
+
+    /// <summary>The column order the two fill reads share, materialised once.</summary>
+    private static IReadOnlyList<StoredFill> MaterialiseFills(SqliteCommand command)
+    {
         var fills = new List<StoredFill>();
         using SqliteDataReader reader = command.ExecuteReader();
 

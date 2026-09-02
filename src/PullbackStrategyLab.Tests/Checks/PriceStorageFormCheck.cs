@@ -57,6 +57,22 @@ public sealed partial class PriceStorageFormCheck
             "a result in R, being money divided by the money that was at risk. The two quantities it "
             + "is computed from are TEXT in the same row. It is the figure the whole lab is scored "
             + "on, and it is a ratio rather than an amount.",
+        ["trade.result_r"] =
+            "the same result after the borrow a short is charged, on exactly the terms the column it "
+            + "is computed from is exempt. Both names stay because they are two numbers: equal on "
+            + "every long and different by the borrow line on every short.",
+        ["plan_audit.entry_difference_bps"] =
+            "how far the entry missed the price its instruction named, as a fraction of that price. "
+            + "A ratio and not a money value, and the money it is derived from is TEXT beside it in "
+            + "the same row, so nothing here crosses the boundary. It is in basis points because six "
+            + "cents on a six-dollar stock and six cents on a four-hundred-dollar one are two "
+            + "different execution facts and the column is read across names.",
+        ["plan_audit.exit_difference_bps"] =
+            "the same figure at the other end of the trade, exempt on the same terms.",
+        ["plan_audit.give_up_difference_bps"] =
+            "the plan's stop against where the trade actually ended, as a fraction of that stop. A "
+            + "different question from the two above rather than a third reading of them, and a "
+            + "ratio on the same terms.",
     };
 
     private readonly ITestOutputHelper _output;

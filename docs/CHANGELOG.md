@@ -1806,3 +1806,23 @@ Why:  4.8 built the exits, so a winner is no longer held for ever; it counts wha
 Was:  A 21:15 row saying `fills` prices each resting order and also closes any position whose give-up point the session reached, with a sentence saying that until 4.8 a position closes only on its give-up point. No 21:20 row.
 Now:  The 21:15 row prices entries alone and says it runs no exit from 4.8. A 21:20 row names `manage`, the two rule sets, the give-up point running beside them, what a tie inside one minute resolves as, and what the night's row counts.
 Why:  Built at 4.8, and the schedule is what `slot-roster` reconciles the dispatcher against. A slot the dispatcher runs and the schedule does not name is a stage this corpus does not know runs, which is the defect found at 4.5 when five of them were in that state.
+
+### 2026-09-02 — SCHEMA.md — cites The audit holds three pairs and they answer three different questions
+Was:  `| `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |` and `| `trade` | trade id | Insert TradeJournal. Result in R, borrow cost on shorts |`, in that order, with no run rows and no column table for either. `run_log.rows_written` declared `INTEGER` with a note saying only that it is measured rather than reported.
+Now:  Both declared with column tables and a section each, `trade_run` and `audit_run` beside them, and the trade before the audit because that is the order they run in. `rows_written` is `INTEGER NULL` and the note says when it is null and why.
+Why:  Built at 4.9. The stop pair is one of three the row carries and naming it alone would have made the other two false. The `rows_written` type went stale at 4.8, in the commit that made it stale: the column started holding null on a stage whose declared tables it only updates, and the spec kept saying `INTEGER`.
+
+### 2026-09-02 — ARCHITECTURE.html — cites TradeJournal runs first and PlanAudit second, and the audit never changes a result
+Was:  Two schedule rows reading `On exit`, PlanAudit above TradeJournal, and no catalogue gloss for either.
+Now:  `Nightly 21:25` and `Nightly 21:26`, TradeJournal first, each row saying what it is after and why, and a gloss for each.
+Why:  Built at 4.9. "On exit" is not a slot the dispatcher can run and `slot-roster` reconciles the schedule against it, so a row that named no time was a stage this corpus scheduled and nothing ran, which is the defect found at 4.5 when five of them were in that state. The order between the two was the second half of the row's done condition and is now a foreign key rather than a note.
+
+### 2026-09-02 — BUILD_PLAN.md — cites The audit holds three pairs and they answer three different questions
+Was:  The obligations table carried two rows raised at 4.8 due at 4.9.
+Now:  Both discharged and removed, two raised, and the total holds at fifty-four.
+Why:  4.9 built the components that read the distinction between a trimmed short's two fills and that measure how long an armed exit waited. What it raised is a second figure called the result and an audit no surface reads.
+
+### 2026-09-02 — RUNBOOK.md — cites TradeJournal runs first and PlanAudit second, and the audit never changes a result
+Was:  The nightly schedule ran from 21:20 straight to 21:30, with no row for either stage.
+Now:  A 21:25 row for `trades` and a 21:26 row for `audit`, each saying what it reads, what it writes and what it does not do.
+Why:  Built at 4.9. The audit row says outright that it changes no result, because that is the property the ordering buys and the one a later session would otherwise be free to reverse.

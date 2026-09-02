@@ -616,6 +616,28 @@ Support is defined nowhere in this corpus: not in the vocabulary, not in the sig
 
 Recorded as dropped, with the reason, so a later session reads a decision rather than an omission. Without this entry the clause's absence is indistinguishable from an oversight, and the next reader restores it.
 
+**The audit holds three pairs and they answer three different questions**
+`plan_audit` carries execution at both ends, the plan's stop against where the trade ended, and the size the plan carried against the size the gate placed. Three pairs and not one field.
+
+**Each of the three sources named a different thing and none of them was wrong.** SCHEMA's ownership line said planned stop beside executed stop. The mockup's plan-against-actual column shows an entry difference in basis points, with "stop jumped" where a gap made the number meaningless. ARCHITECTURE's catalogue said "planned against executed" and named no field at all. Choosing one would have made the other two false, and each of the three is a thing somebody wanted to be able to read.
+
+**The first pair is execution and it is what a defect surfaces in.** The price an instruction named against the price it got, in money and in basis points, at the entry and at the exit. Basis points rather than money alone, because six cents on a six-dollar stock and six cents on a four-hundred-dollar one are two different execution facts and the column is read across names.
+
+**The second is the plan's stop against where the trade ended, and it is not the first one restated.** They are the same number on a give-up exit and a different quantity on every other: a trail exit ends nowhere near the give-up point by design, so reading the two as one would report every winner as an enormous execution failure. Keeping them apart is the same distinction the exit rules already draw between a resting instruction and a rule.
+
+**The third is the gate, and it is what `plan_audit` was designed around.** RiskGate may reduce a size and may never recompute one, so what is compared here is an intention against an outcome rather than two runs of one formula (see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it). The cap that bound is on the row, so a reduction reads as a decision rather than as an unexplained difference.
+
+**Every difference is derived from the two prices rather than copied from `fill.slippage`.** An audit reading the model's own charge would be comparing a number against itself, and a model that stopped charging what it says it charges would agree with the audit all the way down. The two also legitimately differ on a gap, where the model charges nothing and the price moved anyway, so each pair carries the fill's basis and a gap is never read as slippage.
+
+**TradeJournal runs first and PlanAudit second, and the audit never changes a result**
+Both run on exit. The trade is written at 21:25 and the audit at 21:26, and `plan_audit.trade_id` is a foreign key into `trade`.
+
+**The ordering is expressible rather than remembered**, which is the same thing the PaperBroker-then-PositionManager pair already gets from a position having to exist before it can be managed. A note in a runbook is a convention, and a convention that exists only in what previous runs happened to do is one the next run will break.
+
+**What it also buys is that the audit cannot correct anything.** The result was written before the audit ran, so nothing the audit computes can move it. A component that could both produce a result and adjust it would be auditing itself, which is the argument ActionIngestor and IndicatorEngine are two components for one demand: a component that can raise and close its own condition raises nothing.
+
+**The reverse order would have been defensible and is worse for one reason.** Auditing first and journalling second would let the journal record a result already reconciled against the plan, which sounds like an improvement and is the thing being refused: the trade's result is what the fills say it was, and a figure adjusted by a later reading is no longer a measurement of the night.
+
 **A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list**
 A closed loss is noise when the direction-signed ten-day forward return from the trigger reaches +1R or better. Below that, the setup failed.
 
