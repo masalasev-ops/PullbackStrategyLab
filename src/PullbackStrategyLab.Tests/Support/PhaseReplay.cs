@@ -578,6 +578,28 @@ public sealed class PhaseReplay : IDisposable
         Record("vwap.anchorsPriced", vwap.AnchorsPriced);
         Record("vwap.pairedWithPriorSession", vwap.SetupAsOf is null ? 0 : 1);
 
+        // 15d. The replay, at 21:05, over the same stored minutes the averages ran on. It decides
+        //      whether each plan resting in the session was touched and in which minute.
+        //
+        //      <b>Over this fixture nothing rests and nothing is walked, and the seven figures say
+        //      which of those two it was.</b> The night's cap kept no candidate, so `plans.planned`
+        //      is nought and `trade_plan` is empty; the fetch stored no bar, so the clock has no
+        //      minute. Both are nought and they are different noughts: no plan resting is a clean
+        //      night, and a plan resting with no minute to ask it against is a partial one. A
+        //      fixture that grows a second session with a candidate in it turns these into real
+        //      counts with no edit here, which is what makes them worth freezing now.
+        TriggerRunResult triggers = new TriggerResolver(_connections, Logger(), _clock, _options)
+            .Resolve(AsOf);
+
+        stages.Add(new StageRun(TriggerResolver.Name, 0, triggers.RowsWritten, triggers.Outcome.ToStorageText()));
+        Record("triggers.plans", triggers.Plans);
+        Record("triggers.touched", triggers.Touched);
+        Record("triggers.notTouched", triggers.NotTouched);
+        Record("triggers.unresolvable", triggers.Unresolvable);
+        Record("triggers.namesWalked", triggers.NamesWalked);
+        Record("triggers.minutesWalked", triggers.MinutesWalked);
+        Record("triggers.pairedWithPriorSession", triggers.SetupAsOf is null ? 0 : 1);
+
         // The seam, read off the rows the detectors wrote rather than off the constant that names
         // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause
         // set it records is the thing 3.6 counts the short side's twenty sessions by. The engine

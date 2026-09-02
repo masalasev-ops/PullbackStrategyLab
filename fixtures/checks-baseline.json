@@ -239,6 +239,15 @@
         "worker invocations in tools/nightly.ps1": 1
       }
     },
+    "slot-roster": {
+      "scopes": {
+        "slots declared in tools/nightly.ps1": 24,
+        "slot names its own parameter set accepts": 24,
+        "distinct worker verbs the slots run": 27,
+        "stages the worker advertises": 34,
+        "slots whose verbs RUNBOOK's schedule names": 23
+      }
+    },
     "stated-counts": {
       "scopes": {
         "CLAUDE.md, all seven done conditions": 1,

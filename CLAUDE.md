@@ -152,6 +152,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `bar-append-only` | every CI run | Nothing in the shipped source deletes or updates a bar table, and no migration deletes, updates or drops one |
 | `ci-parity` | every CI run | `tools/ci.ps1` and `tools/ci.sh` run the same steps in the same order, and a step that fails fails the script it runs in, proved by running each shipped step function against a command that fails |
 | `slot-diagnostics` | every CI run | Every stage the slot script runs is invoked through the one function that keeps a native command's stderr, so a failing stage's message and the line saying the slot stopped both reach the night's log |
+| `slot-roster` | every CI run | The night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction |
 | `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |
 | `shell-executable` | every CI run | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
 

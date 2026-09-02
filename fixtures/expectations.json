@@ -8375,18 +8375,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "23",
+      "value": "24",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "28",
+      "value": "29",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05."
     },
     {
       "id": "scan.decliner.hits",
@@ -9834,10 +9834,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "40",
+      "value": "41",
       "checkpoint": "4.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on."
     },
     {
       "id": "tiers.falling",
@@ -10596,6 +10596,62 @@
       "checkpoint": "4.16",
       "producedBy": "predicted before the replay was run, then run. The fixture holds one market day, its three setups are flagged on it, and cap.candidates is nought because no setup passed every gating check, so no row carries a cap decision and the stage has nothing to plan. Derived from the fixture's own committed cap figures rather than from a run: cap.setups 3, cap.candidates 0, cap.longKept 0, cap.shortKept 0, cap.cappedOut 0, which fixes every figure below at nought without executing the stage.",
       "note": "capped candidates whose give-up distance is wider than the whole risk budget. The one refusal of the three that depends on the budget as well as on the row, which is why the counts are stored per reason rather than derived from `setup` later."
+    },
+    {
+      "id": "triggers.plans",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "plans resting in the fixture's session, being rows of `trade_plan` whose `live_session` is it. Nought because the night's cap kept no candidate, so no plan was written at all. It is the population every figure below is computed over, and they are stated with it rather than alone."
+    },
+    {
+      "id": "triggers.touched",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "plans whose trigger a minute of the session reached. Nought out of nought, so it carries no property on its own; it becomes a real count the day the fixture holds an evening with a candidate and a session after it."
+    },
+    {
+      "id": "triggers.notTouched",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "plans whose name traded and never reached the trigger, which is the ordinary result and is distinct from the row below."
+    },
+    {
+      "id": "triggers.unresolvable",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "plans the session could not be asked about at all, being a session or a name with no stored minute. Nought here because there is no plan, not because the shape is absent: a session with a plan resting in it and no minute would put every plan in this count and report the run partial."
+    },
+    {
+      "id": "triggers.namesWalked",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "distinct names the clock handed at least one minute for. Nought because the fetch stored no bar for this session, the fixture holding one market day whose setups are flagged on it."
+    },
+    {
+      "id": "triggers.minutesWalked",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "distinct minutes of the session the clock handed out, across every name at once rather than per name. Nought for the same reason as the figure above."
+    },
+    {
+      "id": "triggers.pairedWithPriorSession",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.5",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
+      "note": "1 where the session's plans were written on an earlier evening and 0 where no plan rests. Nought here, and it is the figure that says which of the two noughts above this night was."
     }
   ],
   "frozenOnly": [

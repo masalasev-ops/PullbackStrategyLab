@@ -132,6 +132,26 @@ public sealed partial class ArchitectureConformanceCheck
     };
 
     /// <summary>
+    /// Catalogued components that are not resolved from the container, and why each is not.
+    ///
+    /// <b>Named rather than filtered by shape, and each is still required to be declared.</b> A
+    /// component here has to exist as a type in the shipped source exactly as one that is registered
+    /// does; what is waived is the registration and nothing else. An exemption that stopped applying
+    /// would leave the component unexamined by both halves, so the entry is asserted against the
+    /// catalogue as well: a name here that the catalogue no longer carries fails.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> NotContainerServices { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["SessionReplayClock"] =
+                "it is constructed per session from the connection the resolving stage already holds, and it "
+                + "carries the position of a walk in progress. A singleton would be one walk shared across every "
+                + "session the process resolves, which is the one thing a forward-only clock must not be. It owns "
+                + "no table and is declared as owning none in SCHEMA, and the component that decides something "
+                + "from it is the one the container builds",
+        };
+
+    /// <summary>
     /// The routes the Web project's pages declare, read from the sources rather than from the
     /// compiled routes: the check reads the repository, and a page whose route was deleted
     /// should fail here rather than in a browser.
@@ -226,10 +246,29 @@ public sealed partial class ArchitectureConformanceCheck
                 continue;
             }
 
+            if (NotContainerServices.TryGetValue(component, out string? whyNotAService))
+            {
+                claims.Add(Claim.Passed("Component catalogue", component,
+                    $"declared, and exempt from registration by name: {whyNotAService}"));
+                continue;
+            }
+
             claims.Add(registered.Contains(component)
                 ? Claim.Passed("Component catalogue", component, "declared and registered")
                 : Claim.Failed("Component catalogue", component,
                     $"{component} is declared and is not registered with the container, so nothing can resolve it"));
+        }
+
+        // 1a. The exemptions, read back. A name waived from registration that the catalogue no
+        //     longer carries is an exemption covering nothing, which reads exactly like one that is
+        //     doing work.
+        foreach ((string exempt, string _) in NotContainerServices)
+        {
+            claims.Add(componentNames.Contains(exempt, StringComparer.Ordinal)
+                ? Claim.Passed("Component catalogue", $"{exempt}, exempt from registration",
+                    "the catalogue still names it, so the exemption still covers something")
+                : Claim.Failed("Component catalogue", $"{exempt}, exempt from registration",
+                    $"{exempt} is waived from container registration and the catalogue no longer names it"));
         }
 
         // 2. The build order, read the other way: every component a phase says it builds is a

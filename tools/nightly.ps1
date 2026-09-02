@@ -22,9 +22,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('universe', 'actions', 'bars', 'rebuild', 'index', 'indicators', 'scans',
-                 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap', 'intraday',
-                 'forward', 'scoreboard', 'ceiling', 'snapshot')]
+    # Every key of $slots below, and nothing else. The two lists are one fact written twice because
+    # a ValidateSet attribute takes literals and cannot be derived, so `slot-roster` reconciles them
+    # in both directions on every CI run. They had drifted by four before it existed: 'spread-open',
+    # 'spread-close', 'watchlist' and 'vwap' were declared as slots and rejected by this line, so
+    # four stages built between 4.1 and 4.4 could not be dispatched at all.
+    [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
+                 'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
+                 'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'forward', 'scoreboard',
+                 'ceiling', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -73,6 +79,10 @@ $slots = @{
     'seal'       = @(@('vectorize'), @('journal'))
     'controls'   = @(, @('controls'))
     'cap'        = @(, @('cap'))
+    # 18:30, after the cap and before the watchlist publishes what it wrote. Absent from this map
+    # until 4.5, so the stage built at 4.16 was scheduled by the runbook, dispatched by the worker
+    # and run by nothing.
+    'plans'      = @(, @('plans'))
     # 18:40. It writes nothing: the page projects the setups, and this slot is where a night
     # that capped nothing, or was never capped at all, is noticed without opening a browser.
     'watchlist'  = @(, @('publish-watchlist'))
@@ -87,6 +97,13 @@ $slots = @{
     # a fetch that does not run loses minutes for ever, and an averaging that does not run can be
     # rerun from the stored minutes any evening after.
     'vwap'       = @(, @('vwap'))
+    # 21:05, after the averages and over the same stored minutes. It walks the session one minute at
+    # a time for every name carrying a plan at once, because the earliest trigger is what fills when
+    # the caps bind and that is a comparison across names. Its own slot rather than a second verb
+    # inside 'vwap': an averaging that does not run can be rerun any evening, and so can this, but a
+    # session with plans resting in it and no minutes is a night the lab was blind on, and the run
+    # row says partial rather than clean.
+    'resolve'    = @(, @('resolve-triggers'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
