@@ -106,7 +106,7 @@ public sealed class SectorResolver
         CancellationToken cancellationToken = default)
     {
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "security");
+        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "security");
 
         DateTimeOffset resolvedAt = run.StartedAt;
 

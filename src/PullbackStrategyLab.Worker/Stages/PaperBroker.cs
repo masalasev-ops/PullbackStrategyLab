@@ -10,26 +10,24 @@ using PullbackStrategyLab.Data;
 namespace PullbackStrategyLab.Worker.Stages;
 
 /// <summary>
-/// What the orders RiskGate placed actually got, and what happened to the positions they opened.
+/// What the orders RiskGate placed actually got.
 ///
 /// <b>It prices and it does not decide.</b> <see cref="FillModel"/> holds every rule about what a
 /// fill costs and is pure; this component walks a session, asks that model, and writes the rows. The
 /// split is the one <see cref="RiskLimits"/> and RiskGate already take, and it is what lets the
 /// arithmetic be asserted over every price relationship rather than over the ones a fixture holds.
 ///
-/// <b>The one exit it runs is the give-up point, and that is a boundary rather than an omission.</b>
-/// The give-up price is a resting instruction the plan carried from 18:30 the evening before, live
-/// from the moment the entry fills; it is not a rule anybody evaluates. PositionManager at 4.8 owns
-/// the two rule sets, being the long trail on the 9-day average and the short trim at 3R, and those
-/// are per-direction rules over daily and hourly series. Until 4.8 lands, <b>a position that never
-/// reaches its give-up point is held indefinitely</b>, so a winner occupies a slot the count caps
-/// then refuse the next morning's trigger on. That is recorded rather than absorbed, and it is the
-/// opposite direction of error from the one 4.6 carried.
+/// <b>Every entry is this stage's and every exit is PositionManager's, from 4.8.</b> Until then the
+/// give-up point was closed here, because it was the only way a position could end and it is a
+/// resting instruction rather than a rule. From 4.8 a position can end three ways and the rule is
+/// that the exit is whichever is reached first, which is a comparison across rules; a comparison
+/// cannot be made by two components each of which sees one side of it. So the whole of it moved,
+/// rather than the two new rules joining the old one here, and the boundary is now the one sentence
+/// above rather than a list of which exits live where.
+/// see: Every exit is PositionManager's and every entry is PaperBroker's
 ///
 /// <b>The session is walked one minute at a time, through the same clock the resolver uses.</b> One
-/// clock for every name, forward only, enumerable once. Entries are taken before exits inside a
-/// minute, so a bar holding both the trigger and the give-up point fills and then stops, which is
-/// the pessimistic reading of a bar that carries no order between its own high and low.
+/// clock for every name, forward only, enumerable once.
 ///
 /// <b>A name the session quoted no usable book for is not filled.</b> Charging nought is a free
 /// entry that clears every threshold written as a maximum, and charging a figure taken from other
@@ -42,12 +40,12 @@ public sealed class PaperBroker
 {
     public const string Name = "fills";
 
-    /// <summary>No position was carried in and no order was placed, so there was nothing to price.</summary>
-    public const string NothingToFill = "no position was open and no order was placed in this session";
+    /// <summary>No order was placed, so there was nothing to price.</summary>
+    public const string NothingToFill = "no order was placed in this session";
 
     /// <summary>The session holds no stored minute for any name being filled.</summary>
     public const string SessionHeldNoMinutes =
-        "the store holds no minute of this session for any name with a position or an order in it";
+        "the store holds no minute of this session for any name with an order in it";
 
     /// <summary>Neither spread pass ran, so nothing in this session can be charged a spread.</summary>
     public const string SessionWasNeverSampled =
@@ -60,9 +58,6 @@ public sealed class PaperBroker
     /// <summary>The trigger minute the resolver recorded is not among this session's stored bars.</summary>
     public const string TriggerMinuteNotStored =
         "the minute the resolver found the trigger in is not among this session's stored bars";
-
-    /// <summary>The one exit rule this checkpoint runs.</summary>
-    public const string GaveUp = "give-up";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -95,14 +90,12 @@ public sealed class PaperBroker
             $"{Name}: session of {result.SessionDate:yyyy-MM-dd}, {result.OpenAtStart} position(s) carried in, "
             + $"{result.OrdersPlaced} order(s) placed");
         Console.WriteLine(
-            $"{Name}: {result.EntriesFilled} entry fill(s), {result.EntriesUnfilled} order(s) not priced, "
-            + $"{result.ExitsFilled} exit fill(s)");
+            $"{Name}: {result.EntriesFilled} entry fill(s), {result.EntriesUnfilled} order(s) not priced");
         Console.WriteLine(
             $"{Name}: {result.Slipped} charged the captured spread, {result.Gapped} filled at an open "
             + "and charged nothing");
         Console.WriteLine(
-            $"{Name}: walked {result.MinutesWalked} minute(s) across {result.NamesWalked} name(s), "
-            + $"{result.OpenAtEnd} position(s) open at the end");
+            $"{Name}: walked {result.MinutesWalked} minute(s) across {result.NamesWalked} name(s)");
         Console.WriteLine(
             $"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} row(s) written"
             + (result.StoppedBecause is null ? string.Empty : $", stopped because {result.StoppedBecause}"));
@@ -111,11 +104,10 @@ public sealed class PaperBroker
     }
 
     /// <summary>
-    /// Price every fill of <paramref name="sessionDate"/> and carry the book through it.
+    /// Price every entry of <paramref name="sessionDate"/>.
     ///
-    /// Idempotent: a position is keyed on its plan and inserted with do-nothing on conflict, and a
-    /// close is applied only to a row this run still reads as open. A rerun over a closed session
-    /// writes nothing.
+    /// Idempotent: a position is keyed on its plan and inserted with do-nothing on conflict, so a
+    /// rerun over a session already priced writes nothing.
     /// </summary>
     public FillRunResult Fill(DateOnly sessionDate)
     {
@@ -125,20 +117,19 @@ public sealed class PaperBroker
         DateTimeOffset observedAt = run.StartedAt;
         var tally = new Tally();
 
-        // Carried in: opened in an earlier session and not closed before this one. A close this run
-        // already wrote is visible here, which is what makes a rerun write nothing.
-        List<StoredPosition> carried =
-            [.. PositionReader.OpenComingInto(connection, sessionDate, sessionDate)
-                .Where(p => p.ClosedSession is null)];
+        // The book coming into the session, reported and not walked. It is what the caps saw at
+        // 21:10 and it belongs on the night's row; nothing here can change it, because a position
+        // opened before this session ends by a rule this stage does not run.
+        tally.OpenAtStart = PositionReader.OpenComingInto(connection, sessionDate, sessionDate)
+            .Count(p => p.ClosedSession is null);
 
         StoredTradeOrder[] placed =
             [.. TradeOrderReader.ForLiveSession(connection, sessionDate, sessionDate)
                 .Where(o => string.Equals(o.Status, "placed", StringComparison.Ordinal))];
 
-        tally.OpenAtStart = carried.Count;
         tally.OrdersPlaced = placed.Length;
 
-        if (carried.Count == 0 && placed.Length == 0)
+        if (placed.Length == 0)
         {
             return Complete(connection, run, sessionDate, tally, RunOutcome.Clean, NothingToFill, observedAt);
         }
@@ -149,18 +140,17 @@ public sealed class PaperBroker
         SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, sessionDate, sessionDate);
 
         string[] names =
-            [.. carried.Select(p => p.Ticker).Concat(placed.Select(o => o.Ticker))
-                .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            [.. placed.Select(o => o.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, [.. carried.Select(p => p.SetupId).Concat(placed.Select(o => o.SetupId))], sessionDate)
+            .ForSetups(connection, [.. placed.Select(o => o.SetupId)], sessionDate)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         if (sampling.IsUnsampled)
         {
-            // Every order becomes an unfilled row and every carried position stays open. Partial and
-            // not failed: the stage did its whole job over a session whose evidence is missing, and
-            // a failed run would be indistinguishable from one that could not open the store.
+            // Every order becomes an unfilled row. Partial and not failed: the stage did its whole
+            // job over a session whose evidence is missing, and a failed run would be
+            // indistinguishable from one that could not open the store.
             using SqliteTransaction unsampled = connection.BeginTransaction();
 
             foreach (StoredTradeOrder order in placed)
@@ -170,8 +160,6 @@ public sealed class PaperBroker
             }
 
             unsampled.Commit();
-
-            tally.OpenAtEnd = carried.Count;
 
             return Complete(connection, run, sessionDate, tally, RunOutcome.Partial, SessionWasNeverSampled, observedAt);
         }
@@ -185,7 +173,6 @@ public sealed class PaperBroker
 
         SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate);
 
-        List<Holding> live = [.. carried.Select(p => Holding.Carried(p, plans[p.SetupId]))];
         Dictionary<DateTimeOffset, List<StoredTradeOrder>> byMinute = placed
             .GroupBy(o => o.TriggeredAt)
             .ToDictionary(g => g.Key, g => g.OrderBy(o => o.Ticker, StringComparer.Ordinal).ToList());
@@ -199,59 +186,27 @@ public sealed class PaperBroker
         {
             minutesWalked++;
 
-            // Which names this minute is the session's first for, decided over every name that
-            // traded in it rather than over the ones something happens to ask about. A name whose
-            // trigger fires at noon has been trading since the open, and asking only at the trigger
-            // would call noon its first minute and read an ordinary fill as a gap.
-            var firstMinuteOf = new HashSet<string>(StringComparer.Ordinal);
-
             foreach (string ticker in minute.Bars.Keys)
             {
-                if (seen.Add(ticker))
-                {
-                    firstMinuteOf.Add(ticker);
-                }
+                seen.Add(ticker);
             }
 
-            // 1. Entries first. A minute holding both a trigger and a give-up point fills and then
-            //    stops, which is the pessimistic reading of a bar that carries no order inside it.
-            if (byMinute.TryGetValue(minute.OpenedAt, out List<StoredTradeOrder>? triggered))
+            if (!byMinute.TryGetValue(minute.OpenedAt, out List<StoredTradeOrder>? triggered))
             {
-                foreach (StoredTradeOrder order in triggered)
-                {
-                    StoredIntradayBar? bar = minute.Of(order.Ticker);
-
-                    if (bar is null)
-                    {
-                        continue;
-                    }
-
-                    StoredTradePlan plan = plans[order.SetupId];
-                    Holding? opened = Open(
-                        plan, order, bar, firstMinuteOf.Contains(order.Ticker), quotes[order.Ticker],
-                        observedAt, writes, tally);
-                    filled.Add(order.SetupId);
-
-                    if (opened is not null)
-                    {
-                        live.Add(opened);
-                    }
-                }
+                continue;
             }
 
-            // 2. Exits, over everything held, including anything opened a moment ago.
-            foreach (Holding holding in live.Where(h => !h.IsClosed).ToArray())
+            foreach (StoredTradeOrder order in triggered)
             {
-                StoredIntradayBar? bar = minute.Of(holding.Ticker);
+                StoredIntradayBar? bar = minute.Of(order.Ticker);
 
                 if (bar is null)
                 {
                     continue;
                 }
 
-                Close(
-                    holding, bar, firstMinuteOf.Contains(holding.Ticker), quotes[holding.Ticker],
-                    sessionDate, observedAt, writes, tally);
+                Open(plans[order.SetupId], order, bar, quotes[order.Ticker], observedAt, writes, tally);
+                filled.Add(order.SetupId);
             }
         }
 
@@ -281,8 +236,6 @@ public sealed class PaperBroker
 
             blind.Commit();
 
-            tally.OpenAtEnd = carried.Count;
-
             return Complete(connection, run, sessionDate, tally, RunOutcome.Partial, SessionHeldNoMinutes, observedAt);
         }
 
@@ -299,7 +252,6 @@ public sealed class PaperBroker
         // asked about, so a night the fetch missed half of is legible from the row.
         tally.NamesWalked = seen.Count;
         tally.MinutesWalked = minutesWalked;
-        tally.OpenAtEnd = carried.Count + tally.EntriesFilled - tally.ExitsFilled;
 
         return Complete(connection, run, sessionDate, tally, RunOutcome.Clean, null, observedAt);
     }
@@ -307,29 +259,32 @@ public sealed class PaperBroker
     /// <summary>
     /// Price an entry, or record why it could not be priced.
     ///
-    /// The gap case is decided here rather than in the model, because whether a minute is the
-    /// session's first for a name is a fact about the walk and not about a price.
+    /// <b>A minute that opens through the trigger fills at that open, whatever time of day it is.</b>
+    /// Until 4.8 the gap rule ran only on the session's first regular minute, which is the overnight
+    /// case the decision was written about, and an intraday minute opening past the trigger filled at
+    /// the trigger: a price that did not trade in that minute at all, and one that flatters every
+    /// time. The rule now reads the bar rather than the clock
+    /// (see: A minute that opens through a resting price fills at that open, whatever time of day it
+    /// is).
     /// </summary>
-    private static Holding? Open(
+    private static void Open(
         StoredTradePlan plan,
         StoredTradeOrder order,
         StoredIntradayBar bar,
-        bool firstOfName,
         QuotedSpread? quote,
         DateTimeOffset observedAt,
         List<Action<SqliteTransaction>> writes,
         Tally tally)
     {
-        decimal? gapped = firstOfName
-            && FillModel.OpenedThrough(plan.Direction, isExit: false, plan.TriggerPrice, bar.Open)
-                ? bar.Open
-                : null;
+        decimal? gapped = FillModel.OpenedThrough(plan.Direction, isExit: false, plan.TriggerPrice, bar.Open)
+            ? bar.Open
+            : null;
 
         if (gapped is null && quote is null)
         {
             writes.Add(tx => InsertUnfilled(tx, plan, order, NoUsableQuote, observedAt));
             tally.EntriesUnfilled++;
-            return null;
+            return;
         }
 
         Fill fill = FillModel.Entry(plan.Direction, plan.TriggerPrice, gapped, quote?.BasisPoints ?? 0d);
@@ -346,69 +301,11 @@ public sealed class PaperBroker
         {
             InsertPosition(tx, plan, order, positionId, fillId, bar.OpenedAt, shares, fill.Price,
                 value, riskIntended, riskRealised, observedAt);
-            InsertFill(tx, plan, positionId, fillId, "entry", bar.SessionDate, bar.OpenedAt,
-                plan.TriggerPrice, fill, shares, gapped is null ? quote : quote, observedAt);
+            InsertFill(tx, plan, positionId, fillId, bar.SessionDate, bar.OpenedAt,
+                plan.TriggerPrice, fill, shares, quote, observedAt);
         });
 
         tally.EntriesFilled++;
-        tally.Count(fill.Basis);
-
-        return new Holding(
-            positionId, plan.SetupId, plan.Ticker, plan.Direction, shares, plan.GiveUpPrice,
-            fill.Price, riskRealised, openedThisSession: true);
-    }
-
-    /// <summary>Close a holding whose give-up point this minute reached, if it did.</summary>
-    private static void Close(
-        Holding holding,
-        StoredIntradayBar bar,
-        bool firstOfName,
-        QuotedSpread? quote,
-        DateOnly sessionDate,
-        DateTimeOffset observedAt,
-        List<Action<SqliteTransaction>> writes,
-        Tally tally)
-    {
-        // A gap exit is an overnight jump, so it belongs only to a position that was already held
-        // when the session opened. A position entered inside this session cannot have gapped over a
-        // price it was not resting behind yet.
-        decimal? gapped = firstOfName && !holding.OpenedThisSession
-            && FillModel.OpenedThrough(holding.Direction, isExit: true, holding.GiveUpPrice, bar.Open)
-                ? bar.Open
-                : null;
-
-        if (gapped is null && !TriggerTouch.GaveUp(holding.Direction, holding.GiveUpPrice, bar.High, bar.Low))
-        {
-            return;
-        }
-
-        if (gapped is null && quote is null)
-        {
-            // Held rather than closed at a price nobody measured. The position stays open and the
-            // next session gets another chance to price it, which is the only answer that does not
-            // invent a number.
-            return;
-        }
-
-        Fill fill = FillModel.Exit(holding.Direction, holding.GiveUpPrice, gapped, quote?.BasisPoints ?? 0d);
-
-        decimal perShare = holding.Direction == SetupDirection.Long
-            ? fill.Price - holding.EntryPrice
-            : holding.EntryPrice - fill.Price;
-
-        decimal pnl = perShare * holding.Shares;
-        double realisedR = holding.RiskRealised == 0m ? 0d : (double)(pnl / holding.RiskRealised);
-
-        string fillId = $"{holding.SetupId}:exit";
-        holding.IsClosed = true;
-
-        writes.Add(tx =>
-        {
-            InsertFill(tx, holding, fillId, sessionDate, bar.OpenedAt, holding.GiveUpPrice, fill, quote, observedAt);
-            ClosePosition(tx, holding, fillId, sessionDate, bar.OpenedAt, fill.Price, pnl, realisedR, observedAt);
-        });
-
-        tally.ExitsFilled++;
         tally.Count(fill.Basis);
     }
 
@@ -504,89 +401,12 @@ public sealed class PaperBroker
         command.ExecuteNonQuery();
     }
 
-    private static void ClosePosition(
-        SqliteTransaction transaction,
-        Holding holding,
-        string fillId,
-        DateOnly sessionDate,
-        DateTimeOffset closedAt,
-        decimal exitPrice,
-        decimal pnl,
-        double realisedR,
-        DateTimeOffset observedAt)
-    {
-        using SqliteCommand command = transaction.Connection!.CreateCommand();
-        command.Transaction = transaction;
-
-        // Guarded on the row still being open, so a rerun of a closed session updates nothing and a
-        // second exit for one position is unexpressible rather than merely unwritten.
-        command.CommandText = """
-            UPDATE position
-               SET status = 'closed',
-                   closed_session = @closed_session,
-                   closed_at = @closed_at,
-                   exit_fill_id = @exit_fill_id,
-                   exit_price = @exit_price,
-                   exit_reason = @exit_reason,
-                   realised_pnl = @realised_pnl,
-                   realised_r = @realised_r,
-                   closed_observed_at = @closed_observed_at
-             WHERE position_id = @position_id
-               AND status = 'open';
-            """;
-
-        command.Parameters.AddWithValue("@closed_session", StoreText.DateToStorageText(sessionDate));
-        command.Parameters.AddWithValue("@closed_at", StoreText.TimestampToStorageText(closedAt));
-        command.Parameters.AddWithValue("@exit_fill_id", fillId);
-        command.Parameters.AddWithValue("@exit_price", StoreText.PriceToStorageText(exitPrice));
-        command.Parameters.AddWithValue("@exit_reason", GaveUp);
-        command.Parameters.AddWithValue("@realised_pnl", StoreText.PriceToStorageText(pnl));
-        command.Parameters.AddWithValue("@realised_r", realisedR);
-        command.Parameters.AddWithValue("@closed_observed_at", StoreText.TimestampToStorageText(observedAt));
-        command.Parameters.AddWithValue("@position_id", holding.PositionId);
-        command.ExecuteNonQuery();
-    }
-
     private static void InsertFill(
         SqliteTransaction transaction,
         StoredTradePlan plan,
         string positionId,
         string fillId,
-        string leg,
         DateOnly sessionDate,
-        DateTimeOffset filledAt,
-        decimal restingPrice,
-        Fill fill,
-        int shares,
-        QuotedSpread? quote,
-        DateTimeOffset observedAt) =>
-        InsertFill(
-            transaction, fillId, positionId, plan.SetupId, sessionDate, plan.Ticker, plan.Direction,
-            leg, filledAt, restingPrice, fill, shares, quote, observedAt);
-
-    private static void InsertFill(
-        SqliteTransaction transaction,
-        Holding holding,
-        string fillId,
-        DateOnly sessionDate,
-        DateTimeOffset filledAt,
-        decimal restingPrice,
-        Fill fill,
-        QuotedSpread? quote,
-        DateTimeOffset observedAt) =>
-        InsertFill(
-            transaction, fillId, holding.PositionId, holding.SetupId, sessionDate, holding.Ticker,
-            holding.Direction, "exit", filledAt, restingPrice, fill, holding.Shares, quote, observedAt);
-
-    private static void InsertFill(
-        SqliteTransaction transaction,
-        string fillId,
-        string positionId,
-        string setupId,
-        DateOnly sessionDate,
-        string ticker,
-        string direction,
-        string leg,
         DateTimeOffset filledAt,
         decimal restingPrice,
         Fill fill,
@@ -602,7 +422,7 @@ public sealed class PaperBroker
                 basis, resting_price, price, slippage, shares, spread_bps, spread_pass,
                 quote_lag_seconds, straddle_seconds, observed_at)
             VALUES (
-                @fill_id, @position_id, @setup_id, @session_date, @ticker, @direction, @leg, @filled_at,
+                @fill_id, @position_id, @setup_id, @session_date, @ticker, @direction, 'entry', @filled_at,
                 @basis, @resting_price, @price, @slippage, @shares, @spread_bps, @spread_pass,
                 @quote_lag_seconds, @straddle_seconds, @observed_at)
             ON CONFLICT (fill_id) DO NOTHING;
@@ -610,11 +430,10 @@ public sealed class PaperBroker
 
         command.Parameters.AddWithValue("@fill_id", fillId);
         command.Parameters.AddWithValue("@position_id", positionId);
-        command.Parameters.AddWithValue("@setup_id", setupId);
+        command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
-        command.Parameters.AddWithValue("@ticker", ticker);
-        command.Parameters.AddWithValue("@direction", direction);
-        command.Parameters.AddWithValue("@leg", leg);
+        command.Parameters.AddWithValue("@ticker", plan.Ticker);
+        command.Parameters.AddWithValue("@direction", plan.Direction);
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
         command.Parameters.AddWithValue("@basis", fill.Basis);
         command.Parameters.AddWithValue("@resting_price", StoreText.PriceToStorageText(restingPrice));
@@ -658,11 +477,11 @@ public sealed class PaperBroker
         command.CommandText = """
             INSERT INTO fill_run (
                 session_date, open_at_start, orders_placed, entries_filled, entries_unfilled,
-                exits_filled, gapped, slipped, open_at_end, names_walked, minutes_walked,
+                gapped, slipped, names_walked, minutes_walked,
                 outcome, stopped_because, observed_at)
             VALUES (
                 @session_date, @open_at_start, @orders_placed, @entries_filled, @entries_unfilled,
-                @exits_filled, @gapped, @slipped, @open_at_end, @names_walked, @minutes_walked,
+                @gapped, @slipped, @names_walked, @minutes_walked,
                 @outcome, @stopped_because, @observed_at)
             ON CONFLICT (session_date, observed_at) DO NOTHING;
             """;
@@ -672,10 +491,8 @@ public sealed class PaperBroker
         command.Parameters.AddWithValue("@orders_placed", tally.OrdersPlaced);
         command.Parameters.AddWithValue("@entries_filled", tally.EntriesFilled);
         command.Parameters.AddWithValue("@entries_unfilled", tally.EntriesUnfilled);
-        command.Parameters.AddWithValue("@exits_filled", tally.ExitsFilled);
         command.Parameters.AddWithValue("@gapped", tally.Gapped);
         command.Parameters.AddWithValue("@slipped", tally.Slipped);
-        command.Parameters.AddWithValue("@open_at_end", tally.OpenAtEnd);
         command.Parameters.AddWithValue("@names_walked", tally.NamesWalked);
         command.Parameters.AddWithValue("@minutes_walked", tally.MinutesWalked);
         command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
@@ -684,53 +501,7 @@ public sealed class PaperBroker
         command.ExecuteNonQuery();
     }
 
-    /// <summary>
-    /// One position as the walk carries it, which is the plan's give-up point and the price the
-    /// entry actually got.
-    ///
-    /// Held rather than re-read because the give-up point is the plan's and never moves, and because
-    /// a position opened inside this walk has no store row yet: the writes are deferred to one
-    /// transaction so a night is all of a piece.
-    /// </summary>
-    private sealed class Holding(
-        string positionId,
-        string setupId,
-        string ticker,
-        string direction,
-        int shares,
-        decimal giveUpPrice,
-        decimal entryPrice,
-        decimal riskRealised,
-        bool openedThisSession)
-    {
-        public string PositionId { get; } = positionId;
-
-        public string SetupId { get; } = setupId;
-
-        public string Ticker { get; } = ticker;
-
-        public string Direction { get; } = direction;
-
-        public int Shares { get; } = shares;
-
-        public decimal GiveUpPrice { get; } = giveUpPrice;
-
-        public decimal EntryPrice { get; } = entryPrice;
-
-        public decimal RiskRealised { get; } = riskRealised;
-
-        /// <summary>Whether the entry happened inside the session being walked, which decides whether a gap exit is available.</summary>
-        public bool OpenedThisSession { get; } = openedThisSession;
-
-        public bool IsClosed { get; set; }
-
-        public static Holding Carried(StoredPosition position, StoredTradePlan plan) =>
-            new(position.PositionId, position.SetupId, position.Ticker, position.Direction,
-                position.Shares, plan.GiveUpPrice, position.EntryPrice!.Value,
-                position.RiskRealised!.Value, openedThisSession: false);
-    }
-
-    /// <summary>A night's fills counted by what they were and how they were priced.</summary>
+    /// <summary>A night's entries counted by what they were and how they were priced.</summary>
     public sealed class Tally
     {
         public int OpenAtStart { get; set; }
@@ -741,13 +512,9 @@ public sealed class PaperBroker
 
         public int EntriesUnfilled { get; set; }
 
-        public int ExitsFilled { get; set; }
-
         public int Gapped { get; private set; }
 
         public int Slipped { get; private set; }
-
-        public int OpenAtEnd { get; set; }
 
         public int NamesWalked { get; set; }
 
@@ -766,7 +533,7 @@ public sealed class PaperBroker
     }
 }
 
-/// <summary>What one run of PaperBroker priced, with the book at both ends of the night.</summary>
+/// <summary>What one run of PaperBroker priced, with the book it was handed.</summary>
 public sealed record FillRunResult(
     DateOnly SessionDate,
     PaperBroker.Tally Counts,
@@ -782,13 +549,9 @@ public sealed record FillRunResult(
 
     public int EntriesUnfilled => Counts.EntriesUnfilled;
 
-    public int ExitsFilled => Counts.ExitsFilled;
-
     public int Gapped => Counts.Gapped;
 
     public int Slipped => Counts.Slipped;
-
-    public int OpenAtEnd => Counts.OpenAtEnd;
 
     public int NamesWalked => Counts.NamesWalked;
 

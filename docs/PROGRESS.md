@@ -11203,3 +11203,186 @@ Carried:    **A position closes only on its give-up point, so a winner is held f
             nightly total of 2,723 to 4,118, or to accept that a version selecting outside the cap
             trades nothing and say so where the scores are read. Due at 5.1, and it is a purchase
             decision rather than a code one.
+
+## 4.8 — 2026-09-02 — phase-4-position-manager — the two rule sets, and the exit that moved to sit beside them
+
+Built:      **`PositionManager`, with `LongExitRules`, `ShortExitRules` and `ExitReason` in Core,
+            migration 045 and the reads that feed them.** It runs at 21:20 over every position open
+            at any point in the session PaperBroker has just walked, including the entries priced
+            five minutes earlier, and it walks that session again through the same clock. The two
+            rule sets are separate files and separate code paths, which is the deliverable rather
+            than a preference: they are not mirror images. The long rule is a daily-series condition
+            evaluated once at the close and acted on the next morning; the short rules are an
+            intraday level and an hourly-close condition acted on inside the session. One routine
+            with a sign flag could only be their union, which is a strategy nobody trades.
+
+            **The long trail.** A daily close below the 9-day average arms an exit that fills at the
+            next session's open, charged the whole spread the wrong way. Active from entry with no
+            arming threshold, so the rule takes no parameter beyond the two prices. The comparison is
+            on the adjusted basis at both ends, because `ema_9` is computed on adjusted close and a
+            printed close read against it would arm the trail on the morning after every split, on
+            every long the lab held. Below, not below-or-equal: a close sitting exactly on the
+            average has not closed below it, which is the one strict comparison in the exit rules and
+            differs from `TriggerTouch` because a touch asks whether a price was available and a
+            close asks whether a level was lost.
+
+            **The short trim.** Fifteen per cent of the share count the plan was sized at, floored to
+            whole shares, once, when the price reaches three units of realised risk below the entry.
+            Of the planned count rather than of what remains, so the figure is computable before the
+            session opened and R accounting does not depend on how many times the rule has fired, and
+            capped at what is held because RiskGate may have reduced the order. The position stays
+            open: the trim writes a `fill` row with a third leg and five columns on the position, and
+            the close covers `shares` minus `trimmed_shares` with `realised_pnl` being the two halves
+            added. Over the authored case a short sized at 150 against a five-point stop trims 22
+            shares at 84.60, bought back a whole spread worse at 84.6846.
+
+            **The short's exit.** An hourly bar closing back above the 50-day average ends the short,
+            filling at the open of the first minute after that bar, which is the next price after the
+            close and the same mechanic the trail takes from the daily series. The closing stub is
+            not an hourly bar and cannot fire it, which `HourlyGrid` decided at 4.4 and which is
+            asserted here against a session that spends its last half hour above the average. **The
+            average is the one that stood before the session**, because this session's own is
+            computed from a close that had not happened when an 11:30 bar closed, and the printed
+            price is put on the adjusted basis the average lives on rather than compared across the
+            two. A name the store holds no average for is held rather than measured against a
+            stand-in, on the terms `reached-ceiling` already refuses a daily-bar approximation.
+
+Decided:    **Every exit is PositionManager's and every entry is PaperBroker's**, so the give-up
+            point moved out of the broker with the rest of them rather than the two new rules joining
+            it there. Until 4.8 a position ended one way and the broker could run it without
+            evaluating anything, because a give-up price is a resting instruction the plan carried
+            from 18:30. From 4.8 it can end three ways and the rule is that the exit is whichever is
+            reached first, which is **a comparison across rules, and a comparison cannot be made by
+            two components each of which sees one side of it**: a broker closing on the give-up point
+            at 14:00 could not know the reclaim had fired at 10:31, and both are real exits at real
+            prices with only one of them having happened. It also gives `position` one writer per
+            operation rather than two stages that can both close a row, which is the argument RiskGate
+            holds over orders one level up. `fill` keeps two writers, disjoint by leg.
+
+            **Neither exit rule takes over from the other, and a tie inside one minute resolves as a
+            give-up.** This is the one thing 4.15 left and what 4.8 owed. Both are live from the entry
+            fill to the close and neither replaces the other, so there is no handover: **a handover
+            would need a moment to happen at and every available moment is authored**, being a number
+            of R, of sessions or of distance, none of which the strategy names, and it would be a
+            fourth arbitrary-within-a-range value beside the trim fraction, the ADR offset and the
+            noise boundary. What running both does need is a total order, because a bar carries a
+            high and a low and no order between them. Two ranks and not four: an exit at a minute's
+            open resolves before one reached inside that minute, which is a fact about the bar rather
+            than a choice, and within the open giving up comes first, because **a gap through the
+            stop names how the loss occurred** and recording that minute as a trail exit would hide a
+            gap loss inside a rule exit where LossClassifier at 4.10 could not tell the two apart.
+            The two rule-set exits share a rank because no position has both, and that is asserted
+            rather than assumed so a third rule finds a rank missing rather than a silent tie.
+
+            **A trim is not an exit and is ordered under both of them.** A bar holding both the 3R
+            level and an exit trigger takes the exit and no trim, on the pessimism the model takes
+            everywhere: a trim locks in a gain, and taking it first would credit the position with a
+            price the bar cannot say traded before the other one. That is the subject the fill
+            model's third rule was written for at 4.7 and could not fire against.
+
+Decided:    **A minute that opens through a resting price fills at that open, whatever time of day it
+            is**, which supersedes the decision naming the session's first regular minute and
+            discharges the third obligation due here. The superseded reasoning survives whole; what
+            does not is the clause the argument never rested on. **A resting order cannot be hit at a
+            price that did not exist, and that says nothing about the time of day.** A minute in the
+            middle of the day can open past a resting price on a halt or a thin book, and until 4.8
+            such an order filled at the price it named, which may be a price that did not trade in
+            that minute at all. The size is small on the capped sixty and the sign is not: every
+            instance of it flattered, which is the only direction of error this lab cannot afford,
+            and 4.8 added two more resting levels a minute can open through, so the same question was
+            about to be asked three times. The favourable side is still refused: an open past a
+            resting price in the position's favour is not a gap, which is the short trim's case.
+
+            **RiskGate reads the book as it stood coming into the session, and what that costs is
+            counted**, which discharges the second obligation. The gate runs at 21:10 and decides
+            before either the entries or the exits of that session exist, so a position opened at
+            09:31 and closed at 09:45 still occupies a slot the 10:00 trigger is refused on. The caps
+            are therefore tighter than the design rather than looser, which is the safer of the two
+            directions. Merging the gate into the walk would fix it and would give orders a second
+            writer; reading the previous minute's fills would make the gate's answer depend on a
+            stage that has not run, and a rerun in a different order would quietly change it.
+            **So the cost is counted rather than argued**: `manage_run.closed_in_their_own_session`
+            is its size on the night, so if it stays at nought the approximation never bound and if
+            it grows the merge has a figure attached to it rather than a plausible story.
+
+            **A run whose writes are updates records no row count rather than a nought**, which
+            discharges the row repointed here from 3.8. `rows_written` is a row-count delta over the
+            tables a stage declares and is measured rather than self-reported, because a stage
+            counting its own output reports what it believes it wrote. That reasoning is unchanged
+            and is why the fix is not a reported count. What the delta cannot do is see a write that
+            changes a row rather than adding one, so `sectors`, `clusters` and `checks` reported 0 on
+            a perfect run and 0 on a run that died on the first name. **Null and nought are different
+            statements**: nought says the stage wrote nothing and is a figure the nightly halt keys
+            on, null says the delta does not apply. Applicability is declared at `Begin` rather than
+            decided at the end, so it is part of what a stage says it writes, and it is self-reported
+            on the terms `skipped` already is: what is reported is whether a measure applies, not the
+            value of one. PositionManager keeps the measured delta, because it inserts a fill for
+            every exit and every trim.
+
+Built:      **`position` carries three stamps now, and the third is there for a reason rather than
+            by symmetry.** The trim is an update, so `observed_at` stays at the open and cannot
+            answer a replay standing between the two. Every bound in this store is at session
+            granularity, so `trimmed_at` would answer the same question today by accident; a stamp
+            that is right for a reason outlives one that is right because of how coarse the bounds
+            happen to be. `exit_armed_session` needs none at all, because the column is the session
+            that armed the exit rather than the fact that something did, so a session later than the
+            as-of reads as unarmed and the reason goes with it. A test stands a read at the opening
+            day and finds the position open, untrimmed and holding all 150 shares.
+
+            **Migration 045 rebuilds `fill` for one value and there is no cheaper way.** A trim is a
+            third leg because it is one end of nothing: the position it reduces stays open, and
+            calling it an exit would make `exit_fill_id` ambiguous on every trimmed short. SQLite
+            cannot alter a CHECK, so the table is renamed out of the way, redeclared and copied back.
+            **The rename is safe on `fill` and would not be on `position`**: nothing holds a foreign
+            key into `fill`, and SQLite rewrites a child's foreign key clause when the parent is
+            renamed, which is the hazard SCHEMA names under `rebuild_demand`. So `position` gains
+            columns and no constraints, and the trim columns' equivalence is asserted by a test
+            instead. That is stated rather than left as an absence.
+
+            **`fill_run` loses `exits_filled` and `open_at_end`.** The broker prices no exit, so both
+            would read nought on every future night, and a stage's record that can only report zero
+            is one a later session reads as broken. That is the ruling migration 044 took over the
+            two `vwap_run` counters one checkpoint ago. The night's book at its end is `manage_run`'s.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 832 tests**, from 797 at 4.7.
+
+            **`tools/verify-phase` GREEN**: 133 claims, 105 passed, 0 failed, 28 out of scope, 0
+            unexamined, coverage examined 6,971, 1,425 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 99 by the four the management
+            table brought in: it was deferred to 4.8 from the day the check was written, and 4.8 is
+            the checkpoint that gave three of its four rows something to be asserted against. Out of
+            scope falls from 30 to 28 for the same reason, one table having left the deferred set and
+            one of 4.7's own rows with it.
+
+            **The fixture's `manage.*` figures are eleven noughts and each is structural.** Nothing
+            was open, because nothing was placed, because nothing triggered, because nothing was
+            planned, because the capped population is empty on this fixture's one market day. They
+            are `DERIVED` rather than frozen because the chain that produces them is the fixture's
+            own committed figures rather than a run, and `manage.openAtStart` is the one every other
+            is bounded by, so a fixture that ever opens a position moves that first and the rest
+            follow with no edit to the file.
+
+Carried:    **`closed_in_their_own_session` is the size of an approximation and it is in the store
+            alone.** The decision to leave RiskGate at 21:10 rests on the cost being countable rather
+            than argued, and it is counted every night. What it is not is read: no screen carries it,
+            and a figure a person never sees is one nobody reviews the choice against, which is the
+            sixth failure shape stated the other way round. Due at 4.11, which is the trade journal
+            page and the first surface a position's life is drawn on.
+
+            **A trim splits one trade into two fills and `position.shares` still means the entry
+            count.** `realised_pnl` on a trimmed short is the trim's money plus the close's, and the
+            close covers `shares` minus `trimmed_shares`, which `StoredPosition.SharesRemaining`
+            derives. Nothing outside PositionManager reads it yet, and a component reading `shares`
+            as what the exit covered would overstate a trimmed short's result by the trim. Due at
+            4.9, which builds PlanAudit and TradeJournal.
+
+            **An armed exit is never re-evaluated, so a session the store holds no minute of
+            postpones it rather than reconsidering it.** The trail is armed on session N's close and
+            fills at the open of the next session the store has minutes for; where that is N+3, the
+            fill is three sessions of price movement after the close that armed it. The rule says the
+            next open and this is the next open the lab has. What is unstated is whether a stale
+            arming should expire, which is a rule nobody has described and would be a fourth authored
+            number. Due at 4.9, where a result is first stated in R.
+
+            **Three discharged from 4.7 and one from 3.8, three raised, so the obligations table
+            falls from 55 to 54.**

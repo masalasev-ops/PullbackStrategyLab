@@ -86,6 +86,42 @@ public sealed class IndicatorDailyReader
         return reader.Read() ? Map(reader) : null;
     }
 
+    /// <summary>
+    /// The latest computation for a session strictly before <paramref name="session"/>, as at
+    /// <paramref name="asOf"/>, or null where the store holds none.
+    ///
+    /// <b>Strictly before, and that is the whole reason it exists.</b> The short exit compares an
+    /// hourly close inside a session against the 50-day average, and this session's own average is
+    /// computed from this session's close, which had not happened when the hourly bar closed. Reading
+    /// it would decide an 11:30 exit from the 16:00 price, which is the one property this lab tests
+    /// for by name.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    public static StoredIndicators? LatestBefore(
+        SqliteConnection connection, string ticker, DateOnly session, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT ticker, as_of, computed_at, ema_9, ema_21, ema_50, atr_14, adr_20,
+                   dollar_volume_median_20, range_avg_20, ladder_grade
+              FROM indicator_daily
+             WHERE ticker = @ticker
+               AND as_of < @session
+               AND computed_at <= @computed_before
+             ORDER BY as_of DESC, computed_at DESC
+             LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+        command.Parameters.AddWithValue("@computed_before", EndOf(asOf));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        return reader.Read() ? Map(reader) : null;
+    }
+
     private static StoredIndicators Map(SqliteDataReader reader) => new(
         reader.GetString(0),
         StoreText.StorageTextToDate(reader.GetString(1)),

@@ -12,9 +12,9 @@ namespace PullbackStrategyLab.Core.Trading;
 ///
 /// <b>Pessimistic on purpose, and the direction is the point.</b> Being too pessimistic understates
 /// edge, which is the safe direction for a lab whose question is whether edge exists at all. Every
-/// rule below is chosen that way, and the two places the model is optimistic are named rather than
-/// left to be found: the touch rule fills on a touch, and an intraday minute that opens through a
-/// resting price fills at that price rather than at the open.
+/// rule below is chosen that way, and the one place the model is optimistic is named rather than
+/// left to be found: the touch rule fills on a touch. The second such place closed at 4.8, when the
+/// gap rule stopped naming the session's first regular minute and started reading the bar.
 ///
 /// <b>Three rules and a fourth that cannot fire yet.</b>
 ///
@@ -22,16 +22,19 @@ namespace PullbackStrategyLab.Core.Trading;
 /// <item><b>An ordinary fill crosses the book and is charged the whole captured spread</b>, the wrong
 /// way, at both ends and on both sides (see: Entry slippage is the whole captured spread, symmetric
 /// between the directions) (see: Exit slippage is charged on the same terms as entry slippage).</item>
-/// <item><b>A price the session opened through fills at that open and is not slipped again</b>,
-/// because the gap is the adverse move and a spread charged over it charges twice for one crossing
-/// (see: A gap through a price fills at the session's first regular minute open, and is not slipped
-/// again).</item>
+/// <item><b>A price a minute opened through fills at that open and is not slipped again</b>,
+/// because the gap is the adverse move and a spread charged over it charges twice for one crossing.
+/// Any minute, not the session's first alone: the argument is that a resting order cannot be hit at
+/// a price that did not exist, and that says nothing about the time of day
+/// (see: A minute that opens through a resting price fills at that open, whatever time of day it
+/// is).</item>
 /// <item><b>A minute holding both the give-up price and a profit-taking level gives up first.</b>
 /// <see cref="GiveUpComesFirst"/> is that rule and it returns a constant, because there is no reading
-/// of a minute bar that says which of two prices inside it traded first. It cannot fire before 4.8,
-/// which is the checkpoint that builds a profit-taking level at all: until then a minute holds one
-/// level and there is nothing to order. It is written and asserted here anyway, so 4.8 adds a level
-/// rather than a rule.</item>
+/// of a minute bar that says which of two prices inside it traded first. It was written and asserted
+/// here from 4.7 with nothing to order, and 4.8 gave it a subject: the short trim at 3R is the
+/// profit-taking level, and a bar holding both it and an exit trigger takes the exit. The wider
+/// ordering across two exit rules is <see cref="ExitReason.First"/>, which is a different question
+/// and lives with the reasons rather than with the prices.</item>
 /// </list>
 ///
 /// <b>What the spread is a fraction of, which is 4.7's own question.</b> <c>spread_bps</c> is basis
@@ -96,17 +99,16 @@ public static class FillModel
     /// <summary>
     /// What an entry gets, given the minute the trigger was reached in.
     ///
-    /// <paramref name="openedThrough"/> is the open of that minute where it is the session's first
-    /// regular minute and that open is already past the trigger, and null otherwise. The caller
-    /// decides that, because whether a minute is a session's first is a fact about the walk.
+    /// <paramref name="openedThrough"/> is that minute's open where it is already past the trigger,
+    /// and null otherwise. The caller decides that, because it is reading the bar it is standing on.
     ///
     /// <b>The gap rule is applied to an entry and the decision was written about an exit.</b> Its
     /// argument is symmetric and this is the direction that matters more: a long whose trigger sits
-    /// at 100 in a session that opened at 105 did not buy at 100, and filling it there would hand the
+    /// at 100 in a minute that opened at 105 did not buy at 100, and filling it there would hand the
     /// lab five points it never had. Every other approximation in this model understates edge; that
     /// one would manufacture it, which is the only kind this lab cannot afford
-    /// (see: A gap through a price fills at the session's first regular minute open, and is not
-    /// slipped again).
+    /// (see: A minute that opens through a resting price fills at that open, whatever time of day it
+    /// is).
     /// </summary>
     public static Fill Entry(
         string direction, decimal triggerPrice, decimal? openedThrough, double spreadBasisPoints) =>

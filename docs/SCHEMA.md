@@ -738,9 +738,10 @@ Declared at store level. Columns owed at their checkpoint.
 | `trigger_run` | session + observation | Insert TriggerResolver. What one replay walked beside what it decided |
 | `trade_order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
 | `order_run` | session + observation | Insert RiskGate. What one evening's gate decided, with its refusals and reductions counted by cap |
-| `fill` | fill id | Insert PaperBroker. One row per end of a trade, entry and exit alike, with what it cost and what the cost was computed from |
-| `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding and entry slippage are visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
-| `fill_run` | session + observation | Insert PaperBroker. What one evening's fill stage priced, with the book at both ends of the night |
+| `fill` | fill id | Insert PaperBroker · Insert PositionManager, **disjoint by leg**: the broker writes the `entry` and the manager writes the `exit` and the `trim`, and neither may write the other's. One row per fill, with what it cost and what the cost was computed from |
+| `position` | position id | Insert PaperBroker · Update PositionManager. One writer per operation and not two stages that can both close a row: from 4.8 the broker opens a position and the manager is the only thing that trims, arms or closes one (see: Every exit is PositionManager's and every entry is PaperBroker's). Carries `risk_intended` and `risk_realised` so share rounding and entry slippage are visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
+| `fill_run` | session + observation | Insert PaperBroker. What one evening's fill stage priced, and the book it was handed |
+| `manage_run` | session + observation | Insert PositionManager. What one evening's two rule sets closed, trimmed and armed, with each exit counted under the rule that produced it |
 | `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |
 | `trade` | trade id | Insert TradeJournal. Result in R, borrow cost on shorts |
 | `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |
@@ -884,27 +885,38 @@ Columns of `position`. Built at 4.7, and the columns are the ones that checkpoin
 | `closed_session`, `closed_at`, `exit_fill_id`, `exit_price`, `exit_reason` | TEXT NULL | The exit. Present exactly on a closed row |
 | `realised_pnl` | TEXT NULL | The money, at the two prices the fills actually got |
 | `realised_r` | REAL NULL | The result in R, which is a ratio and not money. Below minus one wherever the exit cost more than the risk it was measured against, which a gap through the give-up point always does |
+| `trim_fill_id`, `trimmed_at`, `trimmed_shares`, `trim_price`, `trim_realised_pnl` | TEXT / INTEGER NULL | The short trim at 3R, which reduces a position and leaves it open. Present exactly on a trimmed row, and asserted by a test rather than by a CHECK: `fill` holds a foreign key into this table, so rebuilding it to add one would rewrite that clause as a side effect of a tidiness. `realised_pnl` on the close is this figure plus the close's own, so a reader is never asked to derive the first half from a fill row nothing points at |
+| `exit_armed_session`, `exit_armed_reason` | TEXT NULL | An exit decided in one session and filled at the open of the next, with the rule that decided it. The long trail needs this because it is evaluated on a daily close and the next price after that close is the next session's open; the short reclaim needs it in the one case where the store holds no later minute of the session |
 | `observed_at` | TEXT | When the position was opened, which is what a point-in-time read bounds on |
 | `closed_observed_at` | TEXT NULL | When the close was observed. The second half of the bound |
+| `trim_observed_at` | TEXT NULL | When the trim was observed. The third |
 
-**Two stamps, because this is the one updated table in the phase.** A row is inserted when it fills
-and updated when it closes, so a single stamp would answer a replay standing between the two with
-the state the row ended in. Every read bounds `observed_at` for whether the row exists at all and
-`closed_observed_at` for whether the close had happened yet, and a close observed after the as-of
-reads as open, which is what it was.
+**Three stamps, because this is the one updated table in the phase.** A row is inserted when it
+fills, updated when a short is trimmed and updated again when it closes, so a single stamp would
+answer a replay standing between any two of those with the state the row ended in. Every read
+bounds `observed_at` for whether the row exists at all, `trim_observed_at` for whether the trim
+had happened yet and `closed_observed_at` for whether the close had, and either event observed
+after the as-of reads as not having happened, which is what it was.
+
+**`exit_armed_session` carries no stamp of its own and does not need one**, because the column is
+the session that armed the exit rather than the fact that something did. A session later than the
+as-of is a reading the lab had not made yet and reads as unarmed, and the reason goes with it.
 
 **No give-up price is copied here.** It is `trade_plan`'s and a reduction never moves it, so a column
 here would be a second statement of the one price R is measured against. That is the ruling
 `trade_order` took at 4.6 and `trigger_resolution` at 4.5.
 
-**A position closes only on its give-up point until 4.8.** The give-up price is a resting instruction
-the plan carried from 18:30 and is live from the moment the entry fills; the two rule sets that trail
-a long and trim a short are PositionManager's. So a position that never reaches its give-up point is
-held indefinitely, and it occupies a slot the count caps refuse the next morning's trigger on.
+**A position can end three ways from 4.8, and one component decides which.** The give-up point is a
+resting instruction the plan carried from 18:30; the long trail and the short reclaim are rules
+PositionManager evaluates. The exit is whichever is reached first, which is a comparison across
+rules, and a comparison cannot be made by two components each of which sees one side of it. So the
+give-up exit moved out of PaperBroker with the rest of them, and `exit_reason` is `give-up`, `trail`
+or `hourly-reclaim` (see: Every exit is PositionManager's and every entry is PaperBroker's).
 
 ### What one end of one trade cost
 
-Columns of `fill`. Built at 4.7. Entry and exit are the same shape, priced by the same rules.
+Columns of `fill`. Built at 4.7 and given a third leg at 4.8. Every leg is the same shape, priced by
+the same rules.
 
 | Column | Form | Why |
 |---|---|---|
@@ -912,10 +924,10 @@ Columns of `fill`. Built at 4.7. Entry and exit are the same shape, priced by th
 | `position_id`, `setup_id` | TEXT | What it belongs to |
 | `session_date` | TEXT | The session the fill happened in, which for an exit is not the session the position opened in |
 | `ticker`, `direction` | TEXT | The name and the side, carried so a fill reads without a join |
-| `leg` | TEXT, one of two | `entry` or `exit`. Named `leg` and not `end` because `END` is a SQLite keyword, on exactly the grounds `trade_order` is not called `order` |
+| `leg` | TEXT, one of three | `entry`, `exit` or `trim`. Named `leg` and not `end` because `END` is a SQLite keyword, on exactly the grounds `trade_order` is not called `order`. `trim` arrived at 4.8 by migration 045 rebuilding the table, because a trim is one end of nothing: the position it reduces stays open, and calling it an exit would make `exit_fill_id` ambiguous on every trimmed short |
 | `filled_at` | TEXT | The minute |
 | `basis` | TEXT, one of two | `slipped` or `gapped`. The countable half of how a fill was priced, so a night groups without parsing a price |
-| `resting_price` | TEXT | The price the order named, being the trigger on an entry and the give-up point on an exit |
+| `resting_price` | TEXT | The price the rule named, being the trigger on an entry, the give-up point or the minute's open on an exit, and the 3R level on a trim. Never the price the fill got, which is the next column |
 | `price` | TEXT | What it actually got |
 | `slippage` | TEXT | The money per share the crossing cost, nought on a gap because the gap is the adverse move |
 | `shares` | INTEGER | |
@@ -981,9 +993,32 @@ Grain: session + observation. What one evening's fill stage priced, at 21:15.
 | Column | Type | Note |
 |---|---|---|
 | `session_date`, `observed_at` | TEXT | PK |
-| `open_at_start`, `open_at_end` | INTEGER | the book at both ends of the night, because RiskGate reads this table from 4.7 and a night that opened four and closed none is a night the next morning's fifth trigger is refused on |
-| `orders_placed`, `entries_filled`, `entries_unfilled`, `exits_filled` | INTEGER | what it was given and what it priced |
+| `open_at_start` | INTEGER | the book RiskGate read at 21:10, reported rather than walked, because a night that opened four and closed none is a night the next morning's fifth trigger is refused on |
+| `orders_placed`, `entries_filled`, `entries_unfilled` | INTEGER | what it was given and what it priced |
 | `gapped`, `slipped` | INTEGER | how the fills were priced, counted apart |
+| `names_walked`, `minutes_walked` | INTEGER | what the clock actually handed out, which is the figure that says a night was blind |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the session was never sampled or held no minute |
+
+**`exits_filled` and `open_at_end` were dropped at 4.8 rather than kept reading nought.** Exits moved
+to PositionManager, so both would report zero on every future night, and a stage's record that can
+only report zero is one a later session reads as broken. That is the ruling migration 044 took over
+the two `vwap_run` counters one checkpoint earlier. The night's book at its end is `manage_run`'s,
+because the manager is the last stage that can change it.
+
+#### `manage_run`
+Grain: session + observation. What one evening's two rule sets did, at 21:20.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `open_at_start`, `open_at_end` | INTEGER | the positions handed to the manager, being everything open at any point in the session including the entries priced five minutes earlier, and what was still open when it finished |
+| `longs_managed`, `shorts_managed` | INTEGER | the two rule sets are separate code paths, so the two populations are separate figures (see: Long and short are never pooled into one figure) |
+| `closed_give_up`, `closed_trail`, `closed_reclaim` | INTEGER | each exit under the rule that produced it. A night of trail exits is a different night from a night of stop-outs, and a single total lets the one that is a finding hide inside the one that is ordinary |
+| `trimmed` | INTEGER | shorts that reached 3R and were reduced, which is not an exit and is counted apart from them |
+| `exits_armed` | INTEGER | exits decided on this session and filled at the next open. The rule that armed each one is on the position row |
+| `gapped`, `slipped` | INTEGER | how the fills were priced, counted apart, on the same terms `fill_run` counts entries |
+| `held_no_quote` | INTEGER | positions a rule reached and the session quoted no usable book for, held rather than closed at a price nobody measured. Counted once per position however many minutes the hold lasts |
+| `closed_in_their_own_session` | INTEGER | the size of an approximation rather than a result. RiskGate runs at 21:10 and reads the book as it stood coming into the session, so a position opened at 09:31 and closed at 09:45 still occupied a slot the 10:00 trigger was refused on (see: RiskGate reads the book as it stood coming into the session, and what that costs is counted) |
 | `names_walked`, `minutes_walked` | INTEGER | what the clock actually handed out, which is the figure that says a night was blind |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the session was never sampled or held no minute |
 

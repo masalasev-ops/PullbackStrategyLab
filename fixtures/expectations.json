@@ -8375,18 +8375,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "26",
+      "value": "27",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "31",
+      "value": "32",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry."
     },
     {
       "id": "scan.decliner.hits",
@@ -9834,10 +9834,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "44",
+      "value": "45",
       "checkpoint": "4.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run."
     },
     {
       "id": "tiers.falling",
@@ -10512,10 +10512,10 @@
     {
       "id": "authored.rows",
       "tier": "DERIVED",
-      "value": "45",
+      "value": "46",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "rows of the authored-parameters table"
+      "note": "rows of the authored-parameters table Moved from 45 to 46 at 4.8, which adds the row answering when the trail takes over from the fixed stop. That was the one question 4.15 left, so the row arrives filled rather than open."
     },
     {
       "id": "authored.open",
@@ -10528,18 +10528,18 @@
     {
       "id": "authored.filled",
       "tier": "DERIVED",
-      "value": "45",
+      "value": "46",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "of those, the ones stating a value. Nought open and 45 filled are the same fact twice only while the total holds, which is why both are recorded"
+      "note": "of those, the ones stating a value. Nought open and 45 filled are the same fact twice only while the total holds, which is why both are recorded Moved from 45 to 46 at 4.8 with the row above: the answer and the row landed together."
     },
     {
       "id": "authored.citingADecision",
       "tier": "DERIVED",
-      "value": "11",
+      "value": "12",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move"
+      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move Moved from 11 to 12 at 4.8, the new row citing the decision that answers it."
     },
     {
       "id": "plans.candidates",
@@ -10702,14 +10702,6 @@
       "note": "orders the stage could not price, being a name the session quoted no usable two-sided book for. Worth freezing at nought now because the fixture's own capture already holds such a name: MUZ was answered with one side on 2026-09-01, so this becomes a real count with no edit here the day an order lands on a name like it."
     },
     {
-      "id": "fills.exitsFilled",
-      "tier": "DERIVED",
-      "value": "0",
-      "checkpoint": "4.7",
-      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. No position exists to carry in either, since the fixture holds one market day and nothing before it. So the stage is handed nothing on both sides and every figure below is fixed at nought without executing it. The run is clean and says which shape of nothing it was: no order and no position is not the same fact as an order nobody could price.",
-      "note": "positions closed, which until 4.8 means positions whose give-up point the session reached."
-    },
-    {
       "id": "fills.gapped",
       "tier": "DERIVED",
       "value": "0",
@@ -10726,12 +10718,92 @@
       "note": "fills charged the session's widest captured quote, the wrong way."
     },
     {
-      "id": "fills.openAtEnd",
+      "id": "manage.openAtStart",
       "tier": "DERIVED",
       "value": "0",
-      "checkpoint": "4.7",
-      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. No position exists to carry in either, since the fixture holds one market day and nothing before it. So the stage is handed nothing on both sides and every figure below is fixed at nought without executing it. The run is clean and says which shape of nothing it was: no order and no position is not the same fact as an order nobody could price.",
-      "note": "positions open when the night ended. The pair with openAtStart is what makes the book legible without a join, and both move first on any fixture that grows a traded day."
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. positions open at any point in the session, which is what the manager is handed. It is the figure every other one here is bounded by, so a fixture that ever opens a position moves this first and the rest follow with no edit to this file"
+    },
+    {
+      "id": "manage.longsManaged",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. of those, the longs. Counted apart from the shorts because the two rule sets are separate code paths and a pooled figure would say nothing about either (see: Long and short are never pooled into one figure)"
+    },
+    {
+      "id": "manage.shortsManaged",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. of those, the shorts"
+    },
+    {
+      "id": "manage.closedGiveUp",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. closed on the plan's give-up point, which is the exit that moved here from PaperBroker at 4.8"
+    },
+    {
+      "id": "manage.closedTrail",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. closed on the long trail, being a daily close below the 9-day average filling at the next open"
+    },
+    {
+      "id": "manage.closedReclaim",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. closed on an hourly bar closing back above the 50-day average, which is the short side's exit"
+    },
+    {
+      "id": "manage.trimmed",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. shorts reduced by 15% of the planned size at 3R. Not an exit, so counted apart from the three above"
+    },
+    {
+      "id": "manage.exitsArmed",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. exits decided on this session and filled at the open of the next. The first figure here that would move without a position closing, because arming a long needs a daily close below its average and nothing else"
+    },
+    {
+      "id": "manage.heldNoQuote",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. positions a rule reached and the session quoted no usable book for, held rather than closed at a price nobody measured. The fixture's capture holds a name the vendor quoted with one side, so the day it grows a position on such a name this becomes a real count with no edit to this file"
+    },
+    {
+      "id": "manage.closedInTheirOwnSession",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. closed in the session they opened in, which the caps could not see at 21:10. The size of the approximation rather than a result, and the figure the decision to leave RiskGate where it is will be reviewed against (see: RiskGate reads the book as it stood coming into the session, and what that costs is counted)"
+    },
+    {
+      "id": "manage.openAtEnd",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. still open when the manager finished, which is the night's book and the figure the next morning's caps are decided from"
     }
   ],
   "frozenOnly": [

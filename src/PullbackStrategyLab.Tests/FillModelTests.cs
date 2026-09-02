@@ -99,7 +99,7 @@ public sealed class FillModelTests
     ///
     /// The loss is never clamped, so the fill is where the session actually opened. Taking the worse
     /// of the open and the give-up point would price an adverse move that did not occur.
-    /// see: A gap through a price fills at the session's first regular minute open, and is not slipped again
+    /// see: A minute that opens through a resting price fills at that open, whatever time of day it is
     /// </summary>
     [Fact]
     public void A_gap_fills_at_the_open_and_charges_nothing_on_top()

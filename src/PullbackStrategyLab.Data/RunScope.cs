@@ -27,9 +27,11 @@ public sealed class RunScope : ICallBudget, IDisposable
         DateTimeOffset startedAt,
         IReadOnlyDictionary<string, int> baselineRowCounts,
         int callsAlreadyUsedToday,
-        CallCounting counting)
+        CallCounting counting,
+        RowDelta rowDelta)
     {
         Counting = counting;
+        RowDelta = rowDelta;
         _runLogger = runLogger;
         _connection = connection;
         _baselineRowCounts = baselineRowCounts;
@@ -50,6 +52,16 @@ public sealed class RunScope : ICallBudget, IDisposable
 
     /// <summary>Whether this run's calls count against the day's ceiling.</summary>
     public CallCounting Counting { get; }
+
+    /// <summary>
+    /// Whether a row-count delta measures anything about this stage.
+    ///
+    /// Declared at <see cref="RunLogger.BeginUpdatingInPlace"/> rather than worked out here, because
+    /// a stage that only updates its declared tables reports 0 on a perfect run and 0 on a run that
+    /// died on the first name, and a figure that cannot distinguish those is not a measurement.
+    /// see: A run whose writes are updates records no row count rather than a nought
+    /// </summary>
+    public RowDelta RowDelta { get; }
 
     /// <summary>
     /// Names this run walked past after a failure it survived, or null where it walked no list.
@@ -124,15 +136,27 @@ public sealed class RunScope : ICallBudget, IDisposable
     {
         ObjectDisposedException.ThrowIf(_completed, this);
 
-        int rowsWritten = 0;
-        foreach ((string table, int baseline) in _baselineRowCounts)
+        int? rowsWritten = null;
+
+        if (RowDelta == RowDelta.Measured)
         {
-            rowsWritten += Math.Max(0, RunLogger.CountRows(_connection, table) - baseline);
+            int delta = 0;
+
+            foreach ((string table, int baseline) in _baselineRowCounts)
+            {
+                delta += Math.Max(0, RunLogger.CountRows(_connection, table) - baseline);
+            }
+
+            rowsWritten = delta;
         }
 
         _runLogger.Complete(_connection, RunId, outcome, rowsWritten, CallsUsed, Skipped);
         _completed = true;
-        return new RunSummary(RunId, Stage, outcome, rowsWritten, CallsUsed, Skipped);
+
+        // The summary keeps a number rather than a null, and says separately whether it measures
+        // anything. A stage's own result record is read by its console line and by the phase replay,
+        // and neither has a question the null answers; the column the nightly halt keys on does.
+        return new RunSummary(RunId, Stage, outcome, rowsWritten ?? 0, CallsUsed, Skipped, RowDelta);
     }
 
     public void Dispose()
@@ -146,7 +170,29 @@ public sealed class RunScope : ICallBudget, IDisposable
     }
 }
 
-public sealed record RunSummary(string RunId, string Stage, RunOutcome Outcome, int RowsWritten, int CallsUsed, int? Skipped = null);
+/// <summary>
+/// What one run did. <see cref="RowDelta"/> says whether <see cref="RowsWritten"/> measures
+/// anything: it is nought and meaningless on a stage whose declared tables it only updates, which is
+/// the state <c>run_log.rows_written</c> records as null rather than as a figure.
+/// </summary>
+public sealed record RunSummary(
+    string RunId,
+    string Stage,
+    RunOutcome Outcome,
+    int RowsWritten,
+    int CallsUsed,
+    int? Skipped = null,
+    RowDelta RowDelta = RowDelta.Measured);
+
+/// <summary>Whether a row-count delta measures what a stage wrote.</summary>
+public enum RowDelta
+{
+    /// <summary>The stage inserts, so the delta is a count of the rows it added.</summary>
+    Measured,
+
+    /// <summary>The stage only updates its declared tables, so the delta is 0 whatever it did.</summary>
+    DoesNotApply,
+}
 
 /// <summary>
 /// Thrown when a stage asks for a vendor call the day's ceiling cannot cover. The ceiling

@@ -65,7 +65,7 @@ public sealed class ThemeClusterer
     public ClusterResult Count(DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "scan_hit");
+        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "scan_hit");
 
         // One row per hit, with the name's industry beside it. Names with no industry are returned
         // too, so the stage can say how many it could not group rather than reporting a smaller

@@ -177,7 +177,7 @@ public sealed class CheckRecomputer
         ArgumentException.ThrowIfNullOrWhiteSpace(check);
 
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "setup");
+        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "setup");
 
         // The bound, in the end-of-day form every reader in the lab uses. An input stamped after it
         // is something the night did not have, whatever it is and however slowly it moves.
@@ -279,7 +279,7 @@ public sealed class CheckRecomputer
         ArgumentException.ThrowIfNullOrWhiteSpace(check);
 
         using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.Begin(connection, Name, "setup");
+        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "setup");
 
         var rows = new List<(string SetupId, string Ticker, string? Prior)>();
         int unscoped = 0;

@@ -442,14 +442,49 @@ Pricing one end of the trade and not the other flatters every R figure by half t
 
 A trail exit and a give-up exit are given the same treatment rather than two, because nothing in the corpus distinguishes the book one crosses on the way out by which rule sent the order.
 
-**A gap through a price fills at the session's first regular minute open, and is not slipped again**
-The open of the first regular-hours minute bar of the session, read from `intraday_bar` rather than from any session-open field.
+**A minute that opens through a resting price fills at that open, whatever time of day it is**
+The open of the minute bar in which the order would otherwise have been filled, read from `intraday_bar` rather than from any session-open field, and not slipped on top. Supersedes **A gap through a price fills at the session's first regular minute open, and is not slipped again**, which said the same thing about the session's first regular minute alone.
 
-The loss is explicitly never clamped, so the gap is taken as it happened. Taking the worse of the open and the stop would price an adverse move that did not occur, which is pessimism past the point where it is still measuring something. Tying the price to the store's own first regular minute keeps it derivable from what the lab holds, on the same footing as every other price in the system, rather than resting on a field the vendor computes.
+The loss is explicitly never clamped, so the gap is taken as it happened. Taking the worse of the open and the resting price would price an adverse move that did not occur, which is pessimism past the point where it is still measuring something. Tying the price to a bar the store holds keeps it derivable from what the lab has, on the same footing as every other price in the system, rather than resting on a field the vendor computes.
 
 **A gap fill does not additionally slip**, because the gap is the adverse move. Charging a spread on top would be charging twice for one crossing.
 
-This applies to an exit as much as to an entry, and it is the one exception to the rule above.
+This applies to an exit as much as to an entry, and it is the one exception to the slippage rule above.
+
+**What changed is the clock, and the clock was never the reason.** The superseded wording named the session's first regular minute because that was the case 4.7 could see: an overnight gap. A minute in the middle of the day can open past a resting price too, on a halt or a thin book, and until 4.8 such a minute filled at the price the order named, which may be a price that did not trade in that minute at all. The argument for the open was always that a resting order cannot be hit at a price that did not exist, and that argument says nothing about the time of day.
+
+**The size is small and the sign is not.** The capped sixty are large and liquid, so a minute-to-minute jump through a price is usually a fraction of a spread. Every instance of it flattered, which is the only direction of error this lab cannot afford, and 4.8 added two more resting levels a minute can open through, so the same question was about to be asked three times.
+
+**The favourable side is refused rather than taken.** An open past a resting price in the position's favour is not a gap and is not filled there: the short trim is the case, and taking a better open would price a fill better than a resting instruction could have got.
+
+**Every exit is PositionManager's and every entry is PaperBroker's**
+From 4.8 the broker opens a position and the manager is the only thing that trims, arms or closes one. The give-up exit moved out of the broker with the two rule sets rather than staying beside them.
+
+Until 4.8 a position ended one way, on the give-up point, which is a resting instruction the plan carried from 18:30 rather than a rule anybody evaluates, so the broker could run it without evaluating anything. From 4.8 it can end three ways and the rule is that the exit is whichever is reached first. **That is a comparison across rules, and a comparison cannot be made by two components each of which sees one side of it.** A broker that closed on the give-up point at 14:00 could not know the manager's hourly reclaim had fired at 10:31, and nothing downstream could have seen the difference: both are real exits at real prices and only one of them happened.
+
+**It also gives `position` one writer per operation.** Two stages that can both close a row would put the exit rules in two code paths and void every comparison between versions, which is the argument RiskGate holds over orders one level up (see: RiskGate is the sole writer of orders, for both directions and every version). `fill` keeps two writers and they are disjoint by leg, on the shape `setup_signal` already carries.
+
+**The 21:20-after-21:15 ordering is unchanged and is now load-bearing.** A position has to exist before it can be managed, and a position opened at 09:31 and stopped out at 09:45 is one the manager walks in the same session the broker opened it in.
+
+**Neither exit rule takes over from the other, and a tie inside one minute resolves as a give-up**
+The fixed give-up point and the direction's rule set are both live from the entry fill to the close. Neither replaces the other at any point, so there is no handover; the exit is whichever is reached first, and where two name the same minute the order is stated rather than left to the sequence a walk evaluates its rules in.
+
+**A handover rule would need a moment to happen at, and every available moment is authored.** A number of R, a number of sessions, a distance: nothing in the strategy names one, so a threshold would be a fourth arbitrary-within-a-range value beside the trim fraction, the ADR offset and the noise boundary. Running both to the end needs no parameter at all, and the fixed give-up point already governs the early part of the trade, which is the same reasoning that gave the trail no arming threshold (see: The long trail is evaluated on the daily close and fills at the next open).
+
+**What running both does need is a total order, because a minute bar carries no order inside it.** Two ranks and not four. An exit at a minute's open resolves before one reached inside that minute, which is a fact about the bar rather than a choice. Within the open, giving up comes first, on the pessimism the fill model takes everywhere else and for one further reason: **a gap through the stop names how the loss occurred**, and recording such a minute as a trail exit would hide a gap loss inside a rule exit where LossClassifier could not tell the two apart (see: A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list).
+
+**The two rule-set exits share a rank because they can never contest each other**, one being the long side's and one the short side's. That is asserted rather than assumed, so a later session adding a third rule finds a rank missing rather than a silent tie (see: Long and short are never pooled into one figure).
+
+**A trim is not an exit and is ordered under both of them.** A bar holding both the 3R level and an exit trigger takes the exit and no trim, on the same pessimism: a trim locks in a gain, and taking it first would credit the position with a price the bar cannot say traded before the other one.
+
+**RiskGate reads the book as it stood coming into the session, and what that costs is counted**
+The gate stays at 21:10 with the previous session's book, and `manage_run.closed_in_their_own_session` records how many positions closed inside the session it was gating.
+
+The gate decides before either the entries or the exits of that session exist, so a position opened at 09:31 and closed at 09:45 still occupies a slot the 10:00 trigger is refused on. **The caps are therefore tighter than the design rather than looser**, which is the opposite direction of error from the one 4.6 carried and the safer of the two: it under-trades rather than over-trades.
+
+**Merging the gate into the walk would fix it and would give orders a second writer**, which costs more than the approximation does. Reading the previous minute's fills instead would make the gate's answer depend on a stage that has not run, and a rerun in a different order would quietly change it, which is the fault `OpenComingInto` is bounded on a session rather than a stamp to avoid.
+
+**So the cost is counted rather than argued.** A figure on the night is what makes the choice reviewable: if it stays at nought the approximation never bound, and if it grows the merge has a size attached to it rather than a plausible story.
 
 **A fill is charged the widest usable quote of its session, not the nearest one**
 Of the two passes a session gets, the fill model charges the one with the wider spread, whatever
@@ -791,6 +826,17 @@ Nothing rests on the sentence holding. The Api writes no other column because `w
 **The Web project reads through the Api and never opens the store**
 One read path, so a page cannot acquire a second connection to a file the Worker is writing. The store's own rule is one writer and one connection, and a page opening the file directly is the easiest way to lose that quietly. It also keeps the isolation check meaningful: Web talks to Api over HTTP with the base address in configuration, and no page holds a store connection to inspect.
 
+**A run whose writes are updates records no row count rather than a nought**
+`run_log.rows_written` is null on a stage whose declared tables it only updates, and the measured delta is written on every other stage exactly as it always was.
+
+The figure is a row-count delta over the tables a stage declares, taken at the start of the run and again at the end, and it is measured rather than self-reported because a stage counting its own output reports what it believes it wrote. **That reasoning is unchanged and it is why the fix is not a reported count.** What the delta cannot do is see a write that changes a row rather than adding one: `sectors` and `clusters` issue `UPDATE` and never `INSERT`, so a perfect run and a run that died on the first name both report 0, and on 2026-08-27 `sectors` recorded 149 calls against 0 rows, which is what a clean run would also have recorded.
+
+**Null and nought are different statements, which is the whole of it.** Nought says the stage wrote nothing and is a figure the nightly halt keys on. Null says the delta does not apply to this stage, so a person reading the row is told the measure is absent rather than shown a measurement that happens to be wrong. The alternative was a stage reporting rows affected, which breaks the rule the column exists for.
+
+**Applicability is declared at `Begin` and not decided at the end**, so it is part of what a stage says it writes rather than something a stage could forget to mention. It is self-reported, on the terms `run_log.skipped` already is: what is being reported is whether a measure applies, not the value of one, and there is no belief about its own output to guard against.
+
+**A stage that both inserts and updates keeps the measured delta.** PositionManager inserts a fill for every exit and every trim, so its delta is a real count of the rows it added, and the updates it also makes are not something the column ever claimed to cover.
+
 ## Corpus and process
 
 **Decisions are named, not numbered**
@@ -850,6 +896,18 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**A gap through a price fills at the session's first regular minute open, and is not slipped again**
+The open of the first regular-hours minute bar of the session, read from `intraday_bar` rather than from any session-open field.
+
+The loss is explicitly never clamped, so the gap is taken as it happened. Taking the worse of the open and the stop would price an adverse move that did not occur, which is pessimism past the point where it is still measuring something. Tying the price to the store's own first regular minute keeps it derivable from what the lab holds, on the same footing as every other price in the system, rather than resting on a field the vendor computes.
+
+**A gap fill does not additionally slip**, because the gap is the adverse move. Charging a spread on top would be charging twice for one crossing.
+
+This applies to an exit as much as to an entry, and it is the one exception to the rule above.
+
+Superseded on 2026-09-02 by **A minute that opens through a resting price fills at that open, whatever time of day it is**. Every word of the reasoning survives; what does not is the clause naming the session's first regular minute, which was the only case 4.7 could see and was never what the argument rested on.
+
 
 **The minimum sample is derived from a measured dispersion and counted in effective observations**
 A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. The first two are judgements and belong to a person. The third is a fact about the market, and until this decision nothing in the corpus had measured it.
