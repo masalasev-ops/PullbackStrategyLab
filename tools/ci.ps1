@@ -78,6 +78,7 @@ Invoke-Step 'check-stated-counts'          { Invoke-Check 'stated-counts' }
 Invoke-Step 'check-pinned-constants'       { Invoke-Check 'pinned-constants' }
 Invoke-Step 'check-path-casing'            { Invoke-Check 'path-casing' }
 Invoke-Step 'check-writer-ownership'       { Invoke-Check 'writer-ownership' }
+Invoke-Step 'check-order-provenance'       { Invoke-Check 'order-provenance' }
 Invoke-Step 'check-api-isolation'          { Invoke-Check 'api-isolation' }
 Invoke-Step 'check-ci-parity'              { Invoke-Check 'ci-parity' }
 Invoke-Step 'check-slot-diagnostics'       { Invoke-Check 'slot-diagnostics' }

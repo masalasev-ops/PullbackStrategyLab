@@ -59,6 +59,20 @@ public sealed partial class PriceStorageFormCheck
         RegexOptions.CultureInvariant)]
     private static partial Regex ColumnDeclaration();
 
+    /// <summary>
+    /// A column added to an existing table, which is the other way a column arrives.
+    ///
+    /// <b>Parsed from 4.6, having been counted and not read since 3.7.</b> Thirteen columns had
+    /// arrived this way and the guard on the storage half of the decimal rule could see none of
+    /// them, which made a green here mean "every column declared at table creation" while reading as
+    /// "every column". It is the statement form a later phase is most likely to add a money column
+    /// with, and 4.6 is the phase where money columns start to matter.
+    /// </summary>
+    [GeneratedRegex(
+        @"ALTER\s+TABLE\s+(?<table>[A-Za-z_][A-Za-z0-9_]*)\s+ADD\s+COLUMN\s+(?<declaration>[^;]*);",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex AddColumn();
+
     /// <summary>The clauses that open a table constraint rather than a column.</summary>
     private static readonly string[] Constraints =
         ["PRIMARY", "FOREIGN", "UNIQUE", "CHECK", "CONSTRAINT"];
@@ -124,42 +138,47 @@ public sealed partial class PriceStorageFormCheck
             }
         }
 
-        // What this guard cannot see, counted rather than left out.
-        //
-        // It reads CREATE TABLE bodies. A column added by ALTER TABLE is in neither figure above, so
-        // a green from here currently means less than its readers think: it means every column
-        // declared at table creation has the right affinity, not every column in the store. Thirteen
-        // arrive that way today and all thirteen are TEXT or INTEGER, so nothing is wrong in the
-        // store; what is wrong is that the one guard on the storage half of the decimal rule cannot
-        // see the statement form a later phase is most likely to add a column with.
-        //
-        // Counted here rather than fixed, and the parse is a carried obligation. A count is not the
-        // repair and it is what stops the green being read as more than it is.
-        int addedLater = System.Text.RegularExpressions.Regex.Matches(
-            string.Concat(files.Select(File.ReadAllText)),
-            @"ALTER\s+TABLE\s+\w+\s+ADD\s+COLUMN",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+        // The other way a column arrives, read rather than counted from 4.6. It was counted and
+        // deferred from 3.7, so a green here meant "every column declared at table creation" while
+        // reading as "every column", and thirteen columns sat outside it.
+        int addedLater = 0;
+
+        foreach (string file in files)
+        {
+            foreach (Match added in AddColumn().Matches(RepositoryLayout.Read(file)))
+            {
+                addedLater++;
+                columns++;
+
+                string name = added.Groups["table"].Value;
+                Match declaration = ColumnDeclaration().Match(added.Groups["declaration"].Value.Trim());
+
+                if (!declaration.Success)
+                {
+                    offenders.Add(
+                        $"{RepositoryLayout.Relative(file)}: an ALTER TABLE {name} ADD COLUMN declares no readable "
+                        + "column and type, so its affinity was not checked rather than found correct.");
+                    continue;
+                }
+
+                string column = declaration.Groups["column"].Value;
+                string type = declaration.Groups["type"].Value.Trim();
+
+                if (!HasRealAffinity(type) || Exempt.ContainsKey($"{name}.{column}"))
+                {
+                    continue;
+                }
+
+                offenders.Add(
+                    $"{RepositoryLayout.Relative(file)}: {name}.{column} is added as {type}, which has REAL affinity.");
+            }
+        }
 
         coverage
             .Context("migration files read", files.Length)
             .Examined("tables declared across them", tables)
             .Examined("column declarations checked for REAL affinity", columns)
-            // 4.6 rather than 4.1, from 2026-08-30, so the deferral and the obligation row it
-            // defers to name the same checkpoint. BUILD_PLAN's classification had sent the row to
-            // 4.6 as the cheapest place to write the parse while this argument said 4.1, and a
-            // deferral to a checkpoint PROGRESS records fails the run: the first CI run after 4.1's
-            // entry landed would have turned this step red for a disagreement rather than for a
-            // defect. 4.6 is where the tables carrying orders arrive, which is where money columns
-            // start to matter.
-            .OutOfScope(
-                "columns added by ALTER TABLE, which this guard does not parse",
-                addedLater,
-                CheckCoverage.OutOfScopeReason.UntilCheckpoint(
-                    "4.6",
-                    "the regex reads CREATE TABLE bodies, so a column added later is in neither figure above. All "
-                    + "of them are TEXT or INTEGER today, so nothing is wrong in the store; what is missing is the "
-                    + "guard's reach over the statement form a later phase is most likely to add a column with. "
-                    + "Counted here so the green states its own coverage, and the parse itself is the obligation"))
+            .Examined("of those added by ALTER TABLE rather than declared at creation", addedLater)
             .NoSourceScan(
                 "the migration text is the declaration itself. The store is built by executing exactly these "
                 + "statements, so a column's affinity cannot differ from what the statement says, and removing "

@@ -341,4 +341,69 @@ public sealed class MigrationRowSurvivalTests
 
         Assert.Contains("FOREIGN KEY", refused.Message, StringComparison.OrdinalIgnoreCase);
     }
+    /// <summary>
+    /// A migration that would orphan a row is rolled back, and the store stays where it was.
+    ///
+    /// <b>The obligation raised at 3.12 and due at 4.6.</b> `foreign_key_check` ran after each
+    /// migration's transaction committed, so it reported the damage rather than preventing it: the
+    /// message it threw said as much, that the migration has committed and the store needs the
+    /// snapshot taken before it. The pragma is a read and answers inside a transaction, so asking
+    /// before the commit lets the rebuild roll back instead of leaving the operator a restore. Moved
+    /// at the checkpoint where the order tables arrive, because that is where a foreign key first
+    /// constrains something expensive.
+    ///
+    /// <b>The orphan is authored rather than waited for.</b> No migration in this repository orphans
+    /// a row, which is exactly why nothing exercised the path: the guard is run here against a
+    /// statement written to break it, so the assertion fails if the check moves back after the
+    /// commit rather than passing because nothing in the corpus happens to violate anything.
+    /// </summary>
+    [Fact]
+    public void A_migration_that_would_orphan_a_row_is_rolled_back_and_the_store_is_unchanged()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+
+        using SqliteConnection connection = factory.OpenWrite();
+        MigrationResult applied = new MigrationRunner(factory).Apply(connection);
+        int version = applied.ToVersion;
+
+        Execute(connection, """
+            INSERT INTO security (ticker, name, exchange, type, first_seen)
+            VALUES ('AAPL', 'Apple', 'NASDAQ', 'Common Stock', '2020-01-02');
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all, capped_out)
+            VALUES ('2026-08-25-AAPL-long', '2026-08-25', 'AAPL', 'long', '[]', 1, 0);
+            """);
+
+        // A row pointing at a security that is about to stop existing. The foreign keys are off
+        // during a migration by design, so nothing refuses this at the statement.
+        Execute(connection, "PRAGMA foreign_keys = OFF;");
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        using (SqliteCommand drop = connection.CreateCommand())
+        {
+            drop.Transaction = transaction;
+            drop.CommandText = "DELETE FROM security WHERE ticker = 'AAPL';";
+            drop.ExecuteNonQuery();
+        }
+
+        string[] orphans = MigrationRunner.ForeignKeyViolations(connection, transaction);
+
+        Assert.NotEmpty(orphans);
+        Assert.Contains(orphans, o => o.Contains("setup", StringComparison.Ordinal));
+
+        transaction.Rollback();
+
+        // The store is where it was: the row the orphan pointed at is back, and the version has not
+        // moved. Both, because a rollback that lost the version would be a different fault wearing
+        // the same green.
+        Assert.Empty(MigrationRunner.ForeignKeyViolations(connection));
+        Assert.Equal(version, MigrationRunner.ReadUserVersion(connection));
+
+        using SqliteCommand count = connection.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM security WHERE ticker = 'AAPL';";
+        Assert.Equal(1L, (long)count.ExecuteScalar()!);
+    }
+
 }

@@ -600,6 +600,22 @@ public sealed class PhaseReplay : IDisposable
         Record("triggers.minutesWalked", triggers.MinutesWalked);
         Record("triggers.pairedWithPriorSession", triggers.SetupAsOf is null ? 0 : 1);
 
+        // 15e. The caps, at 21:10, over the triggers the replay recorded.
+        //
+        //      <b>Nothing rested and nothing triggered, so the gate decides nothing, and the run row
+        //      says which of those it was.</b> `triggers.touched` is nought, so there is no order to
+        //      place or refuse. The four figures below are worth freezing because a blocked order is
+        //      a row rather than an absence: the day the fixture holds a session with more triggers
+        //      than slots, `placed` and `blocked` become real counts with no edit here, and
+        //      `reduced` moves independently of both.
+        OrderRunResult orders = new RiskGate(_connections, Logger(), _clock, _options).Apply(AsOf);
+
+        stages.Add(new StageRun(RiskGate.Name, 0, orders.RowsWritten, orders.Outcome.ToStorageText()));
+        Record("orders.triggers", orders.Triggers);
+        Record("orders.placed", orders.Placed);
+        Record("orders.reduced", orders.Reduced);
+        Record("orders.blocked", orders.Blocked);
+
         // The seam, read off the rows the detectors wrote rather than off the constant that names
         // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause
         // set it records is the thing 3.6 counts the short side's twenty sessions by. The engine

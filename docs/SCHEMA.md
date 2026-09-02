@@ -113,7 +113,11 @@ Insert DailyBarIngestor
 **And it is what the delisted purchase resumes from.** A name is finished when it has a row here, including a name whose history came back empty, so a run spread across nights asks for each name once and never again. It is deliberately not a second list of what is done: a copy can disagree with what it copies, and this is the record the fetch itself writes (see: Delisted daily history is bought so a reconstructed walk is not confined to survivors).
 
 ### `index_bar`
-Grain: symbol + date + `observed_at`. SPY, QQQ, IWM. Same shape and the same terms as `daily_bar`: **append-only, never deleted, never updated**, a correction arriving as a new row with a later `observed_at`, and reads taking the latest observation at or before the as-of date.
+Grain: symbol + date + `observed_at`. SPY, QQQ, IWM.
+
+Shape of `index_bar`: same as `daily_bar`, with `symbol` in place of `ticker`.
+
+The same terms as `daily_bar` too: **append-only, never deleted, never updated**, a correction arriving as a new row with a later `observed_at`, and reads taking the latest observation at or before the as-of date.
 
 Insert IndexIngestor · PK (`symbol`, `bar_date`, `observed_at`)
 
@@ -318,6 +322,7 @@ Grain: date.
 | `breadth_score` | INTEGER | −1, 0, +1 |
 | `label` | TEXT | `risk_on`, `mixed`, `risk_off` |
 | `long_ladder_count`, `short_ladder_count` | INTEGER | the raw breadth inputs |
+| `indexes_above` | INTEGER | how many of the three trackers closed above their own 50-day average, which is what `breadth_score` is derived from |
 
 Insert RegimeLabeler
 
@@ -368,7 +373,11 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Up
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.
 
-Same shape as `setup`, in a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
+Shape of `calibration_setup`: same as `setup`, less `corrected_at`, `corrected_because`, `correction_lateness_minutes`, `corrected_from`, `degraded_because` and `corrected_check`.
+
+**The six are the correction and degradation columns, and the divergence is deliberate.** A calibration row is not evidence, nothing corrects one and no night is degraded by one, so three migrations decline to add them and say so in their own comments. It read "same shape as `setup`" until 4.6, which was six columns wrong and was the sentence a reconciliation would have read as licence to skip the table.
+
+It is a separate table that no downstream component reads. Rows here are reconstructed against today's universe rather than against a recorded snapshot, so they carry survivorship bias and are not evidence. (see: The evidence store holds only setups flagged forward, never setups reconstructed from history)
 
 *Three reconstructions ride on every row, and each is recorded rather than assumed. **Membership** is today's, because a night the lab was not running has no snapshot. **The market-cap clause of `tradable-shortable` is exempt**, because the lookup is bounded on when it was made and a 2024 session has no capitalisation at all; every short verdict here says which clauses ran. And **the bar series is read as the store knows it now**, corrections included, rather than as it stood on the night: a backfill takes a name's whole history in one evening, so every historical bar was observed later than its own session and a read bounded on the session's own instant returns nothing. That third one is not a choice between two readings; it is the only reading that returns anything, which is why it is written down here rather than left as a property of a query.*
 
@@ -377,7 +386,9 @@ Insert LongSetupDetector / ShortSetupDetector in calibration mode, **disjoint by
 ### `calibration_control_setup`
 Grain: control draw. The matched controls of a reconstructed setup, drawn by the same sampler.
 
-Same shape as `control_setup` and pointed at `calibration_setup` by its foreign key, so a reconstructed control cannot be hung off an evidence setup and an evidence control cannot be hung off a reconstructed one. Nothing downstream reads it (see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store).
+Shape of `calibration_control_setup`: same as `control_setup`.
+
+Pointed at `calibration_setup` by its foreign key, so a reconstructed control cannot be hung off an evidence setup and an evidence control cannot be hung off a reconstructed one. Nothing downstream reads it (see: A reconstructed read answers whether the pattern has anything in it, and never enters the evidence store).
 
 *Two tables rather than a `source` column on `control_setup`, and that is the safety property rather than a preference. A column would put reconstructed rows one predicate away from every read the scoreboard makes, and the rows are real draws over real names: nothing about their shape says which population they came from. Separate tables make the mixing impossible to write rather than merely wrong, on the same grounds `calibration_setup` is a table rather than a flag.*
 
@@ -451,6 +462,7 @@ Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cos
 | `control_as_of` | TEXT NULL | the control's **own** session, which is the setup's on every row of both sets. It could be an earlier one for a tight draw for one day, from 2026-08-30 to 2026-08-31 |
 | `match_quality` | TEXT | the distance on each matched dimension, separately, never as one number |
 | `rank` | INTEGER | 1 to 5 by distance, ticker as the tiebreak. The fifth is by construction the worst of the five |
+| `drawn_at` | TEXT | when the draw was made, which is what a point-in-time read of a night's controls bounds on |
 
 Insert ControlSampler · UNIQUE (`setup_id`, `control_set`, `control_ticker`)
 
@@ -492,6 +504,7 @@ Grain: date + direction. The win-rate bound perfect foresight could have reached
 | `subjects` | INTEGER | how many closed setups the bound was computed over, which is the population |
 | `bound` | TEXT | the fraction a system with perfect foresight could have won |
 | `achieved` | TEXT | the fraction actually won over the same rows |
+| `computed_at` | TEXT | when the bound was computed, which is what a read of it bounds on |
 
 Insert CeilingCalculator · PK (`as_of`, `direction`)
 
@@ -515,6 +528,8 @@ Grain: date + panel. What each band showed on a given day, so a panel can be rea
 | `n_minimum` | INTEGER NULL | what `n_effective` must reach before the panel may be read. Band 1 only |
 | `n_sessions` | INTEGER NULL | how many sessions carry a pair, which is the other half of what the panel is read against. Band 1 only |
 | `n_minimum_sessions` | INTEGER NULL | what `n_sessions` must reach. Band 1 only |
+| `computed_at` | TEXT | when the panel was built, which is what a read of a night's scoreboard bounds on |
+| `withheld_because` | TEXT NULL | why a panel carries no figure, on every panel that carries none. A withheld panel is a row rather than an absence |
 
 Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`) · Unique (`as_of`, `panel`) where `direction IS NULL`
 
@@ -702,7 +717,8 @@ Declared at store level. Columns owed at their checkpoint.
 | `plan_run` | session + observation | Insert PlanBuilder. What one evening's plan stage did, with its refusals counted by reason |
 | `trigger_resolution` | plan | Insert TriggerResolver. What the session did to each plan resting in it, one row per plan and no price copied from either the plan or the bar |
 | `trigger_run` | session + observation | Insert TriggerResolver. What one replay walked beside what it decided |
-| `order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
+| `trade_order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
+| `order_run` | session + observation | Insert RiskGate. What one evening's gate decided, with its refusals and reductions counted by cap |
 | `fill` | fill id | Insert PaperBroker |
 | `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding is visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
 | `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |
@@ -711,7 +727,7 @@ Declared at store level. Columns owed at their checkpoint.
 
 ### The plan, and the size it carries
 
-Built at 4.16, and the columns are the ones that checkpoint owes rather than the whole eventual
+Columns of `trade_plan`. Built at 4.16, and the columns are the ones that checkpoint owes rather than the whole eventual
 shape.
 
 | Column | Form | Why |
@@ -723,6 +739,8 @@ shape.
 | `shares` | INTEGER, `> 0` | The size, which is PlanBuilder's and not RiskGate's |
 | `equity`, `risk_fraction`, `risk_budget` | TEXT | What the size was computed from, so a plan can be re-derived without knowing which constants were in force |
 | `risk_at_stake` | TEXT | What the rounded share count actually risks, at or below `risk_budget` |
+| `ticker`, `direction` | TEXT | The name and the side, carried so a plan reads without a join |
+| `observed_at` | TEXT | When the plan was written, which is what a point-in-time read of an evening bounds on |
 
 **There is no variant column and the grain above is not wrong.** Columns are owed at their
 checkpoint, and there is one baseline and no versions, so the key at 4.16 is the setup alone. 5.1
@@ -750,7 +768,7 @@ that is ordinary arithmetic.
 
 ### What the session did to each plan
 
-Built at 4.5, and the columns are the ones that checkpoint owes.
+Columns of `trigger_resolution`. Built at 4.5, and the columns are the ones that checkpoint owes.
 
 | Column | Form | Why |
 |---|---|---|
@@ -760,6 +778,8 @@ Built at 4.5, and the columns are the ones that checkpoint owes.
 | `touched_at` | TEXT NULL | The minute the trigger was reached, and the only thing that carries a time. Constrained to be present exactly when the outcome is `touched` |
 | `minutes_walked` | INTEGER | How many of the name's minutes the resolution was taken over, so a decision cannot be told apart from one taken over a session the store barely holds |
 | `unresolved_because` | TEXT NULL | Which of the two blindnesses it was. Constrained to be present exactly when the outcome is `unresolvable` |
+| `ticker`, `direction` | TEXT | The name and the side, carried so a resolution reads without a join |
+| `observed_at` | TEXT | When the replay ran, which is what a point-in-time read of a session bounds on |
 
 **Three outcomes, and the third is the one that would otherwise disappear.** A plan whose name traded
 all day and never reached its trigger did not fire, which is the ordinary result. A plan whose session
@@ -779,6 +799,89 @@ here, so a gap fill reads the same bar the touch was found in.
 carries `minutes_walked` and `names_walked` for that reason: a blind night reported as a night on
 which nothing triggered is the shape that cost this lab a second evening of evidence, and the figure
 that says so has to be on the morning's run row rather than in a rate three months later.
+
+### The order, and the caps that shaped it
+
+Columns of `trade_order`. Built at 4.6, and the columns are the ones that checkpoint owes.
+
+| Column | Form | Why |
+|---|---|---|
+| `order_id` | TEXT, the key | One order per plan. A plan triggers at most once, because the resolver records the first minute that reached the trigger and no later one moves it |
+| `setup_id` | TEXT, unique | The plan this order came from, which is what `plan_audit` joins on at 4.9 |
+| `triggered_at` | TEXT | The minute the trigger was reached, read from `trigger_resolution` |
+| `status` | TEXT, one of two | `placed` or `blocked`. A blocked order is a row and never an absence |
+| `planned_shares`, `shares` | INTEGER | What the plan carried and what the caps granted. Both, because a reduction that overwrote the first would leave the plan and the order agreeing about a number the caps had changed |
+| `risk_at_stake` | TEXT | What the granted size actually risks, at the plan's give-up distance. Nought on a blocked row |
+| `bound_by` | TEXT NULL | The cap that changed the answer, null where nothing bound. A placed row may carry one, which is the reduction case |
+| `blocked_because` | TEXT NULL | What that cap saw, in figures. Present exactly when the status is `blocked` |
+| `live_session` | TEXT | The session the order belongs to, read from the plan rather than derived |
+| `ticker`, `direction` | TEXT | The name and the side, carried so an order reads without a join |
+| `observed_at` | TEXT | When the gate ran, which is what a point-in-time read of a session bounds on |
+
+**The table is `trade_order` and not `order`, which this document declared until 4.6.** `order` is a
+reserved word in SQLite, so every statement touching it would carry quotes and one unquoted use would
+be a syntax error found at runtime. The half that decided it is that every parser in the verification
+harness reads an unquoted identifier after `CREATE TABLE` or `INSERT INTO`, so a quoted table is one
+`writer-ownership`, `bar-append-only`, `price-storage-form` and `point-in-time` cannot see. A store
+nothing scans is the shape this corpus keeps finding, and it is not worth buying with a name.
+
+**No give-up price is copied here.** A reduction keeps the plan's give-up price, so there is one
+give-up price for a trade and it lives in `trade_plan`. A column here would be a second statement of
+it that a later reduction could move, and R would then depend on which row a reader opened
+(see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it).
+
+**Two of the six limits are not applied by RiskGate and both are named rather than absent.** Risk per
+trade is what the plan was sized from, so it is asserted and a plan over its budget stops the stage
+rather than being trimmed. The give-up distance cap is `exit-tight` at detection, so a plan that
+reached a trigger cleared it hours before, and re-applying it here would be a second implementation of
+a gate that could disagree with the first on a day the daily range was restated.
+
+**The count caps see only the session being walked, until `position` exists.** A position is
+PaperBroker's row and arrives at 4.7, so what RiskGate can count today is what it has placed inside
+one session: a position held overnight occupies no slot the next morning. That makes the caps looser
+than the design rather than tighter, which is the direction that flatters, so it is recorded here and
+carried rather than left to be inferred from a cap that never binds.
+
+### The three run rows of the trading night
+
+One row per run of a stage, on the pattern `vwap_run` and `intraday_fetch` set. All three carry
+`session_date` and `observed_at` as their key, an `outcome` of `clean`, `partial` or `failed`, and a
+`stopped_because` naming which shape of nothing a night was. What differs is the middle, and the middle
+is where each stage declines to state one total: a single `refused` or `blocked` figure would let the
+reason that is a defect hide inside the reason that is ordinary arithmetic.
+
+#### `plan_run`
+Grain: session + observation. What one evening's plan stage did, at 18:30.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `live_session` | TEXT | the session the evening's plans are live in, stored rather than stepped to |
+| `candidates`, `planned` | INTEGER | capped candidates, and plans written for them |
+| `refused_absent_geometry`, `refused_equal_prices`, `refused_below_one_share` | INTEGER | the three reasons a candidate got no plan, counted apart |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | which of the three shapes of nothing the night was |
+
+#### `trigger_run`
+Grain: session + observation. What one replay walked and what it decided, at 21:05.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `setup_as_of` | TEXT NULL | the evening the session's plans were written on, null where none rested |
+| `plans`, `touched`, `not_touched`, `unresolvable` | INTEGER | what the replay found, with the third outcome counted apart from the second |
+| `names_walked`, `minutes_walked` | INTEGER | what the clock actually handed out, which is the figure that says a night was blind |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where plans rested and no minute was walked |
+
+#### `order_run`
+Grain: session + observation. What one evening's gate decided, at 21:10.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `triggers`, `placed`, `reduced`, `blocked` | INTEGER | what the gate was given and what it did |
+| `blocked_open_positions`, `blocked_open_shorts`, `blocked_below_one_share` | INTEGER | the three ways an order was refused |
+| `reduced_position_size`, `reduced_total_risk` | INTEGER | the two proportional caps, counted apart, because a night of trims is a different night from a night of blocks |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | a night of blocked orders is clean: the caps binding is what they are for |
 
 ## Research — phases 5 and 6
 

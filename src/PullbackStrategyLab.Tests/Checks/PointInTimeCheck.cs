@@ -82,6 +82,11 @@ public sealed class PointInTimeCheck
             // standing at an old date that saw a resolution written after it would fill an order the
             // night could not have placed.
             ["trigger_resolution"] = "observed_at",
+
+            // An order is an observation about a session and is read to decide an answer: 4.9
+            // compares planned against executed, so a replay standing at an old date that saw an
+            // order written after it would audit a position the night could not have held.
+            ["trade_order"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -163,6 +168,10 @@ public sealed class PointInTimeCheck
                 "observed_at is when one evening's plan stage ran and what it refused, which is operational "
                 + "on the same terms as vwap_run above. Nothing computes a figure about the market from it: "
                 + "the plans it counts are in trade_plan, which is stamped and bounded.",
+            ["order_run"] =
+                "observed_at is when one evening's gate ran and what it refused, which is operational on the "
+                + "same terms as trigger_run below. Nothing computes a figure about the market from it: the "
+                + "orders it counts are in trade_order, which is stamped and bounded.",
             ["trigger_run"] =
                 "observed_at is when one session's replay ran, what it walked and what it could not ask, "
                 + "which is operational on the same terms as plan_run above. Nothing computes a figure "
@@ -235,6 +244,14 @@ public sealed class PointInTimeCheck
             + "sector_resolved_at is a lazily resolved attribute of the instrument and has nothing to do with "
             + "whether the name was ever a member, and bounding it would make every delisted name invisible "
             + "until something resolved its sector, which for a delisted name nothing ever will."),
+        new("TradeOrderReader.cs", "SELECT order_id, observed_at",
+            "ProvenanceOfEveryOrder is what `order-provenance` reads, and it asks whether a row exists in this "
+            + "store that RiskGate did not write. That is a question about the whole store rather than about "
+            + "what a session could have known, and bounding it on an as-of would let a row written outside a "
+            + "run scope hide behind the bound, which is the one fault the read exists to find. It returns an "
+            + "identity and an instant and no price, so nothing can compute a figure about the market from it. "
+            + "The read in the same file that answers for a session is ForLiveSession, which takes an as-of and "
+            + "bounds observed_at against it."),
         new("HistoryBackfill.cs", "SELECT DISTINCT ticker FROM history_refetch;",
             "ReadRefetchedTickers asks which names a backfill of any mode has already taken, which is what lets "
             + "a purchase spread across nights ask for each name once. Bounding it on the as-of would hide every "

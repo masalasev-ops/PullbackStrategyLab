@@ -95,17 +95,26 @@ public sealed partial class MigrationRunner
                     command.ExecuteNonQuery();
                 }
 
-                transaction.Commit();
-
-                string[] orphans = ForeignKeyViolations(connection);
+                // Asked before the commit, from 4.6. `foreign_key_check` is a read and answers
+                // inside a transaction, so a migration that orphaned rows rolls back here instead of
+                // leaving the operator a restore. It ran after the commit until this checkpoint,
+                // which reported the damage rather than preventing it and said so in the message it
+                // threw: the migration has committed and the store needs the snapshot taken before
+                // it. Moved where the order and position tables arrive, because that is where a
+                // foreign key first constrains something expensive.
+                string[] orphans = ForeignKeyViolations(connection, transaction);
                 if (orphans.Length > 0)
                 {
+                    transaction.Rollback();
+
                     throw new InvalidOperationException(
-                        $"Migration '{migration.Name}' left {orphans.Length} foreign key violation(s), so it "
-                        + "dropped or rewrote rows another table points at. The migration has committed and the "
-                        + "store needs the snapshot taken before it. Violations, as child table, rowid and parent: "
-                        + string.Join("; ", orphans.Take(20)));
+                        $"Migration '{migration.Name}' would leave {orphans.Length} foreign key violation(s), so "
+                        + "it drops or rewrites rows another table points at. It has been rolled back and the "
+                        + "store is unchanged, at schema " + startingVersion.ToString(CultureInfo.InvariantCulture)
+                        + ". Violations, as child table, rowid and parent: " + string.Join("; ", orphans.Take(20)));
                 }
+
+                transaction.Commit();
             }
         }
         finally
@@ -138,14 +147,20 @@ public sealed partial class MigrationRunner
     /// Every orphaned row in the store, as child table, rowid and the parent it points at.
     ///
     /// <c>foreign_key_check</c> rather than the enforcement the migrations run without: it asks the
-    /// question of the whole store at once, after the rebuild, which is the shape of answer wanted
+    /// question of the whole store at once, over the rebuild, which is the shape of answer wanted
     /// here. A constraint refuses one statement; this names the rows.
+    ///
+    /// <paramref name="transaction"/> is what makes it a guard rather than a report. The pragma is a
+    /// read, so it answers inside an open transaction and sees the rebuild that transaction has
+    /// done; asked with no transaction it answers about the store as committed, which is what a
+    /// caller outside a migration wants and is the only use the default serves.
     /// </summary>
-    public static string[] ForeignKeyViolations(SqliteConnection connection)
+    public static string[] ForeignKeyViolations(SqliteConnection connection, SqliteTransaction? transaction = null)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
         using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = "PRAGMA foreign_key_check;";
 
         var violations = new List<string>();

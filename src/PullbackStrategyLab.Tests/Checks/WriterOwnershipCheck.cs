@@ -1,3 +1,7 @@
+using System.Text.RegularExpressions;
+using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,7 +21,7 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// machinery later phases build, and a declared writer for a table no migration has created
 /// is reported as unexamined rather than passed.
 /// </summary>
-public sealed class WriterOwnershipCheck
+public sealed partial class WriterOwnershipCheck
 {
     private readonly ITestOutputHelper _output;
 
@@ -147,11 +151,14 @@ public sealed class WriterOwnershipCheck
             .Examined("writes found in the shipped source", SourceWrites.InProductionSource.Count)
             .Context("types declared in the shipped source", SourceWrites.ProductionTypeNames.Count)
             .Scan("every write in the shipped source belongs to the component SCHEMA declares for it",
-                CheckCoverage.Backing.None(
-                    "nothing runs the pipeline and asks which component wrote each row. The behavioural form of "
-                    + "this is order-provenance, which the roster starts at 4.6 and which covers orders alone. "
-                    + "Until then a component that issued a write through a helper the scan does not recognise "
-                    + "would be attributed to nobody, and the check would report a smaller set rather than fail"))
+                CheckCoverage.Backing.Test(
+                    "OrderProvenanceCheck.A_row_written_outside_a_run_of_the_gate_is_caught",
+                    "the behavioural form of this scan, for orders alone, which is where the corpus scheduled "
+                    + "one. It runs the gate over an authored session, reads every row back and asks whether a "
+                    + "run of that stage was open when it was written, then writes a row outside every run and "
+                    + "requires the predicate to reject it. What it does not reach is the other twenty stores: a "
+                    + "component issuing a write through a helper this scan does not recognise would still be "
+                    + "attributed to nobody there, and the check would report a smaller set rather than fail"))
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
             ;
@@ -192,6 +199,37 @@ public sealed class WriterOwnershipCheck
                 "the name could not be resolved to a catalogue component, so neither direction could be asserted for it");
         }
 
+        // A table created under a quoted identifier is a table no scanner in this suite can see.
+        // Every parser here and in `bar-append-only`, `price-storage-form` and `point-in-time` reads
+        // an unquoted name after CREATE TABLE or INSERT INTO, so quoting one hides it from all four
+        // at once. 4.6 nearly bought that with a name: `order` is a reserved word and the table was
+        // written as `trade_order` for exactly this reason, so the next one fails here rather than
+        // disappearing.
+        foreach (Migration migration in MigrationRunner.All())
+        {
+            foreach (Match quoted in QuotedTable().Matches(migration.Sql))
+            {
+                failures.Add(
+                    $"{migration.Name} creates a table as {quoted.Value.Trim()}, under a quoted identifier. Every "
+                    + "scanner in this suite reads an unquoted name, so a table declared this way is invisible to "
+                    + "all of them at once. Name it so it needs no quotes.");
+            }
+        }
+
+        // Direction three: the columns. SCHEMA's column tables were read by nothing until 4.6, and
+        // five columns were already missing when the 3.7 sign-off measured it, one of them since
+        // 2.5. It is reconciled against a store built by running every migration rather than against
+        // the migration text, so a column added by an ALTER, or one a rebuild dropped, is seen the
+        // way the store sees it.
+        (int tablesReconciled, int columnsReconciled) = ReconcileColumns(failures);
+
+        coverage
+            .Examined("tables whose columns SCHEMA declares and a built store confirms", tablesReconciled)
+            .Examined("column declarations reconciled against the store, both ways", columnsReconciled)
+            .Examined(
+                "tables declared by shape rather than by a column table of their own",
+                SchemaColumns.DeclaredByShape.Count);
+
         coverage.Report();
 
         Assert.True(failures.Count == 0,
@@ -204,5 +242,100 @@ public sealed class WriterOwnershipCheck
         Assert.True(SourceWrites.InProductionSource.Count > 0,
             "No store writes were found in the shipped source at all, which means the scanner stopped matching. "
             + "A check that examines nothing passes forever.");
+    }
+
+    /// <summary>A table created under a quoted, bracketed or backticked identifier.</summary>
+    [GeneratedRegex(
+        @"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[""`\[]",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex QuotedTable();
+
+    /// <summary>
+    /// Every column the store holds is declared in SCHEMA, and every column SCHEMA declares is in the
+    /// store.
+    ///
+    /// <b>Both directions, and the second is the one the obligation argued for.</b> Repairing the
+    /// five columns that were missing would have left the sixth to arrive unnoticed, which is the
+    /// same reasoning that makes the writer half of this check run both ways.
+    ///
+    /// <b>A table the migrations create and SCHEMA declares no columns for is a failure.</b> That is
+    /// the shape a column arrives unnoticed through: not a column missing from a table SCHEMA
+    /// describes, but a whole table nobody described. Six phase-4 tables were in that state when this
+    /// was written.
+    /// </summary>
+    private static (int Tables, int Columns) ReconcileColumns(List<string> failures)
+    {
+        using var root = new TemporaryDirectory();
+        var connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        new MigrationRunner(connections).Apply();
+
+        using SqliteConnection connection = connections.OpenReadOnly();
+
+        int tables = 0;
+        int columns = 0;
+
+        foreach (string table in TablesInTheStore(connection))
+        {
+            IReadOnlySet<string> actual = ColumnsOf(connection, table);
+
+            if (!SchemaColumns.Declared.TryGetValue(table, out IReadOnlySet<string>? declared))
+            {
+                failures.Add(
+                    $"the migrations create {table} with {actual.Count} column(s) and SCHEMA.md declares none of "
+                    + "them, so nothing reconciles what that table holds. Give it a section, or a "
+                    + "\"Shape of\" line naming the table it shares a shape with.");
+                continue;
+            }
+
+            tables++;
+            columns += actual.Count;
+
+            foreach (string undeclared in actual.Except(declared, StringComparer.Ordinal).Order(StringComparer.Ordinal))
+            {
+                failures.Add($"{table}.{undeclared} is in the store and SCHEMA.md does not declare it.");
+            }
+
+            foreach (string absent in declared.Except(actual, StringComparer.Ordinal).Order(StringComparer.Ordinal))
+            {
+                failures.Add($"SCHEMA.md declares {table}.{absent} and no migration creates it.");
+            }
+        }
+
+        return (tables, columns);
+    }
+
+    private static IReadOnlyList<string> TablesInTheStore(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name;";
+
+        var tables = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            tables.Add(reader.GetString(0));
+        }
+
+        return tables;
+    }
+
+    private static IReadOnlySet<string> ColumnsOf(SqliteConnection connection, string table)
+    {
+        // The table name comes from sqlite_master, so it is the store naming itself.
+        using SqliteCommand command = connection.CreateCommand();
+        SqliteIdentifier.Validate(table);
+        command.CommandText = $"PRAGMA table_info({table});";
+
+        var columns = new HashSet<string>(StringComparer.Ordinal);
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            columns.Add(reader.GetString(1));
+        }
+
+        return columns;
     }
 }

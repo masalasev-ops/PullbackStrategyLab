@@ -8375,18 +8375,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "24",
+      "value": "25",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "29",
+      "value": "30",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10."
     },
     {
       "id": "scan.decliner.hits",
@@ -9834,10 +9834,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "42",
       "checkpoint": "4.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run."
     },
     {
       "id": "tiers.falling",
@@ -10652,6 +10652,38 @@
       "checkpoint": "4.5",
       "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.planned is 0, so `trade_plan` holds no row and no plan is live in any session, which fixes triggers.plans at nought and every count below it; intraday.barsWritten is 0, so the store holds no minute of this session and the clock walks none, which fixes namesWalked and minutesWalked. The two noughts have different causes and the stage distinguishes them: with no plan resting the run is clean and says so, where a plan resting with no minute would be partial.",
       "note": "1 where the session's plans were written on an earlier evening and 0 where no plan rests. Nought here, and it is the figure that says which of the two noughts above this night was."
+    },
+    {
+      "id": "orders.triggers",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.6",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: triggers.touched is 0, because triggers.plans is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. The gate is given the touched resolutions of the session, so an empty set of those fixes every figure below at nought without executing the stage. The run is clean and says why: no trigger is not the same fact as no order.",
+      "note": "triggers the gate was given, being resolutions of the session with an outcome of `touched`. It is the population the three figures below are computed over, and they are stated with it rather than alone."
+    },
+    {
+      "id": "orders.placed",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.6",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: triggers.touched is 0, because triggers.plans is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. The gate is given the touched resolutions of the session, so an empty set of those fixes every figure below at nought without executing the stage. The run is clean and says why: no trigger is not the same fact as no order.",
+      "note": "orders placed. Nought out of nought triggers, so it carries no property on its own; it becomes a real count the day the fixture holds a session with a plan that fired."
+    },
+    {
+      "id": "orders.reduced",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.6",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: triggers.touched is 0, because triggers.plans is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. The gate is given the touched resolutions of the session, so an empty set of those fixes every figure below at nought without executing the stage. The run is clean and says why: no trigger is not the same fact as no order.",
+      "note": "placed orders a proportional cap trimmed. It moves independently of `placed` and of `blocked`, which is why it is a figure of its own: a night of trims is a different night from a night of blocks."
+    },
+    {
+      "id": "orders.blocked",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.6",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: triggers.touched is 0, because triggers.plans is 0, because plans.planned is 0 and no plan rests in the fixture's single market day. The gate is given the touched resolutions of the session, so an empty set of those fixes every figure below at nought without executing the stage. The run is clean and says why: no trigger is not the same fact as no order.",
+      "note": "orders refused. Nought here because there was no trigger, not because the caps never bind: a blocked order is a row rather than an absence, and the run row counts the three reasons apart."
     }
   ],
   "frozenOnly": [

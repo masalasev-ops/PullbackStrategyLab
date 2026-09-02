@@ -137,7 +137,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads. Every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records |
 | `path-casing` | every CI run | Every file path appearing as a string literal in source matches the on-disk path exactly, byte for byte |
 | `two-platform` | the matrix | The suite passes on both windows and macos runners |
-| `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |
+| `order-provenance` | every CI run | No order row exists whose writer was not RiskGate, asserted over the shipped source and over rows the gate wrote and a row it did not |
 | `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |
 | `surface-claims` | every CI run | Every corpus sentence claiming something is stated, recorded on every row, or shown is asserted against the rendered page that carries it. The only check here that reads a surface rather than source, the store or a document |
 | `carried-obligations` | every CI run | Every due point a PROGRESS `Carried` block names is one BUILD_PLAN's obligations table also has. The set of due points rather than the sentences, because prose against prose false-alarms and a suppressed guard is a dead one |

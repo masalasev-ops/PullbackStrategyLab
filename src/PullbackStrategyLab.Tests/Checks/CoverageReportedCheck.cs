@@ -102,12 +102,14 @@ public sealed partial class CoverageReportedCheck
                     + "a second mechanism rather than a behavioural test, and it is why this scan is listed here"))
             .OutOfScope("source-scan assertions made outside a check, which leave no coverage record",
                 outsideACheck.Count,
-                CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.6",
+                CheckCoverage.OutOfScopeReason.UntilCheckpoint("4.17",
                     "a scan in an ordinary test has no coverage record to declare its backing in, so the sweep "
                     + "cannot say whether one exists: " + string.Join(", ", outsideACheck)
-                    + ". Moved from 3.1 to 4.6 at 3.0(e), with the obligation it belongs to: what closes it is "
-                    + "`order-provenance`, which is the behavioural form of the attribution these scans make and "
-                    + "which starts at 4.6"))
+                    + ". Moved from 3.1 to 4.6 at 3.0(e) with the obligation it belongs to, on the reading that "
+                    + "`order-provenance` would close it. It did not: order-provenance is the behavioural form of "
+                    + "`writer-ownership`'s attribution scan and closes that one, and these three are scans in "
+                    + "ordinary tests with no coverage record at all, which is a different absence. Moved to 4.17 "
+                    + "at 4.6 with the rest of the 2.11 row"))
             .OutOfScope("checks whose runner is the workflow matrix", matrix.Length,
                 CheckCoverage.OutOfScopeReason.ByDesign(
                     "the runner set is asserted against the workflow file rather than against a test, so no "
