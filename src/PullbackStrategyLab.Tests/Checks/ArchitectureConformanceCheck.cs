@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
 using PullbackStrategyLab.Worker.Stages;
@@ -287,6 +289,11 @@ public sealed partial class ArchitectureConformanceCheck
         }
 
         // 3. The limits. Risk caps, enforced by the one component that may open a position.
+        //
+        //    Asserted from 4.6, having been out of scope until RiskGate landed and unexamined for
+        //    the length of one report after it. Each row is read against the constant that holds it
+        //    and against the code that applies it, so a document stating a cap the component does
+        //    not enforce fails rather than resting.
         string? riskGate = schedule.CheckpointFor(LimitsAreEnforcedBy);
         foreach (IReadOnlyList<string> row in limits)
         {
@@ -294,7 +301,7 @@ public sealed partial class ArchitectureConformanceCheck
                 ? Claim.NotExamined("The limits", row[0], $"no checkpoint names {LimitsAreEnforcedBy}, which is what applies these")
                 : !schedule.HasLanded(riskGate)
                     ? Claim.OutOfScope("The limits", row[0], riskGate)
-                    : Claim.NotExamined("The limits", row[0], $"{LimitsAreEnforcedBy} exists and no assertion reads this row yet"));
+                    : AssertLimit(row[0], row[1]));
         }
 
         // 4. Failure behaviour. Placed by hand because the table names conditions rather than
@@ -1022,6 +1029,22 @@ public sealed partial class ArchitectureConformanceCheck
             && snapshotter.Contains("RunOutcome.Partial", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The store refuses a blocked order that carries no reason and no cap.
+    ///
+    /// Read from the migration rather than from the stage, because the constraint is what makes the
+    /// behaviour unlosable: a component can stop writing a reason and the store will refuse the row,
+    /// where a scan of the component passes on a helper nothing calls.
+    /// </summary>
+    private static bool TheGateWritesABlockedRowWithItsReason()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("trade-order", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains("(status = 'blocked') = (blocked_because IS NOT NULL)", StringComparison.Ordinal)
+            && migration.Contains("blocked_because IS NULL OR bound_by IS NOT NULL", StringComparison.Ordinal);
+    }
+
     private static bool TheFetchCountsWhatItCouldNotGet()
     {
         string fetcher = RepositoryLayout.Read(
@@ -1030,6 +1053,63 @@ public sealed partial class ArchitectureConformanceCheck
         return fetcher.Contains("empties++", StringComparison.Ordinal)
             && fetcher.Contains("RecordFetch(", StringComparison.Ordinal)
             && fetcher.Contains("names.Count, fetched, empties", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// One row of "The limits", read against the constant that holds it.
+    ///
+    /// <b>Each row says both what the number is and what the component does with it</b>, because a
+    /// cap stated and not applied is the shape this table would otherwise be free to take: four of
+    /// the six are enforced at trigger, and the other two are enforced elsewhere and say where
+    /// (see: Two of the six limits are not applied at trigger, and which two is stated rather than
+    /// left to the code).
+    ///
+    /// The value is read out of the document's own cell rather than compared against a number
+    /// repeated here, so this check and `pinned-constants` are asking different questions of the same
+    /// row: that one asks whether the document and the code agree on a figure, and this one asks
+    /// whether the component the document names does what the row says it does.
+    /// </summary>
+    private static Claim AssertLimit(string limit, string stated)
+    {
+        string gate = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Core", "Trading", "RiskLimits.cs"));
+
+        bool applied = limit switch
+        {
+            "Risk per trade" => stated.Contains("0.75%", StringComparison.Ordinal)
+                && PositionSizing.RiskPerTrade == 0.0075m
+                && gate.Contains("plannedShares", StringComparison.Ordinal),
+            "Give-up distance" => stated.Contains("half the daily range", StringComparison.Ordinal)
+                && RiskCaps.GiveUpDistanceRanges == 0.5m
+                && LongPullbackRules.GiveUpRanges == RiskCaps.GiveUpDistanceRanges
+                && !gate.Contains("GiveUpDistanceRanges", StringComparison.Ordinal),
+            "Position size" => stated.Contains("35%", StringComparison.Ordinal)
+                && RiskCaps.MaxPositionFraction == 0.35m
+                && gate.Contains("RiskCaps.MaxPositionValue", StringComparison.Ordinal),
+            "Open at once" => stated.Contains("4 positions", StringComparison.Ordinal)
+                && RiskCaps.MaxOpenPositions == 4
+                && gate.Contains("RiskCaps.MaxOpenPositions", StringComparison.Ordinal),
+            "Open short positions" => stated.Contains("2 of those 4", StringComparison.Ordinal)
+                && RiskCaps.MaxOpenShortPositions == 2
+                && gate.Contains("RiskCaps.MaxOpenShortPositions", StringComparison.Ordinal),
+            "Total risk at stake" => stated.Contains("3%", StringComparison.Ordinal)
+                && RiskCaps.MaxTotalRiskFraction == 0.03m
+                && gate.Contains("RiskCaps.MaxTotalRisk", StringComparison.Ordinal),
+            _ => false,
+        };
+
+        string where = limit switch
+        {
+            "Risk per trade" => "PlanBuilder sizes from it at 18:30 and RiskGate asserts rather than enforces it",
+            "Give-up distance" => "exit-tight applies it at detection and RiskGate deliberately does not",
+            _ => "RiskGate applies it at trigger",
+        };
+
+        return applied
+            ? Claim.Passed("The limits", limit, $"{stated}, and {where}")
+            : Claim.Failed("The limits", limit,
+                $"the document states \"{stated}\" and the constant or the code that should apply it does not "
+                + "agree. A limit stated and not applied is a cap this lab does not have.");
     }
 
     private static Claim AssertFailureBehaviour(string condition)
@@ -1041,6 +1121,18 @@ public sealed partial class ArchitectureConformanceCheck
 
         return condition switch
         {
+            // The blocked row and its reason, read from the migration that constrains them rather
+            // than from the stage that writes them: the store refuses a blocked order with no
+            // reason and a reason with no cap, so the behaviour cannot be lost by an edit to the
+            // component. The behavioural half is RiskGateTests, which runs five triggers against
+            // four slots and reads the blocked row back with the cap that bound.
+            "Risk gate blocks an order" => TheGateWritesABlockedRowWithItsReason()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a refused order is a row with the cap that bound and the figures that cap saw, and the store "
+                    + "refuses a blocked row carrying neither")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 042 no longer constrains a blocked order to carry a reason and a cap, so a refusal "
+                    + "can be written that nobody can act on"),
             "Intraday prices unavailable for a day" => TheFetchCountsWhatItCouldNotGet()
                 ? Claim.Passed("Failure behaviour", condition,
                     "IntradayFetcher counts a name the vendor holds nothing for rather than failing the night, records the count it asked for beside the count it answered so the shortfall is a join rather than an edit, and writes a fetch row whatever the outcome")
