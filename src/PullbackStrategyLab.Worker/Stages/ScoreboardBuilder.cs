@@ -72,6 +72,23 @@ public sealed class ScoreboardBuilder
     /// <summary>The ranked subset, which is what a decile curve can be computed over.</summary>
     public const string Candidates = "capped candidates only";
 
+    /// <summary>
+    /// What a withheld band 1 panel says when what it lacks is sessions.
+    ///
+    /// <b>A constant rather than the tail of an interpolated sentence, from 4.11.</b> The two
+    /// shortages are settled by completely different things: sessions arrive by waiting and control
+    /// outcomes do not, so a panel that could not tell a reader which one is blocking would be
+    /// telling them to wait for something waiting cannot fix. `surface-claims` names both sentences
+    /// as text the scoreboard must carry, and until 4.11 each claim held a hand-written copy of the
+    /// words this stage emits: the check rendered the copy and proved only that the template does
+    /// not swallow a string. The claims resolve against these two members now.
+    /// </summary>
+    public const string SessionShortage = "a shortage of sessions rather than of evidence";
+
+    /// <summary>What a withheld band 1 panel says when what it lacks is control outcomes.</summary>
+    public const string ControlShortage =
+        "a shortage of control outcomes rather than of time, and waiting does not fix it";
+
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
     private readonly IClock _clock;
@@ -345,7 +362,7 @@ public sealed class ScoreboardBuilder
 
         if (shortage.ClosedControlOutcomes == 0)
         {
-            return $"{Count(shortage.ClosedSetupOutcomes)} setup outcome(s) have closed and no control outcome has, so no pair exists. That is a shortage of control outcomes rather than of time, and waiting does not fix it";
+            return $"{Count(shortage.ClosedSetupOutcomes)} setup outcome(s) have closed and no control outcome has, so no pair exists. That is {ControlShortage}";
         }
 
         if (sessions == 0)
@@ -355,7 +372,7 @@ public sealed class ScoreboardBuilder
 
         if (sessions < needed)
         {
-            return $"only {Count(sessions)} session(s) carry a pair and a block bootstrap needs {needed}, which is a shortage of sessions rather than of evidence";
+            return $"only {Count(sessions)} session(s) carry a pair and a block bootstrap needs {needed}, which is {SessionShortage}";
         }
 
         return $"{Count(sessions)} session(s) carry a pair and the blocks they form do not differ, so the interval would have no width. An interval of no width clears zero always and is withheld instead";

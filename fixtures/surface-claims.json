@@ -11,6 +11,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/setups",
       "mustCarry": "the anchored clause arrives at 4.4",
+      "producedBy": "ShortPullbackRules.ClausesRun",
       "why": "The first of the two the gallery review found. The note was in the store and the screen dropped it whenever a value sat beside it, so the caveat was written down and never stated to anybody."
     },
     {
@@ -19,6 +20,7 @@
       "statedIn": "docs/SCHEMA.md",
       "surface": "/setups",
       "mustCarry": "market capitalisation",
+      "producedBy": "ClauseResult.MarketCapitalisation",
       "why": "The second, and worse on the calibration side: every one of the 16,917 short rows carries the exemption note, and a reader paging them would have seen a four-clause verdict."
     },
     {
@@ -27,6 +29,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/setups",
       "mustCarry": "no stop or no daily range for the session",
+      "producedBy": "CheckResult.NoStopOrRange",
       "why": "A check handed nothing must show what was absent. A blank would read as a check that passed quietly."
     },
     {
@@ -35,6 +38,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/scoreboard",
       "mustCarry": "class=\"count\"",
+      "producedBy": "the page",
       "why": "The failure this whole system exists to avoid is reading a pattern in forty observations, and a panel printing a figure with no denominator is the most efficient way to commit it."
     },
     {
@@ -43,6 +47,7 @@
       "statedIn": "CLAUDE.md",
       "surface": "/scoreboard",
       "mustCarry": "over every flagged setup",
+      "producedBy": "ScoreboardBuilder.Flagged",
       "why": "Band 1 is over every flagged setup and band 2's decile curve is over the capped candidates, and at the calibrated thresholds those differ by three orders of magnitude. Until 3.7 the page showed both without saying which rows either used, which is the fifth defect shape sitting on the surface the sixth is about."
     },
     {
@@ -51,6 +56,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/scoreboard",
       "mustCarry": "does not clear zero yet",
+      "producedBy": "the page",
       "why": "A band that could only report a result and never a non-result would be a page nobody could be disappointed by, which is the same as a page nobody should believe."
     },
     {
@@ -59,6 +65,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "scoreboard-band side",
+      "producedBy": "the page",
       "why": "The pooling rule is easiest to break on a screen, where one table with a direction column looks tidier than two blocks and quietly invites a total."
     },
     {
@@ -67,7 +74,8 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/journal",
       "why": "The rate is on the position from 4.7 and on the trade from 4.9, and the page that shows a person a short is where \"on every short trade\" is a claim about anything. The sentence is rendered per short rather than as a legend, and a long carries the words saying it is not a short, because a blank cell on a long reads as a cost of nought.",
-      "mustCarry": "borrow availability is not in the price feed"
+      "mustCarry": "borrow availability is not in the price feed",
+      "producedBy": "BorrowAssumption.AvailabilityIsNotModelled"
     },
     {
       "name": "realised-risk-beside-intended",
@@ -75,7 +83,8 @@
       "statedIn": "docs/DECISIONS.md",
       "surface": "/journal",
       "why": "The two figures are on the position from 4.7 and on the audit from 4.9, and they differ by the entry slippage and by nothing else. \"Beside\" is a claim about a surface, and this is the first one that puts them next to each other where a person reads a trade.",
-      "mustCarry": "risk intended"
+      "mustCarry": "risk intended",
+      "producedBy": "the page"
     },
     {
       "name": "failed-checks-greyed-with-the-failing-check-named",
@@ -83,7 +92,8 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/watchlist",
       "why": "A greyed row that did not say which check failed would tell a reader a name was rejected and nothing about why, which is the state the gallery was in before 2.9. Live as of 4.1: the page renders a greyed row for a candidate that failed a gate and names each failing check beside it, with the failing clause where the gate has more than one, which is the 2.9 obligation reaching the surface it was raised about.",
-      "mustCarry": "greyed"
+      "mustCarry": "greyed",
+      "producedBy": "the page"
     },
     {
       "name": "loss-causes-as-a-share",
@@ -91,7 +101,8 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/scoreboard",
       "why": "Two different wins with the same symptom, and this is the only place that would separate them. The panel arrived at 4.10 with the classifier that fills it, and the two shares are over the losses whose horizon has closed rather than over every loss: a row still waiting carries no aftermath, and folding it in would make the unclassified share read as the ordinary state of every recent loss.",
-      "mustCarry": "Failed setups shrinking as a share is direct evidence the filter improved"
+      "mustCarry": "Failed setups shrinking as a share is direct evidence the filter improved",
+      "producedBy": "the page"
     },
     {
       "name": "proposal-hit-rate-by-pack-version",
@@ -107,6 +118,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "of 262 needed",
+      "producedBy": "the page",
       "why": "3.6 used to wait three months, a figure written before anything was measured. It now waits for a sample, and a trigger a reader cannot see from the first night is a date in disguise. The store can hold all three numbers and the page is the only place the claim is ever about."
     },
     {
@@ -115,6 +127,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "not yet an answer",
+      "producedBy": "the page",
       "why": "This is the state the panel is in for every night of the wait, and it is the state a reader is most likely to misread: a mean sitting there with an interval around it looks like a result. The sixth defect shape is exactly a claim about a surface verified against the store, so the words are asserted on the page."
     },
     {
@@ -123,6 +136,7 @@
       "statedIn": "docs/SCHEMA.md",
       "surface": "/scoreboard",
       "mustCarry": "a shortage of sessions rather than of evidence",
+      "producedBy": "ScoreboardBuilder.SessionShortage",
       "why": "Only one thing withholds a figure: the block bootstrap needs twenty sessions. The minimum sample is a separate statement about information, and the two can contradict each other, because a fortnight of very wide nights reaches the minimum before it reaches twenty sessions. Without this the page could say the minimum was reached beside a figure it was refusing to show, and a reader could not tell which was blocking or what would unblock it."
     },
     {
@@ -131,6 +145,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/scoreboard",
       "mustCarry": "a shortage of control outcomes rather than of time",
+      "producedBy": "ScoreboardBuilder.ControlShortage",
       "why": "ForwardReturnFiller wrote no control outcome for the whole of phase 3, so band 1 was withheld on every night with an effective count of nought, and 3.6 fires on that count. The panel said no session had closed a 10-session horizon while the store held thirty nights of closed horizons. The wrong cause is worse than no cause: it sends a reader to wait for something that has already happened. The stage's own words are held by the fixture at accumulation.starved.withheldBecause; this holds that the page renders them."
     },
     {
@@ -139,6 +154,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/setups",
       "mustCarry": "This night was short of an input",
+      "producedBy": "the page",
       "why": "The third clause of the vendor-ceiling rule, built at 3.11 and asserted on no surface until 3.12. Setup rows are immutable, so a night flagged on incomplete inputs can never be improved; if the gallery does not say so, the only place the fact exists is a column nobody opens."
     },
     {
@@ -147,6 +163,7 @@
       "statedIn": "CLAUDE.md",
       "surface": "/scoreboard",
       "mustCarry": "capped candidates only",
+      "producedBy": "ScoreboardBuilder.Candidates",
       "why": "The population claim beside this one requires 'over every flagged setup', which band 1 carries, so a decile panel dropping its own population would have left that claim green. The two populations differ by three orders of magnitude and band 2 is the one computed over the smaller, which is the reading a person is most likely to take for the other."
     },
     {
@@ -155,6 +172,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/setups",
       "mustCarry": "Stages that read a column the store has not got will fail",
+      "producedBy": "the page",
       "why": "The version was already on the band and had nothing beside it. On 2026-08-28 it read 30 against a build needing 32, four stages died on a missing column, and the figure that would have said so was on every page all night."
     },
     {
@@ -163,6 +181,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "over 5 session(s) of 20 needed",
+      "producedBy": "the page",
       "why": "3.6 fires on twenty sessions and 262 effective observations, and only the second reached the page. PairedInterval.Estimate carried the session count from the day the interval was written, ScoreboardBuilder read five of its six fields, the store had no column, and the panel rendered two numbers. The count appeared only inside withheld_because, in prose, and that column is null the moment an interval exists, so it vanished at exactly the point it starts deciding how much the interval is worth."
     },
     {
@@ -171,6 +190,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "both conditions are reached: the sessions and the minimum sample",
+      "producedBy": "the page",
       "why": "The page said \"the minimum sample is reached\", which is the sentence of one condition, on a comparison of one condition. Saying which two are reached is what makes the claim on the screen the same claim BUILD_PLAN makes."
     },
     {
@@ -179,6 +199,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "short of 15 more session(s)",
+      "producedBy": "the page",
       "why": "The sharpest case and the one the old property got wrong outright: 900 effective observations over 5 sessions read as the trigger reached. A reader told only that a panel is below the minimum goes to wait for evidence, and if what is short is sessions then no amount of evidence closes it, because a night of eighty pairs moves the session count by one whatever it carries."
     },
     {
@@ -187,6 +208,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/watchlist",
       "mustCarry": "not answered",
+      "producedBy": "the page",
       "why": "4.1's own row says the band states what each field shows rather than taking it from the mockup. It is a claim about a surface and it was held by nothing: a field with no figure says so on the page, and this is what asserts that it does. It carried \"not until 4.7\" from 4.1 until 4.7 landed, which is the state where the absence was a component that did not exist. Every field of the band reads the store now, so the absence this asserts is a store with no session in it, and what has to hold is unchanged: a field with no figure never renders as a nought."
     },
     {
@@ -195,6 +217,7 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/watchlist",
       "mustCarry": "Store",
+      "producedBy": "the page",
       "why": "The band carries the store's state, which is the consequence a reader sees; the cause is in the night's log. Asserted against the band's own field rather than against the sentence."
     },
     {
@@ -203,6 +226,7 @@
       "statedIn": "docs/ARCHITECTURE.html",
       "surface": "/scoreboard",
       "mustCarry": "class=\"count\"",
+      "producedBy": "the page",
       "why": "The sentence a reader takes as the promise that no figure on that page is shown without the sample behind it, which is the failure mode the whole scoreboard exists to avoid. It was held by nothing until 4.1. Asserted against the element the page draws the count in rather than against a phrase: the first attempt named the mockup's own wording, which is not how the page writes it."
     },
     {
@@ -211,7 +235,18 @@
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/scoreboard",
       "mustCarry": "effective",
+      "producedBy": "the page",
       "why": "The sentence 3.11 wrote to make the withholding trigger readable on the page rather than only in the store: a panel withheld for a shortage of evidence and one withheld for a shortage of sessions are different states, and a reader can only tell them apart if the counts are on the screen. It was held by nothing until 4.1."
+    },
+    {
+      "name": "the-watchlist-shows-the-size-the-plan-committed-to",
+      "sentence": "The size the plan committed to is shown, from 4.11",
+      "statedIn": "ARCHITECTURE.html, the watchlist key under Share count",
+      "surface": "/watchlist",
+      "mustCarry": "<th>Shares</th>",
+      "producedBy": "the page",
+      "arrivesAt": null,
+      "why": "the sixth failure shape on the screen the obligation was raised about. The column is a claim about a surface and it was false of that surface for a checkpoint: the page and the store disagreed about what the evening knows, because the size existed from 4.16 and the watchlist went on not drawing it. The header is what this asserts, and the value in the cell is asserted by WatchlistPageTests, because a header over a column of absences renders identically to a working one"
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

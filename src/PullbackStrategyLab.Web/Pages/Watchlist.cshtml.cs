@@ -11,10 +11,13 @@ namespace PullbackStrategyLab.Web.Pages;
 /// a candidate. The gallery is where every flagged row is read; this page is where the ones the lab
 /// would act on are.
 ///
-/// <b>Plans do not exist yet and the page does not pretend they do.</b> `trade_plan` arrives at 4.16
-/// and share counts arrive with PlanBuilder at 4.16, so each row shows the trigger, the give-up price
-/// and the distance the detector computed, and no share count at all. A column drawn with a number
-/// nothing produced is the one thing that cannot be told from a working screen later.
+/// <b>The share count arrives at 4.11 with the plan behind it.</b> `trade_plan` and PlanBuilder
+/// landed at 4.16, which the recorded build order puts before this checkpoint, and the plan is
+/// written at 18:30 while this page publishes at 18:40, so the column has a source ten minutes
+/// before the page runs. It was absent rather than drawn empty until then,
+/// because a column drawn with a number nothing produced is the one thing that cannot be told from a
+/// working screen later, and a page that went on omitting it once the number existed would understate
+/// what the lab committed to, which is the same fault from the other side.
 ///
 /// <b>It reads through the Api like every other page</b>, and it adds no endpoint: `/setups/{asOf}`
 /// already returns rank and the cap flag, so the watchlist is that answer filtered and ordered.

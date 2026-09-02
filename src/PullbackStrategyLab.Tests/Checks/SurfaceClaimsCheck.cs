@@ -1,4 +1,5 @@
 using System.Net;
+using System.Reflection;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -28,6 +29,27 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// check here, all of which read source, the store, or a document. A claim about what a person can
 /// see cannot be verified against what a machine can read, and until this existed it was.
 ///
+/// <b>The stub bodies are authored, and until 4.11 that was a hole rather than a design.</b> Every
+/// page here is rendered with the read surface stubbed, which is right: what is under test is
+/// whether the page carries a note it was handed, so the note has to be handed to it. But a claim
+/// whose text originates in a <i>producer</i> rather than in the template then proved only that the
+/// template does not swallow a string, because the same words were written twice by hand, once into
+/// the claim and once into the stub. If `ScoreboardBuilder`'s wording moved and neither copy did,
+/// this check stayed green over a page carrying different words. Raised at 3.5 while adding exactly
+/// such a claim, whose text was reconciled against the stage's own sentence by hand.
+///
+/// <b>So every claim naming text declares where that text comes from.</b> `ProducedBy` is either
+/// <see cref="ThePage"/>, meaning the words are the template's own and rendering them is the whole
+/// reconciliation, or <c>Type.Member</c> naming a constant in the shipped source, which is resolved
+/// and compared. A claim naming text and declaring neither fails, on the same grounds
+/// `coverage-reported` fails a check that declares neither a scan nor `NoSourceScan`: a declaration
+/// that can be forgotten is one the next claim will forget.
+///
+/// <b>The stub is not interpolated from those constants, and that is deliberate.</b> It would be the
+/// same property held twice. A producer whose wording moves fails the comparison below, the claim's
+/// text is then corrected, and the stub still holding the old words fails the render on the next
+/// line. Two mechanisms for one property is how one of them stops being read.
+///
 /// <b>Deliberately narrow, and not UI testing.</b> The subject is a declared list of corpus
 /// sentences and the exact text each requires. It says nothing about whether a page is readable,
 /// well laid out, or any good. A claim whose surface arrives later names the checkpoint that builds
@@ -53,8 +75,12 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
         string StatedIn,
         string Surface,
         string? MustCarry,
+        string? ProducedBy,
         string? ArrivesAt,
         string Why);
+
+    /// <summary>What <c>ProducedBy</c> says where the text is the surface's own words.</summary>
+    public const string ThePage = "the page";
 
     private sealed record ClaimFile(string Tier, IReadOnlyList<Claim> Claims);
 
@@ -227,6 +253,24 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             failures.AddRange(Missing(claim, html));
         }
 
+        // The 3.5 obligation, discharged at 4.11: the claim's text against the member that emits it.
+        //
+        // A claim naming a producer is reconciled against the value that member holds today, so a
+        // sentence moving in the shipped source fails here instead of leaving a green check over a
+        // page carrying different words. A claim naming the page is not reconciled against anything
+        // else, because there is nothing else: the render above is the whole of it.
+        Claim[] fromAProducer =
+            [.. live.Where(c => c.MustCarry is not null && c.ProducedBy is not (null or ThePage))];
+
+        failures.AddRange(live.Where(c => c.MustCarry is not null && c.ProducedBy is null).Select(c =>
+            $"{c.Name}: names the text \"{c.MustCarry}\" and declares no producer. Name the member that "
+            + $"emits it, as Type.Member, or \"{ThePage}\" where the words are the template's own."));
+
+        foreach (Claim claim in fromAProducer)
+        {
+            failures.AddRange(Drifted(claim, Emitted(claim.ProducedBy!)));
+        }
+
         // The direction that was missing until 4.1, raised at 3.12 and named at 3.7 before that.
         //
         // Everything above reconciles the claim file against the pages: a declared claim whose
@@ -242,6 +286,12 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             .Examined("claims of visibility declared in the corpus", file.Claims.Length())
             .Examined("of those whose surface exists and was rendered and read", live.Length)
             .Examined("corpus sentences claiming visibility, read back against the claim file", candidates)
+            // The claims whose text is a producer's rather than the template's, which is the
+            // population the 3.5 reconciliation governs. Floored, and low: a claim legitimately
+            // moves to the page when a sentence stops being a producer's, so a floor at today's
+            // figure would fire on that rather than on the guard going away. What it has to catch
+            // is the count reaching nothing, which is the resolver having stopped resolving.
+            .Examined("claims whose text is reconciled against the member that emits it", fromAProducer.Length)
             .Context("surfaces rendered", rendered.Count)
             .Context("sentences exempted from the reverse read, each with its reason", ExemptSentences.Count)
             .NoSourceScan(
@@ -307,6 +357,148 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     }
 
     /// <summary>
+    /// The value a named member of the shipped source holds today.
+    ///
+    /// <b>Resolved rather than copied, which is the whole of the 3.5 repair.</b> The name is
+    /// <c>Type.Member</c>, matched against the loaded assemblies by type name, because the claim file
+    /// is read by a person and a fully qualified name with its namespace would be noise on every row.
+    /// A name that resolves to nothing throws rather than returning null: a producer that has been
+    /// renamed is exactly the case this exists for, and answering "no text" would let it pass as a
+    /// claim whose surface carries nothing.
+    /// </summary>
+    public static string Emitted(string producedBy)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(producedBy);
+
+        string[] parts = producedBy.Split('.');
+
+        if (parts.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"\"{producedBy}\" is not a producer. Name one as Type.Member, or say \"{ThePage}\".");
+        }
+
+        Type[] types =
+        [
+            .. AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => a.GetName().Name?.StartsWith("PullbackStrategyLab", StringComparison.Ordinal) == true)
+                .SelectMany(SafeTypes)
+                .Where(t => string.Equals(t.Name, parts[0], StringComparison.Ordinal)),
+        ];
+
+        if (types.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"No type named {parts[0]} is loaded, so the claim naming {producedBy} resolves to nothing. "
+                + "A renamed producer is what this reconciliation exists to catch.");
+        }
+
+        foreach (Type type in types)
+        {
+            object? value =
+                type.GetField(parts[1], BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
+                ?? type.GetProperty(parts[1], BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+
+            if (value is string text)
+            {
+                return text;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"{parts[0]} has no public static string called {parts[1]}, so the claim naming {producedBy} "
+            + "resolves to nothing.");
+    }
+
+    private static IEnumerable<Type> SafeTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            return e.Types.OfType<Type>();
+        }
+    }
+
+    /// <summary>
+    /// Whether a claim's text and the sentence its producer emits have come apart.
+    ///
+    /// <b>One contains the other, in whichever direction.</b> A claim sometimes names the whole of a
+    /// producer's sentence and sometimes a phrase inside it, and the page sometimes wraps the
+    /// producer's words in its own, as "over every flagged setup" does around a population. Demanding
+    /// equality would make the claim file a copy of the source with extra steps; demanding a fixed
+    /// direction would reject one of those two shapes for no reason. What matters is that the shorter
+    /// of the two is wholly inside the longer, because that is exactly the condition under which the
+    /// claim is still about the sentence the producer emits. A wording change that breaks it fails
+    /// here, which is the thing that was done by hand until 4.11.
+    /// </summary>
+    public static IReadOnlyList<string> Drifted(Claim claim, string emitted)
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+        ArgumentNullException.ThrowIfNull(emitted);
+
+        string carried = claim.MustCarry ?? string.Empty;
+
+        if (carried.Contains(emitted, StringComparison.Ordinal)
+            || emitted.Contains(carried, StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        return
+        [
+            $"{claim.Name}: the claim names \"{carried}\" and {claim.ProducedBy} now emits \"{emitted}\", "
+            + "so the claim and the sentence it is about have come apart. The page may still render the "
+            + "producer's words and this check would go on looking for the old ones.",
+        ];
+    }
+
+    /// <summary>
+    /// The 3.5 reconciliation, proved against a claim and a sentence written here.
+    ///
+    /// <b>Both shapes and the failure, because the corpus holds only the two that pass.</b> A run
+    /// over the live claim file exercises a claim naming the whole of a producer's sentence and one
+    /// naming a phrase inside it, and never the drift, so the clause that fails would be filtering an
+    /// empty list and would read exactly as it reads when it holds.
+    ///
+    /// The resolver is exercised against a real member rather than a stub, because a resolver that
+    /// answered from a table written here would prove nothing about the one the run uses.
+    /// </summary>
+    [Fact]
+    public void A_claim_whose_producer_has_been_reworded_is_caught()
+    {
+        var claim = new Claim(
+            Name: "a-claim",
+            Sentence: "the caveat is shown beside the reading",
+            StatedIn: "ARCHITECTURE.html",
+            Surface: "/setups",
+            MustCarry: "the anchored clause arrives at 4.4",
+            ProducedBy: "ShortPullbackRules.ClausesRun",
+            ArrivesAt: null,
+            Why: "a proof, not a run");
+
+        // The member the claim names, read out of the shipped source rather than copied here.
+        string emitted = Emitted(claim.ProducedBy!);
+        Assert.Contains(claim.MustCarry!, emitted, StringComparison.Ordinal);
+
+        // A phrase inside the producer's sentence, and the producer's sentence inside a claim that
+        // wraps it. Both are shapes the corpus holds and neither is drift.
+        Assert.Empty(Drifted(claim, emitted));
+        Assert.Empty(Drifted(claim with { MustCarry = "over " + emitted }, emitted));
+
+        // And the one the corpus never holds: the producer reworded and the claim left behind.
+        string failure = Assert.Single(Drifted(claim, "21-day and 50-day only; the third clause arrives later"));
+        Assert.Contains("have come apart", failure, StringComparison.Ordinal);
+
+        // A producer that has been renamed resolves to nothing rather than to no text, because no
+        // text reads as a page carrying nothing and passes every comparison above.
+        Assert.Throws<InvalidOperationException>(() => Emitted("ShortPullbackRules.AClauseNobodyDeclared"));
+        Assert.Throws<InvalidOperationException>(() => Emitted("ATypeNobodyDeclared.ClausesRun"));
+    }
+
+    /// <summary>
     /// The guard, proved against a page body written here and run through the check's own
     /// comparison.
     ///
@@ -327,6 +519,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             StatedIn: "ARCHITECTURE.html",
             Surface: "/setups",
             MustCarry: "the anchored clause arrives at 4.4",
+            ProducedBy: "ShortPullbackRules.ClausesRun",
             ArrivesAt: null,
             Why: "a proof, not a run");
 

@@ -76,10 +76,24 @@ public sealed class LabSetups
             return SetupsResponse.Empty(session, $"no setups were flagged on {session}");
         }
 
+        // The night's plans, keyed by setup, so a row can say how many shares the lab committed to.
+        //
+        // <b>Read here rather than per setup.</b> One statement for the night against sixty, and the
+        // reader already bounds itself on the as-of it is given, so the point-in-time property is the
+        // reader's rather than a second one written out at this level.
+        //
+        // <b>Written on this evening, not live in this session.</b> A plan is written on the evening
+        // of N for session N+1, and the gallery and the watchlist are both reading the evening of N.
+        // Reading by live session would return the plans written last night, which is the set every
+        // row on this page is not about.
+        IReadOnlyDictionary<string, int> planned = TradePlanReader
+            .WrittenOn(connection, asOf, asOf)
+            .ToDictionary(plan => plan.SetupId, plan => plan.Shares, StringComparer.Ordinal);
+
         SetupView[] all =
         [
             .. stored
-                .Select(s => View(connection, s, asOf, observedBefore))
+                .Select(s => View(connection, s, asOf, observedBefore, planned))
                 .OrderBy(s => s.Rank ?? int.MaxValue)
                 .ThenBy(s => s.Ticker, StringComparer.Ordinal),
         ];
@@ -147,7 +161,8 @@ public sealed class LabSetups
         SqliteConnection connection,
         StoredSetup setup,
         DateOnly asOf,
-        DateTimeOffset observedBefore)
+        DateTimeOffset observedBefore,
+        IReadOnlyDictionary<string, int> planned)
     {
         CheckResult[] checks = JsonSerializer.Deserialize<CheckResult[]>(setup.CheckResults, Json) ?? [];
 
@@ -185,6 +200,7 @@ public sealed class LabSetups
             setup.Agreement,
             setup.AgreementNote,
             setup.DegradedBecause,
+            planned.TryGetValue(setup.SetupId, out int shares) ? shares : null,
             [.. checks.Select(c => new SetupCheckView(
                 c.Name, c.Passed, c.Value, c.Note,
                 [.. c.FailedClauses.Select(f => f.Name)]))],
@@ -211,7 +227,15 @@ public sealed record SetupsResponse(
     public static SetupsResponse Empty(string asOf, string why) => new(asOf, null, 0, [], [], [], why);
 }
 
-/// <summary>One setup, with every check's verdict and the window to read it against.</summary>
+/// <summary>
+/// One setup, with every check's verdict and the window to read it against.
+///
+/// <b><c>PlannedShares</c> is null on a setup no plan was written for, and that is not a defect.</b>
+/// PlanBuilder refuses a candidate whose geometry is absent, whose trigger and give-up point are the
+/// same price, or whose risk budget cannot buy one share at that distance, and it plans only the
+/// capped set. So a null here means the lab committed to nothing on that row, which is a different
+/// fact from a size of nought and is why the column is nullable rather than defaulted.
+/// </summary>
 public sealed record SetupView(
     string SetupId,
     string Ticker,
@@ -225,6 +249,7 @@ public sealed record SetupView(
     string? Agreement,
     string? AgreementNote,
     string? DegradedBecause,
+    int? PlannedShares,
     IReadOnlyList<SetupCheckView> Checks,
     IReadOnlyList<SetupCandle> Candles);
 

@@ -141,7 +141,7 @@ public static class ShortPullbackRules
                 new ClauseResult("liquidity", volume >= LiquidityFloor, volume),
                 new ClauseResult("price", close > PriceFloor, close),
                 new ClauseResult(
-                    "market capitalisation",
+                    ClauseResult.MarketCapitalisation,
                     e.MarketCapExempt || e.MarketCap > MarketCapFloor,
                     e.MarketCapExempt ? null : e.MarketCap),
                 new ClauseResult("listing age", listed >= MinimumSessionsListed, listed),
@@ -381,7 +381,7 @@ public static class ShortPullbackRules
 
     private static CheckResult ExitTight(ShortEvidence e) =>
         e.StopDistanceRanges is not decimal distance
-            ? CheckResult.Unknown("exit-tight", "no stop or no daily range for the session")
+            ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
             : new CheckResult("exit-tight", distance <= GiveUpRanges, distance);
 
     private static CheckResult Cluster(ShortEvidence e) =>

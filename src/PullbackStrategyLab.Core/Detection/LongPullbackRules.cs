@@ -155,7 +155,7 @@ public static class LongPullbackRules
 
     private static CheckResult ExitTight(LongEvidence e) =>
         e.StopDistanceRanges is not decimal distance
-            ? CheckResult.Unknown("exit-tight", "no stop or no daily range for the session")
+            ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
             : new CheckResult("exit-tight", distance <= GiveUpRanges, distance);
 
     private static CheckResult Cluster(LongEvidence e) =>
