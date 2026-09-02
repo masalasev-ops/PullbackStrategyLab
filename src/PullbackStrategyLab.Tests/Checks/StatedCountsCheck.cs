@@ -125,13 +125,17 @@ public sealed partial class StatedCountsCheck
             Derived: NumberedItem().Matches(doneSection).Count,
             Derivation: "numbered items under Definition of done for a checkpoint"));
 
-        // CLAUDE.md, five specs and three records plus one artefact, over the lifecycle table.
+        // CLAUDE.md, five specs and three records, over the lifecycle table.
+        //
+        // <b>The artefact row went at 4.12 and its claim went with it, rather than being kept at
+        // nought.</b> A claim asserting that the table holds no artefact would pass on a table with
+        // no rows at all, and the total below it is what actually holds the shape: eight rows, five
+        // of them specs and three records, reconciled in three directions.
         IReadOnlyList<IReadOnlyList<string>> lifecycle = MarkdownTable.BodyRowsAfter(claude, "## Document lifecycle");
-        Assert.Contains("Five specs and three records, plus one artefact.", claude, StringComparison.Ordinal);
+        Assert.Contains("Five specs and three records.", claude, StringComparison.Ordinal);
         claims.Add(new Claim("CLAUDE.md, five specs", 5, KindCount(lifecycle, "spec"), "lifecycle rows marked spec"));
         claims.Add(new Claim("CLAUDE.md, three records", 3, KindCount(lifecycle, "record"), "lifecycle rows marked record"));
-        claims.Add(new Claim("CLAUDE.md, one artefact", 1, KindCount(lifecycle, "artefact"), "lifecycle rows marked artefact"));
-        claims.Add(new Claim("The corpus is eight documents plus one artefact", 9, lifecycle.Count, "rows of the lifecycle table"));
+        claims.Add(new Claim("The corpus is eight documents", 8, lifecycle.Count, "rows of the lifecycle table"));
 
         // BUILD_PLAN.md, the authored parameters still open, over the table itself.
         //

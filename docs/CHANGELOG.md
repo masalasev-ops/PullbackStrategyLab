@@ -1851,3 +1851,18 @@ Why:  Built at 4.10, and the schedule is what `slot-roster` reconciles the dispa
 Was:  The obligations table carried a row raised at 4.8 due at 4.11 and a row raised at 4.9 due at 4.11.
 Now:  Both discharged and removed, and one raised.
 Why:  4.11 built the page both were waiting on. The caps figure is in the journal's band with a caption saying what it is, and the audit and the classification are on every row. What it raised is that a trade's chart is one session of it.
+
+### 2026-09-02 — CLAUDE.md — cites The corpus is eight documents and a ninth requires retiring one
+Was:  The repository layout listed `SCREENS.html` under `/docs`; the document lifecycle opened "Five specs and three records, plus one artefact" over a nine-row table whose last row was the artefact.
+Now:  Eight rows, "Five specs and three records", and a paragraph saying the ninth was retired at 4.12 and why.
+Why:  Built at 4.12. A mockup and a built page are two answers to one question, and the day the two disagreed nothing would have said which was the specification.
+
+### 2026-09-02 — BUILD_PLAN.md — cites The corpus is eight documents and a ninth requires retiring one
+Was:  The 4.12 row and the obligations table cited the superseded decision name.
+Now:  Both cite the decision that superseded it, and one obligation is raised.
+Why:  The artefact is gone, so the name that included it no longer resolves to a live decision. What is raised is that the research ledger's only drawing went with it, and the page it was for is 5.5's.
+
+### 2026-09-02 — SCHEMA.md — cites The corpus is eight documents and a ninth requires retiring one
+Was:  A citation of the superseded name.
+Now:  The name that superseded it.
+Why:  Same edit, same reason. The citation is unchanged in what it points at.

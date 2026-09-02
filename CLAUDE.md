@@ -44,7 +44,6 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
   PullbackStrategyLab.Tests       the suite
 /docs             ARCHITECTURE.html  SCHEMA.md  BUILD_PLAN.md
                   DECISIONS.md  PROGRESS.md  CHANGELOG.md  RUNBOOK.md
-                  SCREENS.html
 /tools            ci.ps1  ci.sh  verify-phase  verify-phase.ps1  snapshot-db  migrate
                   nightly.ps1  the slot dispatcher the scheduler calls, not run by CI
                   slot-log-verdict.ps1  what a slot log says about a stage, read by the
@@ -286,7 +285,7 @@ Done conditions are written against **what the file will say after the edit**, n
 
 ## Document lifecycle
 
-Five specs and three records, plus one artefact. A ninth document requires retiring one or writing down why not.
+Five specs and three records. A ninth document requires retiring one or writing down why not.
 
 | Document | Kind | Rule |
 |---|---|---|
@@ -298,6 +297,6 @@ Five specs and three records, plus one artefact. A ninth document requires retir
 | `DECISIONS.md` | record | grouped by topic, superseded entries move to "Previously decided" keeping their reasoning |
 | `PROGRESS.md` | record | append only, corrections are new dated entries |
 | `CHANGELOG.md` | record | prior text of every clean spec edit |
-| `SCREENS.html` | artefact | mockups, retired when the real UI ships |
+A corpus of the same shape grew past twenty documents on a previous project and the documentation tax stopped scaling with the size of the work. (see: The corpus is eight documents and a ninth requires retiring one)
 
-A corpus of the same shape grew past twenty documents on a previous project and the documentation tax stopped scaling with the size of the work. (see: The corpus is eight documents plus one artefact, and a ninth requires retiring one)
+**`SCREENS.html` was the ninth and is gone.** It held mockups of the five screens and was retired at 4.12, the checkpoint the plan scheduled it for, once the pages it drew existed. A mockup and a built page are two answers to one question, and the day the two disagreed nothing would have said which was the specification.

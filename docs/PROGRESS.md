@@ -11718,3 +11718,64 @@ Carried:    **The journal draws one session of a trade and calls it the trade's 
             page checkpoint.
 
             **Two discharged and one raised, so the obligations table falls from 54 to 53.**
+
+## 4.12 — 2026-09-02 — phase-4-retire-mockups — the ninth document, retired at the checkpoint that was always going to retire it
+
+Built:      **`docs/SCREENS.html` is deleted.** It held mockups of the five screens and was the
+            corpus's one artefact, scheduled for retirement here from the day the plan was written.
+            Four of the five pages it drew now exist, and each has absorbed the layout of its own:
+            the watchlist at 4.1, the setups gallery at 2.9, the scoreboard at 3.5 and the journal
+            at 4.11, which took the band, the two panels and the plan-against-actual column in the
+            commit before this one.
+
+            **A mockup and a built page are two answers to one question.** SCREENS drew a journal
+            with a plan-against-actual column and the built one has that column too; the day the two
+            disagreed, nothing would have said which was the specification. An artefact is retired
+            when the thing it stands in for exists, and the alternative is a document that is either
+            duplicated or wrong.
+
+            **What it carried that was not layout was checked rather than assumed gone.** One
+            sentence in it was about how the lab works rather than about how a page looks, being what
+            a twin pair is put to the model as: these look identical in everything the lab records
+            and did opposite things, what would you want to see. It is in ARCHITECTURE under the
+            heading The question and was before this. A mockup deleted with a claim in it is the same
+            defect as a decision deleted with its reasoning.
+
+Decided:    **The corpus is eight documents and a ninth requires retiring one**, which supersedes the
+            name that included the artefact. The ceiling is unchanged and only the artefact is gone,
+            so what the new entry adds is what retiring it cost, stated rather than assumed to be
+            nothing: the research ledger's drawing is gone and 5.5 designs from ARCHITECTURE's
+            description instead.
+
+Built:      **`stated-counts` lost a claim rather than keeping it at nought.** It asserted that the
+            lifecycle table holds one artefact row, and a claim asserting it holds none would pass on
+            a table with no rows at all. What holds the shape is the total beside it, which is now
+            eight and is reconciled in three directions: five specs, three records, and eight rows.
+            The baseline's two scopes are renamed in the same commit rather than left to fail as
+            scopes that stopped being reported, which is what that guard is for.
+
+            **`RepositoryLayout.CorpusFiles` is eight entries.** It is what `decision-resolves` and
+            `no-superseded-citation` read, so a document under `/docs` that is not in it is one
+            nothing scans. The fixture now counts the directory rather than the list, so the day the
+            two disagree it says so.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 883 tests**, unchanged from 4.11: this checkpoint
+            deletes a document and moves two claims rather than adding behaviour.
+
+            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
+            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
+            the commit that produced them with the tree clean.
+
+            **`corpus.artefacts` is nought and the nought is the subject.** It read 1 until this
+            checkpoint. A figure that could only ever be nought would be worth nothing, and this one
+            is a fact about the repository rather than about the fixture's data, on the precedent
+            `store.schemaVersion` sets by counting migration files.
+
+Carried:    **The research ledger's only drawing is gone and the page it was for is not built.** Its
+            band of five figures, its proposal table's six columns, its holdout register and the
+            twin-pair panel beside it were drawn nowhere else. What 5.5 lost is a picture and not a
+            specification, because the one sentence about the method is in ARCHITECTURE. Recorded
+            here rather than left to be discovered at 5.5, because a checkpoint that finds its
+            reference deleted has to reconstruct it from a commit. Due at 5.5.
+
+            **None discharged and one raised, so the obligations table rises from 53 to 54.**
