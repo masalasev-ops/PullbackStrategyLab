@@ -11762,9 +11762,10 @@ Built:      **`stated-counts` lost a claim rather than keeping it at nought.** I
 Measured:   **`tools/ci.ps1` green at 30 steps and 883 tests**, unchanged from 4.11: this checkpoint
             deletes a document and moves two claims rather than adding behaviour.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of scope, 0
+            unexamined, coverage examined 7,530, 1,452 expectations, read against the commit that
+            produced them with the tree clean. Nothing moved but the coverage figure, which rose by
+            the twelve the two new expectations and the directory read are counted in.
 
             **`corpus.artefacts` is nought and the nought is the subject.** It read 1 until this
             checkpoint. A figure that could only ever be nought would be worth nothing, and this one
