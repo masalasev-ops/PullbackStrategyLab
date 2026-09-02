@@ -11346,9 +11346,13 @@ Built:      **`position` carries three stamps now, and the third is there for a 
 
 Measured:   **`tools/ci.ps1` green at 30 steps and 832 tests**, from 797 at 4.7.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 133 claims, 105 passed, 0 failed, 28 out of scope, 0
+            unexamined, coverage examined 6,971, 1,425 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 99 by the four the management
+            table brought in: it was deferred to 4.8 from the day the check was written, and 4.8 is
+            the checkpoint that gave three of its four rows something to be asserted against. Out of
+            scope falls from 30 to 28 for the same reason, one table having left the deferred set and
+            one of 4.7's own rows with it.
 
             **The fixture's `manage.*` figures are eleven noughts and each is structural.** Nothing
             was open, because nothing was placed, because nothing triggered, because nothing was
