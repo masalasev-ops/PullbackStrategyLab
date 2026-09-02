@@ -11586,9 +11586,12 @@ Built:      **`loss_class` carries two stamps, on the terms `position` carries t
 
 Measured:   **`tools/ci.ps1` green at 30 steps and 871 tests**, from 855 at 4.9.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 137 claims, 113 passed, 0 failed, 24 out of scope, 0
+            unexamined, coverage examined 7,481, 1,447 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 107 by the four the loss
+            table brought in and the two schedule rows, and out of scope falls from 26 for the same
+            reason: the loss table had been deferred to this checkpoint from the day the check was
+            written.
 
             **The fixture's nine `losses.*` figures are noughts and each is structural.** Nothing
             closed, because nothing was open, because nothing was placed, so neither pass had a
