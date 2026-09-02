@@ -89,6 +89,13 @@ public sealed class PointInTimeCheck
             ["trade_order"] = "observed_at",
             ["position"] = "observed_at",
             ["fill"] = "observed_at",
+
+            // A trade is read to decide an answer: LossClassifier at 4.10 classifies a closed loss
+            // and the scoreboard scores what closed, so a replay standing at an old date that saw a
+            // trade written after it would classify a loss the night could not have had. The audit
+            // is on the same footing, being a reading of a trade.
+            ["trade"] = "observed_at",
+            ["plan_audit"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -174,6 +181,12 @@ public sealed class PointInTimeCheck
                 "what one evening's fill stage priced and what it could not, on the same terms as "
                 + "order_run below. The positions it counts are in position, which carries three stamps "
                 + "and is bounded on all three.",
+            ["trade_run"] =
+                "what one evening's journal wrote, on the same terms as manage_run below. The trades it "
+                + "counts are in trade, which is stamped and bounded.",
+            ["audit_run"] =
+                "what one evening's audit read and wrote, on the same terms as trade_run above. The audits "
+                + "it counts are in plan_audit, which is stamped and bounded.",
             ["manage_run"] =
                 "what one evening's two rule sets closed, trimmed and armed, on the same terms as "
                 + "fill_run above. The positions it counts are in position, which carries three stamps "

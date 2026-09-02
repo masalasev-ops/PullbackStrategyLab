@@ -742,8 +742,10 @@ Declared at store level. Columns owed at their checkpoint.
 | `position` | position id | Insert PaperBroker · Update PositionManager. One writer per operation and not two stages that can both close a row: from 4.8 the broker opens a position and the manager is the only thing that trims, arms or closes one (see: Every exit is PositionManager's and every entry is PaperBroker's). Carries `risk_intended` and `risk_realised` so share rounding and entry slippage are visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
 | `fill_run` | session + observation | Insert PaperBroker. What one evening's fill stage priced, and the book it was handed |
 | `manage_run` | session + observation | Insert PositionManager. What one evening's two rule sets closed, trimmed and armed, with each exit counted under the rule that produced it |
-| `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |
-| `trade` | trade id | Insert TradeJournal. Result in R, borrow cost on shorts |
+| `trade` | trade id | Insert TradeJournal. Result in R after the borrow a short is charged, which is the whole reason it is a row rather than a view over `position` |
+| `plan_audit` | trade | Insert PlanAudit. Three pairs and not one field: execution at both ends, the plan's stop against where the trade ended, and the size the plan carried against the size the gate placed (see: The audit holds three pairs and they answer three different questions) |
+| `trade_run` | session + observation | Insert TradeJournal. What one evening's journal wrote, counted by side |
+| `audit_run` | session + observation | Insert PlanAudit. What one evening's audit read and wrote, with the two figures worth reading off a total |
 | `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |
 
 ### The plan, and the size it carries
@@ -1022,6 +1024,77 @@ Grain: session + observation. What one evening's two rule sets did, at 21:20.
 | `names_walked`, `minutes_walked` | INTEGER | what the clock actually handed out, which is the figure that says a night was blind |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the session was never sampled or held no minute |
 
+### What a closed position came to
+
+Columns of `trade`. Built at 4.9. One row per closed position, written the evening the position closed.
+
+| Column | Form | Why |
+|---|---|---|
+| `trade_id` | TEXT, the key | One trade per position, so the key is the position's own identifier, which is the plan's. 5.1 fans plans out per variant and this follows |
+| `position_id`, `setup_id` | TEXT, unique | A second trade for one position is unexpressible rather than merely unwritten |
+| `ticker`, `direction` | TEXT | Carried so a trade reads without a join, which is the point of the table |
+| `opened_session`, `closed_session` | TEXT | The two ends |
+| `held_calendar_days` | INTEGER | What the borrow is charged on, because borrow accrues overnight rather than per session and a Friday-to-Monday hold costs three days |
+| `held_sessions` | INTEGER | What a person reads, counted from the daily bars the store holds rather than from an authored calendar (see: A session is a date the store holds minutes for, and no calendar is authored here). The two differ over every weekend, and both are here rather than leaving a reader to guess which one they are looking at |
+| `entry_price`, `exit_price`, `exit_reason` | TEXT | What the two fills got and which rule ended it |
+| `shares`, `trimmed_shares` | INTEGER | The count the entry opened with, and what a short trim took out of it before the close. The close covered the difference |
+| `value_at_entry`, `risk_realised` | TEXT | Carried from the position because the borrow is charged on the first and R is taken over the second |
+| `gross_pnl` | TEXT | The money before borrow, which is the trim's plus the close's on a trimmed short |
+| `borrow_rate_assumed`, `borrow_cost` | TEXT NULL | Present exactly on the shorts, in both directions. The rate is the one that position stamped on itself when it opened, so a trade closed today is charged what its own position assumed rather than what the constant says now |
+| `net_pnl`, `result_r` | TEXT / REAL | After borrow. **`result_r` is after and `position.realised_r` is before**, so the two are equal on every long and differ by the borrow line on every short. Both names stay, because one name over two numbers is the fault this corpus keeps finding |
+| `exit_armed_session`, `armed_sessions_waited` | TEXT / INTEGER NULL | Present exactly when a rule armed the exit on an earlier session. The trail fills at the next open the store holds minutes for, so a session the lab was blind on postpones the fill rather than reconsidering it, and this is the size of that on each trade rather than an argument about how often it happens |
+| `observed_at` | TEXT | One stamp, because nothing updates this table |
+
+**One stamp and not three.** A trade is written when a position closes and is never revisited: a
+correction to a trade would be a second answer to what a night produced, which the append-only
+records in this store refuse everywhere else. `position` needs three because it is inserted, trimmed
+and closed; this is inserted and left alone.
+
+### The plan against what happened
+
+Columns of `plan_audit`. Built at 4.9. Three pairs answering three different questions
+(see: The audit holds three pairs and they answer three different questions).
+
+| Column | Form | Why |
+|---|---|---|
+| `trade_id` | TEXT, the key | The trade it audits, and a foreign key into it, which is what makes the ordering between the two stages expressible rather than remembered |
+| `setup_id`, `ticker`, `direction` | TEXT | Carried so an audit reads without a join |
+| `planned_trigger`, `executed_entry`, `entry_difference`, `entry_difference_bps`, `entry_basis` | TEXT / REAL | **The first question, execution at the entry.** The price the instruction named against the price it got, positive where the trade was worse off. Basis points beside the money because six cents on a six-dollar stock and six cents on a four-hundred-dollar one are two different facts. `entry_basis` is `slipped` or `gapped`, so a gap is never read as slippage |
+| `exit_resting_price`, `executed_exit`, `exit_difference`, `exit_difference_bps`, `exit_basis`, `exit_reason` | TEXT / REAL | The same question at the exit, against the price the exit rule named rather than against the plan's stop |
+| `planned_give_up`, `give_up_difference`, `give_up_difference_bps` | TEXT / REAL | **The second question, and not the first restated.** The plan's stop against where the trade actually ended. Equal to the exit pair on a give-up exit and a different quantity on every other one: a trail exit ends nowhere near the give-up point by design, so reading the two as one would report every winner as an enormous execution failure |
+| `planned_shares`, `executed_shares`, `shares_difference`, `reduced_because` | INTEGER / TEXT NULL | **The third question, the gate.** The size the plan carried against the size that was placed, with the cap that bound or null where none did. RiskGate may reduce a size and may never recompute one, so this is an intention against an outcome rather than two runs of one formula (see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it) |
+| `risk_intended`, `risk_realised`, `risk_difference` | TEXT | The two above in the unit everything is scored in |
+| `observed_at` | TEXT | |
+
+**Every difference is derived from the two prices, never copied from `fill.slippage`.** An audit
+reading the model's own charge would be comparing a number against itself, and the two legitimately
+differ on a gap, where the model charges nothing and the price moved anyway.
+
+#### `trade_run`
+Grain: session + observation. What one evening's journal wrote, at 21:25.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `closed_in_session`, `journalled` | INTEGER | what it was handed and what it wrote, which differ only on a rerun |
+| `longs`, `shorts` | INTEGER | counted apart (see: Long and short are never pooled into one figure) |
+| `shorts_charged` | INTEGER | shorts that were held overnight and so paid borrow. A same-day short pays none, and the two are told apart here rather than by reading a cost of nought |
+| `trimmed` | INTEGER | trades whose short was reduced at 3R before it closed |
+| `armed_exits` | INTEGER | trades whose exit was decided on an earlier session and filled at an open |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | clean where nothing closed, which is a shape of nothing rather than a failure |
+
+#### `audit_run`
+Grain: session + observation. What one evening's audit read and wrote, at 21:26.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `trades_read`, `audited` | INTEGER | the two differ on a rerun and on a trade missing a fill at one end, which is refused rather than filled with noughts |
+| `longs`, `shorts` | INTEGER | counted apart |
+| `reduced_by_a_cap` | INTEGER | trades the gate sized down. The figure the third pair exists to make readable |
+| `gapped_at_an_end` | INTEGER | trades where one end or the other filled at an open rather than at the price it named, so the night's difference figures are never read as though they were all slippage |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | |
+
 ## Research — phases 5 and 6
 
 | Store | Grain | Writer |
@@ -1062,7 +1135,7 @@ Grain: run id. Every stage writes a start and an end entry here, so it is delive
 | `stage` | TEXT | the calling stage |
 | `started_at`, `ended_at` | TEXT | |
 | `outcome` | TEXT | `clean`, `partial`, `failed` |
-| `rows_written` | INTEGER | measured from the store, not self-reported by the stage |
+| `rows_written` | INTEGER NULL | measured from the store, not self-reported by the stage. **Null on a stage whose declared tables it only updates**, where the delta reports 0 on a perfect run and 0 on a run that died on the first name; null says the measure does not apply and nought says the stage wrote nothing (see: A run whose writes are updates records no row count rather than a nought) |
 | `calls_used` | INTEGER | counted as the stage runs |
 | `counts_against_ceiling` | INTEGER | 0 or 1. Whether the daily total sees this run's calls |
 | `skipped` | INTEGER NULL | names the run walked past after a failure it survived. Null where it walked no list |
@@ -1072,6 +1145,8 @@ Insert RunLogger · Update RunLogger
 **One writer, not one per stage.** Stages do not write this table. They call `RunLogger`, which owns both operations. Declaring every stage as a writer would put the run-accounting logic in a dozen places and `writer-ownership` could never pass.
 
 **`rows_written` is measured, not reported.** A stage counting its own output will report what it believes it wrote. The nightly halt keys on this number, so it is read back from the store.
+
+**And it is null rather than nought where the delta measures nothing.** `sectors`, `clusters` and `checks` issue `UPDATE` and never `INSERT`, so the row-count delta over their declared tables is 0 whether they resolved every name or died on the first. Applicability is declared at the stage's `Begin` rather than decided at the end, so it is part of what a stage says it writes; what is self-reported is whether a measure applies and not the value of one, which is the footing `skipped` beside it already stands on. The column stated a type it no longer holds from 4.8 until 4.9, which is a spec that went stale in the commit that made it stale (see: A run whose writes are updates records no row count rather than a nought).
 
 **And it distinguishes nothing on a stage that only updates, which is why `skipped` exists.** The measurement is a row-count delta over the tables the stage declares, so `sectors`, which issues `UPDATE` against `security` and never `INSERT`, reports 0 rows whether it resolved every name or died on the first. On 2026-08-27 it recorded outcome `failed`, 149 calls and 0 rows, and 0 rows is exactly what a perfect run would have recorded. `skipped` is reported by the stage rather than measured, which is the opposite of the rule above and is deliberate: a skip is a decision the stage made and nothing in the store records it, so there is no belief here for a measurement to guard against. Null rather than 0 on a run that skipped nothing, so a stage that walks no list is distinguishable from one that walked its list cleanly, and so that the sixty-one runs recorded before the column existed are not asserted to have skipped none.
 

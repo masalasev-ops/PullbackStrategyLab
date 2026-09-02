@@ -55,6 +55,12 @@ public sealed class TradeOrderReader
         command.Parameters.AddWithValue(
             "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
 
+        return Materialise(command);
+    }
+
+    /// <summary>The column order the two reads above share, materialised once.</summary>
+    private static IReadOnlyList<StoredTradeOrder> Materialise(SqliteCommand command)
+    {
         var orders = new List<StoredTradeOrder>();
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -77,6 +83,51 @@ public sealed class TradeOrderReader
         }
 
         return orders;
+    }
+
+    /// <summary>
+    /// The orders behind a named set of setups, as at <paramref name="asOf"/>.
+    ///
+    /// <b>Here because a trade outlives the session its order was placed in.</b> PlanAudit reads
+    /// what the gate did to a size against what the plan carried, and the trade it is auditing
+    /// closed days after the order was placed. Reading by live session would return every order
+    /// except the ones it needs, which is the same shape <see cref="TradePlanReader.ForSetups"/>
+    /// was added for one checkpoint earlier.
+    /// </summary>
+    public static IReadOnlyList<StoredTradeOrder> ForSetups(
+        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(setupIds);
+
+        if (setupIds.Count == 0)
+        {
+            return [];
+        }
+
+        string slots = string.Join(", ", setupIds.Select((_, at) => $"@setup{at}"));
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT order_id, setup_id, live_session, ticker, direction, triggered_at, status,
+                   planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at
+              FROM trade_order
+             WHERE setup_id IN ({slots})
+               AND observed_at <= @observed_before
+             ORDER BY triggered_at, ticker
+            """;
+
+        int slot = 0;
+
+        foreach (string setupId in setupIds)
+        {
+            command.Parameters.AddWithValue($"@setup{slot++}", setupId);
+        }
+
+        command.Parameters.AddWithValue(
+            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+
+        return Materialise(command);
     }
 
     /// <summary>

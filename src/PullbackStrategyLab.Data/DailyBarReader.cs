@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 
 using PullbackStrategyLab.Core.Time;
@@ -231,6 +232,44 @@ public sealed class DailyBarReader
                 reader.GetInt64(6),
                 StoreText.StorageTextToTimestamp(reader.GetString(7)))
             : null;
+    }
+
+    /// <summary>
+    /// How many sessions the store holds for <paramref name="ticker"/> between two dates,
+    /// inclusive, as at <paramref name="asOf"/>.
+    ///
+    /// <b>Counted from the store rather than from a calendar, on the ruling 4.5 already took.</b>
+    /// This lab authors no exchange calendar: a session is a date the store holds bars for, so a
+    /// holding period measured in sessions is a count of the rows that exist and a market holiday
+    /// is absent from it by not being there. A calendar written here would be a second statement
+    /// of which days trade, and the one that was not edited would be the one somebody read.
+    /// see: A session is a date the store holds minutes for, and no calendar is authored here
+    ///
+    /// Distinct dates rather than rows, because a corrected bar is a second observation of one
+    /// session and counting both would make a holding period grow when a vendor restated a price.
+    /// </summary>
+    public static int SessionsBetween(
+        SqliteConnection connection, string ticker, DateOnly from, DateOnly to, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(DISTINCT bar_date)
+              FROM daily_bar
+             WHERE ticker = @ticker
+               AND bar_date >= @from
+               AND bar_date <= @to
+               AND observed_at <= @observed_before;
+            """;
+
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
+        command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
+        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>The last instant of a date, in the form observed_at is stored in.</summary>

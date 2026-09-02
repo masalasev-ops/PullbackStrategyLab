@@ -11386,3 +11386,130 @@ Carried:    **`closed_in_their_own_session` is the size of an approximation and 
 
             **Three discharged from 4.7 and one from 3.8, three raised, so the obligations table
             falls from 55 to 54.**
+
+## 4.9 — 2026-09-02 — phase-4-trade-journal — what holding it came to, and the plan held against it
+
+Built:      **`TradeJournal` and `PlanAudit`, with `BorrowCost` and `PlanDifference` in Core and
+            migration 046.** The journal runs at 21:25 over the positions the manager closed five
+            minutes earlier and writes one trade for each; the audit runs at 21:26 over the trades
+            the journal wrote. Both spend no vendor call.
+
+            **A trade is not a copy of a position and the borrow line is the difference.** A position
+            is what the lab held; a trade is what holding it came to. Everything carried onto the
+            trade that also lives on the position is carried because the trade is the row a person
+            reads, and a join to answer "how much did it make" is a join nobody makes. What is new is
+            the borrow charge on the short side and the result after it.
+
+            **`result_r` is after borrow and `position.realised_r` is before it, and both names
+            stay.** They are equal on every long and differ by the borrow line on every short. One
+            name over two numbers is the fault this corpus keeps finding, so the second is named
+            differently and the difference is stated at both declarations. **The rate charged is the
+            one that position stamped on itself when it opened**, not what the constant says tonight,
+            which is the fault `trade_plan` stores `equity` and `risk_fraction` to avoid arriving one
+            table later.
+
+            **Calendar days for the borrow and stored sessions for the holding period, and the row
+            carries both.** Borrow accrues overnight rather than per session, so a Friday-to-Monday
+            hold costs three days and is two sessions. A row carrying one of the two would leave a
+            reader to work out which, and the two differ over every weekend. The session count is
+            taken from the daily bars the store holds rather than from an authored calendar, which is
+            the ruling 4.5 already took (see: A session is a date the store holds minutes for, and no
+            calendar is authored here).
+
+            **A short closed in the session it opened in pays nothing**, because it was never held
+            overnight, and `shorts_charged` counts what was charged rather than what was eligible. It
+            is the one figure on the night's row where two noughts mean different things.
+
+Decided:    **The audit holds three pairs and they answer three different questions**, which is what
+            the row asked to be stated. Each of the three sources named a different thing and none of
+            them was wrong: SCHEMA said planned stop beside executed stop, the mockup's
+            plan-against-actual column shows an entry difference in basis points, and the catalogue
+            said "planned against executed" and named no field at all. Choosing one would have made
+            the other two false.
+
+            **The first is execution and it is what a defect surfaces in**, being the price each
+            instruction named against the price it got, at both ends, in money and in basis points.
+            Basis points because six cents on a six-dollar stock and six cents on a
+            four-hundred-dollar one are two different execution facts and the column is read across
+            names. **The second is the plan's stop against where the trade ended and it is not the
+            first restated**: they are the same number on a give-up exit and a different quantity on
+            every other one, because a trail exit ends nowhere near the give-up point by design, so
+            reading the two as one would report every winner as an enormous execution failure. **The
+            third is the gate**, being the size the plan carried against the size that was placed with
+            the cap that bound, which is what `plan_audit` was designed around: RiskGate may reduce a
+            size and may never recompute one, so it holds an intention against an outcome rather than
+            two runs of one formula.
+
+            **Every difference is derived from the two prices and never copied from
+            `fill.slippage`.** An audit reading the model's own charge would compare a number against
+            itself, and a model that stopped charging what it says it charges would agree with the
+            audit all the way down. The two also legitimately differ on a gap, where the model
+            charges nothing and the price moved anyway, so each pair carries the fill's basis and a
+            gap is never read as slippage. The authored case is a seven-point overnight gap: the
+            audit reports seven points against a fill charged nought.
+
+            **TradeJournal runs first and PlanAudit second, and the audit never changes a result.**
+            Both run on exit and the corpus said only that. The ordering is now a foreign key rather
+            than a note, on the shape PaperBroker and PositionManager already stand in: the audit
+            points at a trade, so the trade has to exist. **What it also buys is that the audit
+            cannot correct anything**, because the result was written before it ran. A component that
+            could both produce a result and adjust it would be auditing itself, which is why
+            ActionIngestor and IndicatorEngine are two components for one demand. The reverse order
+            would have been defensible and is refused for one reason: the trade's result is what the
+            fills say it was, and a figure adjusted by a later reading is no longer a measurement of
+            the night.
+
+Built:      **The two obligations 4.8 raised are discharged by the components that first read what
+            they were about.** A trimmed short's money is the trim's plus the close's and its exit
+            covered `shares` minus `trimmed_shares`; nothing outside PositionManager had read that
+            distinction, and a component reading `shares` as what the exit covered would have
+            overstated every trimmed short by the trim. The authored case trims 22 of 150 and the
+            trade's gross is asserted as the two halves added rather than as one multiplication.
+
+            **And an armed exit now records how many sessions it waited.** The trail is armed on a
+            session's close and fills at the open of the next session the store holds minutes for, so
+            a session the lab was blind on postpones the fill rather than reconsidering it. The
+            authored case arms on one session, leaves the next with a daily bar and no minutes, and
+            fills on the third: `armed_sessions_waited` reads 2. The size is on each trade rather than
+            left as an argument about how often it happens, which is the shape 4.8 already gave
+            `closed_in_their_own_session`.
+
+Found:      **`run_log.rows_written` was declared `INTEGER` in SCHEMA while the column had started
+            holding null, and the commit that made it stale was the one that should have said so.**
+            4.8 made the figure null on a stage whose declared tables it only updates, wrote the
+            decision, wrote the prose paragraph beside the column table, and left the type on the row
+            itself. Nothing could see it: `writer-ownership` reconciles which columns exist rather
+            than what a document says their type is, so the two halves of one row can disagree with
+            each other and the check reads the half it cares about. Corrected here rather than
+            carried, because it is a document edit and the type is now `INTEGER NULL` with the reason
+            on the row.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 855 tests**, from 832 at 4.8.
+
+            **`tools/verify-phase` GREEN**: 133 claims, 107 passed, 0 failed, 26 out of scope, 0
+            unexamined, coverage examined 7,302, 1,438 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 105 by the two schedule rows
+            that stopped reading "On exit" and started naming a slot, and out of scope falls from 28
+            for the same reason.
+
+            **The fixture's thirteen `trades.*` and `audit.*` figures are noughts and each is
+            structural.** Nothing was open, because nothing was placed, because nothing triggered, so
+            nothing closed and there was no trade to journal or audit. They are `DERIVED` rather than
+            frozen because the chain that produces them is the fixture's own committed figures rather
+            than a run, and `trades.closedInSession` is the one every other is bounded by.
+
+Carried:    **Two figures called the result now exist and nothing downstream has chosen between
+            them.** `trade.result_r` is after borrow and `position.realised_r` is before it, and both
+            are correct. The difference is small, at roughly two tenths of one per cent of a unit of
+            risk on a four-day hold, and the size is not the point: a component reading either
+            produces a defensible number, and two components reading different ones produce a
+            comparison nobody can reconcile. Due at 4.10, which builds the first thing that reads a
+            closed loss.
+
+            **`plan_audit` is written every night and no surface reads it.** Three pairs per trade,
+            and the one the mockup drew is the journal page's plan-against-actual column. A table with
+            a writer and no reader is the state `spread_snapshot` was in until 4.7. Due at 4.11,
+            which is the same checkpoint `closed_in_their_own_session` waits on, so the two arrive on
+            one surface.
+
+            **Two discharged and two raised, so the obligations table holds at 54.**
