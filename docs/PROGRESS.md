@@ -12995,3 +12995,98 @@ Verified:   **`tools/ci.ps1` green at 31 steps and 913 tests**, unchanged, this 
 Carried:    **Seven rows closed, two repointed to 5.0, one repointed to 5.2, none raised.** The
             thrust rule is untouched at the operator and is put when 5.0(a) reports. Nothing here
             moves a floor or raises the out-of-scope ceiling.
+
+## 5.0(a) — 2026-09-02 — phase-5-thrust-selection-measurement — the prediction, before the run that tests it
+
+The first part of 5.0, and this entry is the half of it that has to exist before the other half can
+mean anything. Nothing is measured here and nothing is changed: no threshold, no gate, no detector,
+and the once-only threshold adjustment stays unspent and the operator's. It is committed before the
+measurement run starts so that the prediction can fail, on the terms 3.0(c) set for the last
+geometry change.
+
+Measured:   **The thrust-selection clause of the order-price decision, read literally.** Where
+            several qualifying scan hits fall inside the ten-session window, the thrust is the hit
+            whose own session carries the highest adjusted high on the long side and the lowest
+            adjusted low on the short, ties broken by the later session and then by rank.
+            Everything after the selection is untouched: the geometry runs from the chosen hit with
+            that hit's own scan span, the anchored average is anchored off the same chosen hit, and
+            every gate reads what it reads today. The shipped rule is the most recent qualifying
+            hit, then rank, and it stays shipped: the alternative runs from a scratch worktree
+            against copies of the store and reaches neither `main` nor `data/live`. The patch is
+            fourteen lines across the two detectors and is recorded verbatim in the entry that
+            reports the run.
+            (see: The order prices are derived from the final pullback session's minutes, not from the screening geometry)
+
+Population: **Four calibration runs, two a side, over the 602 sessions from 2024-04-01 to
+            2026-08-24**, each into its own copy of `data/live` taken tonight with
+            `calibration_setup` cleared, because the insert's `ON CONFLICT DO NOTHING` turns a re-run
+            over a full table into one that writes nothing and reports success, which 3.0(c) found.
+            The before-run is the shipped rule and the after-run is the rule above, and both read
+            today's membership and today's bar series, so the delta between them is the rule and
+            nothing else. The before-run is also compared against the figures of 2026-08-30, and
+            any drift in membership or bars since the run of 2026-08-27 is reported on its own line
+            rather than folded into the delta. The drift is expected to be small and is not
+            expected to be nought, because membership is today's and the universe has moved since;
+            its size is a figure the run reports rather than one this entry guesses.
+
+            **The funnel is reported on the terms of 2026-08-30**: per gate and per side, each gate
+            over the rows still alive when it is reached, in the order of the check lists, `cluster`
+            excluded because it is recorded and never gating, and a median a night over every
+            session with a session producing none counted as nought. Long and short are reported
+            separately throughout and no figure covers both.
+            (see: Long and short are never pooled into one figure)
+
+Predicted:  Six clauses, each written so the run can contradict it.
+
+            **1. The row counts do not move.** The recording floor is `tradable`, `moves-enough`,
+            `uptrend` and `thrust` on the long side and their mirrors on the short, and none of the
+            four reads which hit was chosen: `thrust` asks whether any qualifying hit sits inside
+            the window. So the after-run records the same number of long rows over 602 sessions and
+            short rows over 601 as the before-run, and the four floor gates pass 100% on both sides
+            in both runs. `averages-squeezing` reads the bar series and no thrust, so its pass count
+            is identical between the two runs as well.
+
+            **2. Between a quarter and a half of the rows on each side change their thrust, and most
+            of those carry a twenty-session scan.** A row changes only where two or more qualifying
+            hits sit in its window and the most recent is not the one at the extreme. `leader` and
+            `laggard` rank a twenty-session move, so a name that has peaked stays in their top fifty
+            for several sessions while its highs fall, and each of those sessions is a hit below the
+            peak. `gainer`, `gapper`, `decliner` and `gapdown` flag one session, and a second hit
+            below the peak needs a bounce inside the pullback big enough to make the top fifty,
+            which is rarer. So: between 25% and 50% of long rows change, the same band short, and
+            more than half of the changed rows on each side carry `leader` or `laggard` under the
+            shipped rule.
+
+            **3. Every row whose thrust does not change is identical in every check value**, name
+            for name and figure for figure, because nothing downstream of the selection was
+            touched. This is the control, as INTC-short was the control at 3.0(c), and it holds with
+            no exceptions or the patch did more than it says.
+
+            **4. `dip-shape` and `bounce-shape` admit more rows, not fewer.** Where a twenty-session
+            hit gives way to an earlier twenty-session hit, the span start and the origin move
+            earlier into the run-up, the extreme stays at the same peak, the move grows and the
+            give-back is the same fraction of a larger move, so the 0.40 cap is cleared more often
+            with the bar count unchanged. Where a one-session hit gives way to an earlier one-session
+            hit, the extreme moves back to the higher peak, the pullback gets longer and the fraction
+            is taken over one day's move, which pushes the other way. Clause 2 says the first case
+            dominates, so long `dip-shape` passes rise above the before-run's figure and short
+            `bounce-shape` passes rise above its own.
+
+            **5. The four gates behind the shape gate keep their conditional pass rates within a few
+            points, and `exit-tight`'s falls rather than rises.** `held-floor`, `contraction`,
+            `trigger-near` and `exit-tight` read the pullback bars after the extreme, which the
+            dominant case leaves where they were; the one-session case lengthens the pullback and
+            widens the trigger-to-stop distance, so what movement there is on `exit-tight` is
+            downward from the before-run's conditional rate, 1.51% long on 2026-08-30. Short's
+            `reached-ceiling` reads the distance to the two averages and no thrust, so its
+            conditional rate is unchanged within noise.
+
+            **6. Candidates move by less than a factor of two and the median a night stays nought on
+            both sides.** More rows through the shape gate at an unchanged tail rate means long
+            survivors rise from the before-run's figure, 30 on 2026-08-30, to no more than twice it
+            and no fewer than it; short survivors stay in single figures from nought. A median above
+            nought needs a candidate on more than 301 of 602 sessions, and nothing in clauses 4 and
+            5 is that size.
+
+Not         Whether the rule should move. That is question 6 of the phase 5 sitting, it is the
+predicted:  operator's, and it is put with the figures rather than with this.
