@@ -11077,7 +11077,8 @@ Decided:    **The gap rule is applied to an entry as well as an exit, and the de
 Measured:   **`tools/ci.ps1` green at 30 steps and 797 tests**, from 765 at 4.6.
 
             **`tools/verify-phase` GREEN**: 129 claims, 99 passed, 0 failed, 30 out of scope, 0
-            unexamined, coverage examined 6,702, 1,416 expectations. Claims passing rose from 96 by
+            unexamined, coverage examined 6,735, 1,416 expectations, read against the commit that produced
+            them with the tree clean. Claims passing rose from 96 by
             the three the two failure-behaviour rows and the gap needed, which had been out of scope
             on 4.7 and became unexamined the moment it landed.
 
