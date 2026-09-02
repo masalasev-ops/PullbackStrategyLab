@@ -27,6 +27,28 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "**The phase is seventeen checkpoints, and the order of the rows is the order of the work.**" in the
+      phase 4 preamble; no 4.18 row; the 4.13 row ending "...which is a different question from the one it
+      was written for and is the reason it stays"; the freeze paragraph reading "They are repairs to stored
+      figures rather than new components, so they do not need a checkpoint of their own; what they need is
+      to be finished before V0 is registered, because after that a repair costs the accumulated variant
+      record rather than an afternoon."; "None of the forty rows above fall due at 4.17"; and the
+      claim-register row and the source-scan row ending at their 5.1 due points with no ruling on the move;
+      and "names seven frozen-only checkpoints under `frozenOnly`".
+Now:  Eight frozen-only checkpoints, 4.13's permit being the eighth. Eighteen checkpoints, with 4.18 holding what the 4.13 sign-off of 2026-09-02 found and sitting before
+      4.13 in the order; the 4.13 row says the pass did not sign the phase off and what it waits on; the
+      freeze paragraph states the split, eleven repairs the freeze makes uncorrectable and four the phase
+      makes dearer, naming the four; forty-four rows, four raised at 4.13 and due at 4.18; and the two
+      rows that have each moved at least three times carry the ruling that the move stands and the next
+      one is a checkpoint rather than a due point.
+Why:  The sign-off found 4.16's first clause unbuilt, two stages carrying a result that is wrong on the first
+      day a position exists, a loss boundary over a population other than the one named beside it, and a
+      check counting seven pinned rows as unpinned. A sign-off may not commit code and a row cannot fall
+      due at a landed checkpoint, so the work needed a checkpoint, on the terms 4.17 was added at 4.6. The
+      freeze sentence was true of eleven rows and being read as true of fifteen, which is the fifth
+      failure shape in a spec.
+
 ### 2026-09-02 — SCHEMA.md — cites The session average is derived when it is wanted and is not stored on a bar
 Was:  `| ``vwap_session`` | TEXT, written by VwapEngine |` in `intraday_bar`'s column table, and the writer line
       `Insert IntradayFetcher · Update VwapEngine (``vwap_session`` only) · PK (``ticker``, ``bar_ts``, ``observed_at``)`.

@@ -12018,3 +12018,222 @@ Measured:   **`tools/ci.ps1` green at 31 steps and 895 tests**, from 31 steps an
             checkpoints before any of them was touched. `surface-claims` was run with
             `ScoreboardBuilder.SessionShortage` reworded and named the claim that had come apart from
             it.
+
+## 4.13 — 2026-09-02 — phase-4-sign-off — the phase does not sign off in this pass: a clause 4.16 never built, and two stages run rather than argued
+
+A fresh session with no code committed to this repository, which is the rule the row rests on. It
+reviewed 4.1 through 4.12 and 4.14 through 4.17 in the order they landed, ran both gates itself, and
+did not sign the phase off. What it found is below, in the order the rules rank it: what fails a done
+condition first, what would put a silently wrong result into shipped code second, and the readings
+last. The prompt that started this session was written by the session that built most of the phase,
+and nothing in it was taken as evidence; every figure here was derived on this tree.
+
+Verified:   **`tools/ci.ps1` green at 31 steps and 895 tests**, run on `fc4c95e` with the tree
+            clean, which is the tree the phase ended on. **`tools/verify-phase.ps1` GREEN**: 137
+            claims, 114 passed, 0 failed, 23 out of scope, 0 unexamined, coverage examined 8,068,
+            1,453 expectations of which 1 void, inputs CAPTURED 70 and AUTHORED 133, expectations
+            changed since the last commit 0. The provenance line names `fc4c95e`, says the tree is
+            clean and is stamped 2026-09-02 13:29Z, so the report is this tree's and not an earlier
+            run's. The wrapper said which bash it used, Git for Windows' own, which is the 3.14
+            repair doing what it says.
+
+            **Every one of the 23 out-of-scope claims names a checkpoint in phase 5 or 6**: fourteen
+            catalogue rows, six failure-behaviour rows and three tables, closed by 5.1 through 6.8.
+            None names a phase 4 checkpoint, so nothing this phase built is still deferred to itself.
+            The out-of-scope count fell from 50 at the plan to 23 here, against a ceiling of 52 that
+            was never approached, and every move was downward, which the plan predicted and the
+            record confirms at each checkpoint.
+
+            **The merge condition held on every pull request of the phase**, checked on GitHub rather
+            than read from the entries: PR #26 through #45 each ran five jobs green on the branch. The
+            pushes to `main` behind PR #30 through #37 were red on one job, `a failing assertion makes
+            the slot job red`, from 2026-09-01T14:54Z to 2026-09-02T02:10Z, with the four other jobs
+            green on each; that is the inverted job the 4.7 entry found and fixed, and its cause is the
+            one that entry gives. The condition is CI green on the pull request and it was met.
+
+            **All twenty merges reached `main` through a branch and a pull request**, read from the
+            first-parent log from `d0b74bf`. Nothing was committed to `main` directly.
+
+Stated:     **No row of the authored-parameters table is OPEN, and nothing reopened one between 4.15
+            and this sign-off.** Stated rather than searched, on the row's own terms, and derived
+            three ways so the statement rests on more than the test that already holds it. The table
+            parses to 46 body rows and the string `OPEN` occurs once in the whole of
+            `ARCHITECTURE.html`, in the paragraph under the table that explains what the marker was
+            for. The last commit to touch an OPEN marker in that file is `8abefc2`, which is 4.15
+            itself, and the eight commits to the file since have touched none. The one row added
+            after 4.15 is "When the trail takes over from the fixed stop", added at `d4383d4` for 4.8
+            and filled on arrival, which is why the fixture's `authored.rows` and `authored.filled`
+            moved from 45 to 46 together and `authored.open` stayed at nought. The completeness
+            sentence is present in the words it returned in, and `AuthoredParametersTests` holds the
+            mutual exclusion in both directions over an authored table carrying one open row.
+
+Found:      **4.16's first clause was not built, and the plan's order prices are the reading the
+            decision names as the one to refuse.** The row says the checkpoint computes the order
+            prices from the final pullback session's regular-hours minutes, with the give-up point
+            0.1 ADR beyond the extreme and the thrust chosen by its extreme (see: The order prices are
+            derived from the final pullback session's minutes, not from the screening geometry).
+            `PlanBuilder` writes `setup.trigger_price` and `setup.stop_price` into `trade_plan`, and
+            those are `PullbackGeometry.Of`'s figures from daily bars, with the stop at the low of the
+            whole dip, which the decision's own text rejects as an order reference. No offset, no
+            minute read and no ADR appear in the stage, the geometry or `PlanBuilderTests`, and the
+            4.16 entry does not say the substitution was made. **The reason it could not have been
+            built as written is worth more than the omission**: the plan is written at 18:30 on the
+            evening a setup is flagged, the minute fetch runs at 20:30 and buys session N's bars for
+            the names flagged on the evening of N−1, so the minutes the decision derives its prices
+            from are not in the store when the plan is written. The decision, the fetch pairing and
+            the plan slot cannot all stand, and 4.16 resolved it silently in the one direction the
+            decision forbids. This fails a done condition and reopens the phase.
+
+            **The position manager closes a position on bars that traded before it opened.** Read
+            from the walk, which evaluates every holding from the session's first minute and carries
+            no bound at the entry, then run as a throwaway case and reverted: a long opened at 10:15
+            against a trigger of 100 and a give-up point of 95, in a session whose 09:30 bar opened at
+            94, was closed at 09:30 with reason `give-up`, `closed_at` forty-five minutes before
+            `opened_at`, and a loss of 915 booked against a position that did not yet exist. The test
+            beside it in the suite walks a 09:30 bar whose low sits above the give-up point, so it
+            could not see this. A pullback long enters from below by construction, which is why this
+            is the first run's fault and not a corner.
+
+            **And a rerun of a session that armed the trail closes the position a session early.**
+            Run the same way: the first pass armed one exit and closed nothing; the second pass over
+            the same session closed the position at that session's first minute with reason `trail`,
+            where the rule fills at the next session's open and the stage's summary says a rerun
+            writes nothing. `Holding.ArmedInAnEarlierSession` is set from the presence of a reason
+            rather than from `exit_armed_session` against the session walked, and the reader shows
+            the arming as of the session that made it. Reruns are a supported act in this lab, so it
+            is a defect in a path the operator uses rather than a hypothetical.
+
+            **The loss boundary compares a return from the setup's close against one R from the
+            trigger, and labels it from the trigger.** `LossCause.OneRInReturn` is the give-up
+            distance over the trigger price and its own comment says the forward return is a
+            fraction of the trigger price; `ForwardOutcome.Of` measures `return_signed` from the
+            setup session's close, over the ten sessions after the setup; `LossClassifier.Place`
+            compares the two and writes "the direction-signed 10-session return from the trigger"
+            beside them. A long's trigger sits above the setup close by construction, so the return
+            the code reads exceeds the return from the trigger by the whole gap, and a loss that
+            never reached one R from the trigger is placed as noise, which points at execution and
+            away from the filter. Every number is right and the sentence names a different
+            population, which is the fifth failure shape with the code as the subject and the first
+            instance of it in the trading layer.
+
+            **`pinned-constants` counts seven pinned rows as unpinned, and the mapping 4.15 listed was
+            not built.** The check's `pinnedParameters` names sixteen rows and its own examined detail
+            pins twenty-three, so the report's out-of-scope figure reads 30 against 23 rows with no
+            constant: the four rows the six caps pin at 4.6, the borrow rate, the horizons and the
+            selection sample were pinned and the list was not moved, and the comment on that list says it is
+            what moves. 4.15's row lists "the authored parameters mapped to the checkpoint that builds
+            the component they govern" among its deliverables, its entry does not mention it, and the
+            exemption still says the mapping has never been derived with every component the ten
+            answered rows govern now landed. The direction is the safe one, since the report claims
+            less coverage than it has, and it is still a figure on the report that is wrong by seven.
+
+            **Three smaller readings, recorded and not rowed.** `fill_run.open_at_start` is counted
+            over rows that a rerun after PositionManager reads differently, so the figure is not
+            rerun-stable, which is a run-row cosmetic beside the two faults above. A short whose name
+            prints no bar in the closing stub never has its 14:30 hour judged, so that reclaim is lost
+            rather than deferred, which is a corner the 4.18 session should read while it is in the
+            file. And `armed_sessions_waited` counts inclusive-minus-one, so an ordinary next-open fill
+            reads 1 where the migration's comment says it is the size of the postponement, which would
+            read nought; the test pins the number and the comment is what is wrong.
+
+Ruled:      **The phase does not sign off in this pass.** A finding reopens a phase only if it fails a
+            done condition or breaks a check, and the first finding fails 4.16's. The second and
+            third are the other half of the interrupt rule, a silently wrong result in shipped code,
+            and would have travelled to the next checkpoint alone; they travel with the first.
+
+            **The work goes to a checkpoint of its own, 4.18, before 4.13 in the order.** A sign-off
+            may not commit code, and a row cannot fall due at 4.16, 4.8 or 4.10, because each has
+            landed and `carried-obligations` refuses a row due at a landed checkpoint, which is the
+            clause 4.11 added on the day this prompt was written. That is the same reasoning that
+            added 4.17 at 4.6, and 4.18 sits where 4.17 sits for the same reason. Its row says which
+            of the two ways out the order-price finding has, since one of them is a schedule change
+            and the other is a decision the operator answers, and it says none of its six may be
+            repointed. The phase signs off in a later pass on the tree that lands 4.18, on the terms
+            1.12 signed off in its third pass.
+
+            **On the two rulings the prompt put to this session.** The repoint of the claim-register
+            sweep from 4.11 to 5.1 stands: the row fell due at 4.11 and was not done, the correction
+            says so, and 5.1 is the last checkpoint before the register grows again. It is also the
+            row's third move for price, 4.1 to 4.11 to 5.1, and a due point that moves at every
+            sign-off is permanent while reading as pending, which is the reasoning that sent three
+            rows to the operator. This row has no operator to go to, so the ruling appended to it is
+            that the move stands and the next one is a checkpoint of its own rather than a fourth due
+            point. The source-scan row raised at 2.11 has moved at least as often and carries the same
+            ruling on the same terms.
+
+            **The fifteen due before the freeze are the right fifteen, and the sentence over them was
+            true of eleven.** The reading that they are phase 4's tail rather than phase 5's opening
+            holds, because 5.1's own deliverable is the freeze and an obligation due at 5.1 is due
+            before its done condition. What did not hold is "they are repairs to stored figures":
+            eleven are, being the ten repointed on 2026-08-31 with the freeze reasoning and the
+            160-observation minimum raised at 3.0(f), and four are not, being the claim-register
+            sweep, the source-scan assertions, the spread-capture population and the aftermath
+            window, which sit at 5.1 because phase 5 makes them dearer rather than uncorrectable. The
+            paragraph now states the split and names the four. A sentence true of eleven rows and
+            read as true of fifteen is the fifth failure shape in a spec, one level up from where it
+            was found in the code above.
+
+            **The obligation rows 4.13 raises are four, all due at 4.18**, and the table rises from 40
+            to 44. The eleven at the operator are untouched, and the fifteen at 5.1 are untouched.
+
+Read:       **On the first thing the prompt asked to be watched, a green report is a statement about
+            the build and never about the lab.** What phase 4 asserted against the running system:
+            `tools/nightly.ps1` refuses to dispatch from a tree that is not on `main`, proved by
+            running it and exiting 4; the status band no longer claims the schema agrees when the
+            read surface did not answer; and `slot-roster` reconciles the dispatcher, which is a file
+            in this repository and was always a subject a check could have had. What it did not and
+            could not assert: whether `data/live` was migrated after each of the eleven merges
+            carrying migrations 037 through 047, which landed across two calendar days and each of
+            which was a night at risk under the same shape RUNBOOK's "After a merge that carries a
+            migration" describes. The guard is the one 3.12 built, being that every stage refuses a
+            store whose version is not the build's, so the fault refuses rather than passing, and
+            what it costs is the night. Whether any night was lost that way is a fact about the lab,
+            read off the night logs and the live store, and this session did not open either. The
+            4.5 row already at the operator is the same question for the four slots the dispatcher
+            refused, and the reading of the migration nights belongs beside it rather than in a new
+            row.
+
+            **On the second, the fixture passes nothing through its funnel and the phase's tier is
+            honest about it.** Of the phase's 132 fixture expectations, every one is `DERIVED`, and
+            of those the 60 that belong to the trading layer, 4.16 and 4.5 through 4.11, are noughts
+            derived from the fixture's own committed cap figures rather than from a run: nought
+            candidates, so nought plans, so nought triggers, orders, fills, positions, trades and
+            losses. Under the tier decision that is a second method sharing no code with the engine,
+            and it is stated as such on every entry. What it verifies is the empty path, being that
+            each stage writes its run row, records which shape of nothing the night was, and
+            fabricates nothing on an empty night. What it does not verify is any price, any R or any
+            cap, and the corpus says where that lives: an authored case either side of every rule
+            (see: Gate boundaries are exercised by authored cases and the captured fixture is not
+            asked to do it). The two faults found above are exactly the shape that division leaves
+            open, being a rule whose authored cases were written by the session that wrote the rule
+            and sat on the side of every boundary it thought of. **The reading worth carrying is
+            about the day the fixture gains a candidate**: on that day the 60 stop being derivable
+            from the cap figure and become engine output, and a session that updates their values
+            without changing their tier has 60 `FROZEN` expectations wearing `DERIVED`. Nothing
+            guards that, and no row is raised for it, because the day is the whole-market capture
+            already priced and rowed at 3.6, and a row waiting on a purchase nobody has scheduled is
+            the shape this table is small on purpose to avoid; the 3.6 row is where the next session
+            reads it.
+
+            **Two readings that are not defects, with the reason.** The journal's
+            `SlotsTheCapsCouldNotSee` is one figure over both sides on a screen, and the pooling
+            rule would read it as a breach; it is a count of an approximation in the account-wide
+            caps, which are shared between the sides by decision, so the figure is about the account
+            and not about a result, and it stays. And two sessions read `data/live` read-only for a
+            measurement, on 2026-08-30 and at 4.4; the corpus bans checks from reaching the live
+            store and bans a build session from acting on it, and a read-only measurement recorded
+            with its population is neither, so nothing is ruled against them.
+
+Carried:    **Four raised, all due at 4.18, none discharged, none repointed.** The plan's order prices,
+            which are the screening geometry; the position manager's two faults, both run; the loss
+            boundary's population; and `pinned-constants`'s examined list with the mapping 4.15 owed.
+            The table reads 44.
+
+            **Two rulings appended to rows that stay at 5.1**: the claim-register sweep raised at
+            3.12 and the source-scan assertions raised at 2.11 may not move again for price.
+
+            **The fixture gains a permit for this checkpoint and no expectation**, on the terms 2.12,
+            3.7 and 3.15 carry, and BUILD_PLAN's sentence counting the permits reads eight.
+
+            **Nothing here is a raise of the out-of-scope ceiling and nothing moves a floor.** This
+            pass adds no test, so the count stays at 895 until 4.18 adds the two cases it is owed.
