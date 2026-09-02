@@ -11071,6 +11071,11 @@
       "checkpoint": "3.15",
       "settled": "a phase sign-off, whose whole output is a reading of what already ran",
       "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase sign-off covering 3.8 through 3.14: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, two rulings the plan asked it to take, and the document repairs those produce. The golden fixture replays the nightly pipeline, and a sign-off adds no stage to it and no behaviour to freeze: there is no figure a market day could be replayed to produce, because the checkpoint's whole output is a reading of what already ran. Its document repairs are held by stated-counts, which derives BUILD_PLAN's permit figure from this file, so the count and the sentence naming it cannot part again."
+    },
+    {
+      "checkpoint": "4.13",
+      "settled": "a phase sign-off, whose whole output is a reading of what already ran and the rows that reading raised",
+      "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase 4 sign-off, on the footing 2.12, 3.7 and 3.15 stand on: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, the authored-parameters statement its row asks for, and the obligation rows and the checkpoint the findings needed. A sign-off adds no stage to the replayed pipeline and no behaviour to freeze, so there is no figure a market day could be replayed to produce. The findings it raised are held where they are owed: 4.18 carries them, and the two the sign-off ran rather than argued are owed there as permanent tests, because the fixture's one market day plans nothing and could not exercise either."
     }
   ]
 }
