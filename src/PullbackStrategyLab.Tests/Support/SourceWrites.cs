@@ -89,7 +89,7 @@ public static partial class SourceWrites
         ArgumentNullException.ThrowIfNull(source);
 
         string text = CSharpSource.WithoutComments(source);
-        Match[] types = TypeDeclaration().Matches(text).ToArray();
+        IReadOnlyList<TypeSpan> types = TypeSpans(source, text);
         var writes = new List<SourceWrite>();
 
         void Add(int index, string table, StoreOperation operation, bool isDelete) =>
@@ -174,21 +174,115 @@ public static partial class SourceWrites
         RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex SetClause();
 
-    private static string EnclosingType(IReadOnlyList<Match> types, int index)
+    /// <summary>
+    /// The type whose braces enclose <paramref name="index"/>, innermost first.
+    ///
+    /// <b>It took the last declaration starting before the write until 4.6, and never popped.</b> A
+    /// nested type declared above a write reattributed that write to the nested type, so declaring
+    /// <c>CheckRecomputer.Arguments</c> at the top of its class moved both <c>UPDATE setup</c>
+    /// statements onto <c>Arguments</c> and turned `writer-ownership` red in both directions at once.
+    /// That is the loud direction and it was loud by luck: this corpus puts nested types last in
+    /// every file, so the only writes it had ever mis-attributed were ones SCHEMA declares for the
+    /// enclosing type. Where a file holds two components and a write sits after the second
+    /// declaration, the mis-attribution lands on a name SCHEMA does have and the check passes on the
+    /// wrong subject, which is the direction that does not announce itself.
+    /// </summary>
+    private static string EnclosingType(IReadOnlyList<TypeSpan> types, int index)
     {
         string enclosing = "(none)";
-        foreach (Match type in types)
+        int narrowest = int.MaxValue;
+
+        foreach (TypeSpan type in types)
         {
-            if (type.Index > index)
+            if (type.Start > index || type.End < index)
             {
-                break;
+                continue;
             }
 
-            enclosing = type.Groups["name"].Value;
+            // Innermost wins, which is what "enclosing" means when types nest. Measured by span
+            // width rather than by declaration order, so a partial type declared twice in one file
+            // cannot make the wider of the two look nearer.
+            int width = type.End - type.Start;
+
+            if (width < narrowest)
+            {
+                narrowest = width;
+                enclosing = type.Name;
+            }
         }
 
         return enclosing;
     }
+
+    /// <summary>
+    /// Every type declaration in one file with the span its braces cover.
+    ///
+    /// <paramref name="text"/> is the comment-blanked source the declarations are matched in, so a
+    /// type named in a comment is not read as one. The braces are counted over
+    /// <see cref="CSharpSource.WithoutCommentsOrLiterals"/> of the same source instead, because a
+    /// brace inside a string literal is a character in a query rather than a scope: this corpus puts
+    /// its SQL in raw string literals and its interpolation holes inside them. Both strings preserve
+    /// the source's offsets, so one index reads correctly in either.
+    ///
+    /// A declaration whose body never closes, which is a file that does not compile, is given a span
+    /// reaching the end of the file rather than being dropped: a write inside it is then attributed
+    /// to something rather than to <c>(none)</c>, and the compiler is the thing that should be
+    /// complaining.
+    /// </summary>
+    private static IReadOnlyList<TypeSpan> TypeSpans(string source, string text)
+    {
+        string braces = CSharpSource.WithoutCommentsOrLiterals(source);
+        Match[] declarations = TypeDeclaration().Matches(text).ToArray();
+
+        var spans = new List<TypeSpan>();
+        var open = new Stack<int>();
+        int next = 0;
+        string? pending = null;
+
+        for (int i = 0; i < braces.Length; i++)
+        {
+            while (next < declarations.Length && declarations[next].Index <= i)
+            {
+                // A declaration reached before its opening brace. Two in a row cannot happen in
+                // compiling C#, and if it did the later one is the one whose brace comes next.
+                pending = declarations[next].Groups["name"].Value;
+                next++;
+            }
+
+            if (braces[i] == '{')
+            {
+                if (pending is not null)
+                {
+                    open.Push(spans.Count);
+                    spans.Add(new TypeSpan(pending, i, braces.Length - 1));
+                    pending = null;
+                }
+                else
+                {
+                    open.Push(-1);
+                }
+
+                continue;
+            }
+
+            if (braces[i] != '}' || open.Count == 0)
+            {
+                continue;
+            }
+
+            int slot = open.Pop();
+
+            if (slot >= 0)
+            {
+                spans[slot] = spans[slot] with { End = i };
+            }
+        }
+
+        return spans;
+    }
+
+    /// <summary>A type declaration and the span of source its braces cover.</summary>
+    private sealed record TypeSpan(string Name, int Start, int End);
 }
 
 public sealed record SourceWrite(

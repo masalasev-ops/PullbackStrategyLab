@@ -285,6 +285,22 @@ So the lab records what it can observe. A plan resting in a session the store ho
 
 **The cost is bounded and is a plan that does not fire rather than one that fires on the wrong day.** Plans are immutable and single-session, so a plan carrying a holiday is not rolled forward: it finds no minutes and resolves against nothing. What that costs is the candidates of about nine evenings a year, which at a median of nought candidates a night is currently nothing and stops being nothing the moment the thresholds move.
 
+**Two of the six limits are not applied at trigger, and which two is stated rather than left to the code**
+RiskGate applies four: two count caps that can only block, being four positions open and two of those short, and two proportional caps that reduce to fit, being 35% of the account in one position and 3% of it at risk at once. The other two are limits of the strategy and not of the gate.
+
+**Risk per trade is what the plan was sized from**, so RiskGate asserts it rather than enforcing it. A plan risking more than the budget it names is a defect at 18:30, and gating it would treat a broken plan as an ordinary large one and carry the defect into a position. The stage stops on one.
+
+**The give-up distance cap is `exit-tight` at detection.** A setup whose give-up point is further than half a daily range is refused on the evening it is flagged, so a plan that reached a trigger cleared it hours before. Re-applying it at trigger would be a second implementation of a gate, and the two would disagree the day a daily range was restated between the evening and the session.
+
+It is a decision because the alternative is coherent and its failure is quiet. A gate that re-applied all six would look more careful, would pass every test written against it, and would silently refuse trades on a recomputed range while the record said the setup had passed. **And 4.6's own row said three count caps where the tables hold two**, which is how a miscount in a done condition becomes a component with a cap nobody wrote: the reconciliation is here rather than in the row that got it wrong.
+
+**A tie in trigger time is broken by ticker, and never by rank**
+Two plans touched in the same minute with one slot left have to be ordered somehow, and the corpus says outright what may not do it: rank governs which setups are recorded under the nightly cap and how the screen sorts, and it governs no fill (see: Plans are resting orders and fills go in time order when the caps bind). So the tie falls to the ticker, alphabetically, which is the tiebreak the screen and the cap already use.
+
+**It is deterministic rather than fair, and that is the property being bought.** A tie decided by whatever order a query happened to return is a fill nobody can reproduce, and a replay of the same session on a different day would place a different order. Alphabetical is arbitrary and admits it; the alternative is arbitrary and hides it.
+
+**The cost is small and is stated so nobody re-derives it later.** A minute is the finest resolution the vendor sells, so two plans in one minute is the finest tie the data can express, and at a median of nought candidates a night it has never happened. It is decided now because the first time it happens is a night nobody is watching.
+
 **One replay clock walks every name of a session at once**
 The contention rule fills the earliest trigger and blocks the later ones, so which name fired first is a comparison across names rather than a property of any one of them. A clock per name would answer each name correctly and would produce no ordering at all, leaving it to be reconstructed afterwards by whoever needed it (see: Plans are resting orders and fills go in time order when the caps bind).
 

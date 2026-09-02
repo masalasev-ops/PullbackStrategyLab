@@ -16,7 +16,23 @@ namespace PullbackStrategyLab.Tests.Support;
 /// </summary>
 public static class CSharpSource
 {
-    public static string WithoutComments(string source)
+    public static string WithoutComments(string source) => Scan(source, blankLiterals: false);
+
+    /// <summary>
+    /// The same, with the contents of every string and character literal blanked out too.
+    ///
+    /// <b>For reading the shape of the code rather than the SQL inside it.</b> Brace tracking is the
+    /// caller: a brace inside a string literal is a character in a query and not a scope, and an
+    /// interpolation hole's braces are balanced but nested inside a literal that may not be. Blanking
+    /// the whole literal makes both harmless without the tracker having to know which it was looking
+    /// at.
+    ///
+    /// Offsets and line breaks are preserved exactly as <see cref="WithoutComments"/> preserves them,
+    /// so an index into this string is the same index into the source, and a caller may hold both.
+    /// </summary>
+    public static string WithoutCommentsOrLiterals(string source) => Scan(source, blankLiterals: true);
+
+    private static string Scan(string source, bool blankLiterals)
     {
         ArgumentNullException.ThrowIfNull(source);
 
@@ -32,7 +48,7 @@ public static class CSharpSource
             {
                 int fence = Run(source, i, '"');
                 int end = FindRawStringEnd(source, i + fence, fence);
-                output.Append(source, i, end - i);
+                Emit(output, source, i, end, blankLiterals);
                 i = end;
                 continue;
             }
@@ -40,7 +56,7 @@ public static class CSharpSource
             if (c == '@' && i + 1 < source.Length && source[i + 1] == '"')
             {
                 int end = FindVerbatimStringEnd(source, i + 2);
-                output.Append(source, i, end - i);
+                Emit(output, source, i, end, blankLiterals);
                 i = end;
                 continue;
             }
@@ -48,7 +64,7 @@ public static class CSharpSource
             if (c is '"' or '\'')
             {
                 int end = FindSimpleLiteralEnd(source, i + 1, c);
-                output.Append(source, i, end - i);
+                Emit(output, source, i, end, blankLiterals);
                 i = end;
                 continue;
             }
@@ -68,7 +84,7 @@ public static class CSharpSource
             {
                 while (i < source.Length && !(source[i] == '*' && i + 1 < source.Length && source[i + 1] == '/'))
                 {
-                    output.Append(source[i] is '\r' or '\n' ? source[i] : ' ');
+                    output.Append(char.IsControl(source[i]) ? source[i] : ' ');
                     i++;
                 }
 
@@ -86,6 +102,27 @@ public static class CSharpSource
         }
 
         return output.ToString();
+    }
+
+    /// <summary>
+    /// A literal, either verbatim or blanked to spaces with its control characters kept.
+    ///
+    /// The line breaks survive, along with the tabs beside them, because a caller counting lines over
+    /// this string has to arrive at the same line number it would over the source, and a raw string in
+    /// this corpus spans twenty lines.
+    /// </summary>
+    private static void Emit(StringBuilder output, string source, int from, int to, bool blank)
+    {
+        if (!blank)
+        {
+            output.Append(source, from, to - from);
+            return;
+        }
+
+        for (int i = from; i < to; i++)
+        {
+            output.Append(char.IsControl(source[i]) ? source[i] : ' ');
+        }
     }
 
     private static int Run(string source, int start, char c)

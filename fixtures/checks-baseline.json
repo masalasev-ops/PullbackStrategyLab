@@ -200,7 +200,17 @@
         "BUILD_PLAN.md, 3.6 and 4.4, the clause record the short seam is read from": 1,
         "ARCHITECTURE.html, data budget, minute bars, cost": 1,
         "ARCHITECTURE.html, data budget, spread snapshots, cost": 1,
-        "ARCHITECTURE.html, data budget, spread snapshots, calls a night": 1
+        "ARCHITECTURE.html, data budget, spread snapshots, calls a night": 1,
+        "ARCHITECTURE.html, the limits, risk per trade": 1,
+        "ARCHITECTURE.html, authored parameters, Risk per trade": 1,
+        "ARCHITECTURE.html, the limits, give-up distance": 1,
+        "ARCHITECTURE.html, the limits, position size": 1,
+        "ARCHITECTURE.html, authored parameters, Position cap": 1,
+        "ARCHITECTURE.html, the limits, open at once": 1,
+        "ARCHITECTURE.html, the limits, open short positions": 1,
+        "ARCHITECTURE.html, authored parameters, Concurrent positions": 1,
+        "ARCHITECTURE.html, the limits, total risk at stake": 1,
+        "ARCHITECTURE.html, authored parameters, Total risk at stake": 1
       }
     },
     "point-in-time": {
@@ -222,7 +232,8 @@
     "price-storage-form": {
       "scopes": {
         "tables declared across them": 23,
-        "column declarations checked for REAL affinity": 162
+        "column declarations checked for REAL affinity": 162,
+        "of those added by ALTER TABLE rather than declared at creation": 16
       },
       "context": [
         "migration files read"
@@ -277,11 +288,11 @@
         "BUILD_PLAN.md, the frozen-only permits the fixture holds": 1,
         "BUILD_PLAN.md, the frozen-only permits still resting on an open obligation": 1,
         "BUILD_PLAN.md, the times the first run after 4.1 turns red": 1,
-        "BUILD_PLAN.md, the carried obligations table's own total, stated again at 4.6": 1,
-        "BUILD_PLAN.md, the obligations due at 4.6, stated in its opening sentence": 1,
-        "BUILD_PLAN.md, the obligations due at 4.6, stated in its heading": 1,
-        "BUILD_PLAN.md, the three groups the 4.6 pile is classified into": 1,
-        "BUILD_PLAN.md, the three groups add up to the 4.6 pile they classify": 1,
+        "BUILD_PLAN.md, the carried obligations table's own total, stated again at 4.17": 1,
+        "BUILD_PLAN.md, the obligations due at 4.17, stated in its opening sentence": 1,
+        "BUILD_PLAN.md, the obligations due at 4.17, stated in its heading": 1,
+        "BUILD_PLAN.md, the three groups the 4.17 pile is classified into": 1,
+        "BUILD_PLAN.md, the three groups add up to the 4.17 pile they classify": 1,
         "BUILD_PLAN.md, phase 4's checkpoint count": 1
       }
     },
@@ -311,11 +322,24 @@
         "stores a migration has created": 27,
         "writes found in the shipped source": 37,
         "declared writers whose store and component both exist": 34,
-        "operations with more than one writer, where SCHEMA states the disjointness": 6
+        "operations with more than one writer, where SCHEMA states the disjointness": 6,
+        "tables whose columns SCHEMA declares and a built store confirms": 34,
+        "column declarations reconciled against the store, both ways": 325,
+        "tables declared by shape rather than by a column table of their own": 3
       },
       "context": [
         "source files read for store writes",
         "types declared in the shipped source"
+      ]
+    },
+    "order-provenance": {
+      "scopes": {
+        "writes against the order tables in the shipped source": 1,
+        "order rows read back and asked who wrote them": 5,
+        "runs of the risk gate the store records": 1
+      },
+      "context": [
+        "shipped source files read for store writes"
       ]
     }
   }

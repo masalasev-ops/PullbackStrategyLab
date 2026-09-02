@@ -29,7 +29,7 @@ param(
     # four stages built between 4.1 and 4.4 could not be dispatched at all.
     [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
                  'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
-                 'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'forward', 'scoreboard',
+                 'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'forward', 'scoreboard',
                  'ceiling', 'snapshot')]
     [string]$Slot,
 
@@ -104,6 +104,10 @@ $slots = @{
     # session with plans resting in it and no minutes is a night the lab was blind on, and the run
     # row says partial rather than clean.
     'resolve'    = @(, @('resolve-triggers'))
+    # 21:10, over the triggers the replay recorded. It applies the caps in the order the
+    # triggers happened, so a full book blocks the later ones, and it writes a row for every
+    # refusal: a blocked order is evidence about the caps rather than an absence of evidence.
+    'orders'     = @(, @('orders'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))

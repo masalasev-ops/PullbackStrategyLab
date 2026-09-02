@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 
@@ -16,6 +18,13 @@ namespace PullbackStrategyLab.Tests;
 /// `UPDATE` against a detector-owned column exists in the shipped source, so a component added later
 /// cannot quietly acquire the ability. And the journal notices at runtime what CI cannot see, being
 /// a column written out of order on a live night.
+///
+/// <b>Two of the four were claimed here and held nowhere, from 3.5 until 4.6.</b> This file carried
+/// both source scans and neither behavioural half: the equivalents existed for `setup_signal`, which
+/// is the pattern the paragraph above says it copies, and the sentence read as though they existed
+/// for `setup` too. The property did hold the whole time, because both detectors insert
+/// `ON CONFLICT (setup_id) DO NOTHING`, so what was missing was the assertion and not the behaviour.
+/// That is the shape this corpus keeps finding one level up: a claim that is true, made by nothing.
 ///
 /// The columns that are legitimately written after the row exists are named here rather than
 /// inferred: SCHEMA declares SetupCapper on `rank` and `capped_out`, LabSetups on `agreement` and
@@ -179,6 +188,87 @@ public sealed partial class SetupJournalTests
         Assert.True(written.Count > 0,
             "No updated columns were found at all, which means the assignment pattern stopped "
             + "matching and this test is asserting over an empty set.");
+    }
+
+
+    /// <summary>
+    /// A night detected twice writes nothing the second time, even where the second run would
+    /// compute different figures.
+    ///
+    /// <b>The bar is changed between the runs, and that is the whole of the test.</b> "The rerun
+    /// wrote nothing" is satisfied by a rerun that had nothing to write, so the store is altered so
+    /// that a detector recomputing the night would produce a different row. The row it wrote first
+    /// is the row that stands.
+    /// see: The plan is written before the session and is immutable after publication
+    /// </summary>
+    [Fact]
+    public void A_night_detected_twice_keeps_the_row_the_first_run_wrote()
+    {
+        using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
+        replay.Run();
+
+        IReadOnlyList<StoredSetup> first = SetupsOf(replay);
+        Assert.NotEmpty(first);
+
+        // A different close on every name of the flagged session, so a recomputed geometry would
+        // differ from the stored one wherever the detector reached this far.
+        using (SqliteConnection write = replay.OpenWrite())
+        {
+            using SqliteCommand shift = write.CreateCommand();
+            shift.CommandText = """
+                UPDATE daily_bar SET close = CAST(CAST(close AS REAL) * 1.11 AS TEXT)
+                 WHERE bar_date = @as_of
+                """;
+            shift.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(replay.AsOf));
+            Assert.True(shift.ExecuteNonQuery() > 0, "No bars of the flagged session to shift.");
+        }
+
+        replay.DetectLong();
+        replay.DetectShort();
+
+        IReadOnlyList<StoredSetup> second = SetupsOf(replay);
+
+        Assert.Equal(first.Count, second.Count);
+        Assert.Equal(
+            first.Select(s => $"{s.SetupId}/{s.TriggerPrice}/{s.StopPrice}/{s.PassedAll}").Order(StringComparer.Ordinal),
+            second.Select(s => $"{s.SetupId}/{s.TriggerPrice}/{s.StopPrice}/{s.PassedAll}").Order(StringComparer.Ordinal));
+    }
+
+    /// <summary>
+    /// The store's own key refuses a second row for one setup, so the property does not rest on the
+    /// detector remembering to check.
+    ///
+    /// The detectors write with a conflict clause, which is what makes a rerun quiet. This asserts
+    /// the layer underneath it: an insert with no such clause is refused by the store, so a component
+    /// added later cannot write a second row for a setup by forgetting one.
+    /// </summary>
+    [Fact]
+    public void The_key_refuses_a_second_row_for_one_setup()
+    {
+        using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
+        replay.Run();
+
+        StoredSetup existing = SetupsOf(replay)[0];
+
+        using SqliteConnection write = replay.OpenWrite();
+        using SqliteCommand second = write.CreateCommand();
+        second.CommandText = """
+            INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all, capped_out)
+            VALUES (@id, @as_of, @ticker, @direction, '[]', 0, NULL);
+            """;
+        second.Parameters.AddWithValue("@id", existing.SetupId);
+        second.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(existing.AsOf));
+        second.Parameters.AddWithValue("@ticker", existing.Ticker);
+        second.Parameters.AddWithValue("@direction", existing.Direction);
+
+        SqliteException thrown = Assert.Throws<SqliteException>(() => second.ExecuteNonQuery());
+        Assert.Contains("UNIQUE", thrown.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<StoredSetup> SetupsOf(PhaseReplay replay)
+    {
+        using SqliteConnection read = replay.OpenStore();
+        return SetupReader.Read(read, replay.AsOf);
     }
 
     // The SET clause alone, from `UPDATE setup ... SET` to the `WHERE` that ends it.

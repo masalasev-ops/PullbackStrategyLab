@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Core.Measurement;
@@ -209,6 +210,49 @@ public sealed class PinnedConstantsCheck
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Market cap floor, short",
             ParameterMoney(architecture, "Market cap floor, short"), ShortPullbackRules.MarketCapFloor,
             "ShortPullbackRules.MarketCapFloor"));
+        // The six limits, stated in two tables of ARCHITECTURE and held nowhere until 4.6. "The
+        // limits" states them in plain terms and the authored-parameters table states them again with
+        // their family, and the code held only the two PositionSizing needs. Both tables are read, so
+        // the two statements of one number cannot drift from each other or from the component that
+        // applies them.
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, risk per trade",
+            LimitCell(architecture, "Risk per trade").Contains("0.75% of equity, so $750", StringComparison.Ordinal),
+            PositionSizing.RiskPerTrade == 0.0075m && PositionSizing.RiskBudget == 750m,
+            "PositionSizing.RiskPerTrade and RiskBudget"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Risk per trade",
+            ParameterCell(architecture, "Risk per trade").Contains("0.75% of equity", StringComparison.Ordinal),
+            PositionSizing.RiskPerTrade == 0.0075m, "PositionSizing.RiskPerTrade"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, give-up distance",
+            LimitCell(architecture, "Give-up distance").Contains("At most half the daily range", StringComparison.Ordinal),
+            RiskCaps.GiveUpDistanceRanges == 0.5m && LongPullbackRules.GiveUpRanges == RiskCaps.GiveUpDistanceRanges,
+            "RiskCaps.GiveUpDistanceRanges against the detector's own GiveUpRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Give-up distance cap",
+            ParameterCell(architecture, "Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
+            RiskCaps.GiveUpDistanceRanges == 0.5m, "RiskCaps.GiveUpDistanceRanges"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, position size",
+            LimitCell(architecture, "Position size").Contains("At most 35% of the account", StringComparison.Ordinal),
+            RiskCaps.MaxPositionFraction == 0.35m, "RiskCaps.MaxPositionFraction"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Position cap",
+            ParameterCell(architecture, "Position cap").Contains("35% of equity", StringComparison.Ordinal),
+            RiskCaps.MaxPositionFraction == 0.35m, "RiskCaps.MaxPositionFraction"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, open at once",
+            LimitCell(architecture, "Open at once").Contains("4 positions", StringComparison.Ordinal),
+            RiskCaps.MaxOpenPositions == 4, "RiskCaps.MaxOpenPositions"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, open short positions",
+            LimitCell(architecture, "Open short positions").Contains("2 of those 4", StringComparison.Ordinal),
+            RiskCaps.MaxOpenShortPositions == 2 && RiskCaps.MaxOpenPositions == 4,
+            "RiskCaps.MaxOpenShortPositions inside MaxOpenPositions"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Concurrent positions",
+            ParameterCell(architecture, "Concurrent positions").Contains("4, of which at most 2 short", StringComparison.Ordinal),
+            RiskCaps.MaxOpenPositions == 4 && RiskCaps.MaxOpenShortPositions == 2,
+            "RiskCaps.MaxOpenPositions and MaxOpenShortPositions"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the limits, total risk at stake",
+            LimitCell(architecture, "Total risk at stake").Contains("3% of the account", StringComparison.Ordinal),
+            RiskCaps.MaxTotalRiskFraction == 0.03m, "RiskCaps.MaxTotalRiskFraction"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Total risk at stake",
+            ParameterCell(architecture, "Total risk at stake").Contains("3% of equity", StringComparison.Ordinal),
+            RiskCaps.MaxTotalRiskFraction == 0.03m, "RiskCaps.MaxTotalRiskFraction"));
+
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Listing age floor, short",
             ParameterCell(architecture, "Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
             ShortPullbackRules.MinimumSessionsListed == 90, "ShortPullbackRules.MinimumSessionsListed"));
@@ -452,6 +496,11 @@ public sealed class PinnedConstantsCheck
     private static string BudgetCell(string architecture, string job, int column) =>
         HtmlTable.BodyRowsUnder(architecture, "Data budget")
             .Single(r => r[0].StartsWith(job, StringComparison.Ordinal))[column].Trim();
+
+    /// <summary>A row of "The limits", which states the same six numbers in plain terms.</summary>
+    private static string LimitCell(string architecture, string limit) =>
+        HtmlTable.BodyRowsUnder(architecture, "The limits")
+            .Single(r => r[0].StartsWith(limit, StringComparison.Ordinal))[1];
 
     private static string ParameterCell(string architecture, string parameter) =>
         HtmlTable.BodyRowsUnder(architecture, "Authored parameters")

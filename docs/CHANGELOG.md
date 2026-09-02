@@ -1669,3 +1669,33 @@ Why:  The holiday question fell due at 4.5 and is answered by the decision it ci
 Was:  The Checks roster ran from `slot-diagnostics` straight to `clock-usage`, with no check over what the night's dispatcher can dispatch.
 Now:  A `slot-roster` row: the night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction.
 Why:  Four lists said what the lab runs and none was reconciled against another. The dispatcher's `ValidateSet` held eighteen names while its slot table held twenty-two, so four stages built between 4.1 and 4.4 could not be dispatched at all, and `plans` was in neither list, so the stage built at 4.16 was scheduled by this corpus and run by nothing. `tools/ci.*` was green and the phase report was GREEN throughout, because the dispatcher was a file in this repository that no check had as a subject.
+
+### 2026-09-01 — SCHEMA.md — cites RiskGate is the sole writer of orders, for both directions and every version
+Was:  `| `order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |`, with no `order_run` and no column table for either.
+Now:  `trade_order` and `order_run` declared, with a column table for the first and a section of its own for the three run rows of the trading night.
+Why:  Built at 4.6. The rename is the substantive half: `order` is a reserved word in SQLite, so every statement would carry quotes and one unquoted use would be a syntax error found at runtime, and every parser in the verification harness reads an unquoted identifier after `CREATE TABLE` or `INSERT INTO`. A quoted table is one `writer-ownership`, `bar-append-only`, `price-storage-form` and `point-in-time` are all blind to at once, and a store nothing scans is the shape this corpus keeps finding.
+
+### 2026-09-01 — SCHEMA.md — cites Data ownership is declared once, in SCHEMA.md
+Was:  `Same shape as `setup`, in a separate table that no downstream component reads.` for `calibration_setup`; `Same shape as `control_setup` and pointed at `calibration_setup` by its foreign key,` for its controls; `Same shape and the same terms as `daily_bar`:` for `index_bar`. `regime_daily`, `control_setup`, `ceiling_bound` and `scoreboard` each omitted a column the store holds, and six phase-4 tables had no column declaration at all.
+Now:  A `Shape of `table`: same as `other`` line on each of the three, with the six-column divergence of `calibration_setup` and the one renamed column of `index_bar` stated. The five missing columns declared, and column tables for `plan_run`, `trigger_run` and `order_run`.
+Why:  Nothing read SCHEMA's column tables until 4.6, and five columns were already missing when the 3.7 sign-off measured it, one of them since 2.5. `writer-ownership` now reconciles them against a store built by running every migration, in both directions, so the sixth cannot arrive unnoticed. The sameness claims had to be made exact first: "same shape as `setup`" was six columns wrong, and a claim of sameness that is false is worse than none, because it passes.
+
+### 2026-09-01 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  `| `order-provenance` | 4.6 | No order row exists whose writer was not RiskGate |`
+Now:  `| `order-provenance` | every CI run | No order row exists whose writer was not RiskGate, asserted over the shipped source and over rows the gate wrote and a row it did not |`
+Why:  It runs from 4.6. The wording gains what the check actually does, which is two halves: a scan cannot see a row that arrived some other way, so the behavioural half writes one outside every run of the gate and requires the predicate to reject it.
+
+### 2026-09-01 — ARCHITECTURE.html — cites Two of the six limits are not applied at trigger, and which two is stated rather than left to the code
+Was:  `<b>One piece of code applies every limit and blocks anything over them.</b>`, with no statement of which limits the component applies, and a contention paragraph that said rank governs no fill and did not say what orders a tie.
+Now:  The gloss says four of the six are applied here and names the other two with their reasons; the contention paragraph says a tie in trigger time falls to the ticker; the limits table's give-up row says it is applied at detection.
+Why:  4.6 built the component and found the row's own arithmetic wrong: it said three count caps and both tables hold two. A document that says "every limit" while the component applies four is a claim a later session would either implement or contradict, and neither would be visible.
+
+### 2026-09-01 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  A phase of sixteen checkpoints; an obligations table of 59 rows with nineteen due at 4.6; and a section headed "What the nineteen due at 4.6 are" classifying them into three groups, which said every row would be read in full at 4.14 and the three counts reconciled there.
+Now:  Seventeen checkpoints, with 4.17 holding the thirteen verification defects. 55 rows, six discharged and two raised. The 4.6 section is a record of what the pile was and what happened to it, and a new section classifies the thirteen at 4.17.
+Why:  4.14 landed as a document pass and did not read the rows, so the promise was made by a checkpoint that shipped without keeping it and nothing said so. 4.6 discharged the seven whose subject was its own and ruled on the rest once, with the whole table in front of it, which is what its done condition asked for. The thirteen have one subject between them, so they are a checkpoint rather than thirteen repointings.
+
+### 2026-09-01 — RUNBOOK.md — cites RiskGate is the sole writer of orders, for both directions and every version
+Was:  `| 21:15 | fills, positions | 0 |` with no slot for the caps.
+Now:  A 21:10 row naming `orders`, saying it spends no vendor call and that every refusal is a row with the cap that bound and what that cap saw.
+Why:  Built at 4.6. The reason is on the row because it is the one thing about this stage an operator would otherwise get wrong: a night on which three setups triggered into one free slot is evidence about the caps and reads as a quiet night unless the refusals are stored.

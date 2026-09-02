@@ -10850,3 +10850,145 @@ Carried:    **One raised, one discharged and one repointed, so the obligations t
             **The fix is in and the damage is not**, which is why the row exists at all. The two
             spread passes are the unrecoverable half, because a quote has no history to buy back; the
             session averages can be recomputed from stored minutes any evening after.
+
+## 4.6 — 2026-09-01 — phase-4-risk-gate — the caps applied in the order the triggers happened, and the nineteen that had piled up behind them
+
+Built:      **`RiskGate`, with `RiskCaps` and `RiskLimits` in Core, migration 042 and
+            `TradeOrderReader`.** The gate reads the session's touched resolutions in the order they
+            happened, applies the caps to each in turn, and writes a row for every one: placed,
+            reduced or blocked. Each placed order changes the book the next one faces, which is what
+            the contention rule is.
+
+            **A blocked order is a row and never an absence**, because the caps are as much the
+            subject of this lab as the rules are. A night on which three setups triggered into one
+            free slot is evidence about the caps and is indistinguishable from a quiet night unless
+            the refusals are stored. The run row counts them by cap rather than as one total, on the
+            ruling PlanBuilder took over its three refusal reasons.
+
+            **The plan's size arrives and leaves reduced, blocked or unchanged, and nothing here
+            divides a risk budget by a distance.** `planned_shares` sits beside `shares` so a
+            reduction cannot leave the plan and the order agreeing about a number the caps changed,
+            which is exactly the pair `plan_audit` compares at 4.9. No give-up price is copied, which
+            is the decision rather than an omission: a reduction keeps the plan's, so there is one
+            give-up price for a trade and R does not depend on which row a reader opened
+            (see: The plan carries its own size, and RiskGate reduces or blocks it but never
+            recomputes it).
+
+Decided:    **Two of the six limits are not applied at trigger, and which two is stated rather than
+            left to the code.** The gate applies four: two count caps that can only block, and two
+            proportional caps that reduce to fit and block only where the fit is under one share.
+            Risk per trade is what the plan was sized from, so it is asserted and a plan over its own
+            budget stops the stage. The give-up distance cap is `exit-tight` at detection, so a plan
+            that reached a trigger cleared it hours before, and re-applying it would be a second
+            implementation of a gate that would disagree with the first the day a daily range was
+            restated between the evening and the session.
+
+            **4.6's own row said three count caps and both tables hold two**, which is how a miscount
+            in a done condition becomes a component with a cap nobody wrote. The reconciliation is in
+            the decision and in `RiskCaps`, and a test names the four sets so a cap added later has to
+            be classified rather than appearing in one of them by accident.
+
+            **A tie in trigger time is broken by ticker, and never by rank.** The corpus says outright
+            that rank governs no fill, so something else has to order two plans touched in one minute
+            with one slot left. Alphabetical is arbitrary and admits it; a tie left to whatever order
+            a query returned is a fill nobody can reproduce, and a replay of the same session would
+            place a different order on a different day.
+
+Built:      **`order-provenance`, which is `writer-ownership`'s missing behavioural half.** The scan
+            asserts that one type in the shipped source writes `trade_order` and that it is RiskGate.
+            The behavioural half runs the gate over an authored session of five triggers against four
+            slots, reads every row back, and asks of each whether a run of that stage was open when it
+            was written. Its proof writes a row outside every run and requires the predicate to reject
+            it, and requires the gate's own rows to still be accepted, because a guard that rejects
+            its own subject is as dead as one that accepts anything.
+
+Corrected:  **The table is `trade_order` and not `order`, which SCHEMA declared since the phase was
+            planned.** `order` is a reserved word in SQLite, so every statement would carry quotes and
+            one unquoted use would be a syntax error found at runtime. The half that decided it is
+            that every parser in this suite reads an unquoted identifier after `CREATE TABLE` or
+            `INSERT INTO`: `writer-ownership`, `bar-append-only`, `price-storage-form` and
+            `point-in-time` would all have been blind to it at once. A store nothing scans is the
+            shape this corpus keeps finding and it is not worth buying with a name.
+            `writer-ownership` now refuses a quoted table name outright, so the next one fails rather
+            than disappearing.
+
+Found:      **The count caps see only the session being walked, and the direction of the error is the
+            one that flatters.** A position is PaperBroker's row and arrives at 4.7, so what the gate
+            can count today is what it placed inside one session: a position held overnight occupies
+            no slot the next morning. That makes the caps looser than the design rather than tighter,
+            so the lab will report trades the design would have refused. Rowed rather than noted, due
+            at 4.7.
+
+            **And the position-size cap is applied at the plan's trigger price, where the fill is a
+            whole spread worse.** The gate has no fill price, because the fill is PaperBroker's and
+            happens after it. The size of the overshoot is measured rather than assumed small: the 4.3
+            capture found spreads from 0.9 basis points to 41, so a position at the cap is between
+            about 0.003% and 0.14% of the account over it once filled. Also rowed at 4.7.
+
+Discharged: **Six of the nineteen obligations due here, and the seventh in the half 4.6 owes.**
+            `writer-ownership` now tracks braces, so a write is attributed to the type whose braces
+            enclose it: the old reading took the last declaration above the statement and never
+            popped, and the shape that does not announce itself is a file holding two components where
+            the mis-attribution lands on a name SCHEMA does have. `price-storage-form` parses
+            `ALTER TABLE ADD COLUMN`, which is where sixteen columns had been arriving unread since
+            3.7. `foreign_key_check` runs inside the migration's own transaction, so a rebuild that
+            would orphan a row is rolled back rather than reported after the commit, and the proof
+            authors an orphan rather than waiting for one.
+
+            **SCHEMA's column tables are reconciled against a built store, in both directions.**
+            Every column the store holds is declared and every column declared is in the store, over
+            34 tables and 325 columns. It found the five the 3.7 sign-off had measured, and it found
+            six phase-4 tables that no section described at all, which is the shape a column arrives
+            unnoticed through: not a column missing from a table SCHEMA describes, but a whole table
+            nobody described. **`calibration_setup` states its six-column divergence from `setup`**
+            rather than claiming sameness, which is what a reconciliation would have read as licence
+            to skip it. And `SetupJournalTests` holds the two behavioural halves it had claimed since
+            3.5: a night detected twice keeps the row the first run wrote, asserted with the bars
+            shifted between the runs so the rerun would compute something different, and the key
+            refuses a second row.
+
+Ruled:      **The thirteen that remain move together, to a new checkpoint 4.17.** Every one is a
+            verification or record defect with no natural owner among the checkpoints phase 4 has
+            left: 4.7 to 4.12 build execution machinery and a page, and 4.13 is a sign-off that may
+            not commit code. Repointing them one at a time to the next checkpoint that plausibly cares
+            is exactly what put all nineteen at 4.6, so they go to a checkpoint whose deliverable is
+            that pile and nothing else. **That is the decision this row's done condition asked for**,
+            taken once with the whole table in front of it rather than once per row by whoever was
+            closest to each.
+
+            **The 4.6 classification section is now a record and its four registered counts moved to
+            the 4.17 one**, on the shape the 4.1 section took when it emptied: a count in a section
+            with nothing left to count is a sentence written to keep a claim passing. The new section
+            is registered in the commit that creates it, which is the second time that has been done
+            before the previous pile emptied and is now the pattern rather than a precaution.
+
+Verified:   `tools/ci.ps1` green at 30 steps and **765 tests**, from 740. Twenty of them are
+            `RiskGateTests`, two are `order-provenance` and its proof, two are the immutability halves
+            `SetupJournalTests` had claimed since 3.5, and one is the migration rollback.
+
+            **Four DERIVED expectations, predicted before the replay was run and every prediction
+            held**, and every one of them is nought. Derived from the fixture's own committed figures:
+            `triggers.touched` is nought because `triggers.plans` is, because `plans.planned` is, so an
+            empty set of touched resolutions fixes all four without running the stage. The run is clean
+            and says why, because no trigger is not the same fact as no order.
+
+            Three existing expectations moved and each moved for a stated reason:
+            `store.schemaVersion` 41 to 42 by migration 042, and `runlog.distinctStages` 24 to 25 with
+            `runlog.entries` 29 to 30 by a stage joining the replayed night.
+
+            **Three guards fired on this checkpoint's own work and all three were paid.**
+            `point-in-time` refused `TradeOrderReader`'s provenance read for not bounding its stamp,
+            and the exemption is by name with the reason: the question is about the whole store rather
+            than about what a session could have known, and a bound would let a row written outside a
+            run scope hide behind it, which is the one fault the read exists to find.
+            `carried-obligations` refused the 4.6 due points until this entry existed, which is the
+            mechanism working. And `coverage-reported` refused its own deferral to 4.6, which was
+            **wrong rather than merely stale**: it said `order-provenance` would close the three scans
+            written outside a check, and order-provenance is the behavioural form of
+            `writer-ownership`'s attribution scan, which is a different absence. It moved to 4.17 with
+            the rest of the 2.11 row.
+
+Carried:    **Six discharged and two raised, so the obligations table falls from 59 to 55.** The two
+            raised are the session-only book and the cap applied before the fill, both due at 4.7 and
+            both about the same seam. Thirteen now fall due at 4.17 and none at 4.6. The operator's
+            eleven are untouched.
