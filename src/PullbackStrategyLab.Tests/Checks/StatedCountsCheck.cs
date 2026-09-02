@@ -113,6 +113,31 @@ public sealed partial class StatedCountsCheck
         RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex CorrectionsClassificationHeading();
 
+    /// <summary>
+    /// The mark a carried obligation row carries when it is one of the phase 5 questions.
+    ///
+    /// A mark rather than a pattern over the prose, because the thing being counted is not visible
+    /// in the sentence: a question and a repair read alike, and the reading beside the operator's
+    /// table used to state how many rows block a checkpoint, which no derivation survives. A blocks
+    /// cell naming the row it is a twin of looks exactly like one naming a checkpoint it stops.
+    /// </summary>
+    [GeneratedRegex(@"\*\*Question \d of the phase 5 sitting", RegexOptions.CultureInvariant)]
+    private static partial Regex PhaseFiveQuestion();
+
+    /// <summary>The same mark at the head of the operator table's own cell, which is the other half
+    /// of the reconciliation: a question that leaves one table has to leave the other.</summary>
+    [GeneratedRegex(@"^Question \d\.", RegexOptions.CultureInvariant)]
+    private static partial Regex MarkedQuestion();
+
+    /// <summary>
+    /// The ruling half of a question whose row was split in two, counted from the sentence that
+    /// names what it was split from rather than from the sentence that states how many were split.
+    /// The work halves say "on the rule four rows took", which holds the figure being asserted, and
+    /// a claim reading its own subject's statement of itself asserts nothing.
+    /// </summary>
+    [GeneratedRegex(@"Split on 2026-09-02 from the row raised at", RegexOptions.CultureInvariant)]
+    private static partial Regex SplitQuestionRow();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -253,15 +278,26 @@ public sealed partial class StatedCountsCheck
             + "its rows discharged and thirteen repointed. Either a row was repointed there after the fact, or "
             + "the ruling did not happen.");
 
-        // BUILD_PLAN.md, the obligations due before the freeze, stated four times in two places.
+        // BUILD_PLAN.md, the obligations due before the freeze, stated three times in three places.
         //
         // Found stale at 4.7, by one. The paragraph and the 5.1 row both read "ten" while eleven rows
         // carried 5.1 as their due point, and the sentence says outright that they are the rows in
         // the table with 5.1 as their due point, so the figure was derivable the whole time and
         // nothing derived it. Every occurrence is asserted rather than the first, because a count
-        // stated four times is four places to forget.
+        // stated in three places is three places to forget.
+        //
+        // <b>The basis is three checkpoints from the phase 5 planning pass of 2026-09-02, and it was
+        // one until then.</b> The property this figure holds is "due before the baseline is frozen",
+        // and that was the same set as "due at 5.1" only while 5.1 was the first checkpoint of its
+        // phase. The plan now opens phase 5 at 5.0 and holds the repairs at 5.8, both of which land
+        // before the freeze, so a derivation keyed on 5.1 alone would have read nought against a
+        // stated seventeen and the count would have looked wrong when the basis was. Keyed on the
+        // set rather than on the one identifier, which is what the sentence beside it has always
+        // meant: 5.1's own deliverable is the freeze, so an obligation due before it is due before
+        // that done condition rather than alongside it.
+        string[] beforeTheFreeze = ["5.0", "5.8", "5.1"];
         int dueBeforeTheFreeze = obligations.Count(
-            r => r.Count > 2 && r[2].Trim().Equals("5.1", StringComparison.Ordinal));
+            r => r.Count > 2 && beforeTheFreeze.Contains(r[2].Trim(), StringComparer.Ordinal));
 
         MatchCollection freezeCounts = FreezeObligationCount().Matches(buildPlan);
 
@@ -348,6 +384,53 @@ public sealed partial class StatedCountsCheck
             operatorQuestions.Count,
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at the operator"));
+
+        // BUILD_PLAN.md, phase 5's own figures, registered by the planning pass that wrote them.
+        //
+        // Registered in the commit that states them rather than after the first one goes stale,
+        // which is the lesson the operator's heading and the permit sentence above both cost.
+        //
+        // <b>The nine questions are counted from a marker rather than from a pattern over prose.</b>
+        // The reading beside the operator's table used to state how many rows block a checkpoint,
+        // and no derivation of that survives contact with the cells: a blocks column naming the row
+        // it is a twin of reads the same as one naming a checkpoint it stops. So the register carries
+        // an explicit mark, "Question N of the phase 5 sitting" in the obligations table and
+        // "Question N." at the head of the operator table's own cell, and the two are reconciled
+        // against each other. A count nobody can derive is a count this registry declines rather than
+        // one it approximates.
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, phase 5's row count",
+            InWords(buildPlan, "The phase is ", " rows"),
+            MarkdownTable.BodyRowsAfter(buildPlan, "## Phase 5 — Variants, without any AI").Count,
+            "rows of the phase 5 table"));
+
+        int questionRows = PhaseFiveQuestion().Matches(buildPlan).Count;
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 5 questions against the operator's table",
+            questionRows,
+            operatorQuestions.Count(r => r.Count > 1 && MarkedQuestion().IsMatch(r[1])),
+            "rows of the operator's table marked as a phase 5 question"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 5 questions the operator's reading states",
+            InWords(buildPlan, "is now phase 5's: **", " of the eighteen rows are the questions**"),
+            questionRows,
+            "rows of the carried obligations table marked as a phase 5 question"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations 5.8 holds",
+            InWords(buildPlan, "**The repair pile**, being ", " of the seventeen"),
+            obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.8", StringComparison.Ordinal)),
+            "rows of the carried obligations table falling due at 5.8"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the obligations 5.0 holds",
+            InWords(buildPlan, "The other ", " fall due at 5.0"),
+            obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.0", StringComparison.Ordinal)),
+            "rows of the carried obligations table falling due at 5.0"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the question rows split in two",
+            InWords(buildPlan, "**Of the seventeen, ", " are two rows each"),
+            SplitQuestionRow().Matches(buildPlan).Count,
+            "obligation rows carrying the ruling half of a split question"));
 
         // BUILD_PLAN.md, the frozen-only permits, derived from the fixture rather than from the prose.
         //
