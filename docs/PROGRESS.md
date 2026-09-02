@@ -10976,6 +10976,23 @@ Verified:   `tools/ci.ps1` green at 30 steps and **765 tests**, from 740. Twenty
             `store.schemaVersion` 41 to 42 by migration 042, and `runlog.distinctStages` 24 to 25 with
             `runlog.entries` 29 to 30 by a stage joining the replayed night.
 
+            `tools/verify-phase.ps1` GREEN: **129 claims, 96 passed, 0 failed, 33 out of scope, 0
+            unexamined**, coverage examined **6,412**, **1,410 expectations** of which 1 is void,
+            inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0. Read on
+            a clean tree at `60d0766`, which carries every edit this checkpoint makes; the block you
+            are reading lands in the next commit.
+
+            **Out of scope falls from 41 to 33 and passed rises from 88 to 96, over the same 129
+            claims.** Eight come into scope with RiskGate: its catalogue row, the six rows of the
+            limits table, and the failure-behaviour row for a blocked order. **Seven of those eight
+            were unexamined on the first report of this checkpoint and are asserted on the second**,
+            which is the state the corpus counts as a defect rather than as progress: a claim this
+            phase should have been able to assert and could not. The limits rows now read the
+            document's own cell against the constant that holds it and against the code that applies
+            it, so a cap stated and not applied fails; the blocked-order row reads migration 042's
+            constraints, because a component can stop writing a reason and the store will still
+            refuse the row.
+
             **Three guards fired on this checkpoint's own work and all three were paid.**
             `point-in-time` refused `TradeOrderReader`'s provenance read for not bounding its stamp,
             and the exemption is by name with the reason: the question is about the whole store rather
