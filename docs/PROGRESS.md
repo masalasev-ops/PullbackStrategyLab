@@ -11699,9 +11699,10 @@ Built:      **Both obligations due here are discharged on the surface they were 
 
 Measured:   **`tools/ci.ps1` green at 30 steps and 883 tests**, from 871 at 4.10.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of scope, 0
+            unexamined, coverage examined 7,518, 1,450 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 113 by the one the two
+            surface claims deferred here brought in, and out of scope falls from 24 with it.
 
             **The fixture's three `journal.*` figures are noughts and each is structural.** Nothing
             closed, so the read surface answers with two empty lists and a sum over run rows that
