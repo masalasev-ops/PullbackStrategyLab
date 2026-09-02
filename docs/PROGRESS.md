@@ -12003,9 +12003,15 @@ Measured:   **`tools/ci.ps1` green at 31 steps and 895 tests**, from 31 steps an
             `carried-obligations`, the producer reconciliation's proof in `surface-claims`, and the
             clause splitter's proof in `architecture-conformance`.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of
+            scope, 0 unexamined, coverage examined 8,068, 1,453 expectations, read against the commit
+            that produced them with the tree clean. The claim count is unchanged at 137, and the
+            coverage figure rises by 51 from 4.17's 8,017. The two new property scopes are named
+            rather than the whole difference decomposed, because the rest is existing scopes growing
+            with the corpus: `carried-obligations` examines 28 obligation rows falling due at a
+            checkpoint, and `surface-claims` examines 8 claims whose text is reconciled against the
+            member that emits it. The two figures `architecture-conformance` gained are context and
+            are not in that total. Expectations rise by 2, being the two the read surface gained.
 
             **The new guard was run red before green, against the corpus rather than only against an
             authored case.** `carried-obligations` named the three live rows and their raised
