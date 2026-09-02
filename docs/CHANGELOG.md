@@ -1974,3 +1974,18 @@ Why:  The 3.12 sweep is repointed to 5.1, so the count of what is due before the
 Was:  The watchlist key described Ranked, ADR units, Short extras and Conflict, and the figure above it drew a share count column no key entry explained.
 Now:  A Share count entry, saying it is the size the plan committed to rather than the size that will be placed, why it arrived a checkpoint after the figure drew it, and what a row the plan stage refused shows.
 Why:  The figure has drawn "nnn sh" since the document was written and the page carried no such column, so the document and the screen disagreed and nothing said which was the specification. The column exists now and the key is what a surface claim can be asserted against.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The 4.13 row ended "**4.18 landed on 2026-09-02** and the second pass reads its entry", with no verdict on the phase.
+Now:  The same, followed by a dated sentence saying the phase signed off in the second pass on the tree that lands 4.18 at `f987253`, with the two gates' figures, the authored-parameters statement the row asks for, and the two obligations raised.
+Why:  The row asks for a sign-off and for the authored-parameters statement to be stated rather than discovered, and a row that records the pass which declined and not the pass which signed off leaves the phase reading as open. The figures are named so the sentence rests on a tree rather than on an assertion.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  5.1's done condition read "**The sixteen obligations due before the freeze discharged first**", the two sentences below the phase 5 table read sixteen with it, and the section under the obligations table opened "None of the forty-one rows above fall due at 4.17".
+Now:  Seventeen in all three places, and forty-three.
+Why:  The 4.13 second pass raises two rows, one due at 5.1 and one at 5.2. Both figures are derived by `stated-counts` from the table they describe, so the four sentences move with it or the suite goes red.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Long and short are never pooled into one figure
+Was:  The paragraph under the phase 5 table read "The other four are not repairs to a frozen figure at all", naming the claim-register sweep, the source-scan assertions, the spread-capture population and the aftermath window.
+Now:  The other five, with the two screens that publish a plan's prices raised at 4.13 named alongside them.
+Why:  The split exists because a sentence true of eleven rows was being read as true of fifteen, which is the fifth failure shape in a spec. A row added to the 5.1 pile without being placed in one of the two groups would restore exactly that: a reader would take the freeze as its deadline, and the freeze is not its deadline. The new row is a screen rather than a stored figure, so it goes to the group phase 5 makes dearer rather than uncorrectable.

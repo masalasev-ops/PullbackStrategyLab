@@ -12375,3 +12375,228 @@ Verified:   `tools/ci.ps1` green at 31 steps and **911 tests**, from 895. `tools
             carried-obligations and stated-counts scopes growing with the record; no floor moves. The
             out-of-scope count is unchanged at 23 against the ceiling of 52, because this checkpoint
             adds no row to a claim table and no table.
+
+## 4.13 — 2026-09-02 — phase-4-sign-off-second-pass — the phase signs off on the tree that lands 4.18, with two rows raised about the surfaces that publish a plan's prices
+
+A fresh session with no code committed to this repository, which is the rule the row rests on. This
+is the second pass: the first, on 2026-09-02, did not sign the phase off and named what it found,
+and 4.18 holds that work. This pass read 4.18, the checkpoints a 4.18 finding sent it back to, and
+the documents 4.18 edited, rather than re-reviewing the phase from 4.2, because the first pass did
+that and its findings are the record. Nothing either earlier session says about its own work was
+taken as evidence, including the prompt that started this one; every figure below was derived on
+this tree.
+
+Verified:   **`tools/ci.ps1` green at 31 steps and 911 tests**, run on `f987253` with the tree clean,
+            which is the tree that lands 4.18. **`tools/verify-phase.ps1` GREEN**: 137 claims, 114
+            passed, 0 failed, 23 out of scope, 0 unexamined, coverage examined 8,167 with unexamined
+            0, 1,453 expectations of which 1 void, inputs CAPTURED 70 and AUTHORED 133, expectations
+            changed since the last commit 0. The provenance line reads
+            `f9872536b2df02ca9fd17ed3e68fa285b719930c`, working tree clean, stamped 2026-09-02
+            18:58:54Z, so the report is this tree's and not an earlier run's.
+
+            **Coverage examined reads 8,167 where the 4.18 entry recorded 8,166, and the difference
+            of one is that entry's own Verified block.** 4.18 states its figures at `98fd0ca` and
+            says outright that the block naming them lands in the next commit, and that the
+            `carried-obligations` and `stated-counts` scopes grow with the record; `4604c8b` is that
+            commit and it changes `docs/PROGRESS.md` and nothing else. So the two figures are one
+            measurement a commit apart rather than a disagreement, and no floor moved between them.
+
+            **The two repairs the first pass ran were re-run here against the shipped tree with the
+            guards taken out, rather than read.** Removing the entry-minute bound from
+            `PositionManager` and restoring `ArmedInAnEarlierSession` to the presence of a reason
+            turned exactly three of 26 `PositionManagerTests` red, being the two sign-off cases and
+            the short-side mirror, and nothing else. Flipping `LossClassifier`'s anchor from
+            `plan.LiveSession` back to `plan.AsOf` turned eight of 20 `LossClassifierTests` red,
+            including the case that separates the two populations and the split case. The tree was
+            restored and `git status` was clean before anything here was written. That is the
+            corpus's own standard, being that an assertion must fail when the thing it guards is
+            removed, applied to the three assertions this pass most depended on.
+
+            **Every one of the phase's twenty-two changes reached `main` through a branch and a
+            pull request, derived here rather than carried forward.** The first-parent log from
+            `d0b74bf`, which is the 3.15 commit that plans this phase, holds twenty-two commits and
+            each names a pull request in its subject, numbered #26 through #47 with no gap. Sixteen
+            are merge commits and six are squash merges, which is worth stating because a sweep
+            looking for merge commits alone reports six direct commits that are not: the property the
+            rule is about is the pull request, not the shape of the commit, and it is the pull request
+            CI green attaches to. The two since `fc4c95e`, where the first pass stopped reading, are
+            #46 and #47. **The eight corpus documents carry no mis-decoded UTF-8**, counted at nought
+            in each on the sequence the 3.14 note names.
+
+Stated:     **No row of the authored-parameters table is OPEN, and 4.18 did not reopen one.** Stated
+            rather than searched, on the row's own terms, and derived on this tree: the table parses
+            to 46 body rows, the string `OPEN` occurs twice in the whole of `ARCHITECTURE.html` and
+            both are in the two paragraphs above the table that record the 3.8 history, no row
+            carries it, and the check's own pattern for an open row matches nothing in the file. The
+            completeness sentence stands and the assertion holds it in both directions.
+
+            **The row 4.18 touched is the one that made the question live again, and it closed harder
+            than it was.** "Trigger and stop derivation" was rewritten to name the daily bar as the
+            source with the reason, to name the trigger as the entry-side extreme and mark that a
+            reading, and to mark clause (c) answered and not built against the 5.1 obligation. It is
+            pinned rather than resting: `pinned-constants` reads its value cell and asserts
+            `OrderPrices.GiveUpOffsetInRanges` is 0.1 and that `OrderPrices.For` returns 104 and
+            100.5 long and 49 and 52.25 short, so the pin exercises the derivation on both sides
+            instead of matching a constant.
+
+            **The placement, derived: 46 rows, 35 pinned, 7 deferred, 4 exempt by name, 0 resting on
+            nothing.** The seven are deferred to 5.1, 5.4, 6.2, 6.3 and 6.5, every one of which
+            BUILD_PLAN has and PROGRESS does not record. The phase report's coverage record for the
+            check reads out-of-scope 15, which is those 11 plus the four data-budget rows carried as
+            one item; 4.18's figure of 11 names the authored-parameters table in the same breath and
+            is right for that population, which is the fifth failure shape handled rather than walked
+            into.
+
+Found:      **The two screens that publish a plan's prices show the screening geometry, and one of
+            them now states a distance that does not match the two prices beside it.** 4.18 moved the
+            plan's pair off `setup.trigger_price` and `setup.stop_price`, carried both pairs onto the
+            setups read surface named apart, and changed the watchlist. It did not change the
+            gallery: `Setups.cshtml` renders `card.TriggerPrice` and `card.StopPrice` under the
+            labels "trigger" and "give up" on every card including the planned ones, while
+            `PlannedTrigger` and `PlannedGiveUp` arrive on the card and are read by nothing. So the
+            page states the screening pair as the prices of a row the lab wrote an order for, which
+            is the reading the order-price decision's first sentence refuses, and it is the sixth
+            failure shape exactly: the store carries the right answer, the read surface carries it
+            named apart, and the page drops it. The watchlist's own two are that its `Trigger` and
+            `Give up` headings now stand over the plan's pair on one row and the detector's on the
+            next with nothing saying which, and that the ADR cell beside them is
+            `StopDistanceRanges`, the detector's distance, so a planned row states a give-up distance
+            computed from prices it is not showing: on the page test's own stub, 119.10 and 116.35 is
+            2.75 of price printed beside 0.31 ADR, which is the screening pair's 6.25. **Nothing is
+            red and that is the half worth keeping.** ARCHITECTURE's watchlist key names the ranking,
+            the ADR units, the share count, the short extras and the conflict banner and never says
+            which pair the two price columns hold, so `surface-claims` has no sentence to assert
+            against them. The corpus never wrote down the thing that broke, so the check built to
+            read surfaces had nothing to read.
+
+            **The loss horizon's anchor moved at 4.18 and the decision paragraph describing it did
+            not.** The decision (see: A loss awaiting its horizon carries no aftermath, and that is
+            not the same as being unclassified) says the horizon is counted from the store's own bars
+            and that "the setup's own session is in the count, so eleven sessions is ten having
+            passed". That was true of the code until 4.18, which counted from `trade_plan.as_of`, the
+            evening the setup was flagged; 4.18 counts from `plan.LiveSession`, the session the
+            trigger was touched in, which is what its own row asked for and what the aftermath is now
+            measured over. A plan is live in exactly one session, so the two differ by exactly one
+            session and the offset is a fact rather than a reading. Everything else in the paragraph
+            still holds. Nothing reads it, which is why it is a row rather than an interrupt.
+
+Ruled:      **The phase signs off, on the tree that lands 4.18 at `f987253`, on the terms 1.12 signed
+            off in its third pass.** A finding reopens a phase only if it fails a done condition or
+            breaks a check, and neither of the two does: no done condition of 4.18's row mentions a
+            screen, the watchlist change was volunteered beyond the row rather than owed by it, no
+            check is red, and the second finding is a record describing a mechanism a session later
+            than 4.18 will read. Both become carried obligations and wait, which is what the stopping
+            rules say to do with everything that is neither.
+
+            **The phase is converging and the count is the evidence.** The first pass raised four
+            rows, three of them silently wrong results in shipped stages and one a check figure wrong
+            by seven. This pass raises two, neither of which is a stored figure: one is a screen and
+            one is a sentence. Three passes each finding less is the signal to stop, and this is the
+            second finding less than the first. Neither finding is in code the first pass named, and
+            neither repeats a first-pass finding: the gallery is a consequence of 4.18's repair
+            rather than a survival of what the repair was for.
+
+            **All six of 4.18's items were checked against the row rather than against its entry, and
+            all six hold.** The order prices are derived in `OrderPrices` from the final pullback
+            session's high and low with the give-up point 0.1 ADR beyond, read through `PlanBuilder`
+            from that session's daily bar and the name's range as they stood on the evening, and a
+            session whose low sits above its high is refused; `DailyBarReader.Latest` keys on the
+            exact bar date rather than on the newest bar at or before it, so a candidate whose
+            session the store does not hold is refused rather than priced off an earlier one, which
+            is what the stage's own comment claims and is the half a reader would have to check. The
+            position manager's two faults are bounded and both are held by the cases that were run,
+            proved red above. The loss boundary measures from the trigger price over the ten sessions
+            after the trigger's session on the adjusted basis, the row's `aftermath_because` names
+            that population in the sentence it writes, and the tests state the population they pass
+            in. `pinned-constants` derives its pinned set from its pins and fails a row that rests on
+            nothing, a row pinned and still deferred, and a row deferred to a checkpoint that has
+            landed, with the live deferrals asserted separately to resolve to checkpoints still
+            ahead. That last pair is the eighth failure shape answered in its own terms: the pure
+            function is proved against six rows written by hand because the live table exercises
+            three dispositions and none of the failing ones, and the check says so where it passes
+            the population in.
+
+            **On the order-price route, neither of the two the row allowed was taken, and that is a
+            better answer rather than a breach.** Both of the row's ways out rested on its own
+            premise that the decision could not be built without moving the schedule. 4.18 tested the
+            premise instead of choosing between its consequences: one `eod/AAPL.US` call for
+            2026-08-25 read against the 959 captured minutes of that session established that the
+            daily bar's high and low are the regular-hours extremes, so the two numbers the decision
+            names are in the store at 18:30 and neither the schedule nor the budget had to move. The
+            schedule route is on the record as rejected with the operator's condition as its reason,
+            and the superseding route was not needed because the decision turned out buildable. The
+            finding is recorded under "What each vendor endpoint carries" as one name on one session,
+            stated as one, which is the right size of claim for the evidence behind it. **No schedule
+            moved, so RUNBOOK, the data budget, `slot-roster` and `NightlyOrderTests` were owed
+            nothing and none of them changed**, which this pass checked rather than assumed.
+
+            **On whether the decision was changed rather than corrected, it was corrected and the
+            distinction holds.** What the decision decided is the final pullback session's
+            regular-hours extremes with the give-up point 0.1 ADR beyond; what moved is which stored
+            row those two numbers are read from, and a mechanism with one implementation is what the
+            conventions say does not become a decision of its own. The correction is dated, names its
+            checkpoint, and says what was built until it. The one thing it leaves standing is that
+            the decision's bold name says minutes while the code reads a daily bar, which resolves
+            for `decision-resolves` and is answered in the first line of the entry a citation sends a
+            reader to; it is not rowed, because the name is an identifier and renaming a decision
+            breaks every citation to it for a gain a reader already has.
+
+            **On whether a sign-off may add a checkpoint row, the first pass was right to.** The
+            alternative was a row due at a landed checkpoint, which `carried-obligations` refuses by
+            the clause 4.11 added, or a row at 5.1, which would have put three silently wrong stored
+            results behind the freeze. Naming a checkpoint is naming and not building, and the fresh
+            session rule protects against a session reviewing its own code rather than against a
+            session saying where code should go. What makes it safe is visible in the log rather than
+            asserted: `b225020` is documents only, the session that wrote it built 4.18 in `98fd0ca`
+            having signed nothing off, and a different session signs that code off here. The chain
+            the rule exists to protect held at every link, and the precedent is now two, 4.17 from a
+            build session and 4.18 from a sign-off.
+
+Read:       **A green report is a statement about the build and never about the lab, and this pass
+            adds nothing to what 4.18 asserted against the running system.** 4.18 carries no
+            migration, so the live store is owed no version step by it and this pass adds no night at
+            risk of the shape the seventh failure shape describes. What it asserted against the
+            running system is nothing: its six items are three stage repairs, a check and two
+            documents, and every one of them is a property of the build. What it did not and could
+            not assert is unchanged from the first pass, being whether `data/live` was migrated after
+            each of the eleven merges carrying migrations 037 through 047; the guard 3.12 built is
+            what refuses a stale store, and the reading of those nights sits beside the 4.5 row at
+            the operator. `data/live` was not opened by this session.
+
+            **The fixture still plans nothing and none of its noughts moved.** The phase report reads
+            expectations changed since the last commit 0, and the only edit 4.18 made to
+            `fixtures/expectations.json` is a `frozenOnly` permit for itself. That is the right
+            outcome and it is also the permit's own argument, because the three repaired stages sit
+            downstream of a cap the fixture's one market day passes nothing through, so every
+            `plans.*`, `manage.*` and `losses.*` figure is a structural nought that could not tell
+            the repaired stage from the broken one. The reading the first pass left, that the day the
+            fixture gains a candidate is the day sixty `DERIVED` noughts become engine output, is
+            untouched and still lives on the 3.6 row.
+
+            **Neither row under the ruling that its next move is a checkpoint moved.** The
+            claim-register sweep raised at 3.12 and the source-scan assertions raised at 2.11 both
+            still read 5.1 and both still carry the ruling, checked against the table rather than
+            against the entry that made it.
+
+            **The three smaller readings the first pass recorded and did not row were not silently
+            changed.** `armed_sessions_waited` and `fill_run.open_at_start` appear nowhere in 4.18's
+            diff and the closing-stub reading is untouched. One of them is now differently true
+            rather than differently written: the rerun repair means a rerun of an arming session no
+            longer closes the position, so the shape that made `open_at_start` disagree across reruns
+            is narrower than the first pass found it. That is a consequence of a repair the row asked
+            for, it moves in the direction of the reading, and it is not rowed.
+
+Carried:    **Two raised, none discharged, none repointed.** The two screens that publish a plan's
+            prices, due at 5.1 and classified into the group the freeze does not make urgent; and the
+            loss horizon's anchor in the decision that describes it, due at 5.2. Both due points are
+            ones BUILD_PLAN has and PROGRESS does not record. The table reads 43, the count due
+            before the freeze rises from sixteen to seventeen, and the split reads twelve and five.
+            The eleven at the operator are untouched.
+
+            **The fixture permit for this checkpoint already exists and no second one is written.**
+            4.13 was entered under `frozenOnly` by the first pass with the reason that a sign-off
+            produces no figure a market day could be replayed to produce, and a second pass of the
+            same checkpoint produces no more of one. BUILD_PLAN's permit sentence still reads nine.
+
+            **Nothing here moves a floor, raises the out-of-scope ceiling or adds a test.** The count
+            stays at 911. This pass commits documents only.
