@@ -25,7 +25,9 @@
         "catalogued components a phase's Builds row names": 44
       },
       "context": [
-        "catalogued screens, named in a Builds row as prose rather than as a token"
+        "catalogued screens, named in a Builds row as prose rather than as a token",
+        "claims whose cell states more than one clause, awaiting the 3.12 sweep",
+        "clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction"
       ]
     },
     "bar-append-only": {

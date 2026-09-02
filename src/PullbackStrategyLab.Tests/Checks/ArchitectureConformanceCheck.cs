@@ -74,6 +74,128 @@ public sealed partial class ArchitectureConformanceCheck
     private static partial Regex PageRoute();
 
     /// <summary>
+    /// The tables that state a sentence per row, which is what the 3.12 sweep is over.
+    ///
+    /// A table whose second cell is a value rather than a sentence, as the limits table's is, states
+    /// no clauses to reach and is not in this list. Named here rather than derived, because "is this
+    /// cell a sentence" is the judgement the sweep is made of and a parser guessing at it would
+    /// produce a number nobody could act on.
+    /// </summary>
+    public static IReadOnlyList<string> TablesStatingASentencePerRow { get; } =
+    [
+        "Failure behaviour", "Component catalogue", "Build order", "The phase report",
+        "Running on Windows and macOS",
+    ];
+
+    /// <summary>
+    /// How many claims state more than one clause, and how many clauses those cells hold.
+    ///
+    /// <b>The 3.12 measurement, derived on every run rather than written down once.</b> That row
+    /// states its figures in prose, they were taken before two pages and a phase of components
+    /// landed, and nothing read them: a sweep priced at 40 claims is a different piece of work from
+    /// one priced at 62, and the difference was invisible. The split is the row's own rule, kept
+    /// exactly: a sentence end, a semicolon, or a comma before "and", "which", "because" or "so",
+    /// with citations excluded because a citation is a pointer rather than a clause.
+    ///
+    /// <b>It measures the document and concludes nothing about the code.</b> Which clauses a verdict
+    /// actually reaches is the judgement the sweep exists to make, and no parser can make it: a
+    /// Failure behaviour cell mixes the behaviour with the reason it is that behaviour, and a sweep
+    /// that asserted every clause would assert prose. So this reports the size of the pile and never
+    /// the disposition of anything in it.
+    /// </summary>
+    public static (int MultiClause, int Clauses) ClauseWeight(string architecture)
+    {
+        ArgumentNullException.ThrowIfNull(architecture);
+
+        int multiClause = 0;
+        int clauses = 0;
+
+        foreach (string table in TablesStatingASentencePerRow)
+        {
+            foreach (IReadOnlyList<string> row in HtmlTable.BodyRowsUnder(architecture, table))
+            {
+                int held = Clauses(string.Join(" ", row.Skip(1))).Count;
+
+                if (held > 1)
+                {
+                    multiClause++;
+                    clauses += held;
+                }
+            }
+        }
+
+        return (multiClause, clauses);
+    }
+
+    /// <summary>The clauses of one cell, on the 3.12 rule.</summary>
+    public static IReadOnlyList<string> Clauses(string cell)
+    {
+        ArgumentNullException.ThrowIfNull(cell);
+
+        return
+        [
+            .. ClauseBoundary()
+                .Split(Citation().Replace(cell, string.Empty))
+                .Select(c => c.Trim())
+                .Where(c => c.Length > 0),
+        ];
+    }
+
+    [GeneratedRegex(@"\(see:[^)]*\)", RegexOptions.CultureInvariant)]
+    private static partial Regex Citation();
+
+    [GeneratedRegex(@"(?<=[.!?])\s+|;\s*|,\s+(?=(?:and|which|because|so)\b)", RegexOptions.CultureInvariant)]
+    private static partial Regex ClauseBoundary();
+
+    /// <summary>
+    /// The splitter, proved against a cell written here rather than against whatever the document
+    /// holds today.
+    ///
+    /// <b>A sweep expecting a non-zero count states that count in advance.</b> The live figure moves
+    /// with every edit to ARCHITECTURE, so a test asserting it would be a test asserting today, and
+    /// what has to hold is that each of the four boundaries is one and that the two that are not are
+    /// not. A comma before an ordinary noun does not open a clause, and a citation is a pointer to a
+    /// decision rather than something a verdict could reach.
+    /// </summary>
+    [Fact]
+    public void The_clause_split_reads_each_boundary_the_measurement_named()
+    {
+        Assert.Equal(
+            ["A sentence.", "Another one"],
+            Clauses("A sentence. Another one"));
+
+        Assert.Equal(
+            ["a first half", "a second"],
+            Clauses("a first half; a second"));
+
+        foreach (string conjunction in new[] { "and", "which", "because", "so" })
+        {
+            Assert.Equal(
+                ["the behaviour", $"{conjunction} the reason it is that behaviour"],
+                Clauses($"the behaviour, {conjunction} the reason it is that behaviour"));
+        }
+
+        // The two that are not boundaries. A list is one clause, and a citation is excluded whole
+        // rather than split on the punctuation inside it.
+        Assert.Single(Clauses("trigger, give-up price, distance and rank"));
+        Assert.Single(Clauses("the stage stops rather than overrunning (see: A stage stops. It does not overrun)"));
+
+        // And the shape the whole measurement turns on: a cell holding one clause is not in the
+        // pile, however long it is.
+        (int multiClause, int clauses) = ClauseWeight(
+            "<h2>Failure behaviour</h2><table><tr><th>a</th><th>b</th></tr>"
+            + "<tr><td>one</td><td>a single clause of some length</td></tr>"
+            + "<tr><td>two</td><td>a clause. and another</td></tr></table>"
+            + "<h2>Component catalogue</h2><table><tr><td>x</td><td>only one</td></tr></table>"
+            + "<h2>Build order</h2><table><tr><td>x</td><td>only one</td></tr></table>"
+            + "<h2>The phase report</h2><table><tr><td>x</td><td>only one</td></tr></table>"
+            + "<h2>Running on Windows and macOS</h2><table><tr><td>x</td><td>only one</td></tr></table>");
+
+        Assert.Equal(1, multiClause);
+        Assert.Equal(2, clauses);
+    }
+
+    /// <summary>
     /// The failure-behaviour table states conditions in prose, so it names no component a parser
     /// could follow. Each row is placed here by hand against the checkpoint that builds the
     /// behaviour, and a row this list does not name is unexamined rather than skipped, which is
@@ -451,6 +573,22 @@ public sealed partial class ArchitectureConformanceCheck
         ];
 
         string[] unplaced = [.. catalogueTypes.Where(n => !namedByAPhase.Contains(n)).Order(StringComparer.Ordinal)];
+
+        // How much of the register states more than one clause, derived rather than stated in prose.
+        //
+        // <b>The 3.12 row's own figure, and it had gone stale.</b> That row measured 40 multi-clause
+        // claims over about 160 clauses at the time it was written, in a sentence nothing read, and
+        // the register has grown by two pages and a phase of components since. A number in prose
+        // about the corpus is the shape `stated-counts` exists for, and the sweep it prices is the
+        // one piece of work whose size nobody could see moving.
+        //
+        // Context rather than a floor. It is a fact about how the document is written, it falls as
+        // the sweep runs and rises as the corpus grows, and neither direction is a property going
+        // away.
+        (int multiClause, int clauses) = ClauseWeight(architecture);
+
+        coverage.Context("claims whose cell states more than one clause, awaiting the 3.12 sweep", multiClause);
+        coverage.Context("clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction", clauses);
 
         coverage.Examined("catalogued components a phase's Builds row names", catalogueTypes.Length - unplaced.Length);
         coverage.Context("catalogued screens, named in a Builds row as prose rather than as a token", componentNames.Length - catalogueTypes.Length);

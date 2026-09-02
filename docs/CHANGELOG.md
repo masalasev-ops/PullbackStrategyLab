@@ -1881,3 +1881,18 @@ Why:  The decision names `data/live` and `data/ci`, both under the repository, a
 Was:  The obligations table carried thirteen rows due at 4.17, and the section above it opened "Thirteen of the fifty-four rows above fall due at 4.17" over a table of three live group counts.
 Now:  Twelve are discharged and removed, one is repointed to 5.1 with the price, and the section is a record of what the pile was and what happened to it, on the terms the 4.6 section became one.
 Why:  4.17's deliverable was the pile, and its done condition asks that every row is discharged or repointed with a reason and that the count is derived. The section is kept rather than deleted because the classification was the checkpoint's specification, and a specification a checkpoint was built against is not a thing to remove once it has been met.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The obligations table carried three rows due at 4.11, the checkpoint the plan records as landed, and the section above it opened "None of the forty-two rows above fall due at 4.17".
+Now:  Two are discharged and removed, one is repointed to 5.1 with the re-measurement as its price, and the total reads forty.
+Why:  A due point that has landed is an obligation the checkpoint shipped without coming back to, and 4.11 shipped with all three still pointing at it. The two that could be discharged were, and the one the plan itself calls a checkpoint rather than a pass names the checkpoint it moves to and what it now costs.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  5.1's done condition read "**The fourteen obligations due before the freeze discharged first**", and the two sentences below the phase 5 table read fourteen with it.
+Now:  Fifteen, in all three places.
+Why:  The 3.12 sweep is repointed to 5.1, so the count of what is due before the freeze rises by one. The figure is derived by `stated-counts` from the table it describes, so the three sentences moved because the check would not let them stay.
+
+### 2026-09-02 — ARCHITECTURE.html — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  The watchlist key described Ranked, ADR units, Short extras and Conflict, and the figure above it drew a share count column no key entry explained.
+Now:  A Share count entry, saying it is the size the plan committed to rather than the size that will be placed, why it arrived a checkpoint after the figure drew it, and what a row the plan stage refused shows.
+Why:  The figure has drawn "nnn sh" since the document was written and the page carried no such column, so the document and the screen disagreed and nothing said which was the specification. The column exists now and the key is what a surface claim can be asserted against.

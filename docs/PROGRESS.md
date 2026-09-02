@@ -11925,3 +11925,90 @@ Measured:   **`tools/ci.ps1` green at 31 steps and 889 tests**, from 30 steps an
             that a discharged pile has nought rows would pass over a table with no rows at all. What
             holds the table's shape is its own total, which is now read out of the sentence rather
             than from a claim that also counted the pile.
+
+## 4.11 — 2026-09-02 — phase-4-carried-obligations — the three rows that fell due here, and the check that could not see them
+
+Corrects:   **The 4.11 entry of 2026-09-01, which recorded the checkpoint as done with three
+            obligation rows falling due at it and none of them discharged, repointed or named.**
+            The entry is accurate about what was built and this is what it did not say. The three
+            were raised at 4.16, 3.12 and 3.5, and the session that built 4.11 discharged the two it
+            had raised itself and never read the table for rows already pointing here.
+
+Built:      **`carried-obligations` reads the obligations table as well as the record, which is the
+            direction nothing read.** The check reconciles every due point a PROGRESS `Carried` block
+            names against the table, and says nothing at all about a row already in the table. So a
+            row falling due at a checkpoint the build has walked past is asserted by nothing, which
+            is exactly the shape `architecture-conformance` refuses of a deferred claim and
+            `fixture-replay` refuses of a frozen-only permit, missing from the one check whose entire
+            subject is that table. **Two clauses rather than one**: a row due at a landed checkpoint
+            fails, and so does a row due at a checkpoint BUILD_PLAN does not have, which is the same
+            fault one step earlier and would never come due at all.
+
+            **The narrowing in the reconciliation does not carry over, and the proof says so.** The
+            record is history and reading a landed due point back out of it would be a false alarm
+            about work that is done; the table is a list of work nobody has come for. The four
+            dispositions are proved against a table written in the test, because a run over the live
+            corpus exercises two of them and the two that can fail would both be filtering an empty
+            list.
+
+Built:      **The watchlist carries the share count the plan committed to**, discharging the row
+            raised at 4.16. 4.1 built the page with no such column and was right to: sizing was
+            RiskGate's, RiskGate did not exist, and a blank column reads as a figure the lab computed
+            and got nothing for. PlanBuilder landed at 4.16, writes a size at 18:30, and this page
+            publishes at 18:40, so the column has had a source ten minutes before the page runs and a
+            screen still omitting it understated what the lab committed to, which is the same fault
+            from the other side. **It is the plan's intention and not the size that will be placed**,
+            because RiskGate may reduce it at the trigger or block the order outright hours after
+            anybody reads the screen, and the page says so. **A row the plan stage refused says so in
+            words**, because a blank reads as a figure that came out empty and a nought reads as a
+            size the lab chose. ARCHITECTURE's figure has drawn the column since the document was
+            written and no key entry explained it; there is one now, and a surface claim asserts the
+            column against the rendered page.
+
+Built:      **Every surface claim naming text says where that text comes from**, discharging the row
+            raised at 3.5. `surface-claims` renders each page with the read surface stubbed, which is
+            right, and it left a hole: a claim whose text originates in a producer rather than in the
+            template proved only that the template does not swallow a string, because the same words
+            were written twice by hand, once into the claim and once into the stub. `ProducedBy` is
+            now either the page, meaning the words are the template's own and rendering them is the
+            whole reconciliation, or `Type.Member` naming a constant in the shipped source, which is
+            resolved and compared. **A claim naming text and declaring neither fails**, on the grounds
+            `coverage-reported` fails a check declaring neither a scan nor `NoSourceScan`.
+
+            **Four sentences became named constants so they could be named.** The absent-quantity note
+            both detectors write, the capitalisation clause of `tradable-shortable`, and the two
+            shortage tails a withheld band 1 panel carries. **The stub is not interpolated from them,
+            deliberately**: a producer whose wording moves fails the comparison, the claim is then
+            corrected, and a stub still holding the old words fails the render on the next line. Two
+            mechanisms for one property is how one of them stops being read.
+
+Carried:    **The claim register sweep, repointed from 4.11 to 5.1**, being the row raised at 3.12.
+            It is the one of the three this checkpoint did not do, and what it gets instead of a
+            second silent slip is that **its own figures are now derived on every run rather than
+            stated once in a row nothing read**. `architecture-conformance` reports the pile as
+            context: **62 claims whose cell states more than one clause, over 266 clauses**, against
+            the 40 and about 160 the row measured when it was written. So the sweep is half as large
+            again as it was priced at, the growth is the two pages and the phase of components that
+            landed in between, and neither figure can go stale again. **The price is the same argument
+            that moved it here from 4.1**: the register grows with every phase, sweeping it before
+            phase 5 builds the variant machinery is strictly cheaper than after, and 5.1 is the last
+            checkpoint before that. What is owed is unchanged and is a decision per claim, recorded on
+            the claim, on which clauses its verdict reaches. Due at 5.1.
+
+            **Two discharged and one repointed, so the obligations table falls from 42 to 40**, and
+            the count due before the freeze rises from fourteen to fifteen.
+
+Measured:   **`tools/ci.ps1` green at 31 steps and 895 tests**, from 31 steps and 889 at 4.17. The
+            six are three watchlist page tests, the second direction's proof in
+            `carried-obligations`, the producer reconciliation's proof in `surface-claims`, and the
+            clause splitter's proof in `architecture-conformance`.
+
+            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
+            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
+            the commit that produced them with the tree clean.
+
+            **The new guard was run red before green, against the corpus rather than only against an
+            authored case.** `carried-obligations` named the three live rows and their raised
+            checkpoints before any of them was touched. `surface-claims` was run with
+            `ScoreboardBuilder.SessionShortage` reworded and named the claim that had come apart from
+            it.
