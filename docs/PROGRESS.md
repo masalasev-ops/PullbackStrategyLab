@@ -12364,3 +12364,14 @@ Carried:    **One raised, due at 5.1**, being the thrust-selection clause with i
             **Nothing here moves a floor and nothing raises the out-of-scope ceiling.** Thirteen
             scopes are added to the baseline for the new pins and the placement, each at the value
             it was recorded at, on the terms a new pin has always been added.
+
+Verified:   `tools/ci.ps1` green at 31 steps and **911 tests**, from 895. `tools/verify-phase.ps1`
+            GREEN: 137 claims, 114 passed, 0 failed, 23 out of scope, 0 unexamined, coverage
+            examined 8,166 from 8,068, 1,453 expectations of which 1 void, inputs CAPTURED 70 and
+            AUTHORED 133, expectations changed since the last commit 0. Read on a clean tree at
+            `98fd0ca`, which carries every edit this checkpoint makes; the block you are reading
+            lands in the next commit, so the figures name the tree they were produced on. The
+            coverage figure rises by the twelve pins and the placement scope, and by the
+            carried-obligations and stated-counts scopes growing with the record; no floor moves. The
+            out-of-scope count is unchanged at 23 against the ceiling of 52, because this checkpoint
+            adds no row to a claim table and no table.
