@@ -2044,10 +2044,9 @@ public sealed partial class ArchitectureConformanceCheck
                 schedule._obligations.Add(new Obligation(row[0].Trim(), row[^1].Trim(), row[1].Trim()));
             }
 
-            MatchCollection landed = LandedEntry().Matches(progress);
-            foreach (Match entry in landed)
+            foreach (string checkpoint in RecordedAsBuilt(progress))
             {
-                schedule._landed.Add(entry.Groups["checkpoint"].Value);
+                schedule._landed.Add(checkpoint);
             }
 
             Assert.NotEmpty(schedule._rows);
@@ -2082,6 +2081,78 @@ public sealed partial class ArchitectureConformanceCheck
         /// there is no second flag to keep in step with it.
         /// </summary>
         public IReadOnlyList<Obligation> Obligations => _obligations;
+
+        /// <summary>
+        /// The checkpoints PROGRESS records as built, which is every one with at least one entry
+        /// that does not open "Not a checkpoint entry".
+        ///
+        /// <b>The heading used to be the whole record, and that made one attribution impossible to
+        /// write.</b> A pass that plans the next phase belongs to that phase's opening checkpoint,
+        /// and filing it there meant a heading naming a checkpoint nobody had built: the entry would
+        /// have marked it landed, turned every obligation due at it overdue, and moved the phase
+        /// report a phase forward on a checkpoint with no deliverable. So the phase 4 plan was filed
+        /// under 3.15 and the phase 5 plan under 4.13, both of them a phase out from the work they
+        /// describe, and the convention was inferred from that rather than written down.
+        ///
+        /// The marker already existed in prose and twenty-four entries carry it. Reading it is what
+        /// lets an entry say which checkpoint it belongs to without claiming that checkpoint has
+        /// landed, and those are two different statements that one heading was making at once.
+        ///
+        /// <b>Inert on the record as it stands</b>, measured before the change rather than after:
+        /// of the fifty-seven checkpoints PROGRESS records, none has only marked entries, so no
+        /// checkpoint changes status and the twenty-four excluded entries all sit under checkpoints
+        /// landed by an entry beside them.
+        /// see: Nothing in the corpus is struck through
+        /// </summary>
+        public static IReadOnlyList<string> RecordedAsBuilt(string progress)
+        {
+            ArgumentNullException.ThrowIfNull(progress);
+
+            Match[] headings = [.. LandedEntry().Matches(progress).Cast<Match>()];
+            var built = new List<string>();
+
+            for (int i = 0; i < headings.Length; i++)
+            {
+                // Past the end of the heading's own line, not past the end of the match. The
+                // heading pattern stops at the space after the checkpoint, so the match ends in the
+                // middle of the line and the "first non-empty line" of what follows would be the
+                // rest of the title. Caught by the proof below on its first run.
+                int newline = progress.IndexOf('\n', headings[i].Index);
+                int start = newline < 0 ? progress.Length : newline + 1;
+                int end = i + 1 < headings.Length ? headings[i + 1].Index : progress.Length;
+                start = Math.Min(start, end);
+
+                if (!DeclaresItselfNotACheckpoint(progress[start..end]))
+                {
+                    built.Add(headings[i].Groups["checkpoint"].Value);
+                }
+            }
+
+            return built;
+        }
+
+        /// <summary>
+        /// Whether an entry opens by saying it is not a checkpoint entry.
+        ///
+        /// The first non-empty line and not anywhere in the body, because five entries mention the
+        /// phrase about a neighbouring entry rather than about themselves, and a search over the
+        /// whole body would read those five as unbuilt. Twenty-four entries open with it, which is
+        /// where the convention has always put it.
+        /// </summary>
+        private static bool DeclaresItselfNotACheckpoint(string body)
+        {
+            foreach (string line in body.Split('\n'))
+            {
+                if (line.Trim().Length == 0)
+                {
+                    continue;
+                }
+
+                return line.TrimStart().StartsWith("Not a checkpoint entry", StringComparison.Ordinal);
+            }
+
+            return false;
+        }
 
         /// <summary>Whether BUILD_PLAN.md has a checkpoint by this identifier at all.</summary>
         public bool Exists(string checkpoint) => _rows.ContainsKey(checkpoint);

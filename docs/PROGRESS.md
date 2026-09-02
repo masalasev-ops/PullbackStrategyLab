@@ -12826,3 +12826,66 @@ Verified:   **`tools/verify-phase.ps1` GREEN on `5ca35ee`, the merge that lands 
 
 Carried:    **Nothing raised, nothing discharged, nothing repointed.** The table still reads 50, the
             operator's list 18, the count due before the freeze 17 and its split twelve and five.
+
+## 5.0 — 2026-09-02 — phase-5-plan-attribution — correction: the phase 5 plan was filed under phase 4, and the record had no way to file it anywhere else
+
+Not a checkpoint entry. It corrects the attribution of the two entries above it, being
+`4.13 — 2026-09-02 — phase-5-plan-and-questions` and `4.13 — 2026-09-02 — phase-5-plan-figures`,
+and the subjects of the commits that carry them, `03edc26` and `afb5663`. Both read `Phase 4 / 4.13`
+and both should have read `Phase 5 / 5.0`. It builds nothing and 5.0 has not landed.
+
+Corrected:  **The pass that plans a phase belongs to the phase it plans.** The phase 5 build plan is
+            phase 5's first work and its first commit, and filing it under 4.13 put the largest
+            single document change of the phase under the phase before it. Ruled by the operator on
+            2026-09-02. The commits are not rewritten, because `main` is shared history and a record
+            is corrected by a new dated entry naming what it corrects rather than by editing what it
+            said (see: Headings carry no numbers, and anchors are slugs).
+
+            **The precedent it was copied from is corrected with it.** `d0b74bf` is
+            `Phase 3 / 3.15 — the phase 4 build plan, and eleven questions put before the first
+            commit`, and the entry it carries is filed under 3.15. That is the same error one phase
+            earlier, and this session read it as the convention and followed it: this corpus has now
+            lost three conventions to the same mechanism, the commit subject at 3.7, the pull request
+            at the 3.12 sign-off, and this. **The rule is in `CLAUDE.md` rather than in this entry**,
+            because that is the whole lesson of the other two.
+
+Found:      **It was unwritable rather than merely unwritten, and that is the half worth keeping.**
+            A checkpoint counted as landed if PROGRESS held a heading naming it, so filing this pass
+            under 5.0 would have recorded 5.0 as built: the three obligation rows due there would
+            have read as overdue, `carried-obligations` would have gone red, and the phase report
+            would have moved to phase 5 on a checkpoint with no deliverable and no test count. So
+            the correct attribution was not available to the session that wrote the plan, nor to the
+            one that wrote the phase 4 plan before it, and both did the only thing the record allowed.
+
+            **The marker already existed and nothing read it.** Twenty-four entries open
+            "Not a checkpoint entry", including both of the ones this corrects and the phase 4 plan's
+            own. An entry that opens with it now says which checkpoint it belongs to without saying
+            that checkpoint has landed, which are two statements one heading was making at once.
+
+            **Measured before the change rather than after it**: of the 57 checkpoints PROGRESS
+            records, none has only marked entries, so no checkpoint changes status and every one of
+            the 24 excluded entries sits under a checkpoint an entry beside it landed. The furthest
+            checkpoint the record holds is unmoved at 4.18 and the phase report still reads phase 4.
+
+            **The first non-empty line and not anywhere in the body**, because five entries mention
+            the phrase about a neighbouring entry rather than about themselves, and a search over the
+            whole body would read those five as unbuilt.
+
+Verified:   `tools/ci.ps1` green at 31 steps and **913 tests**, one more than the 912 the plan
+            landed at, that one being the permanent proof of the clause above.
+            `tools/verify-phase.ps1` GREEN: 137 claims, 114 passed, 0 failed, 23 out of scope,
+            0 unexamined, and the report reads **phase 4**, which is the assertion that matters here:
+            a heading naming 5.0 did not move it.
+
+            **Proved over a record written in the test rather than over PROGRESS.** The live record
+            carries no entry of the shape the clause exists for, being one marked against a
+            checkpoint nothing else records, until this entry lands; a proof reading the live record
+            would have exercised the branch on twenty-four entries whose checkpoint is landed anyway
+            and passed with the clause deleted. That is the eighth failure shape, a clause applied to
+            a population other than the one it governs. The proof's first run failed, and on a real
+            fault: the heading pattern stops at the space after the checkpoint, so the body it read
+            began in the middle of the title line.
+
+Carried:    **Nothing raised, nothing discharged, nothing repointed.** The table still reads 50, the
+            operator's list 18, the count due before the freeze 17 and its split twelve and five.
+            The nine questions are unchanged and eight of them are still open at the operator.
