@@ -338,6 +338,7 @@ public sealed partial class ArchitectureConformanceCheck
         //    than left to the checkpoint that never comes back for them.
         claims.AddRange(PortabilityClaims(architecture));
         claims.AddRange(MoveProcedureClaims(architecture));
+        claims.AddRange(ManagementClaims(architecture));
 
         // 7. And every table in the document placed, which is what stops the five above from
         //    being the document as far as this check is concerned. A table nobody reads produces
@@ -522,7 +523,7 @@ public sealed partial class ArchitectureConformanceCheck
     /// </summary>
     public static IReadOnlyList<string> ClaimTables { get; } =
         ["Component catalogue", "Build order", "The limits", "Failure behaviour", "The phase report",
-         "Running on Windows and macOS", "The procedure"];
+         "Running on Windows and macOS", "The procedure", "What differs in management"];
 
     /// <summary>
     /// Every other table in the document, and why it yields no claim.
@@ -542,7 +543,6 @@ public sealed partial class ArchitectureConformanceCheck
         ["Vocabulary"] = "definitions of terms, not a statement about the code",
         ["Which kinds of measurement are missing"] =
             "what the design deliberately does not measure, which no code can be checked against",
-        ["What differs in management"] = "4.8",
         ["Why each loss happened"] = "4.10",
         ["What each tier of change can be replayed against"] = "5.3",
         ["What the pack contains"] = "6.4",
@@ -599,6 +599,117 @@ public sealed partial class ArchitectureConformanceCheck
 
     [GeneratedRegex(@"^\d+\.\d+$", RegexOptions.CultureInvariant)]
     private static partial Regex Checkpoint();
+
+
+    /// <summary>
+    /// The management table, which describes the two rule sets and was deferred to 4.8 until 4.8
+    /// built them.
+    ///
+    /// <b>One of its four rows is a claim about the code and three are not.</b> Holding period,
+    /// ambition and worst case say what the two sides of this strategy are for; no run of anything
+    /// could agree or disagree with them, so they are exempt by name with the reason rather than
+    /// passed against an assertion nobody wrote. The exit-rule row is different: every clause in it
+    /// names a constant or a mechanism that exists, and until 4.8 none of them did, which is what the
+    /// deferral was for.
+    ///
+    /// <b>Both cells are asserted, and the pooling rule is why that matters here.</b> A check that
+    /// read the long cell and reported the table would say the same thing whether the short side had
+    /// been built or not.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private static IReadOnlyList<Claim> ManagementClaims(string architecture)
+    {
+        const string Table = "What differs in management";
+        var claims = new List<Claim>();
+
+        IReadOnlyList<IReadOnlyList<string>> rows = HtmlTable.BodyRowsUnder(architecture, Table);
+
+        foreach (IReadOnlyList<string> row in rows)
+        {
+            string what = row[0];
+
+            claims.Add(what switch
+            {
+                "Exit rule" => TheTwoRuleSetsAreBuiltAndSeparate(row[1], row[2])
+                    ? Claim.Passed(Table, what,
+                        "the long trail reads a daily close against the 9-day average and fills at the next "
+                        + "open, the short trim takes 15% of the planned size at 3R, the short exit reads an "
+                        + "hourly close against the 50-day average, the two live in separate files, and both "
+                        + "cells' \"whichever is reached first\" is one ordering over all three reasons")
+                    : Claim.Failed(Table, what,
+                        "a clause of the exit-rule row no longer matches the rules the code holds, or the two "
+                        + "rule sets stopped being separate code paths, which is the one way to test a "
+                        + "strategy nobody trades"),
+
+                _ => Claim.Passed(Table, what,
+                    "what the two sides of the strategy are for rather than what the code does, so no run of "
+                    + "anything could agree or disagree with it. Exempt by name beside the vocabulary and the "
+                    + "worked examples"),
+            });
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// The exit-rule row, clause by clause, against the code that holds each one.
+    ///
+    /// The two cells are passed in so a reworded document fails here rather than being asserted
+    /// against constants the row no longer names, which is the direction a source scan cannot see on
+    /// its own.
+    /// </summary>
+    private static bool TheTwoRuleSetsAreBuiltAndSeparate(string longCell, string shortCell)
+    {
+        string manager = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "PositionManager.cs"));
+
+        // Separate code paths rather than one routine with a sign flag, read off the two types
+        // rather than off the text of their files: each names the other in its own prose, on
+        // purpose, so a scan for the other side's method name finds a cross-reference and calls it a
+        // merge. What the deliverable asks for is that neither side's rule is reachable through the
+        // other and that no rule takes a direction, because a direction parameter is the sign flag.
+        Type longSide = typeof(Core.Trading.LongExitRules);
+        Type shortSide = typeof(Core.Trading.ShortExitRules);
+
+        bool separate = longSide.GetMethod("TrailArmedBy") is not null
+            && longSide.GetMethod("Reclaimed") is null
+            && shortSide.GetMethod("Reclaimed") is not null
+            && shortSide.GetMethod("TrailArmedBy") is null
+            && !longSide.GetMethods().Concat(shortSide.GetMethods())
+                .SelectMany(m => m.GetParameters())
+                .Any(p => string.Equals(p.Name, "direction", StringComparison.Ordinal));
+
+        bool trail = longCell.Contains("9-day", StringComparison.Ordinal)
+            && longCell.Contains("next open", StringComparison.Ordinal)
+            && Core.Trading.LongExitRules.TrailArmedBy(adjustedClose: 99m, nineDayAverage: 100m)
+            && !Core.Trading.LongExitRules.TrailArmedBy(adjustedClose: 100m, nineDayAverage: 100m)
+            && manager.Contains("ExitReason.Trail", StringComparison.Ordinal);
+
+        bool trim = shortCell.Contains("15%", StringComparison.Ordinal)
+            && shortCell.Contains("3R", StringComparison.Ordinal)
+            && Core.Trading.ShortExitRules.TrimFraction == 0.15m
+            && Core.Trading.ShortExitRules.TrimAt == 3m
+            && Core.Trading.ShortExitRules.TrimShares(plannedShares: 150, heldShares: 150) == 22;
+
+        bool reclaim = shortCell.Contains("50-day", StringComparison.Ordinal)
+            && Core.Trading.ShortExitRules.Reclaimed(adjustedHourlyClose: 101m, fiftyDayAverage: 100m)
+            && !Core.Trading.ShortExitRules.Reclaimed(adjustedHourlyClose: 100m, fiftyDayAverage: 100m)
+            && manager.Contains("ExitReason.Reclaim", StringComparison.Ordinal);
+
+        // Both cells say it, and it is one ordering over all three reasons rather than two rules
+        // each knowing about the stop.
+        bool whicheverIsFirst = longCell.Contains("whichever is reached first", StringComparison.Ordinal)
+            && shortCell.Contains("whichever is reached first", StringComparison.Ordinal)
+            && Core.Trading.ExitReason.ThatCloseAPosition.Count == 3
+            && Core.Trading.ExitReason.First(
+                [
+                    new Core.Trading.ExitCandidate(Core.Trading.ExitReason.Trail, 88m, AtTheOpen: true),
+                    new Core.Trading.ExitCandidate(Core.Trading.ExitReason.GaveUp, 95m, AtTheOpen: true),
+                ])?.Reason == Core.Trading.ExitReason.GaveUp
+            && manager.Contains("ExitReason.First(", StringComparison.Ordinal);
+
+        return separate && trail && trim && reclaim && whicheverIsFirst;
+    }
 
     /// <summary>
     /// The two-platform table, asserted against the properties that already hold rather than left

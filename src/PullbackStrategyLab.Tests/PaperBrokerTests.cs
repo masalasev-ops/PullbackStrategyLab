@@ -14,7 +14,11 @@ using Xunit;
 namespace PullbackStrategyLab.Tests;
 
 /// <summary>
-/// The session walked, the fills priced, and the positions carried through it.
+/// The session walked and the entries priced.
+///
+/// <b>Every exit lives in <see cref="PositionManagerTests"/> from 4.8.</b> This stage prices what a
+/// resting order got and nothing else, so a test about a give-up point belongs with the component
+/// that decides it rather than with the one that used to.
 ///
 /// <b>Every figure here is over an authored population and that is stated once.</b> The funnel passes
 /// a median of nought candidates a night on both sides, so no captured night holds a plan, an order
@@ -143,110 +147,31 @@ public sealed class PaperBrokerTests : IDisposable
         Assert.Equal(0m, entry.Slippage);
     }
 
-    // ---- the exit, which is the give-up point until 4.8 --------------------------------------
-
-    /// <summary>A position whose give-up point the session reached is closed, and the loss is the round trip.</summary>
+    /// <summary>
+    /// So does an entry in the middle of the day, which is the half 4.7 left optimistic.
+    ///
+    /// The gap rule ran only on the session's first regular minute until 4.8, so a minute at noon
+    /// that opened past the trigger filled at the trigger: a price that did not trade in that minute
+    /// at all, and one that flatters every time. The rule reads the bar rather than the clock.
+    /// see: A minute that opens through a resting price fills at that open, whatever time of day it is
+    /// </summary>
     [Fact]
-    public void A_position_is_closed_when_the_session_reaches_its_give_up_point()
+    public void An_intraday_minute_that_opens_through_the_trigger_fills_at_that_open()
     {
         Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
-        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
-        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
-        Minute("AAPL", Session, new TimeOnly(11, 0), 99m, 99m, 94m, 95m);
+        Order("AAPL", SetupDirection.Long, at: new TimeOnly(12, 0), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(9, 30), 96m, 97m, 95.5m, 96.5m);
+        Minute("AAPL", Session, new TimeOnly(12, 0), 105m, 106m, 104m, 105.5m);
         Quotes("AAPL", Session);
 
         FillRunResult result = Stage().Fill(Session);
 
-        Assert.Equal(1, result.ExitsFilled);
-        Assert.Equal(0, result.OpenAtEnd);
+        Assert.Equal(1, result.Gapped);
+        Assert.Equal(0, result.Slipped);
 
-        StoredFill exit = Fills(Session).Single(f => f.Leg == "exit");
-        Assert.Equal(FillModel.Slipped, exit.Basis);
-        Assert.Equal(95m, exit.RestingPrice);
-        Assert.Equal(94.905m, exit.Price);
-
-        StoredPosition position = Positions(Session).Single();
-        Assert.Equal(PositionStatus.Closed, position.Status);
-        Assert.Equal(PaperBroker.GaveUp, position.ExitReason);
-        Assert.Equal(150 * (94.905m - 100.10m), position.RealisedPnl);
-
-        // Slightly worse than one unit of risk, because the exit crossed the book too. The round
-        // trip is the cost this lab exists to measure against, so an exit priced at nothing would
-        // put a thumb on the scale of every R figure it produces.
-        Assert.True(position.RealisedR < -1d,
-            $"A stop that cost both crossings reported {position.RealisedR} R.");
-    }
-
-    /// <summary>
-    /// A minute holding both the trigger and the give-up point fills and then stops.
-    ///
-    /// A bar carries a high and a low and no order between them, so either reading is available and
-    /// the pessimistic one is taken. It is the same stance the fill model's third rule takes about a
-    /// profit-taking level that does not exist yet.
-    /// </summary>
-    [Fact]
-    public void A_minute_holding_both_levels_fills_and_then_stops()
-    {
-        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
-        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
-        Minute("AAPL", Session, new TimeOnly(9, 30), 98m, 99m, 97m, 98m);
-        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 94m, 96m);
-        Quotes("AAPL", Session);
-
-        FillRunResult result = Stage().Fill(Session);
-
-        Assert.Equal(1, result.EntriesFilled);
-        Assert.Equal(1, result.ExitsFilled);
-
-        StoredPosition position = Positions(Session).Single();
-        Assert.Equal(PositionStatus.Closed, position.Status);
-        Assert.Equal(position.OpenedAt, position.ClosedAt);
-    }
-
-    /// <summary>
-    /// An overnight jump past the give-up point fills at the next session's first regular minute
-    /// open, is never clamped, and loses more than one R.
-    ///
-    /// This is the checkpoint's first done condition, end to end: the loss is bigger than planned,
-    /// the fill price of the gap is stated rather than only its sign, and the row is tagged so the
-    /// size and frequency of these can be read afterwards.
-    /// see: A gap through a price fills at the session's first regular minute open, and is not slipped again
-    /// </summary>
-    [Fact]
-    public void An_overnight_gap_through_the_give_up_point_fills_at_the_open_and_is_never_clamped()
-    {
-        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
-        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
-        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
-        Minute("AAPL", Session, new TimeOnly(15, 0), 100m, 101m, 99m, 100m);
-        Quotes("AAPL", Session);
-
-        Stage().Fill(Session);
-
-        // The next session opens seven points below the give-up point.
-        Minute("AAPL", NextSession, new TimeOnly(9, 30), 88m, 89m, 87m, 88.5m);
-        Quotes("AAPL", NextSession);
-
-        FillRunResult next = Stage(NextSession).Fill(NextSession);
-
-        Assert.Equal(1, next.OpenAtStart);
-        Assert.Equal(1, next.ExitsFilled);
-        Assert.Equal(1, next.Gapped);
-        Assert.Equal(0, next.OpenAtEnd);
-
-        StoredFill exit = Fills(NextSession).Single();
-        Assert.Equal(FillModel.Gapped, exit.Basis);
-        Assert.Equal(88m, exit.Price);
-        Assert.Equal(0m, exit.Slippage);
-
-        StoredPosition position = Positions(Session, asOf: NextSession).Single();
-        Assert.Equal(PositionStatus.Closed, position.Status);
-        Assert.Equal(NextSession, position.ClosedSession);
-        Assert.Equal(150 * (88m - 100.10m), position.RealisedPnl);
-
-        // The risk it was measured against was 5.10 a share, and it lost 12.10 a share.
-        Assert.True(position.RealisedR < -2d,
-            $"A gap of seven points past a five point stop reported {position.RealisedR} R, which is clamped.");
+        StoredFill entry = Fills(Session).Single();
+        Assert.Equal(FillModel.Gapped, entry.Basis);
+        Assert.Equal(105m, entry.Price);
     }
 
     // ---- what cannot be priced ---------------------------------------------------------------
@@ -337,9 +262,9 @@ public sealed class PaperBrokerTests : IDisposable
             PaperBroker.TriggerMinuteNotStored, Positions(Session).Single().UnfilledBecause);
     }
 
-    /// <summary>A night with nothing to price is clean and says which shape of nothing it was.</summary>
+    /// <summary>A night with nothing to price is clean and says so.</summary>
     [Fact]
-    public void A_night_with_no_order_and_no_position_is_clean()
+    public void A_night_with_no_order_is_clean()
     {
         FillRunResult result = Stage().Fill(Session);
 
@@ -388,40 +313,6 @@ public sealed class PaperBrokerTests : IDisposable
         Assert.Equal(99.90m, shortSide.EntryPrice);
     }
 
-    // ---- point in time, over a table that is updated -----------------------------------------
-
-    /// <summary>
-    /// A position closed after the as-of reads as open, which is what it was.
-    ///
-    /// This is the one updated table in the phase, and an update overwrites a state without moving
-    /// the stamp that says when it was observed. Two stamps and two bounds, so a replay standing
-    /// between the open and the close is answered with the state that existed then.
-    /// </summary>
-    [Fact]
-    public void A_position_closed_after_the_as_of_reads_as_open()
-    {
-        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
-        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
-        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
-        Quotes("AAPL", Session);
-
-        Stage().Fill(Session);
-
-        Minute("AAPL", NextSession, new TimeOnly(9, 30), 99m, 99m, 94m, 95m);
-        Quotes("AAPL", NextSession);
-        Stage(NextSession).Fill(NextSession);
-
-        StoredPosition asOfTheClose = Positions(Session, asOf: NextSession).Single();
-        Assert.Equal(PositionStatus.Closed, asOfTheClose.Status);
-        Assert.NotNull(asOfTheClose.ExitPrice);
-
-        StoredPosition asOfTheDayBefore = Positions(Session, asOf: Session).Single();
-        Assert.Equal(PositionStatus.Open, asOfTheDayBefore.Status);
-        Assert.Null(asOfTheDayBefore.ExitPrice);
-        Assert.Null(asOfTheDayBefore.ClosedAt);
-        Assert.Null(asOfTheDayBefore.RealisedR);
-    }
-
     /// <summary>A rerun over a session already priced writes nothing, on the store's own keys.</summary>
     [Fact]
     public void A_rerun_over_a_priced_session_writes_nothing()
@@ -429,17 +320,16 @@ public sealed class PaperBrokerTests : IDisposable
         Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
         Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
         Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
-        Minute("AAPL", Session, new TimeOnly(11, 0), 99m, 99m, 94m, 95m);
         Quotes("AAPL", Session);
 
         Stage().Fill(Session);
 
         FillRunResult again = Stage().Fill(Session);
 
-        Assert.Equal(0, again.OpenAtStart);
+        Assert.Equal(1, again.EntriesFilled);
         Assert.Single(Positions(Session));
-        Assert.Equal(2, Fills(Session).Count);
-        Assert.Equal(PositionStatus.Closed, Positions(Session).Single().Status);
+        Assert.Single(Fills(Session));
+        Assert.Equal(PositionStatus.Open, Positions(Session).Single().Status);
     }
 
     // ---- the book the caps read --------------------------------------------------------------
@@ -482,11 +372,15 @@ public sealed class PaperBrokerTests : IDisposable
     // ---- the night's own record --------------------------------------------------------------
 
     /// <summary>
-    /// The run row carries the book at both ends, because RiskGate reads this table and a night that
-    /// opened four and closed none is a night the next morning's fifth trigger is refused on.
+    /// The run row carries the book it was handed and what it priced, and no longer a book at the
+    /// end of the night.
+    ///
+    /// <c>exits_filled</c> and <c>open_at_end</c> were dropped by migration 045 rather than kept
+    /// reading nought for ever: exits moved to PositionManager at 4.8, and this stage cannot know
+    /// what the night ended holding. <c>manage_run</c> is what carries that now.
     /// </summary>
     [Fact]
-    public void The_run_row_carries_the_book_at_both_ends_of_the_night()
+    public void The_run_row_carries_the_book_it_was_handed_and_what_it_priced()
     {
         Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
         Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
@@ -502,7 +396,6 @@ public sealed class PaperBrokerTests : IDisposable
         Assert.Equal(1, run.OrdersPlaced);
         Assert.Equal(1, run.EntriesFilled);
         Assert.Equal(0, run.EntriesUnfilled);
-        Assert.Equal(1, run.OpenAtEnd);
         Assert.Equal(1, run.NamesWalked);
         Assert.Equal(1, run.MinutesWalked);
         Assert.Equal("clean", run.Outcome);

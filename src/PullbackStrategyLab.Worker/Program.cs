@@ -46,6 +46,7 @@ public static class Program
         builder.Services.AddSingleton<TriggerResolver>();
         builder.Services.AddSingleton<RiskGate>();
         builder.Services.AddSingleton<PaperBroker>();
+        builder.Services.AddSingleton<PositionManager>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
@@ -116,6 +117,7 @@ public static class Program
                 TriggerResolver.Name => host.Services.GetRequiredService<TriggerResolver>().Run(rest),
                 RiskGate.Name => host.Services.GetRequiredService<RiskGate>().Run(rest),
                 PaperBroker.Name => host.Services.GetRequiredService<PaperBroker>().Run(rest),
+                PositionManager.Name => host.Services.GetRequiredService<PositionManager>().Run(rest),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
@@ -257,6 +259,7 @@ public static class Program
         TriggerResolver.Name,
         RiskGate.Name,
         PaperBroker.Name,
+        PositionManager.Name,
         IndicatorEngine.Name,
         ScanEngine.Name,
         TierClassifier.Name,

@@ -7,11 +7,13 @@ namespace PullbackStrategyLab.Data;
 /// The positions the lab holds, the fills that opened and closed them, and PaperBroker's own run
 /// rows.
 ///
-/// <b>Two stamps and both are bounded, because this is the one updated table in the phase.</b> A
-/// position is inserted when it is filled and updated when it closes, so a single stamp would answer
-/// a replay standing between the two with the state the row ended in. Every read here bounds
-/// <c>observed_at</c> for whether the row exists at all and <c>closed_observed_at</c> for whether it
-/// had closed yet, so a position closed after the as-of reads as open, which is what it was.
+/// <b>Three stamps and all three are bounded, because this is the one updated table in the phase.</b>
+/// A position is inserted when it is filled, updated when a short is trimmed, and updated again
+/// when it closes, so a single stamp would answer a replay standing between any two of those with
+/// the state the row ended in. Every read here bounds <c>observed_at</c> for whether the row exists
+/// at all, <c>trim_observed_at</c> for whether it had been trimmed yet and <c>closed_observed_at</c>
+/// for whether it had closed yet, so a position closed after the as-of reads as open, which is what
+/// it was. <c>trail_armed_session</c> needs no stamp because it is a session rather than a fact.
 /// see: A reader's signature does not establish point-in-time; the query does
 ///
 /// <b>An unfilled position is read on the same footing as a filled one.</b> A placed order the
@@ -27,7 +29,8 @@ public sealed class PositionReader
         shares, entry_fill_id, entry_price, value_at_entry, fraction_at_entry, risk_intended,
         risk_realised, unfilled_because, borrow_rate_assumed, borrow_availability, closed_session,
         closed_at, exit_fill_id, exit_price, exit_reason, realised_pnl, realised_r, observed_at,
-        closed_observed_at
+        closed_observed_at, trim_fill_id, trimmed_at, trimmed_shares, trim_price, trim_realised_pnl,
+        trim_observed_at, exit_armed_session, exit_armed_reason
         """;
 
     private readonly StoreConnectionFactory _connections;
@@ -83,6 +86,43 @@ public sealed class PositionReader
             SELECT {Columns}
               FROM position
              WHERE opened_session < @session
+               AND status <> 'unfilled'
+               AND observed_at <= @observed_before
+               AND (closed_observed_at IS NULL OR closed_observed_at > @observed_before
+                    OR closed_session >= @session)
+             ORDER BY opened_at, ticker
+            """;
+
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+        Bound(command, asOf);
+
+        return Read(command, asOf);
+    }
+
+    /// <summary>
+    /// The positions that were open at some point during <paramref name="session"/>, which is what
+    /// PositionManager manages.
+    ///
+    /// <b>A third question, and it is neither of the two above.</b> <see cref="OpenComingInto"/> is
+    /// the caps' read and deliberately excludes the session's own entries, because RiskGate decides
+    /// before they exist. <see cref="OpenAt"/> is the status band's and asks what is held now. This
+    /// one is the manager's: it runs after PaperBroker on the same evening, so a position opened at
+    /// 09:31 of this session is one it has to walk, and a position closed in an earlier session is
+    /// one it must not.
+    ///
+    /// A rerun reads nothing to do, because a close this evening already wrote is visible at this
+    /// as-of and the caller drops any row that comes back closed.
+    /// </summary>
+    public static IReadOnlyList<StoredPosition> OpenDuring(
+        SqliteConnection connection, DateOnly session, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT {Columns}
+              FROM position
+             WHERE opened_session <= @session
                AND status <> 'unfilled'
                AND observed_at <= @observed_before
                AND (closed_observed_at IS NULL OR closed_observed_at > @observed_before
@@ -188,7 +228,7 @@ public sealed class PositionReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT session_date, open_at_start, orders_placed, entries_filled, entries_unfilled,
-                   exits_filled, gapped, slipped, open_at_end, names_walked, minutes_walked,
+                   gapped, slipped, names_walked, minutes_walked,
                    outcome, stopped_because, observed_at
               FROM fill_run
              WHERE session_date = @session_date
@@ -212,11 +252,65 @@ public sealed class PositionReader
                 reader.GetInt32(6),
                 reader.GetInt32(7),
                 reader.GetInt32(8),
+                reader.GetString(9),
+                reader.IsDBNull(10) ? null : reader.GetString(10),
+                StoreText.StorageTextToTimestamp(reader.GetString(11))));
+        }
+
+        return runs;
+    }
+
+    /// <summary>
+    /// PositionManager's own run rows for one session, most recent first.
+    ///
+    /// Unbounded, and <c>manage_run</c> is exempted by name on the terms <c>fill_run</c> already
+    /// carries: it says when the manager ran and what each rule closed, which is operational. The
+    /// positions it counts are in <c>position</c>, which is stamped three times and bounded on all
+    /// three.
+    /// </summary>
+    public static IReadOnlyList<StoredManageRun> ManageRunsFor(
+        SqliteConnection connection, DateOnly sessionDate)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT session_date, open_at_start, longs_managed, shorts_managed, closed_give_up,
+                   closed_trail, closed_reclaim, trimmed, exits_armed, gapped, slipped,
+                   held_no_quote, closed_in_their_own_session, open_at_end, names_walked,
+                   minutes_walked, outcome, stopped_because, observed_at
+              FROM manage_run
+             WHERE session_date = @session_date
+             ORDER BY observed_at DESC
+            """;
+
+        command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
+
+        var runs = new List<StoredManageRun>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            runs.Add(new StoredManageRun(
+                StoreText.StorageTextToDate(reader.GetString(0)),
+                reader.GetInt32(1),
+                reader.GetInt32(2),
+                reader.GetInt32(3),
+                reader.GetInt32(4),
+                reader.GetInt32(5),
+                reader.GetInt32(6),
+                reader.GetInt32(7),
+                reader.GetInt32(8),
                 reader.GetInt32(9),
                 reader.GetInt32(10),
-                reader.GetString(11),
-                reader.IsDBNull(12) ? null : reader.GetString(12),
-                StoreText.StorageTextToTimestamp(reader.GetString(13))));
+                reader.GetInt32(11),
+                reader.GetInt32(12),
+                reader.GetInt32(13),
+                reader.GetInt32(14),
+                reader.GetInt32(15),
+                reader.GetString(16),
+                reader.IsDBNull(17) ? null : reader.GetString(17),
+                StoreText.StorageTextToTimestamp(reader.GetString(18))));
         }
 
         return runs;
@@ -250,6 +344,22 @@ public sealed class PositionReader
                 : StoreText.StorageTextToTimestamp(reader.GetString(26));
 
             bool closeIsVisible = closedObservedAt is not null && closedObservedAt <= bound;
+
+            DateTimeOffset? trimObservedAt = reader.IsDBNull(32)
+                ? null
+                : StoreText.StorageTextToTimestamp(reader.GetString(32));
+
+            bool trimIsVisible = trimObservedAt is not null && trimObservedAt <= bound;
+
+            // An arming needs no stamp of its own, because the column is the session that armed
+            // the exit rather than the fact that something did. A session later than the as-of is
+            // a reading the lab had not made yet and reads as unarmed, which is what it was, and
+            // the reason goes with it.
+            DateOnly? armedSession = reader.IsDBNull(33)
+                ? null
+                : StoreText.StorageTextToDate(reader.GetString(33));
+
+            bool armIsVisible = armedSession is not null && armedSession <= asOf;
 
             // Only a close is projected away. An unfilled row has no close and is not an open
             // position, so rewriting every status the as-of cannot see the close of would turn the
@@ -287,7 +397,15 @@ public sealed class PositionReader
                 closeIsVisible && !reader.IsDBNull(23) ? StoreText.StorageTextToPrice(reader.GetString(23)) : null,
                 closeIsVisible && !reader.IsDBNull(24) ? reader.GetDouble(24) : null,
                 StoreText.StorageTextToTimestamp(reader.GetString(25)),
-                closeIsVisible ? closedObservedAt : null));
+                closeIsVisible ? closedObservedAt : null,
+                trimIsVisible ? reader.GetString(27) : null,
+                trimIsVisible ? StoreText.StorageTextToTimestamp(reader.GetString(28)) : null,
+                trimIsVisible ? reader.GetInt32(29) : null,
+                trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(30)) : null,
+                trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(31)) : null,
+                trimIsVisible ? trimObservedAt : null,
+                armIsVisible ? armedSession : null,
+                armIsVisible && !reader.IsDBNull(34) ? reader.GetString(34) : null));
         }
 
         return positions;
@@ -335,7 +453,19 @@ public sealed record StoredPosition(
     decimal? RealisedPnl,
     double? RealisedR,
     DateTimeOffset ObservedAt,
-    DateTimeOffset? ClosedObservedAt);
+    DateTimeOffset? ClosedObservedAt,
+    string? TrimFillId,
+    DateTimeOffset? TrimmedAt,
+    int? TrimmedShares,
+    decimal? TrimPrice,
+    decimal? TrimRealisedPnl,
+    DateTimeOffset? TrimObservedAt,
+    DateOnly? ExitArmedSession,
+    string? ExitArmedReason)
+{
+    /// <summary>What is still held, which is what an exit closes and what a further trim could not.</summary>
+    public int SharesRemaining => Shares - (TrimmedShares ?? 0);
+}
 
 /// <summary>One end of one trade as the store holds it.</summary>
 public sealed record StoredFill(
@@ -358,16 +488,43 @@ public sealed record StoredFill(
     int? StraddleSeconds,
     DateTimeOffset ObservedAt);
 
-/// <summary>One run of PaperBroker, with the book at both ends of the night.</summary>
+/// <summary>
+/// One run of PaperBroker, which from 4.8 prices entries and nothing else.
+///
+/// <c>exits_filled</c> and <c>open_at_end</c> were dropped by migration 045 rather than kept
+/// reading nought: exits moved to PositionManager, and a stage's record that can only report zero
+/// is one a later session reads as broken. The night's book at its end is
+/// <see cref="StoredManageRun"/>'s.
+/// </summary>
 public sealed record StoredFillRun(
     DateOnly SessionDate,
     int OpenAtStart,
     int OrdersPlaced,
     int EntriesFilled,
     int EntriesUnfilled,
-    int ExitsFilled,
     int Gapped,
     int Slipped,
+    int NamesWalked,
+    int MinutesWalked,
+    string Outcome,
+    string? StoppedBecause,
+    DateTimeOffset ObservedAt);
+
+/// <summary>One run of PositionManager, with every exit counted by the rule that produced it.</summary>
+public sealed record StoredManageRun(
+    DateOnly SessionDate,
+    int OpenAtStart,
+    int LongsManaged,
+    int ShortsManaged,
+    int ClosedGiveUp,
+    int ClosedTrail,
+    int ClosedReclaim,
+    int Trimmed,
+    int ExitsArmed,
+    int Gapped,
+    int Slipped,
+    int HeldNoQuote,
+    int ClosedInTheirOwnSession,
     int OpenAtEnd,
     int NamesWalked,
     int MinutesWalked,

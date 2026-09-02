@@ -172,8 +172,22 @@ public sealed class PointInTimeCheck
                 + "the plans it counts are in trade_plan, which is stamped and bounded.",
             ["fill_run"] =
                 "what one evening's fill stage priced and what it could not, on the same terms as "
-                + "order_run below. The positions it counts are in position, which carries two stamps "
-                + "and is bounded on both.",
+                + "order_run below. The positions it counts are in position, which carries three stamps "
+                + "and is bounded on all three.",
+            ["manage_run"] =
+                "what one evening's two rule sets closed, trimmed and armed, on the same terms as "
+                + "fill_run above. The positions it counts are in position, which carries three stamps "
+                + "and is bounded on all three.",
+
+            // Not a table the store holds. Migration 045 renames `fill` out of the way so it can be
+            // redeclared with a third leg, copies into the new one and drops this in the same file,
+            // so the name exists for four statements and never for a night. It is named here rather
+            // than filtered out of the parse, because a rule that skipped tables a migration also
+            // drops would skip a table a later migration dropped for a real reason.
+            ["fill_before_045"] =
+                "the transient name migration 045 renames fill to while it redeclares it with a third "
+                + "leg. It is dropped by the same migration, so no store this check could read ever "
+                + "holds it.",
             ["order_run"] =
                 "observed_at is when one evening's gate ran and what it refused, which is operational on the "
                 + "same terms as trigger_run below. Nothing computes a figure about the market from it: the "

@@ -614,15 +614,15 @@ public sealed class PhaseReplay : IDisposable
         Record("orders.reduced", orders.Reduced);
         Record("orders.blocked", orders.Blocked);
 
-        // 15f. The fills, at 21:15, over the orders the gate placed and the positions carried in.
+        // 15f. The fills, at 21:15, over the orders the gate placed.
         //
-        //      <b>Nothing was placed and nothing was held, so the night prices nothing and says so.</b>
-        //      The two book figures are the ones worth freezing hardest: RiskGate reads them from
-        //      4.7, so a session that opened a position and did not close it is a session the next
-        //      morning's fifth trigger is refused on, and both would move here first. `unfilled` is
-        //      the other one: the fixture's own capture holds a name the vendor quoted with one side,
-        //      so the day this fixture grows an order on such a name it becomes a real count with no
-        //      edit to this file.
+        //      <b>Nothing was placed, so the night prices nothing and says so.</b> `openAtStart` is
+        //      the book RiskGate read at 21:10 and is the figure worth freezing hardest: a session
+        //      that opened a position and did not close it is a session the next morning's fifth
+        //      trigger is refused on, and it would move here first. `unfilled` is the other one: the
+        //      fixture's own capture holds a name the vendor quoted with one side, so the day this
+        //      fixture grows an order on such a name it becomes a real count with no edit to this
+        //      file.
         //
         //      The session it walks was sampled once rather than twice, which is the degraded state
         //      the reader tells apart from unsampled, so the stage prices rather than refusing.
@@ -633,10 +633,32 @@ public sealed class PhaseReplay : IDisposable
         Record("fills.ordersPlaced", fills.OrdersPlaced);
         Record("fills.entriesFilled", fills.EntriesFilled);
         Record("fills.entriesUnfilled", fills.EntriesUnfilled);
-        Record("fills.exitsFilled", fills.ExitsFilled);
         Record("fills.gapped", fills.Gapped);
         Record("fills.slipped", fills.Slipped);
-        Record("fills.openAtEnd", fills.OpenAtEnd);
+
+        // 15g. The two rule sets, at 21:20, over every position open at any point in the session.
+        //
+        //      <b>Nothing was open, so no rule ran and no exit was priced.</b> The three closing
+        //      figures are counted apart on purpose: a night of trail exits is a different night
+        //      from a night of stop-outs, and a single total would let the one that is a finding
+        //      hide inside the one that is ordinary. `closedInTheirOwnSession` is the size of the
+        //      approximation the caps make, being what RiskGate could not see at 21:10, and it is
+        //      the figure that says how much a merge of the two stages would be worth.
+        ManageRunResult managed =
+            new PositionManager(_connections, Logger(), _clock, _options).Manage(AsOf);
+
+        stages.Add(new StageRun(PositionManager.Name, 0, managed.RowsWritten, managed.Outcome.ToStorageText()));
+        Record("manage.openAtStart", managed.OpenAtStart);
+        Record("manage.longsManaged", managed.LongsManaged);
+        Record("manage.shortsManaged", managed.ShortsManaged);
+        Record("manage.closedGiveUp", managed.ClosedGiveUp);
+        Record("manage.closedTrail", managed.ClosedTrail);
+        Record("manage.closedReclaim", managed.ClosedReclaim);
+        Record("manage.trimmed", managed.Trimmed);
+        Record("manage.exitsArmed", managed.ExitsArmed);
+        Record("manage.heldNoQuote", managed.HeldNoQuote);
+        Record("manage.closedInTheirOwnSession", managed.ClosedInTheirOwnSession);
+        Record("manage.openAtEnd", managed.OpenAtEnd);
 
         // The seam, read off the rows the detectors wrote rather than off the constant that names
         // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause

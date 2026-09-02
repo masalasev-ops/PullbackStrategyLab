@@ -50,7 +50,29 @@ public sealed class RunLogger
     /// already spent itself on the evening's work. The calls are recorded either way, because
     /// what a run cost is worth knowing about every run.
     /// </summary>
-    public RunScope Begin(SqliteConnection connection, string stage, CallCounting counting, params string[] tablesWritten)
+    /// <summary>
+    /// Opens a run whose declared tables it only updates, so <c>rows_written</c> is written null
+    /// rather than nought.
+    ///
+    /// The delta cannot see a write that changes a row rather than adding one, so on such a stage a
+    /// perfect run and a run that died on the first name both report 0. Null says the measure does
+    /// not apply; nought says the stage wrote nothing, and the nightly halt keys on the second. It
+    /// is declared here rather than decided at the end, so it is part of what a stage says it writes
+    /// rather than something a stage could forget to mention.
+    /// see: A run whose writes are updates records no row count rather than a nought
+    /// </summary>
+    public RunScope BeginUpdatingInPlace(SqliteConnection connection, string stage, params string[] tablesWritten) =>
+        Begin(connection, stage, CallCounting.AgainstTheDailyCeiling, RowDelta.DoesNotApply, tablesWritten);
+
+    public RunScope Begin(SqliteConnection connection, string stage, CallCounting counting, params string[] tablesWritten) =>
+        Begin(connection, stage, counting, RowDelta.Measured, tablesWritten);
+
+    private RunScope Begin(
+        SqliteConnection connection,
+        string stage,
+        CallCounting counting,
+        RowDelta rowDelta,
+        params string[] tablesWritten)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(stage);
@@ -81,7 +103,7 @@ public sealed class RunLogger
         int callsAlreadyUsedToday = CallsUsedOn(connection, VendorQuotaDay.Containing(startedAt));
         var baseline = tablesWritten.ToDictionary(t => t, t => CountRows(connection, t), StringComparer.Ordinal);
 
-        return new RunScope(this, connection, runId, stage, startedAt, baseline, callsAlreadyUsedToday, counting);
+        return new RunScope(this, connection, runId, stage, startedAt, baseline, callsAlreadyUsedToday, counting, rowDelta);
     }
 
     /// <summary>The end entry. Called by the scope, never by a stage.</summary>
@@ -89,7 +111,7 @@ public sealed class RunLogger
         SqliteConnection connection,
         string runId,
         RunOutcome outcome,
-        int rowsWritten,
+        int? rowsWritten,
         int callsUsed,
         int? skipped = null)
     {
@@ -105,7 +127,7 @@ public sealed class RunLogger
             """;
         command.Parameters.AddWithValue("@ended_at", StoreText.TimestampToStorageText(_clock.UtcNow));
         command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
-        command.Parameters.AddWithValue("@rows_written", rowsWritten);
+        command.Parameters.AddWithValue("@rows_written", (object?)rowsWritten ?? DBNull.Value);
         command.Parameters.AddWithValue("@calls_used", callsUsed);
         command.Parameters.AddWithValue("@skipped", (object?)skipped ?? DBNull.Value);
         command.Parameters.AddWithValue("@run_id", runId);
