@@ -53,6 +53,10 @@ public sealed record PanelView(
         "band1.vsLoose" => "Against loose controls",
         "band1.vsTight" => "Against tight controls",
         "band2.ceilingGap" => "Ceiling gap",
+        "band2.lossCause.gap" => "Losses that gapped",
+        "band2.lossCause.noise" => "Noise stop-outs",
+        "band2.lossCause.failedSetup" => "Failed setups",
+        "band2.lossCause.unclassified" => "Unclassified losses",
         _ when Name.StartsWith("band2.decile", StringComparison.Ordinal) =>
             $"Decile {Name["band2.decile".Length..]}",
         _ => Name,
@@ -78,6 +82,14 @@ public sealed record PanelView(
             "The honest comparison, and the one that can embarrass the project. Reads green only when the lower bound clears zero",
         "band2.ceilingGap" =>
             "Near zero means the stop is the binding constraint and no selection change can help. Wide means selection has room",
+        "band2.lossCause.gap" =>
+            "Over every classified loss. Rising points at selection: the liquidity floor, or earnings dates inside the window",
+        "band2.lossCause.noise" =>
+            "Over every loss whose horizon has closed. Noise stop-outs shrinking is evidence the execution improved, which is entry timing and stop placement rather than the filter",
+        "band2.lossCause.failedSetup" =>
+            "Over every loss whose horizon has closed. Failed setups shrinking as a share is direct evidence the filter improved, and this is the bucket selection changes can actually reduce",
+        "band2.lossCause.unclassified" =>
+            "Over every loss whose horizon has closed, so a loss still waiting on one is not in it. Rising is a finding about the taxonomy rather than about the trades",
         _ when Name.StartsWith("band2.decile", StringComparison.Ordinal) =>
             "A flat curve across the deciles means the rank is decorative and the cap is truncating at random",
         _ => null,

@@ -746,7 +746,8 @@ Declared at store level. Columns owed at their checkpoint.
 | `plan_audit` | trade | Insert PlanAudit. Three pairs and not one field: execution at both ends, the plan's stop against where the trade ended, and the size the plan carried against the size the gate placed (see: The audit holds three pairs and they answer three different questions) |
 | `trade_run` | session + observation | Insert TradeJournal. What one evening's journal wrote, counted by side |
 | `audit_run` | session + observation | Insert PlanAudit. What one evening's audit read and wrote, with the two figures worth reading off a total |
-| `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |
+| `loss_class` | trade | Insert LossClassifier · Update LossClassifier. Two answers per loss, arriving at different times: the mechanism at the close and the aftermath when the horizon does (see: A loss awaiting its horizon carries no aftermath, and that is not the same as being unclassified) |
+| `loss_run` | session + observation | Insert LossClassifier. What each of the two passes wrote, counted apart |
 
 ### The plan, and the size it carries
 
@@ -1094,6 +1095,42 @@ Grain: session + observation. What one evening's audit read and wrote, at 21:26.
 | `reduced_by_a_cap` | INTEGER | trades the gate sized down. The figure the third pair exists to make readable |
 | `gapped_at_an_end` | INTEGER | trades where one end or the other filled at an open rather than at the price it named, so the night's difference figures are never read as though they were all slippage |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | |
+
+### Why each loss happened
+
+Columns of `loss_class`. Built at 4.10. One row per closed loss, carrying two answers that arrive at
+different times.
+
+| Column | Form | Why |
+|---|---|---|
+| `trade_id` | TEXT, the key | The trade it explains, and a foreign key into it |
+| `setup_id`, `ticker`, `direction`, `closed_session` | TEXT | Carried so a classification reads without a join |
+| `net_pnl`, `result_r` | TEXT / REAL | What is being explained, after the borrow a short is charged |
+| `mechanism` | TEXT, one of two | `gap` or `ordinary`. **How** the loss occurred, known the moment the trade closes |
+| `exit_basis` | TEXT, one of two | What the mechanism was read from, carried so the reading is checkable on the row rather than only reproducible from a join to `fill` (see: A gap loss is detected from the exit fill's basis, not from the size of the loss) |
+| `aftermath` | TEXT NULL, one of three | `noise`, `failed-setup` or `unclassified`. **What happened next**, and null while the ten-session horizon has not closed. Null and `unclassified` are different facts and only the second is a finding |
+| `forward_return_signed`, `one_r_in_return` | TEXT NULL | The two figures the boundary was read from, present exactly on the two aftermaths that came from them. `unclassified` means the horizon closed and the figure was absent, so a row carrying both would be one nobody could tell from a placed one |
+| `aftermath_because` | TEXT NULL | The sentence a person reads, with both figures in it |
+| `observed_at`, `aftermath_observed_at` | TEXT / TEXT NULL | Two stamps, on the terms `position` carries three: an update overwrites a state without moving the stamp that says when it was observed, so a replay standing between the close and the horizon has to see a mechanism and no aftermath |
+
+**Both questions are asked of every loss.** A gap loss that later recovers satisfies both without
+contradiction, and it can only do so if the second is put to it. Asking the aftermath only of the
+losses that were not gaps is what a single ranked list would have done, and the ranked list is what
+the decision refuses (see: A stop-out is noise when the ten-day return reached one R, and cause of
+loss is two questions rather than one ordered list).
+
+#### `loss_run`
+Grain: session + observation. What each of the classifier's two passes wrote, at 21:35.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `losses_closed`, `mechanisms_written` | INTEGER | the first pass. They differ on a rerun and on a closed trade with no exit fill, which is refused rather than classified from the size of the loss |
+| `gap`, `ordinary` | INTEGER | the mechanism, counted apart |
+| `longs`, `shorts` | INTEGER | counted apart (see: Long and short are never pooled into one figure) |
+| `awaiting_aftermath` | INTEGER | rows still waiting on a horizon at the end of the run, read back from the store rather than derived. **Not the same figure as `unclassified`**, which is two columns along |
+| `aftermaths_written`, `noise`, `failed_setup`, `unclassified` | INTEGER | the second pass. A night that wrote three mechanisms and no aftermaths is an ordinary night early in a horizon; one that wrote three aftermaths and no mechanisms is an ordinary night ten sessions later, and one total would make both read the same |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | clean where nothing closed and nothing was waiting |
 
 ## Research — phases 5 and 6
 

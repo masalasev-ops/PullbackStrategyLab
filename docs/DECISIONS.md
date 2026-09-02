@@ -647,6 +647,24 @@ The boundary is in R rather than in per cent, because R is the unit every other 
 
 **Precedence is not a single ordered list, and stating it as one is what made it look like a conflict.** A gap loss is classified as a gap loss first, because that names *how* the loss occurred. Noise against failed setup names *what happened afterwards*, and it classifies the losses that were not gaps. The two answer different questions, so a gap loss that later recovers satisfies both without contradiction, and reporting them as one ranked list would hide that a loss has a mechanism and an aftermath.
 
+**A gap loss is detected from the exit fill's basis, not from the size of the loss**
+`loss_class.mechanism` is `gap` where the exit filled at an open already past the price it named, and `ordinary` otherwise. Supersedes nothing, because nothing had been decided: ARCHITECTURE's failure table carried a detection line and no decision stood behind it.
+
+**The stated detector fires on every ordinary stop-out.** The failure table has said since it was written that a gap loss is a "loss larger than one unit of risk". A round trip costs two crossings, so an ordinary stop loses slightly more than one unit of risk by construction: 4.7 measured exactly that and asserted it as an inequality rather than as a number. Implementing the line as written would put every stop-out in the gap bucket, and the noise and failed-setup buckets would be empty on every night the lab ever ran.
+
+**A taxonomy whose largest bucket is guaranteed to contain another is one whose shares mean nothing**, which is the same argument `unclassified` exists for one level up: a cause that is always assigned can never be shown to be missing one.
+
+**The basis says what happened rather than what it looked like.** `gapped` on a fill is an exit that could not be hit at the price it named because the market opened past it, which is the mechanism the bucket is about; the size of the resulting loss is a consequence of it and of the plan's stop distance together. The document is corrected at 4.10 rather than the code being written to it, because the code is right and the line was a symptom mistaken for a cause.
+
+**A loss awaiting its horizon carries no aftermath, and that is not the same as being unclassified**
+`loss_class.aftermath` is null while the ten-session horizon has not closed, and `unclassified` where it has closed and no forward return was filled.
+
+**They are two different facts and only one of them is a finding.** Null is a question the lab cannot answer yet, which is the ordinary state of every loss for its first ten sessions. `unclassified` is a question the lab could answer and could not place, and a share that grows in it is a finding about the classifier rather than about the trades. Collapsing them would make the second unreadable, since the first is far more common and would swamp it.
+
+**It is also why the classifier writes twice rather than waiting.** The mechanism is known the moment the trade closes and the aftermath is not, so holding the first back until the second exists would discard an answer the lab already has, which is what the recording floor refuses everywhere else. The row is inserted with a mechanism and updated with an aftermath, and carries a stamp for each so a replay standing between the two sees what stood then.
+
+**The horizon is counted from the store's own bars rather than from a calendar** (see: A session is a date the store holds minutes for, and no calendar is authored here). The setup's own session is in the count, so eleven sessions is ten having passed, and a name whose series the fetch has not reached stays waiting rather than becoming unclassified for a reason that is about the fetch.
+
 **The order prices are derived from the final pullback session's minutes, not from the screening geometry**
 `PullbackGeometry.Of` computes an entry level and a give-up point from daily bars and they are screening quantities feeding `trigger-near` and `exit-tight`. They are not the prices an order is placed at, and reading one as the other is how two different numbers silently become one.
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Core.Time;
+using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Data;
 
 namespace PullbackStrategyLab.Worker.Stages;
@@ -19,9 +20,13 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// whole system exists to avoid is reading a pattern in forty observations, and a scoreboard that
 /// prints a figure with no denominator is the most efficient way to commit it.
 ///
-/// <b>Band 2's loss-cause panel is not built here and says so.</b> It needs closed trades from
-/// LossClassifier, which arrives at 4.10. The panel declares the checkpoint that fills it rather
-/// than being quietly absent, on the pattern the navigation already uses.
+/// <b>Band 2's loss-cause panels arrive at 4.10 with the classifier that fills them.</b> Four per
+/// side: the share of losses whose mechanism was a gap, and the shares of the three aftermaths. The
+/// two are over different populations and each says which, because a mechanism is known at the close
+/// and an aftermath is not: a row still waiting on its ten-session horizon is out of the aftermath
+/// denominator rather than silently counted as unclassified
+/// (see: A loss awaiting its horizon carries no aftermath, and that is not the same as being
+/// unclassified).
 /// </summary>
 public sealed class ScoreboardBuilder
 {
@@ -46,6 +51,23 @@ public sealed class ScoreboardBuilder
     /// see: The subject is the flagged setup population, not the trade log
     /// </summary>
     public const string Flagged = "every flagged setup";
+
+    /// <summary>
+    /// The classified losses, which is what a mechanism share is over.
+    ///
+    /// Every loss carries a mechanism from the night it closed, so this population is every row the
+    /// classifier has ever written.
+    /// </summary>
+    public const string ClassifiedLosses = "every classified loss";
+
+    /// <summary>
+    /// The placed losses, which is what an aftermath share is over and is not the same population.
+    ///
+    /// A loss waiting on its ten-session horizon carries no aftermath, so it is out of this
+    /// denominator rather than counted as unclassified. Folding the two together would make the
+    /// unclassified share read as the ordinary state of every recent loss.
+    /// </summary>
+    public const string PlacedLosses = "every loss whose horizon has closed";
 
     /// <summary>The ranked subset, which is what a decile curve can be computed over.</summary>
     public const string Candidates = "capped candidates only";
@@ -110,6 +132,7 @@ public sealed class ScoreboardBuilder
             panels.AddRange(AgainstControls(connection, direction, asOf, computedAt));
             panels.AddRange(RankDeciles(connection, direction, asOf, computedAt));
             panels.AddRange(CeilingGap(connection, direction, asOf, _options.SessionZone));
+            panels.AddRange(LossCauses(connection, direction, asOf, _options.SessionZone));
         }
 
         int skipped = 0;
@@ -666,6 +689,89 @@ public sealed class ScoreboardBuilder
     /// together on band 1: a count with no minimum beside it, or a minimum with no count, would be
     /// half a condition rendered as though it were the whole one.
     /// </summary>
+    /// <summary>
+    /// Band 2's loss causes, as shares, for one direction.
+    ///
+    /// <b>Four panels over two populations, and each says which.</b> The gap share is over every
+    /// classified loss, because a mechanism is known the night a trade closes. The three aftermath
+    /// shares are over the losses whose horizon has closed, because a row still waiting carries no
+    /// aftermath at all. Computing all four over one denominator would make the unclassified share
+    /// read as the ordinary state of every recent loss, which is the opposite of what that value
+    /// means (see: A loss awaiting its horizon carries no aftermath, and that is not the same as
+    /// being unclassified).
+    ///
+    /// <b>Withheld rather than nought where the population is empty.</b> A failed-setup share of
+    /// nought over no losses reads as a filter that never fails, and a lab with nothing on file is
+    /// not a lab with good news.
+    ///
+    /// <b>The two sides are computed separately and never added.</b> The sentence this panel exists
+    /// for is that a failed-setup share shrinking is evidence the filter improved and a noise share
+    /// shrinking is evidence the execution improved, and those are two different wins with the same
+    /// symptom on each side of the book (see: Long and short are never pooled into one figure).
+    /// </summary>
+    private static IReadOnlyList<Panel> LossCauses(
+        SqliteConnection connection, string direction, DateOnly asOf, string sessionZone)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT mechanism, aftermath
+              FROM loss_class
+             WHERE direction = @direction
+               AND closed_session <= @as_of
+               AND observed_at <= @observed_before
+            """;
+
+        command.Parameters.AddWithValue("@direction", direction);
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
+
+        var mechanisms = new List<string>();
+        var aftermaths = new List<string>();
+
+        using (SqliteDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                mechanisms.Add(reader.GetString(0));
+
+                if (!reader.IsDBNull(1))
+                {
+                    aftermaths.Add(reader.GetString(1));
+                }
+            }
+        }
+
+        return
+        [
+            Share("band2.lossCause.gap", direction, mechanisms, LossMechanism.Gap, ClassifiedLosses),
+            Share("band2.lossCause.noise", direction, aftermaths, LossAftermath.Noise, PlacedLosses),
+            Share("band2.lossCause.failedSetup", direction, aftermaths, LossAftermath.FailedSetup, PlacedLosses),
+            Share("band2.lossCause.unclassified", direction, aftermaths, LossAftermath.Unclassified, PlacedLosses),
+        ];
+    }
+
+    /// <summary>
+    /// One value's share of a population, withheld where the population is empty.
+    ///
+    /// The count is the population rather than the matches, which is what the panel is read
+    /// against: a share of a half over two losses and over two hundred are different statements
+    /// and the figure alone cannot tell them apart.
+    /// </summary>
+    private static Panel Share(
+        string name, string direction, IReadOnlyList<string> over, string value, string population)
+    {
+        if (over.Count == 0)
+        {
+            return new Panel(name, direction, "withheld", null, null, 0, null, population);
+        }
+
+        decimal share = (decimal)over.Count(v => string.Equals(v, value, StringComparison.Ordinal))
+            / over.Count;
+
+        return new Panel(
+            name, direction, PairedInterval.Figure(share), null, null, over.Count, null, population);
+    }
+
     private sealed record Panel(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
         int? Effective, string Population, int? Minimum = null, string? WithheldBecause = null,

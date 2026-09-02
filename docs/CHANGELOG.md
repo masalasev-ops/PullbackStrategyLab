@@ -1826,3 +1826,23 @@ Why:  4.9 built the components that read the distinction between a trimmed short
 Was:  The nightly schedule ran from 21:20 straight to 21:30, with no row for either stage.
 Now:  A 21:25 row for `trades` and a 21:26 row for `audit`, each saying what it reads, what it writes and what it does not do.
 Why:  Built at 4.9. The audit row says outright that it changes no result, because that is the property the ordering buys and the one a later session would otherwise be free to reverse.
+
+### 2026-09-02 — ARCHITECTURE.html — cites A gap loss is detected from the exit fill's basis, not from the size of the loss
+Was:  `<tr><td>Gap loss</td><td>Loss larger than one unit of risk</td>...`, with the loss table introduced by one paragraph about `unclassified` and no gloss for LossClassifier. Its schedule row read `On exit`.
+Now:  The detection cell reads the fill's own basis, two paragraphs beside the table state the two-questions shape and record what the old line would have done, the catalogue gains a gloss, and the schedule row reads `Nightly 21:35`.
+Why:  A round trip costs two crossings, so an ordinary stop loses slightly more than one unit of risk by construction, which 4.7 measured. Implementing the line as written would have put every stop-out in the gap bucket and left the other two empty on every night the lab ever ran. `On exit` is not a slot the dispatcher can run, which is the defect found at 4.5.
+
+### 2026-09-02 — SCHEMA.md — cites A loss awaiting its horizon carries no aftermath, and that is not the same as being unclassified
+Was:  `| `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |`, with no run row and no column table.
+Now:  `Insert LossClassifier · Update LossClassifier`, a `loss_run` row beside it, and a section giving both their columns.
+Why:  Built at 4.10. The four causes are two questions rather than one list, and the two answers arrive at different times, so the table is updated once and carries two stamps. A row waiting on a horizon and one that could not be placed are different facts, and the column table is where that distinction is stated for a reader rather than inferred from a null.
+
+### 2026-09-02 — BUILD_PLAN.md — cites A gap loss is detected from the exit fill's basis, not from the size of the loss
+Was:  The obligations table carried a row raised at 4.9 due at 4.10, and a row raised at 4.9 due at 4.11 naming `plan_audit` alone.
+Now:  The first is discharged and removed, the second is widened to name `loss_class` beside it, and one is raised.
+Why:  4.10 built the first component that reads a closed loss, and it reads the trade's figure, which is the choice the discharged row was waiting on. The audit row is widened rather than a near-identical row being raised for one checkpoint and one reason.
+
+### 2026-09-02 — RUNBOOK.md — cites A loss awaiting its horizon carries no aftermath, and that is not the same as being unclassified
+Was:  `| 21:35 | loss classification | 0 |`
+Now:  A row naming `losses`, its two passes, what each reads, and the difference between a row waiting on a horizon and one that is `unclassified`.
+Why:  Built at 4.10, and the schedule is what `slot-roster` reconciles the dispatcher against. The distinction is on the row because it is the one thing about this stage an operator would otherwise get wrong: a count of unclassified losses that included every waiting row would read as a broken taxonomy every night for the first ten sessions of every loss.

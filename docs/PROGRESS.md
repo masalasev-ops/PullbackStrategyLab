@@ -11513,3 +11513,121 @@ Carried:    **Two figures called the result now exist and nothing downstream has
             one surface.
 
             **Two discharged and two raised, so the obligations table holds at 54.**
+
+## 4.10 — 2026-09-02 — phase-4-loss-classifier — two questions with one answer each, arriving ten sessions apart
+
+Built:      **`LossClassifier`, with `LossCause` in Core and migration 047.** It runs at 21:35, after
+            the forward returns because half of what it answers is one of them, and it spends no
+            vendor call. One demoralising number becomes four actionable ones.
+
+            **Two passes, because the two answers arrive at different times.** The mechanism names
+            how the loss occurred and is known the moment the trade closes; the aftermath names what
+            happened next and cannot be known for ten sessions after the trigger. So the first pass
+            classifies what closed tonight and the second walks every row still waiting on a horizon,
+            whatever session it closed in. **Holding the first answer back until the second existed
+            would discard an answer the lab already has**, which is what the recording floor refuses
+            everywhere else. The first pass commits before the second reads, so a loss whose horizon
+            has already closed gets both answers on the night it closes rather than waiting one more.
+
+            **Both questions are asked of every loss.** The decision's own sentence is that a gap loss
+            that later recovers satisfies both without contradiction, and that is only true if the
+            second question is put to a gap loss at all. Asking the aftermath only of the losses that
+            were not gaps is what a single ranked list would have done, and the ranked list is what
+            the decision refuses. The authored case gaps through its stop and returns 30 per cent over
+            the following ten sessions: `gap` and `noise` on one row.
+
+Found:      **ARCHITECTURE's gap-loss detector fires on every ordinary stop-out, and has since the
+            failure table was written.** The line reads "loss larger than one unit of risk". A round
+            trip costs two crossings, so an ordinary stop loses slightly more than one unit of risk
+            **by construction**: 4.7 measured it and asserted it as an inequality rather than as a
+            number, and the test here re-derives it from `FillModel` rather than restating the figure.
+            Implementing the line as written would have put every stop-out in the gap bucket and left
+            noise and failed setup empty on every night this lab ever ran.
+
+            **A taxonomy whose largest bucket is guaranteed to contain another is one whose shares
+            mean nothing**, which is the same argument `unclassified` exists for one level up: a cause
+            that is always assigned can never be shown to be missing one. Nothing could have caught
+            it: the line is a table cell in a document, `architecture-conformance` had the failure
+            table with no assertion behind this row because the component did not exist, and the
+            component that would have made it assertable is this one.
+
+            **The document is corrected rather than the code being written to it.** The mechanism is
+            read from the exit fill's own basis, which says what happened rather than what it looked
+            like: `gapped` is an exit that could not be hit at the price it named because the market
+            opened past it, and the size of the resulting loss is a consequence of that and the
+            plan's stop distance together.
+
+Decided:    **A gap loss is detected from the exit fill's basis, not from the size of the loss.** The
+            finding above, recorded as a decision rather than as a note, because a later session
+            reading the table cell could reimplement the size test and the taxonomy would silently
+            become useless. Nothing is superseded: the cell carried a detection line and no decision
+            ever stood behind it.
+
+            **A loss awaiting its horizon carries no aftermath, and that is not the same as being
+            unclassified.** Null is a question the lab cannot answer yet and is the ordinary state of
+            every loss for its first ten sessions. `unclassified` is a question it could answer and
+            could not place, and a share that grows there is a finding about the classifier rather
+            than about the trades. Collapsing them would swamp the finding with the ordinary state,
+            and the night's row keeps them two columns apart for the same reason. **The horizon is
+            counted from the store's own bars**, so eleven sessions from the setup is ten having
+            passed, and a name whose series the fetch has not reached stays waiting rather than
+            becoming unclassified for a reason that is about the fetch.
+
+Built:      **`loss_class` carries two stamps, on the terms `position` carries three.** A row is
+            inserted with a mechanism when the trade closes and updated with an aftermath when the
+            horizon does, so a single stamp would answer a replay standing between the two with the
+            state the row ended in. A test stands a read between the close and the horizon and finds
+            a mechanism, no aftermath, and the row reading as waiting.
+
+            **Two constraints carry what a comment would otherwise have to.** The aftermath and its
+            stamp arrive together in both directions, and the two figures the boundary was read from
+            are present exactly on the two aftermaths that came from them, so an `unclassified` row
+            carrying a forward return is unwritable rather than merely unwritten.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 871 tests**, from 855 at 4.9.
+
+            **`tools/verify-phase` GREEN**: 137 claims, 113 passed, 0 failed, 24 out of scope, 0
+            unexamined, coverage examined 7,481, 1,447 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 107 by the four the loss
+            table brought in and the two schedule rows, and out of scope falls from 26 for the same
+            reason: the loss table had been deferred to this checkpoint from the day the check was
+            written.
+
+            **The fixture's nine `losses.*` figures are noughts and each is structural.** Nothing
+            closed, because nothing was open, because nothing was placed, so neither pass had a
+            subject. `losses.awaitingAftermath` is the one worth freezing hardest, because it is the
+            figure that must never be read as `unclassified`.
+
+Built:      **Band 2's loss-cause panels, which is what the deferral booked at this checkpoint
+            actually asked for.** A surface claim has said since 3.5 that failed setups shrinking as
+            a share is direct evidence the filter improved and noise stop-outs shrinking is evidence
+            the execution improved, deferred to 4.10 because the data did not exist. A claim deferred
+            to a checkpoint that has landed is a claim that checkpoint shipped without coming back
+            to, so it is discharged here rather than repointed: four panels a side, all withheld on a
+            fixture with no loss in it.
+
+            **The two populations inside one band are the part worth stating.** The gap share is over
+            every classified loss, because a mechanism is known the night a trade closes. The three
+            aftermath shares are over the losses whose horizon has closed, because a row still
+            waiting carries no aftermath at all. Computing all four over one denominator would make
+            the unclassified share read as the ordinary state of every recent loss, which is the
+            opposite of what that value means, and it is the population defect arriving one band
+            below the one 3.7 fixed.
+
+Carried:    **The aftermath is measured over ten sessions from the trigger and a trade can be held
+            for longer than that.** The window is the setup's rather than the trade's, which is what
+            the decision says and is right for the question it answers: whether the move the pattern
+            predicted happened. It stops describing the trade the moment a position is held past it.
+            Nothing is wrong today and nothing will be until the first long hold, because the trail is
+            the only rule that lets a position run and none has ever been held. Due at 5.1, where a
+            variant's losses are scored and the two windows would be compared for the first time.
+
+            **The audit row raised at 4.9 is widened rather than a second one raised.** `loss_class`
+            joins `plan_audit` as a table with a writer and no reader, both waiting on the journal
+            page at 4.11, and raising a near-identical row for one checkpoint and one reason is the
+            noise this table is small on purpose to avoid.
+
+            **One discharged and one raised, so the obligations table holds at 54.** The discharged
+            one asked which of two figures called the result a downstream component reads, and this
+            is the first component that reads one: it takes the trade's, being after the borrow a
+            short is charged, because that is what the trade came to.

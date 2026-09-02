@@ -763,6 +763,28 @@ public sealed class PhaseReplay : IDisposable
         Record("forward.notYetElapsed", filled.NotYetElapsed);
         Record("forward.acrossAHoliday", filled.AcrossAHoliday);
 
+        // 16b. The loss classification, at 21:35, after the forward returns because half of what it
+        //      answers is one of them: what closed tonight, and what has since had a horizon close.
+        //
+        //      <b>Nothing closed, so neither pass had a subject.</b> `awaitingAftermath` is the one
+        //      worth freezing hardest, because it is the figure that must never be read as
+        //      `unclassified`: a row waiting on a horizon is the ordinary state of every loss for
+        //      its first ten sessions, and a row that is unclassified is a finding about this
+        //      component. The two sit two columns apart on the night's row for that reason.
+        LossRunResult classified =
+            new LossClassifier(_connections, Logger(), _clock, _options).Classify(AsOf);
+
+        stages.Add(new StageRun(LossClassifier.Name, 0, classified.RowsWritten, classified.Outcome.ToStorageText()));
+        Record("losses.closed", classified.LossesClosed);
+        Record("losses.mechanismsWritten", classified.MechanismsWritten);
+        Record("losses.gap", classified.Gap);
+        Record("losses.ordinary", classified.Ordinary);
+        Record("losses.awaitingAftermath", classified.AwaitingAftermath);
+        Record("losses.aftermathsWritten", classified.AftermathsWritten);
+        Record("losses.noise", classified.Noise);
+        Record("losses.failedSetup", classified.FailedSetup);
+        Record("losses.unclassified", classified.Unclassified);
+
         // 17. The scoreboard, last, because every panel it builds reads what the stages before it
         //     wrote. Over the fixture most panels are withheld, which is the honest answer for a
         //     lab with one night on file and no closed horizon.

@@ -49,6 +49,7 @@ public static class Program
         builder.Services.AddSingleton<PositionManager>();
         builder.Services.AddSingleton<TradeJournal>();
         builder.Services.AddSingleton<PlanAudit>();
+        builder.Services.AddSingleton<LossClassifier>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
@@ -122,6 +123,7 @@ public static class Program
                 PositionManager.Name => host.Services.GetRequiredService<PositionManager>().Run(rest),
                 TradeJournal.Name => host.Services.GetRequiredService<TradeJournal>().Run(rest),
                 PlanAudit.Name => host.Services.GetRequiredService<PlanAudit>().Run(rest),
+                LossClassifier.Name => host.Services.GetRequiredService<LossClassifier>().Run(rest),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
@@ -266,6 +268,7 @@ public static class Program
         PositionManager.Name,
         TradeJournal.Name,
         PlanAudit.Name,
+        LossClassifier.Name,
         IndicatorEngine.Name,
         ScanEngine.Name,
         TierClassifier.Name,
