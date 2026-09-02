@@ -27,6 +27,88 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-02 — SCHEMA.md — cites The session average is derived when it is wanted and is not stored on a bar
+Was:  `| ``vwap_session`` | TEXT, written by VwapEngine |` in `intraday_bar`'s column table, and the writer line
+      `Insert IntradayFetcher · Update VwapEngine (``vwap_session`` only) · PK (``ticker``, ``bar_ts``, ``observed_at``)`.
+Now:  The column row says written from 4.4 and not written from 4.7 with the reason, the writer line is
+      `Insert IntradayFetcher` alone, and four paragraphs state why the write stopped and why the column stays.
+Why:  4.4 raised the obligation that either a reader be named or the column stop being written, and it fell due
+      at 4.7. The fill model does not read it and nothing else does. It is the last declared update against a
+      bar table, so stopping it leaves `bar-append-only` with no exception at all.
+
+### 2026-09-02 — SCHEMA.md — cites The session average is derived when it is wanted and is not stored on a bar
+Was:  `| ``names``, ``sessions_priced``, ``bars_annotated`` | INTEGER |` in `vwap_run`'s column table.
+Now:  `| ``names`` | INTEGER |`
+Why:  The two counted the annotation, which stopped. Migration 044 drops them, because a stage's own record
+      reading nought on every future night is a stage a later session reads as broken.
+
+### 2026-09-02 — ARCHITECTURE.html — cites The session average is derived when it is wanted and is not stored on a bar
+Was:  The VwapEngine writers row read "Session and anchored average price", and the pipeline figure's box read
+      "VWAP, day's high and low".
+Now:  The row reads "The anchored average price" with the 4.4-to-4.7 history and the citation, and the box reads
+      "The anchored average price".
+Why:  The component no longer computes a session average at all. The day's high and low were never stored and
+      the box named them anyway, which is the same class of claim.
+
+### 2026-09-02 — ARCHITECTURE.html — cites A straddled quote is charged and the straddle is recorded, never widened or refused
+Was:  Under "What each vendor endpoint carries": "4.7 applies a fraction of that figure as entry slippage, so 4.7
+      is where it has to be decided what the fraction is being applied to and what happens to a row whose two
+      sides are far enough apart to be describing different markets. The store already carries what that decision
+      needs: both stamps, and the lag from the older of them."
+Now:  "4.7 applies the whole of that figure as slippage, so 4.7 is where it had to be decided ...", followed by a
+      new paragraph stating the answer: charged anyway, straddle written onto the fill, no threshold authored.
+Why:  4.7 took the decision the paragraph was waiting for, so a paragraph written as pending would be a question
+      nobody could tell had been answered.
+
+### 2026-09-02 — ARCHITECTURE.html — cites Entry slippage is the whole captured spread, symmetric between the directions
+Was:  The fill model list had four bullets: entry slippage, exit slippage, the overnight gap, and the minute
+      holding two levels, plus the borrow-cost line.
+Now:  Six, adding which of the session's two quotes is charged and that the gap rule applies to an entry as well
+      as an exit. The two-levels bullet says the rule cannot fire before 4.8 and states the same stance for a
+      minute holding both the trigger and the give-up point.
+Why:  4.7 built the model, and the two additions are rules it applies that the list did not carry. The bullet
+      about a rule that cannot fire yet reads as a live rule unless it says so.
+
+### 2026-09-02 — ARCHITECTURE.html — cites Long and short are never pooled into one figure
+Was:  In the short checks: "Both **will be** recorded as unmodelled assumptions on every short trade, from
+      **4.7**, which is the checkpoint that first writes a trade row ... Written as a future rather than as a
+      fact because it was written as a fact while no trade row existed, and a claim that something is recorded
+      on every trade is a claim about a surface nobody had built." And in the failure table: "to be recorded as
+      an unmodelled assumption on every short trade from **4.7**".
+Now:  Both are present tense over "every short position", and the sentence explaining why it was written as a
+      future is removed.
+Why:  4.7 writes the position and records both assumptions on it, asserted by a behavioural test over a written
+      row and by a migration CHECK that refuses a short without them.
+
+### 2026-09-02 — ARCHITECTURE.html — cites RiskGate is the sole writer of orders, for both directions and every version
+Was:  The PaperBroker writers row read "On order | Fills at a deliberately pessimistic price", and PositionManager
+      ran at "Nightly 21:15". The PaperBroker catalogue entry was one sentence.
+Now:  PaperBroker runs at 21:15 and carries the book between sessions; PositionManager moves to 21:20, after it,
+      because a position has to exist before it can be managed. The catalogue entry states the split between
+      pricing and deciding, the refusal on an unquoted name, and the one exit it runs until 4.8.
+Why:  The two components shared a slot in a schedule that runs them in order. "On order" was a description of a
+      trigger rather than of a scheduled stage, and `slot-roster` reconciles stages against RUNBOOK's clock.
+
+### 2026-09-02 — RUNBOOK.md — cites Entry slippage is the whole captured spread, symmetric between the directions
+Was:  `| 21:15 | fills, positions | 0 |`
+Now:  The `fills` row, naming what each resting order is priced at, what happens to a name with no usable quote,
+      and that a position closes only on its give-up point until 4.8.
+Why:  A placeholder row is what let five phase-4 stages go undispatched at 4.5. `slot-roster` reads this table.
+
+### 2026-09-02 — RUNBOOK.md — cites The session average is derived when it is wanted and is not stored on a bar
+Was:  In the 21:00 row: "It spends no vendor call: the session average annotates each stored minute with the
+      average as it stood at that minute, and the anchored average is priced for every short setup ..."
+Now:  "It spends no vendor call: the anchored average is priced for every short setup ..."
+Why:  The annotation stopped at 4.7.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held four rows due at 4.7, and the freeze paragraph and the 5.1 row said
+      "the ten obligations due before the freeze" in three places.
+Now:  The four are discharged and removed, four raised in their place, and the freeze count reads twelve.
+Why:  The four fell due at 4.7 and were answered there. The freeze count was already stale by one before this
+      checkpoint touched it, and `stated-counts` now derives it from the table's own rows in all three places,
+      which is what that check exists for.
+
 ### 2026-09-01 — ARCHITECTURE.html — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
 Was:  The catalogue gave PlanBuilder "One committed plan per version per candidate", and RiskGate's gloss opened "**One piece of code sizes every position and blocks anything over the limits.**"
 Now:  PlanBuilder builds one committed plan per capped candidate, sized there, and per version per candidate from 5.1. RiskGate applies every limit and blocks, does not size, may reduce the plan's count to fit a cap or block the order, and records which cap bound.

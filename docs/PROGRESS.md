@@ -11009,3 +11009,196 @@ Carried:    **Six discharged and two raised, so the obligations table falls from
             raised are the session-only book and the cap applied before the fill, both due at 4.7 and
             both about the same seam. Thirteen now fall due at 4.17 and none at 4.6. The operator's
             eleven are untouched.
+
+
+## 4.7 — 2026-09-02 — phase-4-paper-broker — what a resting order actually got, and a column nobody read
+
+Built:      **`PaperBroker`, with `FillModel`, `SpreadCharge` and `BorrowAssumption` in Core,
+            migration 043 and `PositionReader`.** The stage walks a session through the same clock
+            the resolver uses, prices every order the gate placed and every position carried in from
+            an earlier session, and writes the rows. The model is pure and separate from the writer,
+            on the footing `RiskLimits` and RiskGate already set: the arithmetic is asserted over
+            every price relationship rather than over the ones a fixture happens to hold.
+
+            **The whole captured spread, the wrong way, at both ends and on both sides.** A round
+            trip costs two crossings, so an ordinary stop loses slightly more than one unit of risk
+            and the test says so as an inequality against the plan's own distance rather than as a
+            number. `risk_intended` sits beside `risk_realised` on the position: the first is the
+            share count against the distance the plan named, the second is the same count against
+            the distance from the price the fill actually got, and the two differ by the entry
+            slippage. R is taken over the second.
+
+            **A gap fills at the session's first regular minute open and is charged nothing on
+            top**, because the gap is the adverse move and a spread over it charges twice for one
+            crossing. The loss is never clamped: over the authored case a seven-point gap through a
+            five-point stop reports worse than minus two R, and the fill carries `basis = gapped` so
+            the size and frequency of these are readable afterwards rather than inferable from a
+            price (see: A gap through a price fills at the session's first regular minute open, and
+            is not slipped again).
+
+            **Entries first and exits second inside one minute**, so a bar holding both the trigger
+            and the give-up point fills and then stops. A bar carries a high and a low and no order
+            between them, so either reading is available and the pessimistic one is taken. That is
+            the same stance the fill model's third rule takes about a profit-taking level, which is
+            written and asserted here and cannot fire until 4.8 builds a level for it.
+
+Decided:    **The gap rule is applied to an entry as well as an exit, and the decision was written
+            about a stop.** Its argument is symmetric and this direction matters more: a long whose
+            trigger sits at 100 in a session that opened at 105 did not buy at 100. Every other
+            approximation in this model understates edge, which is the safe direction for a lab
+            asking whether edge exists at all; filling that entry at the trigger would manufacture
+            five points the lab never had, and that is the one error it cannot afford.
+
+            **A fill is charged the widest usable quote of its session, not the nearest one.** Three
+            reasons and the first is the model's own stance. The second is that it removes the
+            within-day question entirely, since the choice does not depend on when the fill was: a
+            fill at 09:31 charged the 10:15 quote would be priced from a book the morning had not
+            reached. The third is that a nearest-in-time rule claims a precision the data does not
+            have, the feed being delayed by about fifteen minutes and the two sides of one quote
+            stamped seconds apart. Ties break by pass name.
+
+            **A straddled quote is charged and the straddle is recorded, never widened or refused.**
+            This is the question 4.3 handed forward and 4.7 owed. Both alternatives need a number
+            this corpus does not have: refusing needs a threshold and widening needs a factor, and
+            the only measurement anybody has taken is 32 seconds on AAPL on one response. Every fill
+            carries the pass it was charged, that quote's width, how stale it already was and how far
+            apart its two sides were stamped, and none of the four changes what is charged. It is
+            what the store already does with the vendor's delay
+            (see: A delayed quote records its own lag rather than being corrected for it).
+
+            **A fill with no usable quote for its name is refused and recorded, never charged
+            nought.** A spread of nought is a free entry that clears every threshold written as a
+            maximum, and a figure taken from other names is a spread nobody measured wearing the
+            authority of one that was. The order becomes a position row with `status = unfilled` and
+            the reason, on the terms a blocked order already sits on: a morning on which two orders
+            could not be priced is evidence about the capture and reads as a quiet morning unless the
+            refusals are stored.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 797 tests**, from 765 at 4.6.
+
+            **`tools/verify-phase` GREEN**: 129 claims, 99 passed, 0 failed, 30 out of scope, 0
+            unexamined, coverage examined 6,702, 1,416 expectations. Claims passing rose from 96 by
+            the three the two failure-behaviour rows and the gap needed, which had been out of scope
+            on 4.7 and became unexamined the moment it landed.
+
+            **`price-storage-form` examined 486 column declarations where it had examined 448**,
+            which is not growth. See the finding below.
+
+Built:      **The book RiskGate reads, which discharges the first of the four obligations due here.**
+            The gate opened on an empty book until 4.7 and could count only what it had placed inside
+            the session it was walking, so a position held overnight occupied no slot the next
+            morning and the caps were looser than the design. It now reads `position` for what the
+            lab is holding coming into the session. The test holds four positions overnight and
+            watches the fifth trigger of the next morning be refused on `open-positions`.
+
+            **What stays approximate is intraday and it is the other direction of error.** The gate
+            runs at 21:10 and this stage at 21:15, so nothing at 21:10 can know a position opened at
+            09:31 was stopped out at 09:45: a position occupies its slot for the rest of the session
+            it opened in. Across sessions the book is exact; within a day the caps are now tighter
+            than the design rather than looser. Merging the two stages would fix it and would give
+            orders a second writer, which costs more than the approximation does. Carried.
+
+Built:      **`position` is the one updated table in the phase, and it carries two stamps.** A row is
+            inserted when it fills and updated when it closes, so a single `observed_at` would answer
+            a replay standing between the two with the state the row ended in. `closed_observed_at`
+            is written by the close and every read bounds both, so a position whose close the as-of
+            could not have seen reads as open, which is what it was. The projection is done in one
+            place in the reader rather than in each query, and it moves a closed row back to open
+            without moving an unfilled one, which was a real defect caught by its own test before it
+            left the branch.
+
+Decided:    **`intraday_bar.vwap_session` stops being written, which is the third obligation due
+            here.** 4.4 wrote a running session average onto every stored minute and raised the
+            obligation in the same entry: either a reader is named or the column stops being
+            written. It fell due at 4.7 on the reasoning that the fill model was its most likely
+            reader. **The fill model does not read it.** A fill is the resting price plus the
+            captured spread, no rule in this lab compares a price against a session average, and
+            nothing through phase 6 consumes it. The obligation's premise was wrong, so the choice
+            was between the two answers it offered and the column stopped.
+
+            **It is derivable, which is what separates it from the anchored average.** A running
+            session average is a volume-weighted sum over one session's own minutes in order, so
+            anything wanting one computes it when it wants it; a test asserts the series is still
+            reproducible from the stored bars after the write is gone. That is the ruling VwapEngine
+            already took over the day's high and low and WatchlistPublisher took over a watchlist
+            table. The anchored average needs a swing nothing else resolves and stays.
+
+            **What it bought is the last exception to a hard rule.** This was the one declared update
+            against a bar table anywhere in the store, and `bar-append-only` carried it by table, by
+            column and by component. The exception is gone from the check, so nothing in the shipped
+            source updates a bar table at all and the rule reads as written with nothing after the
+            comma. The column itself is not dropped and the values already written stay: dropping it
+            would delete what past nights wrote from the one kind of table this store never edits, to
+            tidy a document. Migration 044 drops the two `vwap_run` columns that counted the
+            annotation, because a stage's own record reading nought on every future night is a stage
+            a later session reads as broken.
+
+Found:      **`price-storage-form` could not read a table whose comment contained a semicolon, and
+            it said nothing.** The check bounds a table body with `[^;]*` and then requires a closing
+            paren immediately before a semicolon. A `--` comment in the middle of a column list
+            carrying a semicolon puts one where no paren precedes it, so the pattern fails at that
+            table, the engine moves on to the next `CREATE TABLE`, and every column of the skipped
+            table passes by not being looked at. Found by writing `position` with a comment reading
+            "says why; a filled one holds shares", which hid two REAL columns; the check reported one
+            offender where there were three.
+
+            **The scope number was correct throughout and that is the point.** The floor is under
+            "column declarations checked for REAL affinity", and a table nobody parsed contributes no
+            declarations, so the count was as high as it had ever been. Stripping comments before
+            matching took the corpus figure from 448 to 486, which is 38 declarations that had been
+            invisible since whichever migration first put a semicolon in a comment. The check now
+            counts `CREATE TABLE` keywords per file and fails naming any table the body pattern could
+            not read, so a parser that stops reading is a red run rather than a smaller one.
+
+            **The other three migration parsers were checked and none shares it.**
+            `BarAppendOnlyCheck` already strips line comments and bounds nothing with `[^;]`;
+            `SchemaDeclarations.TablesInMigrations` matches the keyword alone; `writer-ownership`
+            builds a real store and reads `sqlite_master`, so it cannot be fooled by text at all. The
+            guard `price-storage-form` was missing existed one file over.
+
+Found:      **BUILD_PLAN said "the ten obligations due before the freeze" while eleven rows carried
+            5.1**, in three places, and the paragraph itself says outright that the figure is the
+            rows in the table with 5.1 as their due point. So it was derivable the whole time and
+            nothing derived it, which is what `stated-counts` exists to stop. Corrected to twelve
+            with this checkpoint's own row added, and every occurrence is now derived from the table
+            by `stated-counts` rather than the first, because a count stated three times is three
+            places to forget.
+
+Found:      **The job guarding the slot-diagnostics job went red on every push to `main`, for a
+            reason that has nothing to do with what it guards.** It produces two failing conditions
+            and requires each to be caught by its own verdict. The first, the empty case, was not
+            produced: it ran the slot with no `-AllowBranch` and relied on the tree guard refusing,
+            on the stated reasoning that a runner is never on main. `actions/checkout` leaves a push
+            to `main` on a local branch called `main`, so the guard passed, `universe-build`
+            dispatched and wrote its own diagnostic, and the verdict was `ok` where the job required
+            `empty`. The tree is now moved off main before the refusal run and asserted to be off it,
+            so the condition holds on every event rather than on the trigger. The step's own comment
+            already said each condition is produced rather than reasoned about; one of the two was
+            resting on an accident. Fixed here rather than carried, because it blocked every merge.
+
+Carried:    **A position closes only on its give-up point, so a winner is held for ever until 4.8.**
+            The give-up price is a resting instruction the plan carried from 18:30 and is live from
+            the moment the entry fills, so this stage runs it without evaluating any rule; the trail
+            and the trim are PositionManager's. The direction of the error is the opposite of the one
+            4.6 carried: the caps now count that held position, so a winner occupies a slot the next
+            morning's trigger is refused on. Due at 4.8.
+
+            **RiskGate cannot see an intraday close.** Due at 4.8, and stated above.
+
+            **An intraday minute that opens through a resting price fills at the price rather than at
+            the open.** The gap rule is written for the session's first regular minute, which is the
+            overnight case and is what the decision names. A minute in the middle of the day can also
+            open past a resting price, on a halt or a thin book, and the model fills such an order at
+            the price it named plus the spread, which may be a price that did not trade in that
+            minute. The size is small on the capped sixty and the sign is not: every instance
+            flatters. Due at 4.8, where the trail and the trim add two more levels a minute can open
+            through, so the same question is asked three times.
+
+            **From 5.1 a version can select outside the capped sixty, and every such order is refused
+            a fill.** 4.7 answered what an uncapped name is charged, which is what 4.3's row was due
+            here for: nothing, because it is not filled, and the row says so. That turns the capture
+            asymmetry from a note into a cost. The choice is to widen the spread capture from the
+            capped sixty to the flagged population, at 88 to 166 calls a pass against 120 on a
+            nightly total of 2,723 to 4,118, or to accept that a version selecting outside the cap
+            trades nothing and say so where the scores are read. Due at 5.1, and it is a purchase
+            decision rather than a code one.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
@@ -150,47 +151,46 @@ public sealed class VwapEngineTests : IDisposable
         Assert.Equal(VwapEngine.NoAnchor, Anchored("INTC")!.AbsentBecause);
     }
 
-    // ---- the session average -------------------------------------------------------------
+    // ---- the session average, which stopped being stored at 4.7 ---------------------------
 
     [Fact]
-    public void The_session_average_is_written_onto_every_minute_as_it_stood_at_that_minute()
+    public void The_session_average_is_no_longer_written_onto_a_minute()
     {
-        // A series and not a figure. A resolver standing at 10:47 asks what the average was at
-        // 10:47, and one closing number per session would answer with a value the session had not
-        // reached yet at every minute but the last.
+        // 4.4 wrote it onto every stored minute and raised the obligation that a reader had to be
+        // named or the column had to stop being written. It fell due at 4.7 on the reasoning that
+        // the fill model was its most likely reader, and the fill model does not read it: a fill is
+        // the resting price plus the captured spread. Nothing else reads it either.
+        //
+        // This is the behavioural half of the removal. A source scan would say the UPDATE is gone
+        // and would say the same thing if the statement had moved somewhere else in the file.
         Short("AAPL", peakAt: new TimeOnly(11, 0), alsoOn: Session);
-
-        VwapRunResult result = Engine().Compute(Session);
-
-        Assert.Equal(1, result.SessionsPriced);
-
-        IReadOnlyList<StoredIntradayBar> priced = Bars("AAPL", Session);
-        Assert.All(priced, bar => Assert.NotNull(bar.VwapSession));
-
-        // The first minute's average is its own typical price, and the last is the whole session's.
-        Assert.Equal(
-            VolumeWeightedAverage.TypicalPrice(priced[0].High, priced[0].Low, priced[0].Close),
-            priced[0].VwapSession);
-        Assert.Equal(WholeSessionAverage("AAPL", Session), priced[^1].VwapSession);
-        Assert.NotEqual(priced[0].VwapSession, priced[^1].VwapSession);
-    }
-
-    [Fact]
-    public void Extended_hours_minutes_are_left_without_a_session_average()
-    {
-        // The store holds them deliberately and 59% of a captured day sits outside the regular
-        // session, so an average taken over everything would describe a different day from the one
-        // every other figure in the lab is about. Null rather than a number over a population
-        // nobody named.
-        Short("AAPL", peakAt: new TimeOnly(11, 0), alsoOn: Session);
-        Minute("AAPL", Session, new TimeOnly(8, 15), 100m, 100m, 100m, 1_000, "extended");
 
         Engine().Compute(Session);
 
-        StoredIntradayBar early = Bars("AAPL", Session, regularOnly: false)
-            .Single(b => b.SessionWindow == "extended");
+        Assert.Equal(0, MinutesCarryingASessionAverage("AAPL", Session));
+    }
 
-        Assert.Null(early.VwapSession);
+    [Fact]
+    public void The_series_it_used_to_store_is_still_derivable_from_the_stored_minutes()
+    {
+        // What the removal cost, asserted rather than argued. A running session average is a sum
+        // over the session's own minutes in order, so anything that wants one computes it at the
+        // moment it is wanted. That is the ruling this stage already took over the day's high and
+        // low: a stored figure would be a second statement of something the store already holds.
+        Short("AAPL", peakAt: new TimeOnly(11, 0), alsoOn: Session);
+
+        Engine().Compute(Session);
+
+        IReadOnlyList<StoredIntradayBar> bars = Bars("AAPL", Session);
+        IReadOnlyList<decimal?> running = VolumeWeightedAverage.Running(
+            [.. bars.Select(b => new VolumeWeightedAverage.Minute(b.OpenedAt, b.High, b.Low, b.Close, b.Volume))]);
+
+        // The first minute's average is its own typical price, and the last is the whole session's.
+        Assert.Equal(
+            VolumeWeightedAverage.TypicalPrice(bars[0].High, bars[0].Low, bars[0].Close),
+            running[0]);
+        Assert.Equal(WholeSessionAverage("AAPL", Session), running[^1]);
+        Assert.NotEqual(running[0], running[^1]);
     }
 
     // ---- the night's record --------------------------------------------------------------
@@ -243,6 +243,27 @@ public sealed class VwapEngineTests : IDisposable
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
         return IntradayBarReader.Read(connection, ticker, session, Session, regularOnly);
+    }
+
+    /// <summary>
+    /// How many of one name's stored minutes carry a session average, read straight from the
+    /// column, because nothing in the solution reads it any more.
+    /// </summary>
+    private int MinutesCarryingASessionAverage(string ticker, DateOnly session)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM intraday_bar
+             WHERE ticker = @ticker
+               AND session_date = @session_date
+               AND vwap_session IS NOT NULL;
+            """;
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(session));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     private decimal WholeSessionAverage(string ticker, DateOnly session) =>

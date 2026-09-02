@@ -87,6 +87,19 @@ public sealed partial class StatedCountsCheck
         RegexOptions.CultureInvariant)]
     private static partial Regex CorrectionsOpeningSentence();
 
+    /// <summary>
+    /// The count of obligations due before the freeze, stated three times in one paragraph and in
+    /// the 5.1 row above it.
+    ///
+    /// It is here because it went stale exactly the way this check exists to prevent: the paragraph
+    /// read "the ten obligations due before the freeze" while eleven rows carried 5.1 as their due
+    /// point, and nothing was comparing the two. Every occurrence is matched rather than the first,
+    /// so a pass that updates one of the four and forgets the rest fails.
+    /// </summary>
+    [GeneratedRegex(@"[Tt]he (?<due>[a-z-]+) (?:obligations due before the freeze|sit\s+between 4\.13 and 5\.1)",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex FreezeObligationCount();
+
     [GeneratedRegex(@"^### What the (?<due>[a-z-]+) due at 4\.17 are[^\n]*",
         RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex CorrectionsClassificationHeading();
@@ -226,6 +239,34 @@ public sealed partial class StatedCountsCheck
             $"{dueAtTheRiskGate} obligation row(s) fall due at 4.6, which PROGRESS records as landed with six of "
             + "its rows discharged and thirteen repointed. Either a row was repointed there after the fact, or "
             + "the ruling did not happen.");
+
+        // BUILD_PLAN.md, the obligations due before the freeze, stated four times in two places.
+        //
+        // Found stale at 4.7, by one. The paragraph and the 5.1 row both read "ten" while eleven rows
+        // carried 5.1 as their due point, and the sentence says outright that they are the rows in
+        // the table with 5.1 as their due point, so the figure was derivable the whole time and
+        // nothing derived it. Every occurrence is asserted rather than the first, because a count
+        // stated four times is four places to forget.
+        int dueBeforeTheFreeze = obligations.Count(
+            r => r.Count > 2 && r[2].Trim().Equals("5.1", StringComparison.Ordinal));
+
+        MatchCollection freezeCounts = FreezeObligationCount().Matches(buildPlan);
+
+        Assert.True(freezeCounts.Count >= 3,
+            $"BUILD_PLAN.md states the count of obligations due before the freeze {freezeCounts.Count} time(s). "
+            + "It has stated it at least three times since the phase was planned, so the pattern stopped "
+            + "matching rather than the paragraph getting shorter.");
+
+        int stated = 0;
+
+        foreach (Match occurrence in freezeCounts)
+        {
+            claims.Add(new Claim(
+                $"BUILD_PLAN.md, the obligations due before the freeze, statement {++stated}",
+                FromWordsOrFail(occurrence.Groups["due"].Value),
+                dueBeforeTheFreeze,
+                "rows of the carried obligations table falling due at 5.1"));
+        }
 
         // BUILD_PLAN.md, the same three figures for the 4.17 pile.
         //

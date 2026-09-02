@@ -34,6 +34,33 @@ public static class TriggerTouch
     /// default here would resolve every short plan on the long side's comparison, which is a fill at
     /// a price the plan never named and nothing downstream could see.
     /// </summary>
+    /// <summary>
+    /// Whether a bar reached the give-up point of an open position in
+    /// <paramref name="direction"/>.
+    ///
+    /// The give-up point sits on the far side of the entry, so the comparison flips: a long is
+    /// stopped by a low reaching down to it and a short by a high reaching up. Written by inverting
+    /// the direction through the same predicate rather than as a second pair of comparisons, so the
+    /// entry rule and the exit rule can never disagree about a bar that touches a price exactly.
+    /// </summary>
+    public static bool GaveUp(string direction, decimal giveUpPrice, decimal high, decimal low)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(direction);
+
+        string exitSide = direction switch
+        {
+            SetupDirection.Long => SetupDirection.Short,
+            SetupDirection.Short => SetupDirection.Long,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(direction),
+                $"'{direction}' is neither '{SetupDirection.Long}' nor '{SetupDirection.Short}'. A "
+                + "give-up point is on the far side of the entry, so an unknown direction would be "
+                + "stopped out by a move in its favour."),
+        };
+
+        return Reached(exitSide, giveUpPrice, high, low);
+    }
+
     public static bool Reached(string direction, decimal triggerPrice, decimal high, decimal low)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(direction);

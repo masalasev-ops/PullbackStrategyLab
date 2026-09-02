@@ -136,10 +136,29 @@ Grain: ticker + minute. Phase 4. Fetched for every flagged setup, not only plann
 | `price_basis` | TEXT. `raw`, because a minute bar is what a trade actually gets |
 | `open`, `high`, `low`, `close` | TEXT holding a decimal, never REAL |
 | `volume` | INTEGER |
-| `vwap_session` | TEXT, written by VwapEngine |
+| `vwap_session` | TEXT. **Written from 4.4 and not written from 4.7.** No reader for it was ever named and none exists |
 | `observed_at` | TEXT. In the key, so a vendor correction is a new row |
 
-Insert IntradayFetcher · Update VwapEngine (`vwap_session` only) · PK (`ticker`, `bar_ts`, `observed_at`)
+Insert IntradayFetcher · PK (`ticker`, `bar_ts`, `observed_at`)
+
+**`vwap_session` stopped being written at 4.7, and it is the reason there is no longer any declared
+update against a bar table.** 4.4 wrote the running session average onto every stored minute and
+raised the obligation in the same entry: either a reader is named or the column stops being written.
+It fell due at 4.7 on the reasoning that the fill model was its most likely reader, and the fill
+model does not read it. A fill is the resting price plus the captured spread; no rule in this lab
+compares a price against a session average; and nothing else in the corpus reads it through phase 6.
+
+**It stopped rather than being kept, because it is derivable and the anchored average is not.** A
+running session average is a sum over the session's own stored minutes in order, so anything that
+wants one computes it at the moment it is wanted, which is the ruling VwapEngine already took over
+the day's high and low and WatchlistPublisher took over a watchlist table. `anchored_vwap` is
+untouched: it needs a swing nothing else resolves and it is not recoverable from one session.
+
+**The column itself is not dropped and the rows that carry a value keep it.** Dropping it would
+delete what past nights wrote from the one kind of table this store never edits, to tidy a document.
+What the stop buys is that `bar-append-only` no longer carries an exception by table, column and
+component: nothing in the shipped source updates a bar table at all
+(see: The session average is derived when it is wanted and is not stored on a bar).
 
 **Extended-hours minutes are stored, not dropped.** A minute outside the regular session is exactly as unrecoverable as one inside it, so the fetch takes whatever the vendor holds for the day and every bar carries the window it fell in. A reader bounds on `session_window` and nothing has to be re-bought when a later question wants the other half.
 
@@ -190,7 +209,7 @@ Grain: session + observation. Phase 4. What one night's engine did, written what
 |---|---|
 | `session_date` | TEXT. The session the minutes are for |
 | `setup_as_of` | TEXT. The evening whose setups named the anchors, always strictly earlier |
-| `names`, `sessions_priced`, `bars_annotated` | INTEGER |
+| `names` | INTEGER |
 | `anchors_asked`, `anchors_priced` | INTEGER. Two figures, because the gap between them is the state of the third clause |
 | `outcome` | TEXT. `clean`, `partial` or `failed` |
 | `stopped_because` | TEXT NULL |
@@ -719,8 +738,9 @@ Declared at store level. Columns owed at their checkpoint.
 | `trigger_run` | session + observation | Insert TriggerResolver. What one replay walked beside what it decided |
 | `trade_order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
 | `order_run` | session + observation | Insert RiskGate. What one evening's gate decided, with its refusals and reductions counted by cap |
-| `fill` | fill id | Insert PaperBroker |
-| `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding is visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
+| `fill` | fill id | Insert PaperBroker. One row per end of a trade, entry and exit alike, with what it cost and what the cost was computed from |
+| `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding and entry slippage are visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
+| `fill_run` | session + observation | Insert PaperBroker. What one evening's fill stage priced, with the book at both ends of the night |
 | `plan_audit` | trade | Insert PlanAudit. Planned stop beside executed stop |
 | `trade` | trade id | Insert TradeJournal. Result in R, borrow cost on shorts |
 | `loss_class` | trade | Insert LossClassifier. Four causes plus `unclassified` as a real category |
@@ -842,9 +862,81 @@ one session: a position held overnight occupies no slot the next morning. That m
 than the design rather than tighter, which is the direction that flatters, so it is recorded here and
 carried rather than left to be inferred from a cap that never binds.
 
-### The three run rows of the trading night
+### What a resting order got, and the position it opened
 
-One row per run of a stage, on the pattern `vwap_run` and `intraday_fetch` set. All three carry
+Columns of `position`. Built at 4.7, and the columns are the ones that checkpoint owes.
+
+| Column | Form | Why |
+|---|---|---|
+| `position_id` | TEXT, the key | One position per plan today, so the key is the plan's own identifier. 5.1 fans plans out per variant and this follows `trade_plan`'s |
+| `setup_id` | TEXT, unique | A second position for one plan is unexpressible rather than merely unwritten |
+| `order_id` | TEXT | The order this came from, so a position reads back to the cap that granted it |
+| `ticker`, `direction` | TEXT | The name and the side, carried so a position reads without a join |
+| `status` | TEXT, one of three | `unfilled`, `open`, `closed`. Three and not two, because a placed order the session quoted no usable book for is a row rather than an absence |
+| `opened_session` | TEXT | The session the entry was priced in |
+| `opened_at` | TEXT NULL | The minute the entry filled. Null exactly on an unfilled row |
+| `shares` | INTEGER | What was actually bought or sold short, nought exactly on an unfilled row |
+| `entry_fill_id`, `entry_price` | TEXT NULL | The fill and the price it got. Null exactly on an unfilled row |
+| `value_at_entry`, `fraction_at_entry` | TEXT / REAL NULL | What the position was worth once filled, and that as a fraction of the account. Here because the position-size cap is applied by RiskGate at the plan's trigger price and the fill is a spread worse, so the overshoot is a figure on the row rather than an argument in a comment |
+| `risk_intended`, `risk_realised` | TEXT NULL | The share count against the give-up distance the plan named, and the same count against the distance from the price the fill actually got. The two differ by the entry slippage, and R is taken over the second |
+| `unfilled_because` | TEXT NULL | Which of the two blindnesses it was. Present exactly on an unfilled row |
+| `borrow_rate_assumed`, `borrow_availability` | TEXT NULL | The two unmodelled short assumptions, present exactly on the shorts |
+| `closed_session`, `closed_at`, `exit_fill_id`, `exit_price`, `exit_reason` | TEXT NULL | The exit. Present exactly on a closed row |
+| `realised_pnl` | TEXT NULL | The money, at the two prices the fills actually got |
+| `realised_r` | REAL NULL | The result in R, which is a ratio and not money. Below minus one wherever the exit cost more than the risk it was measured against, which a gap through the give-up point always does |
+| `observed_at` | TEXT | When the position was opened, which is what a point-in-time read bounds on |
+| `closed_observed_at` | TEXT NULL | When the close was observed. The second half of the bound |
+
+**Two stamps, because this is the one updated table in the phase.** A row is inserted when it fills
+and updated when it closes, so a single stamp would answer a replay standing between the two with
+the state the row ended in. Every read bounds `observed_at` for whether the row exists at all and
+`closed_observed_at` for whether the close had happened yet, and a close observed after the as-of
+reads as open, which is what it was.
+
+**No give-up price is copied here.** It is `trade_plan`'s and a reduction never moves it, so a column
+here would be a second statement of the one price R is measured against. That is the ruling
+`trade_order` took at 4.6 and `trigger_resolution` at 4.5.
+
+**A position closes only on its give-up point until 4.8.** The give-up price is a resting instruction
+the plan carried from 18:30 and is live from the moment the entry fills; the two rule sets that trail
+a long and trim a short are PositionManager's. So a position that never reaches its give-up point is
+held indefinitely, and it occupies a slot the count caps refuse the next morning's trigger on.
+
+### What one end of one trade cost
+
+Columns of `fill`. Built at 4.7. Entry and exit are the same shape, priced by the same rules.
+
+| Column | Form | Why |
+|---|---|---|
+| `fill_id` | TEXT, the key | One per end of a trade |
+| `position_id`, `setup_id` | TEXT | What it belongs to |
+| `session_date` | TEXT | The session the fill happened in, which for an exit is not the session the position opened in |
+| `ticker`, `direction` | TEXT | The name and the side, carried so a fill reads without a join |
+| `leg` | TEXT, one of two | `entry` or `exit`. Named `leg` and not `end` because `END` is a SQLite keyword, on exactly the grounds `trade_order` is not called `order` |
+| `filled_at` | TEXT | The minute |
+| `basis` | TEXT, one of two | `slipped` or `gapped`. The countable half of how a fill was priced, so a night groups without parsing a price |
+| `resting_price` | TEXT | The price the order named, being the trigger on an entry and the give-up point on an exit |
+| `price` | TEXT | What it actually got |
+| `slippage` | TEXT | The money per share the crossing cost, nought on a gap because the gap is the adverse move |
+| `shares` | INTEGER | |
+| `spread_bps` | REAL NULL | The quote charged, in basis points of the mid. A statistic and not money. Present on every slipped fill; present on a gap fill where the session had a quote, so the charge that was not made is legible |
+| `spread_pass` | TEXT NULL | `after_open` or `before_close`, so a fill says which of the session's two samples it was charged |
+| `quote_lag_seconds` | INTEGER NULL | How stale the quote already was, from the older of its two sides |
+| `straddle_seconds` | INTEGER NULL | How far apart the vendor stamped the two sides of that quote. Recorded and never acted on |
+| `observed_at` | TEXT | |
+
+**The straddle is recorded because a stored spread is a figure across two instants.** The vendor
+stamps a quote's bid and its ask separately: on the capture of 2026-09-01 AAPL's two sides were 32
+seconds apart, one name on one response. So `spread_bps` need not be a width that existed at either
+stamp, and on a name whose book moved between them it can be wider or narrower than anything a trader
+could have crossed. It is charged anyway and the gap is stored, on the same terms the capture already
+takes for the vendor's delay: the corpus holds one measurement of a straddle, and a threshold that
+widened or refused a quote would be a number authored from it
+(see: A straddled quote is charged and the straddle is recorded, never widened or refused).
+
+### The four run rows of the trading night
+
+One row per run of a stage, on the pattern `vwap_run` and `intraday_fetch` set. All four carry
 `session_date` and `observed_at` as their key, an `outcome` of `clean`, `partial` or `failed`, and a
 `stopped_because` naming which shape of nothing a night was. What differs is the middle, and the middle
 is where each stage declines to state one total: a single `refused` or `blocked` figure would let the
@@ -882,6 +974,18 @@ Grain: session + observation. What one evening's gate decided, at 21:10.
 | `blocked_open_positions`, `blocked_open_shorts`, `blocked_below_one_share` | INTEGER | the three ways an order was refused |
 | `reduced_position_size`, `reduced_total_risk` | INTEGER | the two proportional caps, counted apart, because a night of trims is a different night from a night of blocks |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | a night of blocked orders is clean: the caps binding is what they are for |
+
+#### `fill_run`
+Grain: session + observation. What one evening's fill stage priced, at 21:15.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `open_at_start`, `open_at_end` | INTEGER | the book at both ends of the night, because RiskGate reads this table from 4.7 and a night that opened four and closed none is a night the next morning's fifth trigger is refused on |
+| `orders_placed`, `entries_filled`, `entries_unfilled`, `exits_filled` | INTEGER | what it was given and what it priced |
+| `gapped`, `slipped` | INTEGER | how the fills were priced, counted apart |
+| `names_walked`, `minutes_walked` | INTEGER | what the clock actually handed out, which is the figure that says a night was blind |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the session was never sampled or held no minute |
 
 ## Research — phases 5 and 6
 

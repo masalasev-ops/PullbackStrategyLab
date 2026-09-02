@@ -47,7 +47,7 @@ public sealed class IntradayBarReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT ticker, bar_ts, session_date, interval_code, session_window, price_basis,
-                   open, high, low, close, volume, vwap_session, observed_at
+                   open, high, low, close, volume, observed_at
               FROM intraday_bar b
              WHERE b.ticker = @ticker
                AND b.session_date = @session_date
@@ -115,7 +115,7 @@ public sealed class IntradayBarReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT ticker, bar_ts, session_date, interval_code, session_window, price_basis,
-                   open, high, low, close, volume, vwap_session, observed_at
+                   open, high, low, close, volume, observed_at
               FROM intraday_bar b
              WHERE b.ticker IN ({string.Join(", ", slots)})
                AND b.session_date = @session_date
@@ -277,8 +277,7 @@ public sealed class IntradayBarReader
         StoreText.StorageTextToPrice(reader.GetString(8)),
         StoreText.StorageTextToPrice(reader.GetString(9)),
         reader.GetInt64(10),
-        reader.IsDBNull(11) ? null : StoreText.StorageTextToPrice(reader.GetString(11)),
-        StoreText.StorageTextToTimestamp(reader.GetString(12)));
+        StoreText.StorageTextToTimestamp(reader.GetString(11)));
 }
 
 /// <summary>One minute bar as the store holds it.</summary>
@@ -294,7 +293,6 @@ public sealed record StoredIntradayBar(
     decimal Low,
     decimal Close,
     long Volume,
-    decimal? VwapSession,
     DateTimeOffset ObservedAt);
 
 /// <summary>What one night's fetch recorded about itself.</summary>

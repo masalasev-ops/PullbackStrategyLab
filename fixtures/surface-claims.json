@@ -186,8 +186,8 @@
       "sentence": "What the status band renders is stated rather than drawn from a mockup",
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/watchlist",
-      "mustCarry": "not until 4.7",
-      "why": "4.1's own row says the band states what each field shows rather than taking it from the mockup. It is a claim about a surface and it was held by nothing: the fields that have no source say so on the page, and this is what asserts that they do."
+      "mustCarry": "not answered",
+      "why": "4.1's own row says the band states what each field shows rather than taking it from the mockup. It is a claim about a surface and it was held by nothing: a field with no figure says so on the page, and this is what asserts that it does. It carried \"not until 4.7\" from 4.1 until 4.7 landed, which is the state where the absence was a component that did not exist. Every field of the band reads the store now, so the absence this asserts is a store with no session in it, and what has to hold is unchanged: a field with no figure never renders as a nought."
     },
     {
       "name": "status-band-shows-the-consequence-not-the-cause",

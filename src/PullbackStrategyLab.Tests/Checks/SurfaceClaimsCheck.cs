@@ -143,6 +143,16 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 + "4.10, so the surface cannot carry it yet. It is deferred rather than exempt in spirit, and it "
                 + "is here rather than in the claim file because the sentence is about what the taxonomy holds "
                 + "rather than about what the page draws",
+            ["on every short position"] =
+                "the two unmodelled short assumptions, being the assumed borrow rate and the note that "
+                + "availability is not modelled at all. The sentence became a present tense at 4.7, which is "
+                + "the checkpoint that first writes a position, and what it claims is that the assumption is "
+                + "on the row rather than that a page draws it: the store is the subject, so the assertion "
+                + "that belongs to it is a behavioural one over a written row, which "
+                + "PaperBrokerTests.A_short_position_carries_the_two_unmodelled_assumptions_and_a_long_carries_neither "
+                + "is, backed by a migration CHECK that refuses a short without them and a long with them. The "
+                + "surface half is the journal and the sentence says so: it arrives at 4.11 and becomes a "
+                + "declared claim there. Both the short-checks prose and the failure table carry the fragment",
         };
 
     /// <summary>

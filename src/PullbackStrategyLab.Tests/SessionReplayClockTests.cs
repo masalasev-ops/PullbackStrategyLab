@@ -161,7 +161,7 @@ public sealed class SessionReplayClockTests
 
         return new StoredIntradayBar(
             ticker, openedAt, on, "1m", "regular", "raw",
-            Open: low, High: high, Low: low, Close: high, Volume: 1_000, VwapSession: null,
+            Open: low, High: high, Low: low, Close: high, Volume: 1_000,
             ObservedAt: openedAt);
     }
 }

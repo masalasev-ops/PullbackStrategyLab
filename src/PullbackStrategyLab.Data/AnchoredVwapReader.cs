@@ -88,7 +88,7 @@ public sealed class AnchoredVwapReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT session_date, setup_as_of, names, sessions_priced, bars_annotated,
+            SELECT session_date, setup_as_of, names,
                    anchors_asked, anchors_priced, outcome, stopped_because, observed_at
               FROM vwap_run
              WHERE session_date = @session_date
@@ -109,11 +109,9 @@ public sealed class AnchoredVwapReader
                 reader.GetInt32(2),
                 reader.GetInt32(3),
                 reader.GetInt32(4),
-                reader.GetInt32(5),
-                reader.GetInt32(6),
-                reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                StoreText.StorageTextToTimestamp(reader.GetString(9)))
+                reader.GetString(5),
+                reader.IsDBNull(6) ? null : reader.GetString(6),
+                StoreText.StorageTextToTimestamp(reader.GetString(7)))
             : null;
     }
 }
@@ -142,8 +140,6 @@ public sealed record StoredVwapRun(
     DateOnly SessionDate,
     DateOnly SetupAsOf,
     int Names,
-    int SessionsPriced,
-    int BarsAnnotated,
     int AnchorsAsked,
     int AnchorsPriced,
     string Outcome,

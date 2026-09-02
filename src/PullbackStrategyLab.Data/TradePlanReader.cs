@@ -50,6 +50,55 @@ public sealed class TradePlanReader
         Read(connection, "as_of", writtenOn, asOf);
 
     /// <summary>
+    /// The plans behind a named set of setups, as at <paramref name="asOf"/>.
+    ///
+    /// <b>Here because a position outlives the session its plan was live in.</b> PaperBroker walks a
+    /// session holding positions opened days earlier, and the give-up price those positions are
+    /// measured against is their own plan's rather than anything the store copied forward. Reading
+    /// by live session would return every plan except the ones it needs.
+    ///
+    /// One parameter slot per setup, on the shape <see cref="IntradayBarReader"/> already uses for a
+    /// list of tickers: an interpolated <c>IN</c> list is the one place a reader could put an
+    /// outside string into a statement, and there is no reason to have one.
+    /// </summary>
+    public static IReadOnlyList<StoredTradePlan> ForSetups(
+        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(setupIds);
+
+        if (setupIds.Count == 0)
+        {
+            return [];
+        }
+
+        string slots = string.Join(", ", setupIds.Select((_, at) => $"@setup{at}"));
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT setup_id, as_of, live_session, ticker, direction,
+                   trigger_price, give_up_price, give_up_distance, shares,
+                   equity, risk_fraction, risk_budget, risk_at_stake, observed_at
+              FROM trade_plan
+             WHERE setup_id IN ({slots})
+               AND observed_at <= @observed_before
+             ORDER BY direction, ticker
+            """;
+
+        int slot = 0;
+
+        foreach (string setupId in setupIds)
+        {
+            command.Parameters.AddWithValue($"@setup{slot++}", setupId);
+        }
+
+        command.Parameters.AddWithValue(
+            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+
+        return Materialise(command);
+    }
+
+    /// <summary>
     /// One column or the other, chosen by comparing against a constant so nothing from outside
     /// reaches the statement. The same shape <see cref="SetupReader"/> uses to pick its table.
     /// </summary>
@@ -77,6 +126,12 @@ public sealed class TradePlanReader
         command.Parameters.AddWithValue(
             "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
 
+        return Materialise(command);
+    }
+
+    /// <summary>The column order the three reads above share, materialised once.</summary>
+    private static IReadOnlyList<StoredTradePlan> Materialise(SqliteCommand command)
+    {
         var plans = new List<StoredTradePlan>();
         using SqliteDataReader reader = command.ExecuteReader();
 
