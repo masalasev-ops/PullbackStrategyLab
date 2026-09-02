@@ -10694,3 +10694,159 @@ Carried:    **Three raised and one discharged, so the obligations table rises fr
             three are the detectors' price pair due at 4.6, the live session's missing holiday
             calendar due at 4.5, and the watchlist's absent share-count column due at 4.11. Nineteen
             now fall due at 4.6, from eighteen.
+
+## 4.5 — 2026-09-01 — phase-4-trigger-resolver — the session walked one minute at a time, and five stages the night never dispatched
+
+Built:      **`SessionReplayClock` and `TriggerResolver`, with `TriggerTouch` in Core, migration 041
+            and `TriggerResolutionReader`.** The clock reads a session's stored minutes for every name
+            carrying a plan and hands them out in ascending order, one minute at a time. The resolver
+            walks it once and decides each plan by the first minute that reaches its trigger.
+
+            **Forward blindness is held by the type rather than by the loop.** The only way out of the
+            clock is `Walk`, which yields a minute and that minute's bars; there is no method taking
+            an instant, and a second enumeration is refused, because a second walk from inside the
+            first is exactly how a caller sees a minute later than the one it is standing on and the
+            answer it produced would look no different. Bars of another session are refused at
+            construction, and two bars for one name in one minute are refused rather than resolved by
+            taking either.
+
+            **One clock for the session rather than one per name**, recorded as a named decision
+            because the per-name reading is the obvious one and its failure is invisible. Every stored
+            reader before this one takes a ticker and a session, so a resolver written on that pattern
+            reads correctly, resolves correctly and produces no ordering at all; the ordering would
+            then be reconstructed by whoever needed it, which is a second implementation of the one
+            thing 4.6 has to get right. `IntradayBarReader.ReadSession` is the session-wide read, on
+            the same as-of bound and the same latest-observation rule as the per-name one, written
+            once (see: One replay clock walks every name of a session at once).
+
+            **Touched, not closed through, applied per direction.** `TriggerTouch.Reached` is in Core
+            beside `PositionSizing` rather than an inequality inside the stage, because it decides the
+            order of a session across names as well as whether any one name fired. An unknown
+            direction throws: the two sides compare opposite ends of a bar, so a silent default would
+            resolve every short plan on the long comparison (see: The trigger is touched, not closed
+            through).
+
+            **The pairing is asserted fail-closed and is not written a second time.**
+            `IntradayFetcher.Pairing.Of` already refuses a session at or before its own setup date, so
+            the resolver forms one per plan rather than restating the comparison. It is formed for
+            every plan and not for the first, because a store holding one bad row among good ones is
+            the case a check of the first would pass.
+
+Decided:    **A session is a date the store holds minutes for, and no calendar is authored here**,
+            which is the obligation 4.16 raised falling due. `live_session` is the next weekday and
+            about nine weekdays a year the exchanges are shut. Writing a holiday list would be a
+            plausible thirty lines, wrong in some future year, wrong silently, and a rule this lab
+            invented sitting inside a record of what a market did. So the lab records what it can
+            observe: a plan resting in a session with no stored minute resolves as `unresolvable` with
+            the reason, and the run reports **partial** rather than clean.
+
+            **The three blindnesses are not told apart and the decision says so.** A holiday, a fetch
+            that did not run and a name the fetch missed all reach the same answer. What is refused is
+            calling any of them a plan that did not trigger, because a strategy that declines to trade
+            on exactly the nights the lab was blind is a different strategy with better numbers.
+
+Found:      **The `plans` slot was missing from `tools/nightly.ps1` and four more slots were refused
+            by the script's own parameter set, so five stages of phase 4 have never been dispatched.**
+            The slot table held twenty-two entries and the `ValidateSet` held eighteen names.
+            `spread-open`, `spread-close`, `watchlist` and `vwap` were in the first and not the
+            second, so the two spread passes of 4.3, the watchlist stage of 4.1 and the averages of
+            4.4 exit on a parameter binding error before reaching the worker. `plans` was in neither,
+            so PlanBuilder was registered with the container, dispatched by name, scheduled by RUNBOOK
+            at 18:30 and run by nothing. It was also absent from `Program.StageNames`, so
+            `list-stages` and the usage text under-reported by one.
+
+            **`tools/ci.*` was green and the phase report was GREEN through all of it, and neither was
+            wrong.** This is the seventh failure shape one step back from the store. The corpus's own
+            reason for that shape is that every check takes its subject from the source, the
+            documents, the fixture or a store it builds, and the running lab is in none of those. The
+            dispatcher is not the running lab: it is a file in this repository, so it was always a
+            subject a check could have had. Nothing had it.
+
+            **Nor could the existing guards, and that is the part worth keeping.**
+            `ComponentReachabilityTests` asked that every advertised stage has a dispatch arm and
+            never the reverse, and the fault was in the reverse. `architecture-conformance` adds
+            `StageNames` to the set of things that count as registered rather than reconciling it, so
+            a stage registered with the container passed while the roster was short.
+            `slot-diagnostics` reads the same file and counts slot verbs, which is a floor on how much
+            it looked at and not a comparison against anything. Three instruments over the same two
+            files, each correct, and the fault between them.
+
+Also built: **`slot-roster`, which reconciles the four lists in every direction.** The slot table
+            against the parameter set both ways, the slots' verbs against the worker's advertised
+            stages, and the slots against RUNBOOK's schedule. `rebuild` is exempt by name, because
+            RUNBOOK schedules it as `backfill --rebuild` and the table states the whole command; the
+            exemption asserts the slot exists, so one that stops applying fails rather than quietly
+            covering something else. `ComponentReachabilityTests` gained the direction it was missing,
+            with one reading of the dispatch feeding both, so the two can never compare different sets
+            of arms.
+
+Corrected:  **ARCHITECTURE's catalogue row for RiskGate still read "Sizes every position and enforces
+            every cap" after 4.16 decided it does not size.** 4.16 corrected the gloss under "The
+            trading day", and its own entry names "the catalogue row", which was PlanBuilder's. So the
+            document carried the decision in one place and its opposite in another, and nothing could
+            see it, because RiskGate does not exist until 4.6 and its claims are out of scope until
+            then. Corrected here rather than left for the checkpoint that would build against it.
+
+            **4.6's row asked two questions 4.16 had answered**, being what RiskGate does to a size it
+            did not compute and whether a reduction keeps the plan's give-up price. A done condition
+            still asking a settled question is a checkpoint that will either re-decide it or amend its
+            own condition, so both are restated as what 4.6 builds against, and what is left open
+            there is named: the behavioural half of the sizing decision, which no test could reach
+            until the component that could break it existed.
+
+Verified:   `tools/ci.ps1` green at 29 steps and **740 tests**, from 714. Twenty-four of them are
+            `TriggerResolverTests`, six are `SessionReplayClockTests`, one is `slot-roster` and one is
+            the second direction of the reachability test.
+
+            **Seven DERIVED expectations, every one predicted before the replay was run and every
+            prediction held**, and every one of them is nought. They were derived from the fixture's
+            own committed figures rather than from a run: `plans.planned` is nought, so `trade_plan`
+            holds no row and no plan is live in any session; `intraday.barsWritten` is nought, so the
+            clock walks nothing. **The two noughts have different causes and the stage distinguishes
+            them**, which is what `triggers.pairedWithPriorSession` records: with no plan resting the
+            run is clean and says so, where a plan resting with no minute would be partial.
+
+            Three existing expectations moved and each moved for a stated reason:
+            `store.schemaVersion` 40 to 41 by migration 041, and `runlog.distinctStages` 23 to 24
+            with `runlog.entries` 28 to 29 by a stage joining the replayed night.
+
+            `tools/verify-phase.ps1` GREEN: **129 claims, 88 passed, 0 failed, 41 out of scope, 0
+            unexamined**, coverage examined **5,855**, **1,406 expectations** of which 1 is void,
+            inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0. Read on
+            a clean tree at `9ba39a2`, which carries every edit this checkpoint makes; the block you
+            are reading lands in the next commit.
+
+            **Out of scope falls from 43 to 41 and passed rises from 85 to 88 over one more claim.**
+            The two that come into scope are TriggerResolver and SessionReplayClock, whose catalogue
+            claims 4.5's deliverable cell names, and recording 4.5 here is what makes them landed. The
+            extra claim is the registration exemption read back against the catalogue, which is a
+            claim about this checkpoint's own exemption rather than about the architecture.
+
+            **Two guards fired on this checkpoint's own work and both were paid rather than
+            loosened.** `point-in-time` refused `trigger_resolution` and `trigger_run` until both were
+            declared, the first as stamped with its read bounded and a behavioural test that a
+            resolution observed after the as-of is invisible, the second beside `plan_run` as
+            operational. `check-completeness` refused its own deferral of the short gate's third
+            clause to 4.5, because recording this checkpoint makes 4.5 landed: the deferral is now a
+            priced exemption naming the operator's window choice, which is what it had become.
+
+            **`architecture-conformance` refused SessionReplayClock for not being registered with the
+            container, and the exemption is named rather than the check widened.** It is constructed
+            per session from the connection the resolving stage already holds and it carries the
+            position of a walk in progress, so a singleton would be one walk shared across every
+            session the process resolves. The exemption waives the registration and nothing else: the
+            type must still be declared, and a second claim reads the exemption back against the
+            catalogue, so a name waived from registration that the catalogue no longer carries fails.
+
+Carried:    **One raised, one discharged and one repointed, so the obligations table stays at 59.**
+            The holiday calendar raised at 4.16 is discharged by the decision above. The fetch window
+            raised at 4.4 fell due here, and 4.5's row prices four options with the rows each would
+            add; what is left is not work, since no option costs a vendor call more than another, so
+            it is repointed to the operator rather than discharged. The one raised is the damage the
+            slot defect did: which nights the four rejected slots did not run, which is read off the
+            night logs and the live store and so is the operator's. **The operator's list goes from
+            nine to eleven** and nineteen still fall due at 4.6.
+
+            **The fix is in and the damage is not**, which is why the row exists at all. The two
+            spread passes are the unrecoverable half, because a quote has no history to buy back; the
+            session averages can be recomputed from stored minutes any evening after.

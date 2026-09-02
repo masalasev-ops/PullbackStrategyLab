@@ -276,6 +276,22 @@ The vendor publishes minute data two to three hours after the close, so live mon
 **The plan is written before the session and is immutable after publication**
 A strategy test whose rules can move after the outcome is visible is not a test of anything. Most of the architecture exists to protect this one property.
 
+**A session is a date the store holds minutes for, and no calendar is authored here**
+A plan's `live_session` is the next weekday after the evening it was written on, and about nine weekdays a year the American exchanges are shut. Nothing in this lab knows which nine. The store holds bars for sessions that have happened, no holiday calendar exists anywhere in the corpus, and 18:30 on the evening before is too early for the next session's bars to answer it.
+
+The alternative is to author one, and that is the reason this is a decision rather than a mechanism. A hand-written list of American market holidays is a plausible thirty lines that would be wrong in some future year, would be wrong silently, and would be a rule this lab invented sitting in the middle of a record of what a market did. It is the ruling 4.15 took over the support definition, in a place where the temptation is stronger because the list feels like a fact rather than a choice.
+
+So the lab records what it can observe. A plan resting in a session the store holds no minute for is resolved as `unresolvable` with the reason on the row, and the run reports partial rather than clean. **That answer is the same for a holiday, for a fetch that did not run and for a name the fetch missed, and the corpus does not pretend to tell them apart.** What it refuses to do is call any of them a plan that did not trigger, because a strategy that declines to trade on exactly the nights the lab was blind is a different strategy with better numbers (see: A gate handed an absent or degenerate quantity fails rather than passing).
+
+**The cost is bounded and is a plan that does not fire rather than one that fires on the wrong day.** Plans are immutable and single-session, so a plan carrying a holiday is not rolled forward: it finds no minutes and resolves against nothing. What that costs is the candidates of about nine evenings a year, which at a median of nought candidates a night is currently nothing and stops being nothing the moment the thresholds move.
+
+**One replay clock walks every name of a session at once**
+The contention rule fills the earliest trigger and blocks the later ones, so which name fired first is a comparison across names rather than a property of any one of them. A clock per name would answer each name correctly and would produce no ordering at all, leaving it to be reconstructed afterwards by whoever needed it (see: Plans are resting orders and fills go in time order when the caps bind).
+
+It is a decision rather than a mechanism because the per-name reading is the obvious one and its failure is invisible. Every stored reader in this lab before 4.5 takes one ticker and one session, so a resolver written on that pattern reads correctly, resolves correctly, and records the same trigger times. The reconstruction that follows is a second implementation of the one ordering 4.6 has to get right, and a second implementation that agrees with the first on ordinary days is exactly the kind that disagrees on a tie.
+
+**The walk is forward-only because the type holds it, not because the caller is careful.** The clock hands out ascending minutes and each one carries that minute's bars and nothing else; there is no method that takes an instant, and the walk may be enumerated once, because a second enumeration from inside the first is precisely how a caller sees a minute later than the one it is standing on. A resolver that could look ahead would produce answers that look exactly like honest ones.
+
 **RiskGate is the sole writer of orders, for both directions and every version**
 Two writers puts the caps in two code paths, which voids every comparison between versions and does so silently.
 

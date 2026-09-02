@@ -108,15 +108,22 @@ public sealed class CheckCompletenessCheck
         coverage.OutOfScope(
             "clauses of the short reached-ceiling gate the store cannot reach a level for",
             1,
-            CheckCoverage.OutOfScopeReason.UntilCheckpoint(
-                "4.5",
+            // Moved from a checkpoint to a price at 4.5, which is where it fell due and where it
+            // stopped being work. 4.5's row prices four fetch windows with the rows each would add,
+            // and no option costs a vendor call more than another, so what is left is how large a
+            // store the operator wants. A checkpoint deferral would rest here for ever while reading
+            // as pending, which is what this shape exists to stop.
+            CheckCoverage.OutOfScopeReason.UntilDecided(
+                "between about 42,000 and 6.5 million further minute rows, one-off per name, and no vendor call "
+                + "either way: the four windows 4.5's row prices, of which one session is what is built",
                 "the third clause compares the price against the average price anchored to the swing the thrust ran "
                 + "from, which is a volume-weighted average over minute bars from that swing forward. VwapEngine "
                 + "computes it from 4.4 and IntradayFetcher buys one session a night, so a row whose swing sits "
-                + "further back than the store reaches records two clauses and says which. Widening that window is "
-                + "free in vendor calls and costly in rows, which is the fetch's decision and is carried to 4.5. "
-                + "Approximating the anchored level from daily bars would put a plausible wrong number inside the "
-                + "check that decides whether the bounce reached its ceiling"));
+                + "further back than the store reaches records two clauses and says which. The swing sits three to "
+                + "twenty-seven sessions back depending on which scan flagged it, so at one session a night no anchor "
+                + "is ever in reach. Approximating the anchored level from daily bars would put a plausible wrong "
+                + "number inside the check that decides whether the bounce reached its ceiling. Ends when the "
+                + "operator chooses a window"));
 
         if (setups.Count == 0)
         {

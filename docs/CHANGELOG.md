@@ -1634,3 +1634,38 @@ Why:  WatchlistPublisher was the only phase-4 component with no store anywhere i
 Was:  `| 18:40 | publish watchlist | 0 |`
 Now:  The row names the verb, says it writes nothing, and says what it is for: a night that was never capped is noticed there rather than by somebody opening a browser.
 Why:  The slot named no verb, so an operator reading the schedule could not run it, and it did not say that the stage writes nothing, which is the one thing worth knowing about a stage that appears to publish something.
+
+### 2026-09-01 — ARCHITECTURE.html — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  `<tr><td><b>RiskGate</b></td><td>On trigger</td><td>Sizes every position and enforces every cap. The only thing that may open a position</td></tr>`
+Now:  `<tr><td><b>RiskGate</b></td><td>On trigger</td><td>Enforces every cap and may reduce or block a plan's size, never recompute it. The only thing that may open a position</td></tr>`
+Why:  4.16 decided that PlanBuilder sizes and RiskGate does not, and corrected the gloss under "The trading day" and PlanBuilder's own catalogue row. This row was missed, so the document stated the decision in one place and its opposite in another. Nothing could see it: RiskGate does not exist until 4.6, so every claim about it is out of scope until then.
+
+### 2026-09-01 — ARCHITECTURE.html — cites One replay clock walks every name of a session at once
+Was:  `<tr><td><b>SessionReplayClock</b></td><td>Nightly 21:00</td><td>Walks the stored minute bars for a session</td></tr>` / A TriggerResolver gloss saying only that it walks the day one minute at a time, seeing only minutes that had already happened.
+Now:  The clock's row says it runs with the resolver, walks every name at once, and owns no table. The resolver's gloss adds the one-clock reason and the three outcomes, naming the session that holds no stored minute as unresolvable rather than as a plan that did not fire.
+Why:  The clock had a scheduled slot of its own and is not a stage: it is the walk the resolver rides on, it writes nothing, and SCHEMA now declares it as owning no table. The resolver's gloss said what it may not see and not what it decides, so the distinction between no fill and cannot-resolve, which is the whole reason the component has three outcomes, was in no spec at all.
+
+### 2026-09-01 — SCHEMA.md — cites Trades are resolved by replaying minute bars after the close, not by watching live
+Was:  A Trading store table going straight from `plan_run` to `order`, with no store between the plan and the order, and no entry for SessionReplayClock among the components that own none.
+Now:  `trigger_resolution` and `trigger_run` declared with TriggerResolver as sole writer, a column table for the first, and SessionReplayClock listed as owning no table with the reason.
+Why:  Built at 4.5. The resolver decides something and so owns a table; the clock reads and writes nothing, and a store missing from this document is indistinguishable from a component that deliberately owns none.
+
+### 2026-09-01 — RUNBOOK.md — cites Trades are resolved by replaying minute bars after the close, not by watching live
+Was:  `| 21:00 | session replay, fills, positions | 0 |`
+Now:  A 21:05 row naming `resolve-triggers`, what it walks, that one clock walks every name at once, and that a session with plans resting in it and no stored minute is reported partial rather than clean; and a 21:15 row for fills and positions.
+Why:  The row named three things at one time, no verb an operator could run, and none of the three existed. The first is built at 4.5 and has a verb; the other two keep their placeholder at the time the catalogue gives PositionManager.
+
+### 2026-09-01 — BUILD_PLAN.md — cites The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+Was:  4.6's deliverable read `RiskGate, all six caps, both directions, sizing off fixed notional equity`, and its done condition asked what RiskGate does to a size it did not compute and whether a reduced position keeps the plan's give-up price or recomputes distance from the new size.
+Now:  The deliverable reads `over the size the plan already carries`, and both questions are restated as what 4.6 builds against, citing the decision. What is left open there is named: the behavioural half of that decision, which no test could reach until the component that could break it existed.
+Why:  4.16 answered both. A done condition still asking a settled question is a checkpoint that will either re-decide it or amend its own condition, and the deliverable's "sizing off fixed notional equity" contradicted a live decision in the row that builds against it.
+
+### 2026-09-01 — BUILD_PLAN.md — cites A session is a date the store holds minutes for, and no calendar is authored here
+Was:  The obligations table carried a row raised at 4.16 due at 4.5, being that a plan's live session is the next weekday and nothing in this lab knows whether that weekday trades; a row raised at 4.4 due at 4.5, being which fetch window `IntradayFetcher` buys; a heading reading "The nine that are the operator's"; and the sentences and counts around it.
+Now:  The 4.16 row is discharged and removed. The 4.4 row is repointed to the operator with the reason, and appears in the operator's table with what it blocks. A new row raised at 4.5 records the slot defect's damage, also the operator's. The heading, the movement sentence, the blocking sentence and the closing paragraph are re-derived over eleven.
+Why:  The holiday question fell due at 4.5 and is answered by the decision it cites: a session is a date the store holds minutes for. The fetch window also fell due at 4.5, where it was priced, and what is left in it is how large a store the operator wants rather than any build session's work.
+
+### 2026-09-01 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Checks roster ran from `slot-diagnostics` straight to `clock-usage`, with no check over what the night's dispatcher can dispatch.
+Now:  A `slot-roster` row: the night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction.
+Why:  Four lists said what the lab runs and none was reconciled against another. The dispatcher's `ValidateSet` held eighteen names while its slot table held twenty-two, so four stages built between 4.1 and 4.4 could not be dispatched at all, and `plans` was in neither list, so the stage built at 4.16 was scheduled by this corpus and run by nothing. `tools/ci.*` was green and the phase report was GREEN throughout, because the dispatcher was a file in this repository that no check had as a subject.

@@ -118,7 +118,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 18:40 | `publish-watchlist`, which writes nothing. It reports what the page would show, so a night that was never capped is noticed here rather than by somebody opening a browser | 0 |
 | 20:30 | `intraday-bars`, one request per distinct flagged name, at 5 calls each. Not the capped sixty: a variant that selects a name the baseline passed on must still be resolvable, and a name whose minutes were never bought is one no variant can ever be scored on | 220 to 415 |
 | 21:00 | `vwap`, over the minutes the fetch stored half an hour earlier. It spends no vendor call: the session average annotates each stored minute with the average as it stood at that minute, and the anchored average is priced for every short setup whose swing the store can reach back to. An anchor out of reach is a row with a reason rather than a silence, and `anchors_asked` against `anchors_priced` is the state of the third ceiling clause on the night | 0 |
-| 21:00 | session replay, fills, positions | 0 |
+| 21:05 | `resolve-triggers`, the session walked one minute at a time over the minutes the fetch stored, deciding whether each plan resting in it was touched and in which minute. It spends no vendor call. One clock for the session rather than one per name, because the earliest trigger is what fills when the caps bind and that is a comparison across names. **A session with plans resting in it and no stored minute is reported partial rather than clean**: that is a night the lab was blind on, and a plan whose live session turns out to be a market holiday lands here as unresolvable with the reason rather than as a plan that did not fire | 0 |
+| 21:15 | fills, positions | 0 |
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | loss classification | 0 |
 | 21:40 | variant scoring | 0 |

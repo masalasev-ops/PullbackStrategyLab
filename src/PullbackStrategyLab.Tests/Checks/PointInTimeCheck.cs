@@ -76,6 +76,12 @@ public sealed class PointInTimeCheck
             // bound will rarely exclude a row today; that is a fact about the writer rather than a
             // property of the read.
             ["trade_plan"] = "observed_at",
+
+            // A resolution is an observation about a session, and it is read to decide an answer:
+            // 4.6 fills the earliest trigger of a session and blocks the later ones, so a replay
+            // standing at an old date that saw a resolution written after it would fill an order the
+            // night could not have placed.
+            ["trigger_resolution"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -157,6 +163,11 @@ public sealed class PointInTimeCheck
                 "observed_at is when one evening's plan stage ran and what it refused, which is operational "
                 + "on the same terms as vwap_run above. Nothing computes a figure about the market from it: "
                 + "the plans it counts are in trade_plan, which is stamped and bounded.",
+            ["trigger_run"] =
+                "observed_at is when one session's replay ran, what it walked and what it could not ask, "
+                + "which is operational on the same terms as plan_run above. Nothing computes a figure "
+                + "about the market from it: the resolutions it counts are in trigger_resolution, which is "
+                + "stamped and bounded.",
         };
 
     /// <summary>

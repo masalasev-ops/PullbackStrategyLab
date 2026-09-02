@@ -79,6 +79,80 @@ public sealed class IntradayBarReader
     }
 
     /// <summary>
+    /// Every named ticker's minutes for one session, in time order across the names, as last
+    /// observed by the end of <paramref name="asOf"/>.
+    ///
+    /// <b>One read for the session rather than one per name, because the replay is one walk.</b>
+    /// A resolver asking name by name gets each name's day correctly and no ordering between them,
+    /// and the contention rule fills the earliest trigger of the session, which is a comparison
+    /// across names. The order here is by minute and then by ticker, so a caller grouping on the
+    /// timestamp gets whole minutes in sequence.
+    ///
+    /// The as-of bound and the latest-observation rule are the same as the per-name read, which is
+    /// why they are written once below: a second spelling of a point-in-time bound is a second
+    /// chance to get it wrong.
+    /// </summary>
+    public static IReadOnlyList<StoredIntradayBar> ReadSession(
+        SqliteConnection connection,
+        IReadOnlyCollection<string> tickers,
+        DateOnly sessionDate,
+        DateOnly asOf,
+        bool regularOnly = true)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(tickers);
+
+        if (tickers.Count == 0)
+        {
+            return [];
+        }
+
+        // One parameter per name rather than a joined string, so nothing from outside the lab reaches
+        // the statement text. The names come from `setup` and `security` and are already constrained,
+        // which is a fact about today's callers and not a property of this read.
+        string[] slots = [.. tickers.Select((_, i) => $"@t{i}")];
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT ticker, bar_ts, session_date, interval_code, session_window, price_basis,
+                   open, high, low, close, volume, vwap_session, observed_at
+              FROM intraday_bar b
+             WHERE b.ticker IN ({string.Join(", ", slots)})
+               AND b.session_date = @session_date
+               AND b.observed_at <= @observed_before
+               AND (@regular_only = 0 OR b.session_window = 'regular')
+               AND b.observed_at = (
+                     SELECT MAX(l.observed_at)
+                       FROM intraday_bar l
+                      WHERE l.ticker = b.ticker
+                        AND l.bar_ts = b.bar_ts
+                        AND l.observed_at <= @observed_before)
+             ORDER BY b.bar_ts, b.ticker;
+            """;
+
+        int slot = 0;
+        foreach (string ticker in tickers)
+        {
+            command.Parameters.AddWithValue($"@t{slot++}", ticker);
+        }
+
+        command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
+        command.Parameters.AddWithValue(
+            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@regular_only", regularOnly ? 1 : 0);
+
+        var bars = new List<StoredIntradayBar>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            bars.Add(Map(reader));
+        }
+
+        return bars;
+    }
+
+    /// <summary>
     /// What the night's fetch recorded for one session, as last observed by the end of
     /// <paramref name="asOf"/>, or null where no fetch ran.
     ///

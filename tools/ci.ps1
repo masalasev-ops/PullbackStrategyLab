@@ -81,6 +81,7 @@ Invoke-Step 'check-writer-ownership'       { Invoke-Check 'writer-ownership' }
 Invoke-Step 'check-api-isolation'          { Invoke-Check 'api-isolation' }
 Invoke-Step 'check-ci-parity'              { Invoke-Check 'ci-parity' }
 Invoke-Step 'check-slot-diagnostics'       { Invoke-Check 'slot-diagnostics' }
+Invoke-Step 'check-slot-roster'            { Invoke-Check 'slot-roster' }
 Invoke-Step 'check-clock-usage'            { Invoke-Check 'clock-usage' }
 Invoke-Step 'check-bar-append-only'        { Invoke-Check 'bar-append-only' }
 Invoke-Step 'check-fixture-inputs'         { Invoke-Check 'fixture-inputs' }

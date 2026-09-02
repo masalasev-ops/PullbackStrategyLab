@@ -43,6 +43,7 @@ public static class Program
         builder.Services.AddSingleton<VwapEngine>();
         builder.Services.AddSingleton<WatchlistPublisher>();
         builder.Services.AddSingleton<PlanBuilder>();
+        builder.Services.AddSingleton<TriggerResolver>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
@@ -110,6 +111,7 @@ public static class Program
                 VwapEngine.Name => host.Services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
                 WatchlistPublisher.Name => host.Services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
                 PlanBuilder.Name => host.Services.GetRequiredService<PlanBuilder>().Run(rest),
+                TriggerResolver.Name => host.Services.GetRequiredService<TriggerResolver>().Run(rest),
                 FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
                 FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
                 IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
@@ -242,6 +244,13 @@ public static class Program
         SpreadSnapshotter.Name,
         VwapEngine.Name,
         WatchlistPublisher.Name,
+        // Absent from this list from 4.16, when the stage was dispatched and registered and
+        // never advertised, so `list-stages` and the usage text under-reported by one. Nothing
+        // could see it: the reachability test asked only that every advertised stage has an arm,
+        // and `architecture-conformance` treats this list as a second way of being registered
+        // rather than as a roster to reconcile. It now reconciles in both directions.
+        PlanBuilder.Name,
+        TriggerResolver.Name,
         IndicatorEngine.Name,
         ScanEngine.Name,
         TierClassifier.Name,

@@ -700,6 +700,8 @@ Declared at store level. Columns owed at their checkpoint.
 |---|---|---|
 | `trade_plan` | setup + variant | Insert PlanBuilder. **Never updated after its session date** (see: The plan is written before the session and is immutable after publication) |
 | `plan_run` | session + observation | Insert PlanBuilder. What one evening's plan stage did, with its refusals counted by reason |
+| `trigger_resolution` | plan | Insert TriggerResolver. What the session did to each plan resting in it, one row per plan and no price copied from either the plan or the bar |
+| `trigger_run` | session + observation | Insert TriggerResolver. What one replay walked beside what it decided |
 | `order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
 | `fill` | fill id | Insert PaperBroker |
 | `position` | position id | Insert PaperBroker · Update PaperBroker. Carries `risk_intended` and `risk_realised` so share rounding is visible rather than assumed away (see: Equity is a fixed $100,000 notional that never compounds) |
@@ -746,6 +748,38 @@ derivable as a *count for a night* without replaying the stage. So the counts ar
 per reason: a single `refused` total would let the reason that is a defect hide inside the reason
 that is ordinary arithmetic.
 
+### What the session did to each plan
+
+Built at 4.5, and the columns are the ones that checkpoint owes.
+
+| Column | Form | Why |
+|---|---|---|
+| `setup_id` | TEXT, the key | One resolution per plan. A plan is live in exactly one session, so a resolution per plan is a resolution per plan per session with the second half derivable |
+| `live_session` | TEXT | The session that was walked, read from the plan rather than stepped to |
+| `outcome` | TEXT, one of three | `touched`, `not_touched`, `unresolvable`. Three and not two, because no fill and cannot-resolve are different answers |
+| `touched_at` | TEXT NULL | The minute the trigger was reached, and the only thing that carries a time. Constrained to be present exactly when the outcome is `touched` |
+| `minutes_walked` | INTEGER | How many of the name's minutes the resolution was taken over, so a decision cannot be told apart from one taken over a session the store barely holds |
+| `unresolved_because` | TEXT NULL | Which of the two blindnesses it was. Constrained to be present exactly when the outcome is `unresolvable` |
+
+**Three outcomes, and the third is the one that would otherwise disappear.** A plan whose name traded
+all day and never reached its trigger did not fire, which is the ordinary result. A plan whose session
+holds no stored minute was never asked: the fetch did not run, the name was not in it, or the live
+session was not a trading day at all. Folding the second into the first would record a strategy that
+declines to trade on exactly the nights the lab was blind, and every rate computed from these rows
+would be wrong in the flattering direction with nothing to show it
+(see: A gate handed an absent or degenerate quantity fails rather than passing).
+
+**No price is copied here.** The trigger price is `trade_plan`'s and the bar is `intraday_bar`'s, and
+`touched_at` addresses that minute exactly. Restating either would be a second statement of a fact the
+store already holds, which is the ruling WatchlistPublisher took over a watchlist table and VwapEngine
+took over the day's high and low. PaperBroker at 4.7 prices a fill from the plan and the minute named
+here, so a gap fill reads the same bar the touch was found in.
+
+**A session with plans resting in it and no minutes is recorded partial rather than clean.** The row
+carries `minutes_walked` and `names_walked` for that reason: a blind night reported as a night on
+which nothing triggered is the shape that cost this lab a second evening of evidence, and the figure
+that says so has to be on the morning's run row rather than in a rate three months later.
+
 ## Research — phases 5 and 6
 
 | Store | Grain | Writer |
@@ -774,6 +808,7 @@ none are indistinguishable from the outside, and the first is a defect.
 | Component | Why it owns none |
 |---|---|
 | SetupJournal | It seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. A component enforcing immutability by writing would be the second writer of the thing it protects |
+| SessionReplayClock | It reads `intraday_bar` one minute at a time and writes nothing. It is the walk rather than a stage: one clock per session hands ascending minutes to whatever is resolving against them, and the component that decides something is the one that owns a table. Declared here because a component missing from this document and one that deliberately owns none are indistinguishable from the outside |
 | WatchlistPublisher | **Ruled at 4.1**, having been the one phase-4 component with no store anywhere in this document. The two answers were a `watchlist` table freezing what was shown, or none and a page that projects the setups. The second holds: `setup` already carries `rank` and `capped_out`, every read of it is bounded on when its rows were observed, and a replay of an evening therefore returns the list that evening showed, corrections and all. A stored copy would be a second statement of one night, and it could disagree with the rows it was copied from with nothing reading both to notice. The stage runs at 18:40 to report what would be on the page, which is the only moment a night that was never capped is noticed without somebody opening a browser |
 
 ### `run_log`
