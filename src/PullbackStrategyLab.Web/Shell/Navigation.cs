@@ -15,7 +15,7 @@ public static class Navigation
     [
         new("Watchlist", "/watchlist", "The morning screen, long and short divided", "4.1"),
         new("Setups", "/setups", "Last night's flagged setups as a gallery of marked-up charts", "2.9"),
-        new("Journal", "/journal", "Closed trades with their loss causes", "4.12"),
+        new("Journal", "/journal", "Closed trades with their loss causes", "4.11"),
         new("Scoreboard", "/scoreboard", "Is the pattern real, can the lab sort it, is the loop learning", "3.5"),
         new("Research", "/research", "Proposals, samples, targets, the holdout register", "5.5"),
     ];

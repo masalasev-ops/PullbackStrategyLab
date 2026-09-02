@@ -10980,6 +10980,30 @@
       "checkpoint": "4.10",
       "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: trades.journalled is 0, because manage.openAtStart is 0, because fills.entriesFilled is 0, because orders.placed is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No trade closes, so no loss does, so neither pass has a subject.",
       "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the taxonomy. of those, the ones whose horizon closed with no forward return filled. A real category rather than a silent skip, and a share that grows here is a finding about the classifier rather than about the trades"
+    },
+    {
+      "id": "journal.longTrades",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.11",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: trades.journalled is 0, because nothing closed, because nothing was open, because the capped population is empty on this fixture's one market day. The read surface answers with two empty lists and a sum over run rows that recorded nought.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the page. closed long trades the journal's read surface answers with"
+    },
+    {
+      "id": "journal.shortTrades",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.11",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: trades.journalled is 0, because nothing closed, because nothing was open, because the capped population is empty on this fixture's one market day. The read surface answers with two empty lists and a sum over run rows that recorded nought.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the page. the same on the short side, counted apart because the page renders two blocks and never one table with a direction column (see: Long and short are never pooled into one figure)"
+    },
+    {
+      "id": "journal.slotsTheCapsCouldNotSee",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.11",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: trades.journalled is 0, because nothing closed, because nothing was open, because the capped population is empty on this fixture's one market day. The read surface answers with two empty lists and a sum over run rows that recorded nought.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the page. the sum over every manage_run of the positions that closed in the session they opened in, which is the size of the approximation RiskGate makes and the one figure the read surface derives rather than carries (see: RiskGate reads the book as it stood coming into the session, and what that costs is counted)"
     }
   ],
   "frozenOnly": [

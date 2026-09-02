@@ -11631,3 +11631,89 @@ Carried:    **The aftermath is measured over ten sessions from the trigger and a
             one asked which of two figures called the result a downstream component reads, and this
             is the first component that reads one: it takes the trade's, being after the borrow a
             short is charged, because that is what the trade came to.
+
+## 4.11 — 2026-09-02 — phase-4-journal-page — the page the last four checkpoints were writing rows for
+
+Built:      **The trade journal at `/journal`, with `LabJournal` on the read surface and
+            `JournalView` in the shell.** Two blocks, never one table with a direction column, and no
+            arithmetic in the template at all: the two expectancies are computed per side by the read
+            surface and there is no total row to write. The pooling rule is easiest to break on a
+            screen, where one table looks tidier and quietly invites a sum.
+
+            **It absorbs the layout the mockup carries**, which is what lets 4.12 delete
+            `SCREENS.html` rather than reconstruct it: a band with a closed count and an expectancy a
+            side, two panels, and a row per trade carrying its dates, its two prices, its result in R,
+            how long it was held, its exit rule, its cause and the plan against the actual. What the
+            mockup drew as a borrow column is a sentence per short here, because the assumption it
+            carries is not a number.
+
+            **Every figure that could be absent says which absence it is.** An expectancy over no
+            trades reads "not yet" rather than nought; a long's borrow cell says it is not a short
+            rather than being blank, because a blank reads as a cost of nought; a loss whose horizon
+            has not closed reads as awaiting one rather than as unclassified. The last is the
+            classifier's own distinction carried onto the surface it is about.
+
+            **A gapped end is named rather than numbered.** The plan-against-actual column is in basis
+            points, because six cents on a six-dollar stock and six cents on a four-hundred-dollar one
+            are two different execution facts. On a gap the model charged nothing and the price moved
+            anyway, so a basis-point figure beside a slipped one would be two quantities in one
+            column, which is what the fill's basis is carried to prevent.
+
+Built:      **The chart per trade, which is a minute chart and not a shorter window of the daily
+            one.** `/chart?trade=` draws the session the exit happened in, minute by minute, with the
+            trigger, the give-up point, the fill and the exit drawn across it. A daily candle cannot
+            show a trigger reached at 10:00 and a stop reached at 14:00 on the same day, which is the
+            whole reason the checkpoint asks for an intraday one.
+
+            **`CandlestickChart` gained a second entry point rather than a wider one.** `Lay` carries
+            a date through to every bar because a daily chart's x-axis is a calendar; a minute
+            chart's is a clock, and one type carrying both would have half its fields null on every
+            instance. The scaling arithmetic is shared, so the two pictures cannot disagree about
+            where a price sits in a box, and the levels widen the scale on exactly the terms an
+            average does: a stop drawn outside the box is a line the reader silently loses.
+
+            **Every level is a price something already recorded.** Two from the plan and two from
+            `fill`. Nothing on this page derives a price: a read surface that computed a fill would be
+            a second implementation of the fill model, and the two would disagree with the picture as
+            the last place anybody looked.
+
+Found:      **The scoreboard's band 2 still said its loss-cause panels arrive at 4.10, one checkpoint
+            after 4.10 built them.** The placeholder named the checkpoint honestly from 3.5 and
+            outlived the thing it was standing in for, which reads as a page nobody finished and is
+            the empty-state rule's own failure mode from the other side. `WebShellTests` asserted the
+            sentence was present, so the test that should have caught it was pinning it in: it now
+            asserts both directions, that band 3 still names 6.8 and that band 2 no longer names a
+            landed checkpoint.
+
+Built:      **Both obligations due here are discharged on the surface they were about.**
+            `closed_in_their_own_session` is summed over every night and sits in the band with a
+            caption saying what it is: the decision to leave RiskGate at 21:10 rests on that cost
+            being countable rather than argued, and a figure nobody reads is one nobody reviews the
+            choice against. `plan_audit` and `loss_class` were tables with a writer and no reader, and
+            every row on this page carries both.
+
+            **And the two surface claims deferred here are discharged rather than repointed.** The
+            borrow assumptions are rendered per short with the availability sentence in full, and a
+            long carries the words saying it carries neither. The realised risk is rendered beside the
+            intended risk on every row, which is what "beside" was ever a claim about.
+
+Measured:   **`tools/ci.ps1` green at 30 steps and 883 tests**, from 871 at 4.10.
+
+            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
+            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
+            the commit that produced them with the tree clean.
+
+            **The fixture's three `journal.*` figures are noughts and each is structural.** Nothing
+            closed, so the read surface answers with two empty lists and a sum over run rows that
+            recorded nought. They are the read surface's own figures rather than a stage's, which is
+            what makes them this checkpoint's rather than 4.9's.
+
+Carried:    **The journal draws one session of a trade and calls it the trade's chart.** The picture
+            is the session the exit happened in, because that is where three of the four levels are
+            and because an x-axis that skipped three sessions would put gaps in the middle of a clock.
+            A position held four sessions has three sessions of minutes nothing draws, and the trail
+            exit in particular is decided on a daily close the picture never shows. Nothing is wrong
+            today, because no position has ever been held past its own session. Due at 5.5, the next
+            page checkpoint.
+
+            **Two discharged and one raised, so the obligations table falls from 54 to 53.**

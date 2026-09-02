@@ -172,6 +172,88 @@ public static class CandlestickChart
             yield return new PriceTick(price, Y(price, low, high, plotHeight));
         }
     }
+
+    /// <summary>
+    /// Lays a session's minutes out inside a box, with horizontal lines across it at named prices.
+    ///
+    /// <b>A second entry point rather than a widening of the one above, and the axis is why.</b>
+    /// <see cref="Lay"/> carries a <c>DateOnly</c> through to every bar, because a daily chart's
+    /// x-axis is a calendar. A minute chart's is a clock, and giving every bar of one session the
+    /// same date would put one label under a thousand candles. The scaling arithmetic is shared:
+    /// both call the same <see cref="Y"/>, so the two pictures cannot disagree about where a price
+    /// sits in a box.
+    ///
+    /// <b>The levels widen the scale, on exactly the terms an average does.</b> A stop drawn outside
+    /// the box is a line the reader silently loses, and the whole point of this picture is that the
+    /// four prices are visible against the session that reached or missed them.
+    /// </summary>
+    public static MinuteChartGeometry LayMinutes(
+        IReadOnlyList<MinuteCandle> candles,
+        IReadOnlyList<PriceLevel> levels,
+        int width,
+        int height)
+    {
+        ArgumentNullException.ThrowIfNull(candles);
+        ArgumentNullException.ThrowIfNull(levels);
+        ArgumentOutOfRangeException.ThrowIfLessThan(width, PriceGutter + 10);
+        ArgumentOutOfRangeException.ThrowIfLessThan(height, DateGutter + 10);
+
+        if (candles.Count == 0)
+        {
+            return MinuteChartGeometry.Empty(width, height);
+        }
+
+        decimal low = candles.Min(c => c.Low);
+        decimal high = candles.Max(c => c.High);
+
+        foreach (PriceLevel level in levels)
+        {
+            low = Math.Min(low, level.Price);
+            high = Math.Max(high, level.Price);
+        }
+
+        if (high == low)
+        {
+            low -= 0.5m;
+            high += 0.5m;
+        }
+
+        double plotWidth = width - PriceGutter;
+        double plotHeight = height - DateGutter;
+        double step = plotWidth / candles.Count;
+        double bodyWidth = Math.Max(1.0, step * 0.62);
+
+        var bars = new List<MinuteGeometry>(candles.Count);
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            MinuteCandle candle = candles[i];
+            double centre = (i * step) + (step / 2);
+            double top = Y(Math.Max(candle.Open, candle.Close), low, high, plotHeight);
+            double bottom = Y(Math.Min(candle.Open, candle.Close), low, high, plotHeight);
+
+            bars.Add(new MinuteGeometry(
+                candle.At,
+                centre,
+                Y(candle.High, low, high, plotHeight),
+                Y(candle.Low, low, high, plotHeight),
+                top,
+                Math.Max(1.0, bottom - top),
+                candle.Close >= candle.Open,
+                bodyWidth));
+        }
+
+        return new MinuteChartGeometry(
+            width,
+            height,
+            plotWidth,
+            plotHeight,
+            low,
+            high,
+            bars,
+            [.. levels.Select(l => new LevelGeometry(l.Name, l.Price, Y(l.Price, low, high, plotHeight)))],
+            false);
+    }
 }
 
 /// <summary>One session, on whichever basis the caller chose. The component does not adjust prices.</summary>
@@ -217,4 +299,45 @@ public sealed record CandlestickGeometry(
     public static CandlestickGeometry Empty(int width, int height) =>
         new(width, height, width - CandlestickChart.PriceGutter, height - CandlestickChart.DateGutter,
             0m, 0m, [], [], [], IsEmpty: true);
+}
+
+/// <summary>One minute of a session. Labelled by a clock rather than a calendar.</summary>
+public sealed record MinuteCandle(string At, decimal Open, decimal High, decimal Low, decimal Close);
+
+/// <summary>One price to draw a line across the session at, and what it is.</summary>
+public sealed record PriceLevel(string Name, decimal Price);
+
+public sealed record MinuteGeometry(
+    string At,
+    double Centre,
+    double HighY,
+    double LowY,
+    double BodyTop,
+    double BodyHeight,
+    bool Up,
+    double BodyWidth);
+
+/// <summary>One level's line, at the y the same scaling put every candle at.</summary>
+public sealed record LevelGeometry(string Name, decimal Price, double Y);
+
+/// <summary>
+/// A session's minutes laid out, with the lines across them.
+///
+/// <see cref="IsEmpty"/> draws a message rather than an empty box, on the terms the daily geometry
+/// already sets: a blank rectangle reads as a stock that did not move.
+/// </summary>
+public sealed record MinuteChartGeometry(
+    int Width,
+    int Height,
+    double PlotWidth,
+    double PlotHeight,
+    decimal Low,
+    decimal High,
+    IReadOnlyList<MinuteGeometry> Candles,
+    IReadOnlyList<LevelGeometry> Levels,
+    bool IsEmpty)
+{
+    public static MinuteChartGeometry Empty(int width, int height) =>
+        new(width, height, width - CandlestickChart.PriceGutter, height - CandlestickChart.DateGutter,
+            0m, 0m, [], [], true);
 }

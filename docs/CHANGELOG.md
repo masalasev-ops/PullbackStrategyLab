@@ -1846,3 +1846,8 @@ Why:  4.10 built the first component that reads a closed loss, and it reads the 
 Was:  `| 21:35 | loss classification | 0 |`
 Now:  A row naming `losses`, its two passes, what each reads, and the difference between a row waiting on a horizon and one that is `unclassified`.
 Why:  Built at 4.10, and the schedule is what `slot-roster` reconciles the dispatcher against. The distinction is on the row because it is the one thing about this stage an operator would otherwise get wrong: a count of unclassified losses that included every waiting row would read as a broken taxonomy every night for the first ten sessions of every loss.
+
+### 2026-09-02 — BUILD_PLAN.md — cites RiskGate reads the book as it stood coming into the session, and what that costs is counted
+Was:  The obligations table carried a row raised at 4.8 due at 4.11 and a row raised at 4.9 due at 4.11.
+Now:  Both discharged and removed, and one raised.
+Why:  4.11 built the page both were waiting on. The caps figure is in the journal's band with a caption saying what it is, and the audit and the classification are on every row. What it raised is that a trade's chart is one session of it.

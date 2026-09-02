@@ -24,6 +24,43 @@ public sealed record ChartView(
 }
 
 /// <summary>
+/// One trade's session as the page renders it: the minutes it happened in, and the four prices that
+/// decided it drawn across them.
+///
+/// <b>Its own shape rather than <see cref="ChartView"/> widened.</b> A daily chart of a quarter and
+/// a minute chart of one session answer different questions: a daily candle cannot show a trigger
+/// reached at 10:00 and a stop reached at 14:00 on the same day, and a minute chart has no
+/// fifty-day average to draw. One type carrying both would be a type where half the fields are null
+/// on every instance.
+///
+/// <b><see cref="Nothing"/> is a reason rather than an error.</b> A trade whose minutes the fetch
+/// never bought is an ordinary thing to ask for, and the sentence says which absence it is.
+/// </summary>
+public sealed record TradeChartView(
+    string TradeId,
+    string Ticker,
+    string Direction,
+    string ClosedSession,
+    string OpenedSession,
+    string ExitReason,
+    IReadOnlyList<MinuteCandle> Candles,
+    IReadOnlyList<TradeLevelLine> Levels,
+    string? Nothing)
+{
+    public static TradeChartView Empty(string tradeId, string why) =>
+        new(tradeId, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], [], why);
+
+    public bool HasBars => Candles.Count > 0;
+
+    /// <summary>Whether the trade opened in a session other than the one drawn, which the page says.</summary>
+    public bool OpenedEarlier =>
+        !string.Equals(OpenedSession, ClosedSession, StringComparison.Ordinal);
+}
+
+/// <summary>One horizontal line, its price and what it is, drawn across the session.</summary>
+public sealed record TradeLevelLine(string Name, string Price, string What);
+
+/// <summary>
 /// The figures the lab computed for this session and stored, beside the lines the page draws.
 ///
 /// The last point of the drawn ema9 line and the stored ema9 are the same computation over the
