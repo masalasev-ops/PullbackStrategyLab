@@ -404,21 +404,32 @@ public sealed partial class StatedCountsCheck
             MarkdownTable.BodyRowsAfter(buildPlan, "## Phase 5 — Variants, without any AI").Count,
             "rows of the phase 5 table"));
 
-        int questionRows = PhaseFiveQuestion().Matches(buildPlan).Count;
+        // <b>The population is the marked rows still due at the operator, not every marked row.</b>
+        // It was every marked row until the sitting of 2026-09-02, which was the same set while every
+        // question was unanswered and stopped being one the moment two were repointed to 5.0 with
+        // their ruling given: the obligations table then held three marked rows and the operator's
+        // table one, and the reconciliation compared the two and failed. The operator's table is a
+        // reading of the operator's rows and of nothing else, so that is the population, which is
+        // the eighth failure shape caught by the claim it governs rather than by a reader.
+        int questionsAtTheOperator = obligations.Count(
+            r => r.Count > 2
+                && r[2].Trim().Equals("the operator", StringComparison.Ordinal)
+                && PhaseFiveQuestion().IsMatch(string.Join(" ", r)));
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the phase 5 questions against the operator's table",
-            questionRows,
+            questionsAtTheOperator,
             operatorQuestions.Count(r => r.Count > 1 && MarkedQuestion().IsMatch(r[1])),
             "rows of the operator's table marked as a phase 5 question"));
         claims.Add(new Claim(
             "BUILD_PLAN.md, the phase 5 questions the operator's reading states",
-            InWords(buildPlan, "is now phase 5's: **", " of the eighteen rows are the questions**"),
-            questionRows,
-            "rows of the carried obligations table marked as a phase 5 question"));
+            InWords(buildPlan, "put here: **", " of the nine rows is a phase 5 question**"),
+            questionsAtTheOperator,
+            "rows of the carried obligations table marked as a phase 5 question and due at the operator"));
 
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations 5.8 holds",
-            InWords(buildPlan, "**The repair pile**, being ", " of the seventeen"),
+            InWords(buildPlan, "**The repair pile**, being ", " of the eighteen"),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.8", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.8"));
         claims.Add(new Claim(
@@ -428,7 +439,7 @@ public sealed partial class StatedCountsCheck
             "rows of the carried obligations table falling due at 5.0"));
         claims.Add(new Claim(
             "BUILD_PLAN.md, the question rows split in two",
-            InWords(buildPlan, "**Of the seventeen, ", " are two rows each"),
+            InWords(buildPlan, "**Of the eighteen, ", " is two rows each"),
             SplitQuestionRow().Matches(buildPlan).Count,
             "obligation rows carrying the ruling half of a split question"));
 

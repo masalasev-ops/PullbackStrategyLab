@@ -12889,3 +12889,109 @@ Verified:   `tools/ci.ps1` green at 31 steps and **913 tests**, one more than th
 Carried:    **Nothing raised, nothing discharged, nothing repointed.** The table still reads 50, the
             operator's list 18, the count due before the freeze 17 and its split twelve and five.
             The nine questions are unchanged and eight of them are still open at the operator.
+
+## 5.0 — 2026-09-02 — phase-5-sitting-answers — the sitting's eight answers, recorded, and three of them answer with a derivation rather than a number
+
+Not a checkpoint entry. It records the answers the operator gave to the phase 5 sitting, each as a
+named decision closing its register row in the same commit, and the corpus edits those answers
+require. It builds no component and 5.0 has not landed. **It is the first entry filed under a
+checkpoint that has not landed**, which the attribution correction above it made possible.
+
+Ruled:      **Eight questions answered, six decisions written, and seven rows closed.** The eight are
+            the sitting's; the ninth, the thrust rule, was not asked and is put when 5.0(a) reports.
+            The seventh row closed is the one raised at 2.11, whose subject the first answer settles.
+
+            **The once-only threshold adjustment is recorded unspent and V0 freezes without it.** The
+            middle reading was refused outright: freezing while the once stays open converts a
+            decision that can be taken now into one that closes every open version the moment it is
+            taken, and waiting does not improve it. What chose between the other two is the
+            measurement of 4.4 rather than a preference: `exit-tight` passes 0.93% of the 431 short
+            rows reaching it against the long side's 1.51% over 1,981, both over the same 602
+            calibration sessions, so the per-row rates are comparable and what the short funnel is
+            short of is rows reaching the gate. **A threshold adjustment moves a rate that is not the
+            fault.** Recorded as unspent so a later session reads a decision rather than an omission,
+            and so the once survives for a fault a measurement locates.
+
+            **The 262 minimum is a derivation, not a value, and that is the answer rather than a
+            deferral.** Both corrections widen it and neither factor is stateable from the corpus:
+            the bootstrap term depends on the tail behaviour of the statistic actually run, and the
+            dispersion term on a ratio measurable from the 602 calibration sessions that nobody has
+            measured. The two are answered together because they compose, since each alone gives a
+            different figure and the pair a third. 5.0(b) writes the derivation, it runs once against
+            the calibration store, and the result is pinned. **It runs before the freeze**, because
+            afterwards a re-derivation closes every open version rather than costing an afternoon,
+            and if it cannot be specified without first running it that is recorded as the result.
+
+            **The execution minimum is 200 paired trades converted at a design effect no trade
+            exists to measure**, so it is stated as a derivation and the row count stands meanwhile.
+            The same shape as the setup-level discount, which was measured at 3.40 rather than
+            assumed at 1.
+
+            **The spread capture does not widen.** Affordability was not what decided it: widening
+            buys spreads for names no version can trade today, against a hypothetical version rather
+            than a measured shortfall. The fail-closed path already built is the more honest answer,
+            and what the ruling owes instead costs no vendor call, being that the refusal is legible
+            where the scores are read so a version scoring poorly for selecting outside the cap is
+            distinguishable from one scoring poorly on its merits.
+
+            **A version changes one gate's threshold and not a clause set.** The acceptance test at
+            5.3 is what decides it: reproducing the baseline's own historical selections is
+            meaningful over a threshold change and vacuous over a structural one, and it is also the
+            only form of "differs by exactly one clause" that is mechanically assertable. It bounds
+            what phase 6 may propose and says so in terms.
+
+            **No execution variant is admitted in this generation.** Both routes are closed for
+            reasons that do not expire on their own, and admitting one anyway would put a version in
+            the register that cannot be screened, scored or resolved, which is a row the corpus
+            carries for ever. What would reopen it is named rather than left to be rediscovered.
+
+            **The aftermath gains a second figure measured from the close.** Two figures, never one
+            replacing the other: the exit price is what the trade earned and the close is what the
+            day offered, and with a single figure a trail that captured a move and one that gave a
+            move back are the same number. Authored now because it costs nothing until the first
+            position is held past its own session, which has never happened.
+
+Built:      **Six named decisions**, three under "How changes are judged", one beside the two spread
+            decisions it belongs with, one under "What is being measured" beside the horizon it
+            extends, and one on the family rules. Each closes its register row in the same commit,
+            which is what the sitting asked for.
+
+            **Two corpus corrections the answers require.** ARCHITECTURE's "One clause" key entry
+            becomes "One threshold" with the reason the acceptance test gives, and the F2 execution
+            entry records that the family is defined and admitted nowhere in this generation, with
+            both closed routes and the two conditions that would reopen it. Prior text in CHANGELOG.
+
+Measured:   **The counts, derived rather than restated.** The obligations table falls from 50 rows to
+            **43**, the operator's list from 18 to **9**, and the count due before the freeze rises
+            from 17 to **18**. The rise is the part worth stating: the two 262 rows moved *into* the
+            before-the-freeze set, because what is left of them is a derivation a build session
+            writes rather than a judgement a person owes, and the spread-capture row moved out of it
+            to 5.2. The split is now **fourteen and four**, the four being the claim-register sweep,
+            the source-scan assertions, the aftermath window and the two screens.
+
+            **One of the nine at the operator is a phase 5 question**, being the thrust rule, and it
+            is marked in both tables so the reading and the register cannot disagree.
+
+Found:      **A reconciliation that was correct while every question was unanswered.**
+            `stated-counts` compared every marked question row in the obligations table against the
+            marked rows of the operator's table, and those were the same set only while no question
+            had been answered. Repointing two to 5.0 with their ruling given left three marked rows
+            in one table and one in the other, and the claim failed on the first run after the
+            answers landed. The operator's table is a reading of the operator's rows and of nothing
+            else, so that is the population it is compared against. **It is the eighth failure shape
+            caught by the claim it governs**, which is the registry doing what it is for.
+
+            **And two citations of this pass's own writing did not resolve.** One named a decision
+            the pass had not written, being the spread ruling, which is the decision-resolves check
+            catching a named answer that had been applied without being recorded. The other cited a
+            bold sub-paragraph inside a decision as though it were a decision, which is the near-miss
+            that check refuses rather than ignores. Both were the check reading this session's own
+            prose on its first run.
+
+Verified:   **`tools/ci.ps1` green at 31 steps and 913 tests**, unchanged, this pass moving claims
+            and prose rather than adding a test method. **The eight corpus documents carry no
+            mis-decoded UTF-8**, counted at nought in each.
+
+Carried:    **Seven rows closed, two repointed to 5.0, one repointed to 5.2, none raised.** The
+            thrust rule is untouched at the operator and is put when 5.0(a) reports. Nothing here
+            moves a floor or raises the out-of-scope ceiling.
