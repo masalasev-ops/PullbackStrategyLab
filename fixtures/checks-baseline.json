@@ -292,14 +292,13 @@
         "BUILD_PLAN.md, the times the first run after 4.1 turns red": 1,
         "CLAUDE.md, all seven done conditions": 1,
         "CLAUDE.md, five specs": 1,
-        "CLAUDE.md, one artefact": 1,
         "CLAUDE.md, three records": 1,
         "LongSetupDetector, ten checks": 1,
         "RUNBOOK.md, the backfill total, fixed term": 1,
         "RUNBOOK.md, the backfill total, term in N": 1,
         "RUNBOOK.md, the nightly call total": 1,
         "ShortSetupDetector, ten checks": 1,
-        "The corpus is eight documents plus one artefact": 1,
+        "The corpus is eight documents": 1,
         "The move procedure, stated in two documents": 1
       }
     },

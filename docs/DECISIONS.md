@@ -909,8 +909,17 @@ A spec is edited cleanly and its prior text goes to the changelog. A record is c
 **Data ownership is declared once, in SCHEMA.md**
 Restating writers in the architecture document would be the same fact in two places, which is how a corpus starts to drift and how sync passes start eating whole sessions.
 
-**The corpus is eight documents plus one artefact, and a ninth requires retiring one**
-Five specs, three records, one artefact. A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+
+**The corpus is eight documents and a ninth requires retiring one**
+Five specs and three records. The artefact is gone: `SCREENS.html` was deleted at 4.12, which is the checkpoint it was scheduled to be retired at from the day the plan was written. Supersedes **The corpus is eight documents plus one artefact, and a ninth requires retiring one**, and the ceiling it sets is unchanged.
+
+A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+
+**What retiring it cost is stated rather than assumed to be nothing.** The mockup was the only place four of the five screens were drawn, and the built pages have absorbed the layout of every one that exists. The fifth is the research ledger, which is 5.5's and is not built, so its drawing is gone and 5.5 designs from ARCHITECTURE's description instead. That is a real loss and it is carried as an obligation rather than left to be discovered at 5.5.
+
+**What it does not cost is any statement about the method.** The one sentence in the mockup that was about how the lab works rather than about how a page looks, being that a twin pair is put to the model as "these look identical in everything I record and did opposite things, what would you want to see", is in ARCHITECTURE under "The question" and was before this. Checked rather than assumed, because a mockup deleted with a claim in it is the same defect as a decision deleted with reasoning in it.
+
+**The rule that made it deletable is that a mockup and a built page are two answers to one question.** SCREENS drew a journal with a plan-against-actual column and the built one has that column too; the day the two disagreed, nothing would have said which was the specification. An artefact is retired when the thing it stands in for exists, and the alternative is a document that is either duplicated or wrong.
 
 **Phase 2 thresholds are calibrated once against nightly counts, before phase 3**
 At that moment no forward return exists anywhere in the store, so there is nothing to fit toward. It is a row count and nothing else. Recorded as a dated event with before and after counts. After phase 3 begins those thresholds move only through the normal proposal route.
@@ -936,6 +945,12 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**The corpus is eight documents plus one artefact, and a ninth requires retiring one**
+Five specs, three records, one artefact. A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+
+Superseded on 2026-09-02 by **The corpus is eight documents and a ninth requires retiring one**. The ceiling is unchanged and the artefact is gone: `SCREENS.html` was deleted at 4.12, the checkpoint it was scheduled to be retired at from the day the plan was written.
+
 
 **A gap through a price fills at the session's first regular minute open, and is not slipped again**
 The open of the first regular-hours minute bar of the session, read from `intraday_bar` rather than from any session-open field.

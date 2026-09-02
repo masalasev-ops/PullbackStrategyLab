@@ -798,6 +798,30 @@ public sealed class PhaseReplay : IDisposable
         Record("journal.shortTrades", journal.Short.Count);
         Record("journal.slotsTheCapsCouldNotSee", journal.SlotsTheCapsCouldNotSee);
 
+        // 16d. The corpus itself, counted from the directory rather than from the list that names it.
+        //
+        //      <b>Read off the filesystem on purpose, which is what makes it a check on the list.</b>
+        //      `RepositoryLayout.CorpusFiles` names the eight documents a citation can live in, and a
+        //      ninth added to `/docs` without being added to that list would be a document nothing
+        //      scans: `decision-resolves` and `no-superseded-citation` both read the list. This figure
+        //      reads the directory, so the day the two disagree the fixture says so.
+        //
+        //      `artefacts` is nought and the nought is the subject. SCREENS.html was the ninth and
+        //      was retired at 4.12 once the pages it drew existed, and a figure that could only ever
+        //      be nought would be worth nothing; this one was 1 until that checkpoint.
+        string[] documents =
+        [
+            .. Directory.EnumerateFiles(RepositoryLayout.Docs)
+                .Select(Path.GetFileName)
+                .Where(name => name is not null)
+                .Select(name => name!)
+                .Order(StringComparer.Ordinal),
+        ];
+
+        Record("corpus.documents", documents.Length + 1);
+        Record("corpus.artefacts", documents.Count(d => d.EndsWith(".html", StringComparison.Ordinal)
+            && !d.StartsWith("ARCHITECTURE", StringComparison.Ordinal)));
+
         // 17. The scoreboard, last, because every panel it builds reads what the stages before it
         //     wrote. Over the fixture most panels are withheld, which is the honest answer for a
         //     lab with one night on file and no closed horizon.

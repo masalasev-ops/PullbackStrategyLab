@@ -572,7 +572,7 @@ Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`) · Unique (`as_of
 
 The library. Every quantity the frozen row can carry, its formula, and the stored columns it reads.
 `signal_definition` holds this as data from 6.2, when SignalAdmissionTest exists to write it; until
-then this section is the library, and it is a section here rather than a document of its own (see: The corpus is eight documents plus one artefact, and a ninth requires retiring one).
+then this section is the library, and it is a section here rather than a document of its own (see: The corpus is eight documents and a ninth requires retiring one).
 
 **Every signal traces to named stored columns, and one does not.** That is the point of writing the
 library down: the source columns are what the point-in-time test is asserted against, and a signal

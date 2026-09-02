@@ -11004,6 +11004,22 @@
       "checkpoint": "4.11",
       "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: trades.journalled is 0, because nothing closed, because nothing was open, because the capped population is empty on this fixture's one market day. The read surface answers with two empty lists and a sum over run rows that recorded nought.",
       "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the page. the sum over every manage_run of the positions that closed in the session they opened in, which is the size of the approximation RiskGate makes and the one figure the read surface derives rather than carries (see: RiskGate reads the book as it stood coming into the session, and what that costs is counted)"
+    },
+    {
+      "id": "corpus.documents",
+      "tier": "DERIVED",
+      "value": "8",
+      "checkpoint": "4.12",
+      "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is eight. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "the five specs and three records, counted from the directory rather than from the list that names them. RepositoryLayout.CorpusFiles is what decision-resolves and no-superseded-citation read, so a ninth document added to /docs and not to that list would be one nothing scans, and this figure is what would say so"
+    },
+    {
+      "id": "corpus.artefacts",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.12",
+      "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is eight. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "note": "the artefacts among them, which is the nought that is the subject. SCREENS.html was the ninth and this figure read 1 until 4.12 retired it, once the pages it drew existed. A figure that could only ever be nought would be worth nothing (see: The corpus is eight documents and a ninth requires retiring one)"
     }
   ],
   "frozenOnly": [
