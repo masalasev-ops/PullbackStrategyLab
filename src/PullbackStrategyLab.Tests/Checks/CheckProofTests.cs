@@ -1627,4 +1627,52 @@ public sealed class CheckProofTests
             Assert.False(schedule.HasLanded(checkpoint), $"\"{row}\" is deferred to {checkpoint}, which has landed.");
         }
     }
+
+    /// <summary>
+    /// An entry that opens "Not a checkpoint entry" says which checkpoint it belongs to without
+    /// saying that checkpoint has landed.
+    ///
+    /// <b>Proved over a record written here rather than over PROGRESS.</b> The live record carries
+    /// no entry of the shape this clause exists for, being one marked against a checkpoint that has
+    /// nothing else recorded, and it will not carry one until the phase 5 plan's correction lands.
+    /// A proof reading the live record would exercise the marked-entry branch on twenty-four entries
+    /// whose checkpoint is landed anyway, so every one of them would pass with the clause deleted.
+    /// That is the eighth failure shape in CLAUDE.md, a clause applied to a population other than
+    /// the one it governs.
+    ///
+    /// The three cases are the three the record can hold: a checkpoint with an ordinary entry, a
+    /// checkpoint whose only entry is marked, and a checkpoint carrying one of each.
+    /// </summary>
+    [Fact]
+    public void An_entry_marked_as_not_a_checkpoint_does_not_land_its_checkpoint()
+    {
+        const string progress = """
+            # PROGRESS.md
+
+            ## 4.18 — 2026-09-02 — a-branch — what the sign-off found, built
+            Built:      the three stages, corrected.
+
+            ## 5.0 — 2026-09-02 — a-branch — the plan for the phase this checkpoint opens
+            Not a checkpoint entry. It records the build plan and builds nothing, so 5.0 is the
+            checkpoint it belongs to and is not a checkpoint the record says has landed.
+
+            ## 4.13 — 2026-09-02 — a-branch — the phase signs off
+            Ruled:      the phase signs off.
+
+            ## 4.13 — 2026-09-03 — a-branch — correction to the entry above
+            Not a checkpoint entry. A correction, under a checkpoint an entry beside it landed.
+            """;
+
+        IReadOnlyList<string> built = ArchitectureConformanceCheck.Schedule.RecordedAsBuilt(progress);
+
+        // The marked entry does not land 5.0, so an obligation due there is not overdue and the
+        // phase report does not move a phase forward onto a checkpoint with no deliverable.
+        Assert.DoesNotContain("5.0", built);
+
+        // And the marker does not un-land a checkpoint that an entry beside it recorded, which is
+        // the direction that would have rewritten the record's own history.
+        Assert.Contains("4.18", built);
+        Assert.Contains("4.13", built);
+        Assert.Single(built, c => c == "4.13");
+    }
 }
