@@ -11910,9 +11910,10 @@ Carried:    **The source-scan assertions nothing exercises, repointed from 4.17 
 Measured:   **`tools/ci.ps1` green at 31 steps and 889 tests**, from 30 steps and 883 at 4.12. The
             step is `changelog-reconciles`.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of scope, 0
+            unexamined, coverage examined 8,017, 1,451 expectations, read against the commit that
+            produced them with the tree clean. Coverage rose by 487 from 4.12, almost all of it the
+            new check's 424 and the second directions the three checks gained.
 
             **`changelog-reconciles` reads 186 commits, of which 124 replaced a line in a spec and
             114 recorded prior text.** The ten exempt are the difference. The floors are set at
