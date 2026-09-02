@@ -7,6 +7,7 @@ using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Core.Measurement;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Worker.Vendor;
@@ -46,9 +47,17 @@ public sealed class PinnedConstantsCheck
         var defaults = new PullbackStrategyLabOptions();
         var pins = new List<Pin>();
 
+        // Every read of the authored-parameters table goes through this, which records the row it
+        // read, so the set of pinned rows is derived from the pins that were made rather than kept
+        // in a second list. The second list existed until 4.18 and was seven rows stale: the caps
+        // pinned at 4.6, the borrow rate, the horizons and the selection sample were all pinned and
+        // still counted as unpinned, so the out-of-scope figure read 30 where the rows with no
+        // constant were 23. A list beside the thing it counts is a count somebody has to remember.
+        var table = new AuthoredParameters(architecture);
+
         // The daily call ceiling, stated in four places and held in one.
         pins.Add(Pin.Number("ARCHITECTURE.html, authored parameters, Daily API ceiling",
-            ParameterNumber(architecture, "Daily API ceiling"), defaults.DailyCallCeiling, "PullbackStrategyLabOptions.DailyCallCeiling"));
+            table.Number("Daily API ceiling"), defaults.DailyCallCeiling, "PullbackStrategyLabOptions.DailyCallCeiling"));
         pins.Add(Pin.Text("ARCHITECTURE.html, data budget, the hard ceiling",
             architecture.Contains("Hard ceiling of 5,000 calls a day", StringComparison.Ordinal),
             defaults.DailyCallCeiling == 5000, "the stated ceiling against the configured default"));
@@ -96,9 +105,9 @@ public sealed class PinnedConstantsCheck
 
         // The universe floors, stated in the authored parameters table and held in configuration.
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Price floor",
-            ParameterMoney(architecture, "Price floor"), defaults.Universe.PriceFloor, "UniverseOptions.PriceFloor"));
+            table.Money("Price floor"), defaults.Universe.PriceFloor, "UniverseOptions.PriceFloor"));
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, long",
-            ParameterMoney(architecture, "Liquidity floor, long"), defaults.Universe.LiquidityFloorLong, "UniverseOptions.LiquidityFloorLong"));
+            table.Money("Liquidity floor, long"), defaults.Universe.LiquidityFloorLong, "UniverseOptions.LiquidityFloorLong"));
 
         // The three bulk request costs, stated in the data budget and held in the vendor client.
         // The budget is only meaningful if the cost a stage charges is the cost the table was
@@ -202,13 +211,13 @@ public sealed class PinnedConstantsCheck
         // constant. Both are $5 and both are stated by that one row, and the two drifting apart
         // would mean the screen admits a name the detector will not trade or the reverse.
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Price floor, the detectors' side",
-            ParameterMoney(architecture, "Price floor, both sides"), LongPullbackRules.PriceFloor,
+            table.Money("Price floor, both sides"), LongPullbackRules.PriceFloor,
             "LongPullbackRules.PriceFloor"));
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Liquidity floor, short",
-            ParameterMoney(architecture, "Liquidity floor, short"), ShortPullbackRules.LiquidityFloor,
+            table.Money("Liquidity floor, short"), ShortPullbackRules.LiquidityFloor,
             "ShortPullbackRules.LiquidityFloor"));
         pins.Add(Pin.Money("ARCHITECTURE.html, authored parameters, Market cap floor, short",
-            ParameterMoney(architecture, "Market cap floor, short"), ShortPullbackRules.MarketCapFloor,
+            table.Money("Market cap floor, short"), ShortPullbackRules.MarketCapFloor,
             "ShortPullbackRules.MarketCapFloor"));
         // The six limits, stated in two tables of ARCHITECTURE and held nowhere until 4.6. "The
         // limits" states them in plain terms and the authored-parameters table states them again with
@@ -220,20 +229,20 @@ public sealed class PinnedConstantsCheck
             PositionSizing.RiskPerTrade == 0.0075m && PositionSizing.RiskBudget == 750m,
             "PositionSizing.RiskPerTrade and RiskBudget"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Risk per trade",
-            ParameterCell(architecture, "Risk per trade").Contains("0.75% of equity", StringComparison.Ordinal),
+            table.Cell("Risk per trade").Contains("0.75% of equity", StringComparison.Ordinal),
             PositionSizing.RiskPerTrade == 0.0075m, "PositionSizing.RiskPerTrade"));
         pins.Add(Pin.Text("ARCHITECTURE.html, the limits, give-up distance",
             LimitCell(architecture, "Give-up distance").Contains("At most half the daily range", StringComparison.Ordinal),
             RiskCaps.GiveUpDistanceRanges == 0.5m && LongPullbackRules.GiveUpRanges == RiskCaps.GiveUpDistanceRanges,
             "RiskCaps.GiveUpDistanceRanges against the detector's own GiveUpRanges"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Give-up distance cap",
-            ParameterCell(architecture, "Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
+            table.Cell("Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
             RiskCaps.GiveUpDistanceRanges == 0.5m, "RiskCaps.GiveUpDistanceRanges"));
         pins.Add(Pin.Text("ARCHITECTURE.html, the limits, position size",
             LimitCell(architecture, "Position size").Contains("At most 35% of the account", StringComparison.Ordinal),
             RiskCaps.MaxPositionFraction == 0.35m, "RiskCaps.MaxPositionFraction"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Position cap",
-            ParameterCell(architecture, "Position cap").Contains("35% of equity", StringComparison.Ordinal),
+            table.Cell("Position cap").Contains("35% of equity", StringComparison.Ordinal),
             RiskCaps.MaxPositionFraction == 0.35m, "RiskCaps.MaxPositionFraction"));
         pins.Add(Pin.Text("ARCHITECTURE.html, the limits, open at once",
             LimitCell(architecture, "Open at once").Contains("4 positions", StringComparison.Ordinal),
@@ -243,14 +252,14 @@ public sealed class PinnedConstantsCheck
             RiskCaps.MaxOpenShortPositions == 2 && RiskCaps.MaxOpenPositions == 4,
             "RiskCaps.MaxOpenShortPositions inside MaxOpenPositions"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Concurrent positions",
-            ParameterCell(architecture, "Concurrent positions").Contains("4, of which at most 2 short", StringComparison.Ordinal),
+            table.Cell("Concurrent positions").Contains("4, of which at most 2 short", StringComparison.Ordinal),
             RiskCaps.MaxOpenPositions == 4 && RiskCaps.MaxOpenShortPositions == 2,
             "RiskCaps.MaxOpenPositions and MaxOpenShortPositions"));
         pins.Add(Pin.Text("ARCHITECTURE.html, the limits, total risk at stake",
             LimitCell(architecture, "Total risk at stake").Contains("3% of the account", StringComparison.Ordinal),
             RiskCaps.MaxTotalRiskFraction == 0.03m, "RiskCaps.MaxTotalRiskFraction"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Total risk at stake",
-            ParameterCell(architecture, "Total risk at stake").Contains("3% of equity", StringComparison.Ordinal),
+            table.Cell("Total risk at stake").Contains("3% of equity", StringComparison.Ordinal),
             RiskCaps.MaxTotalRiskFraction == 0.03m, "RiskCaps.MaxTotalRiskFraction"));
 
         // The borrow rate, stated in the short-checks prose and again in the authored parameters, and
@@ -260,30 +269,30 @@ public sealed class PinnedConstantsCheck
             architecture.Contains("a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar", StringComparison.Ordinal),
             BorrowAssumption.AnnualisedRate == 0.010m, "BorrowAssumption.AnnualisedRate"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Assumed borrow cost",
-            ParameterCell(architecture, "Assumed borrow cost").Contains("1.0% annualised, per calendar day held", StringComparison.Ordinal),
+            table.Cell("Assumed borrow cost").Contains("1.0% annualised, per calendar day held", StringComparison.Ordinal),
             BorrowAssumption.AnnualisedRate == 0.010m, "BorrowAssumption.AnnualisedRate"));
 
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Listing age floor, short",
-            ParameterCell(architecture, "Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
+            table.Cell("Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
             ShortPullbackRules.MinimumSessionsListed == 90, "ShortPullbackRules.MinimumSessionsListed"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Daily range floor",
-            ParameterCell(architecture, "Daily range floor").Contains("5%", StringComparison.Ordinal),
+            table.Cell("Daily range floor").Contains("5%", StringComparison.Ordinal),
             LongPullbackRules.DailyRangeFloor == 0.05m, "LongPullbackRules.DailyRangeFloor"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Pullback shape",
-            ParameterCell(architecture, "Pullback shape").Contains("2 to 7 bars, retrace at most 40%", StringComparison.Ordinal),
+            table.Cell("Pullback shape").Contains("2 to 7 bars, retrace at most 40%", StringComparison.Ordinal),
             LongPullbackRules.MinimumPullbackBars == 2
                 && LongPullbackRules.MaximumPullbackBars == 7
                 && LongPullbackRules.MaximumRetrace == 0.40m,
             "LongPullbackRules.MinimumPullbackBars, MaximumPullbackBars and MaximumRetrace"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger reachability",
-            ParameterCell(architecture, "Trigger reachability").Contains("Within 1.5 daily ranges", StringComparison.Ordinal),
+            table.Cell("Trigger reachability").Contains("Within 1.5 daily ranges", StringComparison.Ordinal),
             LongPullbackRules.TriggerReachRanges == 1.5m, "LongPullbackRules.TriggerReachRanges"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Give-up distance cap",
-            ParameterCell(architecture, "Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
+            table.Cell("Give-up distance cap").Contains("0.5 daily ranges", StringComparison.Ordinal),
             LongPullbackRules.GiveUpRanges == 0.5m && ShortPullbackRules.GiveUpRanges == 0.5m,
             "LongPullbackRules.GiveUpRanges and ShortPullbackRules.GiveUpRanges"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Cluster threshold",
-            ParameterCell(architecture, "Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
+            table.Cell("Cluster threshold").Contains("2 names, same industry", StringComparison.Ordinal),
             LongPullbackRules.ClusterThreshold == 2, "LongPullbackRules.ClusterThreshold"));
         // Not a number, and pinned for the same reason the numbers are. Two rows of BUILD_PLAN say
         // where the short side's twenty sessions start and point at the function that reads it off a
@@ -314,22 +323,22 @@ public sealed class PinnedConstantsCheck
                 .Count() == 4,
             "ShortPullbackRules.ClauseSetOf"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Squeeze test",
-            ParameterCell(architecture, "Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
+            table.Cell("Squeeze test").Contains("21-to-50-day gap against its own 20-session average", StringComparison.Ordinal),
             ShortPullbackRules.SqueezeWindowSessions == 20 && AverageGap.Window == 20,
             "ShortPullbackRules.SqueezeWindowSessions and AverageGap.Window"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Contraction test",
-            ParameterCell(architecture, "Contraction test").Contains("Against the 20-day average range", StringComparison.Ordinal),
+            table.Cell("Contraction test").Contains("Against the 20-day average range", StringComparison.Ordinal),
             IndicatorEngine.RangeWindow == 20, "IndicatorEngine.RangeWindow"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Scan breadth",
-            ParameterCell(architecture, "Scan breadth").Contains("Top 50 per scan", StringComparison.Ordinal),
+            table.Cell("Scan breadth").Contains("Top 50 per scan", StringComparison.Ordinal),
             ScanEngine.Breadth == 50, "ScanEngine.Breadth"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Nightly setup cap",
-            ParameterCell(architecture, "Nightly setup cap")
+            table.Cell("Nightly setup cap")
                 .Contains("60, split 40 long and 20 short", StringComparison.Ordinal),
             NightlyCap.Total == 60 && NightlyCap.LongAllocation == 40 && NightlyCap.ShortAllocation == 20,
             "NightlyCap.Total, LongAllocation and ShortAllocation"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Month-mover lookback",
-            ParameterCell(architecture, "Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
+            table.Cell("Month-mover lookback").Contains("20 sessions", StringComparison.Ordinal),
             ScanEngine.MonthWindow == 20, "ScanEngine.MonthWindow"));
 
         // The three numbers the 3.0 spec pass authored. Each is stated in a decision, so each is
@@ -350,7 +359,7 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.BootstrapDraws == 10_000, "MeasurementParameters.BootstrapDraws"));
 
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Forward horizons",
-            ParameterCell(architecture, "Forward horizons").Contains("10", StringComparison.Ordinal),
+            table.Cell("Forward horizons").Contains("10", StringComparison.Ordinal),
             MeasurementParameters.ScoringHorizonSessions == 10,
             "MeasurementParameters.ScoringHorizonSessions"));
 
@@ -358,7 +367,7 @@ public sealed class PinnedConstantsCheck
         // state it, because the figure it replaced lived in three places and read as derived in all
         // of them while nothing had measured the one input that is a fact.
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Selection variant sample",
-            ParameterCell(architecture, "Selection variant sample")
+            table.Cell("Selection variant sample")
                 .Contains("262 effective paired setup observations", StringComparison.Ordinal),
             MeasurementParameters.MinimumEffectiveObservations == 262,
             "MeasurementParameters.MinimumEffectiveObservations"));
@@ -398,6 +407,86 @@ public sealed class PinnedConstantsCheck
             MinimumSample.Of(0.099811d) == MeasurementParameters.MinimumEffectiveObservations,
             "the dispersion DECISIONS states, put through MinimumSample.Of"));
 
+        // The trading rows 4.15 answered and 4.4, 4.7, 4.8, 4.10 and 4.16 built. Every one of them
+        // was pinned by nothing until 4.18: 4.15's row listed the mapping of each row to the checkpoint
+        // that builds its component as a deliverable, its entry never mentioned it, and the rows sat
+        // under a priced exemption with every component landed. Three of them are pinned a second
+        // time by architecture-conformance's management-table and loss-table claims, which read the
+        // cells of those tables; these read the authored-parameters row, so the two statements of one
+        // number cannot part.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Starting equity",
+            table.Cell("Starting equity").Contains("$100,000 notional, fixed", StringComparison.Ordinal),
+            PositionSizing.NotionalEquity == 100_000m, "PositionSizing.NotionalEquity"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Long exit, trailing average",
+            table.Cell("Long exit, trailing average").Contains("A daily close below the 9-day average, filling at the next open. Active from entry", StringComparison.Ordinal),
+            IndicatorEngine.EmaShortPeriod == 9
+                && LongExitRules.TrailArmedBy(adjustedClose: 99m, nineDayAverage: 100m)
+                && !LongExitRules.TrailArmedBy(adjustedClose: 100m, nineDayAverage: 100m),
+            "IndicatorEngine.EmaShortPeriod and LongExitRules.TrailArmedBy, strictly below"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Short exit, trim fraction",
+            table.Cell("Short exit, trim fraction").Contains("15% of the planned position, once, at 3R", StringComparison.Ordinal),
+            ShortExitRules.TrimFraction == 0.15m
+                && ShortExitRules.TrimAt == 3m
+                && ShortExitRules.TrimShares(plannedShares: 150, heldShares: 150) == 22,
+            "ShortExitRules.TrimFraction, TrimAt and TrimShares of the planned count"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Short exit, the hourly grid",
+            table.Cell("Short exit, the hourly grid").Contains("Six complete hourly bars, and the closing remainder is not one", StringComparison.Ordinal),
+            HourlyGrid.CompleteBars == 6
+                && HourlyGrid.HasStub
+                && HourlyGrid.StubOpen is TimeOnly stub
+                && !HourlyGrid.IsHourlyClose(stub)
+                && HourlyGrid.Opens[0] == SessionBoundaries.RegularSessionOpen,
+            "HourlyGrid.CompleteBars, StubOpen and IsHourlyClose, anchored to the session open"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Entry slippage",
+            table.Cell("Entry slippage").Contains("The whole captured spread, the wrong way, both sides", StringComparison.Ordinal),
+            FillModel.Entry(SetupDirection.Long, 100m, openedThrough: null, spreadBasisPoints: 100d).Price == 101m
+                && FillModel.Entry(SetupDirection.Short, 100m, openedThrough: null, spreadBasisPoints: 100d).Price == 99m,
+            "FillModel.Entry, charging the whole spread against the order on both sides"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Exit slippage",
+            table.Cell("Exit slippage").Contains("the whole captured spread, both directions, trail and give-up alike", StringComparison.Ordinal),
+            FillModel.Exit(SetupDirection.Long, 100m, openedThrough: null, spreadBasisPoints: 100d).Price == 99m
+                && FillModel.Exit(SetupDirection.Short, 100m, openedThrough: null, spreadBasisPoints: 100d).Price == 101m,
+            "FillModel.Exit, charging the whole spread against the order on both sides"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Gap-through fill price",
+            table.Cell("Gap-through fill price").Contains("The open of the minute bar the order would otherwise have filled in. Not slipped again", StringComparison.Ordinal),
+            FillModel.Exit(SetupDirection.Long, 95m, openedThrough: 88m, spreadBasisPoints: 100d) is { Price: 88m, Slippage: 0m, Basis: FillModel.Gapped }
+                && FillModel.OpenedThrough(SetupDirection.Long, isExit: true, restingPrice: 95m, open: 88m)
+                && !FillModel.OpenedThrough(SetupDirection.Long, isExit: true, restingPrice: 95m, open: 96m),
+            "FillModel.Exit at the open with no slippage, and OpenedThrough on the adverse side only"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger confirmation",
+            table.Cell("Trigger confirmation").Contains("Touched. A minute bar's high reaching it long, its low short. No margin", StringComparison.Ordinal),
+            TriggerTouch.Reached(SetupDirection.Long, triggerPrice: 100m, high: 100m, low: 99m)
+                && !TriggerTouch.Reached(SetupDirection.Long, triggerPrice: 100m, high: 99.99m, low: 99m)
+                && TriggerTouch.Reached(SetupDirection.Short, triggerPrice: 100m, high: 101m, low: 100m)
+                && !TriggerTouch.Reached(SetupDirection.Short, triggerPrice: 100m, high: 101m, low: 100.01m),
+            "TriggerTouch.Reached, at the touch and not one cent short of it"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Loss cause boundary",
+            table.Cell("Loss cause boundary, noise against failed setup").Contains("+1R on the direction-signed ten-day return from the trigger", StringComparison.Ordinal),
+            LossCause.AftermathOf(signedReturn: 0.05m, oneRInReturn: 0.05m) == LossAftermath.Noise
+                && LossCause.AftermathOf(signedReturn: 0.0499m, oneRInReturn: 0.05m) == LossAftermath.FailedSetup
+                && LossCause.OneRInReturn(giveUpDistance: 5m, triggerPrice: 100m) == 0.05m
+                && LossClassifier.HorizonDays == 10,
+            "LossCause.AftermathOf at one R, OneRInReturn over the trigger, and LossClassifier.HorizonDays"));
+        // The order prices, which this table stated from 4.15 and nothing read until 4.18: PlanBuilder
+        // copied the screening pair into the plan and the row rested under a priced exemption. Pinned
+        // against the derivation, both sides, with the offset the row states.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger and stop derivation",
+            table.Cell("Trigger and stop derivation").Contains("regular-hours extremes, read off its daily bar, with the give-up point 0.1 ADR beyond its extreme, both sides", StringComparison.Ordinal),
+            OrderPrices.GiveUpOffsetInRanges == 0.1m
+                && OrderPrices.For(SetupDirection.Long, 104m, 101m, 5m) is { Trigger: 104m, GiveUp: 100.5m }
+                && OrderPrices.For(SetupDirection.Short, 52m, 49m, 2.5m) is { Trigger: 49m, GiveUp: 52.25m },
+            "OrderPrices.GiveUpOffsetInRanges and OrderPrices.For on both sides"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Lateness bound",
+            table.Cell("Lateness bound").Contains("24 hours", StringComparison.Ordinal),
+            MeasurementParameters.LatenessBoundHours == 24, "MeasurementParameters.LatenessBoundHours"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Regime label",
+            table.Cell("Regime label").Contains("risk-on at +2, risk-off at minus 2, mixed otherwise", StringComparison.Ordinal),
+            MarketMood.LabelFor(1, 1) == MarketMood.RiskOn
+                && MarketMood.LabelFor(-1, -1) == MarketMood.RiskOff
+                && MarketMood.LabelFor(1, 0) == MarketMood.Mixed
+                && MarketMood.LabelFor(-1, 0) == MarketMood.Mixed,
+            "MarketMood.LabelFor at the two sums and between them"));
+
         IReadOnlyList<IReadOnlyList<string>> parameters = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
 
         foreach (Pin pin in pins)
@@ -414,24 +503,38 @@ public sealed class PinnedConstantsCheck
                 "the test opens a connection and asks it what each pragma is set to, which is the only thing "
                 + "that distinguishes a statement issued from a statement present in the file"));
 
-        // Named so the number moves when a parameter gains a constant, rather than being a
-        // literal somebody has to remember to decrement.
-        string[] pinnedParameters =
-        [
-            "Daily API ceiling", "Price floor", "Liquidity floor, long",
-            "Liquidity floor, short", "Market cap floor, short",
-            "Listing age floor, short", "Daily range floor", "Pullback shape", "Trigger reachability",
-            "Give-up distance cap", "Cluster threshold", "Squeeze test", "Contraction test",
-            "Scan breadth", "Month-mover lookback", "Nightly setup cap",
-        ];
-        coverage.OutOfScope(
-            "rows of the authored parameters table with no code constant yet",
-            parameters.Count - pinnedParameters.Length,
-            CheckCoverage.OutOfScopeReason.UntilDecided(
-                "mapping each authored parameter to the checkpoint that builds the component it governs",
-                "each closes when its component is built, and which checkpoint that is has never been derived. The "
-                + "mapping is by parameter name rather than by component name, which is why Schedule cannot resolve "
-                + "it the way it resolves a catalogue row"));
+        // Every row of the table is pinned, deferred to the checkpoint that builds the component it
+        // governs, or exempted by name with the reason no constant can carry it. Nothing else is
+        // admitted: a row in none of the three fails, and a row deferred to a checkpoint that has
+        // landed fails, which is the mapping 4.15's row listed as a deliverable and 4.18 built. The
+        // set of pinned rows is derived from the pins above, so a pin added or removed moves this
+        // rather than a list beside it.
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+        string[] rows = [.. parameters.Select(r => HtmlTable.Text(r[0]).Trim())];
+
+        coverage.Examined("rows of the authored parameters table placed as pinned, deferred or exempt", rows.Length);
+
+        (IReadOnlyList<Placement> placements, IReadOnlyList<string> problems) = Place(
+            rows, table.WasPinned, RowsDeferredToACheckpoint, RowsNoConstantCanCarry, schedule.HasLanded);
+
+        foreach (Placement placement in placements)
+        {
+            if (placement.Checkpoint is string checkpoint)
+            {
+                coverage.OutOfScope(
+                    $"authored parameter \"{placement.Row}\", whose component {placement.Component} arrives at {checkpoint}", 1,
+                    CheckCoverage.OutOfScopeReason.UntilCheckpoint(checkpoint,
+                        "the row states a value the component built at that checkpoint will hold, and nothing holds it yet"));
+            }
+            else if (placement.Why is string why)
+            {
+                coverage.OutOfScope($"authored parameter \"{placement.Row}\", exempt by name", 1,
+                    CheckCoverage.OutOfScopeReason.ByDesign(why));
+            }
+        }
+
+        Assert.True(problems.Count == 0,
+            $"{problems.Count} row(s) of the authored-parameters table rest on nothing:\n  " + string.Join("\n  ", problems));
 
         IReadOnlyList<IReadOnlyList<string>> budget = HtmlTable.BodyRowsUnder(architecture, "Data budget");
         string[] pinnedBudgetRows =
@@ -455,29 +558,6 @@ public sealed class PinnedConstantsCheck
         Assert.True(parameters.Count >= 25,
             $"Only {parameters.Count} authored parameters were parsed. The table held more than that before any code "
             + "existed, so a number this low means the parser stopped matching.");
-    }
-
-    /// <summary>
-    /// A money value as the table writes it: a dollar sign, digits, and an optional M or B.
-    /// Parsed rather than matched as a string, so a table that says $20M and a constant that
-    /// says 20,000,000 can be compared at all.
-    /// </summary>
-    private static decimal ParameterMoney(string architecture, string parameter)
-    {
-        string value = ParameterCell(architecture, parameter);
-        Match match = Regex.Match(value, @"\$(?<n>[\d,.]+)\s*(?<scale>[MB])?", RegexOptions.CultureInvariant);
-        Assert.True(match.Success, $"No money value in {value}.");
-
-        decimal number = decimal.Parse(
-            match.Groups["n"].Value.Replace(",", string.Empty, StringComparison.Ordinal),
-            CultureInfo.InvariantCulture);
-
-        return match.Groups["scale"].Value switch
-        {
-            "M" => number * 1_000_000m,
-            "B" => number * 1_000_000_000m,
-            _ => number,
-        };
     }
 
     /// <summary>
@@ -512,19 +592,6 @@ public sealed class PinnedConstantsCheck
         HtmlTable.BodyRowsUnder(architecture, "The limits")
             .Single(r => r[0].StartsWith(limit, StringComparison.Ordinal))[1];
 
-    private static string ParameterCell(string architecture, string parameter) =>
-        HtmlTable.BodyRowsUnder(architecture, "Authored parameters")
-            .Single(r => r[0].StartsWith(parameter, StringComparison.Ordinal))[1];
-
-    private static int ParameterNumber(string architecture, string parameter)
-    {
-        string value = HtmlTable.BodyRowsUnder(architecture, "Authored parameters")
-            .Single(r => r[0].StartsWith(parameter, StringComparison.Ordinal))[1];
-        return int.Parse(
-            new string(value.TakeWhile(c => char.IsDigit(c) || c == ',').ToArray()).Replace(",", string.Empty, StringComparison.Ordinal),
-            CultureInfo.InvariantCulture);
-    }
-
     private static string PragmaCell(string schema, string pragma) =>
         MarkdownTable.BodyRowsAfter(schema, "## Store configuration")
             .Single(r => r[0].Contains(pragma, StringComparison.Ordinal))[1];
@@ -549,6 +616,195 @@ public sealed class PinnedConstantsCheck
         }
 
         return count;
+    }
+
+    /// <summary>Where one row of the authored-parameters table rests: on a pin, on a checkpoint, or on a stated reason.</summary>
+    public sealed record Placement(string Row, string? Checkpoint, string? Component, string? Why)
+    {
+        public bool IsPinned => Checkpoint is null && Why is null;
+    }
+
+    /// <summary>
+    /// Every row placed as pinned, deferred or exempt, and every row that is none of the three or
+    /// is deferred to a checkpoint that has landed.
+    ///
+    /// Pure, and separated from the run so it can be proved against rows written by hand: the live
+    /// table exercises the pinned, deferred and exempt dispositions and none of the failing ones,
+    /// which is the population a guard's proof has to state rather than accept.
+    /// </summary>
+    public static (IReadOnlyList<Placement> Placed, IReadOnlyList<string> Problems) Place(
+        IReadOnlyList<string> rows,
+        Func<string, bool> wasPinned,
+        IReadOnlyList<(string Row, string Checkpoint, string Component)> deferred,
+        IReadOnlyList<(string Row, string Why)> exempt,
+        Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        ArgumentNullException.ThrowIfNull(wasPinned);
+        ArgumentNullException.ThrowIfNull(deferred);
+        ArgumentNullException.ThrowIfNull(exempt);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        string[] pinnedRows = [.. rows.Where(wasPinned)];
+        string[] unpinnedRows = [.. rows.Where(r => !wasPinned(r))];
+
+        var placed = new List<Placement>(pinnedRows.Select(r => new Placement(r, null, null, null)));
+        var claimed = new HashSet<string>(StringComparer.Ordinal);
+        var problems = new List<string>();
+
+        foreach ((string row, string checkpoint, string component) in deferred)
+        {
+            string? match = unpinnedRows.SingleOrDefault(r => r.StartsWith(row, StringComparison.Ordinal));
+
+            if (match is null)
+            {
+                problems.Add(pinnedRows.Any(r => r.StartsWith(row, StringComparison.Ordinal))
+                    ? $"\"{row}\" is pinned and still deferred to {checkpoint}. Remove the deferral: a row that has "
+                        + "its constant is not waiting for anything."
+                    : $"\"{row}\" is deferred to {checkpoint} and is not a row of the authored-parameters table.");
+                continue;
+            }
+
+            claimed.Add(match);
+
+            if (hasLanded(checkpoint))
+            {
+                problems.Add(
+                    $"\"{match}\" is deferred to {checkpoint}, which PROGRESS records as landed, and no pin reads it. "
+                    + $"{component} exists now, so the row is pinned against it or the deferral is wrong.");
+                continue;
+            }
+
+            placed.Add(new Placement(match, checkpoint, component, null));
+        }
+
+        foreach ((string row, string why) in exempt)
+        {
+            string? match = unpinnedRows.SingleOrDefault(r => r.StartsWith(row, StringComparison.Ordinal));
+
+            if (match is null)
+            {
+                problems.Add($"\"{row}\" is exempted by name and is not an unpinned row of the authored-parameters table.");
+                continue;
+            }
+
+            claimed.Add(match);
+            placed.Add(new Placement(match, null, null, why));
+        }
+
+        foreach (string row in unpinnedRows.Where(r => !claimed.Contains(r)))
+        {
+            problems.Add(
+                $"\"{row}\" is a row of the authored-parameters table that no pin reads, no checkpoint is named for, "
+                + "and no exemption names. Pin it, defer it to the checkpoint that builds its component, or say why "
+                + "no constant can carry it.");
+        }
+
+        return (placed, problems);
+    }
+
+    /// <summary>
+    /// The rows whose component has not been built, each mapped to the checkpoint whose deliverable
+    /// builds it, which is the mapping 4.15 listed and 4.18 derived.
+    ///
+    /// By row name rather than by component name, because a row names a value and not the type that
+    /// holds it, which is why <c>Schedule.CheckpointFor</c> cannot resolve it the way it resolves a
+    /// catalogue row. The checkpoint has to be one BUILD_PLAN has and PROGRESS does not yet record,
+    /// on the rule every deferral obeys, so a component landing without its row being pinned turns
+    /// this check red rather than leaving the row resting.
+    /// </summary>
+    public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
+    [
+        ("Accounts", "5.1", "VariantAdmitter, which registers a version and the account it trades"),
+        ("Execution variant sample", "5.1", "VariantAdmitter, which writes the pre-registered minimum"),
+        ("Holdout windows", "5.4", "HoldoutRegistry"),
+        ("Twin-pair threshold", "6.3", "TwinPairFinder"),
+        ("Signal correlation limit", "6.2", "SignalAdmissionTest"),
+        ("Researcher model", "6.5", "ResearcherSeat"),
+        ("Researcher cadence", "6.5", "ResearcherSeat"),
+    ];
+
+    /// <summary>
+    /// The rows that state no number and no threshold, each with the reason no constant can carry
+    /// it and where the property it states is held instead.
+    ///
+    /// Exempt by name rather than by shape, so a row added later that states a rule in words has to
+    /// be placed here on purpose, and the count of these is reported apart so it is seen growing.
+    /// </summary>
+    public static IReadOnlyList<(string Row, string Why)> RowsNoConstantCanCarry { get; } =
+    [
+        ("Short exit, trim into support",
+            "it records that a clause was dropped from the baseline rather than a value, so there is no constant to "
+            + "read; a scan for a support level finding nothing would be the vacuous pass, and the drop is recorded as a "
+            + "decision so the next reader finds a choice rather than an omission"),
+        ("Long exit, the other side of the comparison",
+            "it states which of two rules ends a long, in words and not as a number; architecture-conformance's "
+            + "management-table claim asserts the same sentence against ExitReason.First and the two rule types"),
+        ("When the trail takes over from the fixed stop",
+            "it states that no handover exists, which is the absence of a threshold rather than one; the same "
+            + "management-table claim asserts that both rules are live from the entry and that a tie resolves as a give-up"),
+        ("Screen and cap ranking",
+            "it states an ordering and a tiebreak rather than a number; SetupCapper's tests hold the ordering over "
+            + "authored rows, and a scan of the sentence against the code would compare prose with prose"),
+    ];
+
+    /// <summary>
+    /// The authored-parameters table, read through one place that remembers which rows were read.
+    ///
+    /// A pin is made by reading a row's value cell, so the rows read are the rows pinned, and that
+    /// set is what the placement below derives from rather than a list kept beside it.
+    /// </summary>
+    private sealed class AuthoredParameters
+    {
+        private readonly IReadOnlyList<IReadOnlyList<string>> _rows;
+        private readonly HashSet<string> _read = new(StringComparer.Ordinal);
+
+        public AuthoredParameters(string architecture)
+        {
+            _rows = HtmlTable.BodyRowsUnder(architecture, "Authored parameters");
+        }
+
+        /// <summary>The value cell of the row whose name starts with <paramref name="parameter"/>.</summary>
+        public string Cell(string parameter)
+        {
+            _read.Add(parameter);
+            return _rows.Single(r => r[0].StartsWith(parameter, StringComparison.Ordinal))[1];
+        }
+
+        /// <summary>
+        /// A money value as the table writes it: a dollar sign, digits, and an optional M or B.
+        /// Parsed rather than matched as a string, so a table that says $20M and a constant that
+        /// says 20,000,000 can be compared at all.
+        /// </summary>
+        public decimal Money(string parameter)
+        {
+            string value = Cell(parameter);
+            Match match = Regex.Match(value, @"\$(?<n>[\d,.]+)\s*(?<scale>[MB])?", RegexOptions.CultureInvariant);
+            Assert.True(match.Success, $"No money value in {value}.");
+
+            decimal number = decimal.Parse(
+                match.Groups["n"].Value.Replace(",", string.Empty, StringComparison.Ordinal),
+                CultureInfo.InvariantCulture);
+
+            return match.Groups["scale"].Value switch
+            {
+                "M" => number * 1_000_000m,
+                "B" => number * 1_000_000_000m,
+                _ => number,
+            };
+        }
+
+        public int Number(string parameter)
+        {
+            string value = Cell(parameter);
+            return int.Parse(
+                new string(value.TakeWhile(c => char.IsDigit(c) || c == ',').ToArray()).Replace(",", string.Empty, StringComparison.Ordinal),
+                CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>Whether a pin read this row, by the same prefix rule the reads use.</summary>
+        public bool WasPinned(string row) =>
+            _read.Any(read => row.StartsWith(read, StringComparison.Ordinal));
     }
 
     private sealed record Pin(string What, bool Holds, string Detail)

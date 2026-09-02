@@ -17,7 +17,7 @@ namespace PullbackStrategyLab.Tests;
 /// <b>Every figure here is over an authored population and that is stated once.</b> The funnel passes
 /// a median of nought candidates a night on both sides, so no captured night holds a loss. The
 /// positions below are opened and closed by the stages that own those operations rather than
-/// inserted, and the forward returns are written as ForwardReturnFiller would, so what is asserted
+/// inserted, and the daily bars the aftermath is read from are authored, so what is asserted
 /// is a property of the pipeline rather than of a fixture.
 /// see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
 /// </summary>
@@ -172,10 +172,17 @@ public sealed class LossClassifierTests : IDisposable
     }
 
     // ---- the second pass -----------------------------------------------------------------------
+    //
+    // Every case below is over the population the decision names: the return from the trigger
+    // price, over the ten sessions after the session the trigger was touched in, on the adjusted
+    // basis. Until 4.18 the classifier read `forward_return.return_signed`, which is measured from
+    // the setup session's close over the ten sessions after the setup, and the tests here wrote
+    // that row by hand, so they exercised a comparison over two populations and could not see it.
+    // The cases now author the daily bars and let the stage measure.
 
     /// <summary>
-    /// A ten-session return that reached one unit of risk makes the stop-out noise, which points at
-    /// execution rather than at the filter.
+    /// A ten-session return from the trigger that reached one unit of risk makes the stop-out noise,
+    /// which points at execution rather than at the filter.
     /// </summary>
     [Fact]
     public void A_return_that_reached_one_r_makes_the_stop_out_noise()
@@ -183,19 +190,20 @@ public sealed class LossClassifierTests : IDisposable
         StopOut("AAPL", SetupDirection.Long);
         Classifier().Classify(Session);
 
-        ForwardReturn("AAPL", SetupDirection.Long, signed: 0.08m, filledOn: Later);
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 108m);
 
-        LossRunResult result = Classifier(Later).Classify(Later);
+        LossRunResult result = Classifier(tenth).Classify(tenth);
 
         Assert.Equal(1, result.AftermathsWritten);
         Assert.Equal(1, result.Noise);
         Assert.Equal(0, result.FailedSetup);
         Assert.Equal(0, result.AwaitingAftermath);
 
-        StoredLossClass row = Losses(Session, asOf: Later).Single();
+        StoredLossClass row = Losses(Session, asOf: tenth).Single();
         Assert.Equal(LossAftermath.Noise, row.Aftermath);
         Assert.Equal(0.08m, row.ForwardReturnSigned);
         Assert.Equal(0.05m, row.OneRInReturn);
+        Assert.Contains("from the trigger price of 100", row.AftermathBecause, StringComparison.Ordinal);
     }
 
     /// <summary>A follow-up flat or against the trade is a failed setup, which points at the filter.</summary>
@@ -205,12 +213,132 @@ public sealed class LossClassifierTests : IDisposable
         StopOut("AAPL", SetupDirection.Long);
         Classifier().Classify(Session);
 
-        ForwardReturn("AAPL", SetupDirection.Long, signed: -0.02m, filledOn: Later);
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 98m);
 
-        LossRunResult result = Classifier(Later).Classify(Later);
+        LossRunResult result = Classifier(tenth).Classify(tenth);
 
         Assert.Equal(1, result.FailedSetup);
-        Assert.Equal(LossAftermath.FailedSetup, Losses(Session, asOf: Later).Single().Aftermath);
+
+        StoredLossClass row = Losses(Session, asOf: tenth).Single();
+        Assert.Equal(LossAftermath.FailedSetup, row.Aftermath);
+        Assert.Equal(-0.02m, row.ForwardReturnSigned);
+    }
+
+    /// <summary>
+    /// The return is from the trigger and not from the setup's close, and the case is the one that
+    /// tells the two apart.
+    ///
+    /// <b>The population the sign-off found the code measuring, stated as the case it fails.</b>
+    /// The setup closed at 90 on its own evening, the trigger was 100 and the give-up point 95, so
+    /// one R is 5%. Ten sessions after the trigger the name closed at 103: 3% from the trigger, which
+    /// is below one R and a failed setup, and 14.4% from the setup's close, which would have been
+    /// noise. A pullback long enters from below by construction, so the gap between the two
+    /// populations is the whole trigger-minus-close distance and it pushes every loss the same way,
+    /// toward the bucket that points away from the filter.
+    /// see: A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list
+    /// </summary>
+    [Fact]
+    public void The_return_is_measured_from_the_trigger_and_not_from_the_setups_close()
+    {
+        StopOut("AAPL", SetupDirection.Long);
+        DailyBar("AAPL", Evening, close: 90m);
+        Classifier().Classify(Session);
+
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 103m);
+
+        LossRunResult result = Classifier(tenth).Classify(tenth);
+
+        Assert.Equal(1, result.FailedSetup);
+        Assert.Equal(0, result.Noise);
+
+        StoredLossClass row = Losses(Session, asOf: tenth).Single();
+        Assert.Equal(LossAftermath.FailedSetup, row.Aftermath);
+        Assert.Equal(0.03m, row.ForwardReturnSigned);
+    }
+
+    /// <summary>
+    /// The window starts at the trigger's session and not at the setup's, so the tenth close read
+    /// is the tenth after the session the trigger was touched in.
+    /// </summary>
+    [Fact]
+    public void The_window_is_the_ten_sessions_after_the_triggers_session()
+    {
+        StopOut("AAPL", SetupDirection.Long);
+        Classifier().Classify(Session);
+
+        // Nine sessions after the trigger's is one short of the horizon, whatever the setup's
+        // evening contributes: the row waits.
+        for (int at = 1; at <= 9; at++)
+        {
+            DailyBar("AAPL", Session.AddDays(at), close: 120m);
+        }
+
+        LossRunResult waiting = Classifier(Session.AddDays(9)).Classify(Session.AddDays(9));
+        Assert.Equal(0, waiting.AftermathsWritten);
+        Assert.Equal(1, waiting.AwaitingAftermath);
+
+        // The tenth closes it, and the figure is the tenth session's close and no earlier one.
+        DailyBar("AAPL", Session.AddDays(10), close: 104m);
+
+        LossRunResult closed = Classifier(Session.AddDays(10)).Classify(Session.AddDays(10));
+        Assert.Equal(1, closed.AftermathsWritten);
+        Assert.Equal(0.04m, Losses(Session, asOf: Session.AddDays(10)).Single().ForwardReturnSigned);
+    }
+
+    /// <summary>
+    /// A short's return is signed the other way, so a close below the trigger is the favourable
+    /// direction and reaches one R from it.
+    /// </summary>
+    [Fact]
+    public void A_shorts_return_is_signed_the_other_way()
+    {
+        Plan("AAPL", SetupDirection.Short, trigger: 100m, giveUp: 105m);
+        Order("AAPL", SetupDirection.Short, shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 100.5m, 101m, 99.5m, 100m);
+        Minute("AAPL", Session, new TimeOnly(11, 0), 101m, 106m, 101m, 105m);
+        Quotes("AAPL", Session);
+        DailyBar("AAPL", Session, close: 105m);
+        RunTheNight(Session);
+        Classifier().Classify(Session);
+
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 94m);
+
+        LossRunResult result = Classifier(tenth).Classify(tenth);
+
+        Assert.Equal(1, result.Noise);
+        Assert.Equal(0.06m, Losses(Session, asOf: tenth).Single().ForwardReturnSigned);
+    }
+
+    /// <summary>
+    /// Both ends are put on the adjusted basis, so a split inside the ten sessions is not a move.
+    ///
+    /// The trigger is a raw price on the trigger session, whose bar carries the factor that puts it
+    /// on the adjusted basis, and the tenth close is read adjusted. A two-for-one split after the
+    /// trigger halves every raw price, and a return read raw would place every such loss as a failed
+    /// setup on a move that never happened.
+    /// </summary>
+    [Fact]
+    public void A_split_inside_the_horizon_is_not_read_as_a_move()
+    {
+        StopOut("AAPL", SetupDirection.Long);
+        Classifier().Classify(Session);
+
+        // The trigger session's bar, restated after the split: a raw close of 95 that is 47.5 on the
+        // adjusted basis, so the factor is one half. The ten sessions after it are already adjusted.
+        DailyBarObserved("AAPL", Session, close: 95m, adjustedClose: 47.5m, observedOn: Session.AddDays(10));
+
+        for (int at = 1; at <= 10; at++)
+        {
+            DailyBar("AAPL", Session.AddDays(at), close: 54m);
+        }
+
+        DateOnly tenth = Session.AddDays(10);
+        LossRunResult result = Classifier(tenth).Classify(tenth);
+
+        // 54 against a trigger of 100 on the adjusted basis, being 50, is +8%: noise, and not the
+        // -46% a raw read would have called a failed setup.
+        Assert.Equal(1, result.Noise);
+        Assert.Equal(0.08m, Losses(Session, asOf: tenth).Single().ForwardReturnSigned);
     }
 
     /// <summary>
@@ -226,39 +354,48 @@ public sealed class LossClassifierTests : IDisposable
         GapOut("AAPL");
         Classifier(NextSession).Classify(NextSession);
 
-        ForwardReturn("AAPL", SetupDirection.Long, signed: 0.30m, filledOn: Later);
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 130m);
 
-        Classifier(Later).Classify(Later);
+        Classifier(tenth).Classify(tenth);
 
-        StoredLossClass row = Losses(NextSession, asOf: Later).Single();
+        StoredLossClass row = Losses(NextSession, asOf: tenth).Single();
         Assert.Equal(LossMechanism.Gap, row.Mechanism);
         Assert.Equal(LossAftermath.Noise, row.Aftermath);
     }
 
     /// <summary>
-    /// A horizon that closed with no forward return is unclassified, which is a real category rather
-    /// than a silent skip, and it is not what a row still waiting looks like.
+    /// A horizon that closed with no close to read it from is unclassified, which is a real category
+    /// rather than a silent skip, and it is not what a row still waiting looks like.
+    ///
+    /// The store can count eleven sessions from the trigger's and still hold no bar for the
+    /// trigger session itself, which is a fetch that missed a day; that is the one shape the count
+    /// closes on and the figure cannot be read for.
     /// see: A loss awaiting its horizon carries no aftermath, and that is not the same as being unclassified
     /// </summary>
     [Fact]
     public void A_closed_horizon_with_no_figure_is_unclassified_and_a_waiting_row_is_not()
     {
-        StopOut("AAPL", SetupDirection.Long);
+        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
+        Order("AAPL", SetupDirection.Long, shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
+        Minute("AAPL", Session, new TimeOnly(11, 0), 99m, 99m, 94m, 95m);
+        Quotes("AAPL", Session);
+        RunTheNight(Session);
         Classifier().Classify(Session);
 
-        // Eleven sessions counted from the setup's own, which is ten having passed, and no forward
-        // return filled for any of them.
-        for (int at = 0; at < 12; at++)
+        // Eleven sessions after the trigger's and none for the trigger session itself.
+        for (int at = 1; at <= 11; at++)
         {
-            DailyBar("AAPL", Evening.AddDays(at), close: 100m);
+            DailyBar("AAPL", Session.AddDays(at), close: 100m);
         }
 
-        LossRunResult closed = Classifier(Evening.AddDays(11)).Classify(Evening.AddDays(11));
+        DateOnly asOf = Session.AddDays(11);
+        LossRunResult closed = Classifier(asOf).Classify(asOf);
 
         Assert.Equal(1, closed.Unclassified);
         Assert.Equal(0, closed.AwaitingAftermath);
 
-        StoredLossClass row = Losses(Session, asOf: Evening.AddDays(11)).Single();
+        StoredLossClass row = Losses(Session, asOf: asOf).Single();
         Assert.Equal(LossAftermath.Unclassified, row.Aftermath);
         Assert.Null(row.ForwardReturnSigned);
         Assert.Equal(LossClassifier.HorizonClosedWithNoFigure, row.AftermathBecause);
@@ -274,17 +411,17 @@ public sealed class LossClassifierTests : IDisposable
         StopOut("AAPL", SetupDirection.Long);
         Classifier().Classify(Session);
 
-        for (int at = 0; at < 5; at++)
+        for (int at = 1; at <= 4; at++)
         {
-            DailyBar("AAPL", Evening.AddDays(at), close: 100m);
+            DailyBar("AAPL", Session.AddDays(at), close: 100m);
         }
 
-        LossRunResult result = Classifier(Evening.AddDays(4)).Classify(Evening.AddDays(4));
+        LossRunResult result = Classifier(Session.AddDays(4)).Classify(Session.AddDays(4));
 
         Assert.Equal(0, result.Unclassified);
         Assert.Equal(0, result.AftermathsWritten);
         Assert.Equal(1, result.AwaitingAftermath);
-        Assert.True(Losses(Session, asOf: Evening.AddDays(4)).Single().AwaitsItsHorizon);
+        Assert.True(Losses(Session, asOf: Session.AddDays(4)).Single().AwaitsItsHorizon);
     }
 
     // ---- point in time, over a table that is updated -------------------------------------------
@@ -301,10 +438,10 @@ public sealed class LossClassifierTests : IDisposable
         StopOut("AAPL", SetupDirection.Long);
         Classifier().Classify(Session);
 
-        ForwardReturn("AAPL", SetupDirection.Long, signed: 0.08m, filledOn: Later);
-        Classifier(Later).Classify(Later);
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 108m);
+        Classifier(tenth).Classify(tenth);
 
-        StoredLossClass afterwards = Losses(Session, asOf: Later).Single();
+        StoredLossClass afterwards = Losses(Session, asOf: tenth).Single();
         Assert.Equal(LossAftermath.Noise, afterwards.Aftermath);
 
         StoredLossClass between = Losses(Session, asOf: NextSession).Single();
@@ -319,7 +456,6 @@ public sealed class LossClassifierTests : IDisposable
     public void A_rerun_writes_nothing_on_either_pass()
     {
         StopOut("AAPL", SetupDirection.Long);
-        ForwardReturn("AAPL", SetupDirection.Long, signed: 0.08m, filledOn: Session);
         Classifier().Classify(Session);
 
         LossRunResult again = Classifier().Classify(Session);
@@ -456,28 +592,38 @@ public sealed class LossClassifierTests : IDisposable
     private static string SetupIdOf(string ticker, string direction) =>
         $"{Evening:yyyy-MM-dd}-{ticker}-{direction}";
 
-    private void ForwardReturn(string ticker, string direction, decimal signed, DateOnly filledOn)
+    /// <summary>
+    /// Ten sessions of bars after the trigger's session, the last at <paramref name="closeAtTheTenth"/>,
+    /// and the date of that tenth session, which is the first evening the horizon is closed on.
+    /// </summary>
+    private DateOnly TenSessionsAfterTheTrigger(string ticker, decimal closeAtTheTenth)
+    {
+        for (int at = 1; at <= LossClassifier.HorizonDays; at++)
+        {
+            DailyBar(ticker, Session.AddDays(at), close: at == LossClassifier.HorizonDays ? closeAtTheTenth : 100m);
+        }
+
+        return Session.AddDays(LossClassifier.HorizonDays);
+    }
+
+    /// <summary>A bar restated on a later evening, with its adjusted close apart from its raw one.</summary>
+    private void DailyBarObserved(string ticker, DateOnly date, decimal close, decimal adjustedClose, DateOnly observedOn)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO forward_return (
-                subject_id, subject_kind, horizon_days, intended_date, actual_date,
-                return_signed, mfe_atr, mae_atr, filled_at)
-            VALUES (@subject_id, 'setup', @horizon, @intended, @actual, @signed, @mfe, @mae, @filled_at)
-            ON CONFLICT (subject_id, subject_kind, horizon_days) DO NOTHING;
+            INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+            VALUES (@ticker, @bar_date, @close, @close, @close, @close, @adj_close, 1000000, @observed_at)
+            ON CONFLICT (ticker, bar_date, observed_at) DO NOTHING;
             """;
-        command.Parameters.AddWithValue("@subject_id", SetupIdOf(ticker, direction));
-        command.Parameters.AddWithValue("@horizon", LossClassifier.HorizonDays);
-        command.Parameters.AddWithValue("@intended", StoreText.DateToStorageText(filledOn));
-        command.Parameters.AddWithValue("@actual", StoreText.DateToStorageText(filledOn));
-        command.Parameters.AddWithValue("@signed", StoreText.PriceToStorageText(signed));
-        command.Parameters.AddWithValue("@mfe", StoreText.PriceToStorageText(1m));
-        command.Parameters.AddWithValue("@mae", StoreText.PriceToStorageText(1m));
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@bar_date", StoreText.DateToStorageText(date));
+        command.Parameters.AddWithValue("@close", StoreText.PriceToStorageText(close));
+        command.Parameters.AddWithValue("@adj_close", StoreText.PriceToStorageText(adjustedClose));
         command.Parameters.AddWithValue(
-            "@filled_at",
+            "@observed_at",
             StoreText.TimestampToStorageText(
-                SessionBoundaries.At(filledOn, new TimeOnly(21, 30), SessionBoundaries.UsEquities)));
+                SessionBoundaries.At(observedOn, new TimeOnly(17, 30), SessionBoundaries.UsEquities)));
         command.ExecuteNonQuery();
     }
 

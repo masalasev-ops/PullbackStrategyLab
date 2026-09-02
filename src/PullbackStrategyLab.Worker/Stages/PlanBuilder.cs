@@ -44,6 +44,16 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// check, so on a night with no candidate there is nothing here to plan, and the run row says which
 /// of the three shapes of nothing it was.
 ///
+/// <b>The order prices are the final pullback session's regular-hours extremes with the give-up
+/// point 0.1 ADR beyond, and until 4.18 they were the screening geometry.</b> This stage copied
+/// `setup.trigger_price` and `setup.stop_price` into the plan from 4.16, which is the low of the
+/// whole dip and the reading the order-price decision names as the one to refuse, and its entry
+/// did not say so. The 4.13 sign-off found it by reading the stage against the decision. The
+/// derivation is <see cref="OrderPrices"/>, read from the session's daily bar rather than its
+/// minutes, because the vendor's daily bar carries the regular-hours extremes and the minutes are
+/// not in the store at 18:30; the reasoning and the measurement are on that type.
+/// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+///
 /// <b>A setup with no trade geometry gets no plan.</b> Not a plan sized on nought: a give-up
 /// distance of nought divides into the risk budget as many times as you like, and the share count
 /// that comes back is a number with nothing behind it. Two shapes reach this stage and both are
@@ -162,13 +172,13 @@ public sealed class PlanBuilder
 
         foreach (StoredSetup setup in capped)
         {
-            decimal? distance = PositionSizing.GiveUpDistanceOf(setup.TriggerPrice, setup.StopPrice);
-
-            if (distance is null)
+            // The setup's own pair is read for one thing only: whether there is a pullback to plan
+            // against. Both prices absent is a detector that could not compute a geometry; both
+            // present and equal is a thrust that has not pulled back. Neither gets a plan, and the
+            // two are counted apart because only the second is the one the 3.15 obligation named.
+            // The pair is not the order prices, which is what this stage got wrong until 4.18.
+            if (PositionSizing.GiveUpDistanceOf(setup.TriggerPrice, setup.StopPrice) is null)
             {
-                // Counted apart, because the two shapes are different facts and only the second is
-                // the one the 3.15 obligation named. Both prices absent is a detector that could not
-                // compute a geometry; both present and equal is a thrust that has not pulled back.
                 if (setup.TriggerPrice is null || setup.StopPrice is null)
                 {
                     absentGeometry++;
@@ -181,7 +191,20 @@ public sealed class PlanBuilder
                 continue;
             }
 
-            int shares = PositionSizing.SharesFor(distance.Value);
+            // The order prices, from the final pullback session's regular-hours extremes and the
+            // name's average daily range, both read from the store as they stood on this evening.
+            // A candidate whose bar or range the store does not hold is refused as an absent
+            // geometry rather than planned on a stand-in, which cannot happen to a row the detector
+            // flagged from those same figures and is counted where it would show if it did.
+            OrderPrices.Pair? prices = PricesFor(connection, setup, asOf);
+
+            if (prices is null)
+            {
+                absentGeometry++;
+                continue;
+            }
+
+            int shares = PositionSizing.SharesFor(prices.Distance);
 
             if (shares < 1)
             {
@@ -189,7 +212,7 @@ public sealed class PlanBuilder
                 continue;
             }
 
-            Insert(connection, transaction, setup, liveSession, distance.Value, shares, observedAt);
+            Insert(connection, transaction, setup, liveSession, prices, shares, observedAt);
             planned++;
         }
 
@@ -232,15 +255,45 @@ public sealed class PlanBuilder
         return next;
     }
 
+    /// <summary>
+    /// The trigger and the give-up point for one capped candidate, or null where the store holds
+    /// no bar or no range for its final pullback session.
+    ///
+    /// The final pullback session is the evening the setup was flagged on, which is the session
+    /// whose extremes the decision names and whose daily bar carries them. The range is the same
+    /// figure the detector measured the screening distances in, being the average daily range as a
+    /// fraction of price put back into price through that session's close, so the offset is in the
+    /// unit the row was flagged in.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    private static OrderPrices.Pair? PricesFor(SqliteConnection connection, StoredSetup setup, DateOnly asOf)
+    {
+        StoredDailyBar? session = DailyBarReader.Latest(
+            connection,
+            setup.Ticker,
+            asOf,
+            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities)));
+        StoredIndicators? figures = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf);
+
+        if (session is null || figures is null || figures.AverageDailyRange <= 0m || session.Close <= 0m)
+        {
+            return null;
+        }
+
+        return OrderPrices.For(setup.Direction, session.High, session.Low, figures.AverageDailyRange * session.Close);
+    }
+
     private static void Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
         StoredSetup setup,
         DateOnly liveSession,
-        decimal distance,
+        OrderPrices.Pair prices,
         int shares,
         DateTimeOffset observedAt)
     {
+        decimal distance = prices.Distance;
+
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
@@ -264,8 +317,8 @@ public sealed class PlanBuilder
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
         command.Parameters.AddWithValue("@ticker", setup.Ticker);
         command.Parameters.AddWithValue("@direction", setup.Direction);
-        command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(setup.TriggerPrice!.Value));
-        command.Parameters.AddWithValue("@give_up_price", StoreText.PriceToStorageText(setup.StopPrice!.Value));
+        command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(prices.Trigger));
+        command.Parameters.AddWithValue("@give_up_price", StoreText.PriceToStorageText(prices.GiveUp));
         command.Parameters.AddWithValue("@give_up_distance", StoreText.PriceToStorageText(distance));
         command.Parameters.AddWithValue("@shares", shares);
         command.Parameters.AddWithValue("@equity", StoreText.PriceToStorageText(PositionSizing.NotionalEquity));

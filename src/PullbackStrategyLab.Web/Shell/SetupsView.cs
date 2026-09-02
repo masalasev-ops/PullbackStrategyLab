@@ -83,6 +83,8 @@ public sealed record SetupCardView(
     string? AgreementNote,
     string? DegradedBecause,
     int? PlannedShares,
+    decimal? PlannedTrigger,
+    decimal? PlannedGiveUp,
     IReadOnlyList<SetupCheckRowView> Checks,
     IReadOnlyList<Candle> Candles)
 {

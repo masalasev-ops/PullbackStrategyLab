@@ -180,7 +180,7 @@ public sealed class PositionManager
 
         SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate);
 
-        List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.SetupId]))];
+        List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.SetupId], sessionDate))];
         var writes = new List<Action<SqliteTransaction>>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var hourOf = new Dictionary<string, int?>(StringComparer.Ordinal);
@@ -221,6 +221,17 @@ public sealed class PositionManager
                 StoredIntradayBar? maybe = minute.Of(holding.Ticker);
 
                 if (maybe is not StoredIntradayBar bar)
+                {
+                    continue;
+                }
+
+                // A position opened inside this session exists from its entry minute and not from
+                // the open. Until the 4.13 sign-off the walk carried no such bound, so a long that
+                // filled at 10:15 was measured against the 09:30 bar and, on a morning that opened
+                // under its give-up point, was closed forty-five minutes before it was opened. The
+                // entry minute itself is walked, because a bar holding both the trigger and the
+                // give-up point fills and then stops, and that is the pessimistic reading.
+                if (bar.OpenedAt < holding.OpenedAt)
                 {
                     continue;
                 }
@@ -318,9 +329,14 @@ public sealed class PositionManager
         }
 
         // An exit armed in an earlier session fires at this name's first minute of this one; an exit
-        // armed inside this session fires at the minute the walk armed it for, which is this one.
+        // armed inside this walk fires at the minute the walk armed it for, which is this one. An
+        // exit the store already carries for this same session is neither: it was armed by an
+        // earlier run of this walk, on this session's close, and fills at the next session's open.
+        // Until the 4.13 sign-off the second and third read alike, so a rerun of a session that had
+        // armed the trail fired it at that session's first minute and closed the position a session
+        // early, where the stage's own summary said a rerun writes nothing.
         if (holding.ArmedReason is string reason
-            && (!holding.ArmedInAnEarlierSession || firstOfSession))
+            && (holding.ArmedThisWalk || (holding.ArmedInAnEarlierSession && firstOfSession)))
         {
             yield return new ExitCandidate(reason, bar.Open, AtTheOpen: true);
         }
@@ -745,6 +761,7 @@ public sealed class PositionManager
             string ticker,
             string direction,
             DateOnly openedSession,
+            DateTimeOffset openedAt,
             int shares,
             int plannedShares,
             decimal giveUpPrice,
@@ -753,13 +770,16 @@ public sealed class PositionManager
             decimal? trimLevel,
             int trimmedShares,
             decimal trimRealisedPnl,
-            string? armedReason)
+            string? armedReason,
+            DateOnly? armedSession,
+            DateOnly sessionDate)
         {
             PositionId = positionId;
             SetupId = setupId;
             Ticker = ticker;
             Direction = direction;
             OpenedSession = openedSession;
+            OpenedAt = openedAt;
             Shares = shares;
             PlannedShares = plannedShares;
             GiveUpPrice = giveUpPrice;
@@ -769,10 +789,22 @@ public sealed class PositionManager
             TrimmedShares = trimmedShares;
             TrimRealisedPnl = trimRealisedPnl;
             ArmedReason = armedReason;
-            ArmedInAnEarlierSession = armedReason is not null;
+
+            // Read off the session that armed it against the one being walked, and never off the
+            // presence of a reason: an arm this session's own close made is one the store shows on
+            // a rerun, and it is not an earlier session's.
+            ArmedInAnEarlierSession = armedReason is not null
+                && armedSession is DateOnly armed
+                && armed < sessionDate;
         }
 
         public string PositionId { get; }
+
+        /// <summary>The minute the entry filled, before which no bar of its own session is its concern.</summary>
+        public DateTimeOffset OpenedAt { get; }
+
+        /// <summary>Whether this walk armed the exit, as opposed to reading an arm off the store.</summary>
+        public bool ArmedThisWalk { get; private set; }
 
         public string SetupId { get; }
 
@@ -815,9 +847,13 @@ public sealed class PositionManager
         public bool TrimIsAvailable => TrimLevel is not null && TrimmedShares == 0;
 
         /// <summary>An arming this walk raised that no later minute of this session could fill.</summary>
-        public bool PendingReclaim => !ArmedInAnEarlierSession && ArmedReason is not null;
+        public bool PendingReclaim => ArmedThisWalk && ArmedReason is not null;
 
-        public void ArmFor(string reason) => ArmedReason = reason;
+        public void ArmFor(string reason)
+        {
+            ArmedReason = reason;
+            ArmedThisWalk = true;
+        }
 
         /// <summary>Count this position among the night's holds, once however many minutes it lasts.</summary>
         public void CountHeldForNoQuote(Tally tally)
@@ -839,7 +875,7 @@ public sealed class PositionManager
             TrimRealisedPnl = pnl;
         }
 
-        public static Holding From(StoredPosition position, StoredTradePlan plan)
+        public static Holding From(StoredPosition position, StoredTradePlan plan, DateOnly sessionDate)
         {
             bool isShort = string.Equals(position.Direction, SetupDirection.Short, StringComparison.Ordinal);
             decimal entryPrice = position.EntryPrice!.Value;
@@ -850,6 +886,7 @@ public sealed class PositionManager
                 position.Ticker,
                 position.Direction,
                 position.OpenedSession,
+                position.OpenedAt!.Value,
                 position.Shares,
                 plan.Shares,
                 plan.GiveUpPrice,
@@ -860,7 +897,9 @@ public sealed class PositionManager
                     : null,
                 position.TrimmedShares ?? 0,
                 position.TrimRealisedPnl ?? 0m,
-                position.ExitArmedReason);
+                position.ExitArmedReason,
+                position.ExitArmedSession,
+                sessionDate);
         }
     }
 

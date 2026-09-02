@@ -60,13 +60,17 @@ public static class LossCause
     }
 
     /// <summary>
-    /// One unit of risk expressed as a return from the trigger, which is what the forward return is
-    /// measured in.
+    /// One unit of risk expressed as a return from the trigger, which is what the aftermath's return
+    /// is measured in.
     ///
     /// The boundary is stated in R because R is the unit every other figure in this lab is
     /// denominated in and a percentage is not comparable across names of different volatility. The
-    /// forward return is a fraction of the trigger price, so the comparison needs the give-up
-    /// distance in the same terms, and the conversion happens here rather than at a call site.
+    /// return it is compared against is a fraction of the trigger price, taken from the trigger over
+    /// the ten sessions after the session it was touched in, so the give-up distance has to be in the
+    /// same terms, and the conversion happens here rather than at a call site. <b>Until 4.18 the
+    /// return handed in was <c>forward_return.return_signed</c>, a fraction of the setup session's
+    /// close over the ten sessions after the setup</b>, so the two sides of the comparison were over
+    /// different populations while this comment said they were not.
     /// </summary>
     public static decimal OneRInReturn(decimal giveUpDistance, decimal triggerPrice)
     {

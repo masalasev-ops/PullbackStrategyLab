@@ -191,12 +191,71 @@ public sealed class PlanBuilderTests : IDisposable
     [Fact]
     public void A_distance_wider_than_the_budget_gets_no_plan()
     {
-        Candidate("BRKA", "long", trigger: 701_000m, giveUp: 700_000m);
+        Candidate("BRKA", "long", trigger: 701_000m, giveUp: 690_000m);
 
         PlanRunResult result = Stage().Build(Evening);
 
         Assert.Equal(0, result.Planned);
         Assert.Equal(1, result.RefusedBelowOneShare);
+        Assert.Empty(Plans());
+    }
+
+    // ---- the prices, which are the session's and not the screening geometry's ---------------
+
+    /// <summary>
+    /// The plan's prices are the final pullback session's regular-hours extremes with the give-up
+    /// point one tenth of an average daily range beyond, and not the setup's own pair.
+    ///
+    /// <b>The case the 4.13 sign-off found the stage failing, on both sides.</b> The setup rows here
+    /// carry a screening pair a whole dip wide, being what the detector computes and what the stage
+    /// copied into the plan from 4.16; the session's bar carries different extremes, and the plan is
+    /// asserted against the bar. A long enters through the session's high and gives up 0.1 ADR
+    /// under its low; a short enters through the low and gives up 0.1 ADR over the high.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    [Fact]
+    public void The_plan_prices_are_the_sessions_extremes_and_the_offset_and_not_the_setups_pair()
+    {
+        Candidate("AAPL", "long", trigger: 100m, giveUp: 90m, withSession: false);
+        Session("AAPL", high: 104m, low: 101m, close: 100m);
+
+        Candidate("INTC", "short", trigger: 50m, giveUp: 60m, withSession: false);
+        Session("INTC", high: 52m, low: 49m, close: 50m);
+
+        PlanRunResult result = Stage().Build(Evening);
+        Assert.Equal(2, result.Planned);
+
+        // ADR is 5% of a close of 100, which is 5, and a tenth of it is 0.5.
+        StoredTradePlan aapl = Plans().Single(p => p.Ticker == "AAPL");
+        Assert.Equal(104m, aapl.TriggerPrice);
+        Assert.Equal(100.5m, aapl.GiveUpPrice);
+        Assert.Equal(3.5m, aapl.GiveUpDistance);
+
+        // ADR is 5% of 50, which is 2.5, and a tenth of it is 0.25.
+        StoredTradePlan intc = Plans().Single(p => p.Ticker == "INTC");
+        Assert.Equal(49m, intc.TriggerPrice);
+        Assert.Equal(52.25m, intc.GiveUpPrice);
+        Assert.Equal(3.25m, intc.GiveUpDistance);
+
+        // And neither is the pair the setup row carries, which is the regression this case exists for.
+        Assert.NotEqual(101m, aapl.TriggerPrice);
+        Assert.NotEqual(87m, aapl.GiveUpPrice);
+    }
+
+    /// <summary>
+    /// A candidate whose final session's bar or figures the store does not hold gets no plan and is
+    /// counted as an absent geometry, rather than a plan on a stand-in.
+    /// </summary>
+    [Fact]
+    public void A_candidate_with_no_session_bar_gets_no_plan_and_is_counted_as_absent()
+    {
+        Candidate("AAPL", "long", trigger: 100m, giveUp: 95m, withSession: false);
+
+        PlanRunResult result = Stage().Build(Evening);
+
+        Assert.Equal(1, result.Candidates);
+        Assert.Equal(0, result.Planned);
+        Assert.Equal(1, result.RefusedAbsentGeometry);
         Assert.Empty(Plans());
     }
 
@@ -410,14 +469,40 @@ public sealed class PlanBuilderTests : IDisposable
         return TradePlanReader.RunsFor(connection, Evening);
     }
 
+    /// <summary>
+    /// The fraction of price the authored session's average daily range is, so the offset the
+    /// derivation adds is <c>AverageDailyRange * close * OrderPrices.GiveUpOffsetInRanges</c>.
+    /// </summary>
+    private const decimal AverageDailyRange = 0.05m;
+
+    /// <summary>
+    /// One capped candidate, with the final pullback session's bar and figures shaped so that the
+    /// derived order prices are exactly <paramref name="trigger"/> and <paramref name="giveUp"/>.
+    ///
+    /// <b>The setup's own pair is written as something else on purpose.</b> Until 4.18 the stage
+    /// copied it into the plan, so a helper that wrote the same numbers into both would let that
+    /// regression pass every arithmetic test here. The setup carries the screening pair the
+    /// detector would have computed, a whole dip wide, and the plan is asserted against the
+    /// session's extremes: for a long the session's high is the trigger and its low sits one offset
+    /// above the give-up point, and the mirror for a short.
+    /// </summary>
     private void Candidate(
         string ticker,
         string direction,
         decimal? trigger,
         decimal? giveUp,
         bool passedAll = true,
-        bool? cappedOut = false)
+        bool? cappedOut = false,
+        bool withSession = true)
     {
+        if (trigger is decimal t && giveUp is decimal g && t != g && withSession)
+        {
+            bool isLong = string.Equals(direction, "long", StringComparison.Ordinal);
+            decimal close = isLong ? t : g;
+            decimal offset = AverageDailyRange * close * OrderPrices.GiveUpOffsetInRanges;
+            Session(ticker, high: isLong ? t : g + offset, low: isLong ? g + offset : t, close: close);
+        }
+
         using SqliteConnection connection = _connections.OpenWrite();
 
         using (SqliteCommand security = connection.CreateCommand())
@@ -445,11 +530,67 @@ public sealed class PlanBuilderTests : IDisposable
         setup.Parameters.AddWithValue("@passed", passedAll ? 1 : 0);
         setup.Parameters.AddWithValue("@capped", cappedOut is null ? DBNull.Value : cappedOut.Value ? 1 : 0);
         setup.Parameters.AddWithValue(
-            "@trigger", trigger is null ? DBNull.Value : StoreText.PriceToStorageText(trigger.Value));
+            "@trigger", trigger is null ? DBNull.Value : StoreText.PriceToStorageText(trigger.Value + 1m));
         setup.Parameters.AddWithValue(
-            "@stop", giveUp is null ? DBNull.Value : StoreText.PriceToStorageText(giveUp.Value));
+            "@stop", giveUp is null ? DBNull.Value : StoreText.PriceToStorageText(giveUp.Value + (trigger == giveUp ? 1m : -3m)));
         setup.Parameters.AddWithValue(
             "@ranges", trigger is null ? DBNull.Value : StoreText.RatioToStorageText(0.30m));
         setup.ExecuteNonQuery();
+    }
+
+    /// <summary>The final pullback session's daily bar and the figures beside it, as the stage reads them.</summary>
+    private void Session(string ticker, decimal high, decimal low, decimal close)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        using (SqliteCommand security = connection.CreateCommand())
+        {
+            security.CommandText =
+                "INSERT INTO security (ticker, name, exchange, type, first_seen) "
+                + "VALUES (@t, @t, 'NASDAQ', 'Common Stock', @d) ON CONFLICT (ticker) DO NOTHING;";
+            security.Parameters.AddWithValue("@t", ticker);
+            security.Parameters.AddWithValue("@d", StoreText.DateToStorageText(Evening.AddDays(-40)));
+            security.ExecuteNonQuery();
+        }
+
+        using (SqliteCommand bar = connection.CreateCommand())
+        {
+            bar.CommandText = """
+                INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+                VALUES (@ticker, @bar_date, @close, @high, @low, @close, @close, 1000000, @observed_at)
+                ON CONFLICT (ticker, bar_date, observed_at) DO NOTHING;
+                """;
+            bar.Parameters.AddWithValue("@ticker", ticker);
+            bar.Parameters.AddWithValue("@bar_date", StoreText.DateToStorageText(Evening));
+            bar.Parameters.AddWithValue("@high", StoreText.PriceToStorageText(high));
+            bar.Parameters.AddWithValue("@low", StoreText.PriceToStorageText(low));
+            bar.Parameters.AddWithValue("@close", StoreText.PriceToStorageText(close));
+            bar.Parameters.AddWithValue(
+                "@observed_at",
+                StoreText.TimestampToStorageText(
+                    SessionBoundaries.At(Evening, new TimeOnly(17, 30), SessionBoundaries.UsEquities)));
+            bar.ExecuteNonQuery();
+        }
+
+        using SqliteCommand figures = connection.CreateCommand();
+        figures.CommandText = """
+            INSERT INTO indicator_daily
+                (ticker, as_of, computed_at, ema_9, ema_21, ema_50, atr_14, adr_20,
+                 dollar_volume_median_20, range_avg_20)
+            VALUES (@ticker, @as_of, @computed_at, @close, @close, @close, @atr, @adr, @dollars, @range)
+            ON CONFLICT (ticker, as_of, computed_at) DO NOTHING;
+            """;
+        figures.Parameters.AddWithValue("@ticker", ticker);
+        figures.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(Evening));
+        figures.Parameters.AddWithValue(
+            "@computed_at",
+            StoreText.TimestampToStorageText(
+                SessionBoundaries.At(Evening, new TimeOnly(18, 0), SessionBoundaries.UsEquities)));
+        figures.Parameters.AddWithValue("@close", StoreText.PriceToStorageText(close));
+        figures.Parameters.AddWithValue("@atr", StoreText.PriceToStorageText(high - low));
+        figures.Parameters.AddWithValue("@adr", StoreText.RatioToStorageText(AverageDailyRange));
+        figures.Parameters.AddWithValue("@dollars", StoreText.PriceToStorageText(50_000_000m));
+        figures.Parameters.AddWithValue("@range", StoreText.PriceToStorageText(high - low));
+        figures.ExecuteNonQuery();
     }
 }

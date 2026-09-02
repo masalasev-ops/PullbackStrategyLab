@@ -11076,6 +11076,11 @@
       "checkpoint": "4.13",
       "settled": "a phase sign-off, whose whole output is a reading of what already ran and the rows that reading raised",
       "why": "landed without contributing an expectation, and the reason is established rather than owed. It is the phase 4 sign-off, on the footing 2.12, 3.7 and 3.15 stand on: its deliverables are a verification run reproduced from the committed tree, a disposition for every finding, the authored-parameters statement its row asks for, and the obligation rows and the checkpoint the findings needed. A sign-off adds no stage to the replayed pipeline and no behaviour to freeze, so there is no figure a market day could be replayed to produce. The findings it raised are held where they are owed: 4.18 carries them, and the two the sign-off ran rather than argued are owed there as permanent tests, because the fixture's one market day plans nothing and could not exercise either."
+    },
+    {
+      "checkpoint": "4.18",
+      "settled": "repairs to three stages downstream of a cap the fixture's one market day passes nothing through, and to a check that reads the documents",
+      "why": "landed without contributing an expectation, and the reason is established rather than owed. Its six items are the plan's order prices, two faults in the position manager, the loss boundary's population, and pinned-constants' examined list with the mapping 4.15 owed. The three stages sit downstream of the nightly cap, and the golden fixture's one market day caps nought candidates, so no replay of it writes a plan, opens a position or classifies a loss: every plans.*, manage.* and losses.* figure is a structural nought before and after the repair and could not tell the repaired stage from the broken one. The check reads the corpus rather than the replay. Each repair is held by an authored case instead, on the terms the gate boundaries are: the two position-manager cases are the ones the 4.13 sign-off ran and found red, the loss boundary's case is the setup close of 90 against a trigger of 100 that separates the two populations, and the order-price case authors a session whose extremes differ from the setup's pair. The pinned-constants placement is proved against six rows written by hand, three of which fail."
     }
   ]
 }

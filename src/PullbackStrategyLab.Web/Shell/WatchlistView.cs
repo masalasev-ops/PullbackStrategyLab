@@ -92,6 +92,8 @@ public sealed record WatchlistRowView(
     decimal? StopPrice,
     decimal? StopDistanceRanges,
     int? PlannedShares,
+    decimal? PlannedTrigger,
+    decimal? PlannedGiveUp,
     IReadOnlyList<WatchlistFailureView> Failures)
 {
     public static WatchlistRowView Of(SetupCardView card)
@@ -107,8 +109,25 @@ public sealed record WatchlistRowView(
             card.StopPrice,
             card.StopDistanceRanges,
             card.PlannedShares,
+            card.PlannedTrigger,
+            card.PlannedGiveUp,
             [.. card.Checks.Where(c => !c.Passed).Select(WatchlistFailureView.Of)]);
     }
+
+    /// <summary>
+    /// The trigger this screen publishes: the plan's where a plan was written, the detector's where
+    /// none was.
+    ///
+    /// <b>The two are different numbers from 4.18 and the page shows the one the lab will act on.</b>
+    /// The detector's pair is the screening geometry and feeds two gates; the plan's is the final
+    /// pullback session's extremes with the give-up point 0.1 ADR beyond, which is what an order is
+    /// placed at. A greyed row and a capped-out row have no plan and show what the detector computed,
+    /// which is all there is to show for a row the lab declined.
+    /// </summary>
+    public decimal? PublishedTrigger => PlannedTrigger ?? TriggerPrice;
+
+    /// <summary>The give-up point this screen publishes, on the same terms as the trigger.</summary>
+    public decimal? PublishedGiveUp => PlannedGiveUp ?? StopPrice;
 
     /// <summary>A price, or the words the gallery uses where the detector recorded none.</summary>
     public string Price(decimal? value) =>

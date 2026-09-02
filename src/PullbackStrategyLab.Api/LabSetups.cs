@@ -86,9 +86,9 @@ public sealed class LabSetups
         // of N for session N+1, and the gallery and the watchlist are both reading the evening of N.
         // Reading by live session would return the plans written last night, which is the set every
         // row on this page is not about.
-        IReadOnlyDictionary<string, int> planned = TradePlanReader
+        IReadOnlyDictionary<string, StoredTradePlan> planned = TradePlanReader
             .WrittenOn(connection, asOf, asOf)
-            .ToDictionary(plan => plan.SetupId, plan => plan.Shares, StringComparer.Ordinal);
+            .ToDictionary(plan => plan.SetupId, StringComparer.Ordinal);
 
         SetupView[] all =
         [
@@ -162,8 +162,10 @@ public sealed class LabSetups
         StoredSetup setup,
         DateOnly asOf,
         DateTimeOffset observedBefore,
-        IReadOnlyDictionary<string, int> planned)
+        IReadOnlyDictionary<string, StoredTradePlan> planned)
     {
+        StoredTradePlan? plan = planned.TryGetValue(setup.SetupId, out StoredTradePlan? written) ? written : null;
+
         CheckResult[] checks = JsonSerializer.Deserialize<CheckResult[]>(setup.CheckResults, Json) ?? [];
 
         IReadOnlyList<StoredDailyBar> bars =
@@ -200,7 +202,9 @@ public sealed class LabSetups
             setup.Agreement,
             setup.AgreementNote,
             setup.DegradedBecause,
-            planned.TryGetValue(setup.SetupId, out int shares) ? shares : null,
+            plan?.Shares,
+            plan?.TriggerPrice,
+            plan?.GiveUpPrice,
             [.. checks.Select(c => new SetupCheckView(
                 c.Name, c.Passed, c.Value, c.Note,
                 [.. c.FailedClauses.Select(f => f.Name)]))],
@@ -235,6 +239,14 @@ public sealed record SetupsResponse(
 /// same price, or whose risk budget cannot buy one share at that distance, and it plans only the
 /// capped set. So a null here means the lab committed to nothing on that row, which is a different
 /// fact from a size of nought and is why the column is nullable rather than defaulted.
+///
+/// <b><c>PlannedTrigger</c> and <c>PlannedGiveUp</c> are the plan's prices and <c>TriggerPrice</c> and
+/// <c>StopPrice</c> are the detector's, and from 4.18 they differ.</b> The detector's pair is the
+/// screening geometry, a whole dip wide, and feeds two gates; the plan's pair is the final pullback
+/// session's extremes with the give-up point 0.1 ADR beyond, and is what an order is placed at. A
+/// surface publishing the plan shows the plan's where one exists, because the other is a number the
+/// lab will never trade at (see: The order prices are derived from the final pullback session's
+/// minutes, not from the screening geometry).
 /// </summary>
 public sealed record SetupView(
     string SetupId,
@@ -250,6 +262,8 @@ public sealed record SetupView(
     string? AgreementNote,
     string? DegradedBecause,
     int? PlannedShares,
+    decimal? PlannedTrigger,
+    decimal? PlannedGiveUp,
     IReadOnlyList<SetupCheckView> Checks,
     IReadOnlyList<SetupCandle> Candles);
 

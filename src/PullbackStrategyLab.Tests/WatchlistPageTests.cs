@@ -52,7 +52,7 @@ public sealed class WatchlistPageTests : IClassFixture<WebApplicationFactory<Lab
               "rank": 1, "cappedOut": false, "passedAll": true,
               "triggerPrice": 118.50, "stopPrice": 112.25, "stopDistanceRanges": 0.31,
               "agreement": null, "agreementNote": null, "degradedBecause": null,
-              "plannedShares": 120,
+              "plannedShares": 120, "plannedTrigger": 119.10, "plannedGiveUp": 116.35,
               "checks": [ { "name": "tradable", "passed": true, "value": 204580994.64, "note": null } ],
               "candles": [] },
             { "setupId": "2026-08-24-AAPL-long", "ticker": "AAPL", "direction": "long",
@@ -68,7 +68,7 @@ public sealed class WatchlistPageTests : IClassFixture<WebApplicationFactory<Lab
               "rank": 1, "cappedOut": false, "passedAll": true,
               "triggerPrice": 85.14, "stopPrice": 88.20, "stopDistanceRanges": 0.52,
               "agreement": null, "agreementNote": null, "degradedBecause": null,
-              "plannedShares": 245,
+              "plannedShares": 245, "plannedTrigger": 84.60, "plannedGiveUp": 86.90,
               "checks": [ { "name": "downtrend", "passed": true, "value": null, "note": "falling" } ],
               "candles": [] },
             { "setupId": "2026-08-24-XYZ-short", "ticker": "XYZ", "direction": "short",
@@ -145,6 +145,35 @@ public sealed class WatchlistPageTests : IClassFixture<WebApplicationFactory<Lab
         // be a page contradicting itself in two paragraphs.
         Assert.DoesNotContain("No share count", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Sizing is RiskGate", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A planned row shows the plan's trigger and give-up point, and an unplanned row the
+    /// detector's, because from 4.18 the two are different numbers and only one of them is a price
+    /// the lab will trade at.
+    ///
+    /// The stub's planned rows carry a plan pair that differs from the setup pair on purpose, so a
+    /// page that went on showing the screening geometry beside the plan's share count would show
+    /// 118.50 here and fail, which is what the page did until 4.18.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    [Fact]
+    public async Task A_planned_row_shows_the_plans_prices_and_an_unplanned_row_the_detectors()
+    {
+        string html = await Render();
+
+        Assert.Contains("<td>119.10</td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>116.35</td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>84.60</td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>86.90</td>", html, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("<td>118.50</td>", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("<td>112.25</td>", html, StringComparison.Ordinal);
+
+        // The greyed long and the equal-pair short have no plan and show what the detector computed.
+        Assert.Contains("<td>205.00</td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>199.00</td>", html, StringComparison.Ordinal);
+        Assert.Equal(2, Occurrences(html, "<td>40.00</td>"));
     }
 
     private async Task<string> Render()
