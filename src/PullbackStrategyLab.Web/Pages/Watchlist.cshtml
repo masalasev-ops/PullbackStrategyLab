@@ -54,7 +54,7 @@ else
                         <table class="watchlist @kind">
                             <tr>
                                 <th>Rank</th><th>Ticker</th><th>Trigger</th><th>Give up</th>
-                                <th>Distance</th><th>Failed</th>
+                                <th>Distance</th><th>Shares</th><th>Failed</th>
                             </tr>
                             @foreach (WatchlistRowView row in rows)
                             {
@@ -64,6 +64,13 @@ else
                                     <td>@row.Price(row.TriggerPrice)</td>
                                     <td>@row.Price(row.StopPrice)</td>
                                     <td>@row.Price(row.StopDistanceRanges)</td>
+                                    @* The size the plan committed to, from 4.11. Not the size that
+                                       will be placed: RiskGate may reduce it at the trigger or
+                                       block the order outright, hours after anybody reads this. A
+                                       row the plan stage refused says so in words rather than
+                                       showing a blank, which reads as a figure that came out
+                                       empty. *@
+                                    <td>@row.Shares</td>
                                     <td>
                                         @if (row.Failures.Count == 0)
                                         {
@@ -90,9 +97,12 @@ else
     </div>
 
     <p class="muted">
-        <b>No share count, and no conflict banner yet.</b> Sizing is RiskGate's and arrives at
-        <b>4.6</b>; the conflict banner needs an open position to conflict with and arrives at
-        <b>@WatchlistView.ConflictArrivesAt</b>. Both are absent rather than drawn empty, because a
+        <b>The share count is the plan's intention, and there is no conflict banner yet.</b> The
+        column shows what PlanBuilder committed to at 18:30, and RiskGate may reduce it at the
+        trigger or block the order outright, so what was placed is the trade journal's figure and
+        not this one. A row the plan stage refused says so in words rather than showing a blank. The
+        conflict banner needs an open position to conflict with and arrives at
+        <b>@WatchlistView.ConflictArrivesAt</b>; it is absent rather than drawn empty, because a
         column with no source reads as a figure the lab computed and got nothing for.
     </p>
 }

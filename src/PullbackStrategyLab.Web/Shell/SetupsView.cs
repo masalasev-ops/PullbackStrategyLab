@@ -82,6 +82,7 @@ public sealed record SetupCardView(
     string? Agreement,
     string? AgreementNote,
     string? DegradedBecause,
+    int? PlannedShares,
     IReadOnlyList<SetupCheckRowView> Checks,
     IReadOnlyList<Candle> Candles)
 {
@@ -103,6 +104,16 @@ public sealed record SetupCardView(
 
     /// <summary>What a card says where the detector recorded no quantity at all.</summary>
     public const string NotSet = "not set";
+
+    /// <summary>
+    /// The share count the plan carries, or the words the gallery uses where no plan was written.
+    ///
+    /// <b>Not a blank and not a nought.</b> A blank cell reads as a figure the lab computed and got
+    /// nothing for, which is exactly the reason the column was left off the watchlist until 4.11, and
+    /// a nought reads as a size the lab chose. A candidate the plan stage refused has neither.
+    /// </summary>
+    public string Shares =>
+        PlannedShares is int shares ? shares.ToString("N0", CultureInfo.InvariantCulture) : NotSet;
 
     /// <summary>The rank, or a word saying there is none, because a blank cell reads as a zero.</summary>
     public string RankLabel => Rank?.ToString(CultureInfo.InvariantCulture) ?? "unranked";

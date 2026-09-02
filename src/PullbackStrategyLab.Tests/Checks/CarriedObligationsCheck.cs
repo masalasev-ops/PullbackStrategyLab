@@ -22,6 +22,17 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// sides, being the checkpoint it falls due at. A `Carried` block that says "due at 3.4" when no row
 /// in the table falls due at 3.4 is an obligation nobody scheduled, and that is the whole claim.
 ///
+/// <b>The other direction, from the 4.11 correction.</b> The reconciliation above reads the record
+/// and asks the table about it, and it says nothing at all about a row already in the table. So an
+/// obligation row whose due point has landed is an obligation the checkpoint shipped without coming
+/// back to, and nothing said so: three rows fell due at 4.11 and 4.11 landed with all three still
+/// pointing at it. That is the shape `architecture-conformance` refuses of a deferred claim and
+/// `fixture-replay` refuses of a frozen-only permit, and it was missing from the one check whose
+/// entire subject is the obligations table. The clause is a narrowing in the reconciliation above
+/// for a reason that does not carry over: a landed due point in the record is history and reading
+/// it back would be a false alarm about work that is done, where a landed due point in the table is
+/// the table asking for work nobody will ever come for.
+///
 /// <b>What it deliberately cannot catch.</b> A `Carried` block naming a due point some other row
 /// happens to share. If two obligations are both due at 3.7 and only one reaches the table, this
 /// passes. That is the price of not matching prose, it is real, and it is written here rather than
@@ -80,8 +91,27 @@ public sealed partial class CarriedObligationsCheck
         IReadOnlyList<Mention> open = Live(mentions, schedule.HasLanded);
         IReadOnlyList<Mention> unscheduled = Unscheduled(open, scheduled);
 
+        // The table read as a set of rows rather than as a set of due points, which is the other
+        // direction and the one the 4.11 correction added. `Overdue` fires on a row the build has
+        // walked past; `Unplaced` fires on a row pointing at a checkpoint BUILD_PLAN does not have,
+        // which is the same fault one step earlier.
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> rows = schedule.Obligations;
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> atACheckpoint =
+            [.. rows.Where(o => IsACheckpoint(o.DueAt))];
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> overdue =
+            Overdue(rows, schedule.HasLanded);
+        IReadOnlyList<ArchitectureConformanceCheck.Obligation> unplaced =
+            Unplaced(rows, schedule.Exists);
+
         coverage
             .Examined("due points the obligations table declares", scheduled.Count)
+            // The rows whose due point is a checkpoint, which is the population the overdue clause
+            // governs. Floored, because it is the property scope of the second direction, and low
+            // for the same reason the reconciled count above is: discharging obligations legitimately
+            // empties it and a floor at today's figure would fire on the work being done.
+            .Examined("obligation rows falling due at a checkpoint", atACheckpoint.Count)
+            .Context("obligation rows falling due at a named event rather than a checkpoint",
+                rows.Count - atACheckpoint.Count)
             // The parser's own health, and it is the scope that carries the property here. It grows
             // with the record and never shrinks, because PROGRESS is append-only, so a fall means
             // the block or the due-point pattern stopped matching and the check is reconciling an
@@ -104,6 +134,14 @@ public sealed partial class CarriedObligationsCheck
                     $"{nameof(CarriedObligationsCheck)}.{nameof(A_carried_block_naming_an_unscheduled_due_point_is_caught)}",
                     "the reconciliation is run against blocks written by hand, so the guard is proved "
                     + "against a case rather than against whatever the corpus happens to hold today"))
+            .Scan(
+                "that no obligation row falls due at a checkpoint the build has already walked past",
+                CheckCoverage.Backing.Test(
+                    $"{nameof(CarriedObligationsCheck)}.{nameof(A_row_falling_due_at_a_landed_checkpoint_is_caught)}",
+                    "the same two functions the run calls are given a table holding a landed due point, an "
+                    + "unlanded one, one naming a checkpoint the plan does not have and one naming an event, "
+                    + "so each of the four dispositions is proved rather than only the two today's corpus "
+                    + "happens to hold"))
             .Report();
 
         // Stated in advance. A parser that stopped matching would hand this an empty list to
@@ -123,6 +161,23 @@ public sealed partial class CarriedObligationsCheck
             + "obligation at all, which the obligations table can be read to confirm, or the filter has "
             + "emptied itself and this check is asserting over nothing. The second is what happened from 3.0 "
             + "until 3.10.");
+
+        // Stated in advance, on the same grounds as the two above: a parse that stopped matching
+        // would hand both clauses below an empty list, and every empty list holds.
+        Assert.True(rows.Count >= 20,
+            $"Only {rows.Count} obligation row(s) parsed out of the table. A count this low means the "
+            + "parser stopped matching rather than that the corpus discharged them.");
+
+        Assert.True(unplaced.Count == 0,
+            $"{unplaced.Count} obligation row(s) fall due at a checkpoint BUILD_PLAN.md does not have, so "
+            + "nothing will ever bring them due:" + Newline
+            + string.Join(Newline, unplaced.Select(o => $"raised at {o.Raised}, due at {o.DueAt}")));
+
+        Assert.True(overdue.Count == 0,
+            $"{overdue.Count} obligation row(s) fall due at a checkpoint PROGRESS.md already records, so "
+            + "that checkpoint shipped without discharging or repointing them and nothing said so at the "
+            + "time. Discharge each and remove its row, or repoint it with the reason and the price:" + Newline
+            + string.Join(Newline, overdue.Select(o => $"raised at {o.Raised}, due at {o.DueAt}: {Opening(o.What)}")));
 
         Assert.True(unscheduled.Count == 0,
             $"{unscheduled.Count} due point(s) named in a Carried block have no obligation row:\n  "
@@ -144,6 +199,90 @@ public sealed partial class CarriedObligationsCheck
         ArgumentNullException.ThrowIfNull(hasLanded);
 
         return [.. mentions.Where(m => !hasLanded(m.DuePoint))];
+    }
+
+    /// <summary>The two-space indent a multi-line failure message hangs its items on.</summary>
+    private const string Newline = "\n  ";
+
+    /// <summary>
+    /// Obligation rows falling due at a checkpoint the build has already walked past.
+    ///
+    /// <b>A checkpoint due point only.</b> "the operator" and "the move" are events rather than rows
+    /// in the plan, so nothing can say they have landed and a row naming one is open by construction.
+    /// Treating an unparsable due point as still ahead is what
+    /// <see cref="ArchitectureConformanceCheck.Obligation"/> already documents, and this reads it the
+    /// same way rather than a second way.
+    /// </summary>
+    public static IReadOnlyList<ArchitectureConformanceCheck.Obligation> Overdue(
+        IEnumerable<ArchitectureConformanceCheck.Obligation> obligations, Func<string, bool> hasLanded)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentNullException.ThrowIfNull(hasLanded);
+
+        return [.. obligations.Where(o => IsACheckpoint(o.DueAt) && hasLanded(o.DueAt))];
+    }
+
+    /// <summary>
+    /// Obligation rows falling due at a checkpoint BUILD_PLAN.md does not have.
+    ///
+    /// The same fault one step earlier than <see cref="Overdue"/>: a row pointing at 4.18 is not
+    /// overdue and never will be, because nothing will ever record it, and it reads exactly like a
+    /// row that is waiting.
+    /// </summary>
+    public static IReadOnlyList<ArchitectureConformanceCheck.Obligation> Unplaced(
+        IEnumerable<ArchitectureConformanceCheck.Obligation> obligations, Func<string, bool> exists)
+    {
+        ArgumentNullException.ThrowIfNull(obligations);
+        ArgumentNullException.ThrowIfNull(exists);
+
+        return [.. obligations.Where(o => IsACheckpoint(o.DueAt) && !exists(o.DueAt))];
+    }
+
+    /// <summary>Whether a due point names a checkpoint rather than an event.</summary>
+    private static bool IsACheckpoint(string duePoint) => CheckpointShape().IsMatch(duePoint);
+
+    /// <summary>The opening of an obligation, so a failure names the row without printing it whole.</summary>
+    private static string Opening(string what)
+    {
+        string plain = what.Replace("*", string.Empty, StringComparison.Ordinal).Trim();
+        return plain.Length <= 90 ? plain : plain[..90] + "...";
+    }
+
+    [GeneratedRegex(@"^\d+\.\d+$", RegexOptions.CultureInvariant)]
+    private static partial Regex CheckpointShape();
+
+    /// <summary>
+    /// The second direction, proved against a table written here.
+    ///
+    /// <b>Four dispositions and the corpus holds two of them.</b> A run over the live BUILD_PLAN
+    /// exercises the unlanded checkpoint and the named event and nothing else, so the two clauses
+    /// that can fail would both be filtering an empty list and would read exactly as they read when
+    /// they hold. That is the shape the 4.17 pass found in `fixture-replay`, where every permit in
+    /// the file took the branch no proof ever ran.
+    /// </summary>
+    [Fact]
+    public void A_row_falling_due_at_a_landed_checkpoint_is_caught()
+    {
+        var landed = new HashSet<string>(["4.11"], StringComparer.Ordinal);
+        var planned = new HashSet<string>(["4.11", "5.1"], StringComparer.Ordinal);
+
+        ArchitectureConformanceCheck.Obligation[] rows =
+        [
+            new("4.16", "4.11", "the watchlist has no share count column"),
+            new("3.0", "5.1", "a minimum sample computed as though observations were independent"),
+            new("2.2", "9.9", "a due point the plan has no checkpoint for"),
+            new("3.6", "the operator", "one elevated command, which no build session may run"),
+        ];
+
+        ArchitectureConformanceCheck.Obligation only = Assert.Single(Overdue(rows, landed.Contains));
+        Assert.Equal("4.16", only.Raised);
+
+        ArchitectureConformanceCheck.Obligation nowhere = Assert.Single(Unplaced(rows, planned.Contains));
+        Assert.Equal("9.9", nowhere.DueAt);
+
+        // The two that are open, each for a different reason, and neither is either failure.
+        Assert.DoesNotContain(Overdue(rows, landed.Contains), o => o.DueAt is "5.1" or "the operator");
+        Assert.DoesNotContain(Unplaced(rows, planned.Contains), o => o.DueAt is "5.1" or "the operator");
     }
 
     /// <summary>Open mentions whose due point no obligation row declares.</summary>

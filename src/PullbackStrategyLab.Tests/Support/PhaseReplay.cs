@@ -2084,6 +2084,13 @@ public sealed class PhaseReplay : IDisposable
             new Measurement("gallery.agreementRate", looked == 0
                 ? "nobody has looked"
                 : Figure((decimal)agreed / looked)),
+            // The plan's share count reaching the read surface, which is what the watchlist column
+            // was missing for a checkpoint. Two figures rather than one: how many rows carry a
+            // plan and how many shares they name between them. A count alone would read the same
+            // over a night that planned nothing and a night whose plans all named nought shares,
+            // and the second is the state the column exists to distinguish from an absence.
+            new Measurement("gallery.planned", all.Count(s => s.PlannedShares is not null).ToString(CultureInfo.InvariantCulture)),
+            new Measurement("gallery.plannedShares", all.Sum(s => s.PlannedShares ?? 0).ToString(CultureInfo.InvariantCulture)),
             new Measurement("gallery.thumbnail", first?.SetupId ?? "no setup"),
             new Measurement("gallery.thumbnailCandles", thumbnail.Candles.Count.ToString(CultureInfo.InvariantCulture)),
             new Measurement("gallery.thumbnailLastCentre", thumbnail.Candles.Count == 0

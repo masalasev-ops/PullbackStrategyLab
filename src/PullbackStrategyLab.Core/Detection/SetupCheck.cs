@@ -15,6 +15,17 @@ public sealed record CheckResult(string Name, bool Passed, decimal? Value, strin
     public static CheckResult Unknown(string name, string why) => new(name, false, null, why);
 
     /// <summary>
+    /// What a distance gate says where the session has no stop or no daily range to divide it by.
+    ///
+    /// <b>A constant rather than a literal in each detector, from 4.11.</b> It is the text
+    /// `surface-claims` names as what a card must carry for a check handed nothing, and the claim
+    /// resolved against it by hand: the reconciliation is now the claim naming this member, so the
+    /// two cannot drift apart in silence. Shared by both directions because both write the same
+    /// sentence, and two literals saying one thing is how one of them stops saying it.
+    /// </summary>
+    public const string NoStopOrRange = "no stop or no daily range for the session";
+
+    /// <summary>
     /// The clauses a multi-clause gate tested, each with its own verdict, or null on a gate that has
     /// only itself to answer for.
     ///
@@ -52,7 +63,19 @@ public sealed record CheckResult(string Name, bool Passed, decimal? Value, strin
 /// needs a lookup and half the time the lookup does not happen, where "market capitalisation" is the
 /// thing itself. The names are what a screen shows and what a later threshold experiment selects on.
 /// </summary>
-public sealed record ClauseResult(string Name, bool Passed, decimal? Value = null);
+public sealed record ClauseResult(string Name, bool Passed, decimal? Value = null)
+{
+    /// <summary>
+    /// The capitalisation clause of `tradable-shortable`, named once.
+    ///
+    /// <b>A constant rather than a literal, from 4.11.</b> `surface-claims` asserts that a short
+    /// verdict on the gallery says which clauses ran, and the text it looks for is this name. The
+    /// claim resolves against this member now rather than against a copy of the words, which is what
+    /// the 3.5 obligation asked for: a clause renamed here fails the claim rather than leaving a
+    /// green check over a screen carrying different words.
+    /// </summary>
+    public const string MarketCapitalisation = "market capitalisation";
+}
 
 /// <summary>
 /// The two directions, as the store constrains them and as every reader compares them.

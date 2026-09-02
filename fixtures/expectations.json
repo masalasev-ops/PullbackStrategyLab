@@ -4204,6 +4204,22 @@
       "checkpoint": "2.9"
     },
     {
+      "id": "gallery.planned",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.11",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.candidates is 0 and plans.planned is 0, because cap.candidates is 0, because no setup on the fixture one market day passed every gating check. A setup carries a share count only where PlanBuilder wrote a plan for it, so no row on this night carries one and the sum over the rows is nought for the same reason rather than for a different one.",
+      "note": "How many of the night's setups reach the read surface carrying the share count their plan committed to. The watchlist draws a column from it, and it drew none for a checkpoint after the number existed. Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of anything."
+    },
+    {
+      "id": "gallery.plannedShares",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.11",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: plans.candidates is 0 and plans.planned is 0, because cap.candidates is 0, because no setup on the fixture one market day passed every gating check. A setup carries a share count only where PlanBuilder wrote a plan for it, so no row on this night carries one and the sum over the rows is nought for the same reason rather than for a different one.",
+      "note": "The shares those plans name between them. Beside the count rather than instead of it, because a count alone reads the same over a night that planned nothing and a night whose plans all named nought shares, and the column exists to tell an absent size from a chosen one."
+    },
+    {
       "id": "gallery.thumbnail",
       "tier": "FROZEN",
       "value": "2026-08-24-HOOD-long",

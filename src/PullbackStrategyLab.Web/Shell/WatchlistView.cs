@@ -70,9 +70,18 @@ public sealed record WatchlistView(
 /// <summary>
 /// One published candidate: what would be entered, where it would give up, and how far that is.
 ///
-/// <b>No share count.</b> The mockup draws one and PlanBuilder sizes at 4.16, so the column has no
-/// source at 4.1. It is absent rather than rendered empty, because a blank column reads as a figure
-/// the lab computed and got nothing for.
+/// <b>The share count arrives at 4.11 and it is the plan's rather than the gate's.</b> The column had
+/// no source at 4.1, when sizing was RiskGate's and RiskGate did not exist, and it was left off rather
+/// than rendered empty because a blank column reads as a figure the lab computed and got nothing for.
+/// That is no longer where a size comes from: PlanBuilder writes one at 18:30 and this page publishes
+/// at 18:40, so the column has a source ten minutes before the page runs, and a page that went on
+/// omitting it would understate what the lab committed to.
+/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+///
+/// <b>What it is not is the size that will be placed.</b> RiskGate may reduce it at the trigger or
+/// block the order outright, hours after anybody reads this screen, so the column is the intention
+/// and the executed figure is the trade journal's. The two are compared on `plan_audit` and never
+/// here.
 /// </summary>
 public sealed record WatchlistRowView(
     string SetupId,
@@ -82,6 +91,7 @@ public sealed record WatchlistRowView(
     decimal? TriggerPrice,
     decimal? StopPrice,
     decimal? StopDistanceRanges,
+    int? PlannedShares,
     IReadOnlyList<WatchlistFailureView> Failures)
 {
     public static WatchlistRowView Of(SetupCardView card)
@@ -96,12 +106,22 @@ public sealed record WatchlistRowView(
             card.TriggerPrice,
             card.StopPrice,
             card.StopDistanceRanges,
+            card.PlannedShares,
             [.. card.Checks.Where(c => !c.Passed).Select(WatchlistFailureView.Of)]);
     }
 
     /// <summary>A price, or the words the gallery uses where the detector recorded none.</summary>
     public string Price(decimal? value) =>
         value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : SetupCardView.NotSet;
+
+    /// <summary>
+    /// The share count the plan carries, or the words the page uses where no plan was written.
+    ///
+    /// A greyed row and a capped-out row both reach this screen and neither is planned, so the
+    /// absent form is the ordinary case rather than the exception.
+    /// </summary>
+    public string Shares =>
+        PlannedShares is int shares ? shares.ToString("N0", CultureInfo.InvariantCulture) : SetupCardView.NotSet;
 
     public string RankLabel => Rank?.ToString(CultureInfo.InvariantCulture) ?? "unranked";
 

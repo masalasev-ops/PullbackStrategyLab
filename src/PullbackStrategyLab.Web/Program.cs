@@ -467,6 +467,7 @@ public sealed class LabApiClient
         s.Agreement,
         s.AgreementNote,
         s.DegradedBecause,
+        s.PlannedShares,
         [.. s.Checks.Select(c => new SetupCheckRowView(
             c.Name, c.Passed, c.Value, c.Note, c.FailedClauses ?? []))],
         [.. s.Candles.Select(c => new Candle(
@@ -562,6 +563,7 @@ public sealed class LabApiClient
         string? Agreement,
         string? AgreementNote,
         string? DegradedBecause,
+        int? PlannedShares,
         IReadOnlyList<SetupCheckPayload> Checks,
         IReadOnlyList<SetupCandlePayload> Candles);
 

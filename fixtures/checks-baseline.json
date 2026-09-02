@@ -25,7 +25,9 @@
         "catalogued components a phase's Builds row names": 44
       },
       "context": [
-        "catalogued screens, named in a Builds row as prose rather than as a token"
+        "catalogued screens, named in a Builds row as prose rather than as a token",
+        "claims whose cell states more than one clause, awaiting the 3.12 sweep",
+        "clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction"
       ]
     },
     "bar-append-only": {
@@ -43,11 +45,13 @@
     "carried-obligations": {
       "scopes": {
         "due points the obligations table declares": 7,
+        "obligation rows falling due at a checkpoint": 1,
         "due points named inside a Carried block": 71,
         "of those whose due point has not landed, which is what is reconciled": 1
       },
       "context": [
-        "Carried blocks in PROGRESS"
+        "Carried blocks in PROGRESS",
+        "obligation rows falling due at a named event rather than a checkpoint"
       ]
     },
     "check-completeness": {
@@ -315,6 +319,7 @@
       "scopes": {
         "claims of visibility declared in the corpus": 16,
         "of those whose surface exists and was rendered and read": 11,
+        "claims whose text is reconciled against the member that emits it": 1,
         "corpus sentences claiming visibility, read back against the claim file": 15
       },
       "context": [
