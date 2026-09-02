@@ -29,7 +29,8 @@ param(
     # four stages built between 4.1 and 4.4 could not be dispatched at all.
     [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
                  'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
-                 'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'forward', 'scoreboard',
+                 'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'forward',
+                 'scoreboard',
                  'ceiling', 'snapshot')]
     [string]$Slot,
 
@@ -108,6 +109,12 @@ $slots = @{
     # triggers happened, so a full book blocks the later ones, and it writes a row for every
     # refusal: a blocked order is evidence about the caps rather than an absence of evidence.
     'orders'     = @(, @('orders'))
+    # 21:15, over the orders the gate placed and the positions carried in from earlier sessions.
+    # It prices what each resting order actually got, charging the session's widest captured
+    # spread the wrong way, and closes any position whose give-up point the session reached. A
+    # name the session quoted no usable book for is not filled, and the row says so rather than
+    # the order disappearing.
+    'fills'      = @(, @('fills'))
     'forward'    = @(, @('forward-returns'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))

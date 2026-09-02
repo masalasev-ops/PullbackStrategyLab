@@ -1,6 +1,8 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Time;
+using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Data;
 
 namespace PullbackStrategyLab.Api;
@@ -9,10 +11,11 @@ namespace PullbackStrategyLab.Api;
 /// What the status band across the top of every screen reads.
 ///
 /// It reports what the store holds and says nothing about what it does not. The band the
-/// architecture describes also carries market mood, open positions and total risk at stake, and
-/// none of those exist before phases 2 and 4, so each comes back null and the band renders a
-/// dash with the checkpoint that fills it. A zero would read as "no positions open" rather than
-/// as "positions are not a thing yet", and those are different statements.
+/// architecture describes also carries market mood, open positions and total risk at stake. The
+/// mood gained a source at 2.5 and the three position fields at 4.7, so every field of the band now
+/// reads the store; a null is a store with no session in it rather than a component that does not
+/// exist. A zero would read as "no positions open" rather than as "positions are not a thing yet",
+/// and those are still different statements, which is why a null is never rendered as one.
 /// </summary>
 public static class LabStatus
 {
@@ -35,6 +38,7 @@ public static class LabStatus
         // quota day rather than as a UTC date because the run beside it is bounded on a session, and
         // the two windows do not have the same edges.
         int callsUsed = RunLogger.CallsUsedOn(connection, VendorQuotaDay.Containing(clock.UtcNow));
+        OpenPositions? book = BookAt(connection);
 
         return new StatusResponse(
             "ready",
@@ -47,10 +51,50 @@ public static class LabStatus
             callsUsed,
             dailyCallCeiling,
             MarketMood: MoodOfLatestSession(connection),
-            PositionsOpen: null,
-            ShortPositionsOpen: null,
-            RiskAtStake: null);
+            PositionsOpen: book?.Positions,
+            ShortPositionsOpen: book?.Shorts,
+            RiskAtStake: book?.RiskPercent);
     }
+
+    /// <summary>
+    /// What the lab is holding, as at the session the store is current to.
+    ///
+    /// <b>It has a source as of 4.7 and had none before it.</b> The three fields rendered "not until
+    /// 4.7" from 4.1, which was honest while `position` did not exist and stopped being honest the
+    /// moment it did. The band's own guard is what caught it: a field waiting on a checkpoint
+    /// PROGRESS records as landed fails, on the same terms the phase report refuses a claim deferred
+    /// to a checkpoint that has landed.
+    ///
+    /// Null still means the store holds no session at all, which is a real state and different again
+    /// from "positions are not a thing yet". A nought means the lab is flat tonight.
+    ///
+    /// The risk is a percentage of the fixed notional account, which is what the cap it will be shown
+    /// against is stated in, and it is each position's realised risk rather than its intended one:
+    /// what would be lost, not what was meant to be.
+    /// see: Equity is a fixed $100,000 notional that never compounds
+    /// </summary>
+    private static OpenPositions? BookAt(SqliteConnection connection)
+    {
+        string? session = LatestSession(connection);
+
+        if (session is null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<StoredPosition> open =
+            PositionReader.OpenAt(connection, StoreText.StorageTextToDate(session));
+
+        decimal risk = open.Sum(p => p.RiskRealised ?? 0m);
+
+        return new OpenPositions(
+            open.Count,
+            open.Count(p => string.Equals(p.Direction, SetupDirection.Short, StringComparison.Ordinal)),
+            risk / PositionSizing.NotionalEquity * 100m);
+    }
+
+    /// <summary>The three figures the band shows together, so a partial answer is unexpressible.</summary>
+    private sealed record OpenPositions(int Positions, int Shorts, decimal RiskPercent);
 
     /// <summary>
     /// The market mood for the session the store is current to, or null where that night was never

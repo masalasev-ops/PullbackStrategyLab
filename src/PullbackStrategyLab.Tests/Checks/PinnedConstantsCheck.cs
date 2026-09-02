@@ -253,6 +253,16 @@ public sealed class PinnedConstantsCheck
             ParameterCell(architecture, "Total risk at stake").Contains("3% of equity", StringComparison.Ordinal),
             RiskCaps.MaxTotalRiskFraction == 0.03m, "RiskCaps.MaxTotalRiskFraction"));
 
+        // The borrow rate, stated in the short-checks prose and again in the authored parameters, and
+        // held by a code constant from 4.7 because a position now records it. A rate that lived only
+        // in a constant would restate every historical short at whatever the constant says today.
+        pins.Add(Pin.Text("ARCHITECTURE.html, the short checks, assumed borrow rate",
+            architecture.Contains("a flat borrow cost of <b>1.0% annualised</b> is deducted per calendar", StringComparison.Ordinal),
+            BorrowAssumption.AnnualisedRate == 0.010m, "BorrowAssumption.AnnualisedRate"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Assumed borrow cost",
+            ParameterCell(architecture, "Assumed borrow cost").Contains("1.0% annualised, per calendar day held", StringComparison.Ordinal),
+            BorrowAssumption.AnnualisedRate == 0.010m, "BorrowAssumption.AnnualisedRate"));
+
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Listing age floor, short",
             ParameterCell(architecture, "Listing age floor, short").Contains("90 sessions", StringComparison.Ordinal),
             ShortPullbackRules.MinimumSessionsListed == 90, "ShortPullbackRules.MinimumSessionsListed"));

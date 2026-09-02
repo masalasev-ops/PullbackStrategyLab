@@ -1045,6 +1045,62 @@ public sealed partial class ArchitectureConformanceCheck
             && migration.Contains("blocked_because IS NULL OR bound_by IS NOT NULL", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The gap row, read from three places, because the claim it makes has three halves.
+    ///
+    /// The row says a gap through the give-up point is recorded as a loss larger than planned,
+    /// tagged, and never rounded back. So: the model has a basis a fill can carry that is not the
+    /// slipped one and charges nothing on it; the store has a column to carry it; and nothing
+    /// anywhere clamps a realised result. The last is the one that cannot be read from a constant,
+    /// so it is asserted as the absence of a clamp in the stage that writes the figure, and the
+    /// behavioural half is the test that runs a seven-point gap through a five-point stop and reads
+    /// worse than minus two R back off the row.
+    /// </summary>
+    private static bool TheGapIsTaggedAndNeverClamped()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("fill-and-position", StringComparison.Ordinal)).Sql;
+
+        string broker = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "PaperBroker.cs"));
+
+        // Whitespace-tolerant over the span, because a column declaration is aligned by hand and a
+        // pattern built on the alignment breaks on a rename three columns away.
+        bool tagged = Regex.IsMatch(
+                migration,
+                @"basis\s+TEXT\s+NOT NULL CHECK \(basis IN \('slipped', 'gapped'\)\)",
+                RegexOptions.CultureInvariant)
+            && Regex.IsMatch(migration, @"realised_r\s+REAL", RegexOptions.CultureInvariant);
+
+        bool notClamped = !broker.Contains("Math.Max(", StringComparison.Ordinal)
+            && !broker.Contains("Math.Min(", StringComparison.Ordinal)
+            && !broker.Contains("Math.Clamp(", StringComparison.Ordinal);
+
+        bool chargesNothingOnTop = Core.Trading.FillModel
+            .Exit(Core.Detection.SetupDirection.Long, 95m, openedThrough: 88m, 10d)
+            is { Basis: Core.Trading.FillModel.Gapped, Slippage: 0m, Price: 88m };
+
+        return tagged && notClamped && chargesNothingOnTop;
+    }
+
+    /// <summary>
+    /// The two short assumptions, read from the store's own constraints rather than from the stage.
+    ///
+    /// The row says they are recorded on every short position from 4.7, and "on every row" is a
+    /// claim a constraint can carry outright: the migration makes both present exactly on the shorts
+    /// in both directions, so a short without them and a long with them are equally unwritable. The
+    /// behavioural half is the test that fills one of each and reads both rows back.
+    /// </summary>
+    private static bool TheShortAssumptionsAreOnEveryShortRow()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("fill-and-position", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains("(direction = 'short') = (borrow_rate_assumed IS NOT NULL)", StringComparison.Ordinal)
+            && migration.Contains("(direction = 'short') = (borrow_availability IS NOT NULL)", StringComparison.Ordinal)
+            && Core.Trading.BorrowAssumption.AnnualisedRate == 0.010m;
+    }
+
     private static bool TheFetchCountsWhatItCouldNotGet()
     {
         string fetcher = RepositoryLayout.Read(
@@ -1133,6 +1189,29 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "migration 042 no longer constrains a blocked order to carry a reason and a cap, so a refusal "
                     + "can be written that nobody can act on"),
+            // The gap, read from the model, the store and the stage. The document says the loss is
+            // larger than planned, tagged, and never rounded back, and the third of those is an
+            // absence rather than a statement, so it is asserted as one.
+            "Price gaps past the give-up point" => TheGapIsTaggedAndNeverClamped()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a gap fills at the session's first regular minute open and is charged no spread on top, the "
+                    + "fill carries basis 'gapped' so the size and frequency of these are readable afterwards, and "
+                    + "nothing in the stage that writes the result clamps it")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the gap is no longer told apart from a slipped fill on the row, or something now bounds the "
+                    + "realised result, which rounds the bad tail back to a neat one-unit loss"),
+
+            // The borrow assumptions, read from the constraint rather than from the stage, because
+            // "on every short trade" is a claim about every row and a constraint is what holds one.
+            "A short could not have been borrowed" => TheShortAssumptionsAreOnEveryShortRow()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the store admits a short position only with the assumed borrow rate and the note that "
+                    + "availability is not modelled, and admits a long only without them, so both are on every "
+                    + "short row by construction rather than by a stage remembering")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 043 no longer binds the two short assumptions to the short rows, so a short can be "
+                    + "written carrying neither and the assumption stops being visible where the result is read"),
+
             "Intraday prices unavailable for a day" => TheFetchCountsWhatItCouldNotGet()
                 ? Claim.Passed("Failure behaviour", condition,
                     "IntradayFetcher counts a name the vendor holds nothing for rather than failing the night, records the count it asked for beside the count it answered so the shortfall is a join rather than an edit, and writes a fetch row whatever the outcome")

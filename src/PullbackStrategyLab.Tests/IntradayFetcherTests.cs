@@ -271,7 +271,6 @@ public sealed class IntradayFetcherTests : IDisposable
         Assert.Equal(99m, bar.Low);
         Assert.Equal(100.5m, bar.Close);
         Assert.Equal(12_345, bar.Volume);
-        Assert.Null(bar.VwapSession);
     }
 
     [Fact]

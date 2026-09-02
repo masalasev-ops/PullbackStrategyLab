@@ -45,6 +45,18 @@ public sealed partial class PriceStorageFormCheck
             + "computed from are TEXT in the same row, so nothing here crosses the boundary: the "
             + "decimal quantities stay decimal and the derived statistic is a double, which is the "
             + "second clause of the same rule. SCHEMA.md declares it REAL at the column and says why.",
+        ["fill.spread_bps"] =
+            "the same figure carried onto the fill it was charged on, so a fill says what it paid and "
+            + "what that charge was computed from without a join. A ratio and not a money value, on "
+            + "exactly the terms the column it is copied from is exempt.",
+        ["position.fraction_at_entry"] =
+            "the position's value as a fraction of the account, which is a ratio. The value itself is "
+            + "TEXT in the same row and the account is a constant, so the decimal quantities stay "
+            + "decimal and only the derived fraction is a double.",
+        ["position.realised_r"] =
+            "a result in R, being money divided by the money that was at risk. The two quantities it "
+            + "is computed from are TEXT in the same row. It is the figure the whole lab is scored "
+            + "on, and it is a ratio rather than an amount.",
     };
 
     private readonly ITestOutputHelper _output;
@@ -77,6 +89,15 @@ public sealed partial class PriceStorageFormCheck
     private static readonly string[] Constraints =
         ["PRIMARY", "FOREIGN", "UNIQUE", "CHECK", "CONSTRAINT"];
 
+    /// <summary>A line comment, which is stripped before anything is matched.</summary>
+    [GeneratedRegex(@"--[^\n]*", RegexOptions.CultureInvariant)]
+    private static partial Regex LineComment();
+
+    /// <summary>The keyword itself, counted so a table the parser could not read is visible.</summary>
+    [GeneratedRegex(@"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?<table>[A-Za-z_][A-Za-z0-9_]*)",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex CreateTableKeyword();
+
     [Fact]
     [Trait("check", "price-storage-form")]
     public void No_migration_declares_a_column_with_real_affinity()
@@ -87,15 +108,36 @@ public sealed partial class PriceStorageFormCheck
         string[] files = [.. Directory.EnumerateFiles(migrations, "*.sql").Order(StringComparer.Ordinal)];
 
         var offenders = new List<string>();
+        var unread = new List<string>();
         int tables = 0;
         int columns = 0;
 
         foreach (string file in files)
         {
-            string sql = RepositoryLayout.Read(file);
+            // Comments are stripped before anything is matched, and that is not tidiness.
+            // `CreateTable` bounds a table body with `[^;]*`, so one semicolon inside a comment in
+            // the middle of a column list makes the whole table unmatchable: the pattern needs a
+            // closing paren immediately before a semicolon and there is none before the comment's,
+            // so the engine gives up on that table and moves to the next. It found this file's next
+            // table, reported one offender instead of three, and stayed green on the two it never
+            // read. Found at 4.7 by a `position` table whose comment said "says why; a filled one".
+            string sql = LineComment().Replace(RepositoryLayout.Read(file), string.Empty);
+
+            // Every table the keyword appears for, so a table the body pattern cannot read is a
+            // failure rather than a silence. The count is what makes this check's own scope
+            // assertable: a parser that stops matching narrows to nothing and says nothing.
+            var declared = new List<string>();
+
+            foreach (Match keyword in CreateTableKeyword().Matches(sql))
+            {
+                declared.Add(keyword.Groups["table"].Value);
+            }
+
+            var read = new List<string>();
 
             foreach (Match table in CreateTable().Matches(sql))
             {
+                read.Add(table.Groups["table"].Value);
                 tables++;
                 string name = table.Groups["table"].Value;
 
@@ -135,6 +177,11 @@ public sealed partial class PriceStorageFormCheck
 
                     offenders.Add($"{RepositoryLayout.Relative(file)}: {key} is declared {type}, which has REAL affinity.");
                 }
+            }
+
+            foreach (string missed in declared.Except(read, StringComparer.Ordinal))
+            {
+                unread.Add($"{RepositoryLayout.Relative(file)}: {missed}");
             }
         }
 
@@ -193,6 +240,14 @@ public sealed partial class PriceStorageFormCheck
         }
 
         coverage.Report();
+
+        // Before the offenders, because a table nobody read produces no offender and a green over it
+        // is exactly the shape this corpus keeps finding. Reconciled per file against the keyword
+        // rather than against a number, so the message names the table.
+        Assert.True(unread.Count == 0,
+            $"{unread.Count} table(s) appear in a migration and could not be read by this check, so no "
+            + "column of theirs was examined and every one of them passed by not being looked at:\n  "
+            + string.Join("\n  ", unread));
 
         // Stated in advance. A regex that stopped matching would find no columns and pass, which
         // is the shape of failure this whole set of checks exists to refuse.

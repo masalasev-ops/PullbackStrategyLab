@@ -44,7 +44,8 @@ public sealed class SpreadSnapshotReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT pass, bid, ask, spread_bps, quote_lag_seconds, absent_because, snapshot_ts
+            SELECT pass, bid, ask, spread_bps, quote_lag_seconds, absent_because, snapshot_ts,
+                   bid_ts, ask_ts
               FROM spread_snapshot s
              WHERE s.ticker = @ticker
                AND s.session_date = @session_date
@@ -74,7 +75,9 @@ public sealed class SpreadSnapshotReader
                 reader.IsDBNull(3) ? null : reader.GetDouble(3),
                 reader.IsDBNull(4) ? null : reader.GetInt32(4),
                 reader.IsDBNull(5) ? null : reader.GetString(5),
-                StoreText.StorageTextToTimestamp(reader.GetString(6))));
+                StoreText.StorageTextToTimestamp(reader.GetString(6)),
+                reader.IsDBNull(7) ? null : StoreText.StorageTextToTimestamp(reader.GetString(7)),
+                reader.IsDBNull(8) ? null : StoreText.StorageTextToTimestamp(reader.GetString(8))));
         }
 
         return new SessionSpread(ticker, sessionDate, samples, PassesOf(connection, sessionDate, asOf));
@@ -184,7 +187,15 @@ public sealed record SessionSpread(
         [.. Samples.Where(s => s.SpreadBasisPoints is not null)];
 }
 
-/// <summary>One pass's observation of one name's book.</summary>
+/// <summary>
+/// One pass's observation of one name's book.
+///
+/// <b><see cref="BidAt"/> and <see cref="AskAt"/> are the vendor's own two stamps and they differ.</b>
+/// On the capture of 2026-09-01 the two sides of AAPL's book were 32 seconds apart, so
+/// <see cref="SpreadBasisPoints"/> is a figure taken across two instants and need not be a width that
+/// existed at either of them. The store keeps both stamps for that reason and the fill model records
+/// the gap between them on every fill it charges.
+/// </summary>
 public sealed record SpreadSample(
     string Pass,
     decimal? Bid,
@@ -192,4 +203,20 @@ public sealed record SpreadSample(
     double? SpreadBasisPoints,
     int? QuoteLagSeconds,
     string? AbsentBecause,
-    DateTimeOffset SnapshotAt);
+    DateTimeOffset SnapshotAt,
+    DateTimeOffset? BidAt = null,
+    DateTimeOffset? AskAt = null)
+{
+    /// <summary>
+    /// How many seconds apart the vendor stamped the two sides, or null where a side is absent.
+    ///
+    /// Unsigned, because which side is older is a fact about one response and the question a fill
+    /// records is how far apart they were. Nothing acts on it: it is recorded on the fill so a later
+    /// session can exclude a straddled quote from a measurement, on the same terms the capture
+    /// already records the vendor's delay rather than correcting for it
+    /// (see: A straddled quote is charged and the straddle is recorded, never widened or refused).
+    /// </summary>
+    public int? StraddleSeconds => BidAt is null || AskAt is null
+        ? null
+        : (int)Math.Round(Math.Abs((AskAt.Value - BidAt.Value).TotalSeconds));
+}

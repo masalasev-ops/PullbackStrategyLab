@@ -87,6 +87,8 @@ public sealed class PointInTimeCheck
             // compares planned against executed, so a replay standing at an old date that saw an
             // order written after it would audit a position the night could not have held.
             ["trade_order"] = "observed_at",
+            ["position"] = "observed_at",
+            ["fill"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -168,6 +170,10 @@ public sealed class PointInTimeCheck
                 "observed_at is when one evening's plan stage ran and what it refused, which is operational "
                 + "on the same terms as vwap_run above. Nothing computes a figure about the market from it: "
                 + "the plans it counts are in trade_plan, which is stamped and bounded.",
+            ["fill_run"] =
+                "what one evening's fill stage priced and what it could not, on the same terms as "
+                + "order_run below. The positions it counts are in position, which carries two stamps "
+                + "and is bounded on both.",
             ["order_run"] =
                 "observed_at is when one evening's gate ran and what it refused, which is operational on the "
                 + "same terms as trigger_run below. Nothing computes a figure about the market from it: the "

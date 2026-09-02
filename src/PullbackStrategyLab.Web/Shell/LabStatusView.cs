@@ -119,12 +119,18 @@ public sealed record LabStatusView(
     /// the same test.
     /// </summary>
     public static IReadOnlyDictionary<string, string> AwaitedBy { get; } =
-        new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["Open"] = "4.7",
-            ["Shorts"] = "4.7",
-            ["Risk at stake"] = "4.7",
-        };
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// What a field shows when the read surface answered and the figure is absent.
+    ///
+    /// <b>Not a checkpoint, because every field of this band has a source as of 4.7.</b> Open,
+    /// shorts and risk at stake waited on `position` from 4.1 and read it from 4.7, which empties
+    /// <see cref="AwaitedBy"/> entirely. A null is now a store with no session in it rather than a
+    /// component nobody has built, and rendering it as a nought would say the lab is flat when what
+    /// is true is that it has never run.
+    /// </summary>
+    public const string Unanswered = "not answered";
 
     /// <summary>
     /// Positions open, or the checkpoint that will give the field a source.
@@ -134,20 +140,17 @@ public sealed record LabStatusView(
     /// says the lab holds nothing tonight and the second says the lab cannot hold anything at all.
     /// The `position` table arrives at 4.7 and until then this field has no source, so it says so.
     ///
-    /// <b>And the cap it will be shown against is not rendered either, deliberately.</b> Four
-    /// positions, two shorts and 3% are authored values stated in two of ARCHITECTURE's tables and
-    /// held by no code constant anywhere; 4.6 is the checkpoint that pins them, against RiskGate,
-    /// which is the component that applies them. Writing the first copy of a cap into a view would
-    /// put a limit's only code home in the display layer, where the one that drifts is the one
-    /// nothing enforces. The band shows the figure and its cap together from 4.7, or neither.
+    /// <b>The `position` table arrived at 4.7 and this field reads it.</b> It said "not until 4.7"
+    /// from 4.1, which was honest while nothing could hold a position and stopped being honest the
+    /// moment something could. The band's own guard caught it on the checkpoint's first run of
+    /// `tools/ci.ps1`, which is what that guard was written for.
     /// </summary>
-    public string PositionsText => PositionsOpen?.ToString(CultureInfo.InvariantCulture)
-        ?? Awaiting(AwaitedBy["Open"]);
+    public string PositionsText => PositionsOpen?.ToString(CultureInfo.InvariantCulture) ?? Unanswered;
 
-    public string ShortPositionsText => ShortPositionsOpen?.ToString(CultureInfo.InvariantCulture)
-        ?? Awaiting(AwaitedBy["Shorts"]);
+    public string ShortPositionsText =>
+        ShortPositionsOpen?.ToString(CultureInfo.InvariantCulture) ?? Unanswered;
 
     public string RiskText => RiskAtStake is decimal risk
         ? risk.ToString("0.00'%'", CultureInfo.InvariantCulture)
-        : Awaiting(AwaitedBy["Risk at stake"]);
+        : Unanswered;
 }

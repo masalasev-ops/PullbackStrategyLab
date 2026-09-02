@@ -13,11 +13,25 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// The two volume-weighted average prices, computed over the minutes the fetch stored an hour
 /// earlier and spending no vendor call of its own.
 ///
-/// <b>The session average annotates every stored minute, and it is a series rather than a
-/// figure.</b> `vwap_session` holds the average as it stood at the end of that minute, so a resolver
-/// standing at 10:47 reads what the session's average was at 10:47 rather than what it closed at.
-/// One closing figure per session would be a number the session had not reached yet at every minute
-/// but the last, which is the point-in-time fault written into a column.
+/// <b>The session average is no longer stored, and 4.7 is where that was decided.</b> It was written
+/// onto every stored minute from 4.4 and the obligation raised at the same checkpoint said a reader
+/// had to be named or the column had to stop being written. 4.7 was the checkpoint it fell due at,
+/// on the reasoning that the fill model was its most likely reader, and the fill model does not read
+/// it: a fill is the resting price plus the captured spread, and no rule in this lab compares a
+/// price against a session average. Nothing else in the corpus reads it either, through phase 6.
+///
+/// <b>It stopped rather than being kept, because it is derivable and the anchored average is not.</b>
+/// A running session average is a sum over the session's own stored minutes in order, so anything
+/// that wants one computes it from `intraday_bar` through <see cref="VolumeWeightedAverage.Running"/>
+/// at the moment it is wanted. That is the ruling this stage already took over the day's high and
+/// low and WatchlistPublisher took over a watchlist table. The anchored average is a different case
+/// and stays: it needs a swing nothing else resolves, and it is not recoverable from one session.
+/// see: The session average is derived when it is wanted and is not stored on a bar
+///
+/// <b>What it bought is the last exception to a hard rule.</b> `intraday_bar.vwap_session` was the
+/// one declared update against a bar table anywhere in this store, and `bar-append-only` carried it
+/// by table, column and component. With the write gone the rule reads as it is written, with nothing
+/// after the comma.
 ///
 /// <b>The anchored average is the third clause of `reached-ceiling`</b>, deferred since 2.7 and the
 /// disjunct 423 of the 432 short calibration rows reaching that gate are refused for want of. It is
@@ -122,8 +136,7 @@ public sealed class VwapEngine
                 ? $"the names flagged on the evening of {asOf:yyyy-MM-dd}"
                 : "no prior session has flagged setups, so nothing was priced"));
         Console.WriteLine(
-            $"{Name}: {result.Names} name(s), {result.SessionsPriced} with a session average, "
-            + $"{result.BarsAnnotated} minute(s) annotated");
+            $"{Name}: {result.Names} flagged name(s) whose minutes the fetch bought");
         Console.WriteLine(
             $"{Name}: {result.AnchorsAsked} anchor(s) asked, {result.AnchorsPriced} priced, "
             + $"{result.AnchorsAsked - result.AnchorsPriced} out of the store's reach");
@@ -153,36 +166,25 @@ public sealed class VwapEngine
         // see: Minute bars are fetched for the session a plan was live in, never the session it was written on
         if (setupAsOf is null)
         {
-            RecordRun(connection, sessionDate, sessionDate, 0, 0, 0, 0, 0, RunOutcome.Clean, NoPriorSession, observedAt);
+            RecordRun(connection, sessionDate, sessionDate, 0, 0, 0, RunOutcome.Clean, NoPriorSession, observedAt);
             RunSummary nothing = run.Complete(RunOutcome.Clean);
 
             return new VwapRunResult(
-                sessionDate, null, 0, 0, 0, 0, 0, nothing.RowsWritten, RunOutcome.Clean, NoPriorSession);
+                sessionDate, null, 0, 0, 0, nothing.RowsWritten, RunOutcome.Clean, NoPriorSession);
         }
 
         IntradayFetcher.Pairing pairing = IntradayFetcher.Pairing.Of(sessionDate, setupAsOf.Value);
 
-        // Every flagged name, which is the population whose minutes the fetch bought. The capped set
-        // is narrower and is the spread capture's population; annotating only those would leave the
-        // stored minutes of a name a phase-5 version selects without an average.
+        // Every flagged name, which is the population whose minutes the fetch bought. It is counted
+        // and no longer walked: the session average this stage used to write onto each of their
+        // minutes stopped being written at 4.7, and the anchors below are drawn from the short
+        // setups rather than from this list.
         IReadOnlyList<string> names = IntradayFetcher.FlaggedNames(connection, pairing.SetupAsOf);
 
-        int priced = 0;
-        int annotated = 0;
         int asked = 0;
         int anchored = 0;
 
         using SqliteTransaction transaction = connection.BeginTransaction();
-
-        foreach (string ticker in names)
-        {
-            annotated += AnnotateSession(connection, transaction, ticker, sessionDate, observedAt, out bool any);
-
-            if (any)
-            {
-                priced++;
-            }
-        }
 
         foreach (ShortSetupRow row in ShortSetups(connection, transaction, pairing.SetupAsOf))
         {
@@ -203,77 +205,12 @@ public sealed class VwapEngine
         // which is a signal that means nothing.
         RunSummary summary = run.Complete(RunOutcome.Clean);
         RecordRun(
-            connection, sessionDate, pairing.SetupAsOf, names.Count, priced, annotated, asked, anchored,
+            connection, sessionDate, pairing.SetupAsOf, names.Count, asked, anchored,
             RunOutcome.Clean, null, observedAt);
 
         return new VwapRunResult(
-            sessionDate, pairing.SetupAsOf, names.Count, priced, annotated, asked, anchored,
+            sessionDate, pairing.SetupAsOf, names.Count, asked, anchored,
             summary.RowsWritten, RunOutcome.Clean, null);
-    }
-
-    /// <summary>
-    /// Write the running session average onto each of one name's stored minutes for one session.
-    ///
-    /// <b>The one declared update against a bar table, and it touches one column.</b> SCHEMA
-    /// declares `Update VwapEngine (vwap_session only)` and `bar-append-only` carries the exception
-    /// by table, column and component, read from the statement's own SET clause. A vendor correction
-    /// still arrives as a new row and nothing here rewrites a price.
-    ///
-    /// <b>Regular-session minutes only, which is what makes it a session average.</b> The store
-    /// holds extended-hours minutes deliberately and 59% of a captured day is outside the regular
-    /// session, so an average over everything would be an average over a different day from the one
-    /// every other figure in the lab describes. Extended minutes keep a null here rather than a
-    /// number computed over a population nobody named.
-    /// </summary>
-    private static int AnnotateSession(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        string ticker,
-        DateOnly sessionDate,
-        DateTimeOffset observedAt,
-        out bool anyPriced)
-    {
-        IReadOnlyList<StoredIntradayBar> bars = IntradayBarReader.Read(
-            connection, ticker, sessionDate, sessionDate, regularOnly: true);
-
-        anyPriced = false;
-
-        if (bars.Count == 0)
-        {
-            return 0;
-        }
-
-        IReadOnlyList<decimal?> running = VolumeWeightedAverage.Running(
-            [.. bars.Select(b => new VolumeWeightedAverage.Minute(b.OpenedAt, b.High, b.Low, b.Close, b.Volume))]);
-
-        int written = 0;
-
-        for (int i = 0; i < bars.Count; i++)
-        {
-            if (running[i] is not decimal value)
-            {
-                continue;
-            }
-
-            using SqliteCommand command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = """
-                UPDATE intraday_bar
-                   SET vwap_session = @vwap_session
-                 WHERE ticker = @ticker
-                   AND bar_ts = @bar_ts
-                   AND observed_at = @observed_at;
-                """;
-            command.Parameters.AddWithValue("@vwap_session", StoreText.PriceToStorageText(value));
-            command.Parameters.AddWithValue("@ticker", bars[i].Ticker);
-            command.Parameters.AddWithValue("@bar_ts", StoreText.TimestampToStorageText(bars[i].OpenedAt));
-            command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(bars[i].ObservedAt));
-            written += command.ExecuteNonQuery();
-        }
-
-        anyPriced = written > 0;
-        _ = observedAt;
-        return written;
     }
 
     /// <summary>
@@ -479,8 +416,6 @@ public sealed class VwapEngine
         DateOnly sessionDate,
         DateOnly setupAsOf,
         int names,
-        int sessionsPriced,
-        int barsAnnotated,
         int anchorsAsked,
         int anchorsPriced,
         RunOutcome outcome,
@@ -490,16 +425,14 @@ public sealed class VwapEngine
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO vwap_run
-                (session_date, setup_as_of, names, sessions_priced, bars_annotated,
+                (session_date, setup_as_of, names,
                  anchors_asked, anchors_priced, outcome, stopped_because, observed_at)
-            VALUES (@session_date, @setup_as_of, @names, @sessions_priced, @bars_annotated,
+            VALUES (@session_date, @setup_as_of, @names,
                     @anchors_asked, @anchors_priced, @outcome, @stopped_because, @observed_at);
             """;
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue("@setup_as_of", StoreText.DateToStorageText(setupAsOf));
         command.Parameters.AddWithValue("@names", names);
-        command.Parameters.AddWithValue("@sessions_priced", sessionsPriced);
-        command.Parameters.AddWithValue("@bars_annotated", barsAnnotated);
         command.Parameters.AddWithValue("@anchors_asked", anchorsAsked);
         command.Parameters.AddWithValue("@anchors_priced", anchorsPriced);
         command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
@@ -516,8 +449,6 @@ public sealed record VwapRunResult(
     DateOnly SessionDate,
     DateOnly? SetupAsOf,
     int Names,
-    int SessionsPriced,
-    int BarsAnnotated,
     int AnchorsAsked,
     int AnchorsPriced,
     int RowsWritten,

@@ -276,10 +276,10 @@ public sealed class IntradayFetcher
         command.CommandText = """
             INSERT INTO intraday_bar (
                 ticker, bar_ts, session_date, interval_code, session_window, price_basis,
-                open, high, low, close, volume, vwap_session, observed_at)
+                open, high, low, close, volume, observed_at)
             VALUES (
                 @ticker, @bar_ts, @session_date, @interval_code, @session_window, @price_basis,
-                @open, @high, @low, @close, @volume, NULL, @observed_at)
+                @open, @high, @low, @close, @volume, @observed_at)
             ON CONFLICT (ticker, bar_ts, observed_at) DO NOTHING;
             """;
         command.Parameters.AddWithValue("@ticker", bar.Ticker);

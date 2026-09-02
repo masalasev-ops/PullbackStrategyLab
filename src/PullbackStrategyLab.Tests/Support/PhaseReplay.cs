@@ -572,8 +572,6 @@ public sealed class PhaseReplay : IDisposable
 
         stages.Add(new StageRun(VwapEngine.Name, 0, vwap.RowsWritten, vwap.Outcome.ToStorageText()));
         Record("vwap.names", vwap.Names);
-        Record("vwap.sessionsPriced", vwap.SessionsPriced);
-        Record("vwap.barsAnnotated", vwap.BarsAnnotated);
         Record("vwap.anchorsAsked", vwap.AnchorsAsked);
         Record("vwap.anchorsPriced", vwap.AnchorsPriced);
         Record("vwap.pairedWithPriorSession", vwap.SetupAsOf is null ? 0 : 1);
@@ -615,6 +613,30 @@ public sealed class PhaseReplay : IDisposable
         Record("orders.placed", orders.Placed);
         Record("orders.reduced", orders.Reduced);
         Record("orders.blocked", orders.Blocked);
+
+        // 15f. The fills, at 21:15, over the orders the gate placed and the positions carried in.
+        //
+        //      <b>Nothing was placed and nothing was held, so the night prices nothing and says so.</b>
+        //      The two book figures are the ones worth freezing hardest: RiskGate reads them from
+        //      4.7, so a session that opened a position and did not close it is a session the next
+        //      morning's fifth trigger is refused on, and both would move here first. `unfilled` is
+        //      the other one: the fixture's own capture holds a name the vendor quoted with one side,
+        //      so the day this fixture grows an order on such a name it becomes a real count with no
+        //      edit to this file.
+        //
+        //      The session it walks was sampled once rather than twice, which is the degraded state
+        //      the reader tells apart from unsampled, so the stage prices rather than refusing.
+        FillRunResult fills = new PaperBroker(_connections, Logger(), _clock, _options).Fill(AsOf);
+
+        stages.Add(new StageRun(PaperBroker.Name, 0, fills.RowsWritten, fills.Outcome.ToStorageText()));
+        Record("fills.openAtStart", fills.OpenAtStart);
+        Record("fills.ordersPlaced", fills.OrdersPlaced);
+        Record("fills.entriesFilled", fills.EntriesFilled);
+        Record("fills.entriesUnfilled", fills.EntriesUnfilled);
+        Record("fills.exitsFilled", fills.ExitsFilled);
+        Record("fills.gapped", fills.Gapped);
+        Record("fills.slipped", fills.Slipped);
+        Record("fills.openAtEnd", fills.OpenAtEnd);
 
         // The seam, read off the rows the detectors wrote rather than off the constant that names
         // it. Every short row on the fixture carries a `reached-ceiling` verdict, and which clause

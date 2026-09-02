@@ -23,12 +23,19 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// nightly cap and how the screen sorts; it governs no fill.
 /// see: Plans are resting orders and fills go in time order when the caps bind
 ///
-/// <b>The book starts empty every session, and that is a limitation rather than a rule.</b> The count
-/// caps ask how many positions are open, and a position is PaperBroker's row, which arrives at 4.7.
-/// Until then the only thing this component can count is what it has placed inside the session it is
-/// walking, so a position held overnight occupies no slot the next morning. It is stated here and on
-/// the row rather than left to be discovered from a cap that never binds, and it makes the caps
-/// looser than the design rather than tighter, which is the direction that flatters.
+/// <b>The book comes in from the positions the lab is holding, and from 4.7 it is read rather than
+/// assumed empty.</b> Until PaperBroker existed the only thing this component could count was what
+/// it had placed inside the session it was walking, so a position held overnight occupied no slot
+/// the next morning and the caps were looser than the design rather than tighter. It now opens on
+/// the positions still held coming into the session and adds to that as it goes.
+///
+/// <b>What remains approximate is intraday and it is the other direction of error.</b> This runs at
+/// 21:10 and PaperBroker at 21:15, so nothing here can know that a position opened at 09:31 was
+/// stopped out at 09:45: a position placed inside the session occupies its slot for the rest of that
+/// session. The caps are therefore tighter than the design within a day and exact across days, where
+/// before they were looser on both counts. Two stages cannot be merged to fix it without giving
+/// orders a second writer, which costs more than the approximation does.
+/// see: RiskGate is the sole writer of orders, for both directions and every version
 ///
 /// <b>Two of the six limits are not applied here and both are named.</b> Risk per trade is what the
 /// plan was sized from, so it is asserted rather than enforced: a plan risking more than the budget
@@ -125,7 +132,7 @@ public sealed class RiskGate
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         var tally = new Tally();
-        OpenBook book = OpenBook.Empty;
+        OpenBook book = BookComingInto(connection, sessionDate);
         string? stoppedBecause = null;
 
         using SqliteTransaction transaction = connection.BeginTransaction();
@@ -179,6 +186,27 @@ public sealed class RiskGate
 
         return new OrderRunResult(
             sessionDate, triggers.Length, tally, summary.RowsWritten, outcome, stoppedBecause);
+    }
+
+    /// <summary>
+    /// What the lab is already holding when this session opens.
+    ///
+    /// Read from <c>position</c> rather than accumulated, which is what 4.7 changed. The money at
+    /// stake is each position's realised risk, being its share count against the distance from the
+    /// price it actually filled at to the give-up point the plan named, because that is what would
+    /// be lost rather than what was intended to be.
+    /// </summary>
+    private static OpenBook BookComingInto(SqliteConnection connection, DateOnly sessionDate)
+    {
+        OpenBook book = OpenBook.Empty;
+
+        foreach (StoredPosition position in
+                 PositionReader.OpenComingInto(connection, sessionDate, sessionDate))
+        {
+            book = book.With(position.Direction, position.RiskRealised ?? 0m);
+        }
+
+        return book;
     }
 
     private static void Insert(

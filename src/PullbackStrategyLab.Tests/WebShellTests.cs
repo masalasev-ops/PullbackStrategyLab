@@ -202,9 +202,11 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         Assert.Contains("clean", html, StringComparison.Ordinal);
         Assert.Contains("690 of 5,000", html, StringComparison.Ordinal);
 
-        // The position fields do not exist before 4.7 and say so, never as a zero: a zero reads as
-        // "none open" where the truth is "positions are not a thing yet".
-        Assert.Contains("not until 4.7", html, StringComparison.Ordinal);
+        // The position fields read the store from 4.7 and no longer defer to it. The stub answers
+        // with no figures, which is the store-with-no-session state rather than a component that does
+        // not exist, and it renders as neither a checkpoint nor a nought.
+        Assert.DoesNotContain("not until 4.7", html, StringComparison.Ordinal);
+        Assert.Contains("not answered", html, StringComparison.Ordinal);
 
         // And the mood no longer does. It said "not until 2.5" through the whole of phase 3 with
         // RegimeLabeler labelling every night, which is a deferral outliving its own due point on a
@@ -274,14 +276,16 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     public void A_band_field_with_no_source_is_told_apart_from_one_whose_answer_is_nought()
     {
         // The conflation this corpus keeps finding, on the one surface where it is invisible to
-        // every check that reads a store: a nought positions-open is a fact about the account and a
-        // component that does not exist is not, and both would render as "0".
+        // every check that reads a store: a nought positions-open is a fact about the account and an
+        // absent answer is not, and both would render as "0". The absent case was "the component
+        // does not exist" until 4.7 and is "the store holds no session" after it; what has to hold
+        // either way is that the two are not the same text.
         LabStatusView notBuilt = Band(positionsOpen: null, shortPositionsOpen: null, riskAtStake: null);
         LabStatusView genuinelyEmpty = Band(positionsOpen: 0, shortPositionsOpen: 0, riskAtStake: 0m);
 
-        Assert.Equal("not until 4.7", notBuilt.PositionsText);
-        Assert.Equal("not until 4.7", notBuilt.ShortPositionsText);
-        Assert.Equal("not until 4.7", notBuilt.RiskText);
+        Assert.Equal(LabStatusView.Unanswered, notBuilt.PositionsText);
+        Assert.Equal(LabStatusView.Unanswered, notBuilt.ShortPositionsText);
+        Assert.Equal(LabStatusView.Unanswered, notBuilt.RiskText);
 
         Assert.Equal("0", genuinelyEmpty.PositionsText);
         Assert.Equal("0", genuinelyEmpty.ShortPositionsText);

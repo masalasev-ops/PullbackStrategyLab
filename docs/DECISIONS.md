@@ -451,6 +451,106 @@ The loss is explicitly never clamped, so the gap is taken as it happened. Taking
 
 This applies to an exit as much as to an entry, and it is the one exception to the rule above.
 
+**A fill is charged the widest usable quote of its session, not the nearest one**
+Of the two passes a session gets, the fill model charges the one with the wider spread, whatever
+minute the fill happened in. A session with one usable pass is charged that one.
+
+**Three reasons, and the first is the fill model's own stance.** Pessimism on purpose is what every
+other rule in the model is chosen for, and being too pessimistic understates edge, which is the safe
+direction for a lab asking whether edge exists at all.
+
+**The second is that it removes the within-day question entirely.** The passes are at 10:15 and 15:45
+and a fill can happen at any minute, so a rule preferring the nearer sample would charge a fill at
+09:31 from a quote taken three quarters of an hour later, which is a book that morning had not
+reached. Choosing by width does not depend on when the fill was, so there is no reading of it under
+which a fill is priced from the future.
+
+**The third is that a nearest-in-time rule would claim a precision the data does not have.** The feed
+is delayed by about fifteen minutes by design, and the two sides of one quote are stamped seconds
+apart. A sample that is nearer in clock time is not thereby a better estimate of the book at the
+fill, and treating it as one would put a false precision on top of two stated approximations.
+
+A tie is broken by pass name, on the same grounds a tie in trigger time is broken by ticker: an
+answer that depends on the order a query returned is one nobody can reproduce
+(see: A tie in trigger time is broken by ticker, and never by rank).
+
+**A straddled quote is charged and the straddle is recorded, never widened or refused**
+The vendor stamps a quote's bid and its ask separately. A fill is charged the stored spread whatever
+the gap between those two stamps, and the gap in seconds is written onto the fill beside the figure
+it was charged.
+
+**The alternatives both require authoring a number this corpus does not have.** Refusing a quote
+whose sides are far enough apart to describe different markets needs a threshold, and widening one
+needs a factor. The corpus holds exactly one measurement of a straddle, being 32 seconds on AAPL on
+the capture of 2026-09-01, one name on one response. A threshold set from that is a number invented
+at the consumer and then relied on as though it had been measured.
+
+**Recording it is what the store already does with the vendor's delay**, which is the same shape of
+fact: the feed is delayed, the lag is stored per row, and nothing subtracts a constant, because
+subtracting one would make the assumption invisible and leave a later reader unable to tell a normal
+sample from a stale one (see: A delayed quote records its own lag rather than being corrected for it).
+The straddle is stored per fill for the same reason, and a later session that accumulates enough of
+them can set the threshold from data rather than from a guess.
+
+**What this costs is stated rather than left implied.** A stored `spread_bps` need not be a width that
+existed at either stamp, and on a name whose book moved between them it can be wider or narrower than
+anything a trader could have crossed. Charging a fraction of it as though it existed at an instant is
+an approximation taken deliberately, and it is the one 4.3 handed forward to be answered here.
+
+**A fill with no usable quote for its name is refused and recorded, never charged nought**
+Where a session ran its passes and quoted a name no two-sided book, the placed order is not filled.
+It is written as a position row with the status `unfilled` and the reason, and no position is opened.
+
+**Charging nought is the failure this refusal exists to prevent.** A spread of nought is not a missing
+spread: it is a free entry, and it clears every threshold written as a maximum. A lab that filled such
+an order at the trigger exactly would produce an encouraging figure computed over the names its own
+capture could not price (see: A gate handed an absent or degenerate quantity fails rather than
+passing).
+
+**Charging a figure taken from other names is worse, because it looks like an answer.** A median or a
+sector average would be a spread nobody measured wearing the authority of one that was, and nothing
+downstream could tell the two apart from the row.
+
+**The refusal is a row rather than an absence**, on the terms a blocked order already sits on. A
+morning on which two orders could not be priced is evidence about the capture, and it is
+indistinguishable from a quiet morning unless the refusals are stored.
+
+**What it costs today is small and it grows at 5.1.** Plans are built for capped candidates only, and
+the spread capture takes the capped sixty, so the only names this can refuse today are ones the vendor
+quoted with one side. From 5.1 a version can select outside the cap, and a name outside it has minutes
+bought and no spread at all, so every such order would be refused. That is the choice this decision
+puts in front of 5.1: widen the capture to the flagged population, or accept that a version selecting
+outside the cap trades nothing. It is stated here rather than discovered there.
+
+**The session average is derived when it is wanted and is not stored on a bar**
+`intraday_bar.vwap_session` was written onto every stored minute from 4.4 and stopped being written at
+4.7. Anything wanting a running session average computes it from the session's own stored minutes at
+the moment it wants one. The anchored average is unaffected and stays a stored table.
+
+**No reader was ever named and none exists.** 4.4 raised the obligation in the same entry that built
+the column: either a reader is named or the column stops being written. It fell due at 4.7 on the
+reasoning that the fill model was its most likely reader, and the fill model does not read it. A fill
+is the resting price plus the captured spread, no rule in this lab compares a price against a session
+average, and nothing through phase 6 consumes it.
+
+**It is derivable, which is what separates it from the anchored average.** A running session average
+is a volume-weighted sum over one session's minutes in order, so it needs nothing the store does not
+already hold. That is the ruling VwapEngine already took over the day's high and low and
+WatchlistPublisher took over a watchlist table: a stored figure derivable from rows the store holds is
+a second statement of those rows that can disagree with them. The anchored average needs a swing
+nothing else resolves and is not recoverable from one session, so it stays.
+
+**What stopping it buys is the last exception to a hard rule.** This was the one declared update
+against a bar table anywhere in the store, and `bar-append-only` carried it by table, by column and by
+component. With the write gone, nothing in the shipped source updates a bar table at all, and the rule
+reads as it is written with nothing after the comma.
+
+**The column is not dropped and the values already written stay.** Dropping it would delete what past
+nights wrote from the one kind of table this store never edits, in order to tidy a document. It is
+recorded in SCHEMA as written from 4.4 and not written from 4.7. The two `vwap_run` columns that
+counted the annotation are dropped by migration 044, because a stage's record reading nought on every
+future night is a stage a later session reads as broken.
+
 **The trigger is touched, not closed through**
 For a long, a minute bar whose high reaches the trigger price. For a short, a minute bar whose low reaches it. No margin.
 
