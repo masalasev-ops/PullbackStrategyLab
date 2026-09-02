@@ -141,6 +141,12 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             ["figures shown are illustrative rather than measured"] =
                 "a caption on a mockup saying its own figures are not real, which is the opposite of a claim that "
                 + "something appears on a live page. Both screen descriptions carry it as of 4.14",
+            ["Every sentence claiming this page shows something is declared"] =
+                "5.5's done condition, which instructs the checkpoint to declare its claims rather than making "
+                + "one. It names no quantity and no page element, so there is nothing a rendered response could "
+                + "be read for, and declaring it would put a claim in the file whose subject is the file. Caught "
+                + "by the reverse read on the pass that wrote it, which is that read working on the session's "
+                + "own prose for the second time after the 4.1 instance recorded above",
             ["It is the page you would show someone"] =
                 "what the scoreboard is for, in a sentence about a person's use of it rather than about its contents",
             ["not in a page somebody looks at"] =

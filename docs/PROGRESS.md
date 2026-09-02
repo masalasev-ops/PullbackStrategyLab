@@ -12600,3 +12600,202 @@ Carried:    **Two raised, none discharged, none repointed.** The two screens tha
 
             **Nothing here moves a floor, raises the out-of-scope ceiling or adds a test.** The count
             stays at 911. This pass commits documents only.
+
+## 4.13 — 2026-09-02 — phase-5-plan-and-questions — the phase 5 build plan, and nine questions given a register before they were asked
+
+Not a checkpoint entry. It records the phase 5 build plan, the nine questions that phase turns on,
+four corpus corrections, one defect found in a check by running it, and the counts every one of those
+moves. No component, no store and no migration. Nothing here is evidence and none of it moves 3.6.
+Written on the terms `3.15 — 2026-09-01` was, which is the pass that planned phase 4.
+
+Built:      **The Phase 5 section of `BUILD_PLAN.md`, rewritten.** Nine rows against seven, the two
+            added being the opening pass at 5.0 and the repair pile at 5.8. Existing identifiers are
+            not renumbered, because 5.1 to 5.5 are cited by number in `architecture-conformance`'s
+            deferred claims, `pinned-constants`'s deferral table, `coverage-reported`'s out-of-scope
+            reason, `Navigation.cs`'s `ArrivesAt` and eleven due points of the obligations table, so
+            5.8 ascends where the build order does not, exactly as 4.14 to 4.18 do. Each row states
+            the population its done condition is verified over and what it settles, where before they
+            were one-line deliverables.
+
+            **5.0 is three parts and each has its own done condition and its own population**, which
+            is the shape the plan was amended into rather than the shape it was drafted in: one done
+            condition over three parts is a done condition narrower than its clause, and that is the
+            most common defect in this corpus by its own account. The order inside it is the
+            argument. **(a) is the thrust-selection measurement and it runs first**, because a
+            measurement that can change what a rule is cannot sit behind the part that defines how a
+            rule is written down; **(b) is the spec pass** and it names what it does not depend on
+            rather than leaving that to be assumed; **(c) is the two acts that apply an operator
+            answer**, and two obligation rows fall due at it, which is what makes it a step rather
+            than a part whose deliverable is applying an answer that may not exist.
+
+            **5.8 is 4.17's shape**, a checkpoint whose deliverable is the pile and nothing else. It
+            takes fourteen of the seventeen due before the freeze and 5.0 takes the other three.
+            It lands after 5.0 so no figure is repaired twice because a decision moved its basis,
+            and before 5.1 because the freeze is what makes a repair permanent.
+
+            **5.6 is parked and 5.7 signs off without it**, on 3.7's reasoning one phase along.
+            Admission waits on 3.6 for the direction concerned and the execution family waits on a
+            second thing: both of its routes are closed rather than pending, since it cannot be
+            screened at 5.3 for a reason that does not expire and cannot accumulate paired trades
+            while the funnel passes a median of nought candidates a night. **No new decision was
+            written for the parking**, because it follows from one that exists and a plan superseding
+            a decision is the thing the conventions forbid
+            (see: 3.6 gates what may be admitted, not what may be built).
+
+Asked:      **Nine questions, and they were given rows in the carried obligations table before they
+            were asked.** Filing each in the home its shape names would have left an unanswered one
+            with no trace anywhere, where phase 4's eleven were OPEN rows first and its sign-off
+            reported which were still open rather than discovering it. An unanswered question is an
+            obligation at the operator by every test that table applies, so the register is the table
+            rather than a new list. Each row carries the mark "Question N of the phase 5 sitting" and
+            the operator's own table carries "Question N." at the head of its cell, so the count is
+            derived from both and reconciled between them.
+
+            **Three are new rows, four are rows split in two, and two were already here.** The split
+            is one rule applied four times: the judgement is the operator's and the act is a build
+            session's, so a question whose answer has to be applied to something leaves a ruling half
+            at the operator and a work half at the checkpoint that applies it. The four are the
+            execution sample raised at 3.0(f), the spread-capture population raised at 4.7, the
+            thrust rule raised at 4.18 and the aftermath window raised at 4.10.
+
+            **Eight were put in the sitting and the ninth was not, and the row says when it is.**
+            Question 6 asks whether the thrust-selection rule moves at all, its shape is measurement
+            then ruling, and the measurement is 5.0(a). The sitting runs before the phase's first
+            commit and 5.0(a) runs after it, so asking at the sitting would send the question out
+            before the figures that answer it exist. It goes with the prediction and the delta per
+            gate in front of the operator. 5.7 reports nine asked across two moments rather than nine
+            asked at once.
+
+            **No OPEN row was written in ARCHITECTURE's authored-parameters table, and the count is
+            nought rather than nine on purpose.** A question takes one only where it resolves to an
+            authored value the table has no value for. Three of the nine are value questions and all
+            three name rows that already carry a value, so a ruling that moves one lands as a dated
+            correction and a re-pin rather than as a reopening. Filing the other six there would gate
+            the completeness sentence on questions the table was never built to hold, and 4.13's
+            assertion that no row is OPEN stands untouched.
+
+            **Questions 2 and 3 ask for one figure between them.** Both raise the 262 minimum and
+            they raise it for different reasons, a studentised bootstrap's wider tails and a
+            dispersion taken over a population the minimum does not govern. Answered separately they
+            yield three figures, being each correction alone and whatever the pair produces together,
+            and nothing said which was being asked for. Each row now cites the other, the question
+            asks for the resulting minimum with both applied, and the answer files as a single dated
+            correction and one re-pin. A minimum moved twice is a generation closed twice.
+
+            **Question 8 moves three rows rather than one and they are named on it.** Whether an
+            execution variant may be admitted at all decides whether 5.2 scores two families or one,
+            whether 5.3's acceptance test is the selection half of a two-half screen or the only
+            screen this lab will ever have, and whether 5.6 is two hand-written versions per family
+            or one. Each of the three rows says what it becomes under each answer.
+
+Corrected:  **The replay-tier table's Execution row said an execution change gets a full replay
+            because minute bars exist for every flagged setup.** True of every night ahead and of no
+            night behind: minutes are captured from 4.2 onward, exist for no night before it, and the
+            vendor sells none. `architecture-conformance` defers that table to 5.3, so as written the
+            claim would have been asserted at the checkpoint that cannot satisfy it. The cell now
+            says forward only with the reason and records that the gap does not expire.
+
+            **The obligation raised at 3.0(f) is written against a figure the corpus no longer
+            states.** ARCHITECTURE states 160 nowhere: a selection variant settles at 262 effective
+            paired setup observations, which is that row's own complaint answered
+            (see: The minimum sample is 262 effective observations, ratified at two points and 90% power).
+            Its live remainder is the execution family's 200 paired trades, stated in rows, and that
+            is what question 4 asks about.
+
+            **Both 262 rows read "3.6, but weakly" and that holds only while nothing has frozen the
+            figure.** From 5.1 the pre-registration writes it into every version and makes it
+            immutable, so a ruling that moves it closes open versions rather than adjusting a panel.
+            Both cells now state the before and the after and cite the freeze at the point of change.
+            A reader who saw "weakly" and deferred past 5.1 would have read the row correctly and
+            been misled by it.
+
+            **The reading beside the operator's table stated a figure nothing could derive.** It said
+            how many of the eleven block scheduled work, and no derivation of that survives contact
+            with the cells: a blocks column naming the row it is a twin of reads exactly like one
+            naming a checkpoint it stops. It now states how many rows are phase 5 questions, which is
+            marked in both tables and reconciled between them. A count nobody can derive is one this
+            corpus declines rather than approximates.
+
+Found:      **Repointing an obligation off a checkpoint that has not landed orphaned every record
+            that named it, and `carried-obligations` is the check it happened to.** The check
+            reconciles due points named in PROGRESS `Carried` blocks against the table, narrowed to
+            the ones whose due point has not landed, because a landed due point is history. Until
+            this pass that was safe by accident: every repointing this corpus had done moved a row
+            off a checkpoint that later landed, and a landed due point is filtered out before it
+            reaches the comparison. Moving seventeen rows off 5.1, which has not landed and will not
+            for a phase, turned seven entries that had correctly written "due at 5.1" into holes in
+            the one check whose entire subject is obligations nobody scheduled.
+
+            **The repair is that a due point the table records moving away from is one the table
+            still has.** The row is there and says where it went; the entry that named the old point
+            is history rather than an omission, and correcting a dated entry is the one thing an
+            append-only record must never do. `DuePoints` now reads both verbs the record moves an
+            obligation with, "Repointed from" and "Moved from", because reading one of the two would
+            be the whitespace-tolerance lesson in a different coat.
+
+            **It is proved over a table written in the test rather than over the live one, and that
+            is the point of it.** Today's corpus holds the case because seventeen rows moved in one
+            pass; the day all seventeen are discharged the live table would exercise nothing and a
+            test reading it would still report as covering the clause. That is the eighth failure
+            shape, a clause applied to a population other than the one it governs. Proved red before
+            green by removing the loop: both the new test and the live check failed, and the tree was
+            restored and `git status` clean before this entry was written.
+
+Projected:  **Four figures, stated before the write rather than after it**, on the 4.14 terms that a
+            direction cannot be wrong and only a number the derivation can contradict is worth
+            stating. The starting point was the table at 43 rows, 17 due before the freeze split
+            twelve and five, and 11 at the operator. The arithmetic put in advance was three new rows
+            and four rows split in two, giving **50, 18, 17 unmoved and twelve and five unmoved**.
+
+            **All four derived as projected**, and the two that were projected not to move are the
+            ones worth having written down. The count due before the freeze looks as though it should
+            fall, because four of its rows stop being a build session's to answer; it does not,
+            because each of the four leaves behind the act of applying the answer, due at the same
+            checkpoint on the same deadline. Had it derived 13 or 15 the finding would have been that
+            the splitting rule reached three rows or five, which is a statement about the rule rather
+            than about the number.
+
+            **The out-of-scope count was read against its ceiling before the commit**, as the phase 4
+            section asks: 23 against a ceiling of 52, unchanged from the 4.13 sign-off, and no raise
+            is needed. A planning pass adds no component, so it retires no catalogue claim either.
+
+Verified:   **`tools/ci.ps1` green at 31 steps and 912 tests**, one more than the 911 the phase signed
+            off at, that one being the permanent proof of the repair above.
+            **`tools/verify-phase.ps1` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of scope,
+            0 unexamined, coverage examined 8,232 with unexamined 0, 1,453 expectations of which 1
+            void, inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0.
+            Coverage rises from the 8,232 against the sign-off's 8,167 because the record and the
+            plan both grew, which is the `carried-obligations` and `stated-counts` scopes doing what
+            they do. **The eight corpus documents carry no mis-decoded UTF-8**, counted at nought in
+            each on the sequence the 3.14 note names.
+
+            **`stated-counts` gains six claims** and `fixtures/checks-baseline.json` gains the six
+            floors under them, registered in the commit that writes the figures rather than after the
+            first one goes stale. They are phase 5's own row count, the questions marked in both
+            tables read two ways, the rows due at 5.8, the rows due at 5.0, and the question rows
+            split in two. Each is one claim, so each floors at 1.
+
+            **One sentence of this pass's own prose was caught by the reverse read of
+            `surface-claims` and exempted with its reason.** 5.5's done condition says every sentence
+            claiming that page shows something is declared in the claim file, which names no quantity
+            and no page element, so there is nothing a rendered response could be read for and
+            declaring it would put a claim in the file whose subject is the file. That is the second
+            time the reverse read has caught the session writing it, after the 4.1 instance.
+
+Carried:    **Three rows raised, four split in two, seventeen repointed, none discharged.** The table
+            reads 50, the operator's list reads 18, the count due before the freeze reads 17 and its
+            split reads twelve and five. Fourteen fall due at 5.8 and three at 5.0, and no row falls
+            due at 5.1, because 5.1's deliverable is the freeze and a repair due before the freeze is
+            due before that done condition rather than alongside it.
+
+            **The eleven that were the operator's are untouched as questions and one of them is
+            re-read.** 2.11 is no longer the only row on that list that stalls a phase: question 1
+            stalls 5.1 outright, since the freeze is that checkpoint's whole deliverable and it says
+            whether the freeze may be taken while the once-only adjustment is unspent, and question 7
+            stalls 5.0(b), since a spec pass cannot settle what one clause means over a
+            representation nobody has chosen. What has not changed is that 2.11's is the only answer
+            that is a threshold.
+
+            **Nothing here raises a new obligation of its own.** The nine rows are the questions,
+            which existed as questions before they existed as rows, and the check repaired above
+            landed with its own test rather than with a row.

@@ -337,6 +337,47 @@ public sealed partial class CarriedObligationsCheck
     }
 
     /// <summary>
+    /// A due point the table records moving away from is one the table still has.
+    ///
+    /// <b>Proved over a table written here rather than over the live one, and that is the whole
+    /// point of it.</b> The clause it exercises was added because seventeen rows moved off 5.1 in
+    /// one pass, and today's corpus therefore holds the case; the day every one of those rows is
+    /// discharged the live table would exercise nothing and this test would still read as covering
+    /// it. That is the eighth failure shape in <c>CLAUDE.md</c>, being a clause applied to a
+    /// population other than the one it governs, and it is the shape that put this clause here.
+    ///
+    /// The second row is the other direction: a row that records no move contributes its own due
+    /// point and no other, so the pattern cannot quietly widen the set to anything it finds.
+    /// </summary>
+    [Fact]
+    public void A_due_point_the_table_records_moving_away_from_is_one_the_table_has()
+    {
+        const string table = """
+            ## Carried obligations
+
+            | Raised | Obligation | Due at |
+            |---|---|---|
+            | 3.5 | A repair to a stored figure. **Repointed from 5.1 to 5.8 on 2026-09-02** | 5.8 |
+            | 2.9 | An act no build session can perform. **Moved from 1.12 to 2.11** at the sign-off | the operator |
+            | 4.4 | A row that has never moved and names 9.9 nowhere | 4.5 |
+            """;
+
+        IReadOnlySet<string> due = DuePoints(table);
+
+        // The three live due points, and the two the table records moving away from.
+        Assert.Contains("5.8", due);
+        Assert.Contains("the operator", due);
+        Assert.Contains("4.5", due);
+        Assert.Contains("5.1", due);
+        Assert.Contains("1.12", due);
+
+        // Not the checkpoint a row was moved *to* in its own prose, which is already its due point,
+        // and nothing else the cells happen to hold.
+        Assert.DoesNotContain("9.9", due);
+        Assert.Equal(5, due.Count);
+    }
+
+    /// <summary>
     /// The parser, proved against every form the record writes a due point in.
     ///
     /// <b>Why this exists separately from the test above.</b> That one proves the reconciliation and
@@ -466,6 +507,24 @@ Carried:    **One new, due before 5.1**: a minimum sample restated. Due **4.1**,
     }
 
     /// <summary>The due points the obligations table declares, which is its last column.</summary>
+    /// <summary>
+    /// The due points the obligations table has: the one each row is due at, and every one a row
+    /// records having been repointed away from.
+    ///
+    /// <b>The second half was missing and it made repointing a row a way to orphan the record.</b>
+    /// A `Carried` block is dated history and says where an obligation stood that day, so a block
+    /// naming 5.1 is reconciled for as long as 5.1 has not landed. Until the phase 5 planning pass
+    /// of 2026-09-02 that was safe by accident: every repointing this corpus had done moved a row
+    /// off a checkpoint that later landed, and a landed due point is filtered out before it reaches
+    /// this set. That pass moved seventeen rows off 5.1, which has not landed and will not for a
+    /// phase, and seven entries that had correctly written "due at 5.1" became holes in a check
+    /// whose entire subject is obligations nobody scheduled.
+    ///
+    /// A due point the table records moving away from is one the table still has. The row is there,
+    /// it says where it went, and the entry that named the old point is history rather than an
+    /// omission. Correcting those entries is the one thing an append-only record must never do.
+    /// see: Nothing in the corpus is struck through
+    /// </summary>
     private static IReadOnlySet<string> DuePoints(string buildPlan)
     {
         var due = new HashSet<string>(StringComparer.Ordinal);
@@ -473,6 +532,11 @@ Carried:    **One new, due before 5.1**: a minimum sample restated. Due **4.1**,
         foreach (IReadOnlyList<string> row in MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations"))
         {
             due.Add(row[^1].Trim());
+
+            foreach (Match moved in RepointedFrom().Matches(string.Join(" ", row)))
+            {
+                due.Add(moved.Groups["from"].Value);
+            }
         }
 
         return due;
@@ -488,4 +552,15 @@ Carried:    **One new, due before 5.1**: a minimum sample restated. Due **4.1**,
         @"\bdue\s+(?:\*\*\s*)?(?:(?:at|before)\s+)?(?:\*\*\s*)?(?<due>\d+\.\d+|the operator|the move)\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex DuePhrase();
+
+    /// <summary>
+    /// The two verbs this corpus moves an obligation with. Both forms are in the table already,
+    /// "Repointed from 4.1 to 6.8 on 2026-08-31" and "Moved from 1.12 to 2.11 at the 1.12 sign-off",
+    /// and reading one of the two would be the whitespace-tolerance lesson in a different coat: a
+    /// pattern that matches most of what the record writes reports a count nobody can tell from the
+    /// whole one.
+    /// </summary>
+    [GeneratedRegex(@"\b(?:Repointed|Moved)\s+from\s+(?:\*\*\s*)?(?<from>\d+\.\d+)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex RepointedFrom();
 }
