@@ -2009,3 +2009,28 @@ Why:  "Weakly" was true only while nothing had frozen the figure, and a reader w
 Was:  The replay-tier table's Execution row read "Full replay, because minute bars exist for every flagged setup".
 Now:  Forward only, with the reason: minutes are captured from the night capture begins at 4.2 and exist for no night before it, the vendor sells none, and the gap does not expire because the hole stays the same size while the screenable set grows at one night a night.
 Why:  The sentence is true of every night ahead and of none behind, and `architecture-conformance` defers this table to 5.3, so as written the claim would have been asserted at the checkpoint that cannot satisfy it. The decision cited already says in its own words that no minute bars exist for any night before capture begins, at any price, which is why 5.3 screens selection variants and never execution ones.
+
+### 2026-09-02 — BUILD_PLAN.md — cites The once-only threshold adjustment is recorded unspent, and the baseline is frozen without it
+Was:  The carried obligations table held fifty rows, eighteen of them at the operator, and the section under it opened "None of the fifty rows above fall due at 4.17". Nine of the eighteen were phase 5 questions and the reading beside the operator's table said so.
+Now:  Forty-three rows, nine at the operator, and one of those nine is a phase 5 question. Six of the eight the sitting asked closed with a named decision, the row raised at 2.11 closed with the first of them, and two were repointed to 5.0.
+Why:  The sitting of 2026-09-02 answered eight of the nine. A discharged obligation is removed from the table in the commit that discharges it, so presence is the record and there is no second flag to keep in step with it.
+
+### 2026-09-02 — BUILD_PLAN.md — cites A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze
+Was:  Seventeen obligations due before the freeze, stated in three places, split twelve and five, with the five naming the spread-capture population among them. The 5.0 row's part (c) carried two work halves and 5.1's row said it waited on question 1.
+Now:  Eighteen in all three places, split fourteen and four. Part (c) carries one work half, part (b) gains the three derivations, and 5.1 says question 1 is answered and names the two derivations as what the freeze still waits on.
+Why:  The two 262 rows moved from the operator into the before-the-freeze set, because what is left of them is a derivation a build session writes rather than a judgement. The spread-capture row left it, because the ruling that the capture does not widen leaves an act that costs no vendor call and belongs at 5.2 with the score. Both figures are derived by `stated-counts` from the table they describe.
+
+### 2026-09-02 — BUILD_PLAN.md — cites No execution variant is admitted in this generation, and the condition that would reopen it is named
+Was:  5.2, 5.3 and 5.6 each said what they would become under each answer to question 8, and 5.6 said the question decided whether it was one family or two.
+Now:  Each states the answer: 5.2 scores one family and names the other's scoring as unreachable, 5.3 is the only screen this lab has rather than the selection half of a two-half screen, and 5.6 is one family.
+Why:  A row that says what it would be under either answer is a row nobody can build. The answer is on the record with the condition that would reopen it, so the three rows state what they are.
+
+### 2026-09-02 — ARCHITECTURE.html — cites A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+Was:  The key entry "One clause", reading "Within a family, a variant differs from the baseline by exactly one clause. The same rule for the same reason."
+Now:  "One threshold", saying a version differs by exactly one gate's threshold with every other gate identical, why the acceptance test is what decides it, that it is the form that is mechanically assertable, and that a structural proposal is out of scope for this generation.
+Why:  Replay reproducing the baseline's own historical selections is meaningful over a threshold change and vacuous over a structural one, so the one check between a proposal and the record says nothing about a clause set that differs. An unassertable admission rule holds only while everyone remembers it.
+
+### 2026-09-02 — ARCHITECTURE.html — cites No execution variant is admitted in this generation, and the condition that would reopen it is named
+Was:  The F2 execution key entry ended at "Requires the minute bars, which is why they are now fetched for every flagged setup rather than only planned ones."
+Now:  The same, followed by the family being defined and admitted nowhere in this generation, both closed routes with their reasons, what admitting one anyway would put in the register, and the two conditions that would reopen it.
+Why:  The family is described as scored and admitted like the other, and neither is possible: no minute bar exists before capture began and no trade has ever fired. A document describing a route the lab does not have is the thing a later session builds against.

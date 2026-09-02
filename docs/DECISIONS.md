@@ -665,6 +665,16 @@ The boundary is in R rather than in per cent, because R is the unit every other 
 
 **The horizon is counted from the store's own bars rather than from a calendar** (see: A session is a date the store holds minutes for, and no calendar is authored here). The setup's own session is in the count, so eleven sessions is ten having passed, and a name whose series the fetch has not reached stays waiting rather than becoming unclassified for a reason that is about the fetch.
 
+**The aftermath is measured from the exit as well as from the close, as two figures and never one**
+Answered by the operator on 2026-09-02, at the phase 5 sitting, closing the row raised at 4.10. The aftermath keeps the window it has, measured over the ten sessions from the trigger, **and gains a second figure measured from the close of the trade**. Neither replaces the other and no figure adds them together.
+
+**They answer two different questions and the gap between them is the thing being judged.** The first asks whether the move the pattern predicted happened, which is a question about the setup and is what the scoreboard's flagged-setup population is scored on. The second asks what the day offered against what the trade took, which is a question about the exit rule. **The exit price is what the trade earned and the close is what the day offered.**
+
+**It is the only way the trail can be judged at all.** The trail is the one rule that lets a position run past its own session, so with a single figure a trail that captured a move and a trail that gave one back are the same number. The second figure is what separates them, and it is authored now rather than when the first long hold arrives, because a rule that has never fired is exactly when its measurement can be designed without a result in view.
+
+**Nothing is wrong today and the cost is nought until it is.** No position has ever been held past its own session, so the two figures agree on every row the store holds and the second is a column nobody has to backfill.
+(see: Long and short are never pooled into one figure)
+
 **The order prices are derived from the final pullback session's minutes, not from the screening geometry**
 `PullbackGeometry.Of` computes an entry level and a give-up point from daily bars and they are screening quantities feeding `trigger-near` and `exit-tight`. They are not the prices an order is placed at, and reading one as the other is how two different numbers silently become one.
 
@@ -680,17 +690,63 @@ The boundary is in R rather than in per cent, because R is the unit every other 
 
 ## How changes are judged
 
+**The once-only threshold adjustment is recorded unspent, and the baseline is frozen without it**
+Answered by the operator on 2026-09-02, at the phase 5 sitting, closing the row raised at 2.11 and the sequencing question raised beside it. The adjustment 2.11's count distribution called for is not spent, and it is not held open against the freeze either.
+
+**The middle reading is the one refused, and refusing it is most of the decision.** Three readings were on the table: spend the once before the freeze, freeze knowing the once costs a generation whenever it is spent, or record it unspent and freeze. The second converts a decision that can be taken now into one that closes every open version as unresolved the moment it is taken, and nothing about waiting improves the answer (see: An approved proposal creates a new version from zero, and a running version is never edited).
+
+**What decided between the other two is the measurement of 4.4 rather than a preference.** Given the third clause its maximum, so that every one of the 432 short rows reaching `reached-ceiling` is admitted, `exit-tight` passes 0.93% of the 431 rows that reach it against the long side's 1.51% over 1,981, both over the same 602 calibration sessions. The per-row rates are comparable between the two sides, so what the short funnel is short of is rows reaching the gate rather than a gate set too strict. **A threshold adjustment moves a rate that is not the fault**, and spending a once-only adjustment on it spends it for nothing.
+
+**Unspent is a decision and not an omission, which is the whole reason it is recorded here.** A later session reading 2.11's band of 5 to 60 against a median of nought a night would otherwise find a condition that fired and an adjustment nobody made. What this says is that the adjustment was located, priced against the gate it would move, and deliberately not made. **The once survives**, for a fault a measurement actually locates rather than for the first fault anybody points at, and V0 freezes with nothing outstanding against it.
+
 **Versions select from one shared nightly candidate list rather than each re-scanning**
 Makes the comparison paired. Unpaired, a small improvement needs thousands of observations; paired it needs hundreds. That is the difference between a verdict in months and a verdict in years.
 
 **Two experiment families, selection and execution, scored differently and never mixed in one version**
 An execution change alters the size of the R unit rather than the choice of stock, so its results cannot be differenced the same way. A version changing both teaches you nothing about which change caused the result.
 
+**No execution variant is admitted in this generation, and the condition that would reopen it is named**
+Answered by the operator on 2026-09-02, at the phase 5 sitting. The execution family is defined, scored nowhere and admitted nowhere for this generation, because both of the routes by which a version earns its place are closed and neither closes for a reason that expires on its own.
+
+**It cannot be screened.** An execution rule is replayed against minute bars, minute bars exist only from the night capture begins at 4.2, and the vendor sells no minute history, so the stored record has nothing for a stop or a trail to be resolved against. **And it cannot accumulate.** It is scored on R, R needs fills, and the funnel passes a median of nought candidates a night on both sides, so no trade has ever fired and none is expected under the thresholds as they stand.
+
+**Admitting one anyway would put a version in the register that cannot be screened, cannot be scored and cannot be resolved**, which is a row the corpus carries for ever: a version stays open with its age on the ledger and there is no timeout that quietly closes it, by design (see: Targets and minimum samples are written at creation and are immutable).
+
+**What it settles for the three rows that turn on it.** VariantScorer scores one family and names the execution family's scoring as unreachable with the reason. ReplayHarness's acceptance test is the only screen this lab has, and its row says that rather than describing a half it does not build. And the hand-written versions are one family.
+
+**What would reopen it, named rather than left to be rediscovered.** Minute bars accumulate forward from 4.2, so the screenable population grows at one night a night and an execution screen eventually has one; and a funnel that produces trades makes the forward route live. This is a decision for this generation rather than for ever, and the row it closes says which condition changes it (see: Replay screens proposals and the forward paired test admits them).
+
+**A version changes one threshold over the existing gate list, and structural change is out of scope for this generation**
+Answered by the operator on 2026-09-02, at the phase 5 sitting. A version differs from the baseline by **one gate's threshold**, with every other gate identical. It does not add a clause, remove one, or change the shape of one.
+
+**What decides it is the acceptance test at 5.3 rather than a preference for simplicity.** That test is that the baseline's own rule through the harness reproduces the baseline's historical selections exactly, and it is meaningful over a threshold change and vacuous over a structural one: a version carrying a different clause set is not a rule the harness can reproduce the baseline with, so the one check standing between a proposal and the record says nothing about it.
+
+**It is also what makes "differs by exactly one clause" assertable.** Over the gate list as it stands the claim is mechanical: one named gate's threshold moves and the rest compare equal. Over structural difference it is not, without a rule algebra nobody has specified, and an unassertable admission rule is one that holds only while everyone remembers it (see: Two experiment families, selection and execution, scored differently and never mixed in one version).
+
+**This bounds phase 6 and it says so in terms.** The researcher proposes threshold moves over the named gates, and a structural proposal is out of scope for this generation rather than a proposal that gets rejected on its merits. A signal request is unaffected, because it widens the library rather than the rule shape, and it is the channel the loop's own design says makes the system better over time.
+
 **Acceptance measures expectancy, never win rate**
 Win rate is reported alongside as a diagnostic. Any version raising win rate while lowering expectancy is rejected automatically. Widening the stop does exactly that, and this rule is written before any results exist on purpose.
 
 **Targets and minimum samples are written at creation and are immutable**
 Twenty worthless candidates give a 64% chance that at least one looks impressive by luck. Pre-registration is the only defence, and a target that can move after the result is not a target.
+
+**A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze**
+Answered by the operator on 2026-09-02, at the phase 5 sitting, over the two rows raised at 3.5 and 3.11 read as one question. Both said the 262 is too small and neither could say by how much, and the answer is that no one can: **the figure is a derivation, not a value, and what was owed was never a number**.
+
+**Both corrections widen it and neither factor is stateable from the corpus.** The bootstrap correction depends on the tail behaviour of the statistic actually run, being a studentised moving-block bootstrap over `nights / 10` blocks, and no normal-theory sample size describes it. The dispersion correction depends on the ratio of flagged-name dispersion to universe dispersion, which is measurable from the 602 calibration sessions and has never been measured. So a number written today would be the same error the 160 was: an estimate wearing a derivation's clothes.
+
+**The two are answered together because they compose.** Each alone gives a different figure and the pair gives a third, and answering them separately would leave nobody able to say which of the three was being asked for. One derivation applies both, one dated correction records it, and one pin holds the result.
+
+**It runs before the freeze, and that is the operative half.** 262 stands until the derivation replaces it. After V0 is registered a re-derivation is a change to a figure the pre-registration made immutable, so it closes every open version and starts a generation, where before the freeze it costs an afternoon. **If the derivation cannot be specified without first running it, that is recorded as the result** and the rows stay with the operator saying so, which is an answer rather than a deferral.
+(see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+
+**The execution minimum is 200 paired trades and its conversion waits on a trade existing**
+Answered by the operator on 2026-09-02, at the phase 5 sitting, over the row raised at 3.0(f). The figure is **200 paired trades converted at the measured trade-level design effect**, which is unmeasurable until trades exist, so it is stated as a derivation rather than as a number and the row count stands in the meantime.
+
+**It is the same shape as the selection figure and it is not a stall.** The corpus's unit is effective observations because overlapping labels and a shared market factor make a row worth less than its own number, and a row count is what 200 is. The setup-level discount was measured at 3.40 rather than assumed at 1, and the honest form here is to name the same conversion and say what it waits on. **No trade has ever fired**, so nothing about a design effect over trades can be measured today, and stating one would be inventing the very quantity the setup-level measurement refused to assume.
+
+**What is written into a version's pre-registration until then is the row count**, with the record saying it is a row count. That keeps the figure assertable, keeps the pin honest about what it holds, and leaves the conversion owed to the first checkpoint that has trades to measure it over.
 
 **An approved proposal creates a new version from zero, and a running version is never edited**
 Editing contaminates a record retroactively and there is no way to detect it afterwards.
@@ -812,6 +868,15 @@ The lag is measured from the older of the two sides, because a spread is only as
 
 **Two spread samples a session, not one and not three**
 One quote cannot be checked. A stale quote, a locked or crossed book and a one-off blowout all look like an ordinary row, and nothing on that row says which it was; two independent observations of one name on one day give the fill model something to disagree with, and the disagreement is itself the finding, because a name whose spread doubles across a session is a name no single figure describes. A third would cost sixty more unrecoverable calls every session for the life of the lab and would buy the shape of the intraday curve rather than a check on its level, which is not what a fill model charges. If the two turn out to disagree often enough that no level is usable, that is an argument for a third made from the record rather than ahead of it.
+
+**The spread capture stays at the capped sixty, and a version selecting outside it is scored as refused**
+Answered by the operator on 2026-09-02, at the phase 5 sitting, closing the row raised at 4.7. The two spread passes go on sampling the capped sixty, and the capture is not widened to the flagged population, which is 88 to 166 calls a pass against the 120 it spends today.
+
+**Affordability is not what decides it.** The calls exist inside a nightly total of 2,723 to 4,118 against a ceiling of 5,000. What decides it is that the widening buys spreads for names no version can trade today, on the chance that a version admitted later selects them, which is a purchase against a hypothetical rather than against a shortfall anybody has measured.
+
+**The alternative is already built and is the more honest of the two.** A version selecting outside the cap is refused a fill and trades nothing, which is a recorded fact about that version rather than a silent absence (see: RiskGate is the sole writer of orders, for both directions and every version).
+
+**What the ruling does owe costs no vendor call.** The refusal is legible where the scores are read, so a version scoring poorly because it selected outside the capped sixty is distinguishable from one scoring poorly on its merits. That distinction is what the widening was really for, and it is a column rather than a call. Owed at 5.2, where a version's score is computed, and rendered on the ledger at 5.5.
 
 **The runtime is .NET with C#, one codebase for both halves**
 The components most likely to produce a silently wrong answer are the trading and journal ones, and those benefit most from a compiler. Analysis can be pointed at the same store later without changing the application.
