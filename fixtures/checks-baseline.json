@@ -33,7 +33,8 @@
         "bar tables named by the check": 3,
         "bar tables a migration has created": 2,
         "writes found against a bar table": 2,
-        "migrations read for a delete, update or drop": 30
+        "migrations read for a delete, update or drop": 30,
+        "tables a migration created whose name ends in _bar": 3
       },
       "context": [
         "source files scanned"
@@ -106,7 +107,8 @@
       "scopes": {
         "captured responses in the manifest": 68,
         "vendor endpoints a live run exercises": 3,
-        "of those with at least one captured input": 3
+        "of those with at least one captured input": 3,
+        "routes the vendor client asks for, read from its own source": 5
       }
     },
     "fixture-replay": {
@@ -223,7 +225,8 @@
         "statements selecting from a stamped table": 63,
         "stamped tables the check knows about": 16,
         "directions of the future-dated case": 2,
-        "statements reading the run log": 2
+        "statements reading the run log": 2,
+        "statements whose table is an interpolation hole, placed by hand": 4
       },
       "context": [
         "SQL statements read across the shipped source",
@@ -245,7 +248,8 @@
     },
     "shell-executable": {
       "scopes": {
-        "shell entry points checked against their recorded mode": 4
+        "shell entry points checked against their recorded mode": 4,
+        "files under tools that carry a shebang": 6
       }
     },
     "slot-diagnostics": {
@@ -277,18 +281,14 @@
         "BUILD_PLAN.md, phase 4's checkpoint count": 1,
         "BUILD_PLAN.md, six phases": 1,
         "BUILD_PLAN.md, the authored parameters left open": 1,
-        "BUILD_PLAN.md, the carried obligations table's own total, stated again at 4.17": 1,
+        "BUILD_PLAN.md, the carried obligations table's own total": 1,
         "BUILD_PLAN.md, the frozen-only permits still resting on an open obligation": 1,
         "BUILD_PLAN.md, the frozen-only permits the fixture holds": 1,
-        "BUILD_PLAN.md, the obligations due at 4.17, stated in its heading": 1,
-        "BUILD_PLAN.md, the obligations due at 4.17, stated in its opening sentence": 1,
         "BUILD_PLAN.md, the obligations due before the freeze, statement 1": 1,
         "BUILD_PLAN.md, the obligations due before the freeze, statement 2": 1,
         "BUILD_PLAN.md, the obligations due before the freeze, statement 3": 1,
         "BUILD_PLAN.md, the operator's table against the obligations table": 1,
         "BUILD_PLAN.md, the questions that are the operator's": 1,
-        "BUILD_PLAN.md, the three groups add up to the 4.17 pile they classify": 1,
-        "BUILD_PLAN.md, the three groups the 4.17 pile is classified into": 1,
         "BUILD_PLAN.md, the times the first run after 4.1 turns red": 1,
         "CLAUDE.md, all seven done conditions": 1,
         "CLAUDE.md, five specs": 1,
@@ -347,6 +347,13 @@
       "context": [
         "shipped source files read for store writes"
       ]
+    },
+    "changelog-reconciles": {
+      "scopes": {
+        "commits read": 186,
+        "commits that replaced a line in a spec": 124,
+        "of those, the ones that recorded prior text": 114
+      }
     }
   }
 }

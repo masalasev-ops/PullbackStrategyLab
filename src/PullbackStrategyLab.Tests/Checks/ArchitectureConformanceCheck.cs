@@ -422,8 +422,10 @@ public sealed partial class ArchitectureConformanceCheck
                     "ComponentReachabilityTests.Every_stage_the_entry_point_advertises_has_an_arm_in_the_dispatch",
                     "the direction this scan cannot see is a registration that is present and unreachable: a "
                     + "line the pattern does not match fails loudly, and a stage in the table with no arm in "
-                    + "the dispatch passes. The test resolves each advertised name against the dispatch, which "
-                    + "is exactly the gap between registered and reachable"));
+                    + "the dispatch passes. The test asks the dispatch itself for each advertised name and "
+                    + "asserts on what comes back, with an authored bad name and a bad case asserting the "
+                    + "other direction. It read Program.cs as text and matched switch-arm shapes with a regex "
+                    + "until 4.17, which was a scan backed by a scan and was recorded here as backed"));
 
         // The catalogue read against the build order in the direction nothing asked before 4.14.
         //

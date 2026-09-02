@@ -32,6 +32,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        # The whole history, because `changelog-reconciles` reads it: the default shallow
+        # clone gives one commit, and a check whose subject is the history reports a scope of
+        # one over it. It refuses a shallow checkout rather than passing, so this is what lets
+        # it run at all rather than a speed-up in reverse.
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -79,6 +85,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        # The whole history, because `changelog-reconciles` reads it: the default shallow
+        # clone gives one commit, and a check whose subject is the history reports a scope of
+        # one over it. It refuses a shallow checkout rather than passing, so this is what lets
+        # it run at all rather than a speed-up in reverse.
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -190,6 +202,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        # The whole history, because `changelog-reconciles` reads it: the default shallow
+        # clone gives one commit, and a check whose subject is the history reports a scope of
+        # one over it. It refuses a shallow checkout rather than passing, so this is what lets
+        # it run at all rather than a speed-up in reverse.
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -320,6 +338,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        # The whole history, because `changelog-reconciles` reads it: the default shallow
+        # clone gives one commit, and a check whose subject is the history reports a scope of
+        # one over it. It refuses a shallow checkout rather than passing, so this is what lets
+        # it run at all rather than a speed-up in reverse.
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:

@@ -113,7 +113,7 @@ public sealed class SectorResolver
         // Which pass of the night this is. The slot runs the stage twice, and a night where the
         // first pass died early and the second asked for everything reads exactly like a quiet
         // night unless the passes are told apart.
-        int pass = PassNumber(connection, run.StartedAt);
+        int pass = PassNumber(connection, _clock, run.StartedAt, _options.SessionZone);
         IReadOnlyList<string> unresolved = Unresolved(connection, asOf, _options.SessionZone);
 
         int asked = 0;
@@ -125,6 +125,13 @@ public sealed class SectorResolver
         foreach (string ticker in unresolved.Take(limit))
         {
             VendorResult<VendorFundamentals?> answer;
+
+            // Counted before the request rather than after a successful one, which is what the
+            // sentence beside it says. It was incremented after the answer until 4.17, so the
+            // skipped were outside the count they are stated as a subset of: on the night the repair
+            // was written for, 149 requests and 148 answers, the line read "148 asked of which 1
+            // skipped". Every number was right and the sentence named a different population.
+            asked++;
 
             try
             {
@@ -149,12 +156,14 @@ public sealed class SectorResolver
             if (answer.BudgetExhausted)
             {
                 // The ceiling bound before the list ran out. A partial run, said to be partial: the
-                // names not reached keep their null sector and are asked again tomorrow.
+                // names not reached keep their null sector and are asked again tomorrow. This one is
+                // not an ask: the budget refused before the request went out, so the increment above
+                // is taken back rather than left standing for a call nobody made.
+                asked--;
                 stoppedShort = true;
                 break;
             }
 
-            asked++;
             VendorFundamentals? found = answer.Value;
 
             if (found is null)
@@ -176,26 +185,46 @@ public sealed class SectorResolver
         RunOutcome outcome = stoppedShort || skipped > 0 ? RunOutcome.Partial : RunOutcome.Clean;
         RunSummary summary = run.Complete(outcome);
 
+        // `asked` now contains the skipped, so the total is the asked and the line beside it reads
+        // as a partition rather than as two overlapping sets.
         return new SectorResult(
             asOf, unresolved.Count, asked, resolved, nothing, resolved + nothing, skipped,
-            asked + skipped, pass, summary.RowsWritten, summary.CallsUsed, outcome);
+            asked, pass, summary.RowsWritten, summary.CallsUsed, outcome);
     }
 
     /// <summary>
-    /// Which pass of the night this run is, counting the runs of this stage already begun today.
+    /// Which pass of the night this run is, counting the runs of this stage already begun in the
+    /// same session.
     ///
-    /// The UTC date rather than the session date, because that is the day the call ceiling is
-    /// counted over and a pass is an attempt against that budget.
+    /// <b>The session's own day rather than the UTC one, because the line calls it a pass of the
+    /// night.</b> It counted the UTC date until 4.17 and the reasoning recorded with it was that the
+    /// ceiling is counted over that day, which is true of the budget and not of the sentence. The
+    /// lab's evening crosses UTC midnight, so `data/live/logs/nightly-2026-08-28.log` already
+    /// recorded the first pass of that session as pass 2: a repair run at 00:19 Eastern on the 28th
+    /// shares its UTC day with the evening of the 27th. Every number was right and the sentence
+    /// named a different population, which is the shape the figure above was wrong in too.
+    ///
+    /// The bounds are the session's own instants, resolved through the zone rather than compared as
+    /// wall times, so a night the zone changes offset is bounded by the instants that night had.
+    /// see: A session is a date the store holds minutes for, and no calendar is authored here
     /// </summary>
-    private static int PassNumber(SqliteConnection connection, DateTimeOffset startedAt)
+    private static int PassNumber(
+        SqliteConnection connection, IClock clock, DateTimeOffset startedAt, string sessionZone)
     {
+        DateOnly session = clock.SessionDate(startedAt, sessionZone);
+
+        // The session's first instant is the previous session's last plus a tick, which is how every
+        // other bound in this store is expressed: one helper produces the end of a session and the
+        // start is the end of the one before it. Written that way rather than as a second helper,
+        // because two functions that must agree about where a session begins are two that will not.
+        string from = StoreText.EndOfSession(session.AddDays(-1), sessionZone);
+
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText =
-            "SELECT COUNT(*) FROM run_log WHERE stage = @stage AND started_at LIKE @today";
+            "SELECT COUNT(*) FROM run_log WHERE stage = @stage AND started_at > @from AND started_at <= @to";
         command.Parameters.AddWithValue("@stage", Name);
-        command.Parameters.AddWithValue(
-            "@today",
-            DateOnly.FromDateTime(startedAt.UtcDateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "%");
+        command.Parameters.AddWithValue("@from", from);
+        command.Parameters.AddWithValue("@to", StoreText.EndOfSession(session, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }

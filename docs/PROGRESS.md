@@ -11780,3 +11780,148 @@ Carried:    **The research ledger's only drawing is gone and the page it was for
             reference deleted has to reconstruct it from a commit. Due at 5.5.
 
             **None discharged and one raised, so the obligations table rises from 53 to 54.**
+
+## 4.17 — 2026-09-02 — phase-4-verification-defects — the pile, twelve discharged and one priced
+
+Built:      **Twelve of the thirteen verification defects phase 3 carried are discharged and the
+            thirteenth is repointed to 5.1 with the price.** No component, no store and no threshold:
+            the checks, the tests behind them and the records that stated something the code did not
+            do. The classification was the specification and it is what this entry reports against.
+
+Built:      **A component that does more than it says, three of three.**
+
+            **`recheck --expect` is compared before the first write.** `Run` performed the whole walk
+            and compared afterwards, so an operator who named fifteen and found twenty had corrected
+            all twenty by the time the exit code said so, and the exit code was the only thing that
+            said so. The set is now derived through a read-only connection and the run refuses before
+            the walk. A test names one where there are two and finds both rows uncorrected and no run
+            entry at all.
+
+            **And a flag given twice is refused rather than overwritten.** `--as-of A --as-of B` ran
+            against B and said nothing about A. Somebody who writes a flag twice meant something
+            specific by one of them, and running the last one silently is the fault the two-dates
+            guard already refuses in its other form. The standalone flags are exempt, because there
+            is no second value to disagree with.
+
+            **A dry run opens no write connection and no run entry.** Both walks opened one before
+            looking at `apply` and both completed the scope as partial when anything was refused,
+            whatever `apply` said. `IncompleteStagesOf` selects every non-clean run of the session's
+            day and the detectors write that string into every row's `degraded_because`, so an
+            operator asking what a repair would do could mark a whole night degraded by asking. Both
+            walks are exercised, each with the refusal that used to matter.
+
+            **The detectors write no trigger and no give-up price for a geometry the same row calls
+            absent.** With the extreme on the last session the two prices are equal, and writing that
+            pair while nulling both distances beside it left a row saying it has no geometry and
+            carrying two prices from one. SCHEMA marks all three "absent where the setup has none" in
+            the same words and one of the three was written that way. **The fixture moved and the
+            expectations moved with it**: the INTC short's two prices and the trigger distance
+            derived from one of them are absent rather than frozen, `signals.absent` reads 4 where it
+            read 1, and a distance from a price that does not exist is not a figure.
+
+Built:      **A recorded figure or sentence that is wrong, four of four.**
+
+            **`SectorResolver` counts a name before it asks rather than after it answers.** The line
+            reads N asked of which M skipped, and `asked` was incremented only after a successful
+            answer while the catch incremented `skipped`, so the skipped were outside the count they
+            are stated as a subset of: 149 requests and 148 answers read as "148 asked of which 1
+            skipped". **And its pass number is of the night rather than of the UTC day.** The lab's
+            evening crosses UTC midnight, so the first pass of 2026-08-28 was already recorded as
+            pass 2, because a repair run at 00:19 Eastern shares its UTC day with the evening of the
+            27th. Both are the shape where every number is right and the sentence beside it names a
+            different population.
+
+            **RUNBOOK step 3 no longer contradicts the decision the code follows.** It told the
+            operator to create a data root outside the repository where the decision names two roots
+            inside it, and it is what once armed the fault 3.14 corrected: an operator who followed it
+            and exported the variable had `tools/ci.*` delete whatever it pointed at on its first
+            step. The scripts no longer yield to the variable, so nothing was armed, and what was left
+            was a spec and a decision disagreeing about where the store lives.
+
+            **The `ControlSampler` report is reproduced and answered rather than left as either.** The
+            row said the shape was neither discharged nor reproduced, and named two possibilities.
+            **It was the first**: `b839dba`, the commit that built the draw, calls `Figures(connection,
+            asOf, drawnAt)` twice, once directly and once through `Pool`; `84d4cc3`, the last commit
+            of 3.3, restructured the draw to take one `ISessionFigures` constructed at the top of the
+            pass, and nothing recorded that it had. The report was accurate when it was written and
+            the repair arrived from another direction three days later.
+
+            **And `changelog-reconciles` is the reconciliation the ten commits were owed.** Every
+            commit whose diff deletes a line from a spec must also change `CHANGELOG.md`, read from
+            the history. **Deletions rather than any change at all**, because a commit that appends a
+            row has no prior text to record and a check demanding an entry for every touch would fire
+            on every ordinary addition and then be suppressed. The ten are exempt by hash with what
+            each was: an entry written now would be dated today about an edit made then, which is the
+            one thing an append-only record must not carry. **A shallow clone is refused rather than
+            passed over**, and the workflow fetches the full history for that reason.
+
+Built:      **A check that reconciles in one direction only, six of six.**
+
+            **`decision-resolves` reads the working tree rather than the index.** `git ls-files` alone
+            reads what is staged, so a file a session had created and not staged was invisible in both
+            directions: the scan ran green over exactly the files most likely to carry a citation
+            nobody has resolved yet, which is every new file in every checkpoint. `--others
+            --exclude-standard` adds the untracked files git is not ignoring, which keeps the half the
+            index form was protecting, since `/prompts`, `/data` and `/artifacts` are ignored.
+
+            **`point-in-time` reads the interpolated statement forms.** Its two readers required a
+            quote immediately after `CommandText =` or a raw literal, so a statement built through an
+            interpolated handler was matched by neither: not asserted, not exempted, counted nowhere.
+            Four statements build their table through an interpolation and no amount of reading can
+            match one against a stamped table, so each is placed by hand with why it is not a
+            point-in-time question, and one of the four is the unbounded `daily_bar` count the row
+            named.
+
+            **`path-casing` reads verbatim and raw literals, which its own comment had claimed.** The
+            ordinary reader rejects the opening quote of a verbatim literal and excludes a newline,
+            and there was no separate reader for either form. Nothing was missed, because the two
+            verbatim literals in the shipped source are regexes rather than paths, and it earns the
+            repair rather than a shrug because this is the check that once compared no paths at all
+            and passed.
+
+            **`architecture-conformance`'s catalogue backing is a behavioural test rather than a
+            second scan.** It named `ComponentReachabilityTests` as closing the gap between registered
+            and reachable, and that test read `Program.cs` as text and matched switch-arm shapes with
+            a regex: a scan backed by a scan, recorded as backed. **The dispatch is a table now**, so
+            a name can be resolved without being run, and the test asks the dispatch for each
+            advertised name and asserts on what comes back, with an authored bad name and the same
+            name in the wrong case asserting the other direction.
+
+            **And three of the five checks the 3.7 row left gained their second direction.**
+            `bar-append-only` asks the migrations which tables end in `_bar` and fails on one it does
+            not name; `shell-executable` reads `tools/` for files carrying a shebang and fails on one
+            that is on neither list; `fixture-inputs` reads the vendor client for the routes it asks
+            for and fails on one the list does not name, which is how `fundamentals` was covered only
+            by luck. The other two already carry a recorded price for the direction they cannot have,
+            which is what the row asked for in place of a repair.
+
+Carried:    **The source-scan assertions nothing exercises, repointed from 4.17 to 5.1.** One of its
+            three is closed here, being `architecture-conformance`'s catalogue registration. What is
+            left is `writer-ownership`'s attribution scan, `coverage-reported`'s own scan for the
+            trait, and eleven scans in ordinary tests with no coverage record to declare a backing in.
+            **The price is what moved it**: a behavioural test per scan is thirteen tests, and the
+            eleven need a mechanism before they need a test, because a scan outside a check has
+            nowhere to say whether anything backs it. 4.17's own row refuses to add an instrument to
+            watch the instruments, and this is the row that would have. Due at 5.1, where the baseline
+            freezes and a figure resting on an unbacked scan stops being correctable.
+
+            **Twelve discharged and none raised, so the obligations table falls from 54 to 42.**
+
+Measured:   **`tools/ci.ps1` green at 31 steps and 889 tests**, from 30 steps and 883 at 4.12. The
+            step is `changelog-reconciles`.
+
+            **`tools/verify-phase` GREEN**: 137 claims, 114 passed, 0 failed, 23 out of scope, 0
+            unexamined, coverage examined 8,017, 1,451 expectations, read against the commit that
+            produced them with the tree clean. Coverage rose by 487 from 4.12, almost all of it the
+            new check's 424 and the second directions the three checks gained.
+
+            **`changelog-reconciles` reads 186 commits, of which 124 replaced a line in a spec and
+            114 recorded prior text.** The ten exempt are the difference. The floors are set at
+            today's figures rather than below them, which is safe here and nowhere else in the
+            baseline: history is append-only, so these three can only rise.
+
+            **`stated-counts` lost four claims and gained one.** The three figures about the 4.17
+            pile went with the pile, on the terms the artefact claim went at 4.12: a claim asserting
+            that a discharged pile has nought rows would pass over a table with no rows at all. What
+            holds the table's shape is its own total, which is now read out of the sentence rather
+            than from a claim that also counted the pile.

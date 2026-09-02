@@ -8840,6 +8840,22 @@
       "note": "Thirty of thirty asked. The lookup is lazy and cached: a name is asked about once and stamped even when the vendor has nothing, or it would be re-asked every night for ever."
     },
     {
+      "id": "sectors.skipped",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "4.17",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's captured fundamentals responses: every name the night's scans surfaced is answered, none of them throws, so the number skipped is nought and the number asked is the number requested. The two readings of `asked` agree only because nothing was skipped, which is what makes the pair worth freezing: the night the repair was written for had 149 requests and 148 answers and read as 148 asked of which 1 skipped.",
+      "note": "names the vendor refused, answered unreadably, or could not be reached for. Left unstamped and asked again tomorrow, and inside the count they are stated as a subset of from 4.17"
+    },
+    {
+      "id": "sectors.requests",
+      "tier": "DERIVED",
+      "value": "30",
+      "checkpoint": "4.17",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's captured fundamentals responses: every name the night's scans surfaced is answered, none of them throws, so the number skipped is nought and the number asked is the number requested. The two readings of `asked` agree only because nothing was skipped, which is what makes the pair worth freezing: the night the repair was written for had 149 requests and 148 answers and read as 148 asked of which 1 skipped.",
+      "note": "the total the night's line is stated over, which is `asked` and no longer `asked + skipped`. The skipped are inside `asked` from 4.17, so adding them again would count each one twice"
+    },
+    {
       "id": "sectors.unresolved",
       "tier": "FROZEN",
       "value": "30",
@@ -9497,12 +9513,6 @@
       "voidedBecause": "Voided at 3.11. This expectation froze the defect: the detector recorded exit-tight as failed with value null and the note 'no stop or no daily range for the session' on the same row, and the signal store held 0.0000 because trigger_price, stop_price and stop_distance_ranges were NOT NULL and the detector flattened an absent quantity into nought. Migration 031 lets the column say absent, so this setup now freezes no give-up distance and there is no value to compare. The subject is gone rather than changed."
     },
     {
-      "id": "signal.2026-08-24-INTC-short.stop_price",
-      "tier": "FROZEN",
-      "value": "85.1400",
-      "checkpoint": "2.7"
-    },
-    {
       "id": "signal.2026-08-24-INTC-short.thrust_magnitude",
       "tier": "FROZEN",
       "value": "-0.0154",
@@ -9530,18 +9540,6 @@
       "id": "signal.2026-08-24-INTC-short.thrust_size_in_ranges",
       "tier": "FROZEN",
       "value": "-0.2762",
-      "checkpoint": "2.7"
-    },
-    {
-      "id": "signal.2026-08-24-INTC-short.trigger_distance_ranges",
-      "tier": "FROZEN",
-      "value": "0.4356",
-      "checkpoint": "2.7"
-    },
-    {
-      "id": "signal.2026-08-24-INTC-short.trigger_price",
-      "tier": "FROZEN",
-      "value": "85.1400",
       "checkpoint": "2.7"
     },
     {
@@ -9786,18 +9784,18 @@
     {
       "id": "signals.absent",
       "tier": "DERIVED",
-      "value": "1",
+      "value": "4",
       "checkpoint": "3.11",
       "producedBy": "derived by hand at 3.11 and then run. The fixture holds three setups; exactly one, 2026-08-24-INTC-short, has a degenerate geometry, recorded on its own row as bounce-shape failed with '0 bar(s)'. Of the three geometry signals only stop_distance_ranges is absent for it, because its trigger and stop are both 85.14 and are real prices from the degenerate bounce. One setup times one absent signal is one.",
-      "note": "Was 0, when an absent give-up distance was frozen as 0.0000 rather than skipped."
+      "note": "Was 0, when an absent give-up distance was frozen as 0.0000 rather than skipped. Moved from 1 to 4 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure."
     },
     {
       "id": "signals.frozen",
       "tier": "DERIVED",
-      "value": "98",
+      "value": "95",
       "checkpoint": "3.11",
       "producedBy": "derived by hand at 3.11 and then run. Ninety-nine were frozen while every geometry signal was written whether or not the detector had one. One is now absent, by the derivation recorded on signals.absent, so ninety-eight are frozen.",
-      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two."
+      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure."
     },
     {
       "id": "signals.setups",
@@ -9826,10 +9824,10 @@
     {
       "id": "store.rowsPointingAtSetup",
       "tier": "DERIVED",
-      "value": "127",
+      "value": "124",
       "checkpoint": "3.12",
       "producedBy": "derived by hand from expectations this fixture already carries, and then run. setup_signal is signals.frozen at 98, being 33 signals for each of two setups and 32 for 2026-08-24-INTC-short, whose stop_distance_ranges is absent. control_setup is controls.loose at 15 plus controls.tight at 14, the tight side being one short of five on one setup, which controls.shortOfFive states. 98 + 29 = 127.",
-      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows."
+      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure."
     },
     {
       "id": "store.schemaVersion",

@@ -74,6 +74,7 @@ Invoke-Step 'migrate' { dotnet run --project $WorkerProject --no-build -- migrat
 
 Invoke-Step 'check-decision-resolves'      { Invoke-Check 'decision-resolves' }
 Invoke-Step 'check-no-superseded-citation' { Invoke-Check 'no-superseded-citation' }
+Invoke-Step 'check-changelog-reconciles'   { Invoke-Check 'changelog-reconciles' }
 Invoke-Step 'check-stated-counts'          { Invoke-Check 'stated-counts' }
 Invoke-Step 'check-pinned-constants'       { Invoke-Check 'pinned-constants' }
 Invoke-Step 'check-path-casing'            { Invoke-Check 'path-casing' }

@@ -25,9 +25,38 @@ public sealed partial class PathCasingCheck
 
     public PathCasingCheck(ITestOutputHelper output) => _output = output;
 
-    /// <summary>A string literal, ordinary or verbatim, on one line. Raw string literals are read separately.</summary>
+    /// <summary>
+    /// An ordinary string literal on one line.
+    ///
+    /// <b>Ordinary only, and the doc said otherwise until 4.17.</b> The lookbehind rejects the
+    /// opening quote of a verbatim literal and the character class excludes a carriage return and a
+    /// newline, so this reads neither a verbatim literal nor one spanning lines, and there was no
+    /// separate reader for either. Nothing was missed, because the two verbatim literals in the
+    /// shipped source are regexes rather than paths, but a comment claiming a coverage the code does
+    /// not have is the shape this check has already shipped once: it compared no paths at all and
+    /// passed.
+    /// </summary>
     [GeneratedRegex("(?<!@)\"(?<value>(?:[^\"\\\\\\r\\n]|\\\\.){1,200})\"", RegexOptions.CultureInvariant)]
     private static partial Regex QuotedLiteral();
+
+    /// <summary>
+    /// A verbatim literal, which may span lines and doubles its quotes rather than escaping them.
+    ///
+    /// A path written this way is a path, and until 4.17 nothing here read one. Bounded like the one
+    /// above so a runaway match cannot swallow a file.
+    /// </summary>
+    [GeneratedRegex("@\"(?<value>(?:[^\"]|\"\"){1,400})\"", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex VerbatimLiteral();
+
+    /// <summary>
+    /// A raw string literal, which is where every multi-line literal in this source lives.
+    ///
+    /// The doc above claimed these were read separately and nothing read them. A path inside one is
+    /// as much a path as any other, and the SQL that fills most of them resolves to nothing on disk
+    /// and is dropped by the same filter every other non-path literal is.
+    /// </summary>
+    [GeneratedRegex("\"{3}(?<value>.{1,4000}?)\"{3}", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex RawLiteral();
 
     [Fact]
     [Trait("check", "path-casing")]
@@ -45,7 +74,13 @@ public sealed partial class PathCasingCheck
             // fails on prose gets loosened the first time it does.
             string text = CSharpSource.WithoutComments(RepositoryLayout.Read(file));
 
-            foreach (Match match in QuotedLiteral().Matches(text))
+            // All three literal forms, because a path is a path whichever way it is written and the
+            // doc above claimed two of these were read when neither was.
+            IEnumerable<Match> matches = QuotedLiteral().Matches(text)
+                .Concat(VerbatimLiteral().Matches(text))
+                .Concat(RawLiteral().Matches(text));
+
+            foreach (Match match in matches)
             {
                 literals++;
                 string literal = match.Groups["value"].Value;
