@@ -759,7 +759,7 @@ shape.
 | `setup_id` | TEXT, the key | One plan per capped candidate. A second write is refused by the key rather than by the stage remembering to check |
 | `as_of` | TEXT | The evening the plan was written on |
 | `live_session` | TEXT | The session it is live in, stored rather than derived |
-| `trigger_price`, `give_up_price`, `give_up_distance` | TEXT | Prices, and the distance between them in money |
+| `trigger_price`, `give_up_price`, `give_up_distance` | TEXT | Prices, and the distance between them in money. **The final pullback session's regular-hours extremes with the give-up point 0.1 ADR beyond, from 4.18, and not `setup.trigger_price` and `setup.stop_price`**, which are the screening geometry a whole dip wide and were what this stage copied here from 4.16 until the 4.13 sign-off found it (see: The order prices are derived from the final pullback session's minutes, not from the screening geometry) |
 | `shares` | INTEGER, `> 0` | The size, which is PlanBuilder's and not RiskGate's |
 | `equity`, `risk_fraction`, `risk_budget` | TEXT | What the size was computed from, so a plan can be re-derived without knowing which constants were in force |
 | `risk_at_stake` | TEXT | What the rounded share count actually risks, at or below `risk_budget` |
@@ -1109,7 +1109,7 @@ different times.
 | `mechanism` | TEXT, one of two | `gap` or `ordinary`. **How** the loss occurred, known the moment the trade closes |
 | `exit_basis` | TEXT, one of two | What the mechanism was read from, carried so the reading is checkable on the row rather than only reproducible from a join to `fill` (see: A gap loss is detected from the exit fill's basis, not from the size of the loss) |
 | `aftermath` | TEXT NULL, one of three | `noise`, `failed-setup` or `unclassified`. **What happened next**, and null while the ten-session horizon has not closed. Null and `unclassified` are different facts and only the second is a finding |
-| `forward_return_signed`, `one_r_in_return` | TEXT NULL | The two figures the boundary was read from, present exactly on the two aftermaths that came from them. `unclassified` means the horizon closed and the figure was absent, so a row carrying both would be one nobody could tell from a placed one |
+| `forward_return_signed`, `one_r_in_return` | TEXT NULL | The two figures the boundary was read from, present exactly on the two aftermaths that came from them, and both are fractions of the trigger price: the first is the direction-signed return from the trigger to the adjusted close of the tenth session after the one it was touched in, and the second is the give-up distance over the trigger. **Neither is `forward_return.return_signed`**, which is measured from the setup session's close over the ten sessions after the setup; the classifier read that column until 4.18 and compared it against one R over the trigger, which is a comparison across two populations, found at the 4.13 sign-off. `unclassified` means the horizon closed and the store held no close to read the figure from, so a row carrying both would be one nobody could tell from a placed one |
 | `aftermath_because` | TEXT NULL | The sentence a person reads, with both figures in it |
 | `observed_at`, `aftermath_observed_at` | TEXT / TEXT NULL | Two stamps, on the terms `position` carries three: an update overwrites a state without moving the stamp that says when it was observed, so a replay standing between the close and the horizon has to see a mechanism and no aftermath |
 

@@ -106,6 +106,116 @@ public sealed class PositionManagerTests : IDisposable
     }
 
     /// <summary>
+    /// A position opened inside the session is not measured against the bars before its entry.
+    ///
+    /// <b>Found at the 4.13 sign-off by running it, and kept as the case that was run.</b> The walk
+    /// carried no bound at the entry minute, so a long that filled at 10:15 was measured against the
+    /// 09:30 bar, and on a morning that opened under its give-up point it was closed forty-five
+    /// minutes before it was opened, with the loss booked. A pullback long enters from below by
+    /// construction, so the bars before the trigger sit under it and this is the first run's fault
+    /// and not a corner. The test beside it walks a 09:30 bar whose low happens to sit above the
+    /// give-up point, which is why it could not see this.
+    /// </summary>
+    [Fact]
+    public void A_bar_before_the_entry_cannot_close_the_position()
+    {
+        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
+        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 15), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(9, 30), 94m, 95m, 93m, 94m);
+        Minute("AAPL", Session, new TimeOnly(10, 15), 99m, 101m, 99m, 100.5m);
+        Minute("AAPL", Session, new TimeOnly(15, 0), 100m, 101m, 99m, 100m);
+        Quotes("AAPL", Session);
+        Broker().Fill(Session);
+
+        ManageRunResult result = Stage().Manage(Session);
+
+        Assert.Equal(0, result.ClosedGiveUp);
+        Assert.Equal(0, result.ClosedInTheirOwnSession);
+        Assert.Equal(1, result.OpenAtEnd);
+
+        StoredPosition position = Positions(Session).Single();
+        Assert.Equal(PositionStatus.Open, position.Status);
+        Assert.Null(position.ClosedAt);
+        Assert.DoesNotContain(Fills(Session), f => f.Leg == "exit");
+    }
+
+    /// <summary>
+    /// The same bound on the short side, where the pre-entry bars are the ones a reclaim and the
+    /// trim would otherwise read: a short opened at 10:15 is neither trimmed on a 09:30 bar that
+    /// sat at its 3R level nor stopped on one that sat above its give-up point.
+    /// </summary>
+    [Fact]
+    public void A_bar_before_a_short_entry_neither_trims_nor_stops_it()
+    {
+        Plan("AAPL", SetupDirection.Short, trigger: 100m, giveUp: 105m);
+        Order("AAPL", SetupDirection.Short, at: new TimeOnly(10, 15), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(9, 30), 106m, 107m, 84m, 90m);
+        Minute("AAPL", Session, new TimeOnly(10, 15), 100.5m, 101m, 99.5m, 100m);
+        Minute("AAPL", Session, new TimeOnly(15, 0), 100m, 101m, 99m, 100m);
+        Quotes("AAPL", Session);
+        Broker().Fill(Session);
+
+        ManageRunResult result = Stage().Manage(Session);
+
+        Assert.Equal(0, result.ClosedGiveUp);
+        Assert.Equal(0, result.Trimmed);
+        Assert.Equal(1, result.OpenAtEnd);
+        Assert.Equal(PositionStatus.Open, Positions(Session).Single().Status);
+    }
+
+    /// <summary>
+    /// A rerun of a session that armed the trail on its close writes nothing and closes nothing.
+    ///
+    /// <b>Found at the 4.13 sign-off by running it, and kept as the case that was run.</b>
+    /// <c>ArmedInAnEarlierSession</c> was set from the presence of a reason rather than from the
+    /// session that armed it, so the arm this session's own close made read on the rerun as an
+    /// earlier session's, fired at this session's first minute, and closed the position there with
+    /// reason trail: one session early, at a price the rule never named, under a summary that said
+    /// a rerun writes nothing. The position still exits at the next session's open, which is what
+    /// the second half asserts, so the repair did not buy idempotency by losing the exit.
+    /// </summary>
+    [Fact]
+    public void A_rerun_of_the_session_that_armed_the_trail_closes_nothing()
+    {
+        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
+        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
+        Minute("AAPL", Session, new TimeOnly(15, 0), 100m, 101m, 99m, 100m);
+        Quotes("AAPL", Session);
+        DailyBar("AAPL", Session, close: 99m);
+        Indicators("AAPL", Session, ema9: 102m, ema50: 90m);
+        Broker().Fill(Session);
+
+        ManageRunResult first = Stage().Manage(Session);
+        Assert.Equal(1, first.ExitsArmed);
+        Assert.Equal(0, first.ClosedTrail);
+
+        ManageRunResult second = Stage().Manage(Session);
+
+        Assert.Equal(0, second.ExitsArmed);
+        Assert.Equal(0, second.ClosedTrail);
+        Assert.Equal(0, second.ClosedGiveUp);
+        Assert.Equal(1, second.OpenAtEnd);
+        Assert.Equal(0, second.RowsWritten);
+
+        StoredPosition armed = Positions(Session).Single();
+        Assert.Equal(PositionStatus.Open, armed.Status);
+        Assert.Equal(Session, armed.ExitArmedSession);
+        Assert.Equal(ExitReason.Trail, armed.ExitArmedReason);
+
+        Minute("AAPL", NextSession, new TimeOnly(9, 30), 98m, 99m, 97m, 98.5m);
+        Quotes("AAPL", NextSession);
+
+        ManageRunResult next = Stage(NextSession).Manage(NextSession);
+
+        Assert.Equal(1, next.ClosedTrail);
+        StoredPosition closed = Positions(Session, asOf: NextSession).Single();
+        Assert.Equal(PositionStatus.Closed, closed.Status);
+        Assert.Equal(NextSession, closed.ClosedSession);
+        Assert.Equal(ExitReason.Trail, closed.ExitReason);
+    }
+
+    /// <summary>
     /// An overnight jump past the give-up point fills at the next session's first regular minute
     /// open, is never clamped, and loses more than one R.
     ///

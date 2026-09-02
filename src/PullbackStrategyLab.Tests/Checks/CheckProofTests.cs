@@ -1556,4 +1556,75 @@ public sealed class CheckProofTests
         Assert.Equal(6, notNumbers.Length);
         Assert.All(notNumbers, w => Assert.Null(StatedCountsCheck.FromWords(w)));
     }
+
+    // ---- pinned-constants places every authored parameter ------------------------------------
+
+    /// <summary>
+    /// The placement is proved against rows written by hand, because the live table exercises
+    /// three of the six dispositions and none of the failing ones.
+    ///
+    /// Six rows: one pinned, one deferred to a checkpoint still ahead, one deferred to a checkpoint
+    /// that has landed, one exempt by name, one that nothing places, and one pinned and still
+    /// deferred. The first, second and fourth are accepted; the third, fifth and sixth are the
+    /// problems. Written after the 4.13 sign-off found the check's own pinned list seven rows
+    /// stale and the mapping 4.15 owed never built, so the guard that replaces both is run red here
+    /// rather than trusted to be.
+    /// </summary>
+    [Fact]
+    public void An_authored_parameter_rests_on_a_pin_a_checkpoint_or_a_reason_and_on_nothing_else_is_caught()
+    {
+        string[] rows =
+        [
+            "Price floor, both sides",
+            "Holdout windows",
+            "Trigger and stop derivation",
+            "Screen and cap ranking",
+            "A value nobody placed",
+            "Nightly setup cap",
+        ];
+        var pinned = new HashSet<string>(["Price floor", "Nightly setup cap"], StringComparer.Ordinal);
+        var landed = new HashSet<string>(["4.16"], StringComparer.Ordinal);
+
+        (IReadOnlyList<PinnedConstantsCheck.Placement> placed, IReadOnlyList<string> problems) =
+            PinnedConstantsCheck.Place(
+                rows,
+                row => pinned.Any(p => row.StartsWith(p, StringComparison.Ordinal)),
+                [
+                    ("Holdout windows", "5.4", "HoldoutRegistry"),
+                    ("Trigger and stop derivation", "4.16", "PlanBuilder"),
+                    ("Nightly setup cap", "2.8", "SetupCapper"),
+                ],
+                [("Screen and cap ranking", "an ordering rather than a number")],
+                landed.Contains);
+
+        Assert.Equal(4, placed.Count);
+        Assert.Contains(placed, p => p.Row == "Price floor, both sides" && p.IsPinned);
+        Assert.Contains(placed, p => p.Row == "Nightly setup cap" && p.IsPinned);
+        Assert.Contains(placed, p => p.Row == "Holdout windows" && p.Checkpoint == "5.4");
+        Assert.Contains(placed, p => p.Row == "Screen and cap ranking" && p.Why is not null);
+
+        Assert.Equal(3, problems.Count);
+        Assert.Contains(problems, m => m.Contains("\"Trigger and stop derivation\" is deferred to 4.16, which PROGRESS records as landed", StringComparison.Ordinal));
+        Assert.Contains(problems, m => m.Contains("\"A value nobody placed\" is a row of the authored-parameters table that no pin reads", StringComparison.Ordinal));
+        Assert.Contains(problems, m => m.Contains("\"Nightly setup cap\" is pinned and still deferred to 2.8", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The live mapping resolves: every deferral names a checkpoint BUILD_PLAN has, every row it
+    /// names is a row of the table, and every checkpoint it names has not landed, which is the
+    /// property that makes a landed component's unpinned row a red run rather than a resting one.
+    /// </summary>
+    [Fact]
+    public void Every_deferred_authored_parameter_names_a_checkpoint_the_plan_has_and_the_record_does_not()
+    {
+        ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
+
+        Assert.NotEmpty(PinnedConstantsCheck.RowsDeferredToACheckpoint);
+
+        foreach ((string row, string checkpoint, _) in PinnedConstantsCheck.RowsDeferredToACheckpoint)
+        {
+            Assert.True(schedule.Exists(checkpoint), $"\"{row}\" is deferred to {checkpoint}, which BUILD_PLAN does not have.");
+            Assert.False(schedule.HasLanded(checkpoint), $"\"{row}\" is deferred to {checkpoint}, which has landed.");
+        }
+    }
 }

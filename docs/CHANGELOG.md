@@ -27,6 +27,62 @@ The rule starts at the first commit. From that point every clean edit to a spec 
 
 ---
 
+### 2026-09-02 — ARCHITECTURE.html — cites The order prices are derived from the final pullback session's minutes, not from the screening geometry
+Was:  The authored-parameters value cell "From the final pullback session's minutes, with the give-up point 0.1
+      ADR beyond its extreme, both sides"; its basis cell's clause (a) opening "**(a) The intraday floor is the
+      lowest low of the final pullback session's regular-hours minute bars**" and ending "anything reading the
+      entry session's own minutes is ruled out."; clause (c) ending "so an undocumented rule gives way rather
+      than an authored one."; and the vendor table's row "Daily bars, per ticker and whole market. Adjusted
+      close on the per-ticker route".
+Now:  The value cell reads the regular-hours extremes off the daily bar; (a) says the source is the daily bar
+      and not the minutes, that the two are the same numbers, what the trigger is on each side, and what
+      PlanBuilder did until 4.18; (c) says the clause is answered and not built and where it is carried; the
+      eod row records that the daily bar's high and low are the regular-hours extremes, with the one-session
+      comparison that established it.
+Why:  The decision named minute bars and required the plan to be computable the evening before, and at 18:30
+      the store holds no minute of the flagging session. One eod/AAPL.US call for 2026-08-25 read against the
+      captured minutes settled that the daily bar carries the same two numbers, so the floor is read from
+      where it is. The thrust clause changes the detectors and is measured before it ships, on the operator's
+      ruling of 2026-09-02.
+
+### 2026-09-02 — ARCHITECTURE.html — cites A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list
+Was:  "Stopped out, but the ten-day follow-up shows the move happened anyway" and "Stopped out and the
+      follow-up is flat or against you" in the loss table's detection column.
+Now:  Both cells name the population: the direction-signed return from the trigger price over the ten sessions
+      after the session it was touched in, at or above one R for noise and below it for a failed setup.
+Why:  The 4.13 sign-off found the classifier comparing a return from the setup's close against one R from the
+      trigger, and the cells said neither. The population is stated where the boundary is.
+
+### 2026-09-02 — SCHEMA.md — cites The order prices are derived from the final pullback session's minutes, not from the screening geometry
+Was:  `| trigger_price, give_up_price, give_up_distance | TEXT | Prices, and the distance between them in money |`
+      in trade_plan's column table.
+Now:  The row says the prices are the final pullback session's regular-hours extremes with the give-up point
+      0.1 ADR beyond, and not the setup's own pair, and says what the stage wrote until 4.18.
+Why:  A column table that did not say where a price came from let the screening pair be written there for two
+      checkpoints without any document disagreeing.
+
+### 2026-09-02 — SCHEMA.md — cites A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list
+Was:  `| forward_return_signed, one_r_in_return | TEXT NULL | The two figures the boundary was read from, present
+      exactly on the two aftermaths that came from them. unclassified means the horizon closed and the figure
+      was absent, so a row carrying both would be one nobody could tell from a placed one |`
+Now:  The row states both figures as fractions of the trigger price over the ten sessions after the trigger's
+      session, says that neither is forward_return.return_signed and what the classifier read until 4.18, and
+      that unclassified means the store held no close to read the figure from.
+Why:  The column carried a figure from one population under a name that read as another, which is the fifth
+      failure shape in a column table.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  Four obligation rows raised at 4.13 and due at 4.18; "the fifteen obligations due before the freeze" in
+      three places; "Eleven are repairs to stored figures or to a figure the pre-registration freezes"; "None
+      of the forty-four rows above fall due at 4.17"; "names eight frozen-only checkpoints"; and the 4.13 row
+      ending "on the terms 1.12 signed off in its third pass".
+Now:  The four rows are discharged and removed; one row is raised at 4.18 for the thrust-selection clause, due
+      at 5.1; sixteen due before the freeze, twelve of them repairs the freeze makes uncorrectable; forty-one
+      rows; nine permits; and the 4.13 row says 4.18 landed on 2026-09-02.
+Why:  4.18 built what the four rows named. The thrust clause is a detector rule the operator ruled should be
+      measured before it ships, and a rule the baseline's detection carries is a repair the freeze makes into
+      a new version.
+
 ### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
 Was:  "**The phase is seventeen checkpoints, and the order of the rows is the order of the work.**" in the
       phase 4 preamble; no 4.18 row; the 4.13 row ending "...which is a different question from the one it

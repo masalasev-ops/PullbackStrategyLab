@@ -44,13 +44,14 @@ public sealed class LossClassifier
     public const string NothingToClassify =
         "no loss closed in this session and no earlier one is waiting on a horizon";
 
-    /// <summary>The horizon the aftermath question is answered over, in sessions from the setup.</summary>
+    /// <summary>The horizon the aftermath question is answered over, in sessions after the trigger's.</summary>
     public const int HorizonDays = 10;
 
-    /// <summary>What is written where the horizon closed and the forward return is absent.</summary>
+    /// <summary>What is written where the horizon closed and the store holds no close to read it from.</summary>
     public const string HorizonClosedWithNoFigure =
-        "the ten-session horizon closed and no forward return was filled for this setup, so nothing "
-        + "in the taxonomy fits and the row says so rather than being placed in the nearest bucket";
+        "the ten-session horizon closed and the store holds no close for the trigger session or the "
+        + "tenth session after it, so nothing in the taxonomy fits and the row says so rather than "
+        + "being placed in the nearest bucket";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -238,41 +239,96 @@ public sealed class LossClassifier
         DateTimeOffset observedAt,
         Tally tally)
     {
-        (DateOnly setupDate, decimal triggerPrice, decimal giveUpDistance)? plan =
-            PlanBehind(connection, row.SetupId, sessionDate);
+        StoredTradePlan? plan = PlanBehind(connection, row.SetupId, sessionDate);
 
         if (plan is null)
         {
             return;
         }
 
-        decimal? forward = ForwardReturnOf(connection, row.SetupId, sessionDate);
+        // The horizon is closed when the store holds more than ten sessions for the name from the
+        // session the trigger was touched in. Counted from the bars rather than from an authored
+        // calendar, which is the ruling 4.5 took (see: A session is a date the store holds minutes
+        // for, and no calendar is authored here). The trigger's own session is in the count, so
+        // eleven is ten having passed.
+        int sessions = DailyBarReader.SessionsBetween(
+            connection, row.Ticker, plan.LiveSession, sessionDate, sessionDate);
+
+        if (sessions <= HorizonDays)
+        {
+            return;
+        }
+
+        decimal? forward = ReturnFromTheTrigger(connection, row.Ticker, plan, sessions, sessionDate);
 
         if (forward is decimal signed)
         {
-            decimal oneR = LossCause.OneRInReturn(plan.Value.giveUpDistance, plan.Value.triggerPrice);
+            decimal oneR = LossCause.OneRInReturn(plan.GiveUpDistance, plan.TriggerPrice);
             string aftermath = LossCause.AftermathOf(signed, oneR);
 
             Apply(transaction, row.TradeId, aftermath, signed, oneR,
-                $"the direction-signed {HorizonDays}-session return from the trigger was {signed} against "
-                + $"one unit of risk of {oneR}",
+                $"the direction-signed {HorizonDays}-session return from the trigger price of "
+                + $"{plan.TriggerPrice}, over the ten sessions after {plan.LiveSession:yyyy-MM-dd}, was "
+                + $"{signed} against one unit of risk of {oneR}",
                 observedAt, tally);
 
             return;
         }
 
-        // The horizon is closed when the store holds more than ten sessions for the name after the
-        // setup's own. Counted from the bars rather than from an authored calendar, which is the
-        // ruling 4.5 took (see: A session is a date the store holds minutes for, and no calendar is
-        // authored here). The setup's own session is in the count, so eleven is ten having passed.
-        int sessions = DailyBarReader.SessionsBetween(
-            connection, row.Ticker, plan.Value.setupDate, sessionDate, sessionDate);
+        Apply(transaction, row.TradeId, LossAftermath.Unclassified, null, null,
+            HorizonClosedWithNoFigure, observedAt, tally);
+    }
 
-        if (sessions > HorizonDays)
+    /// <summary>
+    /// The direction-signed return from the trigger price to the close of the tenth session after
+    /// the one the trigger was touched in, on the adjusted basis at both ends, or null where the
+    /// store does not hold that bar.
+    ///
+    /// <b>From the trigger, over the sessions after the trigger, which is the population the
+    /// decision names and the one the code did not measure until 4.18.</b> Until then this read
+    /// <c>forward_return.return_signed</c>, which <c>ForwardOutcome.Of</c> measures from the setup
+    /// session's close over the ten sessions after the setup, and compared it against one R over the
+    /// trigger price. A long's trigger sits above the setup close by construction, so that return
+    /// exceeded the return from the trigger by the whole gap, and a loss that never reached one R
+    /// from the trigger was placed as noise. Every number was right and the sentence beside it named
+    /// a different population, which is the fifth failure shape with the code as the subject.
+    /// see: A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list
+    ///
+    /// The trigger is a raw price and the closes are put on the adjusted basis through the trigger
+    /// session's own bar, on the terms the short reclaim puts a printed hourly close against the
+    /// average, so a split inside the ten sessions does not read as a move.
+    /// </summary>
+    private static decimal? ReturnFromTheTrigger(
+        SqliteConnection connection,
+        string ticker,
+        StoredTradePlan plan,
+        int sessionsFromTheTrigger,
+        DateOnly asOf)
+    {
+        // The newest `sessionsFromTheTrigger` bars at or before the as-of are exactly the trigger
+        // session and everything after it, because that count was taken between the two dates.
+        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, ticker, asOf, sessionsFromTheTrigger);
+
+        StoredDailyBar? triggerSession = bars.FirstOrDefault(b => b.BarDate == plan.LiveSession);
+        StoredDailyBar[] after = [.. bars.Where(b => b.BarDate > plan.LiveSession)];
+
+        if (triggerSession is null || after.Length < HorizonDays || triggerSession.Close == 0m)
         {
-            Apply(transaction, row.TradeId, LossAftermath.Unclassified, null, null,
-                HorizonClosedWithNoFigure, observedAt, tally);
+            return null;
         }
+
+        decimal factor = ShortExitRules.AdjustmentFactor(triggerSession.Close, triggerSession.AdjustedClose);
+        decimal from = plan.TriggerPrice * factor;
+        decimal to = after[HorizonDays - 1].AdjustedClose;
+
+        if (from == 0m)
+        {
+            return null;
+        }
+
+        decimal move = (to - from) / from;
+
+        return string.Equals(plan.Direction, SetupDirection.Long, StringComparison.Ordinal) ? move : -move;
     }
 
     private static void Apply(
@@ -327,46 +383,11 @@ public sealed class LossClassifier
     /// keyed on the setup, so the bound will rarely exclude anything, and a read that trusted that
     /// would stop being point-in-time the day a backfill existed.
     /// </summary>
-    private static (DateOnly, decimal, decimal)? PlanBehind(
-        SqliteConnection connection, string setupId, DateOnly asOf)
+    private static StoredTradePlan? PlanBehind(SqliteConnection connection, string setupId, DateOnly asOf)
     {
         IReadOnlyList<StoredTradePlan> plans = TradePlanReader.ForSetups(connection, [setupId], asOf);
 
-        return plans.Count == 0
-            ? null
-            : (plans[0].AsOf, plans[0].TriggerPrice, plans[0].GiveUpDistance);
-    }
-
-    /// <summary>
-    /// The direction-signed ten-session return from the trigger, as far as this session could know
-    /// it, or null where none was filled.
-    ///
-    /// Bounded on <c>filled_at</c>, which is when the lab could first have known the figure. A
-    /// classification standing at an old session that saw a return filled after it would place a loss
-    /// the night could not have placed.
-    /// </summary>
-    private static decimal? ForwardReturnOf(SqliteConnection connection, string setupId, DateOnly asOf)
-    {
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT return_signed
-              FROM forward_return
-             WHERE subject_id = @subject_id
-               AND subject_kind = 'setup'
-               AND horizon_days = @horizon
-               AND filled_at <= @filled_before
-             ORDER BY filled_at DESC
-             LIMIT 1;
-            """;
-
-        command.Parameters.AddWithValue("@subject_id", setupId);
-        command.Parameters.AddWithValue("@horizon", HorizonDays);
-        command.Parameters.AddWithValue(
-            "@filled_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
-
-        object? value = command.ExecuteScalar();
-
-        return value is string text ? StoreText.StorageTextToPrice(text) : null;
+        return plans.Count == 0 ? null : plans[0];
     }
 
     private static LossRunResult Complete(

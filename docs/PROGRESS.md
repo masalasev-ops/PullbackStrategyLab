@@ -12237,3 +12237,130 @@ Carried:    **Four raised, all due at 4.18, none discharged, none repointed.** T
 
             **Nothing here is a raise of the out-of-scope ceiling and nothing moves a floor.** This
             pass adds no test, so the count stays at 895 until 4.18 adds the two cases it is owed.
+
+## 4.18 — 2026-09-02 — phase-4-sign-off-findings — what the sign-off found, built: three stages corrected against decisions already taken, and a check that now says where every authored row rests
+
+The checkpoint the 4.13 sign-off added, built by the session that ran that sign-off, which may build
+because the rule only forbids a session signing off code it committed. Six items, on the row's own
+terms, and one of them split in two on the operator's ruling.
+
+Built:      **The plan's order prices, from the final pullback session's regular-hours extremes.**
+            `OrderPrices` in Core derives the pair: a long enters through the session's high and gives
+            up a tenth of an average daily range under its low, a short enters through the low and
+            gives up a tenth over the high, and a range that is not positive or a session whose low
+            is above its high is refused rather than priced. `PlanBuilder` reads the session's daily
+            bar and its figures as they stood on the evening, and the setup's own pair for one thing
+            only, being whether there is a pullback to plan against. Until this checkpoint it copied
+            that pair into the plan, which is the low of the whole dip and the reading the decision
+            names as the one to refuse (see: The order prices are derived from the final pullback
+            session's minutes, not from the screening geometry).
+
+            **The source is the daily bar and the decision said minutes, and the two are the same
+            numbers.** The decision named minute bars and required the plan to be computable the
+            evening before, and at 18:30 the store holds no minute of the flagging session: the
+            evening fetch buys the previous evening's names. What settled it is a fact about the
+            vendor rather than an assumption: one `eod/AAPL.US` call for 2026-08-25, run by the
+            operator on 2026-09-02 and read against the 959 captured minutes of that session, gave
+            high 313.59 and low 308.21 from the daily bar and 313.59 and 308.21 from the 390
+            regular-hours minutes, where the 569 extended-hours minutes ran to 313.011 and 290.4636.
+            One name on one session, stated as one. It is recorded under "What each vendor endpoint
+            carries" beside the note 4.3 left, because the next checkpoint reaching for a daily
+            extreme will ask the same question, and the decision carries a dated correction saying
+            which source it takes and why. **No schedule moved and no call was added**, which was the
+            operator's condition and is why the other route was not taken. **The trigger is the same
+            session's extreme on the entry side**, which is a reading of an answer that named the
+            floor, the ceiling and the offset and not the trigger apart from them, and it is stated
+            as a reading.
+
+            **The watchlist publishes the plan's prices where a plan exists and the detector's where
+            none does.** Until this checkpoint it showed the screening pair beside the plan's share
+            count, which from here are different numbers, and only one of them is a price the lab
+            will trade at. The setups read surface carries both pairs, named apart.
+
+            **The position manager, two faults, both run at the sign-off and both kept as tests.**
+            The walk carries a bound at the entry minute, so a position opened inside the session is
+            not measured against the bars before it existed; the entry minute itself is walked,
+            because a bar holding both the trigger and the give-up point fills and then stops.
+            `ArmedInAnEarlierSession` is read off `exit_armed_session` against the session walked
+            rather than off the presence of a reason, and an arm the walk raises is told apart from
+            one the store already carried, so a rerun of a session that armed the trail arms nothing,
+            closes nothing, writes nothing, and the position still exits at the next session's open.
+
+            **The loss boundary, over the population the decision names.** The aftermath is the
+            direction-signed return from the trigger price to the adjusted close of the tenth session
+            after the one the trigger was touched in, with the trigger put on the adjusted basis
+            through its own session's bar so a split inside the window is not a move. It read
+            `forward_return.return_signed` until now, which is from the setup session's close over
+            the ten sessions after the setup, and compared it against one R over the trigger. The
+            horizon is counted from the trigger's session, and `unclassified` is the shape where the
+            count closes and the store holds no bar for the trigger session itself.
+
+            **`pinned-constants` places every row of the authored-parameters table.** The pinned set
+            is derived from the pins the check makes rather than kept in a list beside them, which
+            is the list that was seven rows stale. Twelve trading rows gained pins: starting equity,
+            the long trail, the short trim, the hourly grid, entry and exit slippage, the gap-through
+            fill, trigger confirmation, the loss boundary, the lateness bound, the regime label, and
+            the trigger and stop derivation against `OrderPrices`. Every remaining row is deferred to
+            the checkpoint that builds its component, which has to be one BUILD_PLAN has and PROGRESS
+            does not record, or exempted by name with the reason no constant can carry it, and a row
+            in none of the three fails. The placement is a pure function proved against six rows
+            written by hand, three of which fail, and a second test asserts the live deferrals all
+            resolve to checkpoints still ahead.
+
+Ruled:      **The thrust-selection clause is answered and not built, on the operator's ruling of
+            2026-09-02.** The order-price decision's third clause says the thrust is the scan hit
+            with the extreme, ties by recency, and both detectors take the most recent hit and then
+            rank, which is the rule the decision says it replaces. It is a detector rule and not a
+            plan one: changing it moves the thrust of every setup with two hits in its window and
+            with it the screening geometry, the gate verdicts, the anchored average and every
+            calibration figure since 2.11, none of which has been measured under the new rule. Put to
+            the operator as build-now against measure-first, and measure-first was taken. It is a
+            row due at 5.1, with the measurement stated as the obligation: the funnel over the 602
+            calibration sessions before and after, per gate and per side, with the prediction stated
+            before the run, on the terms 3.0(c) set for the last geometry change.
+
+Measured:   **`dotnet test` over the suite: 911 tests, from 895 at 4.13.** Three are the position
+            manager's cases, four the classifier's, four `OrderPricesTests`, two `PlanBuilderTests`,
+            one the watchlist page, and two the placement's proofs.
+
+            **The two sign-off cases were red before the repair and green after.** The long opened at
+            10:15 against a 09:30 bar that opened at 94 read `closed_at` 13:30Z against `opened_at`
+            14:15Z with a loss of 915 before, and stays open with no exit fill after. The rerun of the
+            session that armed the trail closed the position at 14:00Z with reason `trail` and one
+            row written before, and arms nothing, closes nothing and writes nought rows after, with
+            the exit landing at the next session's open.
+
+            **The classifier's population case.** A setup that closed at 90 on its evening, a trigger
+            of 100 and a give-up point of 95, and a close of 103 ten sessions after the trigger: 3%
+            from the trigger against one R of 5%, a failed setup, where the return from the setup's
+            close is 14.4% and the code until now placed it as noise.
+
+            **`pinned-constants`'s out-of-scope figure for the table reads 11 where it read 30**: 7
+            rows deferred to 5.1, 5.4, 6.2, 6.3 and 6.5, and 4 exempt by name, over 46 rows of which
+            35 are pinned. The 30 was 46 less a list of 16, and the list had not moved since 4.6.
+
+Found:      **The `Only_the_plan_stage_turns_a_distance_into_a_share_count` scan still holds** with
+            the plan's distance now the derivation's rather than the setup's, because the one caller
+            of the sizing function is unchanged; what changed is what it is handed.
+
+            **The BRKA over-budget case in `PlanBuilderTests` had a session whose low sat above its
+            high once the offset was applied**, which the new derivation refuses, and the case was
+            widened rather than the refusal loosened: a give-up distance of 11,000 against a budget
+            of 750 buys nought shares either way.
+
+Carried:    **One raised, due at 5.1**, being the thrust-selection clause with its measurement, so
+            the count due before the freeze rises from fifteen to sixteen and the split reads twelve
+            and four: a rule the baseline's own detection carries is a repair the freeze makes into a
+            new version. **Four discharged**, being the rows 4.13 raised, all due here. The table
+            reads 41.
+
+            **The fixture gains a permit for this checkpoint and no expectation.** The three stages
+            sit downstream of a cap the fixture's one market day passes nothing through, so every
+            `plans.*`, `manage.*` and `losses.*` figure is a structural nought before and after the
+            repair and could not tell the repaired stage from the broken one; the check reads the
+            corpus. Each repair is held by an authored case instead, on the terms the gate boundaries
+            are. BUILD_PLAN's permit sentence reads nine.
+
+            **Nothing here moves a floor and nothing raises the out-of-scope ceiling.** Thirteen
+            scopes are added to the baseline for the new pins and the placement, each at the value
+            it was recorded at, on the terms a new pin has always been added.
