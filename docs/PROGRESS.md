@@ -12799,3 +12799,30 @@ Carried:    **Three rows raised, four split in two, seventeen repointed, none di
             **Nothing here raises a new obligation of its own.** The nine rows are the questions,
             which existed as questions before they existed as rows, and the check repaired above
             landed with its own test rather than with a row.
+
+## 4.13 — 2026-09-02 — phase-5-plan-figures — the phase 5 plan's figures, read against the commit that carries them
+
+Not a checkpoint entry. The entry above states its figures from a run made before it was itself
+written, which is the only order available to it, and this records them against a commit on a clean
+tree so the record rests on a tree rather than on an assertion. It changes `docs/PROGRESS.md` and
+nothing else.
+
+Verified:   **`tools/verify-phase.ps1` GREEN on `5ca35ee`, the merge that lands the plan**, working
+            tree clean, stamped 2026-09-02 20:48:17Z: 137 claims, 114 passed, 0 failed, 23 out of
+            scope, 0 unexamined, 1,453 expectations of which 1 void, inputs CAPTURED 70 and AUTHORED
+            133, expectations changed since the last commit 0. Every figure is the one the entry
+            above states.
+
+            **Coverage examined reads 8,242 where that entry recorded 8,232, and the ten are its own
+            prose.** `carried-obligations` counts the due points named in `Carried` blocks and
+            `stated-counts` reads the record beside the specs, so an entry describing seventeen
+            repointed obligations enlarges the corpus those two scopes are measured over. The figure
+            was taken before the entry existed and could not have been taken after it, which is the
+            same one-commit gap the 4.13 sign-off reconciled between `98fd0ca` and `4604c8b`. No
+            floor moved and no scope changed its classification.
+
+            **`tools/ci.ps1` is unchanged at 31 steps and 912 tests**, which this entry does not move:
+            it adds no test and commits one document.
+
+Carried:    **Nothing raised, nothing discharged, nothing repointed.** The table still reads 50, the
+            operator's list 18, the count due before the freeze 17 and its split twelve and five.
