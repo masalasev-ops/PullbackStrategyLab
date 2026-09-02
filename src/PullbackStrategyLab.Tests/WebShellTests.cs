@@ -134,12 +134,14 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// <summary>
     /// The screens that are filled rather than empty states.
     ///
-    /// <b>The watchlist joined at 4.1</b>, which is what its own empty state had said since 1.8. A
+    /// <b>The watchlist joined at 4.1 and the journal at 4.11</b>, which is what each one's own empty
+    /// state had said since 1.8. A
     /// page that arrived and kept its "nothing here yet" would pass the test below by claiming to be
     /// unbuilt, which is the same shape as a status-band field waiting on a landed checkpoint: an
     /// honest placeholder outliving the thing it was standing in for.
     /// </summary>
-    private static IReadOnlyList<string> Landed { get; } = ["/setups", "/scoreboard", "/watchlist"];
+    private static IReadOnlyList<string> Landed { get; } =
+        ["/setups", "/scoreboard", "/watchlist", "/journal"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -158,21 +160,24 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     }
 
     /// <summary>
-    /// A screen that is built still names the checkpoint that fills any panel it does not have yet.
+    /// A screen that is built still names the checkpoint that fills any panel it does not have yet,
+    /// and stops naming one the moment that checkpoint lands.
     ///
-    /// The scoreboard is the case this exists for. Three of its four bands are live as of 3.5 and the
-    /// fourth needs closed trades from 4.10, so the page is neither an empty state nor complete. A
-    /// band silently absent would read as a page that had shown everything it has, which is the
-    /// failure the empty-state rule exists to prevent, arrived at from the other side.
+    /// The scoreboard is the case this exists for. Band 3 needs the research loop and is honestly
+    /// absent; band 2's loss causes were in the same state until 4.10 built them, and the
+    /// placeholder was removed at 4.11 when this test found it still standing. **Both directions are
+    /// asserted here**, because a placeholder outliving the thing it stood in for reads as a page
+    /// nobody finished, which is the failure the empty-state rule exists to prevent arrived at from
+    /// the other side.
     /// </summary>
     [Fact]
-    public async Task A_built_screen_still_names_the_checkpoint_that_fills_what_it_lacks()
+    public async Task A_built_screen_names_what_it_lacks_and_stops_naming_what_it_has()
     {
         using HttpClient client = Reading();
         string html = await client.GetStringAsync("/scoreboard");
 
-        Assert.Contains("checkpoint 4.10", html, StringComparison.Ordinal);
         Assert.Contains("checkpoint 6.8", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("checkpoint 4.10", html, StringComparison.Ordinal);
     }
 
     [Fact]

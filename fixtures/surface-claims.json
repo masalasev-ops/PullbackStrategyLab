@@ -65,17 +65,17 @@
       "name": "borrow-assumption-on-every-short-trade",
       "sentence": "Both will be recorded as unmodelled assumptions on every short trade, from 4.7",
       "statedIn": "docs/ARCHITECTURE.html",
-      "surface": "the trade journal",
-      "arrivesAt": "4.11",
-      "why": "The third the obligation names, and the one nobody had looked at. No trade row exists until 4.7 and no journal until 4.11, so the claim rests on a surface nobody has built. It was written in the present tense until 3.0(d)."
+      "surface": "/journal",
+      "why": "The rate is on the position from 4.7 and on the trade from 4.9, and the page that shows a person a short is where \"on every short trade\" is a claim about anything. The sentence is rendered per short rather than as a legend, and a long carries the words saying it is not a short, because a blank cell on a long reads as a cost of nought.",
+      "mustCarry": "borrow availability is not in the price feed"
     },
     {
       "name": "realised-risk-beside-intended",
       "sentence": "the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away",
       "statedIn": "docs/DECISIONS.md",
-      "surface": "the trade journal",
-      "arrivesAt": "4.11",
-      "why": "Same shape as the borrow assumption. Share counts round down and the gap that creates is a real cost, visible only if something shows both numbers."
+      "surface": "/journal",
+      "why": "The two figures are on the position from 4.7 and on the audit from 4.9, and they differ by the entry slippage and by nothing else. \"Beside\" is a claim about a surface, and this is the first one that puts them next to each other where a person reads a trade.",
+      "mustCarry": "risk intended"
     },
     {
       "name": "failed-checks-greyed-with-the-failing-check-named",

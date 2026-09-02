@@ -1,4 +1,5 @@
 @page "/chart/{ticker?}"
+@using System.Globalization
 @using PullbackStrategyLab.Web.Shell
 @model ChartModel
 @*
@@ -10,6 +11,71 @@
     see: Pages are server-rendered with no build step, and any script is local rather than fetched
 *@
 <h1>Chart</h1>
+
+@if (Model.TradeChart is TradeChartView trade)
+{
+    @*
+        A trade rather than a window: one session, minute by minute, with the four prices that
+        decided it drawn across it. The x-axis is a clock rather than a calendar, which is why this
+        is a different geometry from the one below rather than the same one with a shorter window.
+    *@
+    @if (trade.Nothing is string missing)
+    {
+        <p class="down">@missing</p>
+    }
+    else
+    {
+        <p class="lede">
+            <b>@trade.Ticker</b> @trade.Direction.
+            The session of @trade.ClosedSession, minute by minute.
+            Exited on the @trade.ExitReason rule.
+            @if (trade.OpenedEarlier)
+            {
+                <span>The entry filled in the session of @trade.OpenedSession, so the fill line below
+                      is a price this session did not necessarily reach.</span>
+            }
+        </p>
+
+        <svg class="chart minutes" viewBox="0 0 @Model.MinuteGeometry.Width @Model.MinuteGeometry.Height"
+             role="img" aria-label="@trade.Ticker minutes with the trade's levels">
+            @foreach (MinuteGeometry bar in Model.MinuteGeometry.Candles)
+            {
+                <line class="wick" x1="@bar.Centre" x2="@bar.Centre" y1="@bar.HighY" y2="@bar.LowY" />
+                <rect class="body @(bar.Up ? "up" : "down")"
+                      x="@(bar.Centre - (bar.BodyWidth / 2))" y="@bar.BodyTop"
+                      width="@bar.BodyWidth" height="@bar.BodyHeight" />
+            }
+            @foreach (LevelGeometry level in Model.MinuteGeometry.Levels)
+            {
+                <line class="level @level.Name" x1="0" x2="@Model.MinuteGeometry.PlotWidth"
+                      y1="@level.Y" y2="@level.Y" />
+                @*
+                    Razor reads a bare <text> tag as its own escape construct and refuses attributes
+                    on it, so the SVG element is written through Html.Raw. The label is built from
+                    the geometry rather than from anything a request carries, and both parts are
+                    encoded, so nothing from outside reaches the markup.
+                *@
+                @Html.Raw(
+                    "<text class=\"level-label\" x=\""
+                    + ((Model.MinuteGeometry.PlotWidth + 4).ToString("0.##", CultureInfo.InvariantCulture))
+                    + "\" y=\""
+                    + ((level.Y + 4).ToString("0.##", CultureInfo.InvariantCulture))
+                    + "\">"
+                    + System.Net.WebUtility.HtmlEncode(level.Name + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture))
+                    + "</text>")
+            }
+        </svg>
+
+        <ul class="legend levels">
+            @foreach (TradeLevelLine level in trade.Levels)
+            {
+                <li><span class="swatch @level.Name"></span><b>@level.Name</b> @level.Price &mdash; @level.What</li>
+            }
+        </ul>
+    }
+
+    return;
+}
 
 <form class="ask" method="get" action="/chart">
     <label>Ticker <input name="ticker" value="@Model.Ticker" placeholder="IESC" size="8" autofocus /></label>

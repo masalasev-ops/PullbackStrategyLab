@@ -92,6 +92,25 @@ public static class Program
                 connections,
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture))));
 
+        // Every closed trade the store holds, as at the date asked for, with the plan held against
+        // each and the cause of every loss. The date is in the path on the terms the scoreboard's is:
+        // a journal opened on an old date is a reading of what the lab knew then, and the bound is
+        // what makes that true rather than a filter over what it knows now.
+        app.MapGet("/journal/{asOf}", (string asOf, StoreConnectionFactory connections) =>
+            Results.Ok(LabJournal.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture))));
+
+        // One trade's session, minute by minute, with the four prices that decided it. A second read
+        // rather than a widening of /chart: that one draws a quarter of daily bars with the averages
+        // on them, and a daily candle cannot show a trigger reached at 10:00 and a stop reached at
+        // 14:00 on the same day.
+        app.MapGet("/chart/trade/{tradeId}", (string tradeId, StoreConnectionFactory connections, IClock clock, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabTradeChart.Read(
+                connections,
+                tradeId,
+                clock.SessionDate(clock.UtcNow, configured.Value.SessionZone))));
+
         app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, string? failed) =>
             Results.Ok(setups.Read(
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),

@@ -375,6 +375,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             {
                 _ when path.StartsWith("/setups", StringComparison.Ordinal) => Night,
                 _ when path.StartsWith("/scoreboard", StringComparison.Ordinal) => Panels,
+                _ when path.StartsWith("/journal", StringComparison.Ordinal) => Trades,
                 _ => Status,
             };
 
@@ -383,6 +384,59 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
             };
         });
+
+    /// <summary>
+    /// A journal carrying one trade a side, because the two claims it answers are about the two
+    /// sides separately.
+    ///
+    /// <b>A short and a long, and the short is the one that matters.</b> The borrow claim is that
+    /// both unmodelled assumptions are recorded on every short trade, and a body with no short in it
+    /// would let the page satisfy that claim by never having to render one. The long is here so the
+    /// other half is exercised too: a page that printed the borrow sentence on every row would
+    /// satisfy the claim and be wrong, because a long carries neither assumption and a cost of
+    /// nought on it reads as a long that borrowed for free.
+    ///
+    /// <b>The risk pair is on both.</b> The decision it answers is that the realised risk is recorded
+    /// beside the intended risk on every position, and "every" is what a one-row body cannot show.
+    ///
+    /// <b>The loss on the short has a mechanism and no aftermath.</b> That is the ordinary state of
+    /// every loss for its first ten sessions, and the page has to be able to say it is waiting rather
+    /// than say it is unclassified.
+    /// </summary>
+    private const string Trades = """
+        {
+          "asOf": "2026-08-24", "absent": null,
+          "longExpectancyR": 0.48, "shortExpectancyR": 0.11,
+          "slotsTheCapsCouldNotSee": 3,
+          "long": [
+            { "tradeId": "t-long", "ticker": "AAA", "direction": "long",
+              "openedSession": "2026-08-20", "closedSession": "2026-08-24",
+              "entryPrice": "100.10", "exitPrice": "126.40", "exitReason": "trail",
+              "resultR": 9.8, "heldSessions": 4, "shares": 150, "trimmedShares": 0,
+              "riskIntended": "750.00", "riskRealised": "765.00",
+              "borrowRateAssumed": null, "borrowCost": null, "borrowAvailability": null,
+              "entryDifferenceBasisPoints": 10.0, "exitDifferenceBasisPoints": 10.0,
+              "entryBasis": "slipped", "exitBasis": "slipped",
+              "plannedGiveUp": "95.00", "plannedShares": 150, "executedShares": 150,
+              "reducedBecause": null,
+              "lossMechanism": null, "aftermath": null, "aftermathBecause": null }
+          ],
+          "short": [
+            { "tradeId": "t-short", "ticker": "BBB", "direction": "short",
+              "openedSession": "2026-08-21", "closedSession": "2026-08-24",
+              "entryPrice": "99.90", "exitPrice": "105.11", "exitReason": "give-up",
+              "resultR": -1.02, "heldSessions": 3, "shares": 150, "trimmedShares": 22,
+              "riskIntended": "750.00", "riskRealised": "765.00",
+              "borrowRateAssumed": "0.010", "borrowCost": "1.23",
+              "borrowAvailability": "borrow availability is not in the price feed: the market-capitalisation floor of tradable-shortable stands in for it, so a short nobody would have lent is recorded here as though it filled",
+              "entryDifferenceBasisPoints": 10.0, "exitDifferenceBasisPoints": 10.0,
+              "entryBasis": "slipped", "exitBasis": "slipped",
+              "plannedGiveUp": "105.00", "plannedShares": 196, "executedShares": 150,
+              "reducedBecause": "total-risk",
+              "lossMechanism": "ordinary", "aftermath": null, "aftermathBecause": null }
+          ]
+        }
+        """;
 
     private const string Status = """
         { "store": "ready", "schemaVersion": 20, "schemaVersionExpected": 32,

@@ -241,6 +241,124 @@ public sealed class LabApiClient
         }
     }
 
+    /// <summary>
+    /// The trade journal, on the terms every other read here stands on: it never throws, and an
+    /// answer it could not get is a sentence rather than an exception.
+    /// </summary>
+    public async Task<JournalView> ReadJournalAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/journal/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return JournalView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            JournalPayload? payload = await JsonSerializer
+                .DeserializeAsync<JournalPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return JournalView.Empty(session, "the read surface answered with nothing");
+            }
+
+            if (payload.Absent is not null)
+            {
+                return JournalView.Empty(session, payload.Absent);
+            }
+
+            IReadOnlyList<TradeRow> longSide = Trades(payload.Long);
+            IReadOnlyList<TradeRow> shortSide = Trades(payload.Short);
+
+            return new JournalView(
+                session,
+                null,
+                JournalView.ExpectancyOf(payload.LongExpectancyR, longSide.Count),
+                JournalView.ExpectancyOf(payload.ShortExpectancyR, shortSide.Count),
+                longSide,
+                shortSide,
+                payload.SlotsTheCapsCouldNotSee);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+        {
+            return JournalView.Empty(session, "the read surface did not answer");
+        }
+    }
+
+    /// <summary>
+    /// One trade's session, minute by minute, on the terms every other read here stands on.
+    /// </summary>
+    public async Task<TradeChartView> ReadTradeChartAsync(
+        string tradeId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(tradeId);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/chart/trade/{Uri.EscapeDataString(tradeId)}", cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return TradeChartView.Empty(tradeId, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            TradeChartPayload? payload = await JsonSerializer
+                .DeserializeAsync<TradeChartPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return TradeChartView.Empty(tradeId, "the read surface answered with nothing");
+            }
+
+            if (payload.Nothing is not null)
+            {
+                return TradeChartView.Empty(tradeId, payload.Nothing);
+            }
+
+            return new TradeChartView(
+                payload.TradeId,
+                payload.Ticker,
+                payload.Direction,
+                payload.ClosedSession,
+                payload.OpenedSession,
+                payload.ExitReason,
+                payload.Bars is null
+                    ? []
+                    : [.. payload.Bars.Select(b => new MinuteCandle(b.At, b.Open, b.High, b.Low, b.Close))],
+                payload.Levels is null
+                    ? []
+                    : [.. payload.Levels.Select(l => new TradeLevelLine(l.Name, l.Price, l.What))],
+                null);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+        {
+            return TradeChartView.Empty(tradeId, "the read surface did not answer");
+        }
+    }
+
+    private static IReadOnlyList<TradeRow> Trades(IReadOnlyList<TradePayload>? trades) =>
+        trades is null
+            ? []
+            : [.. trades.Select(t => new TradeRow(
+                t.TradeId, t.Ticker, t.Direction, t.OpenedSession, t.ClosedSession, t.EntryPrice,
+                t.ExitPrice, t.ExitReason, t.ResultR, t.HeldSessions, t.Shares, t.TrimmedShares,
+                t.RiskIntended, t.RiskRealised, t.BorrowRateAssumed, t.BorrowCost, t.BorrowAvailability,
+                t.EntryDifferenceBasisPoints, t.ExitDifferenceBasisPoints, t.EntryBasis, t.ExitBasis,
+                t.PlannedGiveUp, t.PlannedShares, t.ExecutedShares, t.ReducedBecause,
+                t.LossMechanism, t.Aftermath, t.AftermathBecause))];
+
     private static IReadOnlyList<PanelView> Panels(IReadOnlyList<PanelPayload>? panels) =>
         panels is null
             ? []
@@ -366,6 +484,61 @@ public sealed class LabApiClient
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
         int? Effective, string? Population, int? Minimum, string? WithheldBecause,
         int? Sessions, int? MinimumSessions);
+
+    private sealed record TradeChartPayload(
+        string TradeId,
+        string Ticker,
+        string Direction,
+        string ClosedSession,
+        string OpenedSession,
+        string ExitReason,
+        IReadOnlyList<TradeChartBarPayload>? Bars,
+        IReadOnlyList<TradeLevelPayload>? Levels,
+        string? Nothing);
+
+    private sealed record TradeChartBarPayload(
+        string At, decimal Open, decimal High, decimal Low, decimal Close, long Volume);
+
+    private sealed record TradeLevelPayload(string Name, string Price, string What);
+
+    private sealed record JournalPayload(
+        string AsOf,
+        string? Absent,
+        double? LongExpectancyR,
+        double? ShortExpectancyR,
+        IReadOnlyList<TradePayload>? Long,
+        IReadOnlyList<TradePayload>? Short,
+        int SlotsTheCapsCouldNotSee);
+
+    private sealed record TradePayload(
+        string TradeId,
+        string Ticker,
+        string Direction,
+        string OpenedSession,
+        string ClosedSession,
+        string EntryPrice,
+        string ExitPrice,
+        string ExitReason,
+        double ResultR,
+        int HeldSessions,
+        int Shares,
+        int TrimmedShares,
+        string? RiskIntended,
+        string RiskRealised,
+        string? BorrowRateAssumed,
+        string? BorrowCost,
+        string? BorrowAvailability,
+        double? EntryDifferenceBasisPoints,
+        double? ExitDifferenceBasisPoints,
+        string? EntryBasis,
+        string? ExitBasis,
+        string? PlannedGiveUp,
+        int? PlannedShares,
+        int? ExecutedShares,
+        string? ReducedBecause,
+        string? LossMechanism,
+        string? Aftermath,
+        string? AftermathBecause);
 
     private sealed record SetupsPayload(
         string? AsOf,

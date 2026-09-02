@@ -2,17 +2,104 @@
 @using PullbackStrategyLab.Web.Shell
 @model JournalModel
 @*
-    The empty state, which is the whole page until 4.12. It names what will fill it and
-    which checkpoint fills it, because an empty page that says so is honest and a page of
-    invented rows is not.
+    Every closed trade, long and short in divided panels.
+
+    Two panels and never one list with a direction column, on the rule the whole corpus is built
+    around. The two expectancies are computed per side by the read surface and nothing here adds
+    them: there is no total row and no arithmetic in this template at all.
+
+    Nothing here is stubbed. Where a figure has no source the cell says which state it is in rather
+    than being blank, because a blank cell is read as a nought and most of these are not.
 *@
 <h1>@Model.Item.Title</h1>
 <p class="lede">@Model.Item.What.</p>
 
-<div class="empty-state">
-    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
-    <p>The shell, its navigation, the status band and the shared chart component are what
-       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
-       invented data reads as a working screen and is the one thing that cannot be told apart
-       from the real one later.</p>
-</div>
+@if (Model.Journal.Absent is string absent)
+{
+    @* "Nothing has closed" and "this page is not built" are different facts and the words have to
+       be different too. Every unbuilt screen in this shell says "Nothing here yet", so a built page
+       reusing that sentence would report itself as unbuilt on the one surface a person reads. *@
+    <div class="empty-state">
+        <p><b>No closed trades.</b> @absent.</p>
+        <p>The screen is built and nothing has closed yet. A lab that has held no position is an
+           ordinary state of a lab with two nights on file, and it is not the same as a page waiting
+           for a checkpoint: those say so in the words above, and this one does not.</p>
+    </div>
+}
+else
+{
+    <div class="band">
+        <div><b>Closed trades</b><span class="count">@(Model.Journal.Long.Count + Model.Journal.Short.Count)</span>
+             <span class="muted">long @Model.Journal.Long.Count &middot; short @Model.Journal.Short.Count</span></div>
+        <div><b>Long expectancy</b><span class="num">@Model.Journal.LongExpectancy</span></div>
+        <div><b>Short expectancy</b><span class="num">@Model.Journal.ShortExpectancy</span>
+             <span class="muted">borrow assumed</span></div>
+        <div><b>Slots the caps could not see</b><span class="num">@Model.Journal.SlotsTheCapsCouldNotSee</span></div>
+    </div>
+
+    <p class="muted caps-caption">@Model.Journal.CapsCaption</p>
+
+    <div class="row">
+        @{
+            void Panel(string title, string kind, IReadOnlyList<TradeRow> rows)
+            {
+                <div class="col journal-side" style="flex:1">
+                    <h2>@title <span class="pill">@rows.Count</span></h2>
+                    @if (rows.Count == 0)
+                    {
+                        <p class="muted">Nothing has closed on this side.</p>
+                    }
+                    else
+                    {
+                        <table class="journal @kind">
+                            <tr>
+                                <th>Ticker</th><th>In</th><th>Out</th><th>Entry</th><th>Exit</th>
+                                <th>R</th><th>Held</th><th>Shares</th><th>Exit rule</th>
+                                <th>Cause</th><th>Plan vs actual</th>
+                            </tr>
+                            @foreach (TradeRow row in rows)
+                            {
+                                <tr>
+                                    <td class="tk">
+                                        <a href="/chart?trade=@row.TradeId">@row.Ticker</a>
+                                    </td>
+                                    <td class="num">@row.OpenedSession</td>
+                                    <td class="num">@row.ClosedSession</td>
+                                    <td class="num">@row.EntryPrice</td>
+                                    <td class="num">@row.ExitPrice</td>
+                                    <td class="num @(row.Lost ? "bad" : "good")">@row.Result</td>
+                                    <td class="num">@row.HeldSessions</td>
+                                    <td class="num">@row.SharesHeld</td>
+                                    <td class="muted">@row.ExitReason</td>
+                                    <td class="muted cause">@row.Cause</td>
+                                    <td class="num muted">@row.PlanAgainstActual</td>
+                                </tr>
+                                <tr class="detail">
+                                    @* The two figures the risk decision asked to be visible side by
+                                       side rather than assumed away, and the two assumptions every
+                                       short carries. Both are sentences rather than columns,
+                                       because neither is a number a reader can compare down a
+                                       column: one is a pair and the other is a caveat. *@
+                                    <td colspan="11" class="muted">
+                                        <span class="risk-pair">@row.RiskIntendedAgainstRealised</span>
+                                        <span class="borrow">@row.BorrowAssumed</span>
+                                        @if (row.AftermathBecause is string because)
+                                        {
+                                            <span class="aftermath">@because</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    }
+                </div>
+            }
+
+            Panel("Long", "long", Model.Journal.Long);
+            Panel("Short", "short", Model.Journal.Short);
+        }
+    </div>
+
+    <p class="warn">Long and short are never added together into a single number anywhere on this
+       page. Short results carry a borrow assumption that long results do not.</p>
+}

@@ -785,6 +785,19 @@ public sealed class PhaseReplay : IDisposable
         Record("losses.failedSetup", classified.FailedSetup);
         Record("losses.unclassified", classified.Unclassified);
 
+        // 16c. The journal's read surface, over what every stage above wrote.
+        //
+        //      <b>Not a stage and not a night, which is why it is here rather than in the run
+        //      list.</b> It is the answer a person opens the journal to, and it is the first thing
+        //      that reads `trade`, `plan_audit` and `loss_class` together. `slotsTheCapsCouldNotSee`
+        //      is the one figure it derives rather than carries: a sum over every `manage_run` the
+        //      store holds, and the size of the approximation the caps make.
+        JournalResponse journal = LabJournal.Read(_connections, AsOf);
+
+        Record("journal.longTrades", journal.Long.Count);
+        Record("journal.shortTrades", journal.Short.Count);
+        Record("journal.slotsTheCapsCouldNotSee", journal.SlotsTheCapsCouldNotSee);
+
         // 17. The scoreboard, last, because every panel it builds reads what the stages before it
         //     wrote. Over the fixture most panels are withheld, which is the honest answer for a
         //     lab with one night on file and no closed horizon.

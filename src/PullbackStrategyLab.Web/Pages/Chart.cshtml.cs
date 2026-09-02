@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using PullbackStrategyLab.Web.Shell;
 
@@ -40,13 +41,44 @@ public sealed class ChartModel : ScreenModel
     [BindProperty(SupportsGet = true)]
     public int Sessions { get; set; } = 60;
 
+    /// <summary>
+    /// A trade to draw instead of a window, which switches the page from a calendar to a clock.
+    ///
+    /// The journal links here with one, because a trade happened inside one session and a daily
+    /// candle cannot show a trigger reached at 10:00 and a stop reached at 14:00 on the same day.
+    /// The two are one page rather than two because they are the same picture of the same store,
+    /// and a second page would be a second candlestick component eventually.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Trade { get; set; }
+
     public ChartView? Chart { get; private set; }
 
+    public TradeChartView? TradeChart { get; private set; }
+
     public CandlestickGeometry Geometry { get; private set; } = CandlestickChart.Lay([], [], Width, Height);
+
+    public MinuteChartGeometry MinuteGeometry { get; private set; } =
+        CandlestickChart.LayMinutes([], [], Width, Height);
 
     public override async Task OnGetAsync(CancellationToken cancellationToken)
     {
         await base.OnGetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(Trade))
+        {
+            TradeChart = await _api.ReadTradeChartAsync(Trade, cancellationToken).ConfigureAwait(false);
+            ViewData["Title"] = string.IsNullOrWhiteSpace(TradeChart.Ticker) ? "Trade" : TradeChart.Ticker;
+
+            MinuteGeometry = CandlestickChart.LayMinutes(
+                TradeChart.Candles,
+                [.. TradeChart.Levels.Select(l => new PriceLevel(l.Name, Price(l.Price)))],
+                Width,
+                Height);
+
+            return;
+        }
+
         ViewData["Title"] = string.IsNullOrWhiteSpace(Ticker) ? "Chart" : Ticker.ToUpperInvariant();
 
         if (string.IsNullOrWhiteSpace(Ticker))
@@ -59,4 +91,16 @@ public sealed class ChartModel : ScreenModel
         Chart = await _api.ReadChartAsync(Ticker, Sessions, cancellationToken).ConfigureAwait(false);
         Geometry = CandlestickChart.Lay(Chart.Candles, Chart.Averages, Width, Height);
     }
+
+    /// <summary>
+    /// A level's price, from the text the wire carries it as.
+    ///
+    /// TryParse rather than Parse, on the terms the scoreboard's interval already stands on: this
+    /// runs before the response begins, and a value this page did not write would otherwise take
+    /// the whole picture down instead of dropping one line out of the scale.
+    /// </summary>
+    private static decimal Price(string text) =>
+        decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal price)
+            ? price
+            : 0m;
 }
