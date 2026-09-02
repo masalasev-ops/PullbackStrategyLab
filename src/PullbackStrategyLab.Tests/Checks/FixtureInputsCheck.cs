@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PullbackStrategyLab.Core.Configuration;
@@ -92,9 +93,16 @@ public sealed class FixtureInputsCheck
     public sealed record InputTiers(IReadOnlyList<InputTier> Tiers, IReadOnlyList<string> EndpointsWithNoCapturedInput);
 
     /// <summary>
-    /// The endpoints a live run exercises, named here and matched against the manifest. Named
-    /// rather than scraped from the vendor client, because a scraper that stopped matching would
-    /// leave the check quietly narrower and reporting full coverage of nothing.
+    /// The endpoints a live run exercises, named here and matched against the manifest.
+    ///
+    /// <b>Named rather than scraped, and reconciled against the client from 4.17.</b> A scraper that
+    /// stopped matching would leave the check quietly narrower while reporting full coverage of
+    /// nothing, which is why the list is written out. What it did not have was the other direction:
+    /// the list named four endpoints where the client calls five, `fundamentals` being the one it
+    /// missed, and that one was captured only by luck. So the client is read as well, and a route it
+    /// calls that this list does not name fails here rather than being covered by accident. The
+    /// scraper is a second opinion about the list rather than the list itself, which is what makes
+    /// it safe.
     /// </summary>
     public static IReadOnlyList<string> EndpointsALiveRunExercises { get; } =
     [
@@ -102,7 +110,29 @@ public sealed class FixtureInputsCheck
         "eod-bulk-last-day",
         "eod",
         "intraday",
+        "fundamentals",
     ];
+
+    /// <summary>
+    /// The routes the vendor client asks for, read from its own source.
+    ///
+    /// Every request in that file names its route as the first segment of an interpolated path, so
+    /// the pattern is a quote, a lowercase route and a slash. A route the pattern cannot see is one
+    /// this returns fewer of than the list names, which fails rather than passing quietly.
+    /// </summary>
+    public static IReadOnlyList<string> RoutesTheClientCalls()
+    {
+        string client = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Vendor", "EodhdClient.cs"));
+
+        return
+        [
+            .. Regex.Matches(client, "\"(?<route>[a-z][a-z-]{2,})/", RegexOptions.CultureInvariant)
+                .Select(m => m.Groups["route"].Value)
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal),
+        ];
+    }
 
     [Fact]
     [Trait("check", "fixture-inputs")]
@@ -171,9 +201,16 @@ public sealed class FixtureInputsCheck
 
         string[] uncovered = EndpointsALiveRunExercises.Where(e => !endpointsSeen.Contains(e)).ToArray();
 
+        // The other direction: a route the client asks for that this check does not name. The list
+        // was read one way only until 4.17, so a fourth endpoint joined the client and the check
+        // reported full coverage of three.
+        IReadOnlyList<string> routes = RoutesTheClientCalls();
+        string[] unnamed = [.. routes.Where(r => !EndpointsALiveRunExercises.Contains(r, StringComparer.Ordinal))];
+
         coverage
             .Examined("captured responses in the manifest", responses.Length)
             .Examined("vendor endpoints a live run exercises", EndpointsALiveRunExercises.Count)
+            .Examined("routes the vendor client asks for, read from its own source", routes.Count)
             .Examined("of those with at least one captured input", EndpointsALiveRunExercises.Count - uncovered.Length)
             .NoSourceScan(
                 "the manifest and the captured responses are the subject. It counts synthetic vendors by reading "
@@ -192,6 +229,12 @@ public sealed class FixtureInputsCheck
 
         Assert.True(failures.Count == 0,
             $"{failures.Count} problem(s) with the captured fixture:\n  " + string.Join("\n  ", failures));
+
+        Assert.True(unnamed.Length == 0,
+            "The vendor client asks for these routes and this check does not name them, so nothing says "
+            + "whether a live run exercises them and nothing asks for a captured input: "
+            + string.Join(", ", unnamed)
+            + ". Add each to EndpointsALiveRunExercises in the commit that adds the call.");
 
         Assert.True(uncovered.Length == 0,
             "These endpoints have no captured input, so anything verified through them rests on a fixture "

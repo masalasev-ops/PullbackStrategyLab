@@ -451,6 +451,109 @@ public sealed class CheckRecomputerTests : IDisposable
     }
 
     /// <summary>
+    /// A dry run opens no run entry at all, which is the half of "writes nothing" the row above
+    /// could not see.
+    ///
+    /// Both walks opened a write connection and a run scope before looking at the flag until 4.17,
+    /// and both completed the scope as partial when anything was refused. `IncompleteStagesOf`
+    /// selects every non-clean run of the session's day and the detectors write that string into
+    /// every row's `degraded_because`, so an operator asking what a repair would do could mark a
+    /// whole night degraded by asking.
+    ///
+    /// Both walks are exercised and both need a refusal to be the case that used to matter: the
+    /// recompute refuses an input stamped past the lateness bound, and the restore refuses a
+    /// correction mark with no prior state, which the stage cannot write and something else has to
+    /// have.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_dry_run_writes_no_run_entry_and_cannot_mark_the_night_degraded(bool restoring)
+    {
+        Night(restoring ? OnTheNight : BeyondTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+
+        if (restoring)
+        {
+            Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+            using SqliteConnection connection = _connections.OpenWrite();
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE setup SET corrected_from = NULL WHERE ticker = 'AAA'";
+            command.ExecuteNonQuery();
+        }
+
+        int before = Runs();
+
+        RecheckResult result = restoring
+            ? Recomputer().Restore(AsOf, "cluster", apply: false)
+            : Recomputer().Recompute(AsOf, "cluster", apply: false);
+
+        Assert.Equal(1, result.Refused);
+        Assert.Equal(RunOutcome.Partial, result.Outcome);
+
+        // No entry beyond whatever the seeding above wrote, so this call left none of its own and
+        // nothing it did can reach `degraded_because`.
+        Assert.Equal(before, Runs());
+    }
+
+    /// <summary>
+    /// `--expect` is compared before the first write, so a run whose set has moved corrects nothing.
+    ///
+    /// The flag's own doc says the run fails on any other number, and until 4.17 `Run` performed the
+    /// whole walk and compared afterwards: an operator who named fifteen and found twenty had
+    /// corrected all twenty by the time the exit code said so, and the exit code was the only thing
+    /// that said so.
+    /// </summary>
+    [Fact]
+    public void An_expectation_that_does_not_match_refuses_before_anything_is_written()
+    {
+        Night(OnTheNight, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+        Setup("BBB", "long", new CheckResult("cluster", false, null));
+
+        int exit = Recomputer().Run(["--check", "cluster", "--as-of", "2026-08-27", "--expect", "1", "--apply"]);
+
+        Assert.Equal(2, exit);
+
+        // Two rows were in the set and one was expected, so neither is corrected and no run entry
+        // exists: the refusal happens before the walk rather than after it.
+        Assert.Null(Read("AAA", "long").CorrectedAt);
+        Assert.Null(Read("BBB", "long").CorrectedAt);
+        Assert.Equal(0, Runs());
+    }
+
+    /// <summary>An expectation that matches lets the walk run, so the guard is not simply a refusal.</summary>
+    [Fact]
+    public void An_expectation_that_matches_lets_the_walk_run()
+    {
+        Night(OnTheNight, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+
+        int exit = Recomputer().Run(["--check", "cluster", "--as-of", "2026-08-27", "--expect", "1", "--apply"]);
+
+        Assert.Equal(0, exit);
+        Assert.NotNull(Read("AAA", "long").CorrectedAt);
+    }
+
+    /// <summary>The count the expectation is compared against is the set each walk is over.</summary>
+    [Fact]
+    public void The_counted_set_is_the_one_the_walk_is_over()
+    {
+        Night(OnTheNight, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+        Setup("BBB", "long", new CheckResult("cluster", false, null));
+
+        Assert.Equal(2, Recomputer().CountTheSet(AsOf, "cluster", restoring: false));
+        Assert.Equal(0, Recomputer().CountTheSet(AsOf, "cluster", restoring: true));
+
+        Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.Equal(0, Recomputer().CountTheSet(AsOf, "cluster", restoring: false));
+        Assert.Equal(2, Recomputer().CountTheSet(AsOf, "cluster", restoring: true));
+    }
+
+    /// <summary>
     /// A check that ran and produced a number is a measurement the night made, and this stage has no
     /// permission to revisit one. Only a verdict with no value at all is a candidate.
     /// </summary>
@@ -928,6 +1031,26 @@ public sealed class CheckRecomputerTests : IDisposable
             Assert.Throws<ArgumentException>(
                 () => CheckRecomputer.Arguments.Parse(["--check"])).Message,
             StringComparison.Ordinal);
+
+        // A flag given twice, whichever flag it is. The loop assigned until 4.17, so the last value
+        // won and nothing said the first had been given at all.
+        string[][] twice =
+        [
+            ["--check", "cluster", "--check", "cluster"],
+            ["--as-of", "2026-08-27", "--as-of", "2026-08-28"],
+            ["--expect", "1", "--expect", "2"],
+        ];
+
+        foreach (string[] line in twice)
+        {
+            Assert.Contains(
+                "is given more than once",
+                Assert.Throws<ArgumentException>(() => CheckRecomputer.Arguments.Parse(line)).Message,
+                StringComparison.Ordinal);
+        }
+
+        // And the standalone flags are exempt, because there is no second value to disagree with.
+        Assert.True(CheckRecomputer.Arguments.Parse(["--check", "cluster", "--apply", "--apply"]).Applying);
 
         // A date that is not one, named as a date rather than as whatever it looked like.
         Assert.Contains(

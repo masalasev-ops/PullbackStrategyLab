@@ -75,6 +75,7 @@ step 'migrate' dotnet run --project "$worker_project" --no-build -- migrate
 
 step 'check-decision-resolves'      run_check 'decision-resolves'
 step 'check-no-superseded-citation' run_check 'no-superseded-citation'
+step 'check-changelog-reconciles'   run_check 'changelog-reconciles'
 step 'check-stated-counts'          run_check 'stated-counts'
 step 'check-pinned-constants'       run_check 'pinned-constants'
 step 'check-path-casing'            run_check 'path-casing'

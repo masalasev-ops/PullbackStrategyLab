@@ -84,7 +84,18 @@ public static class RepositoryLayout
             ".db", ".parquet", ".png", ".jpg", ".jpeg", ".ico", ".woff", ".woff2",
         };
 
-        var git = new System.Diagnostics.ProcessStartInfo("git", "ls-files -z")
+        // <b>The working tree rather than the index, from 4.17.</b> `ls-files` alone reads what is
+        // staged, so a file a session had created and not staged was invisible in both directions:
+        // the scan ran green over exactly the files most likely to carry a citation nobody has
+        // resolved yet, which is every new file in every checkpoint. It was found at 4.2 by citing a
+        // decision that did not exist and watching the check pass, and staging the file caught it
+        // only because the staging happened first.
+        //
+        // `--others --exclude-standard` adds the untracked files git is not ignoring, which keeps
+        // the half the index form was protecting: `/prompts`, `/data` and `/artifacts` are ignored,
+        // so a scratch file in one of them still cannot add a citation. What changes is that a
+        // source file a session has just written is read.
+        var git = new System.Diagnostics.ProcessStartInfo("git", "ls-files --cached --others --exclude-standard -z")
         {
             WorkingDirectory = Root,
             RedirectStandardOutput = true,

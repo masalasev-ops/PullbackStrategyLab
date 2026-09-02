@@ -586,8 +586,19 @@ public sealed class ShortSetupDetector
         // to compute these on a degenerate bounce, so the flattening happened here and
         // nowhere else, and SignalVectorizer then froze the 0 into a table written once.
         // see: A gate handed an absent or degenerate quantity fails rather than passing
-        command.Parameters.AddWithValue("@trigger_price", Text(evidence.Bounce?.Trigger, StoreText.PriceToStorageText));
-        command.Parameters.AddWithValue("@stop_price", Text(evidence.Bounce?.Stop, StoreText.PriceToStorageText));
+        // <b>Absent where the geometry is, which is the writer half of the same rule the two
+        // distances above already follow.</b> With the extreme on the last session the trigger and
+        // the stop are the same price, and writing that pair while nulling both distances beside it
+        // left a row saying it has no geometry and carrying two prices from one. SCHEMA marks all
+        // three "absent where the setup has none" in the same words, and one of the three was
+        // written that way until 4.17. The consumer half closed at 4.16, where a capped candidate
+        // with an equal pair gets no plan; this is the half that stops the pair existing.
+        // see: A gate handed an absent or degenerate quantity fails rather than passing
+        PullbackGeometry.Pullback? geometry =
+            NoBounceYet(evidence.Bounce) ? null : evidence.Bounce;
+
+        command.Parameters.AddWithValue("@trigger_price", Text(geometry?.Trigger, StoreText.PriceToStorageText));
+        command.Parameters.AddWithValue("@stop_price", Text(geometry?.Stop, StoreText.PriceToStorageText));
         command.Parameters.AddWithValue("@stop_distance_ranges", Text(evidence.StopDistanceRanges, StoreText.RatioToStorageText));
 
         // Null rather than an empty string where the thrust could not be resolved. A name with

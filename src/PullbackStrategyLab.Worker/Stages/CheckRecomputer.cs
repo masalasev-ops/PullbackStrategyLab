@@ -144,6 +144,25 @@ public sealed class CheckRecomputer
         int expect = parsed.Expect;
         bool restoring = parsed.Restoring;
 
+        // The expectation is compared before the first write and not after the last, which is the
+        // whole of what the flag was for. `Run` called the walk and compared afterwards until 4.17,
+        // so an operator who named fifteen and found twenty had corrected all twenty by the time the
+        // exit code said so, and the exit code was the only thing that said so. The set is derived
+        // through a read-only connection here, so a refusal costs nothing and changes nothing.
+        if (expect >= 0)
+        {
+            int found = CountTheSet(asOf, check, restoring);
+
+            if (found != expect)
+            {
+                Console.Error.WriteLine(
+                    $"{Name}: the query found {found} row(s) and the caller expected {expect}. The set is what the "
+                    + "query says and the expectation is what it is checked against, so a difference is a fact about "
+                    + "the store rather than a number to update. Nothing was written.");
+                return 2;
+            }
+        }
+
         RecheckResult result = restoring
             ? Restore(asOf, check, parsed.Applying)
             : Recompute(asOf, check, parsed.Applying);
@@ -157,27 +176,44 @@ public sealed class CheckRecomputer
             : $"{Name}: {result.Corrected} corrected, {result.Refused} refused because the input was stamped after the night");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {(result.Applied ? "written" : "reported only, rerun with " + ApplyFlag)}");
 
-        if (expect >= 0 && expect != result.Candidates)
-        {
-            Console.Error.WriteLine(
-                $"{Name}: the query found {result.Candidates} row(s) and the caller expected {expect}. The set is "
-                + "what the query says and the expectation is what it is checked against, so a difference is a fact "
-                + "about the store rather than a number to update.");
-            return 2;
-        }
-
         // Non-zero where the repair was asked for and could not be made. A hand-run tool that was
         // asked to fix something, fixed nothing, and exited 0 is the shape this whole checkpoint is
         // about: the caller reads the exit code and the log line is what tells them why.
         return result.Refused > 0 ? 1 : 0;
     }
 
+    /// <summary>
+    /// How many rows the walk would be over, read and not written.
+    ///
+    /// <b>A read-only connection, which is what makes <c>--expect</c> a guard rather than a
+    /// report.</b> It is the same two queries the two walks open with, so a difference between what
+    /// this counts and what the walk finds would be the two selecting differently rather than the
+    /// store having moved between them; the walks are what own the correcting, and this owns only
+    /// the count.
+    /// </summary>
+    public int CountTheSet(DateOnly asOf, string check, bool restoring)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(check);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        return restoring
+            ? RowsToRestore(connection, asOf, check).Count
+            : Candidates(connection, asOf, check).Count;
+    }
+
     public RecheckResult Recompute(DateOnly asOf, string check, bool apply)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(check);
 
-        using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "setup");
+        // <b>A dry run opens no write connection and no run entry, which is what the flag says.</b>
+        // Both walks opened one before looking at `apply` until 4.17, and both completed the scope
+        // as partial when anything was refused, whatever `apply` said. `RunLogger.IncompleteStagesOf`
+        // selects every non-clean run of the session's day and the detectors write that string into
+        // every row's `degraded_because`, so an operator asking what a repair would do could mark a
+        // whole night degraded by asking.
+        using SqliteConnection connection = apply ? _connections.OpenWrite() : _connections.OpenReadOnly();
+        using RunScope? run = apply ? _runLogger.BeginUpdatingInPlace(connection, Name, "setup") : null;
 
         // The bound, in the end-of-day form every reader in the lab uses. An input stamped after it
         // is something the night did not have, whatever it is and however slowly it moves.
@@ -204,7 +240,7 @@ public sealed class CheckRecomputer
                 // past; or the row names no thrust, in which case its cluster verdict carried no
                 // value for a reason no sector lookup can repair and the row is left alone.
                 refused++;
-                run.CountSkipped();
+                run?.CountSkipped();
                 Console.WriteLine(
                     candidate.ThrustScan is null || candidate.ThrustSession is null
                         ? $"{Name}: refused {candidate.Ticker}, its row names no thrust, so no hit decided its cluster verdict"
@@ -220,7 +256,7 @@ public sealed class CheckRecomputer
                 // A row corrected once is not corrected again. The second correction would have no
                 // prior state to record and nothing would say which of the two the row now carries.
                 refused++;
-                run.CountSkipped();
+                run?.CountSkipped();
                 Console.WriteLine($"{Name}: refused {candidate.Ticker}, already corrected at {candidate.CorrectedAt}");
                 continue;
             }
@@ -241,7 +277,7 @@ public sealed class CheckRecomputer
         }
 
         RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
-        run.Complete(outcome);
+        run?.Complete(outcome);
 
         return new RecheckResult(asOf, check, candidates.Count, corrected, refused, apply, outcome);
     }
@@ -278,32 +314,13 @@ public sealed class CheckRecomputer
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(check);
 
-        using SqliteConnection connection = _connections.OpenWrite();
-        using RunScope run = _runLogger.BeginUpdatingInPlace(connection, Name, "setup");
+        // A dry run opens no write connection and no run entry, on the terms Recompute states.
+        using SqliteConnection connection = apply ? _connections.OpenWrite() : _connections.OpenReadOnly();
+        using RunScope? run = apply ? _runLogger.BeginUpdatingInPlace(connection, Name, "setup") : null;
 
-        var rows = new List<(string SetupId, string Ticker, string? Prior)>();
-        int unscoped = 0;
-
-        using (SqliteCommand read = connection.CreateCommand())
-        {
-            // Scoped to the check, which is what the argument was validated for. A row corrected
-            // for another check on the same date is another check's row and this call is not
-            // about it.
-            read.CommandText = """
-                SELECT setup_id, ticker, corrected_from
-                  FROM setup
-                 WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check = @check
-                 ORDER BY ticker, direction
-                """;
-            read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-            read.Parameters.AddWithValue("@check", check);
-
-            using SqliteDataReader reader = read.ExecuteReader();
-            while (reader.Read())
-            {
-                rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
-            }
-        }
+        IReadOnlyList<(string SetupId, string Ticker, string? Prior)> rows =
+            RowsToRestore(connection, asOf, check);
+        int unscoped;
 
         using (SqliteCommand read = connection.CreateCommand())
         {
@@ -334,7 +351,7 @@ public sealed class CheckRecomputer
             if (prior is null)
             {
                 refused++;
-                run.CountSkipped();
+                run?.CountSkipped();
                 Console.WriteLine($"{Name}: refused {ticker}, marked corrected with no prior state recorded");
                 continue;
             }
@@ -361,9 +378,43 @@ public sealed class CheckRecomputer
         }
 
         RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
-        run.Complete(outcome);
+        run?.Complete(outcome);
 
         return new RecheckResult(asOf, check, rows.Count, restored, refused, apply, outcome);
+    }
+
+    /// <summary>
+    /// The rows a restore is over, scoped to the check, shared with the count <c>--expect</c> is
+    /// compared against.
+    ///
+    /// Scoped rather than by date alone: a row corrected for another check on the same date is
+    /// another check's row and this call is not about it. Selecting on <c>corrected_check</c> rather
+    /// than on a phrase inside <c>corrected_because</c> is the other half, because a figure recovered
+    /// from prose moves when somebody rewords the sentence.
+    /// </summary>
+    private static IReadOnlyList<(string SetupId, string Ticker, string? Prior)> RowsToRestore(
+        SqliteConnection connection, DateOnly asOf, string check)
+    {
+        var rows = new List<(string SetupId, string Ticker, string? Prior)>();
+
+        using SqliteCommand read = connection.CreateCommand();
+        read.CommandText = """
+            SELECT setup_id, ticker, corrected_from
+              FROM setup
+             WHERE as_of = @as_of AND corrected_at IS NOT NULL AND corrected_check = @check
+             ORDER BY ticker, direction
+            """;
+        read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        read.Parameters.AddWithValue("@check", check);
+
+        using SqliteDataReader reader = read.ExecuteReader();
+
+        while (reader.Read())
+        {
+            rows.Add((reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
+        }
+
+        return rows;
     }
 
     /// <summary>
@@ -593,6 +644,13 @@ public sealed class CheckRecomputer
     ///
     /// <c>--as-of</c> is the form to write and the bare date still works, so the RUNBOOK's
     /// documented ordering keeps parsing. Both are accepted and they must agree.
+    ///
+    /// <b>A flag given twice is refused, from 4.17.</b> The loop assigned until then, so
+    /// <c>--as-of A --as-of B</c> ran against B and said nothing about A. Somebody who writes a flag
+    /// twice meant something specific by one of them, and running the last one silently is the same
+    /// fault the two-dates guard already refuses in its other form. The standalone flags are exempt:
+    /// <c>--apply --apply</c> means what one of them means, and there is no second value for it to
+    /// disagree with.
     /// </summary>
     public sealed record Arguments(string? Check, DateOnly? AsOf, int Expect, bool Applying, bool Restoring)
     {
@@ -621,6 +679,7 @@ public sealed class CheckRecomputer
             int expect = -1;
             bool applying = false;
             bool restoring = false;
+            var given = new HashSet<string>(StringComparer.Ordinal);
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -662,6 +721,18 @@ public sealed class CheckRecomputer
                 // The value, consumed here so it can never be read as the date. This is the whole
                 // repair: the loop knows what is a value because the flag said so.
                 string value = args[++i];
+
+                // A flag given twice is refused rather than overwritten, whichever flag it is. The
+                // loop assigned until 4.17, so `--as-of A --as-of B` ran against B and said nothing
+                // about A. Somebody who writes a flag twice meant something specific by one of them,
+                // and running the last one is the fault the two-dates guard below already refuses in
+                // its other form.
+                if (!given.Add(argument))
+                {
+                    throw new ArgumentException(
+                        $"{argument} is given more than once. Two values for one option is an instruction "
+                        + "with two meanings, and taking the last one runs against a value nobody checked.");
+                }
 
                 if (string.Equals(argument, CheckFlag, StringComparison.Ordinal))
                 {

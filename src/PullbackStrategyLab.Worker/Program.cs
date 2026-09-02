@@ -102,51 +102,9 @@ public static class Program
 
         try
         {
-            return stage switch
-            {
-                MigrateStage.Name => host.Services.GetRequiredService<MigrateStage>().Run(rest),
-                SnapshotStage.Name => host.Services.GetRequiredService<SnapshotStage>().Run(rest),
-                UniverseBuilder.Name => host.Services.GetRequiredService<UniverseBuilder>().RunAsync(rest).GetAwaiter().GetResult(),
-                UniverseBuilder.DelistedName => host.Services.GetRequiredService<UniverseBuilder>().RunDelistedAsync(rest).GetAwaiter().GetResult(),
-                DailyBarIngestor.Name => host.Services.GetRequiredService<DailyBarIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
-                ActionIngestor.Name => host.Services.GetRequiredService<ActionIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
-                DailyBarIngestor.BackfillName => host.Services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
-                IndexIngestor.Name => host.Services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
-                IntradayFetcher.Name => host.Services.GetRequiredService<IntradayFetcher>().RunAsync(rest).GetAwaiter().GetResult(),
-                SpreadSnapshotter.Name => host.Services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
-                VwapEngine.Name => host.Services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
-                WatchlistPublisher.Name => host.Services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
-                PlanBuilder.Name => host.Services.GetRequiredService<PlanBuilder>().Run(rest),
-                TriggerResolver.Name => host.Services.GetRequiredService<TriggerResolver>().Run(rest),
-                RiskGate.Name => host.Services.GetRequiredService<RiskGate>().Run(rest),
-                PaperBroker.Name => host.Services.GetRequiredService<PaperBroker>().Run(rest),
-                PositionManager.Name => host.Services.GetRequiredService<PositionManager>().Run(rest),
-                TradeJournal.Name => host.Services.GetRequiredService<TradeJournal>().Run(rest),
-                PlanAudit.Name => host.Services.GetRequiredService<PlanAudit>().Run(rest),
-                LossClassifier.Name => host.Services.GetRequiredService<LossClassifier>().Run(rest),
-                FixtureCapture.Name => host.Services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
-                FixtureCapture.CaptureResponseName => host.Services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
-                IndicatorEngine.Name => host.Services.GetRequiredService<IndicatorEngine>().Run(rest),
-                SignalVectorizer.Name => host.Services.GetRequiredService<SignalVectorizer>().Run(rest),
-                ScanEngine.Name => host.Services.GetRequiredService<ScanEngine>().Run(rest),
-                TierClassifier.Name => host.Services.GetRequiredService<TierClassifier>().Run(rest),
-                RegimeLabeler.Name => host.Services.GetRequiredService<RegimeLabeler>().Run(rest),
-                ReconstructedRead.Name => host.Services.GetRequiredService<ReconstructedRead>().Run(rest),
-                SectorResolver.Name => host.Services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
-                ThemeClusterer.Name => host.Services.GetRequiredService<ThemeClusterer>().Run(rest),
-                CheckRecomputer.Name => host.Services.GetRequiredService<CheckRecomputer>().Run(rest),
-                LongSetupDetector.Name => host.Services.GetRequiredService<LongSetupDetector>().Run(rest),
-                ShortSetupDetector.Name => host.Services.GetRequiredService<ShortSetupDetector>().Run(rest),
-                SetupJournal.Name => host.Services.GetRequiredService<SetupJournal>().Run(rest),
-                ScoreboardBuilder.Name => host.Services.GetRequiredService<ScoreboardBuilder>().Run(rest),
-                CeilingCalculator.Name => host.Services.GetRequiredService<CeilingCalculator>().Run(rest),
-                ControlSampler.Name => host.Services.GetRequiredService<ControlSampler>().Run(rest),
-                ForwardReturnFiller.Name => host.Services.GetRequiredService<ForwardReturnFiller>().Run(rest),
-                SetupCapper.Name => host.Services.GetRequiredService<SetupCapper>().Run(rest),
-                PhaseReportStage.Name => host.Services.GetRequiredService<PhaseReportStage>().Run(rest),
-                "list-stages" => ListStages(),
-                _ => UnknownStage(stage),
-            };
+            // Resolved and then run, so the resolution is a question anything can ask and the
+            // running is the only thing that needs a host.
+            return Arm(stage) is { } arm ? arm(host.Services, rest) : UnknownStage(stage);
         }
         catch (Exception e)
         {
@@ -233,6 +191,77 @@ public static class Program
               // that phrase reads as UPDATE against a table called "the". Prose about a thing must
               // not read as the thing, which is the rule the session-bound guard states for itself.
               + "mean what it did. Move the checkout forward rather than running against it.";
+
+    /// <summary>
+    /// Every stage name the worker can run, and what running it does.
+    ///
+    /// <b>A table rather than a switch inside <c>Main</c>, from 4.17, so the dispatch can be
+    /// asked a question without being made to answer one.</b> `architecture-conformance` named a
+    /// behavioural backing for its catalogue scan and the backing was itself a source scan: a
+    /// test reading `Program.cs` as text and matching switch-arm shapes with a regex, which is a
+    /// scan backed by a scan and was recorded as backed. The repair the row asks for is to invoke
+    /// the dispatch once per advertised name and assert on what comes back, and a switch that
+    /// runs the stage cannot be invoked that way: resolving a name would build a host, open a
+    /// store and do a night's work.
+    ///
+    /// <b>So the table resolves and the caller runs.</b> A name it does not hold comes back null,
+    /// which is what an authored bad name asserts against, and a name it holds comes back as the
+    /// thing that would run. Nothing here touches a service provider until the caller invokes
+    /// what it got.
+    /// </summary>
+    public static IReadOnlyDictionary<string, Func<IServiceProvider, string[], int>> Dispatch { get; } =
+        new Dictionary<string, Func<IServiceProvider, string[], int>>(StringComparer.Ordinal)
+        {
+        [MigrateStage.Name] = (services, rest) => services.GetRequiredService<MigrateStage>().Run(rest),
+        [SnapshotStage.Name] = (services, rest) => services.GetRequiredService<SnapshotStage>().Run(rest),
+        [UniverseBuilder.Name] = (services, rest) => services.GetRequiredService<UniverseBuilder>().RunAsync(rest).GetAwaiter().GetResult(),
+        [UniverseBuilder.DelistedName] = (services, rest) => services.GetRequiredService<UniverseBuilder>().RunDelistedAsync(rest).GetAwaiter().GetResult(),
+        [DailyBarIngestor.Name] = (services, rest) => services.GetRequiredService<DailyBarIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+        [ActionIngestor.Name] = (services, rest) => services.GetRequiredService<ActionIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+        [DailyBarIngestor.BackfillName] = (services, rest) => services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
+        [IndexIngestor.Name] = (services, rest) => services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+        [IntradayFetcher.Name] = (services, rest) => services.GetRequiredService<IntradayFetcher>().RunAsync(rest).GetAwaiter().GetResult(),
+        [SpreadSnapshotter.Name] = (services, rest) => services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
+        [VwapEngine.Name] = (services, rest) => services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
+        [WatchlistPublisher.Name] = (services, rest) => services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
+        [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
+        [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
+        [RiskGate.Name] = (services, rest) => services.GetRequiredService<RiskGate>().Run(rest),
+        [PaperBroker.Name] = (services, rest) => services.GetRequiredService<PaperBroker>().Run(rest),
+        [PositionManager.Name] = (services, rest) => services.GetRequiredService<PositionManager>().Run(rest),
+        [TradeJournal.Name] = (services, rest) => services.GetRequiredService<TradeJournal>().Run(rest),
+        [PlanAudit.Name] = (services, rest) => services.GetRequiredService<PlanAudit>().Run(rest),
+        [LossClassifier.Name] = (services, rest) => services.GetRequiredService<LossClassifier>().Run(rest),
+        [FixtureCapture.Name] = (services, rest) => services.GetRequiredService<FixtureCapture>().RunAsync(rest).GetAwaiter().GetResult(),
+        [FixtureCapture.CaptureResponseName] = (services, rest) => services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
+        [IndicatorEngine.Name] = (services, rest) => services.GetRequiredService<IndicatorEngine>().Run(rest),
+        [SignalVectorizer.Name] = (services, rest) => services.GetRequiredService<SignalVectorizer>().Run(rest),
+        [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
+        [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
+        [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
+        [ReconstructedRead.Name] = (services, rest) => services.GetRequiredService<ReconstructedRead>().Run(rest),
+        [SectorResolver.Name] = (services, rest) => services.GetRequiredService<SectorResolver>().RunAsync(rest).GetAwaiter().GetResult(),
+        [ThemeClusterer.Name] = (services, rest) => services.GetRequiredService<ThemeClusterer>().Run(rest),
+        [CheckRecomputer.Name] = (services, rest) => services.GetRequiredService<CheckRecomputer>().Run(rest),
+        [LongSetupDetector.Name] = (services, rest) => services.GetRequiredService<LongSetupDetector>().Run(rest),
+        [ShortSetupDetector.Name] = (services, rest) => services.GetRequiredService<ShortSetupDetector>().Run(rest),
+        [SetupJournal.Name] = (services, rest) => services.GetRequiredService<SetupJournal>().Run(rest),
+        [ScoreboardBuilder.Name] = (services, rest) => services.GetRequiredService<ScoreboardBuilder>().Run(rest),
+        [CeilingCalculator.Name] = (services, rest) => services.GetRequiredService<CeilingCalculator>().Run(rest),
+        [ControlSampler.Name] = (services, rest) => services.GetRequiredService<ControlSampler>().Run(rest),
+        [ForwardReturnFiller.Name] = (services, rest) => services.GetRequiredService<ForwardReturnFiller>().Run(rest),
+        [SetupCapper.Name] = (services, rest) => services.GetRequiredService<SetupCapper>().Run(rest),
+        [PhaseReportStage.Name] = (services, rest) => services.GetRequiredService<PhaseReportStage>().Run(rest),
+            ["list-stages"] = (_, _) => ListStages(),
+        };
+
+    /// <summary>What running one stage does, or null where this build has no such stage.</summary>
+    public static Func<IServiceProvider, string[], int>? Arm(string stage)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(stage);
+
+        return Dispatch.TryGetValue(stage, out Func<IServiceProvider, string[], int>? arm) ? arm : null;
+    }
 
     private static int UnknownStage(string stage)
     {

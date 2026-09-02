@@ -56,6 +56,21 @@ public sealed partial class BarAppendOnlyCheck
 
         string[] created = SchemaDeclarations.TablesInMigrations.Where(bars.Contains).ToArray();
 
+        // The other direction, which this check did not have until 4.17: which tables the migrations
+        // have created that look like a bar table and are not on the list above. A check reading a
+        // hand-named list in one direction only reports nothing when it is the list that is short,
+        // and a fourth bar table would join the store silently and be append-only by nobody's
+        // assertion. The shape is the name: three of three end in `_bar`, and a table that ends in
+        // it and is not named here is one somebody has to place.
+        string[] unnamed =
+        [
+            .. SchemaDeclarations.TablesInMigrations
+                .Where(t => t.EndsWith("_bar", StringComparison.Ordinal))
+                .Where(t => !bars.Contains(t))
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal),
+        ];
+
         // The migrations, which the C# scan above cannot see and where every table rebuild in this
         // project actually lives.
         //
@@ -71,6 +86,10 @@ public sealed partial class BarAppendOnlyCheck
         coverage
             .Examined("bar tables named by the check", BarTables.Count)
             .Examined("bar tables a migration has created", created.Length)
+            .Examined(
+                "tables a migration created whose name ends in _bar",
+                SchemaDeclarations.TablesInMigrations
+                    .Count(t => t.EndsWith("_bar", StringComparison.Ordinal)))
             .Context("source files scanned", SourceWrites.ProductionFilesRead)
             .Examined("writes found against a bar table", inserts.Length + mutations.Length)
             .Examined("migrations read for a delete, update or drop", MigrationCount)
@@ -86,6 +105,13 @@ public sealed partial class BarAppendOnlyCheck
                     "a migration that rebuilds a table is applied to a populated store and every row is "
                     + "asserted present afterwards. That is what a rebuild must not cost; this scan is the "
                     + "half that says no migration takes the shortcut against a bar table"));
+
+        Assert.True(unnamed.Length == 0,
+            "These tables were created by a migration, their names end in _bar, and this check does not "
+            + "name them, so nothing asserts that they are append-only: "
+            + string.Join(", ", unnamed)
+            + ". Add each to BarTables, or rename it if it is not a bar table, in the commit that "
+            + "creates it.");
 
         if (created.Length < BarTables.Count)
         {

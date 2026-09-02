@@ -389,6 +389,15 @@ public sealed class PhaseReplay : IDisposable
         Record("sectors.asked", sectors.Asked);
         Record("sectors.resolved", sectors.Resolved);
 
+        // The two figures 4.17 repaired, frozen so the repair is a fact about the pipeline rather
+        // than a sentence in a record. `asked` counts a name before the request rather than after a
+        // successful answer, so the skipped are inside the count they are stated as a subset of, and
+        // `requests` is `asked` rather than `asked + skipped`: over this fixture nothing is skipped, so
+        // the two readings agree here and would not on the night the repair was written for, where
+        // 149 requests and 148 answers read as "148 asked of which 1 skipped".
+        Record("sectors.skipped", sectors.Skipped);
+        Record("sectors.requests", sectors.Requests);
+
         // 10a. Every captured fundamentals response read through the real client, including the
         //      ones no scan surfaced.
         //

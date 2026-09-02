@@ -1866,3 +1866,18 @@ Why:  The artefact is gone, so the name that included it no longer resolves to a
 Was:  A citation of the superseded name.
 Now:  The name that superseded it.
 Why:  Same edit, same reason. The citation is unchanged in what it points at.
+
+### 2026-09-02 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Checks roster ran from `no-superseded-citation` straight to `pinned-constants`, with no check over whether a spec edit recorded its prior text.
+Now:  A `changelog-reconciles` row: every commit that deleted a line from a spec also changed `CHANGELOG.md`, read from the history, with ten phase-3 commits exempt by hash.
+Why:  `CHANGELOG.md` is a record read by nothing. `decision-resolves` reads it for citations and `stated-counts` for figures, and neither asks whether an edit that should have produced an entry did. Ten phase-3 commits replaced spec lines and recorded nothing, and what was owed was the reconciliation rather than ten retrospective entries.
+
+### 2026-09-02 — RUNBOOK.md — cites The lab keeps one store per purpose under one data root, and CI never opens the operator's
+Was:  Step 3 of the first-run procedure: "Create the data root outside the repository and outside any synced folder. Set `PullbackStrategyLab:DataRoot` to it."
+Now:  Nothing to create; the two roots are inside the repository and the variable is not to be set, with what the old step once armed.
+Why:  The decision names `data/live` and `data/ci`, both under the repository, and the shipped code follows the decision. A spec and a decision disagreeing about where the store lives is what once armed the fault 3.14 corrected: an operator who followed step 3 and exported the variable had `tools/ci.*` delete whatever it pointed at on its first step.
+
+### 2026-09-02 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The obligations table carried thirteen rows due at 4.17, and the section above it opened "Thirteen of the fifty-four rows above fall due at 4.17" over a table of three live group counts.
+Now:  Twelve are discharged and removed, one is repointed to 5.1 with the price, and the section is a record of what the pile was and what happened to it, on the terms the 4.6 section became one.
+Why:  4.17's deliverable was the pile, and its done condition asks that every row is discharged or repointed with a reason and that the count is derived. The section is kept rather than deleted because the classification was the checkpoint's specification, and a specification a checkpoint was built against is not a thing to remove once it has been met.

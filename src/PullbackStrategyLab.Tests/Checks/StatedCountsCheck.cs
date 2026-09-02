@@ -30,6 +30,15 @@ public sealed partial class StatedCountsCheck
     /// is not counted. That matters here: the paragraph above the table and several Basis cells use
     /// "OPEN" in a sentence, and a bare search for the mark reads them as rows.
     /// </summary>
+    /// <summary>
+    /// The sentence the carried obligations table states its own total in.
+    ///
+    /// It sits in the 4.17 section, which is where the count has been written since that
+    /// section was created, and it survived the pile the section was about being discharged.
+    /// </summary>
+    [GeneratedRegex(@"of the (?<total>[a-z-]+) rows above fall due at 4\.17", RegexOptions.CultureInvariant)]
+    private static partial Regex ObligationsTotalSentence();
+
     [GeneratedRegex(@"<tr><td>[^<]*<b>OPEN</b>", RegexOptions.CultureInvariant)]
     private static partial Regex OpenParameterRow();
 
@@ -272,55 +281,29 @@ public sealed partial class StatedCountsCheck
                 "rows of the carried obligations table falling due at 5.1"));
         }
 
-        // BUILD_PLAN.md, the same three figures for the 4.17 pile.
+        // BUILD_PLAN.md, the carried obligations table's own total.
         //
-        // The third classification of the same table. Registered in the commit that writes it rather
-        // than after the first time it goes stale, which is what happened to the operator's heading
-        // below and to the permit sentence further down: both were prose counts of the same table
-        // that nothing read, and both were wrong by the time anyone looked.
-        int dueAtTheCorrections = obligations.Count(
-            r => r.Count > 2 && r[2].Trim().Equals("4.17", StringComparison.Ordinal));
-
-        Match correctionsOpening = CorrectionsOpeningSentence().Match(buildPlan);
-        Assert.True(correctionsOpening.Success,
-            "BUILD_PLAN.md's 4.17 classification section no longer opens with \"<count> of the <total> rows above "
-            + "fall due at 4.17\", which is the sentence its two obligation figures are read from.");
+        // <b>The three figures beside it went at 4.17 with the pile they counted.</b> They were the
+        // count due at 4.17, the same count in the section's heading, and the three group counts
+        // summing to it. 4.17 discharged twelve of the thirteen and repointed the last, so the pile
+        // is nought and its section is a record of what it was, on the terms the 4.6 section became
+        // one. A claim asserting that a discharged pile has nought rows in it would pass over a
+        // table with no rows at all, and the total below is what actually holds the shape.
+        //
+        // Registered in the commit that writes it rather than after the first time it goes stale,
+        // which is what happened to the operator's heading below and to the permit sentence further
+        // down: both were prose counts of the same table that nothing read, and both were wrong by
+        // the time anyone looked.
+        Match obligationsTotal = ObligationsTotalSentence().Match(buildPlan);
+        Assert.True(obligationsTotal.Success,
+            "BUILD_PLAN.md no longer states the carried obligations table's own total in the sentence "
+            + "this claim reads it from, so the one figure that holds the table's shape is unstated.");
 
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the carried obligations table's own total, stated again at 4.17",
-            FromWordsOrFail(correctionsOpening.Groups["total"].Value),
+            "BUILD_PLAN.md, the carried obligations table's own total",
+            FromWordsOrFail(obligationsTotal.Groups["total"].Value),
             obligations.Count,
             "rows of the carried obligations table"));
-
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the obligations due at 4.17, stated in its opening sentence",
-            FromWordsOrFail(correctionsOpening.Groups["due"].Value),
-            dueAtTheCorrections,
-            "rows of the carried obligations table falling due at 4.17"));
-
-        Match correctionsHeading = CorrectionsClassificationHeading().Match(buildPlan);
-        Assert.True(correctionsHeading.Success,
-            "BUILD_PLAN.md has no \"### What the <count> due at 4.17 are\" heading, which is both a stated count "
-            + "and the anchor its classification table is read from.");
-
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the obligations due at 4.17, stated in its heading",
-            FromWordsOrFail(correctionsHeading.Groups["due"].Value),
-            dueAtTheCorrections,
-            "rows of the carried obligations table falling due at 4.17"));
-
-        IReadOnlyList<IReadOnlyList<string>> correctionsGroups =
-            MarkdownTable.BodyRowsAfter(buildPlan, correctionsHeading.Value);
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups the 4.17 pile is classified into",
-            3,
-            correctionsGroups.Count,
-            "rows of the 4.17 classification table"));
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the three groups add up to the 4.17 pile they classify",
-            dueAtTheCorrections,
-            correctionsGroups.Sum(r => int.Parse(r[1].Trim(), CultureInfo.InvariantCulture)),
-            "the 4.17 classification's own three counts, summed"));
 
         // BUILD_PLAN.md, phase 4's own checkpoint count, stated in its preamble.
         //

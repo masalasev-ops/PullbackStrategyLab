@@ -40,28 +40,36 @@ public sealed partial class ComponentReachabilityTests
     /// <summary>The separator each failure message lists its offenders on, one per line.</summary>
     private const string Newline = "\n  ";
 
+    /// <summary>
+    /// Every stage the entry point advertises has an arm in the dispatch.
+    ///
+    /// <b>The dispatch itself rather than the text of the file it lives in, from 4.17.</b> This read
+    /// `Program.cs` and matched switch-arm shapes with a regex until then, and
+    /// `architecture-conformance` named it as the behavioural backing for its own catalogue scan: a
+    /// scan backed by a scan, and the run recorded it as backed. The dispatch is a table now, so a
+    /// name can be resolved without being run and what is asserted is what comes back.
+    /// </summary>
     [Fact]
     public void Every_stage_the_entry_point_advertises_has_an_arm_in_the_dispatch()
     {
-        string program = RepositoryLayout.Read(
-            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Program.cs"));
-
-        HashSet<string> dispatched = DispatchedNames(program);
-
-        // Stated in advance. A pattern that stopped matching would hand this an empty set, and every
-        // stage would read as unreachable, which fails loudly rather than quietly. The guard is here
-        // so the message says which fault it was.
-        Assert.True(dispatched.Count >= 15,
-            $"Only {dispatched.Count} dispatch arm(s) resolved out of Program.cs. A count this low "
-            + "means the pattern or the reflection stopped matching rather than that the worker got "
-            + "smaller.");
-
-        var unreachable = Program.StageNames.Where(name => !dispatched.Contains(name)).ToList();
+        var unreachable = Program.StageNames.Where(name => Program.Arm(name) is null).ToList();
 
         Assert.True(unreachable.Count == 0,
             $"{unreachable.Count} stage(s) are advertised by `list-stages` and have no arm in the "
-            + "dispatch, so the scheduler invoking one by name gets \"Unknown stage\":\n  "
-            + string.Join("\n  ", unreachable));
+            + "dispatch, so the scheduler invoking one by name gets \"Unknown stage\":" + Newline
+            + string.Join(Newline, unreachable));
+
+        // Stated in advance, because every assertion here holds over an empty table.
+        Assert.True(Program.Dispatch.Count >= 15,
+            $"The dispatch holds {Program.Dispatch.Count} arm(s). A count this low means the table "
+            + "stopped being populated rather than that the worker got smaller.");
+
+        // And the other direction of the same question: a name this build has no stage for resolves
+        // to nothing rather than to whichever arm a fall-through reached. The second is the same name
+        // in the wrong case, because the lookup is ordinal and a scheduler that shouted would
+        // otherwise be answered.
+        Assert.Null(Program.Arm("not-a-stage-this-build-has"));
+        Assert.Null(Program.Arm("Fills"));
     }
 
     /// <summary>
@@ -72,33 +80,21 @@ public sealed partial class ComponentReachabilityTests
     /// the worker's own list of what it does, which is how a shipped stage went a checkpoint without
     /// a slot: the runbook said 18:30 and the operator's list of stages did not mention it.
     ///
-    /// The two exemptions are named rather than filtered by shape. <c>list-stages</c> is the command
-    /// that prints the roster and is not on it, and a fixture capture verb is a build tool rather
-    /// than a stage of the night; both are asserted to be dispatched, so an exemption that stops
-    /// existing fails here rather than quietly widening.
+    /// The exemption is named rather than filtered by shape. <c>list-stages</c> is the command that
+    /// prints the roster and is not on it, and it is asserted to be dispatched, so an exemption that
+    /// stops existing fails here rather than quietly widening.
     /// </summary>
     [Fact]
     public void Every_stage_the_dispatch_reaches_is_advertised_by_the_entry_point()
     {
-        string program = RepositoryLayout.Read(
-            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Program.cs"));
-
-        HashSet<string> dispatched = DispatchedNames(program);
-
-        // Stated in advance, on the same grounds the sweep above states its own floor: a pattern that
-        // stopped matching would hand this an empty set and every stage would read as advertised.
-        Assert.True(dispatched.Count >= 15,
-            $"Only {dispatched.Count} dispatch arm(s) resolved out of Program.cs, so this compared "
-            + "almost nothing rather than finding almost nothing.");
-
         string[] notOnTheRoster = ["list-stages"];
 
         foreach (string exempt in notOnTheRoster)
         {
-            Assert.Contains(exempt, dispatched);
+            Assert.NotNull(Program.Arm(exempt));
         }
 
-        var unadvertised = dispatched
+        var unadvertised = Program.Dispatch.Keys
             .Where(name => !Program.StageNames.Contains(name, StringComparer.Ordinal))
             .Where(name => !notOnTheRoster.Contains(name, StringComparer.Ordinal))
             .Order(StringComparer.Ordinal)
@@ -110,36 +106,6 @@ public sealed partial class ComponentReachabilityTests
             + string.Join(Newline, unadvertised));
     }
 
-    /// <summary>
-    /// The arms of the switch, resolved to the names they actually match on.
-    ///
-    /// The dispatch says <c>MigrateStage.Name</c>, which is a reference rather than a value, so the
-    /// constant is read off the type through reflection: comparing the source text would compare a
-    /// reference to a value and report every stage unreachable, which is a check that fails for the
-    /// wrong reason. One reading feeds both directions, so the two can never be looking at different
-    /// sets of arms.
-    /// </summary>
-    private static HashSet<string> DispatchedNames(string program)
-    {
-        var dispatched = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (Match arm in DispatchArm().Matches(program))
-        {
-            string? value = ConstantValue(arm.Groups["owner"].Value, arm.Groups["member"].Value);
-
-            if (value is not null)
-            {
-                dispatched.Add(value);
-            }
-        }
-
-        foreach (Match literal in LiteralArm().Matches(program))
-        {
-            dispatched.Add(literal.Groups["name"].Value);
-        }
-
-        return dispatched;
-    }
 
     /// <summary>
     /// The value of a stage-name constant, read off the type rather than out of the source text.

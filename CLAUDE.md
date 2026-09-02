@@ -132,6 +132,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `point-in-time` | every CI run | No read answers with an observation the lab could not have had by its own date. Three halves: every public read on a store reader takes a date, every hand-written statement selecting from a stamped table bounds that stamp, and a row observed after the as-of is invisible until the as-of moves past it |
 | `decision-resolves` | every CI run | Every decision name cited in code or docs matches a bold decision name in DECISIONS.md exactly, and no two decisions share a name |
 | `no-superseded-citation` | every CI run | No cited name resolves to a decision under "Previously decided" |
+| `changelog-reconciles` | every CI run | Every commit that deleted a line from a spec also changed `CHANGELOG.md`, read from the history. Ten phase-3 commits are exempt by hash |
 | `pinned-constants` | every CI run | Numeric constants stated in docs match the code constant they describe |
 | `coverage-reported` | every CI run | Every check the roster says runs is implemented, is invoked by `tools/ci.*`, states its own scope in numbers, and left a coverage record in the run the phase report reads. Every file in the suite that reads the shipped source belongs to a check, or is listed by name as a scan whose backing nothing records |
 | `path-casing` | every CI run | Every file path appearing as a string literal in source matches the on-disk path exactly, byte for byte |

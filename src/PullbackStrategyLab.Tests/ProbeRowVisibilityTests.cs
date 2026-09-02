@@ -52,7 +52,7 @@ public sealed class ProbeRowVisibilityTests
         Assert.Equal(
             MigrationRunner.LatestVersion.ToString(CultureInfo.InvariantCulture),
             Single(integrity, "store.schemaVersion"));
-        Assert.Equal("127", Single(integrity, "store.rowsPointingAtSetup"));
+        Assert.Equal("124", Single(integrity, "store.rowsPointingAtSetup"));
         Assert.Equal("0", Single(integrity, "store.foreignKeyViolations"));
 
         // The probe does exist by the end of the run, so the nought above is the ordering holding

@@ -303,6 +303,47 @@ public sealed class PointInTimeCheck
             + "night is DailyBarReader.Latest, which takes the observed instant and bounds on it."),
     ];
 
+    /// <summary>
+    /// Statements whose table is an interpolation hole rather than a name, with the reason each is
+    /// not a point-in-time question.
+    ///
+    /// <b>Named because a statement this scan cannot resolve is one it was silently not asserting.</b>
+    /// Until 4.17 the scanner required a quote immediately after `CommandText =` or a raw literal, so
+    /// a statement built through an interpolated handler was matched by neither: not asserted, not
+    /// exempted, and counted nowhere. The scanner reads them now, and a statement whose table is a
+    /// hole cannot be matched against a stamped table by any amount of reading, so what is owed is
+    /// that each one is placed by hand rather than that the pattern gets cleverer.
+    ///
+    /// A statement here has to be found. An exemption covering nothing is an exemption that has
+    /// stopped applying, which is the same defect one level up.
+    /// </summary>
+    public static IReadOnlyList<StatementExemption> ExemptInterpolatedTables { get; } =
+    [
+        new("LabStatus.cs", "SELECT COUNT(*) FROM {table}",
+            "a row count for the status band, over a table named by the two call sites above it. It is "
+            + "a health figure about the store rather than an answer about a session: nothing computes "
+            + "a figure about the market from it, and a band that said how many bars were stored as at "
+            + "some earlier date would be answering a question nobody asked it. The count over "
+            + "`daily_bar` is unbounded for that reason and is stated here rather than left to be "
+            + "found again"),
+        new("RunLogger.cs", "SELECT COUNT(*) FROM {table}",
+            "the row-count baseline a run scope takes at its start and again at its end, over the "
+            + "tables the stage declared it writes. The difference is `rows_written`, which is a "
+            + "figure about a run rather than about the market, and a baseline bounded on an as-of "
+            + "would measure the delta against a store the run could not have seen"),
+        new("ReconstructedRead.cs", "SELECT COUNT(*) FROM {table}",
+            "the before-and-after row count the reconstructed walk takes over the evidence tables, "
+            + "which is how it asserts that a calibration run wrote into `calibration_setup` and "
+            + "nowhere near `setup`. It is a count of the whole table on purpose: the property is "
+            + "that the number did not move at all, and a bounded count would answer for one date "
+            + "while a row written for another slipped past"),
+        new("SetupReader.cs", "FROM {table}",
+            "the evidence table or the calibration one, chosen by comparing against a constant so "
+            + "nothing from outside reaches the statement. The read is bounded on `as_of`, which is "
+            + "the session being asked about; `setup.corrected_at` is the row's own stamp and is "
+            + "exempted above by name, where the reason it is not bounded is written out"),
+    ];
+
     /// <summary>A statement exempted by a fragment of its own text, with the reason.</summary>
     public sealed record StatementExemption(string File, string Fragment, string Why);
 
@@ -384,7 +425,11 @@ public sealed class PointInTimeCheck
         //    cannot hold: a query beside a reader is not bound by the reader's shape.
         int statementsExamined = 0;
         int stampedStatements = 0;
+        int interpolatedTables = 0;
         var exemptionsMatched = new HashSet<StatementExemption>();
+        var interpolatedMatched = new HashSet<StatementExemption>();
+        var interpolationsSeen = new HashSet<string>(StringComparer.Ordinal);
+        var unplacedInterpolations = new List<string>();
 
         foreach (string file in RepositoryLayout.ProductionSourceFiles)
         {
@@ -394,6 +439,35 @@ public sealed class PointInTimeCheck
             foreach (string statement in Statements(source))
             {
                 statementsExamined++;
+
+                // A statement whose table is an interpolation hole cannot be matched against a
+                // stamped table by any amount of reading, so it is placed by hand or it is a
+                // finding. Reported either way, because the failure this repairs is a statement
+                // counted nowhere.
+                if (statement.Contains("FROM {", StringComparison.Ordinal))
+                {
+                    StatementExemption? placed = ExemptInterpolatedTables.FirstOrDefault(
+                        e => string.Equals(e.File, name, StringComparison.Ordinal)
+                             && statement.Contains(e.Fragment, StringComparison.Ordinal));
+
+                    // Counted once per statement rather than once per match. The three readers above
+                    // overlap and cut one literal at different points, so a single statement is
+                    // yielded as several substrings; a scope reporting four for one statement would
+                    // be a figure over a population other than the one its name gives, which is the
+                    // fifth defect shape this corpus catalogues. A placed statement is identified by
+                    // the fragment that placed it and an unplaced one by its own text.
+                    interpolatedTables +=
+                        interpolationsSeen.Add($"{name}: {placed?.Fragment ?? statement.Trim()}") ? 1 : 0;
+
+                    if (placed is StatementExemption exemption)
+                    {
+                        interpolatedMatched.Add(exemption);
+                    }
+                    else if (!unplacedInterpolations.Contains($"{name}: {statement.Trim()}"))
+                    {
+                        unplacedInterpolations.Add($"{name}: {statement.Trim()}");
+                    }
+                }
 
                 foreach ((string table, string stamp) in Stamped)
                 {
@@ -492,6 +566,7 @@ public sealed class PointInTimeCheck
         coverage
             .Examined("public reads on the store's readers", readsExamined)
             .Examined("statements selecting from a stamped table", stampedStatements)
+            .Examined("statements whose table is an interpolation hole, placed by hand", interpolatedTables)
             .Examined("stamped tables the check knows about", Stamped.Count)
             .Examined("statements reading the run log", runLogStatements)
             // The four exemption counts are context and carry no floor, deliberately. A floor is a
@@ -544,6 +619,19 @@ public sealed class PointInTimeCheck
 
         // Stated in advance, because every assertion above holds trivially over an empty sweep.
         Assert.True(readsExamined >= 15, $"Only {readsExamined} public read(s) found on the readers.");
+        Assert.True(unplacedInterpolations.Count == 0,
+            "These statements build their table through an interpolation, so no amount of reading can "
+            + "match them against a stamped table and nothing here asserts or exempts them:\n  "
+            + string.Join("\n  ", unplacedInterpolations)
+            + "\n  Place each in ExemptInterpolatedTables with why it is not a point-in-time "
+            + "question, or give it a literal table name.");
+
+        Assert.True(
+            interpolatedMatched.Count == ExemptInterpolatedTables.Count,
+            "These interpolated-table exemptions matched no statement, so they exempt nothing and would "
+            + "hide a real one silently: "
+            + string.Join(", ", ExemptInterpolatedTables.Except(interpolatedMatched).Select(e => e.Fragment)));
+
         Assert.True(stampedStatements >= 5,
             $"Only {stampedStatements} statement(s) selecting from a stamped table were found outside the readers. "
             + "The scanner stopped matching rather than the source getting cleaner.");
@@ -818,6 +906,29 @@ public sealed class PointInTimeCheck
             source,
             "\"{3}(?<body>\\s*(?:SELECT|INSERT|UPDATE).*?)\"{3}",
             RegexOptions.Singleline | RegexOptions.CultureInvariant))
+        {
+            Group group = match.Groups["body"];
+
+            if (group.Value.Contains("SELECT", StringComparison.OrdinalIgnoreCase) && seen.Add(group.Index))
+            {
+                yield return group.Value;
+            }
+        }
+
+        // <b>And the interpolated forms, which this scan could not see until 4.17.</b> The two
+        // above require a quote immediately after `CommandText =` or a raw literal, so a
+        // statement built through an interpolated handler was matched by neither: it was not
+        // asserted and it was not exempted either, and the check reported a coverage it did not
+        // have. `LabStatus.CountRows` was one such statement and it counted `daily_bar` rows
+        // with no bound at all.
+        //
+        // Any single-line literal opening with a verb, wherever it is assigned from. Wider than
+        // the two above on purpose: this half is about the statements the assignment form hides,
+        // so keying on the assignment is the mistake being repaired.
+        foreach (Match match in Regex.Matches(
+            source,
+            "\\$?\"(?<body>\\s*(?:SELECT|INSERT|UPDATE|DELETE)[^\"]*)\"",
+            RegexOptions.CultureInvariant))
         {
             Group group = match.Groups["body"];
 
