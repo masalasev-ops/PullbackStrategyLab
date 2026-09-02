@@ -11486,9 +11486,11 @@ Found:      **`run_log.rows_written` was declared `INTEGER` in SCHEMA while the 
 
 Measured:   **`tools/ci.ps1` green at 30 steps and 855 tests**, from 832 at 4.8.
 
-            **`tools/verify-phase` GREEN**: CLAIMS claims, PASSED passed, 0 failed, SCOPE out of
-            scope, 0 unexamined, coverage examined EXAMINED, EXPECTATIONS expectations, read against
-            the commit that produced them with the tree clean.
+            **`tools/verify-phase` GREEN**: 133 claims, 107 passed, 0 failed, 26 out of scope, 0
+            unexamined, coverage examined 7,302, 1,438 expectations, read against the commit that
+            produced them with the tree clean. Claims passing rose from 105 by the two schedule rows
+            that stopped reading "On exit" and started naming a slot, and out of scope falls from 28
+            for the same reason.
 
             **The fixture's thirteen `trades.*` and `audit.*` figures are noughts and each is
             structural.** Nothing was open, because nothing was placed, because nothing triggered, so
