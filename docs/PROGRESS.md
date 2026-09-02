@@ -10810,6 +10810,18 @@ Verified:   `tools/ci.ps1` green at 29 steps and **740 tests**, from 714. Twenty
             `store.schemaVersion` 40 to 41 by migration 041, and `runlog.distinctStages` 23 to 24
             with `runlog.entries` 28 to 29 by a stage joining the replayed night.
 
+            `tools/verify-phase.ps1` GREEN: **129 claims, 88 passed, 0 failed, 41 out of scope, 0
+            unexamined**, coverage examined **5,855**, **1,406 expectations** of which 1 is void,
+            inputs CAPTURED 70 and AUTHORED 133, expectations changed since the last commit 0. Read on
+            a clean tree at `9ba39a2`, which carries every edit this checkpoint makes; the block you
+            are reading lands in the next commit.
+
+            **Out of scope falls from 43 to 41 and passed rises from 85 to 88 over one more claim.**
+            The two that come into scope are TriggerResolver and SessionReplayClock, whose catalogue
+            claims 4.5's deliverable cell names, and recording 4.5 here is what makes them landed. The
+            extra claim is the registration exemption read back against the catalogue, which is a
+            claim about this checkpoint's own exemption rather than about the architecture.
+
             **Two guards fired on this checkpoint's own work and both were paid rather than
             loosened.** `point-in-time` refused `trigger_resolution` and `trigger_run` until both were
             declared, the first as stamped with its read bounded and a behavioural test that a
