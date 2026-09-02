@@ -235,8 +235,28 @@ jobs:
           }
 
           # 1. The empty case, produced by the condition that actually caused the false green: no
-          #    -AllowBranch, so the tree guard refuses on a runner, which is never on main. No stage
-          #    is dispatched and the log carries only what the script wrote about itself.
+          #    -AllowBranch, so the tree guard refuses, no stage is dispatched, and the log carries
+          #    only what the script wrote about itself.
+          #
+          #    The condition is produced here rather than inherited from the runner, and that is the
+          #    whole of what 4.7 changed. The comment above used to read "the tree guard refuses on a
+          #    runner, which is never on main", and that is false for one event: `actions/checkout`
+          #    leaves a push to `main` on a local branch called `main`, so the guard passes,
+          #    universe-build dispatches, and the verdict is `ok` rather than `empty`. This job
+          #    therefore went red on every merge, for a reason that has nothing to do with what it
+          #    guards, in the one place where being right about the tree matters most. The step's own
+          #    comment already said each condition is produced rather than reasoned about; one of the
+          #    two was resting on an accident of the trigger instead.
+          & git checkout -q -b ci-empty-condition-not-main
+
+          $onBranch = (git rev-parse --abbrev-ref HEAD).Trim()
+          if ($onBranch -eq 'main') {
+            $ErrorActionPreference = 'Stop'
+            throw ("The tree is still on 'main' after being moved off it, so the run below would " +
+              "dispatch a stage instead of being refused, and the empty case would not be produced " +
+              "at all.")
+          }
+
           $refused = Invoke-Slot
           $emptyVerdict = if ($refused.Path -eq 'nothing') { 'empty the slot wrote no log at all' } else {
             & pwsh -NoProfile -File tools/slot-log-verdict.ps1 `
