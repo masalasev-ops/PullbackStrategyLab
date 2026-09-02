@@ -96,6 +96,12 @@ public sealed class PointInTimeCheck
             // is on the same footing, being a reading of a trade.
             ["trade"] = "observed_at",
             ["plan_audit"] = "observed_at",
+
+            // A classification is read to decide an answer from 4.11, where the journal page shows
+            // each loss with its cause, and from phase 5 where a variant's losses are compared. It
+            // also carries a second stamp for the aftermath, so a replay standing between the close
+            // and the horizon sees a mechanism and nothing else.
+            ["loss_class"] = "observed_at",
             ["corporate_action"] = "observed_at",
             ["indicator_daily"] = "computed_at",
             ["history_refetch"] = "refetched_at",
@@ -181,6 +187,10 @@ public sealed class PointInTimeCheck
                 "what one evening's fill stage priced and what it could not, on the same terms as "
                 + "order_run below. The positions it counts are in position, which carries three stamps "
                 + "and is bounded on all three.",
+            ["loss_run"] =
+                "what each of the classifier's two passes wrote, on the same terms as trade_run below. "
+                + "The classifications it counts are in loss_class, which is stamped twice and bounded "
+                + "on both.",
             ["trade_run"] =
                 "what one evening's journal wrote, on the same terms as manage_run below. The trades it "
                 + "counts are in trade, which is stamped and bounded.",

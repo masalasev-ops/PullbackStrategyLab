@@ -89,9 +89,9 @@
       "name": "loss-causes-as-a-share",
       "sentence": "Failed setups shrinking as a share is direct evidence the filter improved. Noise stop-outs shrinking is evidence the execution improved",
       "statedIn": "docs/ARCHITECTURE.html",
-      "surface": "/scoreboard, band 2's loss-cause panel",
-      "arrivesAt": "4.10",
-      "why": "Two different wins with the same symptom, and this is the only place that would separate them. The panel is on the page now declaring its checkpoint rather than absent."
+      "surface": "/scoreboard",
+      "why": "Two different wins with the same symptom, and this is the only place that would separate them. The panel arrived at 4.10 with the classifier that fills it, and the two shares are over the losses whose horizon has closed rather than over every loss: a row still waiting carries no aftermath, and folding it in would make the unclassified share read as the ordinary state of every recent loss.",
+      "mustCarry": "Failed setups shrinking as a share is direct evidence the filter improved"
     },
     {
       "name": "proposal-hit-rate-by-pack-version",

@@ -339,6 +339,7 @@ public sealed partial class ArchitectureConformanceCheck
         claims.AddRange(PortabilityClaims(architecture));
         claims.AddRange(MoveProcedureClaims(architecture));
         claims.AddRange(ManagementClaims(architecture));
+        claims.AddRange(LossCauseClaims(architecture));
 
         // 7. And every table in the document placed, which is what stops the five above from
         //    being the document as far as this check is concerned. A table nobody reads produces
@@ -523,7 +524,8 @@ public sealed partial class ArchitectureConformanceCheck
     /// </summary>
     public static IReadOnlyList<string> ClaimTables { get; } =
         ["Component catalogue", "Build order", "The limits", "Failure behaviour", "The phase report",
-         "Running on Windows and macOS", "The procedure", "What differs in management"];
+         "Running on Windows and macOS", "The procedure", "What differs in management",
+         "Why each loss happened"];
 
     /// <summary>
     /// Every other table in the document, and why it yields no claim.
@@ -543,7 +545,6 @@ public sealed partial class ArchitectureConformanceCheck
         ["Vocabulary"] = "definitions of terms, not a statement about the code",
         ["Which kinds of measurement are missing"] =
             "what the design deliberately does not measure, which no code can be checked against",
-        ["Why each loss happened"] = "4.10",
         ["What each tier of change can be replayed against"] = "5.3",
         ["What the pack contains"] = "6.4",
         ["Model budget"] = "6.5",
@@ -709,6 +710,106 @@ public sealed partial class ArchitectureConformanceCheck
             && manager.Contains("ExitReason.First(", StringComparison.Ordinal);
 
         return separate && trail && trim && reclaim && whicheverIsFirst;
+    }
+
+
+    /// <summary>
+    /// The loss taxonomy, which was deferred to 4.10 until 4.10 built it.
+    ///
+    /// <b>Every row here is a claim about the code, which is what makes this table different from
+    /// the management one.</b> Each names a detector, and until 4.10 none of them had one. The gap
+    /// row is the reason this pass is worth having at all: it carried a detector for the whole of
+    /// phases 1 to 3 that would have put every ordinary stop-out in its bucket, and nothing could
+    /// see it because the component that would have made the cell assertable did not exist.
+    /// see: A gap loss is detected from the exit fill's basis, not from the size of the loss
+    /// </summary>
+    private static IReadOnlyList<Claim> LossCauseClaims(string architecture)
+    {
+        const string Table = "Why each loss happened";
+        var claims = new List<Claim>();
+
+        IReadOnlyList<IReadOnlyList<string>> rows = HtmlTable.BodyRowsUnder(architecture, Table);
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("loss-class", StringComparison.Ordinal)).Sql;
+
+        decimal oneR = Core.Trading.LossCause.OneRInReturn(giveUpDistance: 5m, triggerPrice: 100m);
+
+        foreach (IReadOnlyList<string> row in rows)
+        {
+            string what = HtmlTable.Text(row[0]);
+
+            claims.Add(what switch
+            {
+                "Noise stop-out" =>
+                    Core.Trading.LossCause.AftermathOf(oneR, oneR) == Core.Trading.LossAftermath.Noise
+                    && Core.Trading.LossCause.AftermathOf(oneR * 2m, oneR) == Core.Trading.LossAftermath.Noise
+                        ? Claim.Passed(Table, what,
+                            "a direction-signed ten-session return that reached one unit of risk places the loss "
+                            + "as noise, and reaching it exactly counts, because one R is where the trade would "
+                            + "have paid for the risk it took")
+                        : Claim.Failed(Table, what,
+                            "the boundary no longer places a return that reached one unit of risk as noise"),
+
+                "Failed setup" =>
+                    Core.Trading.LossCause.AftermathOf(0m, oneR) == Core.Trading.LossAftermath.FailedSetup
+                    && Core.Trading.LossCause.AftermathOf(-oneR, oneR) == Core.Trading.LossAftermath.FailedSetup
+                        ? Claim.Passed(Table, what,
+                            "a follow-up that was flat or against the trade places the loss as a failed setup, "
+                            + "which is the bucket selection changes can reduce")
+                        : Claim.Failed(Table, what,
+                            "a flat or adverse follow-up no longer places the loss as a failed setup"),
+
+                "Gap loss" => TheGapIsDetectedFromTheBasis(row[1])
+                    ? Claim.Passed(Table, what,
+                        "the mechanism is read from the exit fill's own basis, so a gap is an exit that could "
+                        + "not be hit at the price it named. The cell said \"loss larger than one unit of risk\" "
+                        + "until 4.10, and that detector fires on every ordinary stop-out because a round trip "
+                        + "costs two crossings")
+                    : Claim.Failed(Table, what,
+                        "the gap detector is back to a test on the size of the loss, which every ordinary "
+                        + "stop-out satisfies, or the mechanism no longer reads the fill's basis"),
+
+                "unclassified" =>
+                    Core.Trading.LossAftermath.All.Contains(Core.Trading.LossAftermath.Unclassified, StringComparer.Ordinal)
+                    && migration.Contains("'unclassified'", StringComparison.Ordinal)
+                        ? Claim.Passed(Table, what,
+                            "it is a value the store admits and the taxonomy names, rather than a null or a "
+                            + "silent skip. A row still waiting on its horizon carries neither, which is a "
+                            + "different fact and the one that would otherwise swamp it")
+                        : Claim.Failed(Table, what,
+                            "unclassified is no longer a value the store admits, so a loss the rules cannot "
+                            + "place has nowhere to go but the nearest bucket"),
+
+                _ => Claim.NotExamined(Table, what,
+                    "the taxonomy gained a cause and this check has no assertion for it, so nothing says "
+                    + "whether the detector it names exists"),
+            });
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// The gap row, against the code and against its own cell.
+    ///
+    /// The cell is passed in so a document reworded back to a size test fails here rather than the
+    /// check quietly asserting the code against a line the table no longer carries, which is the
+    /// direction a source scan cannot see on its own.
+    /// </summary>
+    private static bool TheGapIsDetectedFromTheBasis(string detectionCell)
+    {
+        string cell = HtmlTable.Text(detectionCell);
+
+        bool documentSaysBasis = cell.Contains("basis", StringComparison.OrdinalIgnoreCase)
+            && !cell.Contains("larger than one unit of risk", StringComparison.OrdinalIgnoreCase);
+
+        string classifier = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "LossClassifier.cs"));
+
+        return documentSaysBasis
+            && Core.Trading.LossCause.MechanismOf(Core.Trading.FillModel.Gapped) == Core.Trading.LossMechanism.Gap
+            && Core.Trading.LossCause.MechanismOf(Core.Trading.FillModel.Slipped) == Core.Trading.LossMechanism.Ordinary
+            && classifier.Contains("LossCause.MechanismOf(exit.Basis)", StringComparison.Ordinal);
     }
 
     /// <summary>

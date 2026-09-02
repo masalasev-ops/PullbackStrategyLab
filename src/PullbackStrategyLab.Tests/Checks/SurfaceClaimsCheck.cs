@@ -474,6 +474,13 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     /// stage produces them is held by the fixture, at `accumulation.starved.withheldBecause`, over a
     /// population with every control outcome deleted. Neither substitutes for the other: the sixth
     /// defect shape is exactly the gap between a producer that is right and a surface that drops it.
+    ///
+    /// <b>The three loss-cause panels arrived at 4.10 and the two populations among them are the
+    /// point.</b> The gap share is over every classified loss and the other two are over the losses
+    /// whose horizon has closed, so the page has to be able to render two denominators inside one
+    /// band. A fixture carrying only one of them would satisfy the sentence about failed setups
+    /// while leaving the page unable to tell a reader that the panel above it counted a different
+    /// set, which is the population claim's own failure mode arriving one band lower down.
     /// </summary>
     private const string Panels = """
         {
@@ -493,7 +500,19 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
               "low": null, "high": null, "rows": 240, "effective": 31,
               "population": "every flagged setup", "minimum": 262,
               "withheldBecause": "only 14 session(s) carry a pair and a block bootstrap needs 20, which is a shortage of sessions rather than of evidence",
-              "sessions": 14, "minimumSessions": 20 }
+              "sessions": 14, "minimumSessions": 20 },
+            { "name": "band2.lossCause.failedSetup", "direction": "long", "figure": "0.4100",
+              "low": null, "high": null, "rows": 44, "effective": null,
+              "population": "every loss whose horizon has closed", "minimum": null,
+              "withheldBecause": null },
+            { "name": "band2.lossCause.noise", "direction": "long", "figure": "0.3600",
+              "low": null, "high": null, "rows": 44, "effective": null,
+              "population": "every loss whose horizon has closed", "minimum": null,
+              "withheldBecause": null },
+            { "name": "band2.lossCause.gap", "direction": "long", "figure": "0.0900",
+              "low": null, "high": null, "rows": 61, "effective": null,
+              "population": "every classified loss", "minimum": null,
+              "withheldBecause": null }
           ],
           "short": [
             { "name": "band1.vsLoose", "direction": "short", "figure": "withheld",

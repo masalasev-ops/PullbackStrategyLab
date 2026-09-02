@@ -69,6 +69,10 @@ public sealed partial class PriceStorageFormCheck
             + "different execution facts and the column is read across names.",
         ["plan_audit.exit_difference_bps"] =
             "the same figure at the other end of the trade, exempt on the same terms.",
+        ["loss_class.result_r"] =
+            "the trade's result carried onto the classification it explains, so a loss reads with the "
+            + "figure being explained beside the explanation and without a join. A ratio on exactly "
+            + "the terms the column it is copied from is exempt.",
         ["plan_audit.give_up_difference_bps"] =
             "the plan's stop against where the trade actually ended, as a fraction of that stop. A "
             + "different question from the two above rather than a third reading of them, and a "

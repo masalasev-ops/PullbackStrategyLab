@@ -30,7 +30,7 @@ param(
     [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
                  'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
-                 'trades', 'audit', 'forward',
+                 'trades', 'audit', 'forward', 'losses',
                  'scoreboard',
                  'ceiling', 'snapshot')]
     [string]$Slot,
@@ -133,6 +133,12 @@ $slots = @{
     # placed. It changes no result, which is what keeps it an audit.
     'audit'      = @(, @('audit'))
     'forward'    = @(, @('forward-returns'))
+
+    # 21:35, after the forward returns, because half of what it answers is one of them. Two passes:
+    # the mechanism of every loss that closed tonight, which is known from the exit fill, and the
+    # aftermath of every earlier loss whose ten-session horizon has since closed. A row waiting on a
+    # horizon is not an unclassified one, and the two are counted apart.
+    'losses'     = @(, @('losses'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
     'snapshot'   = @(, @('snapshot-db'))
