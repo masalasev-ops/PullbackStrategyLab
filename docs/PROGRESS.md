@@ -13950,3 +13950,46 @@ Carried:    Thirty-nine obligations remain and **none is due at this checkpoint*
             four at 6.8, three at the move and eight at the operator. 5.1 is not started: the
             freeze makes every repair before it permanent and writes 1,802 into every version's
             pre-registration, and the operator is awake for it.
+
+## 5.8 — 2026-09-03 — phase-5-8-cluster-population — the pile, part one: the mixed cluster column reported as the split it holds
+
+Not a checkpoint entry. The first part of the repair pile, being the stored figure the harm runs
+through first, and 5.8 lands when the last part does. Population: **the 44 setup rows of 2026-08-27
+and their `cluster` column**, being 15 repaired over 234 scan names, 28 of the other 29 over the 148
+the walk had reached, and `INFQ` at neither, which is the figure the row was written against.
+
+Built:      **`recheck` reports the night's column as the split it holds, on every run.** After the
+            walk, dry or applied, the stage reads every row of the night carrying the check's
+            verdict against the count the whole scan population gives, and prints four numbers
+            rather than one: rows at that count, rows at another value with both figures named per
+            row, rows without a value, and rows whose whole-population count cannot be formed because
+            nothing resolved their industry inside the bound. `RecheckResult` carries the reading.
+            The stage still revisits none of the twenty-nine: each carries a value and a value is a
+            measurement the night made (see: A late answer is attributed to the session it was
+            fetched for, up to a recorded lateness bound). The runbook states the split where it had
+            stated
+            the fifteen of forty-four, and the catalogue row says the stage reports it (see: Long and
+            short are never pooled into one figure).
+
+            **The ruling half was never asked and is not taken here.** The row named two things, a
+            ruling on whether a verdict computed from a partial input may be revisited and, failing
+            that ruling, the split reported; the ruling was put to nobody and is in no table, so the
+            fallback the row itself named is what landed. Whether the twenty-nine may be recomputed
+            stays unruled and unasked, and this entry says so rather than asking it.
+
+Verified:   Over an authored night: three names in one industry, one row without a value, one at
+            the whole population's three, one at two as a count taken part-way through a walk gives.
+            The dry run reports one, one named with both figures, one; the apply moves the repaired
+            row to the whole population and leaves the row at two where it was, unmarked. A night
+            resolved past the bound reports its valued row as unreadable rather than as agreeing or
+            disagreeing with a count that does not exist. Two tests added to the recomputer's
+            thirty-eight, all green. `tools/ci.ps1` green on Windows, **31 steps,
+            941 tests**. `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,436 with 0 unexamined; 1,455 expectations, none changed since the last commit, with the expected move
+            stated in advance as nought: no expectation, claim or table added.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.8 leaves the table with this
+            commit. The table reads thirty-eight; thirteen due before the freeze, all at 5.8; the
+            operator's eight, unchanged. Nothing this part touched is an input to the minimum
+            sample's derivation: the flagged dispersion is over calibration rows the cluster column
+            does not select, and no calibration figure was re-run. Next is the session zone the
+            store readers name, being the second stored figure in the order the harm runs.

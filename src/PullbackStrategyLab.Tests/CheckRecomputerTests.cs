@@ -680,6 +680,70 @@ public sealed class CheckRecomputerTests : IDisposable
     }
 
     /// <summary>
+    /// The night's column is reported as the split it holds, read against the whole scan
+    /// population, on the dry run and after the apply alike.
+    ///
+    /// <b>The shape 2026-08-27 left behind, authored.</b> Three names in one industry, so the whole
+    /// population gives three. BBB carries three, which is that count. CCC carries two, which is
+    /// what a count taken part-way through a sector walk gives, and this stage has no permission to
+    /// revisit it. AAA carries no value and is the one row the walk can repair. Stated as one
+    /// number, the column reads "cluster of three" and hides that one row of the three was counted
+    /// over a different night; stated as the split, the row at another population is named with
+    /// both figures. After the apply AAA moves to the whole-population count and CCC stays where it
+    /// was, because the reading is a fact about the column and the repair is a fact about the
+    /// rows it may touch.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    [Fact]
+    public void The_nights_column_is_reported_as_the_split_it_holds_against_the_whole_population()
+    {
+        Night(LateButInsideTheBound, "AAA", "BBB", "CCC");
+        Setup("AAA", "long", new CheckResult("cluster", false, null));
+        Setup("BBB", "long", new CheckResult("cluster", true, 3m));
+        Setup("CCC", "long", new CheckResult("cluster", true, 2m));
+
+        RecheckResult reported = Recomputer().Recompute(AsOf, "cluster", apply: false);
+
+        Assert.NotNull(reported.Population);
+        Assert.Equal(1, reported.Population.AtTheWholePopulation);
+        Assert.Equal(["CCC long at 2 against 3"], reported.Population.AtAnotherPopulation);
+        Assert.Equal(1, reported.Population.WithoutAValue);
+        Assert.Equal(0, reported.Population.Unreadable);
+
+        RecheckResult applied = Recomputer().Recompute(AsOf, "cluster", apply: true);
+
+        Assert.NotNull(applied.Population);
+        Assert.Equal(2, applied.Population.AtTheWholePopulation);
+        Assert.Equal(["CCC long at 2 against 3"], applied.Population.AtAnotherPopulation);
+        Assert.Equal(0, applied.Population.WithoutAValue);
+
+        // The row at another population was not revisited: it carries a value, and a value is a
+        // measurement the night made.
+        Assert.Equal(2m, Read("CCC", "long").Cluster.Value);
+        Assert.Null(Read("CCC", "long").CorrectedAt);
+    }
+
+    /// <summary>
+    /// A row whose whole-population count cannot be formed is counted apart from both sides rather
+    /// than read as agreeing or disagreeing with a number that does not exist.
+    /// </summary>
+    [Fact]
+    public void A_row_whose_whole_population_count_cannot_be_formed_is_counted_apart()
+    {
+        Night(BeyondTheBound, "AAA", "BBB");
+        Setup("AAA", "long", new CheckResult("cluster", true, 2m));
+        Setup("BBB", "long", new CheckResult("cluster", false, null));
+
+        RecheckResult reported = Recomputer().Recompute(AsOf, "cluster", apply: false);
+
+        Assert.NotNull(reported.Population);
+        Assert.Equal(0, reported.Population.AtTheWholePopulation);
+        Assert.Empty(reported.Population.AtAnotherPopulation);
+        Assert.Equal(1, reported.Population.WithoutAValue);
+        Assert.Equal(1, reported.Population.Unreadable);
+    }
+
+    /// <summary>
     /// A member of the cluster that is not a setup at all still counts, stated on its own because
     /// it is the strongest form of the property.
     ///
