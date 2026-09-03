@@ -398,6 +398,7 @@ public sealed class LossClassifierTests : IDisposable
         StoredLossClass row = Losses(Session, asOf: asOf).Single();
         Assert.Equal(LossAftermath.Unclassified, row.Aftermath);
         Assert.Null(row.ForwardReturnSigned);
+        Assert.Null(row.ExitReturnSigned);
         Assert.Equal(LossClassifier.HorizonClosedWithNoFigure, row.AftermathBecause);
     }
 
@@ -443,11 +444,15 @@ public sealed class LossClassifierTests : IDisposable
 
         StoredLossClass afterwards = Losses(Session, asOf: tenth).Single();
         Assert.Equal(LossAftermath.Noise, afterwards.Aftermath);
+        Assert.NotNull(afterwards.ExitReturnSigned);
 
+        // Both figures are hidden on the one stamp, so a replay between the close and the horizon
+        // sees neither half of the pair rather than the half that was knowable at the close.
         StoredLossClass between = Losses(Session, asOf: NextSession).Single();
         Assert.Equal(LossMechanism.Ordinary, between.Mechanism);
         Assert.Null(between.Aftermath);
         Assert.Null(between.ForwardReturnSigned);
+        Assert.Null(between.ExitReturnSigned);
         Assert.True(between.AwaitsItsHorizon);
     }
 
@@ -503,7 +508,153 @@ public sealed class LossClassifierTests : IDisposable
         Assert.Equal("clean", run.Outcome);
     }
 
+    // ---- the second aftermath figure, over an authored position ----------------------------------
+
+    /// <summary>
+    /// The two figures are one arithmetic ending in two places, so when the exit is the close they
+    /// are one number, and the sign follows the side.
+    /// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
+    /// </summary>
+    [Fact]
+    public void The_two_figures_are_one_arithmetic_and_agree_when_the_exit_is_the_close()
+    {
+        Assert.Equal(0.08m, LossCause.SignedReturn(100m, 108m, SetupDirection.Long));
+        Assert.Equal(-0.08m, LossCause.SignedReturn(100m, 108m, SetupDirection.Short));
+        Assert.Equal(
+            LossCause.SignedReturn(100m, 108m, SetupDirection.Long),
+            LossCause.SignedReturn(100m, 108m, SetupDirection.Long));
+        Assert.Throws<ArgumentOutOfRangeException>(() => LossCause.SignedReturn(0m, 108m, SetupDirection.Long));
+        Assert.Throws<ArgumentOutOfRangeException>(() => LossCause.SignedReturn(100m, 108m, "sideways"));
+    }
+
+    /// <summary>
+    /// What the day offered and what the trade earned are two figures, named apart, and they differ
+    /// when the exit is not the close.
+    ///
+    /// <b>Over an authored position, because none has ever been held past its own session.</b> A
+    /// long triggered at 100 and stopped out at its give-up point of 95 in the same session, whose
+    /// name then closed at 108 ten sessions later: the day offered 8% from the trigger and the trade
+    /// earned the stop, which is a loss of 5% and the slippage the exit paid. With one figure the
+    /// row would read as noise and nothing on it would say what the trade took of the move.
+    /// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
+    /// </summary>
+    [Fact]
+    public void What_the_trade_earned_and_what_the_day_offered_differ_when_the_exit_is_not_the_close()
+    {
+        StopOut("AAPL", SetupDirection.Long);
+        Classifier().Classify(Session);
+
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 108m);
+        Classifier(tenth).Classify(tenth);
+
+        StoredLossClass row = Losses(Session, asOf: tenth).Single();
+        StoredTrade trade = Trade(row.TradeId, asOf: tenth);
+
+        Assert.Equal(0.08m, row.ForwardReturnSigned);
+        Assert.NotNull(row.ExitReturnSigned);
+        Assert.Equal(LossCause.SignedReturn(100m, trade.ExitPrice, SetupDirection.Long), row.ExitReturnSigned);
+        Assert.True(row.ExitReturnSigned < 0m, "the stop-out earned a loss, so the figure is negative on the trade's own side");
+        Assert.NotEqual(row.ForwardReturnSigned, row.ExitReturnSigned);
+        Assert.Contains($"the trade itself earned {row.ExitReturnSigned} from the same trigger to its exit at {trade.ExitPrice}",
+            row.AftermathBecause, StringComparison.Ordinal);
+        Assert.Contains($"in {Session:yyyy-MM-dd}", row.AftermathBecause, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A position held past its own session is the case the second figure exists for, and the exit
+    /// is read from the session the trade closed in rather than the one it was triggered in.
+    ///
+    /// A long triggered at 100, held overnight and gapped out at 88 the next morning, whose name
+    /// then closed at 130 ten sessions after the trigger: the day offered 30% and the trade earned
+    /// minus 12%, and a single figure would have called the loss noise with nothing beside it saying
+    /// the trade took none of the move. The sentence names the session the exit was in.
+    /// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
+    /// </summary>
+    [Fact]
+    public void A_position_held_past_its_session_measures_what_it_earned_to_the_exit_in_the_session_it_closed()
+    {
+        GapOut("AAPL");
+        Classifier(NextSession).Classify(NextSession);
+
+        DateOnly tenth = TenSessionsAfterTheTrigger("AAPL", closeAtTheTenth: 130m);
+        Classifier(tenth).Classify(tenth);
+
+        StoredLossClass row = Losses(NextSession, asOf: tenth).Single();
+        StoredTrade trade = Trade(row.TradeId, asOf: tenth);
+
+        Assert.Equal(NextSession, row.ClosedSession);
+        Assert.Equal(0.30m, row.ForwardReturnSigned);
+        Assert.Equal(88m, trade.ExitPrice);
+        Assert.Equal(-0.12m, row.ExitReturnSigned);
+        Assert.Equal(LossAftermath.Noise, row.Aftermath);
+        Assert.Contains($"its exit at 88 in {NextSession:yyyy-MM-dd}", row.AftermathBecause, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The second figure is put on the adjusted basis through the bar of the session the trade
+    /// closed in, so where the store holds no such bar the figure is absent and the sentence says
+    /// so, while the first figure and the aftermath it places are unaffected.
+    ///
+    /// The store can count ten sessions after the trigger's and still hold no bar for the session
+    /// in between that the trade closed in, which is a fetch that missed a day.
+    /// </summary>
+    [Fact]
+    public void The_exit_figure_is_absent_where_the_closed_sessions_bar_is_and_the_first_figure_is_not()
+    {
+        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
+        Order("AAPL", SetupDirection.Long, shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
+        Quotes("AAPL", Session);
+        DailyBar("AAPL", Session, close: 100m);
+        RunTheNight(Session);
+
+        Minute("AAPL", NextSession, new TimeOnly(9, 30), 88m, 89m, 87m, 88.5m);
+        Quotes("AAPL", NextSession);
+        RunTheNight(NextSession);
+        Classifier(NextSession).Classify(NextSession);
+
+        // Ten sessions after the trigger's, none of them the session the trade closed in.
+        for (int at = 2; at <= LossClassifier.HorizonDays + 1; at++)
+        {
+            DailyBar("AAPL", Session.AddDays(at), close: at == LossClassifier.HorizonDays + 1 ? 130m : 100m);
+        }
+
+        DateOnly tenth = Session.AddDays(LossClassifier.HorizonDays + 1);
+        LossRunResult result = Classifier(tenth).Classify(tenth);
+
+        Assert.Equal(1, result.Noise);
+
+        StoredLossClass row = Losses(NextSession, asOf: tenth).Single();
+        Assert.Equal(0.30m, row.ForwardReturnSigned);
+        Assert.Null(row.ExitReturnSigned);
+        Assert.Contains(LossClassifier.ExitFigureNotReadable, row.AftermathBecause, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The store refuses the second figure on its own: what the trade earned is half of a comparison
+    /// and the other half has to be there.
+    /// </summary>
+    [Fact]
+    public void The_store_refuses_what_the_trade_earned_without_what_the_day_offered()
+    {
+        StopOut("AAPL", SetupDirection.Long);
+        Classifier().Classify(Session);
+
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "UPDATE loss_class SET exit_return_signed = '-0.05' WHERE forward_return_signed IS NULL;";
+
+        SqliteException refused = Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+        Assert.Contains("CHECK constraint failed", refused.Message, StringComparison.Ordinal);
+    }
+
     // ---- scaffolding ---------------------------------------------------------------------------
+
+    private StoredTrade Trade(string tradeId, DateOnly asOf)
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        return TradeReader.AllClosed(connection, asOf).Single(t => t.TradeId == tradeId);
+    }
 
     /// <summary>A long opened and stopped out in one session, which is the ordinary loss.</summary>
     private void StopOut(string ticker, string direction)

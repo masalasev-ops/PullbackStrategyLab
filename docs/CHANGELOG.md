@@ -2099,3 +2099,18 @@ Why:  The panel reads the pin, and the pin moved.
 Was:  The repository layout listed `derive-indicators.py` alone among the one-time aids under `/tools`.
 Now:  It lists `derive-authored-parameters.py` beside it and `derive-minimum-sample.py`, the derivation's instrument, with the note that re-running the last re-pins and that after the freeze a re-pin closes every open version.
 Why:  A tool a later session would reach for is listed where the layout is stated, and the one whose re-run has a cost says so at the point it is named.
+
+### 2026-09-03 — SCHEMA.md — cites The aftermath is measured from the exit as well as from the close, as two figures and never one
+Was:  `loss_class` carried one aftermath figure, `forward_return_signed`, the direction-signed return from the trigger to the close of the tenth session after the trigger's, with `one_r_in_return` beside it.
+Now:  A second figure, `exit_return_signed`, the same return taken to the exit fill: what the trade earned beside what the day offered, written when the aftermath is and only beside the first, added at 5.0(c) by migration 048.
+Why:  The decision says the aftermath gains a second figure and that it is a column. With one figure a trail that captured a move and one that gave a move back are the same number, and the column is the only place the gap between them can be read from.
+
+### 2026-09-03 — ARCHITECTURE.html — cites The aftermath is measured from the exit as well as from the close, as two figures and never one
+Was:  The LossClassifier catalogue row and the "Why each loss happened" section described one aftermath figure, the ten-session return from the trigger.
+Now:  Both say the aftermath is two figures from 5.0(c), named apart, what the day offered and what the trade earned, with the gap between them as what the trail rule is judged on, and that neither replaces the other.
+Why:  The component now writes both, and a document describing one figure over a store holding two would have the read surface disagree with the store on the next long hold.
+
+### 2026-09-03 — BUILD_PLAN.md — cites The aftermath is measured from the exit as well as from the close, as two figures and never one
+Was:  The carried obligations table held thirty-nine rows plus the aftermath row raised at 4.10, due at 5.0; the 5.0 row said "No component, no store, no migration"; the 5.8 row said fourteen of fifteen due before the freeze with the other one at 5.0; 5.1 said the freeze waited on 5.0(c) and the pile; the paragraph under the table said fourteen repairs and four others, the others including the aftermath window; the freeze count read fifteen in each of its places.
+Now:  Thirty-nine rows. The 4.10 row is discharged by 5.0(c) on 2026-09-03. The 5.0 row says (c) adds one column by migration, on the decision's own word that the second figure is a column. Fourteen due before the freeze, all at 5.8 and none at 5.0; the paragraph reads ten repairs and four others, the fourth other being the two cap readers raised at 5.0, and says the aftermath window was a fifth until 5.0(c).
+Why:  A discharged obligation leaves the table in the commit that discharges it. The "no migration" clause was written at the planning pass and the sitting's decision the same day said the figure is a column, and a decision is changed only by another decision, so the row follows the decision. The repairs-and-others split had read fourteen and four since the planning pass and summed to eighteen over a set that had been fifteen since 5.0(b), which is the stale prose count `stated-counts` exists for and now derives.

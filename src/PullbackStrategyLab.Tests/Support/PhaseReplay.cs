@@ -889,6 +889,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
         measurements.AddRange(ClauseFigures());
+        measurements.AddRange(RuleFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -2336,6 +2337,27 @@ public sealed class PhaseReplay : IDisposable
                 unplaced.ToString(CultureInfo.InvariantCulture)),
         ];
     }
+
+    /// <summary>
+    /// The shape of the selection rule 5.0 wrote down: how many named thresholds each side's gate
+    /// list compares, which is the number a version may move exactly one of.
+    ///
+    /// <b>A figure about the rule rather than about the fixture's data</b>, on the precedent
+    /// <c>catalogue.unplacedInAnyBuildsRow</c> and <c>store.schemaVersion</c> set, and derived from
+    /// the document rather than from the code: ARCHITECTURE's two check lists state each quantity a
+    /// gate compares against a threshold, and the count per side is read off those lists by hand
+    /// before the run. The identity test at 5.0(b) proves the detector reads these thresholds and no
+    /// others, so the figure moving is a gate gaining or losing a comparison, which is the
+    /// structural change this generation names out of scope.
+    /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
+    /// </summary>
+    private static IReadOnlyList<Measurement> RuleFigures() =>
+    [
+        new Measurement("rule.longThresholds",
+            SelectionRule.Long.Thresholds.Count.ToString(CultureInfo.InvariantCulture)),
+        new Measurement("rule.shortThresholds",
+            SelectionRule.Short.Thresholds.Count.ToString(CultureInfo.InvariantCulture)),
+    ];
 
     /// <summary>
     /// Rows the store holds that were observed later than this run, which must be none while the

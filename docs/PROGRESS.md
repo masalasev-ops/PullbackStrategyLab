@@ -13853,3 +13853,100 @@ Carried:    **Two rows discharged, one moved, nothing raised.** The rows raised 
             derivations landed and names the pin. The layout in `CLAUDE.md` lists the three
             derivation aids under `/tools`, with the note that re-running the last one after the
             freeze closes every open version. Next is 5.0(c).
+
+## 5.0(c) — 2026-09-03 — phase-5-0c-second-aftermath-figure — the second aftermath figure, over an authored position, and the act that is not owed
+
+The third part of 5.0, and the last. One act applying an operator answer, verified over an authored
+position because no position has ever been held past its own session. The spread-capture act the
+part carried until the sitting is recorded as not owed rather than left looking half done.
+
+Built:      **The aftermath is two figures and they are named apart.** `forward_return_signed` is
+            what the day offered: the direction-signed return from the trigger to the adjusted close
+            of the tenth session after the trigger's, and it is the figure the loss is placed on, as
+            it was. `exit_return_signed` is what the trade earned: the same return taken to the exit
+            fill, on the adjusted basis through the bar of the session the trade closed in. One
+            arithmetic, `LossCause.SignedReturn`, ends in two places, so when the exit is the close
+            the two are one number and the gap between them is what the trail rule is judged on
+            (see: The aftermath is measured from the exit as well as from the close, as two figures
+            and never one).
+
+            **Written when the aftermath is, and only beside the first figure.** The exit is known
+            the night the trade closes and the figure is still held for the horizon, because what the
+            trade earned is half of a comparison and a row carrying it alone would state half.
+            Migration 048 rebuilds `loss_class` for the column on the terms 045 rebuilt `fill`, since
+            the constraint is the point and SQLite cannot add one to a column it adds; nothing holds a
+            foreign key into the table and the live store holds no row in it. The reader hides the
+            second figure on the aftermath's stamp, so a replay standing between the close and the
+            horizon sees neither half. Where the store holds no bar for the session the trade closed
+            in, the figure is absent and `aftermath_because` says so, with the first figure and the
+            placement unaffected. The sentence a person reads carries both figures and the exit's
+            price and session.
+
+            **The spread half is not owed, and the record says so here.** Question 5 closed with the
+            capture staying at the capped sixty, and a version selecting outside it is refused a fill
+            and scored as refused (see: The spread capture stays at the capped sixty, and a version
+            selecting outside it is scored as refused). What that answer owes instead costs no vendor
+            call and is a column where the scores are read, due at 5.2, whose row carries it. Nothing
+            in this part touches the spread passes and nothing was left for a later part of 5.0.
+
+Verified:   **Over two authored positions, because none has ever been held past its own session.** A
+            long triggered at 100 and stopped out at 95 in the same session, whose name closed at 108
+            ten sessions later: the day offered 0.08 and the trade earned the stop and its slippage,
+            read off the trade row, negative on the trade's own side and not equal to the first. A
+            long held overnight and gapped out at 88 the next morning, whose name closed at 130: the
+            day offered 0.30, the trade earned minus 0.12, the row is gap and noise at once, and the
+            sentence names the session the exit was in. The pure arithmetic agrees with itself when
+            the exit is the close and flips its sign on the short side. The store refuses the second
+            figure written without the first. A row whose closed session has no bar carries the first
+            figure, its placement and the sentence saying the second could not be put on the same
+            basis. An unclassified row carries neither. Five tests added to the classifier's
+            twenty, all green.
+
+            **The phase report's expected move was stated before the run.** `store.schemaVersion`
+            from 47 to 48 by migration 048, re-derived by reading the directory; two expectations
+            added at 5.0, `rule.longThresholds` 12 and `rule.shortThresholds` 14, derived by hand
+            from ARCHITECTURE's two check lists before the run, which is 5.0's own `DERIVED`
+            contribution and what closes the checkpoint under done condition seven; no claim added
+            or removed, both architecture edits being a cell of an existing row and a paragraph, so
+            the register reads 137 and 23 out of scope as before. `tools/ci.ps1` green on Windows,
+            **31 steps, 939 tests**. `tools/verify-phase.ps1` **GREEN**, read before the closing entry below landed and so still phase 4: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,425 with 0 unexamined; 1,455 expectations of which 929 independent, three changed since the last commit, being exactly the three stated above; and read again after it, with 5.0 landed and the report on phase 5, **GREEN** on phase 5 with the same 137 claims, 114 passed, 23 out of scope and 0 unexamined, coverage examined 8,426.
+
+Carried:    **One row discharged and one prose count corrected, nothing raised.** The row raised at
+            4.10 leaves the table with this entry, discharged by migration 048 and the classifier in
+            this commit. The table reads thirty-nine; fourteen due before the freeze, all of them at
+            5.8 and none at 5.0; the operator's eight, unchanged. The paragraph under the phase 5
+            table had read fourteen repairs and four others since the planning pass, eighteen over a
+            set that 5.0(b) had brought to fifteen; it now reads ten and four over fourteen, and
+            `stated-counts` derives both numbers against the rows rather than reading past them.
+            5.8 is next, and 5.0 closes with the entry below.
+
+## 5.0 — 2026-09-03 — phase-5-0c-second-aftermath-figure — the checkpoint closes, with its three parts landed and the phase opened
+
+Closes checkpoint 5.0, on the precedent 3.0 set. Three parts, three landed, none repointed, and no
+done condition amended.
+
+Built:      **(a)** the thrust-selection measurement over the 602 calibration sessions, with the
+            prediction written before the run and question 6 put to the operator with the figures in
+            front of them, answered the same day: the rule does not move. **(b)** the spec pass,
+            three named decisions over authored cases and the minimum sample re-derived at 1,802 on a
+            specification committed before the run. **(c)** the second aftermath figure, over an
+            authored position, and the spread half recorded as not owed. Beside the three, on the
+            same identifier: the sitting's eight answers recorded, the live store migrated on the
+            operator's instruction, the slot damage measured, and the thirteen registrations
+            produced and not run.
+
+Measured:   Against phase 4's sign-off tree: **31 steps, 939 tests,
+            1,455 expectations of which 929 independent**. Two
+            expectations at this checkpoint, both `DERIVED` from the document before the run, being
+            the two threshold counts a version may move exactly one of. The measurement that is the
+            checkpoint's one substantive result, the funnel under the extreme rule, and its
+            prediction two-thirds right, are in the 5.0(a) entries and are not restated here.
+
+Verified:   `tools/ci.ps1` green on Windows, 31 steps, 939 tests.
+            `tools/verify-phase.ps1` **GREEN**, read before the closing entry below landed and so still phase 4: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,425 with 0 unexamined; 1,455 expectations of which 929 independent, three changed since the last commit, being exactly the three stated above; and read again after it, with 5.0 landed and the report on phase 5, **GREEN** on phase 5 with the same 137 claims, 114 passed, 23 out of scope and 0 unexamined, coverage examined 8,426.
+
+Carried:    Thirty-nine obligations remain and **none is due at this checkpoint**. Fourteen at 5.8,
+            which is next; four at 5.2, one at 5.3, two at 5.5, one at 3.6, one at 6.1, one at 6.5,
+            four at 6.8, three at the move and eight at the operator. 5.1 is not started: the
+            freeze makes every repair before it permanent and writes 1,802 into every version's
+            pre-registration, and the operator is awake for it.

@@ -1,3 +1,5 @@
+using PullbackStrategyLab.Core.Detection;
+
 namespace PullbackStrategyLab.Core.Trading;
 
 /// <summary>
@@ -94,6 +96,35 @@ public static class LossCause
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(oneRInReturn);
 
         return signedReturn >= oneRInReturn ? LossAftermath.Noise : LossAftermath.FailedSetup;
+    }
+
+    /// <summary>
+    /// A direction-signed return from one price to another, as a fraction of the first.
+    ///
+    /// <b>One arithmetic for both aftermath figures, so the two differ only in where they end.</b>
+    /// What the day offered runs from the trigger to the close of the tenth session after the
+    /// trigger's; what the trade earned runs from the trigger to the exit fill. Both are fractions
+    /// of the trigger and both are signed so that a move in the trade's favour is positive, which is
+    /// what makes the gap between them readable: a trail that gave a move back shows the day above
+    /// the trade, and a trail that captured one shows the trade above the day. When the exit is the
+    /// close the two are one number, which is the case the pair is defined to agree on.
+    /// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
+    /// </summary>
+    public static decimal SignedReturn(decimal from, decimal to, string direction)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(from);
+
+        decimal move = (to - from) / from;
+
+        return direction switch
+        {
+            SetupDirection.Long => move,
+            SetupDirection.Short => -move,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(direction),
+                $"'{direction}' is neither '{SetupDirection.Long}' nor '{SetupDirection.Short}', so the "
+                + "sign of the return is undefined (see: Long and short are never pooled into one figure)."),
+        };
     }
 }
 
