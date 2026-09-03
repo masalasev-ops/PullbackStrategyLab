@@ -106,35 +106,72 @@ public sealed class ScoreboardBuilder
         _options = options.Value;
     }
 
+    /// <summary>
+    /// The flag that writes a new generation of a date's panels beside the one it already carries.
+    ///
+    /// <b>The supported way to restate a night, from 5.8.</b> Until then the stage's own failure
+    /// message offered restoring a snapshot or deleting the date's panels, which no declared writer
+    /// does and which would make the stale reading unreadable, when the table's grain is that a
+    /// panel can be read back as it stood. A rebuild inserts every panel again under its own
+    /// instant and a reader takes the latest generation at or before its bound.
+    /// see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+    /// </summary>
+    public const string RebuildFlag = "--rebuild";
+
     public int Run(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
 
-        DateOnly asOf = args.Length > 0
-            ? DateOnly.ParseExact(args[0], "yyyy-MM-dd", CultureInfo.InvariantCulture)
+        bool rebuild = args.Contains(RebuildFlag, StringComparer.Ordinal);
+        string[] rest = [.. args.Where(a => !string.Equals(a, RebuildFlag, StringComparison.Ordinal))];
+
+        DateOnly asOf = rest.Length > 0
+            ? DateOnly.ParseExact(rest[0], "yyyy-MM-dd", CultureInfo.InvariantCulture)
             : _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
 
-        ScoreboardResult result = Build(asOf);
+        ScoreboardResult result = Build(asOf, rebuild);
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Panels} panel(s) written");
         Console.WriteLine($"{Name}: {result.WithInterval} carrying an interval, {result.Withheld} withheld for want of a sample");
         Console.WriteLine($"{Name}: {result.Attempted} attempted, {result.Skipped} skipped");
+
+        if (result.Rebuilt)
+        {
+            Console.WriteLine(
+                $"{Name}: rebuilt as a new generation computed at {result.ComputedAt:yyyy-MM-dd'T'HH:mm:ss'Z'}, "
+                + $"beside {result.Superseded} panel(s) of earlier generations, which stay readable as they stood");
+        }
+
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
 
         if (result.Outcome == RunOutcome.Failed && result.Skipped == result.Attempted && result.Attempted > 0)
         {
             Console.Error.WriteLine(
                 $"{Name}: all {result.Skipped} panel(s) were skipped, so {asOf:yyyy-MM-dd} already carries panels and "
-                + "nothing was rebuilt. The insert is ON CONFLICT DO NOTHING and there is no update path, so an "
-                + "in-place rebuild of a past date writes nothing and would otherwise report a clean run. To rebuild "
-                + "it, restore the snapshot taken before that night and re-run, or delete that date's panels first.");
+                + "nothing was rebuilt. A second build of a date writes nothing and would otherwise report a clean "
+                + $"run. To restate the date, rerun with {RebuildFlag}, which writes a new generation of its panels "
+                + "beside the one it carries; the earlier generation stays readable as it stood.");
         }
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
     }
 
     /// <summary>One day's panels.</summary>
-    public ScoreboardResult Build(DateOnly asOf)
+    public ScoreboardResult Build(DateOnly asOf) => Build(asOf, rebuild: false);
+
+    /// <summary>
+    /// One day's panels, or a new generation of them.
+    ///
+    /// <b>Without <paramref name="rebuild"/> a date that already carries a panel is left as it is,
+    /// and a build that wrote nothing fails.</b> The presence test is a read in the same
+    /// transaction as the insert rather than the insert's own conflict, because the key carries the
+    /// instant from 049 and a later instant cannot conflict with an earlier one; a read inside the
+    /// transaction cannot disagree with the insert that follows it. <b>With it, every panel is
+    /// written again under this run's instant</b>, whatever the date carried, and what it carried
+    /// is counted rather than touched.
+    /// see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+    /// </summary>
+    public ScoreboardResult Build(DateOnly asOf, bool rebuild)
     {
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, "scoreboard");
@@ -153,13 +190,27 @@ public sealed class ScoreboardBuilder
         }
 
         int skipped = 0;
+        int superseded = 0;
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
             foreach (Panel panel in panels)
             {
+                int carried = Generations(connection, transaction, asOf, panel, computedAt);
+
+                if (carried > 0 && !rebuild)
+                {
+                    skipped++;
+                    run.CountSkipped();
+                    continue;
+                }
+
+                superseded += carried;
+
                 if (!Insert(connection, transaction, asOf, panel, computedAt))
                 {
+                    // The same instant twice, which a clock that moves cannot produce and a fixed
+                    // one can. Counted as skipped so a run that wrote nothing still says so.
                     skipped++;
                     run.CountSkipped();
                 }
@@ -169,11 +220,10 @@ public sealed class ScoreboardBuilder
         }
 
         // A build that wrote nothing at all is a no-op wearing a clean run. It happens when the date
-        // already carries panels, because the insert is ON CONFLICT DO NOTHING and there is no
-        // update path: the supported way to rebuild a past date is to restore the snapshot taken
-        // before that night and re-run, or to delete that date's panels first. Failing here rather
-        // than refusing up front keeps a first build for a date working and a genuine rebuild
-        // loud, which is the pair that matters.
+        // already carries panels and no rebuild was asked for: the supported way to restate a past
+        // date is the rebuild flag, which writes a new generation beside the old. Failing here
+        // rather than refusing up front keeps a first build for a date working and an accidental
+        // second run loud, which is the pair that matters.
         //
         // Some panels skipped and some written is a different thing and is not a failure: it means
         // the date gained a panel the earlier build did not produce. It is still reported.
@@ -192,7 +242,34 @@ public sealed class ScoreboardBuilder
             summary.CallsUsed,
             outcome,
             panels.Count,
-            skipped);
+            skipped,
+            rebuild,
+            superseded,
+            computedAt);
+    }
+
+    /// <summary>
+    /// How many generations of one panel the date already carries, read inside the transaction the
+    /// insert runs in so the two cannot disagree, and bounded on this run's own instant, which is
+    /// the latest generation a build standing now could be beside.
+    /// </summary>
+    private static int Generations(
+        SqliteConnection connection, SqliteTransaction transaction, DateOnly asOf, Panel panel, DateTimeOffset computedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM scoreboard
+             WHERE as_of = @as_of AND panel = @panel AND direction IS @direction
+               AND computed_at <= @computed_before
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@panel", panel.Name);
+        command.Parameters.AddWithValue("@direction", (object?)panel.Direction ?? DBNull.Value);
+        command.Parameters.AddWithValue("@computed_before", StoreText.TimestampToStorageText(computedAt));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -805,4 +882,7 @@ public sealed record ScoreboardResult(
     int CallsUsed,
     RunOutcome Outcome,
     int Attempted,
-    int Skipped);
+    int Skipped,
+    bool Rebuilt = false,
+    int Superseded = 0,
+    DateTimeOffset ComputedAt = default);

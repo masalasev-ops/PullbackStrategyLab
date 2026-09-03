@@ -237,6 +237,16 @@ When a diff fails, regenerating the expectations is the cheapest way to make it 
 
 A phase whose report shows more changed expectations than new ones has re-baselined rather than built, and that is visible without anyone remembering to look for it.
 
+**A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood**
+Taken at 5.8 on 2026-09-03, closing the row raised at 3.12. `computed_at` joins the scoreboard's key, a rebuild asked for by name inserts every panel of the date again under its own instant, and a reader takes the latest generation at or before its bound. Nothing deletes a panel.
+
+**It follows from three rules already taken rather than choosing between two mechanisms.** The table's own grain sentence is that a panel can be read back as it stood; a record is corrected by a new dated entry and nothing in the corpus is struck through; and the bar tables settled that a correction arrives as a new row with a later stamp and the read takes the latest. The stage's failure message offered deleting the date's panels or restoring a snapshot, and either makes the stale reading unreadable, which is the reading a person standing on that night was shown. 2026-08-28's band 0 says one night recorded and forty-four setups on file, computed before that night's seventy-three setups existed, and after a rebuild it still says so to a reader bounded on that night, beside the generation that says seventy-three to a reader bounded after the rebuild.
+
+**The ordinary build still refuses a second run.** Without the flag a date already carrying a panel writes none and fails, on the terms 3.9(e) set, so an accidental rerun cannot quietly open a generation; the presence test moves from the insert's conflict to a read in the same transaction, because a key carrying the instant cannot conflict across instants. The unique index on the account-wide panels carries the instant too, so one generation holds one copy of each.
+
+**What it costs is stated.** A rebuilt date holds one row per panel per generation, and every reader of the table that is not bounded on the instant has to say which generation it means; the API's read does, and the suite's three hand-written reads stand over stores with one generation each.
+(see: Nothing in the corpus is struck through)
+
 ## What is traded
 
 **Two directions are tested, with separate detectors, separate management and separate scoring**

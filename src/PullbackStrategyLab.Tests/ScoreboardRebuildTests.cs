@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
+using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
@@ -100,36 +101,68 @@ public sealed class ScoreboardRebuildTests : IDisposable
 
         // And it names the supported route, because a failure that does not say what to do next
         // sends the operator to the source.
-        Assert.Contains("restore the snapshot", said, StringComparison.Ordinal);
+        Assert.Contains(ScoreboardBuilder.RebuildFlag, said, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// The supported route still works: with that date's panels gone, a rebuild writes them.
+    /// The supported route: a rebuild writes a new generation of the date's panels beside the one it
+    /// carries, and a reader takes the latest generation it may see.
     ///
-    /// This is what restoring the snapshot taken before the night and re-running reduces to, from
-    /// the stage's point of view. Without this half the change would be indistinguishable from the
-    /// stage having lost the ability to build a date twice for any reason.
+    /// <b>The shape 2026-08-28 left behind, authored.</b> A night's scoreboard ran before an input
+    /// existed, so band 0 says nought setups on file; the input then arrives and the night is
+    /// rebuilt. The first generation stays, unchanged, and a read bounded on the night's own end of
+    /// day still returns it, because that is what the night showed. A read bounded after the
+    /// rebuild returns the second. Neither generation is deleted and no declared writer gains a
+    /// delete.
+    /// see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
     /// </summary>
     [Fact]
-    public void A_rebuild_after_the_date_is_cleared_writes_its_panels_again()
+    public void A_rebuild_writes_a_new_generation_and_a_reader_takes_the_latest_it_may_see()
     {
         ScoreboardResult first = Builder().Build(AsOf);
         Assert.Equal("failed", Builder().Build(AsOf).Outcome.ToStorageText());
 
-        using (SqliteConnection connection = _connections.OpenWrite())
-        {
-            using SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM scoreboard WHERE as_of = @as_of";
-            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
-            command.ExecuteNonQuery();
-        }
+        // The input that arrived after the night's scoreboard ran.
+        SetupOnFile("AAPL");
 
-        ScoreboardResult again = Builder().Build(AsOf);
+        // The rebuild, the next morning, after the night's own end of day.
+        DateTimeOffset nextMorning = new(2026, 8, 28, 10, 0, 0, TimeSpan.Zero);
+        ScoreboardResult rebuilt = Builder(nextMorning).Build(AsOf, rebuild: true);
 
-        Assert.Equal(first.Attempted, again.Attempted);
-        Assert.Equal(0, again.Skipped);
-        Assert.Equal("clean", again.Outcome.ToStorageText());
-        Assert.Equal(first.Attempted, Panels());
+        Assert.True(rebuilt.Rebuilt);
+        Assert.Equal(first.Attempted, rebuilt.Attempted);
+        Assert.Equal(0, rebuilt.Skipped);
+        Assert.Equal(first.Attempted, rebuilt.Superseded);
+        Assert.Equal("clean", rebuilt.Outcome.ToStorageText());
+        Assert.Equal(nextMorning, rebuilt.ComputedAt);
+
+        // Two generations, both on file.
+        Assert.Equal(first.Attempted * 2, Panels());
+
+        // Read as of the night itself, the night's own generation, as it stood.
+        Assert.Equal("0", SetupsOnFile(asOf: AsOf));
+
+        // Read as of the day the rebuild ran, the rebuilt generation, and exactly one row per panel.
+        Assert.Equal("1", SetupsOnFile(asOf: AsOf.AddDays(1)));
+        ScoreboardResponse afterwards = LabScoreboard.Read(_connections, AsOf.AddDays(1));
+        Assert.Equal(first.Attempted, afterwards.Health.Count + afterwards.Long.Count + afterwards.Short.Count);
+    }
+
+    /// <summary>
+    /// An ordinary build after a rebuild still writes nothing and fails: any generation on file
+    /// makes the date one that carries panels, so an accidental rerun cannot open a third.
+    /// </summary>
+    [Fact]
+    public void An_ordinary_build_after_a_rebuild_still_writes_nothing()
+    {
+        ScoreboardResult first = Builder().Build(AsOf);
+        Builder(new DateTimeOffset(2026, 8, 28, 10, 0, 0, TimeSpan.Zero)).Build(AsOf, rebuild: true);
+
+        ScoreboardResult again = Builder(new DateTimeOffset(2026, 8, 29, 10, 0, 0, TimeSpan.Zero)).Build(AsOf);
+
+        Assert.Equal(first.Attempted, again.Skipped);
+        Assert.Equal("failed", again.Outcome.ToStorageText());
+        Assert.Equal(first.Attempted * 2, Panels());
     }
 
     /// <summary>
@@ -178,15 +211,53 @@ public sealed class ScoreboardRebuildTests : IDisposable
         Assert.Equal(first.Attempted, Panels());
 
         // And every row is distinct on the key the schema claims, counting a null direction as one
-        // value rather than as many.
+        // value rather than as many, within a generation: a rebuild adds a generation and never a
+        // second copy inside one.
+        Builder(new DateTimeOffset(2026, 8, 28, 10, 0, 0, TimeSpan.Zero)).Build(AsOf, rebuild: true);
+        Assert.Equal(accountWide * 2, AccountWide());
+
         using SqliteConnection connection = _connections.OpenReadOnly();
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText =
-            "SELECT COUNT(*) FROM (SELECT as_of, panel, COALESCE(direction, '') FROM scoreboard "
-            + "GROUP BY 1, 2, 3 HAVING COUNT(*) > 1)";
+            "SELECT COUNT(*) FROM (SELECT as_of, panel, COALESCE(direction, ''), computed_at FROM scoreboard "
+            + "GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1)";
 
         Assert.Equal(0, Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture));
     }
+
+    /// <summary>One setup on file for the date, which moves band 0's count from nought to one.</summary>
+    private void SetupOnFile(string ticker)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        using (SqliteCommand security = connection.CreateCommand())
+        {
+            security.CommandText =
+                "INSERT INTO security (ticker, name, exchange, type, first_seen) "
+                + "VALUES (@t, @t, 'NASDAQ', 'Common Stock', @d) ON CONFLICT (ticker) DO NOTHING;";
+            security.Parameters.AddWithValue("@t", ticker);
+            security.Parameters.AddWithValue("@d", StoreText.DateToStorageText(AsOf.AddDays(-40)));
+            security.ExecuteNonQuery();
+        }
+
+        using SqliteCommand setup = connection.CreateCommand();
+        setup.CommandText = """
+            INSERT INTO setup
+                (setup_id, as_of, ticker, direction, check_results, passed_all, capped_out,
+                 trigger_price, stop_price, stop_distance_ranges)
+            VALUES (@id, @as_of, @ticker, 'long', '[]', 1, 0, '100', '95', '0.30')
+            """;
+        setup.Parameters.AddWithValue("@id", $"{AsOf:yyyy-MM-dd}-{ticker}-long");
+        setup.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+        setup.Parameters.AddWithValue("@ticker", ticker);
+        setup.ExecuteNonQuery();
+    }
+
+    /// <summary>Band 0's setups-on-file figure, read through the page's own reader as of a date.</summary>
+    private string SetupsOnFile(DateOnly asOf) =>
+        LabScoreboard.Read(_connections, asOf).Health
+            .Single(p => string.Equals(p.Name, "band0.setupsOnFile", StringComparison.Ordinal))
+            .Figure;
 
     /// <summary>How many panels of the date carry no direction, which is band 0.</summary>
     private int AccountWide()
@@ -207,9 +278,13 @@ public sealed class ScoreboardRebuildTests : IDisposable
         return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    private ScoreboardBuilder Builder()
+    private ScoreboardBuilder Builder() => Builder(_clock.UtcNow);
+
+    /// <summary>A builder whose clock reads <paramref name="at"/>, which is the instant a generation is keyed on.</summary>
+    private ScoreboardBuilder Builder(DateTimeOffset at)
     {
         var options = Options.Create(new PullbackStrategyLabOptions { DataRoot = _root.Path });
-        return new ScoreboardBuilder(_connections, new RunLogger(_clock, options), _clock, options);
+        var clock = new FixedClock(at);
+        return new ScoreboardBuilder(_connections, new RunLogger(clock, options), clock, options);
     }
 }
