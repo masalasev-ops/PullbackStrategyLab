@@ -171,18 +171,24 @@ public sealed class CeilingCalculator
 
         while (reader.Read())
         {
+            // Each column through the crossing named for what it carries: the close and the ATR
+            // are prices, and the return, the excursion, the daily range and the give-up distance
+            // are ratios. The values are identical either way and the naming is the whole point,
+            // because a crossing named for what it carries is what stops a percentage being
+            // written where a fraction was meant; until 5.8 every one of these went through the
+            // price crossing.
             decimal close = StoreText.StorageTextToPrice(reader.GetString(6));
-            decimal adr = StoreText.StorageTextToPrice(reader.GetString(5));
+            decimal adr = StoreText.StorageTextToRatio(reader.GetString(5));
 
             subjects.Add(new WinRateCeiling.Subject(
                 reader.GetString(0),
                 direction,
-                StoreText.StorageTextToPrice(reader.GetString(1)),
-                StoreText.StorageTextToPrice(reader.GetString(2)),
+                StoreText.StorageTextToRatio(reader.GetString(1)),
+                StoreText.StorageTextToRatio(reader.GetString(2)),
                 StoreText.StorageTextToPrice(reader.GetString(4)),
                 // The daily range as a price, which is what the give-up distance is a multiple of.
                 adr * close,
-                StoreText.StorageTextToPrice(reader.GetString(3))));
+                StoreText.StorageTextToRatio(reader.GetString(3))));
         }
 
         return subjects;

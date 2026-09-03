@@ -1675,4 +1675,46 @@ public sealed class CheckProofTests
         Assert.Contains("4.13", built);
         Assert.Single(built, c => c == "4.13");
     }
+
+    /// <summary>
+    /// The crossing scanner maps a read through the price crossing to the column at that ordinal
+    /// of the nearest preceding SELECT list, through an alias prefix, a function call and an alias,
+    /// and flags it only where the column is a ratio.
+    ///
+    /// <b>Proved over an authored reader rather than over the shipped source</b>, because the
+    /// shipped source now reads every ratio through the ratio crossing and a proof over it would
+    /// pass with the mapping deleted: no offence found reads exactly like none present. The
+    /// authored reader holds the shape 5.8 repaired, a ratio read through the price crossing, beside
+    /// a price read the same way and a ratio read correctly.
+    /// </summary>
+    [Fact]
+    public void The_crossing_scanner_maps_a_read_to_the_column_it_selects()
+    {
+        const string source = """"
+            command.CommandText = """
+                SELECT s.setup_id, f.return_signed, COALESCE(b.close, '0') AS close, i.adr_20
+                  FROM setup s
+                """;
+            using SqliteDataReader reader = command.ExecuteReader();
+            var a = StoreText.StorageTextToPrice(reader.GetString(1));
+            var b = StoreText.StorageTextToPrice(reader.GetString(2));
+            var c = StoreText.StorageTextToRatio(reader.GetString(3));
+            """";
+
+        (int reads, IReadOnlyList<string> offences) =
+            PriceStorageFormCheck.RatioReadsThroughThePriceCrossing(source, ["return_signed", "adr_20"]);
+
+        // Two reads through the price crossing: the return, which is an offence, and the close,
+        // which is a price and is not. The daily range goes through the ratio crossing and is
+        // neither counted nor flagged.
+        Assert.Equal(2, reads);
+        string offence = Assert.Single(offences);
+        Assert.Contains("return_signed at ordinal 1", offence, StringComparison.Ordinal);
+
+        // And with the mapping's subject gone, nothing is flagged: the assertion fails when the
+        // thing it guards is removed.
+        (_, IReadOnlyList<string> none) =
+            PriceStorageFormCheck.RatioReadsThroughThePriceCrossing(source, ["adr_20"]);
+        Assert.Empty(none);
+    }
 }

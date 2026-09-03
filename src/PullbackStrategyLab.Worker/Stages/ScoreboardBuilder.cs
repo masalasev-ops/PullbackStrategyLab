@@ -602,7 +602,7 @@ public sealed class ScoreboardBuilder
                     byDecile[decile] = returns;
                 }
 
-                returns.Add(StoreText.StorageTextToPrice(reader.GetString(1)));
+                returns.Add(StoreText.StorageTextToRatio(reader.GetString(1)));
             }
         }
 
@@ -678,8 +678,8 @@ public sealed class ScoreboardBuilder
             return [new Panel("band2.ceilingGap", direction, "withheld", null, null, 0, null, Flagged)];
         }
 
-        decimal bound = StoreText.StorageTextToPrice(reader.GetString(0));
-        decimal achieved = StoreText.StorageTextToPrice(reader.GetString(1));
+        decimal bound = StoreText.StorageTextToRatio(reader.GetString(0));
+        decimal achieved = StoreText.StorageTextToRatio(reader.GetString(1));
 
         return
         [
