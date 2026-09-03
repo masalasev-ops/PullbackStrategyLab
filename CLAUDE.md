@@ -46,6 +46,8 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   DECISIONS.md  PROGRESS.md  CHANGELOG.md  RUNBOOK.md
 /tools            ci.ps1  ci.sh  verify-phase  verify-phase.ps1  snapshot-db  migrate
                   nightly.ps1  the slot dispatcher the scheduler calls, not run by CI
+                  update-nightly.ps1  moves the production checkout to the tip of main at
+                  17:00, so a night's slots run one build. Scheduled, not a slot, not run by CI
                   slot-log-verdict.ps1  what a slot log says about a stage, read by the
                   two runner jobs so one predicate serves both
                   derive-indicators.py  one-time verification aid, not run by CI

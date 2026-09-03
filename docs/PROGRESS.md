@@ -14431,3 +14431,60 @@ Carried:    **One row discharged, nothing raised.** The row raised at 5.0 leaves
             operator's eight, unchanged. Nothing this part touched is an input to the minimum
             sample's derivation. The two sweeps are what the pile still holds, and this run stops
             before them with the reason in its report.
+
+## 5.8 — 2026-09-03 — phase-5-8-nightly-checkout — the nightly runs from its own checkout, and the migration order gains its middle step
+
+Not a checkpoint entry. Not a part of the repair pile either: an operational repair to the thing
+the pile's checkpoint runs on, taken before the two sweeps because it costs slots every evening a
+phase merges and the sweeps cost nothing while they wait. Population: **the seventeen scheduled
+tasks and the one working tree they all run from, against the two nights of 2026-09-01 and
+2026-09-02, where the tree guard refused five slot-runs and the schema mismatch refused about
+fifteen.**
+
+Built:      **A production checkout, an updater, and nothing registered.** The schedule runs from a
+            working tree, so a slot executes whatever the tree's ref is at the minute it fires, and
+            phase work lives in the same tree. `tools/update-nightly.ps1` fast-forwards a second
+            checkout to the tip of `main` at 17:00, fifteen minutes before the first slot, refusing
+            on a branch, on a dirty tree, on an unreachable origin, on a ref that will not
+            fast-forward, and rolling its own fast-forward back where the tip does not build. Each
+            refusal leaves the previous build in place, which is a known-good one, and every line
+            goes into the night's own log beside the slots (see: The nightly runs from its own
+            checkout, updated once a night before the first slot).
+
+            **The property is one night, one commit**, and it is worth more than the fault that
+            prompted it: 2026-08-28 ran a night's slots from six commits and 2026-09-02 from three.
+
+            **The migration order gains a middle step, and that is the part most worth writing
+            down.** Merge, then the 17:00 update, then migrate. A merge moves `main` and not the
+            production checkout, so migrating the evening a migration merges puts the store ahead
+            of the build the night will use, and **a store ahead of its build and one behind it
+            produce the same refusal naming the same two numbers**. This lab has lost nights to the
+            behind side twice. The runbook's recovery row now says to read both numbers before
+            migrating rather than assuming which way round it is.
+
+            **The tree guard stays and should now never fire**, which is the change: it stops being
+            a toll paid on every evening merge and becomes a backstop, so a firing is a signal that
+            something is wrong with the production checkout. Nothing in the corpus can see a tree's
+            ref, and the guard is the only thing that writes it into the log.
+
+Verified:   `tools/ci.ps1` green on Windows, **31 steps, 955 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0
+            unexamined**. No expectation moved and the phase report's expected move was stated in
+            advance as nought: the fixture holds no scheduled task and no working tree.
+
+            **Not verified by anything, and that is the point of the entry.** The updater runs
+            against the operator's machine, and no check in this corpus reaches a scheduled task, a
+            second checkout or a tree's ref. It is the seventh failure shape by construction: a
+            property of the running lab, asserted only by a guard inside the thing that runs.
+
+Carried:    **Nothing raised, nothing discharged.** The table still reads twenty-seven; two due
+            before the freeze, both at 5.8, being the claim-register sweep raised at 3.12 and the
+            source-scan assertions raised at 2.11. Nothing here is an input to the minimum sample's
+            derivation.
+
+            **Owed to the operator and not done here, because it is an act on the running lab.**
+            The clone, the copy of `appsettings.Secrets.json`, the move of `data/live` into the
+            production checkout, the re-pointing of the seventeen tasks and the registration of the
+            17:00 task are the operator's, and the commands are in the report that proposed them.
+            Until they are run, the schedule still runs from the working tree and the guard is
+            still a toll rather than a backstop.

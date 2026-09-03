@@ -926,6 +926,20 @@ Two stores exist and only one of them holds evidence. `data/live` is the lab: th
 
 **What may create a store, stated so a fourth does not arrive by accident.** `tools/nightly.ps1` against `data/live`, `tools/ci.*` against `data/ci`, and a hand-run of `migrate` against whichever root is configured. Nothing else. `tools/verify-phase` names a `data/verify` root it has never created, which is dead configuration rather than a third store, and it is named here so that a step which later opens one is a change somebody made rather than one nobody noticed.
 
+**The nightly runs from its own checkout, updated once a night before the first slot**
+The schedule runs from a working tree, so what a slot executes is whatever the tree's ref happens to be at the minute it fires. That was one tree until now, and phase work lives in it: a branch checked out during the slot window costs slots, and it has, five of them across 2026-09-01 and 2026-09-02. A second checkout named `PullbackStrategyLab-nightly`, a sibling of the working tree and a clone from `origin`, is what the schedule runs from and nothing else works in, and `tools/update-nightly.ps1` fast-forwards it to the tip of `main` at 17:00, fifteen minutes before the first slot.
+
+**A clone rather than a `git worktree`, and the difference is what a dev session can reach.** A worktree is cheaper and shares the object database, so a `gc`, a `reset --hard` or a `stash` in the dev tree operates on the production checkout's objects too, and this machine has already produced permission errors writing loose objects with a scanner holding handles. Six megabytes of packed objects buys a checkout that nothing in the other tree can touch.
+
+**The property it buys is one night, one commit,** and that is worth more than the fault that prompted it. On 2026-08-28 a night's slots ran from six different commits, on 2026-09-02 from three, and nothing said so until somebody read the log afterwards. An update at a fixed hour makes a night's build a single fact by construction, and a merge landing after 17:00 is picked up the next night rather than mid-way through this one.
+
+**The store moves into the production checkout,** because `nightly.ps1` derives its data root from its own location and that is the property keeping `PullbackStrategyLab:DataRoot` unset. The decision above is unchanged by this: `data/live` is still the lab, `tools/ci.*` still creates and drops `data/ci` alone, and what moves is which checkout `data/live` sits under. The dev tree is then left with no live store at all, which removes a fourth way to open the operator's data by accident (see: The lab keeps one store per purpose under one data root, and CI never opens the operator's).
+
+**The tree guard stays, and it is worth more after this than before.** A production checkout that silently drifts to a branch is the same fault one directory over, nothing else in the corpus can see a tree's ref, and the guard is the only thing that writes the ref into the log at all. What changes is its economics: it stops being a toll paid on every evening merge and becomes a backstop that should not fire, so a firing is now a signal rather than a cost. `-AllowBranch` has no legitimate use in that tree.
+
+**What it does not fix, stated because the two faults read identically in the log.** It would not have saved either lost night. The branch guard refused five slot-runs across 2026-09-01 and 2026-09-02; the schema mismatch refused about fifteen, and every stage on both nights would have refused anyway. A store behind its build and a store ahead of it are the same refusal, so the update takes a place in the order rather than removing a step: merge, then the 17:00 update, then migrate. Nor does it make a tree's ref visible to any check, which stays what it was, a property of the running lab asserted only by a guard inside the thing that runs.
+
+
 **The store contains no absolute paths**
 What keeps it a directory that can be copied to another machine. Easy to preserve from the start, tedious to retrofit once chart exports or log paths have been persisted.
 
