@@ -13482,3 +13482,165 @@ Corrected:  **The slot entry above says the scheduler registers sixteen slots an
 Carried:    Nothing raised and nothing moved. The thirteen unregistered slots widen the row raised at
             4.5, which is at the operator, and registering them is the operator's act on the same
             terms as this migration was.
+
+## 5.0(a) — 2026-09-03 — phase-5-thirteen-slots — the thirteen registrations, produced and not run, and what the first evening should write
+
+Not a checkpoint entry. It produces the scheduled-task registration each of the thirteen
+undispatched slots needs and states what each should write on its first evening, so the morning
+after can be read against something. **No task is registered by this entry**: registering one is
+an act on the running lab and the operator's, on the terms the migration of 2026-09-02 was.
+
+Sources:    **The times are read from three places and they agree on twelve of the thirteen.**
+            `RUNBOOK.md`'s "Daily operation" table gives every slot a time; `ARCHITECTURE.html`'s
+            component catalogue gives each component one; `tools/nightly.ps1` gives each slot its
+            verbs and, in its comments, a time again. The one disagreement is RiskGate: the runbook
+            and the dispatcher put `orders` at 21:10 and the catalogue says "On trigger", which
+            describes when the gate decides and not when the slot runs. Reported and not resolved.
+            The runbook's 21:40 "variant scoring" row has no verb and no slot until 5.2 and is not
+            among the thirteen.
+
+            **The principal is the seventeen siblings'.** Every existing task runs as the user
+            `udaya` under an interactive token at the limited run level, Monday to Friday, with a
+            two-hour limit, start-when-available, one instance at a time and no battery conditions,
+            from the repository as its working directory, through `tools/nightly.ps1 -Slot <slot>`.
+            The thirteen below carry exactly that, so they run only while the user is logged on, as
+            the runbook says the seventeen do, and a logged-out evening loses them the same way.
+
+Commands:   Capture first, because a spread sample missed never existed and a session of minutes
+            not bought inside the vendor's horizon cannot be bought later; the other ten compute
+            from stored data and can be rerun by hand any evening.
+
+            ```
+            $repo      = 'E:\Stock Analysis  Tool Ideas\PullbackStrategyLab'
+            $days      = 'Monday','Tuesday','Wednesday','Thursday','Friday'
+            $principal = New-ScheduledTaskPrincipal -UserId 'udaya' -LogonType Interactive -RunLevel Limited
+            $settings  = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 2) `
+                             -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+            function Register-Slot([string]$Slot, [string]$At) {
+                $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -WorkingDirectory $repo `
+                               -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$repo\tools\nightly.ps1`" -Slot $Slot"
+                $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $days -At $At
+                Register-ScheduledTask -TaskName "PullbackStrategyLab-$Slot" -Action $action -Trigger $trigger `
+                    -Principal $principal -Settings $settings `
+                    -Description "PullbackStrategyLab nightly slot '$Slot' at $At ET, per RUNBOOK"
+            }
+            # capture, inside the session
+            Register-Slot spread-open  10:15   # spreads after_open;  RUNBOOK 10:15, catalogue SpreadSnapshotter "10:15 and 15:45"
+            Register-Slot spread-close 15:45   # spreads before_close; RUNBOOK 15:45, catalogue the same row
+            # capture, evening block
+            Register-Slot intraday     20:30   # intraday-bars;        RUNBOOK 20:30, catalogue IntradayFetcher "Nightly 20:30"
+            # compute from stored data, evening block
+            Register-Slot plans        18:30   # plans;                RUNBOOK 18:30, catalogue PlanBuilder "Nightly 18:30"
+            Register-Slot watchlist    18:40   # publish-watchlist;    RUNBOOK 18:40, catalogue WatchlistPublisher "Nightly 18:40"
+            Register-Slot vwap         21:00   # vwap;                 RUNBOOK 21:00, catalogue VwapEngine "Nightly 21:00"
+            Register-Slot resolve      21:05   # resolve-triggers;     RUNBOOK 21:05, catalogue TriggerResolver "Nightly 21:05"
+            Register-Slot orders       21:10   # orders;               RUNBOOK 21:10, catalogue RiskGate "On trigger" (the disagreement)
+            Register-Slot fills        21:15   # fills;                RUNBOOK 21:15, catalogue PaperBroker "Nightly 21:15"
+            Register-Slot manage       21:20   # manage;               RUNBOOK 21:20, catalogue PositionManager "Nightly 21:20"
+            Register-Slot trades       21:25   # trades;               RUNBOOK 21:25, catalogue TradeJournal "Nightly 21:25"
+            Register-Slot audit        21:26   # audit;                RUNBOOK 21:26, catalogue PlanAudit "Nightly 21:26"
+            Register-Slot losses       21:35   # losses;               RUNBOOK 21:35, catalogue LossClassifier "Nightly 21:35"
+            ```
+
+            Two of the thirteen run inside the session, being the spread passes; the other eleven
+            run in the evening block, and `intraday` is the one among them whose input the vendor
+            stops selling after its horizon.
+
+First       **The evening is 2026-09-03 for the eleven evening slots if they are registered before
+evening:    18:30 today, and the session is 2026-09-04 for the two spread passes.** The funnel passes a
+            median of nought candidates a night and has passed nought on every recorded night, so the
+            plan slot will write no plan, nothing will rest in any session, and the execution chain
+            will price nothing. That is the correct outcome, and it is told from a slot that did not
+            run by one thing on every slot: **a stage that runs writes its run row whatever the
+            outcome, and a stage that does not run writes nothing.** Every one of the thirteen has a
+            row of its own in the store, and every one leaves a `run_log` row with its stage name,
+            so for each the did-not-run case is the absence of both, together with the night log
+            either having no "slot starting" line for it or having one followed by "refusing" or
+            "exited N".
+
+            **spread-open, 2026-09-04 at 10:15.** A `spread_pass` row for session 2026-09-04, pass
+            `after_open`, `setup_as_of` 2026-09-03, `requested` 0, outcome clean, no reason, because
+            no name of the 3rd carries `capped_out = 0`; a `run_log` row for `spreads` with 0 calls.
+            Did not run: no `spread_pass` row for that session and pass, which is the one absence
+            the runbook says can never be filled.
+
+            **spread-close, 15:45.** The same with pass `before_close`. Two rows for a session is the
+            design, one is a session sampled once, none is a hole.
+
+            **intraday, 2026-09-03 at 20:30, and it is not empty.** The fetch pairs a session with
+            the most recent evening before it that flagged anything, and after two unrecorded
+            nights that is 2026-08-31: an `intraday_fetch` row for session 2026-09-03 with
+            `setup_as_of` 2026-08-31, `requested` 83, the distinct names flagged that evening, five
+            calls each, about 415 calls, and tens of thousands of bars written, outcome clean. The
+            night's vendor total then sits near 2,800 against the 5,000 ceiling. Those bars resolve
+            no plan, because none was written on the 31st; they are bought because the rule buys
+            the flagged set and a night not bought is gone. Did not run: no `intraday_fetch` row
+            for 2026-09-03 and no `intraday-bars` run-log row.
+
+            **plans, 18:30.** A `plan_run` row for 2026-09-03 with `live_session` 2026-09-04,
+            `candidates` 0, `planned` 0, the three refusals 0, outcome clean, and `stopped_because`
+            reading "no setup of this session carries a cap decision, so the night was never
+            capped"; a `run_log` row for `plans` with 0 rows. **That reason is the finding below.**
+            Did not run: no `plan_run` row for the 3rd.
+
+            **watchlist, 18:40.** A `run_log` row for `publish-watchlist` declaring no table and 0
+            rows, and a log line stating the flagged count and "nothing published because no setup
+            of this session carries a cap decision, so the night was never capped". Nothing else,
+            by design. Did not run: no such `run_log` row, which is the whole of the evidence for
+            this slot.
+
+            **vwap, 21:00.** A `vwap_run` row for 2026-09-03 with `setup_as_of` 2026-08-31, `names`
+            83 or the number whose minutes the fetch bought, `anchors_asked` 28, being that
+            evening's short setups, and `anchors_priced` 0, because every swing those anchors sit on
+            is before the first session the store holds a minute of; outcome clean, since an anchor
+            out of reach is a row with a reason and not a partial run. Did not run: no `vwap_run`
+            row for the 3rd.
+
+            **resolve, 21:05.** A `trigger_run` row for 2026-09-03 with `setup_as_of` null, `plans`
+            0, `names_walked` 0, `minutes_walked` 0, outcome clean, "no plan was live in this
+            session". The partial case, plans resting and no minute walked, cannot arise tonight.
+
+            **orders, 21:10.** An `order_run` row with `triggers` 0 and every count 0, clean, "no
+            plan resting in this session was touched".
+
+            **fills, 21:15.** A `fill_run` row with `open_at_start` 0, `orders_placed` 0, clean, "no
+            order was placed in this session".
+
+            **manage, 21:20.** A `manage_run` row with `open_at_start` 0 and `open_at_end` 0, both
+            sides 0, clean, "no position was open at any point in this session".
+
+            **trades, 21:25.** A `trade_run` row with both sides 0, clean, "no position closed in
+            this session".
+
+            **audit, 21:26.** An `audit_run` row with 0 read and 0 written, clean, "no trade was
+            closed in this session".
+
+            **losses, 21:35.** A `loss_run` row with both passes 0, clean, "no loss closed in this
+            session and no earlier one is waiting on a horizon".
+
+            For each of the last eight the did-not-run case is the same shape: no run row for the
+            session and no `run_log` row for the stage. A run row with every count at nought and a
+            reason is the correct evening; no row is a slot that did not fire, was refused, or died.
+
+Found:      **Two of the thirteen cannot tell an empty cap from an absent one, and they will say
+            "never capped" on every night the funnel passes nought, which so far is every night.**
+            `SetupCapper` updates `rank` and `capped_out` on candidate rows only, and SCHEMA says both
+            are null on a setup that failed a gating check. On a night with no candidate it runs,
+            leaves a `run_log` row with 0 rows, and writes no cap decision anywhere. `PlanBuilder`
+            and `WatchlistPublisher` then read the setups, find no row carrying a decision, and
+            report the reason their own comments reserve for "a stage did not run", where the
+            runbook says the 18:40 slot is where a night that was never capped is noticed. The cap
+            ran; the two stages that read it cannot see that it did. It is distinguishable tonight
+            only by reading the `cap` run-log row beside theirs, which is what the expectations
+            above rely on and what nobody reading a plan run's reason would think to do. Raised as
+            an obligation due at 5.8, the repair pile, on the terms the pile's other parts sit
+            there: it is a stored figure that reads wrong, and the fix belongs in the two readers
+            rather than in the capper, whose null is a rule SCHEMA states on purpose.
+
+Verified:   `tools/ci.ps1` green on Windows, **31 steps, 913 tests**. `tools/verify-phase.ps1` **GREEN,
+            still phase 4**: 137 claims, 114 passed, 23 out of scope, 0 unexamined. No code changed.
+
+Carried:    **One row raised, at 5.8**, which makes eighteen due before the freeze and fourteen at
+            5.8, stated in the plan in every place `stated-counts` reads them. Nothing else is
+            moved: the thirteen unregistered slots stay the operator's, on the row raised at 4.5,
+            and this entry is the registration that row was waiting for somebody to write out.
