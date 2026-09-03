@@ -13090,3 +13090,208 @@ Predicted:  Six clauses, each written so the run can contradict it.
 
 Not         Whether the rule should move. That is question 6 of the phase 5 sitting, it is the
 predicted:  operator's, and it is put with the figures rather than with this.
+
+## 5.0(a) — 2026-09-02 — phase-5-thrust-selection-measurement — the funnel under the extreme rule, and a prediction two-thirds right
+
+The first part of 5.0 reports. The prediction above was committed at `2ed1c02`, 19:52 on
+2026-09-02; the four runs started at 19:53 and the last finished at 20:16. **Nothing is changed by
+this entry**: no threshold, no gate, no detector, and the once-only threshold adjustment stays
+unspent and the operator's. The thrust rule is still the most recent hit, then rank, on `main` and in
+`data/live`. What follows is measurement, and then the question it was taken for.
+
+Population: **Every figure is over `calibration_setup` in a copy of `data/live` taken read-only at
+            19:48 on 2026-09-02, migrated from schema 38 to 47, with the table cleared before each
+            run**, across the sessions from 2024-04-01 to 2026-08-24 that hold a row: **602 long
+            and 601 short, being 31,844 rows flagged long and 16,893 flagged short**, under both
+            rules. Membership is today's, so the rows carry survivorship bias and are not evidence
+            about the market, and the two runs a side are the shipped rule and the rule below over
+            the same membership, the same bars and the same code, so the delta between them is the
+            rule alone. Long and short are reported separately throughout and no figure covers both.
+            `cluster` is excluded from every conjunction because it is recorded and never gating. A
+            median a night is over all sessions holding a row with a session producing none counted
+            as nought.
+            (see: Long and short are never pooled into one figure)
+
+            **The rule measured is the thrust-selection clause read literally**: among the qualifying
+            hits inside the ten-session window, the one whose own session carries the highest
+            adjusted high for a long and the lowest adjusted low for a short, ties broken by the
+            later session and then by rank, with the geometry then run from that hit with that hit's
+            own scan span exactly as today. The patch, applied in a scratch worktree at `9e0ef60` and
+            never committed, is the whole of what differed between the two builds:
+
+            ```
+            --- a/src/PullbackStrategyLab.Worker/Stages/LongSetupDetector.cs
+            +++ b/src/PullbackStrategyLab.Worker/Stages/LongSetupDetector.cs
+                     StoredScanHit? thrust = source.Hits(ticker, asOf, windowStart)
+                         .Where(h => h.Scan is "gainer" or "gapper" or "leader")
+            -            .OrderByDescending(h => h.AsOf)
+            -            .ThenBy(h => h.Rank)
+            +            .Select(h => (Hit: h, Index: IndexOf(bars, h.AsOf)))
+            +            .OrderByDescending(x => x.Index >= 0 ? bars[x.Index].High * Factor(bars[x.Index]) : decimal.MinValue)
+            +            .ThenByDescending(x => x.Hit.AsOf)
+            +            .ThenBy(x => x.Hit.Rank)
+            +            .Select(x => x.Hit)
+                         .FirstOrDefault();
+            --- a/src/PullbackStrategyLab.Worker/Stages/ShortSetupDetector.cs
+            +++ b/src/PullbackStrategyLab.Worker/Stages/ShortSetupDetector.cs
+                     StoredScanHit? thrust = source.Hits(ticker, asOf, windowStart)
+                         .Where(h => ThrustScans.Contains(h.Scan))
+            -            .OrderByDescending(h => h.AsOf)
+            -            .ThenBy(h => h.Rank)
+            +            .Select(h => (Hit: h, Index: IndexOf(bars, h.AsOf)))
+            +            .OrderBy(x => x.Index >= 0 ? bars[x.Index].Low * Factor(bars[x.Index]) : decimal.MaxValue)
+            +            .ThenByDescending(x => x.Hit.AsOf)
+            +            .ThenBy(x => x.Hit.Rank)
+            +            .Select(x => x.Hit)
+                         .FirstOrDefault();
+            ```
+
+The funnel: **Long, each gate over the rows still alive when it is reached, shipped rule then extreme
+            rule, both tonight.**
+
+            | gate | reached | passed | rate | reached | passed | rate | delta passed |
+            |---|---|---|---|---|---|---|---|
+            | `tradable` | 31,844 | 31,844 | 100.00% | 31,844 | 31,844 | 100.00% | 0 |
+            | `moves-enough` | 31,844 | 31,844 | 100.00% | 31,844 | 31,844 | 100.00% | 0 |
+            | `uptrend` | 31,844 | 31,844 | 100.00% | 31,844 | 31,844 | 100.00% | 0 |
+            | `thrust` | 31,844 | 31,844 | 100.00% | 31,844 | 31,844 | 100.00% | 0 |
+            | `dip-shape` | 31,844 | 3,182 | 9.99% | 31,844 | 2,952 | 9.27% | **−230** |
+            | `held-floor` | 3,182 | 3,181 | 99.97% | 2,952 | 2,952 | 100.00% | −229 |
+            | `contraction` | 3,181 | 2,032 | 63.88% | 2,952 | 1,869 | 63.31% | −163 |
+            | `trigger-near` | 2,032 | 1,944 | 95.67% | 1,869 | 1,808 | 96.74% | −136 |
+            | `exit-tight` | 1,944 | 24 | 1.23% | 1,808 | 24 | 1.33% | **0** |
+
+            Passing every gate: **24 and 24, the same twenty-four rows**, median nought a night under
+            both, highest night 2 under both.
+
+            **Short, on the same terms.**
+
+            | gate | reached | passed | rate | reached | passed | rate | delta passed |
+            |---|---|---|---|---|---|---|---|
+            | `tradable-shortable` | 16,893 | 16,893 | 100.00% | 16,893 | 16,893 | 100.00% | 0 |
+            | `moves-enough` | 16,893 | 16,893 | 100.00% | 16,893 | 16,893 | 100.00% | 0 |
+            | `downtrend` | 16,893 | 16,893 | 100.00% | 16,893 | 16,893 | 100.00% | 0 |
+            | `averages-squeezing` | 16,893 | 4,923 | 29.14% | 16,893 | 4,923 | 29.14% | 0 |
+            | `thrust` | 4,923 | 4,923 | 100.00% | 4,923 | 4,923 | 100.00% | 0 |
+            | `bounce-shape` | 4,923 | 437 | 8.88% | 4,923 | 393 | 7.98% | **−44** |
+            | `reached-ceiling` | 437 | 9 | 2.06% | 393 | 7 | 1.78% | −2 |
+            | `no-reclaim` | 9 | 9 | 100.00% | 7 | 7 | 100.00% | −2 |
+            | `exit-tight` | 9 | 0 | 0.00% | 7 | 0 | 0.00% | **0** |
+
+            Passing every gate: **nought and nought**, median nought a night under both.
+            `reached-ceiling` still runs two of its three clauses here, because the anchored level is
+            a volume-weighted average over minute bars and no reconstructed session has any, so
+            the short funnel is measured on the same narrowed gate the 2026-08-30 entry was.
+
+Against      **Tonight's shipped-rule run is not the run of 2026-08-27, and the difference is
+2026-08-30:  membership and one repaired count, not the rule.** Long: 32,533 rows then, 31,844
+            tonight; `dip-shape` 3,230 to 3,182; `exit-tight` 30 of 1,981 to 24 of 1,944. Short:
+            16,917 to 16,893; `bounce-shape` 432 to 437; `reached-ceiling` 9 to 9; `exit-tight` 0 of
+            9 both times. Three things account for it, read row by row against the live table.
+            **Twenty-eight names were removed from the universe on 2026-08-27** after that day's
+            calibration ran, so `CurrentMembersWithHistory` no longer returns them: 974 long rows and
+            299 short, and six of the thirty old long survivors were FBRX on consecutive August
+            sessions, which is where the 30 became 24 with BLTE gained on 2025-12-22. **Eighty-nine
+            long and eighty-six short names gained history after 2026-08-27**, being names whose
+            backfill landed on the nights that followed: 285 and 275 rows. And of the 31,559 long
+            rows common to both runs, 2,315 differ in some check value, 1,078 of them first at
+            `held-floor` by one, which is 3.11(f) comparing the floor per bar on 2026-08-28, and 984
+            first at `thrust`, which is the scan's top fifty moving when 28 names leave and 89 arrive.
+            So the figures of 2026-08-30 are restated knowingly rather than reproduced, and the pair
+            that answers question 6 is tonight's before against tonight's after, which share
+            everything but the rule.
+
+Findings:   **The prediction was written before the run so that it could fail, and a third of it did.**
+            Four clauses hold on both sides, one fails on both, and one holds in its size and fails in
+            its direction.
+
+            **1 holds.** The same 31,844 long rows over 602 sessions and 16,893 short over 601 under
+            both rules, no row in one run absent from the other, the four floor gates at 100% on
+            both sides in both runs, and `averages-squeezing` at 4,923 under both.
+
+            **2 holds.** The thrust changed on **10,826 of 31,844 long rows, 34.00%**, and on **5,836
+            of 16,893 short, 34.55%**, both inside the 25% to 50% band. Every one of them moved to an
+            earlier session, none to a later one. Under the shipped rule 7,285 of the long changed
+            rows carried `leader`, 67.3%, and 4,101 of the short carried `laggard`, 70.3%, both over
+            half.
+
+            **3 holds with no exceptions.** Of the 21,018 long rows and 11,057 short rows whose thrust
+            did not change, **none** differs in any check verdict, value or note, or in its trigger or
+            stop. The patch did what it says and nothing else.
+
+            **4 fails, on both sides.** `dip-shape` admits **230 fewer** rows, 3,182 to 2,952, and
+            `bounce-shape` **44 fewer**, 437 to 393. The mechanism the clause named as dominant did
+            run: where a twenty-session hit gave way to an earlier twenty-session hit, 5,187 long rows
+            and 2,947 short, the shape gate flipped fail-to-pass 231 and 111 times against
+            pass-to-fail 58 and 54. What the clause weighed as the rarer case was not rare, and it was
+            not the case the clause described. **The peak session of a twenty-session run is often a
+            one-session hit in its own right**, and the literal rule prefers that hit because its own
+            high is the extreme: `leader` gave way to `gainer` or `gapper` on 2,098 long rows and the
+            shape gate went 7 fail-to-pass against 569 pass-to-fail; `laggard` to `decliner` or
+            `gapdown` on 1,154 short rows, 4 against 403. The extreme is the same bar either way, and
+            what changes is the origin: a twenty-session span measures the give-back against the
+            whole run, a one-session span against the peak day alone, and the same dip is a third of
+            one and most of the other. The one-session-to-twenty-session direction went the other way,
+            as the clause said it would, and there was less of it.
+
+            **5 holds in size and fails in direction.** Conditional rates behind the shape gate moved
+            by at most a point: long `held-floor` +0.03, `contraction` −0.57, `trigger-near` +1.07,
+            `exit-tight` +0.09; short `reached-ceiling` −0.28, `no-reclaim` and `exit-tight`
+            unmoved at 100% and 0%. But long `exit-tight` rose, 1.23% to 1.33%, rather than falling:
+            the same 24 rows pass it out of a smaller population reaching it, 1,944 to 1,808, so the
+            rate went up because the denominator went down and not because a row was admitted.
+
+            **6 holds.** Survivors 24 to 24 long and nought to nought short, medians nought a night
+            on both sides under both rules.
+
+            **What the funnel does not show and question 6 turns on: the rule moves the prices of
+            3,142 long rows and 1,610 short rows, and not one of them is a candidate.** On the other
+            7,684 long and 4,226 short changed rows the extreme, the pullback bars, the trigger and
+            the stop are identical under both rules and only the origin moved. The 24 long survivors
+            are the same 24 rows; sixteen of them changed thrust, every one from a `leader` hit to an
+            earlier `leader` hit, and all sixteen carry the same trigger and the same stop under both
+            rules. So on the calibration population the level the decision was written to correct
+            moves on about one row in ten, and on no row that would have traded.
+
+            **So the clause's own reasoning is measured as half true.** The decision says a
+            most-recent rule can anchor to a smaller hit and place both prices against the wrong
+            level, and it can: 4,752 rows over both sides have their trigger and stop at a different
+            level under the two rules. It also says the thrust should be the hit with the extreme, and
+            the literal reading of that moves the retrace's denominator on every row where the peak
+            session was flagged twice, which is the larger effect and the one the decision does not
+            mention.
+
+Found:      **The live store is at schema 38 and the build needs 47, and every slot tonight refused
+            on it.** `data/live/logs/nightly-2026-09-02.log` shows `universe`, `actions`, `rebuild`
+            and each slot after them stopping on the refusal the seventh shape built at 3.15, from
+            17:15 onward. Migrations 039 to 047 landed through phase 4 and the store was never
+            migrated. The refusal did what it was built to do: no stage wrote a partial night. What
+            it cannot do is migrate the store, because that is an act on the running lab and the
+            operator's, on the same terms as the two cluster rows at 3.14. It is stated here rather
+            than rowed, because a green report is a statement about the build and never about the
+            lab, and this entry is the morning figure that says it. The same log shows six of
+            tonight's slots running from a branch checkout rather than `main`, which is the hazard
+            the row at 3.12 carries and a consequence of a session leaving the tree on its branch
+            while working; this session returns the tree to `main` on merging.
+
+Verified:   `tools/ci.ps1` green on Windows, **31 steps, 913 tests**. `tools/verify-phase.ps1`
+            **GREEN, still phase 4**: 137 claims, 114 passed, 23 out of scope, 0 unexamined, 1,453
+            expectations, 0 changed. No expectation moved, because no shipped behaviour changed: the fixture holds
+            thirty names against a scan breadth of fifty, so every one of them is inside every scan
+            on every session and the fixture cannot exercise a rule choosing between hits.
+
+Carried:    **One row discharged and nothing raised.** The measurement raised at 4.18, the work half
+            of the thrust rule, due at 5.0(a), leaves the carried obligations table with this entry.
+            Its ruling half stays at the operator as question 6 of the phase 5 sitting, put today
+            with the figures above, and the row says so. The table reads forty-two; seventeen due
+            before the freeze, thirteen at 5.8 and four at 5.0; the operator's nine, unchanged in
+            number. `stated-counts` read the freeze count off the literal word "eighteen" in two
+            anchors, which went stale the moment one of the eighteen left, so it now reads and
+            derives both numbers in the split sentence and the repair-pile anchor no longer carries
+            the number; one claim added, floored at one.
+
+            **Question 6 is put with this entry, and nothing in this entry answers it.** Whether the
+            thrust-selection rule moves at all is the operator's, with a reading of what "the one
+            with the extreme" should mean if it does, because the literal reading is the one measured
+            and it is the origin it moves most. 5.0(b) does not wait on the answer: it changes which
+            hit a detector reads and nothing about how a rule is expressed. 5.8 and 5.1 do.
