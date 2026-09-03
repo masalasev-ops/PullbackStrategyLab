@@ -1,0 +1,71 @@
+{
+  "note": "Source-scan assertions made outside a check, and what backs each. The 2.11 obligation, discharged at 5.8. A check declares its scans in its own coverage record; an ordinary test had nowhere to say whether anything exercises the path its scan reads, so the sweep could count these and not judge them. Every suite file that reads the shipped source and is not a check appears here, reconciled in both directions, and a named test has to resolve.",
+  "scans": [
+    {
+      "file": "src/PullbackStrategyLab.Tests/CheckRecomputerTests.cs",
+      "what": "CheckRecomputer admits exactly one stamped column late, read from the stage's own source",
+      "backing": "test",
+      "by": "CheckRecomputerTests.An_input_stamped_beyond_the_bound_is_refused_and_nothing_is_written",
+      "why": "an input past the bound is run through the stage and nothing is written, and its pair admits one inside the bound and reads the recorded lateness back, so the column the scan reads is exercised in both directions rather than only found"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/Detection/SharedCandidateListTests.cs",
+      "what": "SetupCapper selects a night by date and by nothing that would make a rank belong to one version",
+      "backing": "none",
+      "why": "the behavioural form is a cap run against a store holding two versions' rows, and versions do not exist until 5.1. NightlyCapTests exercises the arithmetic the cap applies and not the shape of the night it reads, so nothing today would fail if the query gained a version predicate"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/PlanBuilderTests.cs",
+      "what": "only PlanBuilder turns a give-up distance into a share count, found by reading every production file for the sizing call",
+      "backing": "test",
+      "by": "RiskGateTests.The_position_size_cap_reduces_and_names_itself",
+      "why": "the property is that the gate reduces a size rather than computing one, and this runs the gate over an order that breaches the position cap and reads back a reduced size carrying the cap that bound. A gate that recomputed would produce a size the plan never carried"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/RegimeLabelerTests.cs",
+      "what": "no shipped component branches on the market mood, found by reading every shipped file for the regime labels",
+      "backing": "none",
+      "why": "an absence has no behavioural form: a test can show a component ignoring the mood on one path and cannot show it ignoring it on all of them. What would close it is the property moving into the type system, the label being unreachable from a detector rather than merely unused"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/RiskGateTests.cs",
+      "what": "RiskGate never recomputes a size from a risk budget, the same read from the gate's side",
+      "backing": "test",
+      "by": "RiskGateTests.The_position_size_cap_reduces_and_names_itself",
+      "why": "the same behavioural half, in the file whose scan it backs: the gate is run against a breaching order and the size it writes is the plan's reduced, with the cap named on the row"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/SessionBoundaryTests.cs",
+      "what": "every configured session zone is the zone the bound uses, read across the tracked text files",
+      "backing": "test",
+      "by": "SessionBoundaryTests.A_row_stamped_at_ten_at_night_eastern_is_inside_its_own_session",
+      "why": "a row stamped after the UTC date rolls is read back inside its own session, which is the behaviour the scan's configured zone stands for. It fails on the literal T23:59:59.999Z form the scan exists to keep out"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/SetupImmutabilityWordingTests.cs",
+      "what": "the four sites stating the immutability rule carry the same clause, read across the tracked text files",
+      "backing": "none",
+      "why": "its subject is the corpus's own wording and not a code path, so there is nothing to exercise. The behaviour the wording describes is backed separately by SetupJournalTests; what this holds is that four documents say one thing, and a check of prose against prose is the only instrument for it"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/SetupJournalTests.cs",
+      "what": "no update against a detector-owned column exists in the shipped source",
+      "backing": "test",
+      "by": "SetupJournalTests.A_night_detected_twice_keeps_the_row_the_first_run_wrote",
+      "why": "a night is detected twice and the row the first run wrote is read back unchanged, so the immutability the scan reads for is exercised rather than inferred from the absence of a statement"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/SignalVectorizerTests.cs",
+      "what": "nothing in the shipped source updates a frozen signal, read through the shared write scanner",
+      "backing": "test",
+      "by": "SignalVectorizerTests.A_frozen_value_is_not_revised_when_the_bars_move_underneath_it",
+      "why": "the bars are moved under a frozen signal and the stored value is read back unchanged, which is the one row in the lab nothing ever recomputes and the reason the scan is there"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/SubjectTablesTests.cs",
+      "what": "every table of both populations carries a literal insert in the shipped source",
+      "backing": "none",
+      "why": "the scan's subject is that a table has a writer at all, and the behavioural form of that is writer-ownership's attribution, which reads the source too. A test per table would be a test that the pipeline writes every table, which is the fixture replay's job and does not reach the tables no fixture night populates"
+    }
+  ]
+}

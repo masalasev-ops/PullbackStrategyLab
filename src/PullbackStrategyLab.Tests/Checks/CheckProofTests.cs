@@ -1875,4 +1875,76 @@ public sealed class CheckProofTests
             pile.Sum(p => p.Clauses.Count),
             register.Sum(c => c.Clauses.Count));
     }
+
+    // The source-scan register, proved the same way: each of these removes one thing the
+    // reconciliation guards and asserts it goes red.
+
+    private static CoverageReportedCheck.DeclaredScan Backed(string file, string by) =>
+        new(file, "what it asserts", CoverageReportedCheck.BackedByTest, by, "why that test is the backing");
+
+    private static CoverageReportedCheck.DeclaredScan Unbacked(string file, string? why) =>
+        new(file, "what it asserts", CoverageReportedCheck.BackedByNothing, null, why);
+
+    private static readonly string[] SomeTests = ["SomeTests.A_behaviour_is_exercised"];
+
+    [Fact]
+    public void A_file_scanning_the_source_outside_a_check_and_declaring_nothing_fails()
+    {
+        // The case the register exists for. A file that starts reading the shipped source and says
+        // nothing about what exercises it is a scan nobody can judge, which is the state every one
+        // of these was in from 3.1 to 5.8.
+        string problem = Assert.Single(CoverageReportedCheck.ScanRegisterProblems(
+            ["src/PullbackStrategyLab.Tests/NewlyScanningTests.cs"], [], SomeTests));
+
+        Assert.Contains("NewlyScanningTests.cs", problem, StringComparison.Ordinal);
+        Assert.Contains("declares nothing in fixtures/source-scans.json", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_declaration_for_a_file_that_no_longer_scans_fails()
+    {
+        // The other direction, and it is how a list of exemptions outlives the thing it exempted.
+        string problem = Assert.Single(CoverageReportedCheck.ScanRegisterProblems(
+            [], [Backed("src/PullbackStrategyLab.Tests/StoppedScanningTests.cs", SomeTests[0])], SomeTests));
+
+        Assert.Contains("no longer makes a source-scan assertion", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_scan_register_backing_naming_a_test_that_does_not_exist_fails()
+    {
+        string problem = Assert.Single(CoverageReportedCheck.ScanRegisterProblems(
+            ["src/PullbackStrategyLab.Tests/SomeTests.cs"],
+            [Backed("src/PullbackStrategyLab.Tests/SomeTests.cs", "SomeTests.A_test_that_was_renamed")],
+            SomeTests));
+
+        Assert.Contains("A_test_that_was_renamed", problem, StringComparison.Ordinal);
+        Assert.Contains("reads as covered", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_unbacked_scan_with_no_reason_fails_and_one_with_a_reason_passes()
+    {
+        string problem = Assert.Single(CoverageReportedCheck.ScanRegisterProblems(
+            ["src/PullbackStrategyLab.Tests/SomeTests.cs"],
+            [Unbacked("src/PullbackStrategyLab.Tests/SomeTests.cs", null)],
+            SomeTests));
+
+        Assert.Contains("does not say what would close it", problem, StringComparison.Ordinal);
+
+        Assert.Empty(CoverageReportedCheck.ScanRegisterProblems(
+            ["src/PullbackStrategyLab.Tests/SomeTests.cs"],
+            [Unbacked("src/PullbackStrategyLab.Tests/SomeTests.cs", "an absence has no behavioural form")],
+            SomeTests));
+    }
+
+    [Fact]
+    public void The_committed_register_declares_every_scan_the_suite_makes_outside_a_check()
+    {
+        // Against the real suite and the real register, because what the four above prove is that
+        // the reconciliation works and what this proves is that it currently holds.
+        Assert.Empty(CoverageReportedCheck.ScanRegisterProblems(
+            CoverageReportedCheck.ScanningFilesOutsideACheck(),
+            CoverageReportedCheck.DeclaredScans()));
+    }
 }

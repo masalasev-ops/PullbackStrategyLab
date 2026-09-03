@@ -86,6 +86,10 @@ public sealed partial class CoverageReportedCheck
 
         (IReadOnlyList<string> scanning, IReadOnlyList<string> outsideACheck) = SourceScanningFiles(implemented);
 
+        IReadOnlyList<DeclaredScan> declaredScans = DeclaredScans();
+        int backedScans = declaredScans.Count(s => s.Backing == BackedByTest);
+        IReadOnlyList<string> scanProblems = ScanRegisterProblems(outsideACheck, declaredScans);
+
         coverage
             .Examined("checks declared in CLAUDE.md's roster", roster.Count)
             .Examined("of those declared to run on every CI run", live.Length)
@@ -100,19 +104,15 @@ public sealed partial class CoverageReportedCheck
                     + "requires a coverage record from every check the roster says runs, so a check present in "
                     + "the source and absent from the run turns the report red rather than shrinking it. That is "
                     + "a second mechanism rather than a behavioural test, and it is why this scan is listed here"))
-            .OutOfScope("source-scan assertions made outside a check, which leave no coverage record",
-                outsideACheck.Count,
-                CheckCoverage.OutOfScopeReason.UntilCheckpoint("5.1",
-                    "a scan in an ordinary test has no coverage record to declare its backing in, so the sweep "
-                    + "cannot say whether one exists: " + string.Join(", ", outsideACheck)
-                    + ". Moved from 3.1 to 4.6 at 3.0(e) with the obligation it belongs to, on the reading that "
-                    + "`order-provenance` would close it. It did not: order-provenance is the behavioural form of "
-                    + "`writer-ownership`'s attribution scan and closes that one, and these are scans in ordinary "
-                    + "tests with no coverage record at all, which is a different absence. Moved to 4.17 at 4.6 "
-                    + "with the rest of the 2.11 row, and repointed to 5.1 at 4.17 with the price: these need a "
-                    + "mechanism before they need a test, because a scan outside a check has nowhere to say "
-                    + "whether anything backs it, and 4.17's own row refuses to add an instrument to watch the "
-                    + "instruments"))
+            // The 2.11 obligation, discharged at 5.8. These were out of scope from 3.1 to 5.8 for one
+            // reason: a scan in an ordinary test had nowhere to say whether anything exercised the
+            // path it reads, so the sweep could count them and not judge them. `fixtures/source-scans.json`
+            // is that somewhere. It is a declaration file rather than a second harness, which is what
+            // 4.17's row refused when it refused an instrument to watch the instruments.
+            .Examined("source-scan assertions made outside a check, each declaring what backs it",
+                declaredScans.Count)
+            .Examined("of those a named behavioural test exercises", backedScans)
+            .Context("of those nothing exercises, each saying what would close it", declaredScans.Count - backedScans)
             .OutOfScope("checks whose runner is the workflow matrix", matrix.Length,
                 CheckCoverage.OutOfScopeReason.ByDesign(
                     "the runner set is asserted against the workflow file rather than against a test, so no "
@@ -133,6 +133,10 @@ public sealed partial class CoverageReportedCheck
         }
 
         coverage.Report();
+
+        Assert.True(scanProblems.Count == 0,
+            $"{scanProblems.Count} source-scan assertion(s) outside a check do not declare what backs them:\n  "
+            + string.Join("\n  ", scanProblems));
 
         // Stated in advance rather than left self-validating. A parser that stopped matching would
         // otherwise report an empty roster and pass, which is this check's own failure mode.
@@ -296,6 +300,144 @@ public sealed partial class CoverageReportedCheck
                 .Select(row => new RosterRow(Bare(row[0]), row[1].Trim()))
         ];
     }
+
+    /// <summary>
+    /// The suite files that read the shipped source and belong to no check.
+    ///
+    /// Exposed so the proof beside this check can reconcile the committed register against the real
+    /// suite without running the whole check, which is the difference between a proof that the
+    /// mechanism works and a proof that it currently holds.
+    /// </summary>
+    public static IReadOnlyList<string> ScanningFilesOutsideACheck() =>
+        SourceScanningFiles(ImplementedChecks()).OutsideACheck;
+
+    public const string BackedByTest = "test";
+    public const string BackedByNothing = "none";
+
+    /// <summary>
+    /// One source-scan assertion made outside a check, and what exercises the path it reads.
+    ///
+    /// A check declares its scans in its own coverage record. An ordinary test has no such record,
+    /// which is why these were counted and not judged from 3.1 to 5.8: the sweep could see that a
+    /// file read the shipped source and could not say whether anything ran the code it was reading.
+    /// </summary>
+    public sealed record DeclaredScan(string File, string What, string Backing, string? By, string? Why);
+
+    private sealed record ScanRegister(IReadOnlyList<DeclaredScan> Scans);
+
+    private static readonly JsonSerializerOptions ScanJson = new(JsonSerializerDefaults.Web);
+
+    public static string ScanRegisterFile =>
+        Path.Combine(RepositoryLayout.Root, "fixtures", "source-scans.json");
+
+    public static IReadOnlyList<DeclaredScan> DeclaredScans() =>
+        JsonSerializer.Deserialize<ScanRegister>(RepositoryLayout.Read(ScanRegisterFile), ScanJson)?.Scans ?? [];
+
+    /// <summary>
+    /// The register against the suite, in both directions, and each backing against the suite.
+    ///
+    /// Both directions because either one alone loses the property. A file that starts scanning the
+    /// source and declares nothing is the case this exists for; a register entry naming a file that
+    /// no longer scans is a judgement about something that is not there, and it is how a list of
+    /// exemptions outlives the thing it exempted.
+    ///
+    /// A named test has to resolve, on the grounds `decision-resolves` demands an exact name and
+    /// `Backing.Test` already demands one inside a check: a backing that has gone stale reads as
+    /// covered, which is worse than admitting nothing covers it.
+    /// </summary>
+    public static IReadOnlyList<string> ScanRegisterProblems(
+        IReadOnlyCollection<string> outsideACheck,
+        IReadOnlyList<DeclaredScan> declared,
+        IReadOnlyCollection<string>? testMethods = null)
+    {
+        ArgumentNullException.ThrowIfNull(outsideACheck);
+        ArgumentNullException.ThrowIfNull(declared);
+
+        IReadOnlyCollection<string> methods = testMethods ?? SuiteTestMethods();
+        var problems = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (DeclaredScan scan in declared)
+        {
+            if (!seen.Add(scan.File))
+            {
+                problems.Add($"{scan.File} is declared twice in fixtures/source-scans.json.");
+            }
+
+            if (!outsideACheck.Contains(scan.File))
+            {
+                problems.Add(
+                    $"{scan.File} is declared in fixtures/source-scans.json and no longer makes a source-scan "
+                    + "assertion outside a check. Remove the entry, or the judgement outlives its subject.");
+            }
+
+            switch (scan.Backing)
+            {
+                case BackedByTest when string.IsNullOrWhiteSpace(scan.By):
+                    problems.Add($"{scan.File} says a test backs its scan and names none.");
+                    break;
+
+                case BackedByTest when !methods.Contains(scan.By!):
+                    problems.Add(
+                        $"{scan.File} names {scan.By}, which is not a test in the suite. A backing that does not "
+                        + "resolve reads as covered.");
+                    break;
+
+                case BackedByTest:
+                    break;
+
+                case BackedByNothing when string.IsNullOrWhiteSpace(scan.Why):
+                    problems.Add($"{scan.File} says nothing backs its scan and does not say what would close it.");
+                    break;
+
+                case BackedByNothing:
+                    break;
+
+                default:
+                    problems.Add(
+                        $"{scan.File} declares a backing of \"{scan.Backing}\", which is neither "
+                        + $"\"{BackedByTest}\" nor \"{BackedByNothing}\".");
+                    break;
+            }
+
+            if (string.IsNullOrWhiteSpace(scan.What))
+            {
+                problems.Add($"{scan.File} declares a scan and does not say what it asserts.");
+            }
+        }
+
+        foreach (string file in outsideACheck.Where(f => !seen.Contains(f)).Order(StringComparer.Ordinal))
+        {
+            problems.Add(
+                $"{file} makes a source-scan assertion outside a check and declares nothing in "
+                + "fixtures/source-scans.json, so nothing says whether anything exercises the path it reads.");
+        }
+
+        return problems;
+    }
+
+    /// <summary>Every test method name in the suite, as Type.Method, for a backing to resolve against.</summary>
+    private static IReadOnlyCollection<string> SuiteTestMethods()
+    {
+        var methods = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (string file in RepositoryLayout.SourceFiles
+                     .Where(f => f.Replace(Path.DirectorySeparatorChar, '/')
+                         .Contains("/PullbackStrategyLab.Tests/", StringComparison.Ordinal)))
+        {
+            string type = Path.GetFileNameWithoutExtension(file);
+            foreach (Match method in TestMethod().Matches(RepositoryLayout.Read(file)))
+            {
+                methods.Add($"{type}.{method.Groups["name"].Value}");
+            }
+        }
+
+        return methods;
+    }
+
+    [GeneratedRegex(@"public\s+(?:async\s+)?(?:void|Task)\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*\(",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex TestMethod();
 
     /// <summary>The name in the first cell, without the backticks the table writes it in.</summary>
     private static string Bare(string cell) => cell.Trim().Trim('`').Trim();
