@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Measurement;
@@ -35,6 +36,17 @@ public interface ISessionFigures
 
     /// <summary>How many sessions of this name the store holds at or before the session.</summary>
     int SessionsListed(string ticker, DateOnly asOf);
+
+    /// <summary>
+    /// How many names were indicated on the session and kept out of the control pool because the
+    /// store holds no bar for them dated on it.
+    ///
+    /// Nought by construction in a reconstruction, whose pool admits a name only when its latest
+    /// bar is the session itself; a figure on a forward night, where the indicator engine writes a
+    /// row for a universe member whose last bar is older than the session and the pool refused
+    /// nothing until 5.8.
+    /// </summary>
+    int KeptOutForWantOfABar(DateOnly asOf, string sessionZone) => 0;
 
     /// <summary>The market capitalisation as it was resolved, or null.</summary>
     decimal? MarketCap(string ticker, DateOnly asOf);
@@ -158,6 +170,13 @@ public sealed class StoredFigures : ISessionFigures
         string? mood = Mood(asOf);
 
         using SqliteCommand command = _connection.CreateCommand();
+        // <b>A name is in the pool only where the store holds a bar for it dated on the session.</b>
+        // The indicator engine writes a row for a universe member whose last bar is older than the
+        // session, because the bar reader takes the last 150 bars at or before the as-of without
+        // requiring one dated on it, so a halted or vendor-omitted name was indicated, drawable and
+        // then a control whose window the fill refused. TierClassifier already refuses a name whose
+        // latest bar is not the session, and the calibration pool admits a name only when its
+        // latest bar is the session itself; this is the same rule at the evidence draw, from 5.8.
         command.CommandText = """
             SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
               FROM indicator_daily i
@@ -166,6 +185,9 @@ public sealed class StoredFigures : ISessionFigures
                AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
                                      WHERE c.ticker = i.ticker AND c.as_of = i.as_of
                                        AND c.computed_at <= @computed_before)
+               AND EXISTS (SELECT 1 FROM daily_bar b
+                            WHERE b.ticker = i.ticker AND b.bar_date = @as_of
+                              AND b.observed_at <= @computed_before)
              ORDER BY i.ticker
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
@@ -192,6 +214,25 @@ public sealed class StoredFigures : ISessionFigures
         }
 
         return figures;
+    }
+
+    /// <summary>The names indicated on the session that the bar rule above kept out of the pool.</summary>
+    public int KeptOutForWantOfABar(DateOnly asOf, string sessionZone)
+    {
+        using SqliteCommand command = _connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(DISTINCT i.ticker)
+              FROM indicator_daily i
+             WHERE i.as_of = @as_of
+               AND i.computed_at <= @computed_before
+               AND NOT EXISTS (SELECT 1 FROM daily_bar b
+                                WHERE b.ticker = i.ticker AND b.bar_date = @as_of
+                                  AND b.observed_at <= @computed_before)
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, sessionZone));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     public string? Mood(DateOnly asOf) => RegimeReader.Read(_connection, asOf)?.Label;
