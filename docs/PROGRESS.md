@@ -14488,3 +14488,72 @@ Carried:    **Nothing raised, nothing discharged.** The table still reads twenty
             17:00 task are the operator's, and the commands are in the report that proposed them.
             Until they are run, the schedule still runs from the working tree and the guard is
             still a toll rather than a backstop.
+
+## 5.8 — 2026-09-03 — phase-5-8-claim-register — the pile, part thirteen: every multi-clause claim records which clauses its verdict reaches
+
+Not a checkpoint entry. The thirteenth part of the repair pile and the first of the two sweeps, the
+3.12 obligation discharged. Population, derived before the run and reconciled after it: **62 claims
+whose cell states more than one clause, holding 277 clauses**, over the five tables of
+ARCHITECTURE.html that state a sentence per row. The row priced it at 62 over 266 on 2026-09-02 and
+the clause count had moved to 277 by the time it ran, the twelve parts before it having added prose
+to the document; the claim count had not moved. Both figures are derived on every run, which is what
+the row asked for when it was repointed, and the reconciliation is that a Python replication of the
+3.12 split returned the same 62 and 277 the check does.
+
+Built:      **A disposition per clause, in `fixtures/claim-clauses.json`, and five of them.**
+            `reaches` is the claim's own verdict asserting the clause. `elsewhere` is another check
+            in the roster asserting it, named, and the name has to resolve. `rationale` is the
+            reason a behaviour is what it is, with nothing a verdict could reach. `deferred` is a
+            clause of an out-of-scope claim. `unreached` is a property in scope that no verdict
+            asserts, with what is missing in one line. **The judgement is the deliverable and the
+            file is where it lives**: 277 judgements will not fit on the claims themselves, and a
+            committed reference the run is measured against is what `fixtures/` already holds.
+
+            **What stops a judgement going stale is that the clause text is compared verbatim.**
+            Comparing by count or by position would let a rewritten sentence inherit a verdict made
+            about a different one, which is this corpus's oldest shape: the subject went away and
+            the assertion said what it always said. A reworded cell fails, a cell that gained a
+            clause fails, a register entry naming a claim the document no longer holds fails, and a
+            backing naming something that is not a check in the roster fails.
+
+            **The result, and the number worth reading is the last one.** 66 clauses reached by the
+            claim's own verdict, 40 asserted by another named check, 94 the reason for a behaviour
+            rather than a property, 17 deferred with their claim, and **60 in scope that nothing
+            reaches**, each saying what is missing. They are reported as five scopes rather than one
+            total, because a single figure would read 277 whatever the judgements were.
+
+            **Two findings the sweep produced rather than the checks.** The Failure behaviour row
+            for a migration adding a stamped column states "Fourteen tables today" and
+            `PointInTimeCheck.Stamped` names twenty-eight: a stated count inside a table cell, which
+            no count check reaches. And the Chart page row writes its apostrophe as an entity whose
+            semicolon the 3.12 splitter reads as a clause boundary, so that cell splits one clause
+            into two. Both are recorded as `unreached` with the reason rather than repaired here,
+            the second because changing the splitter would move the population this sweep was priced
+            and reconciled against.
+
+            **Two greps were dictating grammar to the document they read.** `stated-counts` matched
+            "obligations due before the freeze" and "The other N are not repairs" in the plural
+            only, so the day the pile fell to one the prose had to say "the other one are not
+            repairs" or the pattern would stop matching and the check would blame the paragraph.
+            Both now take the singular. That is the whitespace-and-markup lesson in a third form:
+            a match that never happens is not a match that broke.
+
+Verified:   Eight proof tests, one per clause of the reconciliation and one against the committed
+            register and the real document, on the rule that an assertion must fail when the thing
+            it guards is removed and the proof of that is permanent. `tools/ci.ps1` green on
+            Windows, **31 steps, 963 tests**. `tools/verify-phase.ps1` **GREEN** on phase 5: 137
+            claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**. No expectation moved
+            and the phase report's expected move was stated in advance as nought: the register is a
+            judgement about the document and produces no pipeline figure.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.12 leaves the table with
+            this commit, after moving four times, 4.1 to 4.11 to 5.1 to 5.8. The table reads
+            twenty-six; **one due before the freeze**, being the source-scan assertions raised at
+            2.11; the operator's eight, unchanged. Nothing here is an input to the minimum sample's
+            derivation.
+
+            **The 60 unreached clauses are not an obligation and are deliberately not raised as
+            one.** What 3.12 owed was the decision per clause, recorded, and that is what this
+            commit is. Turning 60 recorded gaps into 60 rows would be the sweep proposing itself
+            again at a larger size, which is the shape that moved this row four times. They are
+            counted on every run and the count falls as verdicts widen.

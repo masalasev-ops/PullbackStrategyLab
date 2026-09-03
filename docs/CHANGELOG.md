@@ -2264,3 +2264,13 @@ Why:  Without the middle step the documented order now produces the fault it was
 Was:  The recovery row for a stage failing on a missing column said to run `tools/migrate`, which snapshots first, then rerun that night's stages for their own date, in slot order.
 Now:  It first says to read both numbers in the message, because a store ahead of its build refuses identically, and to migrate no further if the store is ahead and the production checkout has not had its 17:00 update.
 Why:  The row is read at speed during a failing night, and following it against an ahead store migrates in the wrong direction.
+
+### 2026-09-03 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The `architecture-conformance` row asserted that every claim a table in ARCHITECTURE.html makes has a verdict of pass, fail, out of scope or unexamined, and that every table is placed so none can go unread.
+Now:  It adds the second half: every claim whose cell states more than one clause records, clause by clause, whether its verdict reaches it, another named check does, the clause is the reason for a behaviour rather than a property, or nothing reaches it and what is missing; and the clause text is compared verbatim, so a reworded cell loses its judgement.
+Why:  The roster is the list of properties this corpus holds, and a check that gained one and did not say so is a property nobody wrote down.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held twenty-seven rows, with the claim-register sweep raised at 3.12 due at 5.8; two due before the freeze in each of the four places the count is stated; the split paragraph said the other two are not repairs; the 5.8 row priced the sweep at 62 claims over 266 clauses.
+Now:  Twenty-six rows. The 3.12 row is discharged by the thirteenth part of 5.8 on 2026-09-03; one due before the freeze in each place, being the source-scan assertions raised at 2.11; the split paragraph names that one and says where the sweep went; the 5.8 row records the sweep as run over 62 claims holding 277 clauses, and says why 277 rather than 266.
+Why:  A discharged obligation leaves the table in the commit that discharges it, and the figure moved because the twelve parts before it added prose to the document the sweep is over.

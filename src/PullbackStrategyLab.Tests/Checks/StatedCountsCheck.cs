@@ -105,7 +105,11 @@ public sealed partial class StatedCountsCheck
     /// point, and nothing was comparing the two. Every occurrence is matched rather than the first,
     /// so a pass that updates one of the four and forgets the rest fails.
     /// </summary>
-    [GeneratedRegex(@"[Tt]he (?<due>[a-z-]+) (?:obligations due before the freeze|sit\s+between 4\.13 and 5\.1)",
+    // `obligations?` because the count reaching one is a state the pattern was not written for and
+    // the sentence then wants the singular. A grep over prose that only matches the plural stops
+    // matching on the day the pile is nearly cleared, which is the day the figure matters most, and
+    // it stops silently: the assertion below reads three statements as two and blames the paragraph.
+    [GeneratedRegex(@"[Tt]he (?<due>[a-z-]+) (?:obligations? due before the freeze|sit\s+between 4\.13 and 5\.1)",
         RegexOptions.CultureInvariant)]
     private static partial Regex FreezeObligationCount();
 
@@ -150,7 +154,11 @@ public sealed partial class StatedCountsCheck
 
     /// <summary>The paragraph under the phase 5 table splitting the rows due before the freeze into
     /// repairs to a frozen figure and the rest, with both counts.</summary>
-    [GeneratedRegex(@"(?<repairs>[A-Za-z-]+) (?:are repairs to stored figures|is a repair to a stored figure)[\s\S]{0,600}?The other (?<rest>[a-z-]+)\s+are not repairs",
+    // Both halves take the singular as well as the plural. A pattern that only reads "are not
+    // repairs" forces the prose to say "the other one are not repairs" on the day the pile is down
+    // to one, so the grep would be dictating grammar to the document it reads. Same reason the
+    // freeze count above takes `obligations?`.
+    [GeneratedRegex(@"(?<repairs>[A-Za-z-]+) (?:are repairs to stored figures|is a repair to a stored figure)[\s\S]{0,600}?The other (?<rest>[a-z-]+)\s+(?:are not repairs|is not a repair)",
         RegexOptions.CultureInvariant)]
     private static partial Regex RepairsAndTheRest();
 
