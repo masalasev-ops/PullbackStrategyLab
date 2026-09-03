@@ -2054,3 +2054,8 @@ Why:  The operator answered question 6 on 2026-09-02 with the 5.0(a) figures in 
 Was:  The trigger-and-stop derivation row said the thrust-selection clause was "answered and not yet built", that the detectors still took the most recent hit then rank, that it was measured at 5.0(a), and that whether it ships was question 6, put to the operator and open.
 Now:  The clause is withdrawn, the rule that stays is written out in the row, the measurement's two figures are beside it, and the operator's ruling of the same day is cited.
 Why:  The sentence described a pending ruling after the ruling was given, and it described the shipped rule only as the thing a clause would replace. The rule was written nowhere, and the row is where the derivation of the order prices is stated, so it is where the thrust the prices are measured from belongs.
+
+### 2026-09-03 — BUILD_PLAN.md — cites The nightly cap is 60, split forty long and twenty short, unused slots released
+Was:  The carried obligations table held forty-one rows, seventeen due before the freeze in every place the count is stated, thirteen of them at 5.8, and the repair pile's deliverable named three kinds of part.
+Now:  Forty-two rows and eighteen before the freeze, fourteen at 5.8, with a fourth kind of part named in the pile: the two readers of the cap that report "never capped" on a night the cap ran and published none.
+Why:  Raised at 5.0(a) on 2026-09-03 while stating what the first evening of the thirteen unregistered slots should write. The capper's null on a non-candidate row is SCHEMA's rule and the decision cited is the cap's, so the repair belongs in the two stages that read the rule as an absence; a carried obligation is recorded in the plan when it is created rather than remembered.
