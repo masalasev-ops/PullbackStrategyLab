@@ -2244,3 +2244,23 @@ Why:  Every recorded night has passed nought candidates and both readers of the 
 Was:  The carried obligations table held twenty-eight rows, with the two cap readers row raised at 5.0 due at 5.8; three due before the freeze; the paragraph named the cap readers among the three that are not repairs.
 Now:  Twenty-seven rows. The 5.0 row is discharged by the twelfth part of 5.8 on 2026-09-03; two due before the freeze in each place the count is stated, being the two sweeps.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — CLAUDE.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  The `/tools` listing named `nightly.ps1` as the slot dispatcher the scheduler calls, and no script updated the checkout it dispatches from.
+Now:  It adds `update-nightly.ps1`, which moves the production checkout to the tip of main at 17:00 so a night's slots run one build, scheduled, not a slot, not run by CI.
+Why:  A tool the operator's schedule calls and CI does not is exactly the kind the layout has to name, because nothing in a CI run would reveal it.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  Step 3 of first-time setup said the lab keeps two stores under two data roots inside the repository, `data/live` for the nightly job and `data/ci` for the scratch store, with `/data` gitignored.
+Now:  Two roots, `data/live` under the production checkout the nightly runs from and `data/ci` under the working tree, gitignored in both, with a sentence saying the two sat under one repository until the production checkout existed and that each root is still derived from the location of the script that opens it.
+Why:  The property the step rests on is that neither root is configured, and that survives the split; the sentence claiming one repository does not.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  "The order is merge, then migrate, and not the other way round", with the paragraph explaining that a store migrated ahead of the checkout is refused on the same footing as one behind it.
+Now:  "The order is merge, then the 17:00 update, then migrate", keeping that paragraph and adding one for the new middle step: a merge moves `main` and not the production checkout, the two faults are indistinguishable in the log, and a migration merging after 17:00 waits for tomorrow's update.
+Why:  Without the middle step the documented order now produces the fault it was written to prevent, from the ahead side rather than the behind side.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  The recovery row for a stage failing on a missing column said to run `tools/migrate`, which snapshots first, then rerun that night's stages for their own date, in slot order.
+Now:  It first says to read both numbers in the message, because a store ahead of its build refuses identically, and to migrate no further if the store is ahead and the production checkout has not had its 17:00 update.
+Why:  The row is read at speed during a failing night, and following it against an ahead store migrates in the wrong direction.
