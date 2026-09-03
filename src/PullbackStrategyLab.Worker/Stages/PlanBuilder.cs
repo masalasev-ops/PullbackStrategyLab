@@ -83,6 +83,19 @@ public sealed class PlanBuilder
     public const string NeverCapped =
         "no setup of this session carries a cap decision, so the night was never capped";
 
+    /// <summary>
+    /// The cap ran and had nobody to keep, which is an ordinary night and not a stage that did not run.
+    ///
+    /// <b>The row raised at 5.0.</b> The cap writes its decision on candidate rows only, so a night
+    /// with no candidate leaves no cap decision anywhere and this stage said the night was never
+    /// capped, which is the sentence reserved for a stage that did not run; every recorded night has
+    /// passed nought candidates, so every reading said it. The cap's own run row is what tells the
+    /// two apart, and it is read rather than inferred from the rows the cap chose not to write.
+    /// </summary>
+    public const string CapKeptNobody =
+        "the cap ran for this session and kept nobody: no setup passed every gating check, so there "
+        + "is no candidate list to plan from";
+
     /// <summary>The cap ran and kept nobody, which is an ordinary outcome of the gates.</summary>
     public const string AllCappedOut = "every flagged setup was capped out";
 
@@ -160,7 +173,11 @@ public sealed class PlanBuilder
         string? stoppedBecause = flagged.Count == 0
             ? NothingFlagged
             : capped.Count == 0
-                ? flagged.Any(s => s.CappedOut == true) ? AllCappedOut : NeverCapped
+                ? flagged.Any(s => s.CappedOut == true)
+                    ? AllCappedOut
+                    : RunLogger.StageRanOn(connection, SetupCapper.Name, asOf, _options.SessionZone)
+                        ? CapKeptNobody
+                        : NeverCapped
                 : null;
 
         int planned = 0;

@@ -36,6 +36,10 @@ public sealed class WatchlistPublisher
     /// <summary>Recorded where the night has no capped rows at all, which is not the same as a night with none published.</summary>
     public const string NeverCapped = "no setup of this session carries a cap decision, so the night was never capped";
 
+    /// <summary>The cap ran and kept nobody, on the terms PlanBuilder states it; a night the page can describe.</summary>
+    public const string CapKeptNobody =
+        "the cap ran for this session and kept nobody: no setup passed every gating check, so the page shows a night with no candidate";
+
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
     private readonly IClock _clock;
@@ -94,10 +98,16 @@ public sealed class WatchlistPublisher
         // A night nobody capped and a night the cap published none are different facts. The first
         // means a stage did not run and the page shows a session it cannot describe; the second is
         // an ordinary outcome of the gates. Only the first is worth waking anybody for.
+        // A night the cap ran and kept nobody is a third fact, from 5.8, and until then it read as
+        // the first: the cap writes its decision on candidate rows only, so a night with no
+        // candidate carries no decision and this said the night was never capped. The cap's own run
+        // row is what tells the two apart.
         string? nothing = flagged == 0
             ? "no setup was flagged for this session"
             : longs + shorts == 0
-                ? Count(connection, asOf, capped: false) == 0 ? NeverCapped : "every flagged setup was capped out"
+                ? Count(connection, asOf, capped: false) == 0
+                    ? RunLogger.StageRanOn(connection, SetupCapper.Name, asOf, _options.SessionZone) ? CapKeptNobody : NeverCapped
+                    : "every flagged setup was capped out"
                 : null;
 
         RunSummary summary = run.Complete(RunOutcome.Clean);

@@ -428,6 +428,40 @@ public sealed class PlanBuilderTests : IDisposable
     }
 
     /// <summary>
+    /// A night the cap ran and kept nobody is told apart from a night nobody capped, by both
+    /// readers of the cap, from the cap's own run row.
+    ///
+    /// <b>The row raised at 5.0.</b> The cap writes its decision on candidate rows only, so a night
+    /// with no candidate carries no decision anywhere, and both readers said the night was never
+    /// capped, which their own comments reserve for a stage that did not run. Every recorded night
+    /// has passed nought candidates, so every reading said it. The same store answers both ways
+    /// here: with no run row the night reads as never capped, with the cap's run row it reads as the
+    /// cap having kept nobody, and the rows are identical between the two.
+    /// </summary>
+    [Fact]
+    public void A_night_the_cap_ran_and_kept_nobody_is_told_apart_from_one_nobody_capped_by_both_readers()
+    {
+        Candidate("AAPL", "long", trigger: 102.50m, giveUp: 100.00m, cappedOut: null);
+
+        IOptions<PullbackStrategyLabOptions> options = Options.Create(
+            new PullbackStrategyLabOptions { DataRoot = _root.Path });
+        var publisher = new WatchlistPublisher(_connections, new RunLogger(_clock, options), _clock, options);
+
+        Assert.Equal(PlanBuilder.NeverCapped, Stage().Build(Evening).StoppedBecause);
+        Assert.Equal(WatchlistPublisher.NeverCapped, publisher.Publish(Evening).NothingBecause);
+
+        // The cap runs, has no candidate to decide over, and leaves only its run row.
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using RunScope cap = new RunLogger(_clock, options).Begin(connection, SetupCapper.Name, "setup");
+            cap.Complete(RunOutcome.Clean);
+        }
+
+        Assert.Equal(PlanBuilder.CapKeptNobody, Stage().Build(Evening).StoppedBecause);
+        Assert.Equal(WatchlistPublisher.CapKeptNobody, publisher.Publish(Evening).NothingBecause);
+    }
+
+    /// <summary>
     /// A cap that ran and kept nobody is the third shape of nothing, and it is most nights.
     ///
     /// Separated from the one above because only one of the three is worth waking anybody for. A

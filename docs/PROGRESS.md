@@ -14398,3 +14398,36 @@ Carried:    **One row discharged, nothing raised.** The row raised at 4.13 leave
             two sweeps and the cap readers; the operator's eight, unchanged. Nothing this part
             touched is an input to the minimum sample's derivation: two pages changed what they say
             and no store row changed. Next is the claim-register sweep raised at 3.12.
+
+## 5.8 — 2026-09-03 — phase-5-8-cap-readers — the pile, part twelve: the two readers of the cap tell an empty cap from an absent one
+
+Not a checkpoint entry. The twelfth part of the repair pile, taken before the two sweeps because
+it is one evening's reading and the sweeps are each a session's work, which the report says
+rather than leaving the order to be inferred. Population: **the two stages that read the cap,
+`PlanBuilder` at 18:30 and `WatchlistPublisher` at 18:40, over every recorded night, all of which
+passed nought candidates and all of which both stages said were never capped.**
+
+Built:      **A third fact between the two.** The cap writes its decision on candidate rows only,
+            so a night with no candidate leaves no cap decision anywhere, and both readers said
+            the night was never capped, which their own comments reserve for a stage that did not
+            run. Each now asks the run log whether the cap ran to an end on the session's own day,
+            through one read in `RunLogger` on the terms every statement against that table lives
+            there, and says the cap ran and kept nobody where it did (see: The nightly cap is 60,
+            split forty long and twenty short, unused slots released). The sentence for a stage
+            that did not run is unchanged and is now said only of one. The runbook's 18:40 row
+            says which is which.
+
+Verified:   Over one authored night read both ways: with the cap's run row absent both readers say
+            the night was never capped, and with the cap having run and left only its run row both
+            say it ran and kept nobody, over rows identical between the two readings. One test
+            added, all green. No expectation moved and the phase report's expected move was stated
+            in advance as nought: the fixture's night has candidates. `tools/ci.ps1` green on
+            Windows, **31 steps, 955 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,551 with 0 unexamined; 1,459 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 5.0 leaves the table with this
+            commit. The table reads twenty-seven; two due before the freeze, both at 5.8, being the
+            claim-register sweep raised at 3.12 and the source-scan assertions raised at 2.11; the
+            operator's eight, unchanged. Nothing this part touched is an input to the minimum
+            sample's derivation. The two sweeps are what the pile still holds, and this run stops
+            before them with the reason in its report.

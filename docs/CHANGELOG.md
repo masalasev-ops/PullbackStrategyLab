@@ -2234,3 +2234,13 @@ Why:  The row raised at 4.13 found that the corpus never wrote down which pair t
 Was:  The carried obligations table held twenty-nine rows, with the two-screens row raised at 4.13 due at 5.8; four due before the freeze; the paragraph named the two screens among the four that are not repairs.
 Now:  Twenty-eight rows. The 4.13 row is discharged by the eleventh part of 5.8 on 2026-09-03; three due before the freeze in each place the count is stated; the paragraph names three that are not repairs.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly cap is 60, split forty long and twenty short, unused slots released
+Was:  The 18:40 row said a night that was never capped is noticed at `publish-watchlist` rather than by somebody opening a browser.
+Now:  It adds that from 5.8 the stage tells that night from one the cap ran and kept nobody, by the cap's own run row.
+Why:  Every recorded night has passed nought candidates and both readers of the cap said each was never capped, which is the sentence reserved for a stage that did not run; the runbook is where the operator reads that sentence.
+
+### 2026-09-03 — BUILD_PLAN.md — cites The nightly cap is 60, split forty long and twenty short, unused slots released
+Was:  The carried obligations table held twenty-eight rows, with the two cap readers row raised at 5.0 due at 5.8; three due before the freeze; the paragraph named the cap readers among the three that are not repairs.
+Now:  Twenty-seven rows. The 5.0 row is discharged by the twelfth part of 5.8 on 2026-09-03; two due before the freeze in each place the count is stated, being the two sweeps.
+Why:  A discharged obligation leaves the table in the commit that discharges it.
