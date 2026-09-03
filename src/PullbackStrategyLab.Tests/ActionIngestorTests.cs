@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -65,10 +66,10 @@ public sealed class ActionIngestorTests : IDisposable
         Assert.Equal(2, result.DemandsRaised);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate).Order(StringComparer.Ordinal));
+        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate, SessionBoundaries.UsEquities).Order(StringComparer.Ordinal));
 
         // The dividend is stored, and it is stored as cash per share rather than as a factor.
-        StoredCorporateAction dividend = Assert.Single(CorporateActionReader.Read(connection, "BBB", EffectiveDate));
+        StoredCorporateAction dividend = Assert.Single(CorporateActionReader.Read(connection, "BBB", EffectiveDate, SessionBoundaries.UsEquities));
         Assert.Equal(CorporateActionType.Dividend, dividend.Type);
         Assert.Equal(0.44m, dividend.Ratio);
     }
@@ -100,7 +101,7 @@ public sealed class ActionIngestorTests : IDisposable
         await ingestor.IngestAsync(EffectiveDate.AddDays(7));
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        IReadOnlyList<RebuildDemand> open = IndicatorRebuildReader.Open(connection, EffectiveDate.AddDays(7));
+        IReadOnlyList<RebuildDemand> open = IndicatorRebuildReader.Open(connection, EffectiveDate.AddDays(7), SessionBoundaries.UsEquities);
 
         Assert.Equal(2, open.Count);
         Assert.All(open, d => Assert.Equal("AAA", d.Ticker));
@@ -167,10 +168,10 @@ public sealed class ActionIngestorTests : IDisposable
         // night and an open one from the restatement. Nothing was mutated and nothing cleared.
         Assert.Equal(2, CountRows("corporate_action"));
         Assert.Equal(2, CountRows("indicator_rebuild"));
-        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate.AddDays(1)));
+        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate.AddDays(1), SessionBoundaries.UsEquities));
 
         // And a read takes the latest observation, so the ratio in force is the restated one.
-        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(1))).Ratio);
+        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(1), SessionBoundaries.UsEquities)).Ratio);
     }
 
     [Fact]
@@ -190,8 +191,8 @@ public sealed class ActionIngestorTests : IDisposable
 
         // The same property the bar reader holds. A replay of the night the lab acted has to see
         // the factor the lab had, including the one that turned out to be wrong.
-        Assert.Equal(4m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate)).Ratio);
-        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(2))).Ratio);
+        Assert.Equal(4m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate, SessionBoundaries.UsEquities)).Ratio);
+        Assert.Equal(5m, Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(2), SessionBoundaries.UsEquities)).Ratio);
     }
 
     [Fact]
@@ -241,7 +242,7 @@ public sealed class ActionIngestorTests : IDisposable
 
         // And the stock paying it is blocked, which is the whole point of the change.
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate).Order(StringComparer.Ordinal));
+        Assert.Equal(["AAA", "BBB"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate, SessionBoundaries.UsEquities).Order(StringComparer.Ordinal));
     }
 
     [Fact]
@@ -259,7 +260,7 @@ public sealed class ActionIngestorTests : IDisposable
         Assert.Equal(0, result.DividendsPublished);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate));
+        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate, SessionBoundaries.UsEquities));
     }
 
     [Fact]
@@ -302,8 +303,8 @@ public sealed class ActionIngestorTests : IDisposable
 
         // The same property the bar reader holds, for the same reason. A replay of the Monday
         // before must not see Tuesday's split, or it answers with knowledge the lab did not have.
-        Assert.Empty(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(-1)));
-        Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate));
+        Assert.Empty(CorporateActionReader.Read(connection, "AAA", EffectiveDate.AddDays(-1), SessionBoundaries.UsEquities));
+        Assert.Single(CorporateActionReader.Read(connection, "AAA", EffectiveDate, SessionBoundaries.UsEquities));
     }
 
     [Fact]
@@ -319,8 +320,8 @@ public sealed class ActionIngestorTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate));
-        Assert.Empty(IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate.AddDays(3)));
+        Assert.Equal(["AAA"], IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate, SessionBoundaries.UsEquities));
+        Assert.Empty(IndicatorRebuildReader.BlockedTickers(connection, EffectiveDate.AddDays(3), SessionBoundaries.UsEquities));
     }
 
     [Theory]

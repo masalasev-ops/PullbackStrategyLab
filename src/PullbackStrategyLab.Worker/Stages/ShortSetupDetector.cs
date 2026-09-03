@@ -123,11 +123,11 @@ public sealed class ShortSetupDetector
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.SetupTable);
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
-        var source = new StoredFigures(connection);
+        var source = new StoredFigures(connection, _options.SessionZone);
 
         Tally tally = Walk(
             connection, members, asOf, SetupReader.SetupTable, source,
-            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions));
+            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions, _options.SessionZone));
 
         // A night that could not read a name did not do everything it set out to do, and saying so
         // is what stops the loss reading as a quiet night.
@@ -190,7 +190,7 @@ public sealed class ShortSetupDetector
                     connection, ticker, session, HistorySessions, observedBefore);
             }
 
-            source.Rank(session, windows);
+            source.Rank(session, windows, _options.SessionZone);
 
             if (session < from)
             {
@@ -295,8 +295,8 @@ public sealed class ShortSetupDetector
     /// Public for the same reason the long side's is: the replay authors cases the captured data
     /// cannot produce and has to author them from the evidence the detector would have used.
     /// </summary>
-    public static ShortPullbackRules.ShortEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf) =>
-        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions), new StoredFigures(connection));
+    public static ShortPullbackRules.ShortEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone) =>
+        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions, sessionZone), new StoredFigures(connection, sessionZone));
 
     /// <summary>
     /// The same evidence, with the bar window and the session's figures handed in. The long side's

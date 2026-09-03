@@ -20,10 +20,10 @@ public sealed class TriggerResolutionReader
     public TriggerResolutionReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The resolutions of <paramref name="liveSession"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTriggerResolution> ForLiveSession(DateOnly liveSession, DateOnly asOf)
+    public IReadOnlyList<StoredTriggerResolution> ForLiveSession(DateOnly liveSession, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ForLiveSession(connection, liveSession, asOf);
+        return ForLiveSession(connection, liveSession, asOf, sessionZone);
     }
 
     /// <summary>
@@ -35,7 +35,7 @@ public sealed class TriggerResolutionReader
     /// see: Plans are resting orders and fills go in time order when the caps bind
     /// </summary>
     public static IReadOnlyList<StoredTriggerResolution> ForLiveSession(
-        SqliteConnection connection, DateOnly liveSession, DateOnly asOf)
+        SqliteConnection connection, DateOnly liveSession, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -51,7 +51,7 @@ public sealed class TriggerResolutionReader
 
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         var resolutions = new List<StoredTriggerResolution>();
         using SqliteDataReader reader = command.ExecuteReader();

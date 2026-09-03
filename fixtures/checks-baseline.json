@@ -247,6 +247,7 @@
       },
       "context": [
         "SQL statements read across the shipped source",
+        "store reader files read for the session zone constant",
         "exempted files, each with its reason",
         "stamps in the list that no read bounds, each with its reason",
         "statements exempted by a fragment of themselves, each with its reason",

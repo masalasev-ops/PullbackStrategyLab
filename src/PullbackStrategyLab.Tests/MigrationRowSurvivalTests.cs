@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
@@ -63,7 +64,7 @@ public sealed class MigrationRowSurvivalTests
 
         // The demands carry the type and the observation of the action that raised them, taken
         // from the action rather than invented, and the satisfied one is still satisfied.
-        IReadOnlyList<RebuildDemand> open = IndicatorRebuildReader.Open(connection, new DateOnly(2026, 8, 26));
+        IReadOnlyList<RebuildDemand> open = IndicatorRebuildReader.Open(connection, new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities);
         RebuildDemand only = Assert.Single(open);
         Assert.Equal("AAA", only.Ticker);
         Assert.Equal(CorporateActionType.Split, only.Type);
@@ -140,7 +141,7 @@ public sealed class MigrationRowSurvivalTests
         // 028 moves it from midnight UTC, which is the previous Eastern session, to 05:00Z, which
         // is inside this one on either side of the clock change.
         StoredIndicators row = Assert.IsType<StoredIndicators>(
-            IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 24)));
+            IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 24), SessionBoundaries.UsEquities));
 
         Assert.Equal(10m, row.EmaShort);
         Assert.Equal("rising", row.LadderGrade);
@@ -150,7 +151,7 @@ public sealed class MigrationRowSurvivalTests
         // column: the values were not available before the evening that produced them. This is the
         // assertion 028 exists for. Under the UTC bound it passed against a stamp in the wrong
         // session, because the bound was wrong by the same offset and the two cancelled.
-        Assert.Null(IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 23)));
+        Assert.Null(IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 23), SessionBoundaries.UsEquities));
     }
 
     private static void Execute(SqliteConnection connection, string sql)

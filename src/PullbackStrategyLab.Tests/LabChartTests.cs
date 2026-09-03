@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -76,7 +77,7 @@ public sealed class LabChartTests : IDisposable
     }
 
     private ChartResponse Read(string ticker, int sessions = 60) =>
-        LabChart.Read(_connections, ticker, AsOf, sessions, _clock.UtcNow);
+        LabChart.Read(_connections, ticker, AsOf, sessions, _clock.UtcNow, SessionBoundaries.UsEquities);
 
     [Fact]
     public void Every_line_the_page_draws_ends_on_the_number_the_engine_stored()
@@ -134,7 +135,7 @@ public sealed class LabChartTests : IDisposable
         using var empty = new TemporaryDirectory();
         var connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(empty.Path));
 
-        ChartResponse chart = LabChart.Read(connections, "TEST", AsOf, 60, _clock.UtcNow);
+        ChartResponse chart = LabChart.Read(connections, "TEST", AsOf, 60, _clock.UtcNow, SessionBoundaries.UsEquities);
 
         Assert.Equal("there is no store yet", chart.Nothing);
     }

@@ -124,7 +124,7 @@ public sealed class IndicatorEngine
         DateTimeOffset computedAt = run.StartedAt;
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
-        ILookup<string, RebuildDemand> openDemands = IndicatorRebuildReader.Open(connection, asOf)
+        ILookup<string, RebuildDemand> openDemands = IndicatorRebuildReader.Open(connection, asOf, _options.SessionZone)
             .ToLookup(d => d.Ticker, StringComparer.Ordinal);
 
         // Bounded by the end of the as-of date like every other read here, so a replay of a night

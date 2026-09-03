@@ -128,26 +128,36 @@ public interface ISessionFigures
 public sealed class StoredFigures : ISessionFigures
 {
     private readonly SqliteConnection _connection;
+    private readonly string _sessionZone;
 
-    public StoredFigures(SqliteConnection connection) =>
+    /// <summary>
+    /// The zone is given once here, from configuration, rather than named by any reader: from 5.8 a
+    /// store reader takes the zone its bound is computed in, and this seam is where a forward
+    /// night's readers get theirs.
+    /// </summary>
+    public StoredFigures(SqliteConnection connection, string sessionZone)
+    {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionZone);
+        _sessionZone = sessionZone;
+    }
 
     public StoredIndicators? Indicators(string ticker, DateOnly asOf, IReadOnlyList<StoredDailyBar> bars) =>
-        IndicatorDailyReader.Read(_connection, ticker, asOf, asOf);
+        IndicatorDailyReader.Read(_connection, ticker, asOf, asOf, _sessionZone);
 
     public IReadOnlyList<StoredScanHit> Hits(string ticker, DateOnly asOf, DateOnly windowStart) =>
-        ScanHitReader.ForTicker(_connection, ticker, asOf, windowStart);
+        ScanHitReader.ForTicker(_connection, ticker, asOf, windowStart, _sessionZone);
 
     public int SessionsListed(string ticker, DateOnly asOf) =>
-        DailyBarReader.SessionsStored(_connection, ticker, asOf);
+        DailyBarReader.SessionsStored(_connection, ticker, asOf, _sessionZone);
 
     public decimal? MarketCap(string ticker, DateOnly asOf) =>
-        SecurityReader.MarketCap(_connection, ticker, asOf);
+        SecurityReader.MarketCap(_connection, ticker, asOf, _sessionZone);
 
     public bool MarketCapExempt => false;
 
     public decimal? AnchoredAveragePrice(string ticker, DateOnly asOf, DateOnly anchorSession) =>
-        AnchoredVwapReader.Latest(_connection, ticker, anchorSession, asOf)?.Value;
+        AnchoredVwapReader.Latest(_connection, ticker, anchorSession, asOf, _sessionZone)?.Value;
 
     public bool Reconstructed => false;
 
@@ -370,11 +380,11 @@ public sealed class CalibrationFigures : ISessionFigures
     /// scan at all, because a stock with three sessions of history has moved a long way in all of
     /// them and would top the month movers every time.
     /// </summary>
-    public void Rank(DateOnly asOf, IReadOnlyDictionary<string, IReadOnlyList<StoredDailyBar>> windows)
+    public void Rank(DateOnly asOf, IReadOnlyDictionary<string, IReadOnlyList<StoredDailyBar>> windows, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(windows);
 
-        BuildPool(asOf, windows);
+        BuildPool(asOf, windows, sessionZone);
 
         var candidates = new List<ScanEngine.Candidate>();
 
@@ -484,7 +494,7 @@ public sealed class CalibrationFigures : ISessionFigures
     /// observed later than the sessions themselves like every other backfilled bar, so the read is
     /// bounded on the run's own instant for the reason the calibration entry gives.
     /// </summary>
-    private void BuildPool(DateOnly asOf, IReadOnlyDictionary<string, IReadOnlyList<StoredDailyBar>> windows)
+    private void BuildPool(DateOnly asOf, IReadOnlyDictionary<string, IReadOnlyList<StoredDailyBar>> windows, string sessionZone)
     {
         _ranked.Clear();
         _rankedSession = asOf;
@@ -523,7 +533,7 @@ public sealed class CalibrationFigures : ISessionFigures
         }
 
         string? mood = MarketMood.Of(
-            Trackers(asOf), asOf, RegimeLabeler.HistorySessions, rising, falling).Label;
+            Trackers(asOf, sessionZone), asOf, RegimeLabeler.HistorySessions, rising, falling).Label;
 
         // The mood is a property of the session, so it is stamped onto every candidate of that
         // session rather than looked up beside them. Built after the pass because the breadth score
@@ -534,14 +544,14 @@ public sealed class CalibrationFigures : ISessionFigures
     }
 
     /// <summary>The three trackers' windows for one session, as the mood scoring wants them.</summary>
-    private IReadOnlyList<MarketMood.Tracker> Trackers(DateOnly asOf)
+    private IReadOnlyList<MarketMood.Tracker> Trackers(DateOnly asOf, string sessionZone)
     {
         var trackers = new List<MarketMood.Tracker>();
 
         foreach (string symbol in _indexSymbols)
         {
             IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(
-                _connection, symbol, asOf, RegimeLabeler.HistorySessions, _observedBefore);
+                _connection, symbol, asOf, RegimeLabeler.HistorySessions, _observedBefore, sessionZone);
 
             trackers.Add(new MarketMood.Tracker(
                 [.. bars.Select(b => b.AdjustedClose)],

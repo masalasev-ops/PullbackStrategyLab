@@ -2209,3 +2209,18 @@ Why:  A discharged obligation leaves the table in the commit that discharges it.
 Was:  The carried obligations table held thirty-one rows, with the horizon-cannot-close row raised at 3.5 due at 5.8; six due before the freeze; two repairs and four others.
 Now:  Thirty rows. The 3.5 horizon row is discharged by the ninth part of 5.8 on 2026-09-03 on its visible half, the state counted apart per subject kind and the replacement question put to the operator with its figure; five due before the freeze in each place the count is stated; one repair and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it, and the half that would move the derivation's population is reported rather than taken.
+
+### 2026-09-03 — ARCHITECTURE.html — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  The failure-behaviour row on a stage writing after the UTC date rolls said one function builds the session's closing instant and every bound calls it.
+Now:  It adds that from 5.8 every store reader takes the zone it bounds in as a parameter and names no constant, so the configured zone is the zone on every read.
+Why:  The readers passed a constant where the stages passed the configured zone, and the two agreed only because the option defaults to the constant; the row raised at 3.9 asked that the zone be threaded through the readers, and it is.
+
+### 2026-09-03 — CLAUDE.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  The `point-in-time` roster row named three halves: every public read takes a date, every hand-written statement bounds its stamp, and a row observed after the as-of is invisible.
+Now:  It adds a fourth: no store reader names the session zone constant, so every bound is computed in the zone the reader is given.
+Why:  The check gained the scan at 5.8, with a behavioural test behind it, and the roster lists what each check asserts.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  The carried obligations table held thirty rows, with the session-zone row raised at 3.9 due at 5.8; five due before the freeze; one repair and four others.
+Now:  Twenty-nine rows. The 3.9 row is discharged by the tenth part of 5.8 on 2026-09-03; four due before the freeze in each place the count is stated; no repair to a stored figure and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.

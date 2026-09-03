@@ -160,7 +160,7 @@ public sealed partial class DailyBarIngestor
             tickers = selection switch
             {
                 BackfillSelection.EveryUniverseMember => ReadUniverseList(connection),
-                BackfillSelection.TickersWithAnOpenDemand => IndicatorRebuildReader.Open(connection, asOf)
+                BackfillSelection.TickersWithAnOpenDemand => IndicatorRebuildReader.Open(connection, asOf, _options.SessionZone)
                     .Select(d => d.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
                 _ => named,
             };

@@ -40,15 +40,15 @@ public sealed class TradeReader
     public TradeReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The trades closed in <paramref name="session"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTrade> ClosedIn(DateOnly session, DateOnly asOf)
+    public IReadOnlyList<StoredTrade> ClosedIn(DateOnly session, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ClosedIn(connection, session, asOf);
+        return ClosedIn(connection, session, asOf, sessionZone);
     }
 
     /// <summary>The same read from a connection the caller already holds.</summary>
     public static IReadOnlyList<StoredTrade> ClosedIn(
-        SqliteConnection connection, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -62,7 +62,7 @@ public sealed class TradeReader
             """;
 
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
         return MaterialiseTrades(command);
     }
@@ -73,7 +73,7 @@ public sealed class TradeReader
     /// The journal page's read at 4.11 and the scoreboard's from phase 5. Ordered by the session the
     /// trade ended in rather than the one it opened in, because the page is about what has happened.
     /// </summary>
-    public static IReadOnlyList<StoredTrade> AllClosed(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<StoredTrade> AllClosed(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -85,14 +85,14 @@ public sealed class TradeReader
              ORDER BY closed_session DESC, direction, ticker
             """;
 
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
         return MaterialiseTrades(command);
     }
 
     /// <summary>The audits of a named set of trades, as at <paramref name="asOf"/>.</summary>
     public static IReadOnlyList<StoredPlanAudit> AuditsOf(
-        SqliteConnection connection, IReadOnlyCollection<string> tradeIds, DateOnly asOf)
+        SqliteConnection connection, IReadOnlyCollection<string> tradeIds, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(tradeIds);
@@ -120,7 +120,7 @@ public sealed class TradeReader
             command.Parameters.AddWithValue($"@trade{slot++}", tradeId);
         }
 
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
         var audits = new List<StoredPlanAudit>();
         using SqliteDataReader reader = command.ExecuteReader();
@@ -277,9 +277,9 @@ public sealed class TradeReader
         return trades;
     }
 
-    private static void Bound(SqliteCommand command, DateOnly asOf) =>
+    private static void Bound(SqliteCommand command, DateOnly asOf, string sessionZone) =>
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 }
 
 /// <summary>

@@ -31,14 +31,14 @@ public sealed class DailyBarReader
     /// <paramref name="sessions"/> of them. Only observations made at or before the end of the
     /// as-of date are visible.
     /// </summary>
-    public IReadOnlyList<StoredDailyBar> Read(string ticker, DateOnly asOf, int sessions)
+    public IReadOnlyList<StoredDailyBar> Read(string ticker, DateOnly asOf, int sessions, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, ticker, asOf, sessions);
+        return Read(connection, ticker, asOf, sessions, sessionZone);
     }
 
-    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string ticker, DateOnly asOf, int sessions) =>
-        Read(connection, ticker, asOf, sessions, StorageTextToInstant(EndOf(asOf)));
+    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string ticker, DateOnly asOf, int sessions, string sessionZone) =>
+        Read(connection, ticker, asOf, sessions, StorageTextToInstant(EndOf(asOf, sessionZone)));
 
     /// <summary>
     /// The same window, with the observation bound stated separately from the as-of date.
@@ -125,7 +125,7 @@ public sealed class DailyBarReader
     /// have to be the same number. They were not: the check read a window of bars and the signal
     /// counted from <c>first_seen</c>, and the frozen evidence said 1 where the check had cleared 90.
     /// </summary>
-    public static int SessionsStored(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static int SessionsStored(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -139,7 +139,7 @@ public sealed class DailyBarReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@observed_before", EndOf(asOf, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
     }
@@ -249,7 +249,7 @@ public sealed class DailyBarReader
     /// session and counting both would make a holding period grow when a vendor restated a price.
     /// </summary>
     public static int SessionsBetween(
-        SqliteConnection connection, string ticker, DateOnly from, DateOnly to, DateOnly asOf)
+        SqliteConnection connection, string ticker, DateOnly from, DateOnly to, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -267,14 +267,14 @@ public sealed class DailyBarReader
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
-        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@observed_before", EndOf(asOf, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>The last instant of a date, in the form observed_at is stored in.</summary>
-    private static string EndOf(DateOnly date) =>
-        StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
+    private static string EndOf(DateOnly date, string sessionZone) =>
+        StoreText.EndOfSession(date, sessionZone);
 
     private static DateTimeOffset StorageTextToInstant(string text) => StoreText.StorageTextToTimestamp(text);
 }

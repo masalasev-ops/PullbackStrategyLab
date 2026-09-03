@@ -57,12 +57,12 @@ public sealed class SessionReplayClock
     /// pre-market would fill plans at prices no regular-session order could have been hit at.
     /// </summary>
     public static SessionReplayClock ForSession(
-        SqliteConnection connection, IReadOnlyCollection<string> tickers, DateOnly sessionDate, DateOnly asOf)
+        SqliteConnection connection, IReadOnlyCollection<string> tickers, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(tickers);
 
-        return Over(sessionDate, IntradayBarReader.ReadSession(connection, tickers, sessionDate, asOf));
+        return Over(sessionDate, IntradayBarReader.ReadSession(connection, tickers, sessionDate, asOf, sessionZone));
     }
 
     /// <summary>

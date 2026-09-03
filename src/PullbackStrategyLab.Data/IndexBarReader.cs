@@ -26,14 +26,14 @@ public sealed class IndexBarReader
     /// One symbol's bars up to and including <paramref name="asOf"/>, oldest first, at most
     /// <paramref name="sessions"/> of them.
     /// </summary>
-    public IReadOnlyList<StoredDailyBar> Read(string symbol, DateOnly asOf, int sessions)
+    public IReadOnlyList<StoredDailyBar> Read(string symbol, DateOnly asOf, int sessions, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, symbol, asOf, sessions);
+        return Read(connection, symbol, asOf, sessions, sessionZone);
     }
 
-    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string symbol, DateOnly asOf, int sessions) =>
-        Read(connection, symbol, asOf, sessions, null);
+    public static IReadOnlyList<StoredDailyBar> Read(SqliteConnection connection, string symbol, DateOnly asOf, int sessions, string sessionZone) =>
+        Read(connection, symbol, asOf, sessions, null, sessionZone);
 
     /// <summary>
     /// The same, observed at or before an instant the caller states rather than the session's own
@@ -52,7 +52,7 @@ public sealed class IndexBarReader
     /// see: A calibration run reconstructs against current membership and computes its indicators in memory
     /// </summary>
     public static IReadOnlyList<StoredDailyBar> Read(
-        SqliteConnection connection, string symbol, DateOnly asOf, int sessions, DateTimeOffset? observedBefore)
+        SqliteConnection connection, string symbol, DateOnly asOf, int sessions, DateTimeOffset? observedBefore, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
@@ -80,7 +80,7 @@ public sealed class IndexBarReader
             "@observed_before",
             observedBefore is DateTimeOffset instant
                 ? StoreText.TimestampToStorageText(instant)
-                : StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+                : StoreText.EndOfSession(asOf, sessionZone));
         command.Parameters.AddWithValue("@sessions", sessions);
 
         var bars = new List<StoredDailyBar>();

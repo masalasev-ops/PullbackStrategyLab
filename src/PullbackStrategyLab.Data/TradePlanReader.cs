@@ -28,26 +28,26 @@ public sealed class TradePlanReader
     public TradePlanReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The plans resting when <paramref name="liveSession"/> opened, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTradePlan> ForLiveSession(DateOnly liveSession, DateOnly asOf)
+    public IReadOnlyList<StoredTradePlan> ForLiveSession(DateOnly liveSession, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ForLiveSession(connection, liveSession, asOf);
+        return ForLiveSession(connection, liveSession, asOf, sessionZone);
     }
 
     /// <summary>The plans written on the evening of <paramref name="writtenOn"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTradePlan> WrittenOn(DateOnly writtenOn, DateOnly asOf)
+    public IReadOnlyList<StoredTradePlan> WrittenOn(DateOnly writtenOn, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return WrittenOn(connection, writtenOn, asOf);
+        return WrittenOn(connection, writtenOn, asOf, sessionZone);
     }
 
     public static IReadOnlyList<StoredTradePlan> ForLiveSession(
-        SqliteConnection connection, DateOnly liveSession, DateOnly asOf) =>
-        Read(connection, "live_session", liveSession, asOf);
+        SqliteConnection connection, DateOnly liveSession, DateOnly asOf, string sessionZone) =>
+        Read(connection, "live_session", liveSession, asOf, sessionZone);
 
     public static IReadOnlyList<StoredTradePlan> WrittenOn(
-        SqliteConnection connection, DateOnly writtenOn, DateOnly asOf) =>
-        Read(connection, "as_of", writtenOn, asOf);
+        SqliteConnection connection, DateOnly writtenOn, DateOnly asOf, string sessionZone) =>
+        Read(connection, "as_of", writtenOn, asOf, sessionZone);
 
     /// <summary>
     /// The plans behind a named set of setups, as at <paramref name="asOf"/>.
@@ -62,7 +62,7 @@ public sealed class TradePlanReader
     /// outside string into a statement, and there is no reason to have one.
     /// </summary>
     public static IReadOnlyList<StoredTradePlan> ForSetups(
-        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf)
+        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(setupIds);
@@ -93,7 +93,7 @@ public sealed class TradePlanReader
         }
 
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Materialise(command);
     }
@@ -103,7 +103,7 @@ public sealed class TradePlanReader
     /// reaches the statement. The same shape <see cref="SetupReader"/> uses to pick its table.
     /// </summary>
     private static IReadOnlyList<StoredTradePlan> Read(
-        SqliteConnection connection, string column, DateOnly date, DateOnly asOf)
+        SqliteConnection connection, string column, DateOnly date, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -124,7 +124,7 @@ public sealed class TradePlanReader
 
         command.Parameters.AddWithValue("@date", StoreText.DateToStorageText(date));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Materialise(command);
     }

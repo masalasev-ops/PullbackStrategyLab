@@ -202,7 +202,7 @@ public sealed class IntradayFetcherTests : IDisposable
         // from a night that ran and had nothing to ask for.
         using SqliteConnection connection = _connections.OpenReadOnly();
         StoredIntradayFetch fetch = Assert.IsType<StoredIntradayFetch>(
-            IntradayBarReader.LatestFetch(connection, Session, Session));
+            IntradayBarReader.LatestFetch(connection, Session, Session, SessionBoundaries.UsEquities));
 
         Assert.Equal(0, fetch.Requested);
         Assert.Equal(IntradayFetcher.NoPriorSession, fetch.StoppedBecause);
@@ -240,14 +240,14 @@ public sealed class IntradayFetcherTests : IDisposable
         // The regular session is bounded on the bar's opening stamp, so 15:59 is inside it and 16:00
         // is not: 390 bars and not 391, which is the arithmetic every hourly grid has to answer for.
         IReadOnlyList<StoredIntradayBar> regular =
-            IntradayBarReader.Read(connection, "AAPL", Session, Session);
+            IntradayBarReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
         Assert.Equal(2, regular.Count);
         Assert.All(regular, b => Assert.Equal(IntradayFetcher.RegularWindow, b.SessionWindow));
 
         // And nothing is dropped. An extended-hours minute is exactly as unrecoverable as a regular
         // one, so all five are stored and the reader bounds rather than the writer filtering.
         IReadOnlyList<StoredIntradayBar> everything =
-            IntradayBarReader.Read(connection, "AAPL", Session, Session, regularOnly: false);
+            IntradayBarReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities, regularOnly: false);
         Assert.Equal(5, everything.Count);
         Assert.Equal(3, everything.Count(b => b.SessionWindow == IntradayFetcher.ExtendedWindow));
     }
@@ -261,7 +261,7 @@ public sealed class IntradayFetcherTests : IDisposable
         await Fetcher(vendor).FetchAsync(Session);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        StoredIntradayBar bar = Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, Session));
+        StoredIntradayBar bar = Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities));
 
         Assert.Equal(IntradayFetcher.MinuteInterval, bar.IntervalCode);
         Assert.Equal(IntradayFetcher.RawBasis, bar.PriceBasis);
@@ -315,7 +315,7 @@ public sealed class IntradayFetcherTests : IDisposable
         Assert.Equal(2L, (long)command.ExecuteScalar()!);
 
         // And the reader answers with the later observation, not with both.
-        StoredIntradayBar latest = Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, Session));
+        StoredIntradayBar latest = Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities));
         Assert.Equal(101m, latest.Close);
     }
 
@@ -344,7 +344,7 @@ public sealed class IntradayFetcherTests : IDisposable
         // The shortfall is readable as requested against fetched, which is why both are on the row.
         using SqliteConnection connection = _connections.OpenReadOnly();
         StoredIntradayFetch fetch = Assert.IsType<StoredIntradayFetch>(
-            IntradayBarReader.LatestFetch(connection, Session, Session));
+            IntradayBarReader.LatestFetch(connection, Session, Session, SessionBoundaries.UsEquities));
 
         Assert.Equal("partial", fetch.Outcome);
         Assert.Equal(3, fetch.Requested);
@@ -385,7 +385,7 @@ public sealed class IntradayFetcherTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(IntradayBarReader.Read(connection, "AAPL", Session, new DateOnly(2026, 8, 25)));
-        Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, new DateOnly(2026, 8, 27)));
+        Assert.Empty(IntradayBarReader.Read(connection, "AAPL", Session, new DateOnly(2026, 8, 25), SessionBoundaries.UsEquities));
+        Assert.Single(IntradayBarReader.Read(connection, "AAPL", Session, new DateOnly(2026, 8, 27), SessionBoundaries.UsEquities));
     }
 }

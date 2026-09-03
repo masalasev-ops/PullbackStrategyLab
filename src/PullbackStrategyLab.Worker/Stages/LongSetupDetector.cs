@@ -113,11 +113,11 @@ public sealed class LongSetupDetector
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.SetupTable);
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
-        var source = new StoredFigures(connection);
+        var source = new StoredFigures(connection, _options.SessionZone);
 
         Tally tally = Walk(
             connection, members, asOf, SetupReader.SetupTable, source,
-            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions));
+            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions, _options.SessionZone));
 
         // A night that could not read a name did not do everything it set out to do, and saying so
         // is what stops the loss reading as a quiet night.
@@ -190,7 +190,7 @@ public sealed class LongSetupDetector
                     connection, ticker, session, HistorySessions, observedBefore);
             }
 
-            source.Rank(session, windows);
+            source.Rank(session, windows, _options.SessionZone);
 
             if (session < from)
             {
@@ -296,8 +296,8 @@ public sealed class LongSetupDetector
     /// has to author it from the same evidence the detector would have used. A second assembly there
     /// would make the authored case a test of the test rather than of the rules.
     /// </summary>
-    public static LongPullbackRules.LongEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf) =>
-        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions), new StoredFigures(connection));
+    public static LongPullbackRules.LongEvidence? Evidence(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone) =>
+        Evidence(ticker, asOf, DailyBarReader.Read(connection, ticker, asOf, HistorySessions, sessionZone), new StoredFigures(connection, sessionZone));
 
     /// <summary>
     /// The same evidence, with the bar window and the session's figures handed in.

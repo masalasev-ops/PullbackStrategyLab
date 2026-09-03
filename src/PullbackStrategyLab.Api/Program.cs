@@ -78,7 +78,7 @@ public static class Program
                 ticker,
                 session,
                 sessions ?? LabChart.DefaultSessions,
-                clock.UtcNow));
+                clock.UtcNow, configured.Value.SessionZone));
         });
 
         // A night's setups, both directions, each with every check's verdict and a window to read it
@@ -87,19 +87,19 @@ public static class Program
         // One day's scoreboard panels, read back as the builder wrote them. Nothing is recomputed
         // here: a read surface that recomputed a bound or an interval would be a second
         // implementation of the arithmetic the phase turns on.
-        app.MapGet("/scoreboard/{asOf}", (string asOf, StoreConnectionFactory connections) =>
+        app.MapGet("/scoreboard/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
             Results.Ok(LabScoreboard.Read(
                 connections,
-                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture))));
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
 
         // Every closed trade the store holds, as at the date asked for, with the plan held against
         // each and the cause of every loss. The date is in the path on the terms the scoreboard's is:
         // a journal opened on an old date is a reading of what the lab knew then, and the bound is
         // what makes that true rather than a filter over what it knows now.
-        app.MapGet("/journal/{asOf}", (string asOf, StoreConnectionFactory connections) =>
+        app.MapGet("/journal/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
             Results.Ok(LabJournal.Read(
                 connections,
-                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture))));
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
 
         // One trade's session, minute by minute, with the four prices that decided it. A second read
         // rather than a widening of /chart: that one draws a quarter of daily bars with the averages
@@ -109,12 +109,13 @@ public static class Program
             Results.Ok(LabTradeChart.Read(
                 connections,
                 tradeId,
-                clock.SessionDate(clock.UtcNow, configured.Value.SessionZone))));
+                clock.SessionDate(clock.UtcNow, configured.Value.SessionZone), configured.Value.SessionZone)));
 
-        app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, string? failed) =>
+        app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, IOptions<PullbackStrategyLabOptions> configured, string? failed) =>
             Results.Ok(setups.Read(
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 clock.UtcNow,
+                configured.Value.SessionZone,
                 string.IsNullOrWhiteSpace(failed) ? null : failed)));
 
         // The one write this surface makes, and it is a person's opinion of one setup rather than

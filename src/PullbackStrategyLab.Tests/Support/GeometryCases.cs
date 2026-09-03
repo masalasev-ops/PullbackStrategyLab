@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
 namespace PullbackStrategyLab.Tests.Support;
@@ -87,7 +88,7 @@ public static class GeometryCases
         CaseWindow window = Window;
 
         IReadOnlyList<StoredDailyBar> bars =
-            DailyBarReader.Read(connection, geometryCase.Ticker, window.Date, window.Sessions);
+            DailyBarReader.Read(connection, geometryCase.Ticker, window.Date, window.Sessions, SessionBoundaries.UsEquities);
 
         if (bars.Count == 0)
         {

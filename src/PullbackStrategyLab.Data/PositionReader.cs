@@ -38,15 +38,15 @@ public sealed class PositionReader
     public PositionReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The positions opened in <paramref name="openedSession"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredPosition> ForOpenedSession(DateOnly openedSession, DateOnly asOf)
+    public IReadOnlyList<StoredPosition> ForOpenedSession(DateOnly openedSession, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ForOpenedSession(connection, openedSession, asOf);
+        return ForOpenedSession(connection, openedSession, asOf, sessionZone);
     }
 
     /// <summary>The same read from a connection the caller already holds, ticker ordering the rows.</summary>
     public static IReadOnlyList<StoredPosition> ForOpenedSession(
-        SqliteConnection connection, DateOnly openedSession, DateOnly asOf)
+        SqliteConnection connection, DateOnly openedSession, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -60,9 +60,9 @@ public sealed class PositionReader
             """;
 
         command.Parameters.AddWithValue("@opened_session", StoreText.DateToStorageText(openedSession));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class PositionReader
     /// on when anything ran.
     /// </summary>
     public static IReadOnlyList<StoredPosition> OpenComingInto(
-        SqliteConnection connection, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -94,9 +94,9 @@ public sealed class PositionReader
             """;
 
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ public sealed class PositionReader
     /// as-of and the caller drops any row that comes back closed.
     /// </summary>
     public static IReadOnlyList<StoredPosition> OpenDuring(
-        SqliteConnection connection, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -131,9 +131,9 @@ public sealed class PositionReader
             """;
 
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -145,7 +145,7 @@ public sealed class PositionReader
     /// now, as far as the lab could know by the as-of, so a close observed after it reads as still
     /// held.
     /// </summary>
-    public static IReadOnlyList<StoredPosition> OpenAt(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<StoredPosition> OpenAt(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -159,9 +159,9 @@ public sealed class PositionReader
              ORDER BY opened_at, ticker
             """;
 
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -174,7 +174,7 @@ public sealed class PositionReader
     /// comes back reading open and the caller drops it.
     /// </summary>
     public static IReadOnlyList<StoredPosition> ClosedIn(
-        SqliteConnection connection, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -189,9 +189,9 @@ public sealed class PositionReader
             """;
 
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class PositionReader
     /// Friday's, and a reader that walked sessions to find both would be reconstructing a join.
     /// </summary>
     public static IReadOnlyList<StoredFill> FillsFor(
-        SqliteConnection connection, IReadOnlyCollection<string> positionIds, DateOnly asOf)
+        SqliteConnection connection, IReadOnlyCollection<string> positionIds, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(positionIds);
@@ -233,14 +233,14 @@ public sealed class PositionReader
             command.Parameters.AddWithValue($"@position{slot++}", positionId);
         }
 
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
         return MaterialiseFills(command);
     }
 
     /// <summary>Every fill of one session, in the order they happened.</summary>
     public static IReadOnlyList<StoredFill> FillsOf(
-        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf)
+        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -256,7 +256,7 @@ public sealed class PositionReader
             """;
 
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
         return MaterialiseFills(command);
     }
@@ -396,9 +396,9 @@ public sealed class PositionReader
         return runs;
     }
 
-    private static void Bound(SqliteCommand command, DateOnly asOf) =>
+    private static void Bound(SqliteCommand command, DateOnly asOf, string sessionZone) =>
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
     /// <summary>
     /// Materialise the rows, projecting a close the as-of could not have seen back to open.
@@ -409,10 +409,10 @@ public sealed class PositionReader
     /// exit columns are dropped and the status is put back, in one place, so no query has to
     /// remember to do it.
     /// </summary>
-    private static IReadOnlyList<StoredPosition> Read(SqliteCommand command, DateOnly asOf)
+    private static IReadOnlyList<StoredPosition> Read(SqliteCommand command, DateOnly asOf, string sessionZone)
     {
         DateTimeOffset bound = StoreText.StorageTextToTimestamp(
-            StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            StoreText.EndOfSession(asOf, sessionZone));
 
         var positions = new List<StoredPosition>();
         using SqliteDataReader reader = command.ExecuteReader();

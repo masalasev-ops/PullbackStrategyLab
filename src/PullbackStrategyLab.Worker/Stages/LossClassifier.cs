@@ -115,12 +115,12 @@ public sealed class LossClassifier
         var tally = new Tally();
 
         StoredTrade[] losses =
-            [.. TradeReader.ClosedIn(connection, sessionDate, sessionDate)
+            [.. TradeReader.ClosedIn(connection, sessionDate, sessionDate, _options.SessionZone)
                 .Where(t => LossCause.IsALoss(t.NetPnl))];
 
         tally.LossesClosed = losses.Length;
 
-        int waitingAtTheStart = LossClassReader.All(connection, sessionDate).Count(l => l.AwaitsItsHorizon);
+        int waitingAtTheStart = LossClassReader.All(connection, sessionDate, _options.SessionZone).Count(l => l.AwaitsItsHorizon);
 
         if (losses.Length == 0 && waitingAtTheStart == 0)
         {
@@ -136,7 +136,7 @@ public sealed class LossClassifier
         if (losses.Length > 0)
         {
             ILookup<string, StoredFill> fills = PositionReader
-                .FillsFor(connection, [.. losses.Select(t => t.PositionId)], sessionDate)
+                .FillsFor(connection, [.. losses.Select(t => t.PositionId)], sessionDate, _options.SessionZone)
                 .ToLookup(f => f.PositionId, StringComparer.Ordinal);
 
             using SqliteTransaction mechanisms = connection.BeginTransaction();
@@ -164,20 +164,20 @@ public sealed class LossClassifier
         //    the ones the pass above just wrote. A row inserted weeks ago is exactly the one whose
         //    horizon has now closed, and a row inserted a moment ago may be one too.
         StoredLossClass[] waiting =
-            [.. LossClassReader.All(connection, sessionDate).Where(l => l.AwaitsItsHorizon)];
+            [.. LossClassReader.All(connection, sessionDate, _options.SessionZone).Where(l => l.AwaitsItsHorizon)];
 
         using SqliteTransaction aftermaths = connection.BeginTransaction();
 
         foreach (StoredLossClass row in waiting)
         {
-            Place(aftermaths, connection, row, sessionDate, observedAt, tally);
+            Place(aftermaths, connection, row, sessionDate, observedAt, tally, _options.SessionZone);
         }
 
         aftermaths.Commit();
 
         // Counted after both passes and read from the store rather than derived, because a row this
         // run inserted and did not place is one still waiting and a row it placed is not.
-        tally.AwaitingAftermath = LossClassReader.All(connection, sessionDate).Count(l => l.AwaitsItsHorizon);
+        tally.AwaitingAftermath = LossClassReader.All(connection, sessionDate, _options.SessionZone).Count(l => l.AwaitsItsHorizon);
 
         return Complete(connection, run, sessionDate, tally, RunOutcome.Clean, null, observedAt);
     }
@@ -237,9 +237,9 @@ public sealed class LossClassifier
         StoredLossClass row,
         DateOnly sessionDate,
         DateTimeOffset observedAt,
-        Tally tally)
+        Tally tally, string sessionZone)
     {
-        StoredTradePlan? plan = PlanBehind(connection, row.SetupId, sessionDate);
+        StoredTradePlan? plan = PlanBehind(connection, row.SetupId, sessionDate, sessionZone);
 
         if (plan is null)
         {
@@ -252,14 +252,14 @@ public sealed class LossClassifier
         // for, and no calendar is authored here). The trigger's own session is in the count, so
         // eleven is ten having passed.
         int sessions = DailyBarReader.SessionsBetween(
-            connection, row.Ticker, plan.LiveSession, sessionDate, sessionDate);
+            connection, row.Ticker, plan.LiveSession, sessionDate, sessionDate, sessionZone);
 
         if (sessions <= HorizonDays)
         {
             return;
         }
 
-        AftermathFigures figures = FiguresFromTheTrigger(connection, row, plan, sessions, sessionDate);
+        AftermathFigures figures = FiguresFromTheTrigger(connection, row, plan, sessions, sessionDate, sessionZone);
 
         if (figures.Offered is decimal signed)
         {
@@ -322,11 +322,11 @@ public sealed class LossClassifier
         StoredLossClass row,
         StoredTradePlan plan,
         int sessionsFromTheTrigger,
-        DateOnly asOf)
+        DateOnly asOf, string sessionZone)
     {
         // The newest `sessionsFromTheTrigger` bars at or before the as-of are exactly the trigger
         // session and everything after it, because that count was taken between the two dates.
-        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, row.Ticker, asOf, sessionsFromTheTrigger);
+        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, row.Ticker, asOf, sessionsFromTheTrigger, sessionZone);
 
         StoredDailyBar? triggerSession = bars.FirstOrDefault(b => b.BarDate == plan.LiveSession);
         StoredDailyBar[] after = [.. bars.Where(b => b.BarDate > plan.LiveSession)];
@@ -348,7 +348,7 @@ public sealed class LossClassifier
 
         // The trade this row explains, read on the same bound as everything else here. It closed in
         // `closed_session`, which is at or before the as-of, so its bar is in the set already read.
-        StoredTrade? trade = TradeReader.ClosedIn(connection, row.ClosedSession, asOf)
+        StoredTrade? trade = TradeReader.ClosedIn(connection, row.ClosedSession, asOf, sessionZone)
             .FirstOrDefault(t => string.Equals(t.TradeId, row.TradeId, StringComparison.Ordinal));
         StoredDailyBar? closedSession = bars.FirstOrDefault(b => b.BarDate == row.ClosedSession);
 
@@ -427,9 +427,9 @@ public sealed class LossClassifier
     /// keyed on the setup, so the bound will rarely exclude anything, and a read that trusted that
     /// would stop being point-in-time the day a backfill existed.
     /// </summary>
-    private static StoredTradePlan? PlanBehind(SqliteConnection connection, string setupId, DateOnly asOf)
+    private static StoredTradePlan? PlanBehind(SqliteConnection connection, string setupId, DateOnly asOf, string sessionZone)
     {
-        IReadOnlyList<StoredTradePlan> plans = TradePlanReader.ForSetups(connection, [setupId], asOf);
+        IReadOnlyList<StoredTradePlan> plans = TradePlanReader.ForSetups(connection, [setupId], asOf, sessionZone);
 
         return plans.Count == 0 ? null : plans[0];
     }

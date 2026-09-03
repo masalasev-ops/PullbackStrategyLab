@@ -29,13 +29,13 @@ public sealed class CorporateActionReader
     /// Every action for one ticker effective on or before <paramref name="asOf"/>, as it was
     /// last observed by the end of that date, oldest first.
     /// </summary>
-    public IReadOnlyList<StoredCorporateAction> Read(string ticker, DateOnly asOf)
+    public IReadOnlyList<StoredCorporateAction> Read(string ticker, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, ticker, asOf);
+        return Read(connection, ticker, asOf, sessionZone);
     }
 
-    public static IReadOnlyList<StoredCorporateAction> Read(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static IReadOnlyList<StoredCorporateAction> Read(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -58,7 +58,7 @@ public sealed class CorporateActionReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@observed_before", EndOf(asOf, sessionZone));
 
         return ReadAll(command);
     }
@@ -123,7 +123,7 @@ public sealed class CorporateActionReader
         return actions;
     }
 
-    internal static string EndOf(DateOnly date) => StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
+    internal static string EndOf(DateOnly date, string sessionZone) => StoreText.EndOfSession(date, sessionZone);
 }
 
 /// <summary>
@@ -151,13 +151,13 @@ public sealed class IndicatorRebuildReader
         _connections = connections ?? throw new ArgumentNullException(nameof(connections));
     }
 
-    public IReadOnlyList<RebuildDemand> Open(DateOnly asOf)
+    public IReadOnlyList<RebuildDemand> Open(DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Open(connection, asOf);
+        return Open(connection, asOf, sessionZone);
     }
 
-    public static IReadOnlyList<RebuildDemand> Open(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<RebuildDemand> Open(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -173,7 +173,7 @@ public sealed class IndicatorRebuildReader
                AND (rebuilt_at IS NULL OR rebuilt_at > @observed_before)
              ORDER BY ticker, effective_date, type, observed_at;
             """;
-        command.Parameters.AddWithValue("@observed_before", CorporateActionReader.EndOf(asOf));
+        command.Parameters.AddWithValue("@observed_before", CorporateActionReader.EndOf(asOf, sessionZone));
 
         var demands = new List<RebuildDemand>();
         using SqliteDataReader reader = command.ExecuteReader();
@@ -191,8 +191,8 @@ public sealed class IndicatorRebuildReader
     }
 
     /// <summary>The tickers a calculation must refuse to run for on that date, and nothing else.</summary>
-    public static IReadOnlySet<string> BlockedTickers(SqliteConnection connection, DateOnly asOf) =>
-        Open(connection, asOf).Select(d => d.Ticker).ToHashSet(StringComparer.Ordinal);
+    public static IReadOnlySet<string> BlockedTickers(SqliteConnection connection, DateOnly asOf, string sessionZone) =>
+        Open(connection, asOf, sessionZone).Select(d => d.Ticker).ToHashSet(StringComparer.Ordinal);
 }
 
 /// <summary>

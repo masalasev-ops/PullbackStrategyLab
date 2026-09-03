@@ -83,7 +83,7 @@ public sealed class ControlSampler
     public ControlResult Draw(DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenWrite();
-        var source = new StoredFigures(connection);
+        var source = new StoredFigures(connection, _options.SessionZone);
         return Draw(connection, source, asOf, SubjectTables.Evidence);
     }
 

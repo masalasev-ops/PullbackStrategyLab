@@ -101,7 +101,7 @@ public sealed class ScanEngine
         foreach (string ticker in members)
         {
             IReadOnlyList<StoredDailyBar> bars =
-                DailyBarReader.Read(connection, ticker, asOf, HistorySessions);
+                DailyBarReader.Read(connection, ticker, asOf, HistorySessions, _options.SessionZone);
 
             // The month magnitude needs the whole window and the daily one needs two bars. A name
             // short of either is measured on neither: a scan that quietly ranked a name on a

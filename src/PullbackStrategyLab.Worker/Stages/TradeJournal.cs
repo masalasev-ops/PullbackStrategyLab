@@ -99,7 +99,7 @@ public sealed class TradeJournal
         var tally = new Tally();
 
         StoredPosition[] closed =
-            [.. PositionReader.ClosedIn(connection, sessionDate, sessionDate)
+            [.. PositionReader.ClosedIn(connection, sessionDate, sessionDate, _options.SessionZone)
                 .Where(p => p.ClosedSession is not null)];
 
         tally.ClosedInSession = closed.Length;
@@ -113,7 +113,7 @@ public sealed class TradeJournal
 
         foreach (StoredPosition position in closed)
         {
-            Journal(transaction, connection, position, sessionDate, observedAt, tally);
+            Journal(transaction, connection, position, sessionDate, observedAt, tally, _options.SessionZone);
         }
 
         transaction.Commit();
@@ -127,7 +127,7 @@ public sealed class TradeJournal
         StoredPosition position,
         DateOnly sessionDate,
         DateTimeOffset observedAt,
-        Tally tally)
+        Tally tally, string sessionZone)
     {
         bool isShort = string.Equals(position.Direction, SetupDirection.Short, StringComparison.Ordinal);
 
@@ -140,7 +140,7 @@ public sealed class TradeJournal
         // which reads as a trade that never existed rather than as a series the fetch has not
         // reached, and the two are different findings.
         int heldSessions = Math.Max(1, DailyBarReader.SessionsBetween(
-            connection, position.Ticker, position.OpenedSession, position.ClosedSession.Value, sessionDate));
+            connection, position.Ticker, position.OpenedSession, position.ClosedSession.Value, sessionDate, sessionZone));
 
         decimal grossPnl = position.RealisedPnl!.Value;
         decimal? borrow = isShort
@@ -157,7 +157,7 @@ public sealed class TradeJournal
         // reconsidering it, and this is the size of that on each trade.
         int? waited = position.ExitArmedSession is DateOnly armed
             ? Math.Max(0, DailyBarReader.SessionsBetween(
-                connection, position.Ticker, armed, position.ClosedSession.Value, sessionDate) - 1)
+                connection, position.Ticker, armed, position.ClosedSession.Value, sessionDate, sessionZone) - 1)
             : null;
 
         using SqliteCommand command = transaction.Connection!.CreateCommand();

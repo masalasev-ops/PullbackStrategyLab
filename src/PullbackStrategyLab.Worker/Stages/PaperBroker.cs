@@ -120,11 +120,11 @@ public sealed class PaperBroker
         // The book coming into the session, reported and not walked. It is what the caps saw at
         // 21:10 and it belongs on the night's row; nothing here can change it, because a position
         // opened before this session ends by a rule this stage does not run.
-        tally.OpenAtStart = PositionReader.OpenComingInto(connection, sessionDate, sessionDate)
+        tally.OpenAtStart = PositionReader.OpenComingInto(connection, sessionDate, sessionDate, _options.SessionZone)
             .Count(p => p.ClosedSession is null);
 
         StoredTradeOrder[] placed =
-            [.. TradeOrderReader.ForLiveSession(connection, sessionDate, sessionDate)
+            [.. TradeOrderReader.ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
                 .Where(o => string.Equals(o.Status, "placed", StringComparison.Ordinal))];
 
         tally.OrdersPlaced = placed.Length;
@@ -137,13 +137,13 @@ public sealed class PaperBroker
         // Fail-closed on a session nobody sampled, and it is a run outcome rather than an exception.
         // A fill charged no slippage on a session nobody measured is the silently wrong result, and
         // a stage that threw would leave the night with no row saying why.
-        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, sessionDate, sessionDate);
+        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, sessionDate, sessionDate, _options.SessionZone);
 
         string[] names =
             [.. placed.Select(o => o.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, [.. placed.Select(o => o.SetupId)], sessionDate)
+            .ForSetups(connection, [.. placed.Select(o => o.SetupId)], sessionDate, _options.SessionZone)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         if (sampling.IsUnsampled)
@@ -167,11 +167,11 @@ public sealed class PaperBroker
         Dictionary<string, QuotedSpread?> quotes = names.ToDictionary(
             name => name,
             name => SpreadCharge.Widest(
-                SpreadSnapshotReader.Read(connection, name, sessionDate, sessionDate).Usable
+                SpreadSnapshotReader.Read(connection, name, sessionDate, sessionDate, _options.SessionZone).Usable
                     .Select(s => new QuotedSpread(s.Pass, s.SpreadBasisPoints!.Value, s.QuoteLagSeconds, s.StraddleSeconds))),
             StringComparer.Ordinal);
 
-        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate);
+        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate, _options.SessionZone);
 
         Dictionary<DateTimeOffset, List<StoredTradeOrder>> byMinute = placed
             .GroupBy(o => o.TriggeredAt)

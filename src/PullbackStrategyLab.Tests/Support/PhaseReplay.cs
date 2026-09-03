@@ -730,7 +730,7 @@ public sealed class PhaseReplay : IDisposable
         // complete, and it is not unsampled: three booleans that are the whole of the three cases.
         using (SqliteConnection sampled = _connections.OpenReadOnly())
         {
-            SessionSampling sampling = SpreadSnapshotReader.SamplingOf(sampled, AsOf, AsOf);
+            SessionSampling sampling = SpreadSnapshotReader.SamplingOf(sampled, AsOf, AsOf, SessionBoundaries.UsEquities);
             Record("spread.passesRecorded", sampling.Passes.Count);
             Record("spread.sessionIsUnsampled", sampling.IsUnsampled ? 1 : 0);
             Record("spread.sessionIsDegraded", sampling.IsDegraded ? 1 : 0);
@@ -805,7 +805,7 @@ public sealed class PhaseReplay : IDisposable
         //      that reads `trade`, `plan_audit` and `loss_class` together. `slotsTheCapsCouldNotSee`
         //      is the one figure it derives rather than carries: a sum over every `manage_run` the
         //      store holds, and the size of the approximation the caps make.
-        JournalResponse journal = LabJournal.Read(_connections, AsOf);
+        JournalResponse journal = LabJournal.Read(_connections, AsOf, SessionBoundaries.UsEquities);
 
         Record("journal.longTrades", journal.Long.Count);
         Record("journal.shortTrades", journal.Short.Count);
@@ -945,7 +945,7 @@ public sealed class PhaseReplay : IDisposable
 
         foreach (string symbol in _options.Value.IndexSymbols.Order(StringComparer.Ordinal))
         {
-            IReadOnlyList<StoredDailyBar> history = IndexBarReader.Read(connection, symbol, AsOf, int.MaxValue);
+            IReadOnlyList<StoredDailyBar> history = IndexBarReader.Read(connection, symbol, AsOf, int.MaxValue, SessionBoundaries.UsEquities);
 
             if (history.Count == 0)
             {
@@ -1678,7 +1678,7 @@ public sealed class PhaseReplay : IDisposable
 
         foreach (string scan in ScanEngine.Scans)
         {
-            IReadOnlyList<StoredScanHit> hits = ScanHitReader.Read(connection, AsOf, scan);
+            IReadOnlyList<StoredScanHit> hits = ScanHitReader.Read(connection, AsOf, scan, SessionBoundaries.UsEquities);
             figures.Add(new Measurement($"scan.{scan}.hits", hits.Count.ToString(CultureInfo.InvariantCulture)));
 
             // The top few by name and by the magnitude they were ranked on, rather than a count.
@@ -1728,7 +1728,7 @@ public sealed class PhaseReplay : IDisposable
             // would be a test of the test; what is authored here is the trigger and the stop, which
             // is the part a detector cannot supply for a name that has not pulled back.
             LongPullbackRules.LongEvidence? evidence =
-                LongSetupDetector.Evidence(connection, AuthoredSetupTicker, AsOf);
+                LongSetupDetector.Evidence(connection, AuthoredSetupTicker, AsOf, SessionBoundaries.UsEquities);
 
             IReadOnlyList<CheckResult> results = evidence is null
                 ? []
@@ -1771,7 +1771,7 @@ public sealed class PhaseReplay : IDisposable
         using SqliteConnection connection = _connections.OpenReadOnly();
         var figures = new List<Measurement>();
 
-        IReadOnlyList<StoredSetupSignal> frozen = SetupSignalReader.Read(connection, AsOf);
+        IReadOnlyList<StoredSetupSignal> frozen = SetupSignalReader.Read(connection, AsOf, SessionBoundaries.UsEquities);
 
         foreach (StoredSetupSignal signal in frozen.OrderBy(s => s.SignalName, StringComparer.Ordinal))
         {
@@ -1886,7 +1886,7 @@ public sealed class PhaseReplay : IDisposable
         foreach (string ticker in FixtureTickers.All.Order(StringComparer.Ordinal))
         {
             IReadOnlyList<StoredDailyBar> window =
-                DailyBarReader.Read(connection, ticker, AsOf, floors.LiquidityWindowSessions);
+                DailyBarReader.Read(connection, ticker, AsOf, floors.LiquidityWindowSessions, SessionBoundaries.UsEquities);
 
             if (window.Count < floors.LiquidityWindowSessions)
             {
@@ -1926,7 +1926,7 @@ public sealed class PhaseReplay : IDisposable
         foreach (string tracker in _options.Value.IndexSymbols.Order(StringComparer.Ordinal))
         {
             IReadOnlyList<StoredDailyBar> window =
-                IndexBarReader.Read(connection, tracker, AsOf, floors.LiquidityWindowSessions);
+                IndexBarReader.Read(connection, tracker, AsOf, floors.LiquidityWindowSessions, SessionBoundaries.UsEquities);
 
             if (window.Count < floors.LiquidityWindowSessions)
             {
@@ -2023,7 +2023,7 @@ public sealed class PhaseReplay : IDisposable
     {
         const string Ticker = "IESC";
 
-        ChartResponse chart = LabChart.Read(_connections, Ticker, AsOf, ChartSessions, _clock.UtcNow);
+        ChartResponse chart = LabChart.Read(_connections, Ticker, AsOf, ChartSessions, _clock.UtcNow, SessionBoundaries.UsEquities);
 
         decimal Drawn(string name) => chart.Averages.Single(a => a.Name == name).Values[^1]
             ?? throw new InvalidOperationException($"{name} has no value at the last drawn session.");
@@ -2057,7 +2057,7 @@ public sealed class PhaseReplay : IDisposable
     /// </summary>
     private IReadOnlyList<Measurement> GalleryFigures()
     {
-        SetupsResponse night = new LabSetups(_connections).Read(AsOf, _clock.UtcNow);
+        SetupsResponse night = new LabSetups(_connections).Read(AsOf, _clock.UtcNow, SessionBoundaries.UsEquities);
 
         SetupView[] all = [.. night.Long, .. night.Short];
         int looked = all.Count(s => s.Agreement is not null);
@@ -2433,7 +2433,7 @@ public sealed class PhaseReplay : IDisposable
 
         using SqliteConnection read = _connections.OpenReadOnly();
 
-        IReadOnlyList<StoredDailyBar> onTheNight = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1);
+        IReadOnlyList<StoredDailyBar> onTheNight = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1, SessionBoundaries.UsEquities);
         IReadOnlyList<StoredDailyBar> later = DailyBarReader.Read(read, CorrectedTicker, AsOf, 1, afterwards);
 
         return

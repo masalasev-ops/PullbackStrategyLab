@@ -843,13 +843,13 @@ public sealed class PositionManagerTests : IDisposable
     private IReadOnlyList<StoredPosition> Positions(DateOnly openedSession, DateOnly? asOf = null)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? ThirdSession);
+        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredFill> Fills(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.FillsOf(connection, session, ThirdSession);
+        return PositionReader.FillsOf(connection, session, ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private static string SetupIdOf(string ticker, string direction, DateOnly evening) =>

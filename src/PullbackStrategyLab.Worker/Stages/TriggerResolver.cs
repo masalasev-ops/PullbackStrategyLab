@@ -130,7 +130,7 @@ public sealed class TriggerResolver
         // What was resting when this session opened, which is the question `live_session` was stored
         // to answer rather than one derived by stepping a calendar back over a weekend.
         IReadOnlyList<StoredTradePlan> plans =
-            TradePlanReader.ForLiveSession(connection, sessionDate, sessionDate);
+            TradePlanReader.ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone);
 
         if (plans.Count == 0)
         {
@@ -162,7 +162,7 @@ public sealed class TriggerResolver
         }
 
         string[] names = [.. plans.Select(p => p.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
-        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate);
+        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate, _options.SessionZone);
 
         var touchedAt = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
         var minutesOf = new Dictionary<string, int>(StringComparer.Ordinal);

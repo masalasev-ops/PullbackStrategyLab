@@ -130,7 +130,7 @@ public sealed class PositionManager
         var tally = new Tally();
 
         StoredPosition[] open =
-            [.. PositionReader.OpenDuring(connection, sessionDate, sessionDate)
+            [.. PositionReader.OpenDuring(connection, sessionDate, sessionDate, _options.SessionZone)
                 .Where(p => string.Equals(p.Status, PositionStatus.Open, StringComparison.Ordinal))];
 
         tally.OpenAtStart = open.Length;
@@ -143,13 +143,13 @@ public sealed class PositionManager
         }
 
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, [.. open.Select(p => p.SetupId)], sessionDate)
+            .ForSetups(connection, [.. open.Select(p => p.SetupId)], sessionDate, _options.SessionZone)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         string[] names =
             [.. open.Select(p => p.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
-        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, sessionDate, sessionDate);
+        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, sessionDate, sessionDate, _options.SessionZone);
 
         if (sampling.IsUnsampled)
         {
@@ -165,7 +165,7 @@ public sealed class PositionManager
         Dictionary<string, QuotedSpread?> quotes = names.ToDictionary(
             name => name,
             name => SpreadCharge.Widest(
-                SpreadSnapshotReader.Read(connection, name, sessionDate, sessionDate).Usable
+                SpreadSnapshotReader.Read(connection, name, sessionDate, sessionDate, _options.SessionZone).Usable
                     .Select(s => new QuotedSpread(s.Pass, s.SpreadBasisPoints!.Value, s.QuoteLagSeconds, s.StraddleSeconds))),
             StringComparer.Ordinal);
 
@@ -175,10 +175,10 @@ public sealed class PositionManager
         // measured against an average computed from the 16:00 close.
         Dictionary<string, Reclaim?> reclaimAgainst = names.ToDictionary(
             name => name,
-            name => ReclaimLevelOf(connection, name, sessionDate),
+            name => ReclaimLevelOf(connection, name, sessionDate, _options.SessionZone),
             StringComparer.Ordinal);
 
-        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate);
+        SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate, _options.SessionZone);
 
         List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.SetupId], sessionDate))];
         var writes = new List<Action<SqliteTransaction>>();
@@ -210,7 +210,7 @@ public sealed class PositionManager
                 // is the next price after the close and the same mechanic the trail takes from the
                 // daily series.
                 if (ClosedTheHourAboveTheAverage(
-                        ticker, traded, sessionDate, hourOf, lastBarOfHour, reclaimAgainst[ticker]))
+                        ticker, traded, sessionDate, hourOf, lastBarOfHour, reclaimAgainst[ticker], _options.SessionZone))
                 {
                     reclaimedNow.Add(ticker);
                 }
@@ -273,7 +273,7 @@ public sealed class PositionManager
         // exited at and arming it would leave an instruction against a closed row.
         foreach (Holding holding in live.Where(h => !h.IsClosed && h.IsLong && h.ArmedReason is null))
         {
-            if (!ArmTheTrail(connection, holding, sessionDate))
+            if (!ArmTheTrail(connection, holding, sessionDate, _options.SessionZone))
             {
                 continue;
             }
@@ -361,9 +361,9 @@ public sealed class PositionManager
         DateOnly sessionDate,
         Dictionary<string, int?> hourOf,
         Dictionary<string, StoredIntradayBar> lastBarOfHour,
-        Reclaim? against)
+        Reclaim? against, string sessionZone)
     {
-        int? hour = HourlyGrid.BarIndexOf(bar.OpenedAt, sessionDate, SessionBoundaries.UsEquities);
+        int? hour = HourlyGrid.BarIndexOf(bar.OpenedAt, sessionDate, sessionZone);
 
         bool reclaimed = hourOf.TryGetValue(ticker, out int? previous)
             && previous is not null
@@ -387,10 +387,10 @@ public sealed class PositionManager
     /// refusal <c>reached-ceiling</c> already carries one level up.
     /// see: A gate handed an absent or degenerate quantity fails rather than passing
     /// </summary>
-    private static Reclaim? ReclaimLevelOf(SqliteConnection connection, string ticker, DateOnly sessionDate)
+    private static Reclaim? ReclaimLevelOf(SqliteConnection connection, string ticker, DateOnly sessionDate, string sessionZone)
     {
         StoredIndicators? indicators =
-            IndicatorDailyReader.LatestBefore(connection, ticker, sessionDate, sessionDate);
+            IndicatorDailyReader.LatestBefore(connection, ticker, sessionDate, sessionDate, sessionZone);
 
         if (indicators is null)
         {
@@ -401,7 +401,7 @@ public sealed class PositionManager
             connection,
             ticker,
             indicators.AsOf,
-            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(sessionDate, SessionBoundaries.UsEquities)));
+            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(sessionDate, sessionZone)));
 
         return bar is null
             ? null
@@ -411,16 +411,16 @@ public sealed class PositionManager
     }
 
     /// <summary>Whether this session's close arms the long trail, read on the adjusted basis at both ends.</summary>
-    private static bool ArmTheTrail(SqliteConnection connection, Holding holding, DateOnly sessionDate)
+    private static bool ArmTheTrail(SqliteConnection connection, Holding holding, DateOnly sessionDate, string sessionZone)
     {
         StoredIndicators? indicators =
-            IndicatorDailyReader.Read(connection, holding.Ticker, sessionDate, sessionDate);
+            IndicatorDailyReader.Read(connection, holding.Ticker, sessionDate, sessionDate, sessionZone);
 
         StoredDailyBar? bar = DailyBarReader.Latest(
             connection,
             holding.Ticker,
             sessionDate,
-            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(sessionDate, SessionBoundaries.UsEquities)));
+            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(sessionDate, sessionZone)));
 
         return indicators is not null
             && bar is not null

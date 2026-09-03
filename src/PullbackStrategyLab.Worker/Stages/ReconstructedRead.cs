@@ -132,7 +132,7 @@ public sealed class ReconstructedRead
                     connection, ticker, session, LongSetupDetector.HistorySessions, observedBefore);
             }
 
-            source.Rank(session, windows);
+            source.Rank(session, windows, _options.SessionZone);
 
             if (!inRange.Contains(session))
             {

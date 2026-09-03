@@ -190,7 +190,7 @@ public sealed class VwapEngine
         {
             asked++;
 
-            if (PriceAnchor(connection, transaction, row, pairing, observedAt))
+            if (PriceAnchor(connection, transaction, row, pairing, observedAt, _options.SessionZone))
             {
                 anchored++;
             }
@@ -225,7 +225,7 @@ public sealed class VwapEngine
         SqliteTransaction transaction,
         ShortSetupRow row,
         IntradayFetcher.Pairing pairing,
-        DateTimeOffset observedAt)
+        DateTimeOffset observedAt, string sessionZone)
     {
         if (row.ThrustScan is null || row.ThrustSession is not DateOnly thrustSession)
         {
@@ -234,7 +234,7 @@ public sealed class VwapEngine
         }
 
         IReadOnlyList<StoredDailyBar> daily = DailyBarReader.Read(
-            connection, row.Ticker, pairing.SetupAsOf, ShortSetupDetector.HistorySessions);
+            connection, row.Ticker, pairing.SetupAsOf, ShortSetupDetector.HistorySessions, sessionZone);
 
         if (ShortSetupDetector.AnchorSessionOf(daily, row.ThrustScan, thrustSession) is not DateOnly anchorSession)
         {
@@ -249,10 +249,10 @@ public sealed class VwapEngine
         var minutes = new List<VolumeWeightedAverage.Minute>();
         DateTimeOffset? anchorAt = null;
 
-        foreach (DateOnly session in SessionsWithBars(connection, transaction, row.Ticker, anchorSession, pairing.SessionDate))
+        foreach (DateOnly session in SessionsWithBars(connection, transaction, row.Ticker, anchorSession, pairing.SessionDate, sessionZone))
         {
             IReadOnlyList<StoredIntradayBar> bars = IntradayBarReader.Read(
-                connection, row.Ticker, session, pairing.SessionDate, regularOnly: true);
+                connection, row.Ticker, session, pairing.SessionDate, sessionZone, regularOnly: true);
 
             if (session == anchorSession)
             {
@@ -308,7 +308,7 @@ public sealed class VwapEngine
     /// bars contributes nothing and is not a gap anybody has to classify.
     /// </summary>
     private static IReadOnlyList<DateOnly> SessionsWithBars(
-        SqliteConnection connection, SqliteTransaction transaction, string ticker, DateOnly from, DateOnly to)
+        SqliteConnection connection, SqliteTransaction transaction, string ticker, DateOnly from, DateOnly to, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -324,7 +324,7 @@ public sealed class VwapEngine
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(to, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(to, sessionZone));
 
         var sessions = new List<DateOnly>();
         using SqliteDataReader reader = command.ExecuteReader();

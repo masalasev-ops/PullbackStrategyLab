@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Measurement;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -192,7 +193,7 @@ public sealed class TightDrawDiagnosisTests : IDisposable
 
         using (SqliteConnection connection = _connections.OpenWrite())
         {
-            var source = new StoredFigures(connection);
+            var source = new StoredFigures(connection, SessionBoundaries.UsEquities);
 
             foreach (DateOnly session in new[] { SameMoodEarlier, OtherMoodEarlier, Tonight })
             {

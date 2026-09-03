@@ -14321,3 +14321,43 @@ Carried:    **One row discharged on its visible half, nothing raised, and one qu
             The question of replacing a control whose series ended is put to the operator in this
             run's report with the figure, and is not opened as a row, because opening one is the
             sitting's act and not a build session's.
+
+## 5.8 — 2026-09-03 — phase-5-8-session-zone — the pile, part ten: every store reader takes the zone it bounds in, and none names a constant
+
+Not a checkpoint entry. The tenth part of the repair pile, and the last of the stored-figure
+group. Population: **the store readers under `PullbackStrategyLab.Data` on 2026-09-03, being
+thirty files of which sixteen named the session zone constant in twenty-two public methods
+at twenty-five sites; the nine shipped sites outside them, six in worker stages, two in the API
+and the option's own default; and the suite's call sites, which the compiler enumerated**. The row
+measured nine methods, five readers and sixty-six call sites at 3.9; the readers phase 4 added
+more than doubled it.
+
+Built:      **The zone is a parameter on every reader that computes a bound, and no reader names
+            the constant.** The threading was driven by the compiler rather than by a list: the
+            constant was removed from the readers, every signature the compiler then wanted gained
+            `string sessionZone`, and every caller it then wanted passed the configured zone, being
+            `_options.SessionZone` in a stage, the endpoint's configuration in the API, a threaded
+            parameter in a static helper, and the constant in the suite, whose configured zone the
+            constant is. The stored-figures seam takes the zone once at construction, on the same
+            grounds it takes the connection once. The six worker sites and two API sites that named
+            the constant beside the readers went the same way. `point-in-time` gains a fourth half:
+            no store reader names the constant, scanned over the reader files and backed by a test.
+
+Verified:   **One bar, two zones, two answers.** A bar observed at 21:30Z on its own date is inside
+            the session when the reader is given Eastern time, whose day ends at 04:00Z the next
+            morning, and after it when given Tokyo, whose day ended at 15:00Z; a reader that named
+            a constant would give the Eastern answer to both. That is the behavioural backing the
+            scan declares. Every other test in the suite passed unchanged apart from the arguments
+            they now pass, because the zone passed is the zone the constant was. No expectation
+            moved and the phase report's expected move was stated in advance as nought.
+            `tools/ci.ps1` green on Windows, **31 steps, 953 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,527 with 0 unexamined; 1,459 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.9 leaves the table with this
+            commit. The table reads twenty-nine; four due before the freeze, all at 5.8, and none
+            of them a repair to a stored figure: the claim-register sweep, the source-scan
+            assertions, the two screens and the two cap readers. The operator's eight, unchanged.
+            Nothing this part touched is an input to the minimum sample's derivation: the zone
+            passed everywhere is the zone every bound was already computed in, and no value on any
+            row or figure changed. Next are the two screens that publish a plan's prices, raised at
+            4.13.

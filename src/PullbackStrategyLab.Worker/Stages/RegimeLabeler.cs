@@ -91,7 +91,7 @@ public sealed class RegimeLabeler
 
         foreach (string symbol in _options.IndexSymbols)
         {
-            IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(connection, symbol, asOf, HistorySessions);
+            IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(connection, symbol, asOf, HistorySessions, _options.SessionZone);
 
             trackers.Add(new MarketMood.Tracker(
                 [.. bars.Select(b => b.AdjustedClose)],
