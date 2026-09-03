@@ -2031,6 +2031,22 @@
       "note": "Evidence rows written with no excursions and the reason beside them, which until 5.8 were written as nought and could not be told from a path that never moved. A structural nought over this fixture rather than a measurement of the repair, which the filler's own test carries over an authored subject with no range; the day this moves, a subject the lab flagged had no ATR on its own session and the row says so"
     },
     {
+      "id": "forward.setupHorizonsCannotClose",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "5.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed inputs: the fixture holds one captured market day and the store it builds holds no session after any subject's own, so no horizon is one the market has reached, and a horizon the market has not reached is not yet elapsed rather than unable to close.",
+      "note": "Setup horizons the market has reached and the subject's own series has not, which until 5.8 were counted as not yet elapsed and contributed nothing while reading as waiting. A structural nought over this fixture; the case is carried by the filler's own test over a control whose series stops four sessions in while the market runs twenty"
+    },
+    {
+      "id": "forward.controlHorizonsCannotClose",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "5.8",
+      "producedBy": "predicted before the replay was run, then run. Derived on the same grounds as the setup figure: no session after any control's own is in the store, so nothing has been reached.",
+      "note": "The same figure over the controls, counted apart because the two are different populations. Over the reconstructed read of 2026-08-31, re-run on a copy at 5.8, this is 2,504 of 175,090, which is the figure the operator is asked to rule on"
+    },
+    {
       "id": "forward.long-across-a-split.h1.actualDate",
       "tier": "DERIVED",
       "value": "2026-08-11",

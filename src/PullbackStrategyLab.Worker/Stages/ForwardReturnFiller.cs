@@ -100,6 +100,10 @@ public sealed class ForwardReturnFiller
             $"{Name}: {result.ExcursionsUndefined} written with no excursions, the subject having no range on its "
             + "own session, and the reason on the row");
         Console.WriteLine(
+            $"{Name}: {result.SetupHorizonsCannotClose} setup and {result.ControlHorizonsCannotClose} control "
+            + "horizon(s) can never close, the market having reached them and the subject's own series not, "
+            + "which is not the same as not yet elapsed");
+        Console.WriteLine(
             $"{Name}: {result.WithoutABarOnTheirOwnSession} skipped for having no bar on their own session");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
 
@@ -141,6 +145,9 @@ public sealed class ForwardReturnFiller
         int controlsLaterThanTheCalendarStep = 0;
         int withoutABarOnTheirOwnSession = 0;
         int excursionsUndefined = 0;
+        int setupHorizonsCannotClose = 0;
+        int controlHorizonsCannotClose = 0;
+        var sessionsAfter = new Dictionary<DateOnly, int>();
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
@@ -171,13 +178,24 @@ public sealed class ForwardReturnFiller
 
                     if (outcome is null)
                     {
+                        // <b>Two states that were one counter until 5.8.</b> A horizon that has not
+                        // elapsed is one the store holds too few sessions after the subject's own to
+                        // reach, on any name; a horizon that can never close is one the store holds
+                        // enough sessions for and the subject's own series has none of them, which is
+                        // a name halted for a run of sessions, dropped from the universe, or delisted
+                        // since. The second contributed nothing to its subject's control mean while
+                        // reading as waiting, so a comparison that had narrowed said nothing. Counted
+                        // apart and written nowhere: an outcome the lab cannot measure is not a row.
+                        bool cannotClose = path.Count - 1 < horizon
+                            && SessionsHeldAfter(connection, subject.AsOf, asOf, filledAt, sessionsAfter) >= horizon;
+
                         if (isControl)
                         {
-                            controlHorizonsNotYetElapsed++;
+                            if (cannotClose) { controlHorizonsCannotClose++; } else { controlHorizonsNotYetElapsed++; }
                         }
                         else
                         {
-                            notYetElapsed++;
+                            if (cannotClose) { setupHorizonsCannotClose++; } else { notYetElapsed++; }
                         }
 
                         continue;
@@ -235,7 +253,42 @@ public sealed class ForwardReturnFiller
             controls.Count, controlsWritten, controlHorizonsNotYetElapsed,
             withoutABarOnTheirOwnSession,
             summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean,
-            excursionsUndefined, controlsLaterThanTheCalendarStep);
+            excursionsUndefined, controlsLaterThanTheCalendarStep,
+            setupHorizonsCannotClose, controlHorizonsCannotClose);
+    }
+
+    /// <summary>
+    /// How many sessions the store holds after <paramref name="session"/> and at or before the
+    /// fill's own date, on any name, as the fill could know them, read once per session and kept.
+    ///
+    /// The market's own count of sessions, against which a subject's series is short or not: a
+    /// horizon the market has reached and the subject has not is one the subject can never close.
+    /// Bounded on the fill's date as the subject's own path is, so a fill run for an earlier date
+    /// does not read the sessions after it as reached.
+    /// </summary>
+    private static int SessionsHeldAfter(
+        SqliteConnection connection, DateOnly session, DateOnly asOf, DateTimeOffset filledAt, Dictionary<DateOnly, int> kept)
+    {
+        if (kept.TryGetValue(session, out int held))
+        {
+            return held;
+        }
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(DISTINCT bar_date)
+              FROM daily_bar
+             WHERE bar_date > @session
+               AND bar_date <= @to
+               AND observed_at <= @filled_at
+            """;
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+        command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
+
+        held = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        kept[session] = held;
+        return held;
     }
 
     /// <summary>
@@ -586,4 +639,6 @@ public sealed record FillResult(
     int CallsUsed,
     RunOutcome Outcome,
     int ExcursionsUndefined = 0,
-    int ControlsLaterThanTheCalendarStep = 0);
+    int ControlsLaterThanTheCalendarStep = 0,
+    int SetupHorizonsCannotClose = 0,
+    int ControlHorizonsCannotClose = 0);
