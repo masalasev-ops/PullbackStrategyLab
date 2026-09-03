@@ -14557,3 +14557,103 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.12 leave
             commit is. Turning 60 recorded gaps into 60 rows would be the sweep proposing itself
             again at a larger size, which is the shape that moved this row four times. They are
             counted on every run and the count falls as verdicts widen.
+
+## 5.8 — 2026-09-03 — phase-5-8-source-scans — the pile, part fourteen: a scan written outside a check declares what backs it, and the pile before the freeze is empty
+
+Not a checkpoint entry. The fourteenth part of the repair pile and the second of the two sweeps, the
+2.11 obligation discharged, and with it **the last row due before the freeze**. Population, derived
+before the run: **ten suite files making a source-scan assertion outside a check**, and **six
+unbacked scans inside checks**. The row priced these at eleven and two on 2026-09-02, and both
+figures had moved: one of the eleven stopped scanning, and the two inside checks are six, being
+`changelog-reconciles`, `coverage-reported`, `path-casing`, `price-storage-form`, `slot-diagnostics`
+and `slot-roster`. The six are reported and are not what this row owed.
+
+Built:      **`fixtures/source-scans.json`, which is the somewhere the row has always said was
+            needed first.** A check declares its scans in its own coverage record; an ordinary test
+            had no such record, so from 3.1 the sweep could see that a file read the shipped source
+            and could not say whether anything ran the code it was reading. Each of the ten now
+            declares what its scan asserts and either the behavioural test that exercises it or, in
+            one line, what would close it.
+
+            **It is a declaration file and not a second harness**, which is what 4.17's row refused
+            when it refused an instrument to watch the instruments. The reconciliation runs in both
+            directions: a file that starts scanning and declares nothing fails, an entry naming a
+            file that no longer scans fails, and a named test has to resolve, on the grounds
+            `decision-resolves` demands an exact name and `Backing.Test` already demands one inside
+            a check.
+
+            **Six of the ten are backed by a behavioural test and four are not**, each of the four
+            saying what would close it. The four are the capper's night-shaped query, which needs
+            two versions in a store and so waits on 5.1; the regime scan, where an absence has no
+            behavioural form and what would close it is the label becoming unreachable rather than
+            merely unused; the immutability wording, whose subject is four documents agreeing and
+            not a code path; and the subject-tables insert, whose behavioural form is
+            `writer-ownership`'s attribution and reaches no table a fixture night does not populate.
+            They are reported as their own scope so the four falling is visible.
+
+Verified:   Five proof tests, four removing one thing the reconciliation guards and one against the
+            committed register and the real suite. `tools/ci.ps1` green on Windows, **31 steps, 968
+            tests**. `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0
+            failed, **23 out of scope**, **0 unexamined**, and no expectation moved.
+
+            **The expected move was stated in advance and was stated against the wrong number.**
+            It read that out of scope would fall to 22, on the reasoning that the item saying these
+            scans were closed by a checkpoint is gone. That item is a coverage item of
+            `coverage-reported`, and the report's out-of-scope figure counts claims. The coverage
+            item did go, replaced by two scopes and a context; the claim count was never going to
+            move. Recorded rather than quietly corrected, because a prediction about the wrong
+            quantity is the fifth failure shape in miniature: the figure was right and the sentence
+            beside it named a different population.
+
+Carried:    **One row discharged, nothing raised, and the count before the freeze reads nought.**
+            The row raised at 2.11 leaves the table with this commit, after moving from 3.1 by way
+            of 4.6, 4.17 and 5.1 to 5.8. The table reads twenty-five; **nought due before the
+            freeze**; the operator's eight, unchanged. Nothing here is an input to the minimum
+            sample's derivation.
+
+            **So 5.1 is reachable and the pile is done.** Fourteen parts, the last two of them the
+            sweeps, and what stood between the build and the freeze is discharged. The freeze itself
+            is 5.1's own deliverable and is the operator's to start.
+
+## 5.8 — 2026-09-03 — phase-5-8-source-scans — the repair pile, landed: fourteen parts, and nothing is due before the freeze
+
+**A checkpoint entry.** 5.8's deliverable is the pile and nothing else, and the pile is empty. The
+fourteen parts are recorded above, each with its own population and its own commit, and this entry
+says the checkpoint is done rather than adding work to it.
+
+**It is recorded here rather than inferred**, which is the whole reason it exists as an entry. The
+fourteen parts each open "Not a checkpoint entry", so nothing in the record said 5.8 had landed, and
+`carried-obligations` found it: the 4.13 entry names 5.8 as a due point, the last row at that due
+point left the table with part fourteen, and the check cannot tell a discharged due point from an
+obligation that never reached the table. The state it was pointing at is real. A checkpoint whose
+every obligation is discharged and whose record says nothing is a checkpoint the next session reads
+as still open.
+
+Built:      **Fourteen parts, in the order the harm runs.** The stored figures first: the mixed
+            cluster column reported as the split it holds, a scoreboard rebuild as a new generation,
+            an unmeasurable excursion as null with its reason, the intended date named as a calendar
+            step with the slip counted per kind, every ratio read through the crossing named for it,
+            a recomputed bound that wrote nothing failing loudly, the dead draw-instant remnant, a
+            name with no bar not drawn as a control, a horizon that can never close counted apart,
+            and the session zone threaded through every reader. Then the two screens that publish a
+            plan's prices, then the two readers of the cap, taken before the sweeps with the reason
+            in their entry. Then the two sweeps: the claim register at part thirteen and the
+            source-scan assertions at part fourteen.
+
+            **Every part landed with the check or the test that would have caught it**, which is what
+            the row asked for, and each named its own population.
+
+Verified:   `tools/ci.ps1` green on Windows, **31 steps, 968 tests**, from 934 when the pile opened.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out
+            of scope, **0 unexamined**. Five DERIVED expectations carry the checkpoint in
+            `fixtures/expectations.json`, so done condition seven is met by derivation rather than
+            by frozen regression.
+
+Carried:    **Nothing raised and nothing left.** The carried obligations table reads twenty-five;
+            **nought due before the freeze**; the operator's eight, unchanged. Both rows that stood
+            between the build and the freeze were discharged on 2026-09-03, the claim-register sweep
+            raised at 3.12 and the source-scan assertions raised at 2.11.
+
+            **What 5.1 waits on is the operator and not the build.** The freeze is 5.1's own
+            deliverable, it writes 1802 into every version's pre-registration, and it is the one act
+            in this phase that cannot be undone.

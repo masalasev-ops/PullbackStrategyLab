@@ -99,8 +99,13 @@
         "checks implemented in the suite": 23,
         "checks tools/ci.* invokes as a named step": 23,
         "files in the suite that read the shipped source": 20,
-        "of those belonging to a check, which declares its scans in its own record": 12
-      }
+        "of those belonging to a check, which declares its scans in its own record": 12,
+        "source-scan assertions made outside a check, each declaring what backs it": 8,
+        "of those a named behavioural test exercises": 6
+      },
+      "context": [
+        "of those nothing exercises, each saying what would close it"
+      ]
     },
     "decision-resolves": {
       "scopes": {
