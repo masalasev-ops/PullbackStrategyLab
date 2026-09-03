@@ -143,6 +143,17 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"\*\*Of the (?<total>[a-z-]+), (?<n>[a-z-]+) (?:is|are) two rows", RegexOptions.CultureInvariant)]
     private static partial Regex SplitSentence();
 
+    /// <summary>The 5.8 row's statement of how many obligations fall due at 5.0, which reads
+    /// "the other one falls" while there is one and "none fall" once there is not.</summary>
+    [GeneratedRegex(@"(?<n>[A-Za-z-]+) falls? due at 5\.0(?![.(\d])", RegexOptions.CultureInvariant)]
+    private static partial Regex DueAtTheOpening();
+
+    /// <summary>The paragraph under the phase 5 table splitting the rows due before the freeze into
+    /// repairs to a frozen figure and the rest, with both counts.</summary>
+    [GeneratedRegex(@"(?<repairs>[A-Za-z-]+) are repairs to stored figures[\s\S]{0,600}?The other (?<rest>[a-z-]+)\s+are not repairs",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex RepairsAndTheRest();
+
     /// <summary>The reading beside the operator's table: how many of its rows are phase 5 questions,
     /// out of how many rows.</summary>
     [GeneratedRegex(@"put here[^*]{0,160}\*\*(?<n>[a-z-]+) of the (?<total>[a-z-]+) rows is a phase 5 question\*\*", RegexOptions.CultureInvariant)]
@@ -454,11 +465,31 @@ public sealed partial class StatedCountsCheck
             InWords(buildPlan, "**The repair pile**, being ", " of the "),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.8", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.8"));
+        // Read as a sentence rather than from between two literals, because the count reached
+        // nought at 5.0(c) and "The other one falls" became "None fall": a number the sentence
+        // states is a number a literal anchor cannot see change shape.
+        Match dueAtTheOpening = DueAtTheOpening().Match(buildPlan);
+        Assert.True(dueAtTheOpening.Success,
+            "BUILD_PLAN.md has no \"<count> fall(s) due at 5.0\" sentence in the 5.8 row.");
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations 5.0 holds",
-            InWords(buildPlan, "The other ", " fall"),
+            FromWordsOrFail(dueAtTheOpening.Groups["n"].Value),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.0", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.0"));
+        // BUILD_PLAN.md, the paragraph splitting the rows due before the freeze into repairs to a
+        // frozen figure and the rest. Both numbers are read and their sum is asserted against the
+        // rows, because the sentence read "fourteen" and "four" from the planning pass until 5.0(c),
+        // summing to eighteen over a set that had been fifteen since 5.0(b): the stale prose count
+        // this check exists for, in a sentence nothing here was reading.
+        Match kinds = RepairsAndTheRest().Match(buildPlan);
+        Assert.True(kinds.Success,
+            "BUILD_PLAN.md has no \"<count> are repairs to stored figures ... The other <count> are not repairs\" "
+            + "paragraph under the phase 5 table.");
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the repairs and the rest before the freeze",
+            FromWordsOrFail(kinds.Groups["repairs"].Value) + FromWordsOrFail(kinds.Groups["rest"].Value),
+            dueBeforeTheFreeze,
+            "rows of the carried obligations table falling due before the freeze, as repairs plus the rest"));
         // BUILD_PLAN.md, the question rows split in two. Both numbers in the sentence are asserted:
         // the total is the count due before the freeze, stated a fourth time here, and the split
         // count is derived from the ruling halves that still name what they were split from. The

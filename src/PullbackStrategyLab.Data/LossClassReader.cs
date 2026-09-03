@@ -24,7 +24,7 @@ public sealed class LossClassReader
     private const string Columns = """
         trade_id, setup_id, ticker, direction, closed_session, net_pnl, result_r, mechanism,
         exit_basis, aftermath, forward_return_signed, one_r_in_return, aftermath_because,
-        observed_at, aftermath_observed_at
+        observed_at, aftermath_observed_at, exit_return_signed
         """;
 
     private readonly StoreConnectionFactory _connections;
@@ -175,7 +175,10 @@ public sealed class LossClassReader
                 aftermathIsVisible && !reader.IsDBNull(11) ? StoreText.StorageTextToPrice(reader.GetString(11)) : null,
                 aftermathIsVisible && !reader.IsDBNull(12) ? reader.GetString(12) : null,
                 StoreText.StorageTextToTimestamp(reader.GetString(13)),
-                aftermathIsVisible ? aftermathAt : null));
+                aftermathIsVisible ? aftermathAt : null,
+                // The second figure arrives with the aftermath and is hidden on the same stamp, so
+                // a replay standing between the close and the horizon sees neither half of the pair.
+                aftermathIsVisible && !reader.IsDBNull(15) ? StoreText.StorageTextToPrice(reader.GetString(15)) : null));
         }
 
         return rows;
@@ -188,6 +191,12 @@ public sealed class LossClassReader
 /// <see cref="Aftermath"/> null means the horizon has not closed for this row as far as the as-of
 /// could know. It is not the same as <c>unclassified</c>, which is the horizon having closed and the
 /// figure being absent.
+///
+/// <b>Two aftermath figures, named apart.</b> <see cref="ForwardReturnSigned"/> is what the day
+/// offered, from the trigger to the close of the tenth session after the trigger's;
+/// <see cref="ExitReturnSigned"/> is what the trade earned, from the trigger to the exit fill. The
+/// gap between them is what the trail rule is judged on, and neither replaces the other.
+/// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
 /// </summary>
 public sealed record StoredLossClass(
     string TradeId,
@@ -204,7 +213,8 @@ public sealed record StoredLossClass(
     decimal? OneRInReturn,
     string? AftermathBecause,
     DateTimeOffset ObservedAt,
-    DateTimeOffset? AftermathObservedAt)
+    DateTimeOffset? AftermathObservedAt,
+    decimal? ExitReturnSigned)
 {
     /// <summary>Whether this row is still waiting on a horizon, which is not the same as unplaceable.</summary>
     public bool AwaitsItsHorizon => Aftermath is null;

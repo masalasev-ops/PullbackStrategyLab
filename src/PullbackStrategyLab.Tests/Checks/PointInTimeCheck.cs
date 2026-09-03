@@ -202,15 +202,12 @@ public sealed class PointInTimeCheck
                 + "fill_run above. The positions it counts are in position, which carries three stamps "
                 + "and is bounded on all three.",
 
-            // Not a table the store holds. Migration 045 renames `fill` out of the way so it can be
-            // redeclared with a third leg, copies into the new one and drops this in the same file,
-            // so the name exists for four statements and never for a night. It is named here rather
-            // than filtered out of the parse, because a rule that skipped tables a migration also
-            // drops would skip a table a later migration dropped for a real reason.
-            ["fill_before_045"] =
-                "the transient name migration 045 renames fill to while it redeclares it with a third "
-                + "leg. It is dropped by the same migration, so no store this check could read ever "
-                + "holds it.",
+            // `fill_before_045` sat here from 4.8 to 5.0(c) as the transient name migration 045
+            // renames `fill` to while redeclaring it. It is gone because the entry was doing the
+            // opposite of what it read as doing: the rename-follow above sent `fill` itself here, so
+            // the real table was skipped and this reason covered it. A rename whose target is dropped
+            // is no longer followed, the transient never appears in the parse, and `fill` is
+            // reconciled under its own name, as is `loss_class` after 048 rebuilds it the same way.
             ["order_run"] =
                 "observed_at is when one evening's gate ran and what it refused, which is operational on the "
                 + "same terms as trigger_run below. Nothing computes a figure about the market from it: the "
@@ -734,13 +731,46 @@ public sealed class PointInTimeCheck
         // NotAnObservation with a reason, which is the one-directional list this corpus keeps
         // finding: it works until the next rebuild, and then the next rebuild is a red run and a
         // third hand entry. Following the rename is the rule those entries were standing in for.
+        //
+        // <b>And a rename is followed only where the name it leads to survives.</b> The other
+        // rebuild shape renames the live table out of the way, redeclares it under its own name,
+        // copies and drops the transient: 045 did it to `fill` and 048 to `loss_class`. Followed
+        // blindly, that rename sent `fill` to `fill_before_045`, which sat in NotAnObservation with
+        // a reason, so the real `fill` was never reconciled at all and the entry read as covering
+        // something. What tells the two shapes apart is the order of the drop: the working-name
+        // shape drops the original and then renames onto its name, so the target is dropped before
+        // the rename; the out-of-the-way shape renames and then drops the target. A rename whose
+        // target is dropped after it is not followed, and the transient never appears in `found`
+        // because nothing creates it.
+        Match[] drops = [.. Regex.Matches(migrations, @"DROP TABLE (?<name>\w+)").Cast<Match>()];
+
         var renamedTo = new Dictionary<string, string>(StringComparer.Ordinal);
+        var renamedOutOfTheWay = new List<string>();
 
         foreach (Match rename in Regex.Matches(
             migrations, @"ALTER TABLE (?<from>\w+) RENAME TO (?<to>\w+)"))
         {
-            renamedTo[rename.Groups["from"].Value] = rename.Groups["to"].Value;
+            string to = rename.Groups["to"].Value;
+            bool droppedAfterwards = drops.Any(
+                d => d.Index > rename.Index && string.Equals(d.Groups["name"].Value, to, StringComparison.Ordinal));
+
+            if (droppedAfterwards)
+            {
+                renamedOutOfTheWay.Add(to);
+                continue;
+            }
+
+            renamedTo[rename.Groups["from"].Value] = to;
         }
+
+        // Stated in advance for the same reason as the table count below: the two rebuilds of that
+        // shape are known, and a parser that stopped seeing the drops would follow both renames again.
+        Assert.True(
+            renamedOutOfTheWay.Contains("fill_before_045", StringComparer.Ordinal)
+                && renamedOutOfTheWay.Contains("loss_class_before_048", StringComparer.Ordinal),
+            "the two transient names the rebuilds of fill and loss_class rename out of the way are not both "
+            + "read as dropped after their rename, so the parser stopped seeing DROP TABLE rather than the "
+            + $"rebuilds going away. Read: {string.Join(", ", renamedOutOfTheWay)}");
 
         var unnamed = new List<string>();
 

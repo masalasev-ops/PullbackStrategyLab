@@ -259,30 +259,49 @@ public sealed class LossClassifier
             return;
         }
 
-        decimal? forward = ReturnFromTheTrigger(connection, row.Ticker, plan, sessions, sessionDate);
+        AftermathFigures figures = FiguresFromTheTrigger(connection, row, plan, sessions, sessionDate);
 
-        if (forward is decimal signed)
+        if (figures.Offered is decimal signed)
         {
             decimal oneR = LossCause.OneRInReturn(plan.GiveUpDistance, plan.TriggerPrice);
             string aftermath = LossCause.AftermathOf(signed, oneR);
 
-            Apply(transaction, row.TradeId, aftermath, signed, oneR,
+            // Both figures in one sentence, named apart, because the gap between them is the
+            // thing a person reads it for.
+            string because =
                 $"the direction-signed {HorizonDays}-session return from the trigger price of "
                 + $"{plan.TriggerPrice}, over the ten sessions after {plan.LiveSession:yyyy-MM-dd}, was "
-                + $"{signed} against one unit of risk of {oneR}",
-                observedAt, tally);
+                + $"{signed} against one unit of risk of {oneR}"
+                + (figures.Earned is decimal earned
+                    ? $"; the trade itself earned {earned} from the same trigger to its exit at "
+                      + $"{figures.ExitPrice} in {figures.ClosedSession:yyyy-MM-dd}"
+                    : $"; {ExitFigureNotReadable}");
+
+            Apply(transaction, row.TradeId, aftermath, signed, oneR, figures.Earned, because, observedAt, tally);
 
             return;
         }
 
-        Apply(transaction, row.TradeId, LossAftermath.Unclassified, null, null,
+        Apply(transaction, row.TradeId, LossAftermath.Unclassified, null, null, null,
             HorizonClosedWithNoFigure, observedAt, tally);
     }
 
+    /// <summary>What is written beside the first figure where the second could not be put on the same basis.</summary>
+    public const string ExitFigureNotReadable =
+        "what the trade earned is not stated, because the store holds no bar for the session it "
+        + "closed in and the exit could not be put on the adjusted basis the first figure is on";
+
     /// <summary>
-    /// The direction-signed return from the trigger price to the close of the tenth session after
-    /// the one the trigger was touched in, on the adjusted basis at both ends, or null where the
-    /// store does not hold that bar.
+    /// The two aftermath figures over one row, both from the trigger and both on the adjusted basis.
+    ///
+    /// <b>What the day offered</b> is the direction-signed return from the trigger price to the
+    /// close of the tenth session after the one the trigger was touched in, or null where the store
+    /// does not hold that bar. <b>What the trade earned</b> is the same return taken to the exit
+    /// fill instead, or null where the store holds no bar for the session the trade closed in. The
+    /// two differ only in where they end, and the gap between them is what the trail rule is
+    /// judged on: with one figure a trail that captured a move and a trail that gave one back are
+    /// the same number.
+    /// see: The aftermath is measured from the exit as well as from the close, as two figures and never one
     ///
     /// <b>From the trigger, over the sessions after the trigger, which is the population the
     /// decision names and the one the code did not measure until 4.18.</b> Until then this read
@@ -294,41 +313,62 @@ public sealed class LossClassifier
     /// a different population, which is the fifth failure shape with the code as the subject.
     /// see: A stop-out is noise when the ten-day return reached one R, and cause of loss is two questions rather than one ordered list
     ///
-    /// The trigger is a raw price and the closes are put on the adjusted basis through the trigger
-    /// session's own bar, on the terms the short reclaim puts a printed hourly close against the
-    /// average, so a split inside the ten sessions does not read as a move.
+    /// The trigger and the exit are raw prices and each is put on the adjusted basis through its
+    /// own session's bar, on the terms the short reclaim puts a printed hourly close against the
+    /// average, so a split inside the window does not read as a move on either figure.
     /// </summary>
-    private static decimal? ReturnFromTheTrigger(
+    private static AftermathFigures FiguresFromTheTrigger(
         SqliteConnection connection,
-        string ticker,
+        StoredLossClass row,
         StoredTradePlan plan,
         int sessionsFromTheTrigger,
         DateOnly asOf)
     {
         // The newest `sessionsFromTheTrigger` bars at or before the as-of are exactly the trigger
         // session and everything after it, because that count was taken between the two dates.
-        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, ticker, asOf, sessionsFromTheTrigger);
+        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, row.Ticker, asOf, sessionsFromTheTrigger);
 
         StoredDailyBar? triggerSession = bars.FirstOrDefault(b => b.BarDate == plan.LiveSession);
         StoredDailyBar[] after = [.. bars.Where(b => b.BarDate > plan.LiveSession)];
 
         if (triggerSession is null || after.Length < HorizonDays || triggerSession.Close == 0m)
         {
-            return null;
+            return AftermathFigures.None;
         }
 
         decimal factor = ShortExitRules.AdjustmentFactor(triggerSession.Close, triggerSession.AdjustedClose);
         decimal from = plan.TriggerPrice * factor;
-        decimal to = after[HorizonDays - 1].AdjustedClose;
 
         if (from == 0m)
         {
-            return null;
+            return AftermathFigures.None;
         }
 
-        decimal move = (to - from) / from;
+        decimal offered = LossCause.SignedReturn(from, after[HorizonDays - 1].AdjustedClose, plan.Direction);
 
-        return string.Equals(plan.Direction, SetupDirection.Long, StringComparison.Ordinal) ? move : -move;
+        // The trade this row explains, read on the same bound as everything else here. It closed in
+        // `closed_session`, which is at or before the as-of, so its bar is in the set already read.
+        StoredTrade? trade = TradeReader.ClosedIn(connection, row.ClosedSession, asOf)
+            .FirstOrDefault(t => string.Equals(t.TradeId, row.TradeId, StringComparison.Ordinal));
+        StoredDailyBar? closedSession = bars.FirstOrDefault(b => b.BarDate == row.ClosedSession);
+
+        if (trade is null || closedSession is null || closedSession.Close == 0m)
+        {
+            return new AftermathFigures(offered, null, null, row.ClosedSession);
+        }
+
+        decimal exitFactor = ShortExitRules.AdjustmentFactor(closedSession.Close, closedSession.AdjustedClose);
+        decimal earned = LossCause.SignedReturn(from, trade.ExitPrice * exitFactor, plan.Direction);
+
+        return new AftermathFigures(offered, earned, trade.ExitPrice, row.ClosedSession);
+    }
+
+    /// <summary>
+    /// The pair, with the exit the second was taken to so the sentence can name it.
+    /// </summary>
+    private sealed record AftermathFigures(decimal? Offered, decimal? Earned, decimal? ExitPrice, DateOnly ClosedSession)
+    {
+        public static AftermathFigures None { get; } = new(null, null, null, default);
     }
 
     private static void Apply(
@@ -337,6 +377,7 @@ public sealed class LossClassifier
         string aftermath,
         decimal? signed,
         decimal? oneR,
+        decimal? earned,
         string because,
         DateTimeOffset observedAt,
         Tally tally)
@@ -351,6 +392,7 @@ public sealed class LossClassifier
                SET aftermath = @aftermath,
                    forward_return_signed = @forward_return_signed,
                    one_r_in_return = @one_r_in_return,
+                   exit_return_signed = @exit_return_signed,
                    aftermath_because = @aftermath_because,
                    aftermath_observed_at = @aftermath_observed_at
              WHERE trade_id = @trade_id
@@ -363,6 +405,8 @@ public sealed class LossClassifier
             signed is null ? DBNull.Value : StoreText.PriceToStorageText(signed.Value));
         command.Parameters.AddWithValue(
             "@one_r_in_return", oneR is null ? DBNull.Value : StoreText.PriceToStorageText(oneR.Value));
+        command.Parameters.AddWithValue(
+            "@exit_return_signed", earned is null ? DBNull.Value : StoreText.PriceToStorageText(earned.Value));
         command.Parameters.AddWithValue("@aftermath_because", because);
         command.Parameters.AddWithValue(
             "@aftermath_observed_at", StoreText.TimestampToStorageText(observedAt));
