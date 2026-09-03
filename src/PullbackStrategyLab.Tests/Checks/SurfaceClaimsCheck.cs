@@ -658,6 +658,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             { "setupId": "2026-08-24-AAPL-long", "ticker": "AAPL", "direction": "long",
               "rank": 1, "cappedOut": false, "passedAll": false,
               "triggerPrice": 37.67, "stopPrice": 36.42, "stopDistanceRanges": 0.50,
+              "plannedShares": 120, "plannedTrigger": 38.10, "plannedGiveUp": 36.90,
               "agreement": null, "agreementNote": null, "degradedBecause": null,
               "checks": [
                 { "name": "tradable", "passed": false, "value": 9849921234.0, "note": null,

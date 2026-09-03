@@ -14361,3 +14361,40 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.9 leaves
             passed everywhere is the zone every bound was already computed in, and no value on any
             row or figure changed. Next are the two screens that publish a plan's prices, raised at
             4.13.
+
+## 5.8 — 2026-09-03 — phase-5-8-whose-prices — the pile, part eleven: the two screens say whose prices they publish
+
+Not a checkpoint entry. The eleventh part of the repair pile, and the first of the two screens.
+Population: **the two surfaces that publish a plan's prices, the gallery and the watchlist,
+rendered over authored nights holding a planned row and an unplanned one on each side**, and the
+three corpus sentences that now say what they show.
+
+Built:      **Each price says whose it is.** The gallery card shows the plan's trigger and give-up
+            point where a plan was written and the detector's where none was, which is the pair the
+            watchlist has shown since 4.18 and the card never did, and both screens mark each price
+            as the plan's or the screen's from one member per view. **The distance is named for the
+            geometry it belongs to**: the watchlist's column is headed as the screen's distance in
+            ADR units and the card's line is labelled the same, because on a planned row the pair
+            beside it is the plan's and the figure is not a distance between those two prices. Three
+            sentences in ARCHITECTURE's screens section say all of this, and each is a surface claim
+            read off the rendered page against the member that emits the mark (see: The order
+            prices are derived from the final pullback session's minutes, not from the screening
+            geometry).
+
+Verified:   Over the watchlist's authored night, a planned long and short print the plan's pair
+            marked as the plan's, the greyed long and the equal-pair short print the detector's
+            marked as the screen's, the screening pair of a planned row appears nowhere, and the
+            distance column is headed as the screen's. Over the gallery's authored night, the planned
+            card prints the plan's pair marked and the unplanned card the screen's marked, and the
+            distance line is labelled. The three claims render both surfaces over a night holding a
+            planned card, which the surface-claims night now carries. Two page tests and three
+            claims added, all green; no expectation moved and the phase report's expected move was
+            stated in advance as nought, the claim file being outside the fixture. `tools/ci.ps1`
+            green on Windows, **31 steps, 954 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,549 with 0 unexamined; 1,459 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 4.13 leaves the table with this
+            commit. The table reads twenty-eight; three due before the freeze, all at 5.8, being the
+            two sweeps and the cap readers; the operator's eight, unchanged. Nothing this part
+            touched is an input to the minimum sample's derivation: two pages changed what they say
+            and no store row changed. Next is the claim-register sweep raised at 3.12.

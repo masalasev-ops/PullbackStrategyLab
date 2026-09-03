@@ -36,6 +36,7 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
             { "setupId": "2026-08-24-HOOD-long", "ticker": "HOOD", "direction": "long",
               "rank": 1, "cappedOut": false, "passedAll": false,
               "triggerPrice": 118.50, "stopPrice": 112.25, "stopDistanceRanges": 0.31,
+              "plannedShares": 120, "plannedTrigger": 119.10, "plannedGiveUp": 116.35,
               "agreement": null, "agreementNote": null,
               "checks": [
                 { "name": "tradable", "passed": true, "value": 204580994.64, "note": null },
@@ -194,6 +195,33 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
         Assert.Contains("$9.85bn median daily turnover", html, StringComparison.Ordinal);
         Assert.Contains("floor $50m", html, StringComparison.Ordinal);
         Assert.Contains("class=\"against\"", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A planned card shows the plan's pair marked as the plan's, an unplanned card the detector's
+    /// marked as the screen's, and the distance line is named for the screening geometry.
+    ///
+    /// <b>The row raised at 4.13.</b> The card rendered the screening pair on every card including
+    /// the planned ones, while the plan's pair arrived on the card and was read by nothing: the
+    /// store carried the right answer, the read surface carried it named apart, and the page
+    /// dropped it. HOOD here carries a plan at 119.10 and 116.35 beside a screening pair of 118.50
+    /// and 112.25, and the page shows the plan's and says so; the INTC short carries none and shows
+    /// the screen's and says that.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    [Fact]
+    public async Task A_planned_card_shows_the_plans_pair_marked_as_the_plans_and_an_unplanned_card_the_screens()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        Assert.Contains("<dt>trigger <span class=\"pair\">plan</span></dt><dd>119.10</dd>", html, StringComparison.Ordinal);
+        Assert.Contains("<dt>give up <span class=\"pair\">plan</span></dt><dd>116.35</dd>", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("<dd>118.50</dd>", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("<dd>112.25</dd>", html, StringComparison.Ordinal);
+
+        Assert.Contains("<dt>trigger <span class=\"pair\">screen</span></dt><dd>85.14</dd>", html, StringComparison.Ordinal);
+        Assert.Contains("<dt>screen distance</dt>", html, StringComparison.Ordinal);
     }
 
     [Fact]

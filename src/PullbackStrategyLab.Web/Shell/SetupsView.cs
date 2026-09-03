@@ -101,6 +101,29 @@ public sealed record SetupCardView(
     public string Price(decimal? value) =>
         value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : NotSet;
 
+    /// <summary>
+    /// The pair the card publishes: the plan's where a plan was written and the detector's where
+    /// none was, on the terms the watchlist publishes it, and marked as whose it is.
+    ///
+    /// <b>The row raised at 4.13.</b> The card rendered the screening pair under "trigger" and
+    /// "give up" on every card including the planned ones, while the plan's pair arrived on the
+    /// card and was read by nothing, so the page stated the screening geometry as the prices of a
+    /// row the lab wrote an order for. That is the sixth failure shape exactly.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    public decimal? PublishedTrigger => PlannedTrigger ?? TriggerPrice;
+
+    public decimal? PublishedGiveUp => PlannedGiveUp ?? StopPrice;
+
+    public string PairMark => PlannedTrigger is not null ? PlanPairMark : ScreenPairMark;
+
+    public const string PlanPairMark = "<span class=\"pair\">plan</span>";
+
+    public const string ScreenPairMark = "<span class=\"pair\">screen</span>";
+
+    /// <summary>The distance line's label, named for the geometry the figure belongs to.</summary>
+    public const string ScreenDistanceLabel = "screen distance";
+
     public string Ranges(decimal? value) =>
         value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : NotSet;
 

@@ -247,6 +247,33 @@
       "producedBy": "the page",
       "arrivesAt": null,
       "why": "the sixth failure shape on the screen the obligation was raised about. The column is a claim about a surface and it was false of that surface for a checkpoint: the page and the store disagreed about what the evening knows, because the size existed from 4.16 and the watchlist went on not drawing it. The header is what this asserts, and the value in the cell is asserted by WatchlistPageTests, because a header over a column of absences renders identically to a working one"
+    },
+    {
+      "name": "each-watchlist-row-says-whose-pair-it-shows",
+      "sentence": "Each watchlist row shows the plan's trigger and give-up price where a plan was written and the detector's where none was, and marks each price as the plan's or the screen's",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/watchlist",
+      "mustCarry": "<span class=\"pair\">plan</span>",
+      "producedBy": "WatchlistRowView.PlanPairMark",
+      "why": "The row raised at 4.13: from 4.18 the two columns held a mixed population under one heading, the plan's pair on a planned row and the detector's on the rest, with nothing on the page saying which. The mark is beside each price and this claim reads it off the rendered page over a night holding a planned row."
+    },
+    {
+      "name": "each-card-shows-the-same-pair-with-the-same-mark",
+      "sentence": "Each card shows the same pair with the same mark, so the gallery and the watchlist never disagree about whose prices they publish",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/setups",
+      "mustCarry": "<span class=\"pair\">plan</span>",
+      "producedBy": "SetupCardView.PlanPairMark",
+      "why": "The other half of the 4.13 row: the gallery rendered the screening pair on every card including the planned ones while the plan's pair arrived on the card and was read by nothing, which is the sixth failure shape exactly. The night this claim renders holds a planned card."
+    },
+    {
+      "name": "the-distance-is-named-for-the-screening-geometry",
+      "sentence": "The distance column and the card's distance line show the screening geometry's give-up distance in ADR units and are named for it, because on a planned row the pair beside them is the plan's and differs",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/watchlist",
+      "mustCarry": "Screen distance",
+      "producedBy": "WatchlistRowView.ScreenDistanceHeading",
+      "why": "The third part of the 4.13 row: a planned row printed 119.10 and 116.35, a distance of 2.75, beside 0.31 ADR, which is the screening pair's 6.25. The figure is right and belongs to the other pair, so it is named for the pair it belongs to rather than made to agree with prices it is not a distance between."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

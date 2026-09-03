@@ -99,10 +99,14 @@ else
                             <partial name="_Candlestick" model="geometry" />
                         }
 
+                        @* The pair the lab will trade at where a plan was written and the detector's
+                           where none was, each marked as whose it is, from 5.8; the distance is the
+                           screening geometry's and is named for it, because on a planned card the two
+                           prices above it are the plan's and the figure is not theirs. *@
                         <dl class="plan">
-                            <dt>trigger</dt><dd>@card.Price(card.TriggerPrice)</dd>
-                            <dt>give up</dt><dd>@card.Price(card.StopPrice)</dd>
-                            <dt>distance</dt><dd>@card.Ranges(card.StopDistanceRanges)@(card.StopDistanceRanges is null ? "" : " ranges")</dd>
+                            <dt>trigger @Html.Raw(card.PairMark)</dt><dd>@card.Price(card.PublishedTrigger)</dd>
+                            <dt>give up @Html.Raw(card.PairMark)</dt><dd>@card.Price(card.PublishedGiveUp)</dd>
+                            <dt>@SetupCardView.ScreenDistanceLabel</dt><dd>@card.Ranges(card.StopDistanceRanges)@(card.StopDistanceRanges is null ? "" : " ranges")</dd>
                         </dl>
 
                         <ul class="checks">

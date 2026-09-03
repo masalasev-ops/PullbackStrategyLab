@@ -129,6 +129,29 @@ public sealed record WatchlistRowView(
     /// <summary>The give-up point this screen publishes, on the same terms as the trigger.</summary>
     public decimal? PublishedGiveUp => PlannedGiveUp ?? StopPrice;
 
+    /// <summary>
+    /// Whose pair the row's two prices are, said beside each price.
+    ///
+    /// <b>The row raised at 4.13.</b> From 4.18 the two columns held the plan's pair where a plan
+    /// existed and the detector's where none did, under one heading, so one column held a mixed
+    /// population under one name and nothing on the page said which a reader was looking at. The
+    /// mark is emitted from here so the claim that the page says which is reconciled against the
+    /// member that says it.
+    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// </summary>
+    public string PairMark => PlannedTrigger is not null ? PlanPairMark : ScreenPairMark;
+
+    public const string PlanPairMark = "<span class=\"pair\">plan</span>";
+
+    public const string ScreenPairMark = "<span class=\"pair\">screen</span>";
+
+    /// <summary>
+    /// The distance column's heading, named for the geometry it belongs to: the detector's give-up
+    /// distance in ADR units, which `exit-tight` turned on, and not a distance between the two
+    /// prices beside it, which on a planned row are the plan's and differ.
+    /// </summary>
+    public const string ScreenDistanceHeading = "Screen distance";
+
     /// <summary>A price, or the words the gallery uses where the detector recorded none.</summary>
     public string Price(decimal? value) =>
         value is decimal present ? present.ToString("0.00", CultureInfo.InvariantCulture) : SetupCardView.NotSet;
