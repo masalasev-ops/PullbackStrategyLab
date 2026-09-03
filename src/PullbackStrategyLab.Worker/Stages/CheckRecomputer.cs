@@ -279,7 +279,22 @@ public sealed class CheckRecomputer
         RunOutcome outcome = refused > 0 ? RunOutcome.Partial : RunOutcome.Clean;
         run?.Complete(outcome);
 
-        return new RecheckResult(asOf, check, candidates.Count, corrected, refused, apply, outcome);
+        // Read after the walk, so an applied correction is counted where it now sits, and on the
+        // dry run too, because the split is a fact about the column and not about the repair.
+        PopulationReading population = ReadPopulation(connection, asOf, check, inputs);
+
+        Console.WriteLine(
+            $"{Name}: the night's '{check}' column against the whole scan population: "
+            + $"{population.AtTheWholePopulation} at it, {population.AtAnotherPopulation.Count} at another, "
+            + $"{population.WithoutAValue} without a value, {population.Unreadable} whose whole-population count "
+            + "cannot be formed");
+
+        foreach (string row in population.AtAnotherPopulation)
+        {
+            Console.WriteLine($"{Name}: at another population, {row}");
+        }
+
+        return new RecheckResult(asOf, check, candidates.Count, corrected, refused, apply, outcome, population);
     }
 
     /// <summary>
@@ -495,7 +510,14 @@ public sealed class CheckRecomputer
     }
 
     /// <summary>The rows whose verdict for this check has no value, which is what an absent input leaves.</summary>
-    private static IReadOnlyList<Candidate> Candidates(SqliteConnection connection, DateOnly asOf, string check)
+    private static IReadOnlyList<Candidate> Candidates(SqliteConnection connection, DateOnly asOf, string check) =>
+        // Only a verdict with no value at all. A check that ran and produced a number is a
+        // measurement the night made, and this stage has no permission to revisit one.
+        [.. RowsCarrying(connection, asOf, check).Where(r => r.Verdict.Value is null).Select(r => r.Row)];
+
+    /// <summary>Every row of the night whose results carry a verdict for the check, with that verdict.</summary>
+    private static IReadOnlyList<(Candidate Row, CheckResult Verdict)> RowsCarrying(
+        SqliteConnection connection, DateOnly asOf, string check)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -507,7 +529,7 @@ public sealed class CheckRecomputer
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
 
-        var candidates = new List<Candidate>();
+        var rows = new List<(Candidate, CheckResult)>();
         using SqliteDataReader reader = command.ExecuteReader();
 
         while (reader.Read())
@@ -517,22 +539,78 @@ public sealed class CheckRecomputer
 
             CheckResult? existing = results.FirstOrDefault(r => string.Equals(r.Name, check, StringComparison.Ordinal));
 
-            // Only a verdict with no value at all. A check that ran and produced a number is a
-            // measurement the night made, and this stage has no permission to revisit one.
-            if (existing is { Value: null })
+            if (existing is not null)
             {
-                candidates.Add(new Candidate(
-                    reader.GetString(0),
-                    reader.GetString(1),
-                    reader.GetString(2),
-                    results,
-                    reader.IsDBNull(4) ? null : reader.GetString(4),
-                    reader.IsDBNull(5) ? null : reader.GetString(5),
-                    reader.IsDBNull(6) ? null : reader.GetString(6)));
+                rows.Add((
+                    new Candidate(
+                        reader.GetString(0),
+                        reader.GetString(1),
+                        reader.GetString(2),
+                        results,
+                        reader.IsDBNull(4) ? null : reader.GetString(4),
+                        reader.IsDBNull(5) ? null : reader.GetString(5),
+                        reader.IsDBNull(6) ? null : reader.GetString(6)),
+                    existing));
             }
         }
 
-        return candidates;
+        return rows;
+    }
+
+    /// <summary>
+    /// The night's column for the check, read against the whole scan population and reported as
+    /// the split it holds rather than as one number.
+    ///
+    /// <b>The figure the 2026-08-27 repair left behind, made legible where the column is read.</b>
+    /// The recompute counts over the night's whole scan population, and it ran after a sector walk
+    /// that had died on its 149th name, so the fifteen rows it repaired carry a count over 234
+    /// names while the twenty-nine it had no permission to touch carry what `clusters` computed at
+    /// 18:15 over the 148 resolved by then, and one of those, INFQ, matches neither. Nothing was
+    /// wrong with any single number and the column was three populations under one name, which is
+    /// the fifth failure shape with a store column as the subject. This stage cannot revisit a
+    /// verdict that carries a value, and does not, so what it does instead is say on every run how
+    /// many rows sit at the count the whole population gives, how many carry another value and
+    /// which, and how many carry none. A figure stated over that column then states the split.
+    /// see: Long and short are never pooled into one figure
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    private static PopulationReading ReadPopulation(
+        SqliteConnection connection, DateOnly asOf, string check, ClusterCounts inputs)
+    {
+        int atTheWholePopulation = 0;
+        int withoutAValue = 0;
+        int unreadable = 0;
+        var atAnother = new List<string>();
+
+        foreach ((Candidate row, CheckResult verdict) in RowsCarrying(connection, asOf, check))
+        {
+            if (verdict.Value is null)
+            {
+                withoutAValue++;
+                continue;
+            }
+
+            ClusterInput input = inputs.For(row);
+
+            if (input.Industry is null)
+            {
+                // A row whose whole-population count cannot be formed at all: nothing resolved, or
+                // resolved past the bound. Counted apart rather than folded into either side.
+                unreadable++;
+                continue;
+            }
+
+            if (verdict.Value == input.Count)
+            {
+                atTheWholePopulation++;
+            }
+            else
+            {
+                atAnother.Add($"{row.Ticker} {row.Direction} at {verdict.Value} against {input.Count}");
+            }
+        }
+
+        return new PopulationReading(atTheWholePopulation, atAnother, withoutAValue, unreadable);
     }
 
     /// <summary>
@@ -824,7 +902,12 @@ public sealed class CheckRecomputer
     }
 }
 
-/// <summary>What one recompute found, corrected, and declined to correct.</summary>
+/// <summary>
+/// What one recompute found, corrected, and declined to correct, and the split the night's column
+/// holds once it is read against the whole scan population.
+///
+/// <see cref="Population"/> is null on a restore, which reads nothing against anything.
+/// </summary>
 public sealed record RecheckResult(
     DateOnly AsOf,
     string Check,
@@ -832,4 +915,21 @@ public sealed record RecheckResult(
     int Corrected,
     int Refused,
     bool Applied,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    PopulationReading? Population = null);
+
+/// <summary>
+/// A night's column for one check, split by the population each value was counted over.
+///
+/// Four numbers and never one: rows whose value is the count the whole scan population gives, rows
+/// carrying another value, named with both figures, rows carrying no value at all, and rows whose
+/// whole-population count cannot be formed because nothing resolved their industry inside the
+/// bound. A column stated as one number hides that it is several, which is what 2026-08-27's
+/// `cluster` column was.
+/// see: Long and short are never pooled into one figure
+/// </summary>
+public sealed record PopulationReading(
+    int AtTheWholePopulation,
+    IReadOnlyList<string> AtAnotherPopulation,
+    int WithoutAValue,
+    int Unreadable);

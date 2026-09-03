@@ -2114,3 +2114,18 @@ Why:  The component now writes both, and a document describing one figure over a
 Was:  The carried obligations table held thirty-nine rows plus the aftermath row raised at 4.10, due at 5.0; the 5.0 row said "No component, no store, no migration"; the 5.8 row said fourteen of fifteen due before the freeze with the other one at 5.0; 5.1 said the freeze waited on 5.0(c) and the pile; the paragraph under the table said fourteen repairs and four others, the others including the aftermath window; the freeze count read fifteen in each of its places.
 Now:  Thirty-nine rows. The 4.10 row is discharged by 5.0(c) on 2026-09-03. The 5.0 row says (c) adds one column by migration, on the decision's own word that the second figure is a column. Fourteen due before the freeze, all at 5.8 and none at 5.0; the paragraph reads ten repairs and four others, the fourth other being the two cap readers raised at 5.0, and says the aftermath window was a fifth until 5.0(c).
 Why:  A discharged obligation leaves the table in the commit that discharges it. The "no migration" clause was written at the planning pass and the sitting's decision the same day said the figure is a column, and a decision is changed only by another decision, so the row follows the decision. The repairs-and-others split had read fourteen and four since the planning pass and summed to eighteen over a set that had been fifteen since 5.0(b), which is the stale prose count `stated-counts` exists for and now derives.
+
+### 2026-09-03 — RUNBOOK.md — cites Long and short are never pooled into one figure
+Was:  The recheck paragraph on 2026-08-27 stated fifteen of forty-four repaired and stopped at the obligation about a validity date.
+Now:  It states what the column holds since: fifteen over 234 scan names, twenty-eight over the 148 the walk had reached, one at neither, and that every run of `recheck` reports that split rather than one number while touching none of the twenty-nine.
+Why:  The row raised at 3.8 asked that any figure stated over that column report the split, failing a ruling on revisiting a partial-input verdict that was never put to anybody. The stage now reports it and the runbook states it where the figure was.
+
+### 2026-09-03 — ARCHITECTURE.html — cites Long and short are never pooled into one figure
+Was:  The CheckRecomputer catalogue row described the recompute and its two refusals.
+Now:  It adds that every run reads the night's column against the whole scan population and reports the split, because 2026-08-27's cluster column is three populations under one name.
+Why:  The component now does it, and a catalogue row that omits a stage's output is a row the next reader of that output cannot find.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+Was:  The carried obligations table held thirty-nine rows, with the mixed cluster column raised at 3.8 due at 5.8; fourteen due before the freeze; the paragraph read ten repairs and four others.
+Now:  Thirty-eight rows. The 3.8 row is discharged by the first part of 5.8 on 2026-09-03, on its own fallback clause; thirteen due before the freeze in each place the count is stated; nine repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it, and the row named its own fallback for the case where no ruling had been taken, which is the case.
