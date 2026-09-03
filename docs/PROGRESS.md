@@ -14077,3 +14077,40 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.5 leaves
             with 048 and 049 before it, which is the operator's act on the terms of 2026-09-02, and
             until it is every stage refuses before opening the store and names both versions. Next
             is `intended_date`, raised at 3.5.
+
+## 5.8 — 2026-09-03 — phase-5-8-calendar-step — the pile, part four: the intended date is a calendar step, said so, and the slip counted per kind
+
+Not a checkpoint entry. The fourth part of the repair pile. Population: **the `intended_date`
+column of every `forward_return` and `calibration_forward_return` row the store holds**, all of
+which are the subject's session plus the horizon in calendar days and none of which changes value,
+and the fill's one counter that still pooled setups and controls.
+
+Ruled:      **The intended date is a calendar step, and it says so.** A session step would be
+            `actual_date` under another name and would leave the pair nothing to differ by; what was
+            wrong was the name and the sentence, which said the two differ across a holiday when
+            the step is later than a session on every weekend, so a synthetic run with no holiday
+            counted most of its rows as slipped. Recorded as a named decision because the row asked
+            which the date was, and stated here as a mechanism the session settled under the value
+            the store already holds rather than a ruling the operator gave (see: An intended date is
+            a calendar step from the subject's session, stated as such, and the slip past it is
+            counted per subject kind).
+
+Built:      The counter `AcrossAHoliday` becomes two, setups and controls apart, named for what
+            they count; the console line and the fill result carry both; the fixture's one pooled
+            expectation becomes two, derived from the fixture's own written counts; SCHEMA states
+            what each date is and when they differ.
+
+Verified:   Over an authored fill flagged on a Monday with bars that skip weekends: the setup slips
+            on two of its four horizons and its two controls on two of theirs each, stated apart,
+            and the five-session horizon's intended date is the Saturday with the session the
+            Monday after. One test added to the filler's twenty-eight, all green. Two fixture
+            expectations replace one, both `DERIVED` and nought over the fixture as the one they
+            replace was; nothing else moved. `tools/ci.ps1` green on Windows, **31
+            steps, 946 tests**. `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,513 with 0 unexamined; 1,457 expectations, three changed since the last commit, being the one removed and the two that replace it.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about `intended_date`
+            leaves the table with this commit. The table reads thirty-five; ten due before the
+            freeze, all at 5.8; the operator's eight, unchanged. Nothing this part touched is an
+            input to the minimum sample's derivation: no stored value changed and the derivation
+            reads `actual_date`'s close and never the step. Next is the ratio read back through the
+            price crossing, raised at 3.5.

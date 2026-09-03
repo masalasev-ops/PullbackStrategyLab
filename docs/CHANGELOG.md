@@ -2159,3 +2159,13 @@ Why:  A row that could not be measured was stored as a path that never moved. Th
 Was:  The carried obligations table held thirty-seven rows, with the undefined-excursion row raised at 3.5 due at 5.8; twelve due before the freeze; eight repairs and four others.
 Now:  Thirty-six rows. The 3.5 row is discharged by the third part of 5.8 on 2026-09-03; eleven due before the freeze in each place the count is stated; seven repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — SCHEMA.md — cites An intended date is a calendar step from the subject's session, stated as such, and the slip past it is counted per subject kind
+Was:  `forward_return`'s `intended_date` and `actual_date` row said the two "differ across a holiday, and both are stored".
+Now:  It says what each is, the calendar step from the subject's own session and the session the horizon landed on, that they differ wherever the step is not a session, every weekend as well as a holiday, and that the run counts the slips per subject kind.
+Why:  The sentence named the rare case and the column produced the common one on every row that crossed a weekend, so a reader took a store full of ordinary weekends for a store full of holidays.
+
+### 2026-09-03 — BUILD_PLAN.md — cites An intended date is a calendar step from the subject's session, stated as such, and the slip past it is counted per subject kind
+Was:  The carried obligations table held thirty-six rows, with the intended-date row raised at 3.5 due at 5.8; eleven due before the freeze; seven repairs and four others.
+Now:  Thirty-five rows. The 3.5 intended-date row is discharged by the fourth part of 5.8 on 2026-09-03; ten due before the freeze in each place the count is stated; six repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.
