@@ -2179,3 +2179,13 @@ Why:  The check gained the assertion at 5.8, part five, and the roster lists eve
 Was:  The carried obligations table held thirty-five rows, with the ratio-crossing row raised at 3.5 due at 5.8; ten due before the freeze; six repairs and four others.
 Now:  Thirty-four rows. The 3.5 ratio-crossing row is discharged by the fifth part of 5.8 on 2026-09-03; nine due before the freeze in each place the count is stated; five repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The failure-behaviour section ended at its table, and the rule that a stage whose insert can silently do nothing reports attempted and skipped and fails when they are equal was stated nowhere and implemented once, on the scoreboard at 3.9(e).
+Now:  A paragraph after the table states the form and the two kinds of stage it separates: one that records an observation, whose no-op is the property, and one that computes a figure from other rows, which reports what it attempted and skipped and fails when the two are equal. The scoreboard and the ceiling are named as the two of the second kind.
+Why:  The row raised at 3.5 asked that the general form be written down and applied to every stage in that position, and a rule implemented once with no sentence is one the next stage of that kind will not follow.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held thirty-four rows, with the ceiling-insert row raised at 3.5 due at 5.8; nine due before the freeze; five repairs and four others.
+Now:  Thirty-three rows. The 3.5 ceiling-insert row is discharged by the sixth part of 5.8 on 2026-09-03; eight due before the freeze in each place the count is stated; four repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.

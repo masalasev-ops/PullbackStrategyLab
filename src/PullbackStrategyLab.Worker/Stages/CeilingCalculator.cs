@@ -68,12 +68,34 @@ public sealed class CeilingCalculator
             Console.WriteLine($"{Name}: no closed subjects yet, so no bound. That is not a bound of nought");
         }
 
+        Console.WriteLine($"{Name}: {result.Attempted} attempted, {result.Skipped} skipped");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
+
+        if (result.Outcome == RunOutcome.Failed && result.Skipped == result.Attempted && result.Attempted > 0)
+        {
+            Console.Error.WriteLine(
+                $"{Name}: all {result.Skipped} bound(s) were skipped, so {asOf:yyyy-MM-dd} already carries its bound "
+                + "and nothing was recomputed. The first bound written for a week stands and a recomputation is "
+                + "refused rather than replacing it, so the gap a reader watches narrow is between bounds that were "
+                + "each computed once; a week that needs restating is a decision, not a rerun.");
+        }
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
     }
 
-    /// <summary>One week's bound, per direction, over every subject whose scoring horizon has closed.</summary>
+    /// <summary>
+    /// One week's bound, per direction, over every subject whose scoring horizon has closed.
+    ///
+    /// <b>Attempted and skipped are counted apart, and a run that wrote nothing fails.</b> The
+    /// insert does nothing on conflict and the first bound written for a week stands, so a
+    /// recomputation of a week that already carries one writes nothing; until 5.8 it reported a
+    /// clean run having done so, which is the no-op wearing a clean run that 3.9(e) closed on the
+    /// scoreboard and left open here. The form is the same one: a stage that computes a figure
+    /// from other rows says what it attempted and what it skipped, and fails when the two are
+    /// equal, because a person who asked for a figure and was told the run was clean goes to read a
+    /// figure that did not move. A stage that records an observation is the other kind and its
+    /// no-op is the property, which is what every rerun test in the suite asserts.
+    /// </summary>
     public CeilingResult Compute(DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenWrite();
@@ -81,6 +103,8 @@ public sealed class CeilingCalculator
 
         DateTimeOffset computedAt = _clock.UtcNow;
         var bounds = new List<(string Direction, int Subjects, decimal Bound, decimal Achieved)>();
+        int attempted = 0;
+        int skipped = 0;
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
@@ -100,15 +124,22 @@ public sealed class CeilingCalculator
                 }
 
                 bounds.Add((direction, bound.Subjects, bound.Ceiling, bound.Achieved));
-                Insert(connection, transaction, asOf, direction, bound, computedAt);
+                attempted++;
+
+                if (!Insert(connection, transaction, asOf, direction, bound, computedAt))
+                {
+                    skipped++;
+                    run.CountSkipped();
+                }
             }
 
             transaction.Commit();
         }
 
-        RunSummary summary = run.Complete(RunOutcome.Clean);
+        RunOutcome outcome = attempted > 0 && skipped == attempted ? RunOutcome.Failed : RunOutcome.Clean;
+        RunSummary summary = run.Complete(outcome);
 
-        return new CeilingResult(asOf, bounds, summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
+        return new CeilingResult(asOf, bounds, summary.RowsWritten, summary.CallsUsed, outcome, attempted, skipped);
     }
 
     /// <summary>
@@ -194,7 +225,8 @@ public sealed class CeilingCalculator
         return subjects;
     }
 
-    private static void Insert(
+    /// <summary>Writes one bound, and says whether it wrote.</summary>
+    private static bool Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
         DateOnly asOf,
@@ -205,8 +237,12 @@ public sealed class CeilingCalculator
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
-        // A week recomputed replaces its own row and no other. A later week is a new row and the
-        // old one stays, because the gap narrowing over time is what a reader is looking at.
+        // The first bound written for a week stands and a recomputation writes nothing, which the
+        // caller counts and fails on rather than reporting clean. A later week is a new row and
+        // the old one stays, because the gap narrowing over time is what a reader is looking at.
+        // The comment here said a recomputed week replaces its own row from 3.5 to 5.8 while the
+        // statement below did nothing on conflict; the statement was the intended one and the
+        // sentence was corrected to it, with the no-op made loud.
         command.CommandText = """
             INSERT INTO ceiling_bound
                 (as_of, direction, horizon_days, subjects, bound, achieved, computed_at)
@@ -222,14 +258,16 @@ public sealed class CeilingCalculator
         command.Parameters.AddWithValue("@achieved", StoreText.RatioToStorageText(bound.Achieved));
         command.Parameters.AddWithValue("@computed_at", StoreText.TimestampToStorageText(computedAt));
 
-        command.ExecuteNonQuery();
+        return command.ExecuteNonQuery() > 0;
     }
 }
 
-/// <summary>One week's bounds, per direction.</summary>
+/// <summary>One week's bounds, per direction, with what the run attempted and skipped counted apart.</summary>
 public sealed record CeilingResult(
     DateOnly AsOf,
     IReadOnlyList<(string Direction, int Subjects, decimal Bound, decimal Achieved)> Bounds,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    int Attempted = 0,
+    int Skipped = 0);
