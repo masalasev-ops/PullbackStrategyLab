@@ -117,6 +117,61 @@ public sealed class ForwardReturnFillerTests : IDisposable
     }
 
     /// <summary>
+    /// A subject with no range to state its path in gets no excursions and the reason, never nought.
+    ///
+    /// <b>The conflation the row raised at 3.5 named.</b> `ForwardOutcome` leaves both excursions
+    /// null where the ATR is nought, and the insert coalesced both to nought, so a row that could
+    /// not be measured read as a path that never went against its entry. The store now refuses the
+    /// pair without the reason and the reason without the pair, the run counts the row, and the
+    /// ceiling leaves the subject out rather than reading nought adverse as having survived.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    [Fact]
+    public void A_subject_with_no_range_carries_no_excursions_and_the_reason_rather_than_nought()
+    {
+        Seed("HOOD", "long", ["COIN"], setupAtr: 0m, controlAtr: 2m);
+
+        FillResult filled = Stage().Fill(FillOn);
+
+        Assert.True(filled.Written > 0, "no setup outcome was written, so nothing here is being tested.");
+        Assert.Equal(filled.Written, filled.ExcursionsUndefined);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT mfe_atr IS NULL, mae_atr IS NULL, excursions_absent_because FROM forward_return "
+            + "WHERE subject_kind = 'setup' AND horizon_days = 10";
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        Assert.True(reader.Read());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.Equal(1, reader.GetInt32(1));
+        Assert.Equal(ForwardReturnFiller.ExcursionsUndefined, reader.GetString(2));
+
+        // And the control, which has a range, carries its excursions and no reason.
+        decimal control = Ratio(
+            "SELECT f.mfe_atr FROM forward_return f JOIN control_setup c "
+            + "ON c.control_id = f.subject_id WHERE f.subject_kind = 'control' AND f.horizon_days = 10");
+        Assert.True(control > 0m);
+    }
+
+    /// <summary>The store refuses the excursions without the reason, and the reason without the excursions.</summary>
+    [Fact]
+    public void The_store_refuses_excursions_and_their_absence_stated_together()
+    {
+        Seed("HOOD", "long", ["COIN"]);
+        Stage().Fill(FillOn);
+
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "UPDATE forward_return SET excursions_absent_because = 'x' WHERE subject_kind = 'setup' AND horizon_days = 10";
+
+        SqliteException refused = Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+        Assert.Contains("CHECK constraint failed", refused.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The excursions are stated in the control's own range, not the setup's.
     ///
     /// A control matched on liquidity and daily range is still a different stock, and expressing its

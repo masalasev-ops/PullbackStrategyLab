@@ -153,6 +153,12 @@ public sealed class CeilingCalculator
                                        AND l.observed_at <= @end_of_day)
              WHERE s.direction = @direction AND s.as_of <= @as_of
                AND s.stop_distance_ranges IS NOT NULL
+               -- A row whose excursions could not be measured carries none, with the reason on
+               -- the row, from 050. It is out of the population on the same terms as a setup with
+               -- no give-up distance: there is no path in the subject's own range for a ceiling
+               -- to be a ceiling of, and reading the absence as nought adverse would count it as
+               -- having survived.
+               AND f.mae_atr IS NOT NULL
              ORDER BY s.setup_id
             """;
         command.Parameters.AddWithValue("@direction", direction);

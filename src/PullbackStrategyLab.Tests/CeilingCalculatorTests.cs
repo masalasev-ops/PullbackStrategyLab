@@ -62,7 +62,7 @@ public sealed class CeilingCalculatorTests : IDisposable
         string ticker,
         string direction,
         decimal returnSigned,
-        decimal maeAtr,
+        decimal? maeAtr,
         decimal? stopDistanceRanges,
         DateOnly? session = null)
     {
@@ -88,15 +88,20 @@ public sealed class CeilingCalculatorTests : IDisposable
                 ? StoreText.RatioToStorageText(g)
                 : (object)DBNull.Value));
 
+        // A null adverse excursion is the row 050 admits: no excursions at all, with the reason
+        // beside them, which is what a subject with no range on its own session is written as.
         Execute(connection, transaction, """
             INSERT INTO forward_return (subject_id, subject_kind, horizon_days, intended_date,
-                                        actual_date, return_signed, mfe_atr, mae_atr, filled_at)
-            VALUES (@id, 'setup', @horizon, @date, @date, @return, '1.0', @mae, @filled_at);
+                                        actual_date, return_signed, mfe_atr, mae_atr,
+                                        excursions_absent_because, filled_at)
+            VALUES (@id, 'setup', @horizon, @date, @date, @return, @mfe, @mae, @absent, @filled_at);
             """,
             ("@id", setupId), ("@horizon", MeasurementParameters.ScoringHorizonSessions),
             ("@date", StoreText.DateToStorageText(on.AddDays(14))),
             ("@return", StoreText.PriceToStorageText(returnSigned)),
-            ("@mae", StoreText.PriceToStorageText(maeAtr)),
+            ("@mfe", maeAtr is null ? DBNull.Value : "1.0"),
+            ("@mae", maeAtr is decimal m ? StoreText.PriceToStorageText(m) : DBNull.Value),
+            ("@absent", maeAtr is null ? ForwardReturnFiller.ExcursionsUndefined : DBNull.Value),
             ("@filled_at", StoreText.TimestampToStorageText(_clock.UtcNow.AddDays(-1))));
 
         Execute(connection, transaction, """
@@ -205,6 +210,27 @@ public sealed class CeilingCalculatorTests : IDisposable
         // here is "nobody has measured anything yet", and those are different sentences.
         Assert.DoesNotContain(result.Bounds, b => b.Direction == "short");
         Assert.Equal(1, Count("SELECT COUNT(*) FROM ceiling_bound"));
+    }
+
+    /// <summary>
+    /// A subject whose excursions could not be measured is out of the population, on the same terms
+    /// as one with no give-up distance, rather than read as nought adverse and counted as having
+    /// survived. Until 050 the store held nought for that row and this bound would have counted it.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    [Fact]
+    public void A_subject_with_no_excursions_is_not_in_the_population()
+    {
+        Seed("AAA", "long", returnSigned: 0.08m, maeAtr: -1.0m, stopDistanceRanges: 1.00m);
+        Seed("BBB", "long", returnSigned: 0.05m, maeAtr: null, stopDistanceRanges: 1.00m);
+
+        CeilingResult result = Stage().Compute(AsOf);
+
+        (string Direction, int Subjects, decimal Bound, decimal Achieved) bound =
+            Assert.Single(result.Bounds);
+
+        Assert.Equal(1, bound.Subjects);
+        Assert.Equal(1m, bound.Bound);
     }
 
     [Fact]

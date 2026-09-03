@@ -2149,3 +2149,13 @@ Why:  The component now does it, and the catalogue is where a reader finds what 
 Was:  The carried obligations table held thirty-eight rows, with the recovered-night scoreboard row raised at 3.12 due at 5.8; thirteen due before the freeze; nine repairs and four others.
 Now:  Thirty-seven rows. The 3.12 row is discharged by the second part of 5.8 on 2026-09-03; twelve due before the freeze in each place the count is stated; eight repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — SCHEMA.md — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  `forward_return`'s `mfe_atr` and `mae_atr` were TEXT, not null, with no column saying why a pair might be absent; the calibration table's note said they were nullable there and NOT NULL on the evidence side.
+Now:  Both nullable, null together where the subject has no range to state them in and never nought for that, with `excursions_absent_because` on exactly those rows, asserted in both directions by migration 050; the calibration note says the evidence side has the same shape from 050.
+Why:  A row that could not be measured was stored as a path that never moved. The store now carries the difference and the ceiling leaves such a row out rather than counting it as having survived.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  The carried obligations table held thirty-seven rows, with the undefined-excursion row raised at 3.5 due at 5.8; twelve due before the freeze; eight repairs and four others.
+Now:  Thirty-six rows. The 3.5 row is discharged by the third part of 5.8 on 2026-09-03; eleven due before the freeze in each place the count is stated; seven repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.
