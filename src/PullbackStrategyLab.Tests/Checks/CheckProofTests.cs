@@ -1717,4 +1717,162 @@ public sealed class CheckProofTests
             PriceStorageFormCheck.RatioReadsThroughThePriceCrossing(source, ["adr_20"]);
         Assert.Empty(none);
     }
+
+    // The clause register, proved clause by clause. Each of these removes one thing the
+    // reconciliation guards and asserts it goes red, because a source scan finding a pattern is not
+    // evidence the behaviour exists.
+
+    private static ArchitectureConformanceCheck.Claim Live(string table, string subject) =>
+        ArchitectureConformanceCheck.Claim.Passed(table, subject, "asserted");
+
+    private static ArchitectureConformanceCheck.Claim Waiting(string table, string subject, string closes) =>
+        ArchitectureConformanceCheck.Claim.OutOfScope(table, subject, closes);
+
+    private static (string, string, IReadOnlyList<string>) Piled(string subject, params string[] clauses) =>
+        ("Failure behaviour", subject, clauses);
+
+    private static ArchitectureConformanceCheck.ClaimClauses Judged(
+        string subject, params ArchitectureConformanceCheck.ClauseDisposition[] clauses) =>
+        new("Failure behaviour", subject, clauses);
+
+    private static ArchitectureConformanceCheck.ClauseDisposition Reaching(string clause) =>
+        new(clause, ArchitectureConformanceCheck.Reaches, null, null);
+
+    private static readonly string[] SomeRoster = ["writer-ownership", "fixture-replay"];
+
+    [Fact]
+    public void A_multi_clause_claim_the_register_says_nothing_about_fails()
+    {
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("A condition", problem, StringComparison.Ordinal);
+        Assert.Contains("says nothing about it", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_clause_reworded_since_it_was_judged_fails_rather_than_keeping_the_judgement()
+    {
+        // The failure the whole register turns on. Comparing by count or by position would let a
+        // rewritten sentence inherit a verdict made about a different one, which is the shape this
+        // corpus has shipped four times: the subject went away and the assertion said what it
+        // always said.
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "The clause as it reads today")],
+            [Judged("A condition", Reaching("One clause."), Reaching("The clause as it read before"))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("A reworded clause keeps no disposition", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_cell_that_gained_a_clause_fails_rather_than_leaving_the_new_one_unjudged()
+    {
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause.", "A third nobody judged")],
+            [Judged("A condition", Reaching("One clause."), Reaching("Another clause."))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("the judgement is stale", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_backing_naming_something_that_is_not_a_check_fails()
+    {
+        // Same grounds as `decision-resolves`: a pointer that has gone stale reads as covered, and
+        // reading as covered is worse than admitting nothing covers it.
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [Judged("A condition",
+                Reaching("One clause."),
+                new("Another clause", ArchitectureConformanceCheck.Elsewhere, "a-check-that-went-away", null))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("a-check-that-went-away", problem, StringComparison.Ordinal);
+        Assert.Contains("not a check in CLAUDE.md's roster", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_unreached_clause_with_no_reason_fails_and_one_with_a_reason_passes()
+    {
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [Judged("A condition",
+                Reaching("One clause."),
+                new("Another clause", ArchitectureConformanceCheck.Unreached, null, null))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("says nothing about why", problem, StringComparison.Ordinal);
+
+        Assert.Empty(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [Judged("A condition",
+                Reaching("One clause."),
+                new("Another clause", ArchitectureConformanceCheck.Unreached, null, "nothing asserts it yet"))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+    }
+
+    [Fact]
+    public void Deferred_has_to_agree_with_the_claims_own_verdict_in_both_directions()
+    {
+        // A clause of a live claim cannot be waiting on a checkpoint, and an out-of-scope claim has
+        // nothing its verdict could have reached. Both directions, because one of them alone lets
+        // an unbuilt thing's clauses read as judged.
+        string onLive = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [Judged("A condition",
+                Reaching("One clause."),
+                new("Another clause", ArchitectureConformanceCheck.DeferredClause, null, null))],
+            [Live("Failure behaviour", "A condition")],
+            SomeRoster));
+
+        Assert.Contains("Only an out-of-scope claim has clauses a checkpoint closes", onLive, StringComparison.Ordinal);
+
+        string onWaiting = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [Piled("A condition", "One clause.", "Another clause")],
+            [Judged("A condition",
+                Reaching("One clause."),
+                new("Another clause", ArchitectureConformanceCheck.DeferredClause, null, null))],
+            [Waiting("Failure behaviour", "A condition", "9.9")],
+            SomeRoster));
+
+        Assert.Contains("An unbuilt thing's clauses are deferred, not judged", onWaiting, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_register_entry_the_document_no_longer_holds_fails()
+    {
+        string problem = Assert.Single(ArchitectureConformanceCheck.ClauseDispositionProblems(
+            [],
+            [Judged("A condition nobody states", Reaching("One clause."), Reaching("Another clause"))],
+            [],
+            SomeRoster));
+
+        Assert.Contains("the document holds no multi-clause claim by that name", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_committed_register_judges_every_multi_clause_claim_the_document_states()
+    {
+        // Against the real document and the real register, because what the seven above prove is
+        // that the reconciliation works and what this proves is that it currently holds.
+        string architecture = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Docs, "ARCHITECTURE.html"));
+
+        var pile = ArchitectureConformanceCheck.MultiClauseClaims(architecture);
+        var register = ArchitectureConformanceCheck.DeclaredClauses();
+
+        Assert.Equal(pile.Count, register.Count);
+        Assert.Equal(
+            pile.Sum(p => p.Clauses.Count),
+            register.Sum(c => c.Clauses.Count));
+    }
 }

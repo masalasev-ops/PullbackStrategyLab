@@ -22,12 +22,18 @@
         "claims in What differs in management": 4,
         "claims in Why each loss happened": 4,
         "claims in Tables in the document": 12,
-        "catalogued components a phase's Builds row names": 44
+        "catalogued components a phase's Builds row names": 44,
+        "multi-clause claims whose clauses are judged": 55
       },
       "context": [
         "catalogued screens, named in a Builds row as prose rather than as a token",
-        "claims whose cell states more than one clause, awaiting the 3.12 sweep",
-        "clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction"
+        "claims whose cell states more than one clause",
+        "clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction",
+        "clauses the claim's own verdict reaches",
+        "clauses another named check asserts",
+        "clauses that are the reason for a behaviour rather than a property",
+        "clauses of an out-of-scope claim, closed by its checkpoint",
+        "clauses in scope that no verdict reaches, each saying what is missing"
       ]
     },
     "bar-append-only": {

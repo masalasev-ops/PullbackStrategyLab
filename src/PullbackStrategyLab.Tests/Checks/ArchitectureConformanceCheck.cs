@@ -141,6 +141,220 @@ public sealed partial class ArchitectureConformanceCheck
         ];
     }
 
+    /// <summary>
+    /// One clause of a claim's cell, and what this corpus does about it.
+    ///
+    /// Five dispositions and no sixth. <c>reaches</c> is the claim's own verdict asserting the
+    /// clause. <c>elsewhere</c> is another check in the roster asserting it, named, and the name
+    /// has to resolve on the grounds `decision-resolves` demands an exact one: a pointer that has
+    /// gone stale reads as covered. <c>rationale</c> is the reason a behaviour is what it is, with
+    /// nothing a verdict could reach. <c>deferred</c> is a clause of an out-of-scope claim, closed
+    /// by the checkpoint that closes the claim. <c>unreached</c> is a property in scope that this
+    /// claim's verdict does not assert, with what is missing said in one line.
+    /// </summary>
+    public sealed record ClauseDisposition(string Clause, string Disposition, string? By, string? Why);
+
+    public sealed record ClaimClauses(string Table, string Subject, IReadOnlyList<ClauseDisposition> Clauses);
+
+    private sealed record ClauseRegister(IReadOnlyList<ClaimClauses> Claims);
+
+    public const string Reaches = "reaches";
+    public const string Elsewhere = "elsewhere";
+    public const string Rationale = "rationale";
+    public const string DeferredClause = "deferred";
+    public const string Unreached = "unreached";
+
+    private static readonly JsonSerializerOptions ClauseJson = new(JsonSerializerDefaults.Web);
+
+    public static string ClauseRegisterFile =>
+        System.IO.Path.Combine(RepositoryLayout.Root, "fixtures", "claim-clauses.json");
+
+    /// <summary>The register as committed, keyed the way the derived pile is keyed.</summary>
+    public static IReadOnlyList<ClaimClauses> DeclaredClauses() =>
+        JsonSerializer.Deserialize<ClauseRegister>(RepositoryLayout.Read(ClauseRegisterFile), ClauseJson)
+            ?.Claims ?? [];
+
+    /// <summary>
+    /// The multi-clause claims as the document holds them today, keyed by table and subject.
+    ///
+    /// The same walk <see cref="ClauseWeight"/> makes, returning the clauses rather than counting
+    /// them, so the pile the register is reconciled against and the figure the report states are
+    /// one derivation rather than two that agree by habit.
+    /// </summary>
+    public static IReadOnlyList<(string Table, string Subject, IReadOnlyList<string> Clauses)> MultiClauseClaims(
+        string architecture)
+    {
+        ArgumentNullException.ThrowIfNull(architecture);
+
+        var pile = new List<(string, string, IReadOnlyList<string>)>();
+
+        foreach (string table in TablesStatingASentencePerRow)
+        {
+            foreach (IReadOnlyList<string> row in HtmlTable.BodyRowsUnder(architecture, table))
+            {
+                IReadOnlyList<string> held = Clauses(string.Join(" ", row.Skip(1)));
+                if (held.Count > 1)
+                {
+                    pile.Add((table, row[0], held));
+                }
+            }
+        }
+
+        return pile;
+    }
+
+    /// <summary>
+    /// The register against the document, in both directions, and against the verdicts.
+    ///
+    /// <b>The 3.12 obligation, and what it turns on is that a disposition cannot go stale
+    /// quietly.</b> The clause text is compared verbatim rather than by position or by count, so
+    /// rewording a cell fails, and a reworded cell keeping its old judgement is the one outcome
+    /// this could not be allowed to have. A register entry naming a claim the document no longer
+    /// holds fails too, because a judgement about a sentence nobody can find is worse than an
+    /// absent one.
+    /// </summary>
+    public static IReadOnlyList<string> ClauseDispositionProblems(
+        IReadOnlyList<(string Table, string Subject, IReadOnlyList<string> Clauses)> pile,
+        IReadOnlyList<ClaimClauses> register,
+        IReadOnlyList<Claim> claims,
+        IReadOnlyCollection<string> rosterChecks)
+    {
+        ArgumentNullException.ThrowIfNull(pile);
+        ArgumentNullException.ThrowIfNull(register);
+        ArgumentNullException.ThrowIfNull(claims);
+        ArgumentNullException.ThrowIfNull(rosterChecks);
+
+        var problems = new List<string>();
+        Dictionary<(string, string), ClaimClauses> declared = [];
+
+        foreach (ClaimClauses entry in register)
+        {
+            if (!declared.TryAdd((entry.Table, entry.Subject), entry))
+            {
+                problems.Add($"[{entry.Table}] {entry.Subject} appears twice in the register.");
+            }
+        }
+
+        Dictionary<(string, string), Claim> verdicts = [];
+        foreach (Claim claim in claims)
+        {
+            verdicts.TryAdd((claim.Table, claim.Subject), claim);
+        }
+
+        foreach ((string table, string subject, IReadOnlyList<string> held) in pile)
+        {
+            if (!declared.TryGetValue((table, subject), out ClaimClauses? entry))
+            {
+                problems.Add(
+                    $"[{table}] {subject} states {held.Count} clauses and the register says nothing about it. "
+                    + "Every multi-clause claim records which clauses its verdict reaches.");
+                continue;
+            }
+
+            if (entry.Clauses.Count != held.Count)
+            {
+                problems.Add(
+                    $"[{table}] {subject} states {held.Count} clauses and the register holds {entry.Clauses.Count}. "
+                    + "The cell has been rewritten since the judgement was made, so the judgement is stale.");
+                continue;
+            }
+
+            for (int i = 0; i < held.Count; i++)
+            {
+                ClauseDisposition recorded = entry.Clauses[i];
+
+                if (!string.Equals(recorded.Clause, held[i], StringComparison.Ordinal))
+                {
+                    problems.Add(
+                        $"[{table}] {subject} clause {i + 1} reads \"{Short(held[i])}\" and the register judged "
+                        + $"\"{Short(recorded.Clause)}\". A reworded clause keeps no disposition.");
+                    continue;
+                }
+
+                problems.AddRange(DispositionProblems(table, subject, i + 1, recorded,
+                    verdicts.GetValueOrDefault((table, subject)), rosterChecks));
+            }
+        }
+
+        foreach ((string Table, string Subject) key in declared.Keys
+                     .Where(k => !pile.Any(p => p.Table == k.Item1 && p.Subject == k.Item2))
+                     .OrderBy(k => k.Item1 + k.Item2, StringComparer.Ordinal))
+        {
+            problems.Add(
+                $"[{key.Table}] {key.Subject} is judged in the register and the document holds no multi-clause "
+                + "claim by that name. Either the cell has been reworded to one clause or the subject renamed.");
+        }
+
+        return problems;
+    }
+
+    private static IReadOnlyList<string> DispositionProblems(
+        string table,
+        string subject,
+        int position,
+        ClauseDisposition recorded,
+        Claim? verdict,
+        IReadOnlyCollection<string> rosterChecks)
+    {
+        var problems = new List<string>();
+        string where = $"[{table}] {subject} clause {position}";
+
+        switch (recorded.Disposition)
+        {
+            case Reaches:
+                break;
+
+            case Elsewhere when string.IsNullOrWhiteSpace(recorded.By):
+                problems.Add($"{where} is recorded as asserted elsewhere and names nothing that asserts it.");
+                break;
+
+            case Elsewhere when !rosterChecks.Contains(recorded.By!):
+                problems.Add(
+                    $"{where} names \"{recorded.By}\", which is not a check in CLAUDE.md's roster. A backing that "
+                    + "does not resolve reads as covered and is worse than none.");
+                break;
+
+            case Elsewhere:
+                break;
+
+            case Rationale or Unreached when string.IsNullOrWhiteSpace(recorded.Why):
+                problems.Add($"{where} is recorded as {recorded.Disposition} and says nothing about why.");
+                break;
+
+            case Rationale or Unreached:
+                break;
+
+            // Deferred is the one disposition that has to agree with the claim's own verdict, and
+            // it is checked in both directions below: a clause of a live claim cannot be waiting on
+            // a checkpoint, and an out-of-scope claim has nothing its verdict could have reached.
+            case DeferredClause when verdict is not null && verdict.Verdict != Deferred:
+                problems.Add(
+                    $"{where} is deferred and the claim's verdict is \"{verdict.Verdict}\". Only an out-of-scope "
+                    + "claim has clauses a checkpoint closes.");
+                break;
+
+            case DeferredClause:
+                break;
+
+            default:
+                problems.Add(
+                    $"{where} is recorded as \"{recorded.Disposition}\", which is not one of the five dispositions.");
+                break;
+        }
+
+        if (verdict is not null && verdict.Verdict == Deferred && recorded.Disposition != DeferredClause)
+        {
+            problems.Add(
+                $"{where} is recorded as {recorded.Disposition} on a claim that is out of scope until "
+                + $"{verdict.Closes}. An unbuilt thing's clauses are deferred, not judged.");
+        }
+
+        return problems;
+    }
+
+    private static string Short(string clause) =>
+        clause.Length <= 60 ? clause : string.Concat(clause.AsSpan(0, 57), "...");
+
     [GeneratedRegex(@"\(see:[^)]*\)", RegexOptions.CultureInvariant)]
     private static partial Regex Citation();
 
@@ -585,10 +799,38 @@ public sealed partial class ArchitectureConformanceCheck
         // Context rather than a floor. It is a fact about how the document is written, it falls as
         // the sweep runs and rises as the corpus grows, and neither direction is a property going
         // away.
-        (int multiClause, int clauses) = ClauseWeight(architecture);
+        IReadOnlyList<(string Table, string Subject, IReadOnlyList<string> Clauses)> pile =
+            MultiClauseClaims(architecture);
+        IReadOnlyList<ClaimClauses> register = DeclaredClauses();
+        IReadOnlyList<string> clauseProblems = ClauseDispositionProblems(
+            pile, register, claims, [.. CoverageReportedCheck.Roster().Select(r => r.Name)]);
 
-        coverage.Context("claims whose cell states more than one clause, awaiting the 3.12 sweep", multiClause);
+        int clauses = pile.Sum(p => p.Clauses.Count);
+
+        coverage.Context("claims whose cell states more than one clause", pile.Count);
         coverage.Context("clauses those cells hold, split at a sentence end, a semicolon or a comma before a conjunction", clauses);
+
+        // The 3.12 sweep's result, one scope per disposition rather than one number.
+        //
+        // <b>Separate because only one of the five is a defect.</b> A single "clauses judged" would
+        // be 277 whatever the judgements were, which is the shape of a figure that cannot go
+        // anywhere: the count nobody could read moving is the count nobody reads. `unreached` is the
+        // one that should fall, and it is reported on its own so that it can.
+        //
+        // The property scope is the claims judged, because that is what the sweep did and it is the
+        // number that fails when a claim goes unjudged. The five dispositions are context: they are
+        // facts about how the document is written and they move whenever a cell is reworded.
+        Dictionary<string, int> byDisposition = register
+            .SelectMany(c => c.Clauses)
+            .GroupBy(c => c.Disposition, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+
+        coverage.Examined("multi-clause claims whose clauses are judged", register.Count);
+        coverage.Context("clauses the claim's own verdict reaches", byDisposition.GetValueOrDefault(Reaches));
+        coverage.Context("clauses another named check asserts", byDisposition.GetValueOrDefault(Elsewhere));
+        coverage.Context("clauses that are the reason for a behaviour rather than a property", byDisposition.GetValueOrDefault(Rationale));
+        coverage.Context("clauses of an out-of-scope claim, closed by its checkpoint", byDisposition.GetValueOrDefault(DeferredClause));
+        coverage.Context("clauses in scope that no verdict reaches, each saying what is missing", byDisposition.GetValueOrDefault(Unreached));
 
         coverage.Examined("catalogued components a phase's Builds row names", catalogueTypes.Length - unplaced.Length);
         coverage.Context("catalogued screens, named in a Builds row as prose rather than as a token", componentNames.Length - catalogueTypes.Length);
@@ -651,6 +893,9 @@ public sealed partial class ArchitectureConformanceCheck
             $"The component catalogue parsed {catalogue.Count} rows. It held 52 before any of this phase's "
             + "components were added, so a number below that means the parser stopped matching rather than that the "
             + "document got smaller.");
+        Assert.True(clauseProblems.Count == 0,
+            $"{clauseProblems.Count} multi-clause claim(s) have no current judgement on which clauses their "
+            + "verdict reaches:\n  " + string.Join("\n  ", clauseProblems.Take(20)));
         Assert.True(failures.Count == FailureBehaviourCheckpoints.Count,
             $"The failure-behaviour table has {failures.Count} rows and {FailureBehaviourCheckpoints.Count} are placed at a checkpoint.");
     }

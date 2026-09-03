@@ -1,0 +1,1679 @@
+{
+  "note": "Which clauses of its cell each multi-clause claim's verdict reaches. The 3.12 obligation, discharged at 5.8. The clause text is the split ARCHITECTURE.html produces on the 3.12 rule and is compared verbatim, so a reworded cell fails rather than keeping a stale disposition.",
+  "claims": [
+    {
+      "table": "Failure behaviour",
+      "subject": "Intraday prices unavailable for a day",
+      "clauses": [
+        {
+          "clause": "No trades resolved and every setup flagged that night excluded from variant scoring.",
+          "disposition": "unreached",
+          "why": "variant scoring is not built, so the exclusion cannot be asserted; this verdict reaches the fetcher's count of names the vendor held nothing for"
+        },
+        {
+          "clause": "A variant that could not be tested must not be scored as though it chose to pass.",
+          "disposition": "rationale",
+          "why": "the reason the exclusion exists"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A spread snapshot is missed",
+      "clauses": [
+        {
+          "clause": "Three different outcomes",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and they are not one condition with three sizes.",
+          "disposition": "rationale",
+          "why": "emphasis on the three being distinct"
+        },
+        {
+          "clause": "One of the two passes missed: the session is degraded.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "It has a spread and that spread rests on a single reading",
+          "disposition": "rationale",
+          "why": "what a single reading is"
+        },
+        {
+          "clause": "so it can be neither checked against a second nor asked how the book moved through the day",
+          "disposition": "rationale",
+          "why": "what a single reading cannot answer"
+        },
+        {
+          "clause": "degraded rather than failed",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because one sample is worth more than none and nothing later can raise it to two.",
+          "disposition": "rationale",
+          "why": "why one sample is worth keeping"
+        },
+        {
+          "clause": "Both missed: the read refuses.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "There is no spread for that session and there never will be",
+          "disposition": "rationale",
+          "why": "what refusing means"
+        },
+        {
+          "clause": "and a reader answering with an empty result would be indistinguishable from a name that had no book",
+          "disposition": "rationale",
+          "why": "what an empty result would be indistinguishable from"
+        },
+        {
+          "clause": "which is a fill charged no slippage on a session nobody measured.",
+          "disposition": "rationale",
+          "why": "the consequence of that indistinguishability"
+        },
+        {
+          "clause": "Some of the names missed: the run is partial with the count",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and the shortfall is per name rather than per session",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "so the names captured are unaffected and each name absent refuses on the same footing as the second case.",
+          "disposition": "rationale",
+          "why": "the consequence for the names that were captured"
+        },
+        {
+          "clause": "The distinction that makes all three legible is that a pass writes a spread_pass row whatever it did",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "so a session nobody sampled is absence and a session that ran and asked for nothing is a row .",
+          "disposition": "reaches"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Price gaps past the give-up point",
+      "clauses": [
+        {
+          "clause": "Recorded as a loss larger than planned and tagged.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Never rounded back",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because the size and frequency of these is a genuine property of the strategy and one of the things you most want to learn.",
+          "disposition": "rationale",
+          "why": "why the tail is worth keeping unrounded"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A short could not have been borrowed",
+      "clauses": [
+        {
+          "clause": "Not detectable from the feed.",
+          "disposition": "rationale",
+          "why": "a statement about the vendor feed rather than about the code"
+        },
+        {
+          "clause": "Mitigated by a market-cap floor and a borrow-cost deduction, recorded as an unmodelled assumption on every short position from 4.7 and shown in the journal from 4.11.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Long and short results are never pooled.",
+          "disposition": "unreached",
+          "why": "the never-pooled rule is asserted where the panels are computed and not by this verdict, which reaches the borrow assumptions on the row"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Unprocessed corporate action",
+      "clauses": [
+        {
+          "clause": "Calculations refuse to run for that stock and no plan is published.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Failing loudly matters: any action that moves the adjusted close corrupts every moving average at once and produces plausible-looking nonsense.",
+          "disposition": "rationale",
+          "why": "why failing loudly matters"
+        },
+        {
+          "clause": "A split does it by a factor and a dividend by a smaller one",
+          "disposition": "rationale",
+          "why": "the relative size of the two actions"
+        },
+        {
+          "clause": "and magnitude does not enter it .",
+          "disposition": "rationale",
+          "why": "that size does not change the treatment"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Detector errors on one stock",
+      "clauses": [
+        {
+          "clause": "An error row is written for that stock and date.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Silently skipping shrinks the recorded universe without anyone noticing",
+          "disposition": "rationale",
+          "why": "what silently skipping would cost"
+        },
+        {
+          "clause": "which is the kind of defect that survives for months.",
+          "disposition": "rationale",
+          "why": "how long such a defect survives"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Nightly setup cap reached",
+      "clauses": [
+        {
+          "clause": "The cap truncates the shared candidate list by rank before any variant selects",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and the truncation is recorded.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Never applied per variant, or the disagreements go unscoreable.",
+          "disposition": "unreached",
+          "why": "per-variant application cannot be asserted before 5.1 builds variants"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Daily API ceiling reached",
+      "clauses": [
+        {
+          "clause": "The nightly job counts as it goes and stops rather than overrunning.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "A stopped job writes a partial-run row and the affected setups are marked degraded.",
+          "disposition": "reaches"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Two variants pick the same stock",
+      "clauses": [
+        {
+          "clause": "Two orders in two separate simulated accounts, both tagged, both capped by the same code.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "Never combined.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Risk gate blocks an order",
+      "clauses": [
+        {
+          "clause": "A blocked row with the reason.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "A variant that missed a winner because it was full reads very differently from one that never spotted it.",
+          "disposition": "rationale",
+          "why": "why a blocked row is worth storing"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "AI usage allowance exhausted",
+      "clauses": [
+        {
+          "clause": "The weekly job queues and no proposal is produced.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "Nothing else affected",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "and the seat never returns a partial suggestion.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Holdout windows exhausted",
+      "clauses": [
+        {
+          "clause": "No further pack-version decisions can be made by replay.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "The remaining channel is the forward hit rate",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "which is slower.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "This is a designed dead end, not a bug.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Variant sample never accumulates",
+      "clauses": [
+        {
+          "clause": "Stays open, ledger shows its age.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "No timeout that quietly accepts or rejects",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "because a timeout is a decision made by the calendar rather than by evidence.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A comparison has no control outcomes",
+      "clauses": [
+        {
+          "clause": "ForwardReturnFiller records an outcome for every control drawn as well as every setup, over the control's own bars, from the control's own session, signed by the flagging setup's direction and expressed in the control's own range.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Where a side still has none, the band 1 panel is withheld and says a shortage of control outcomes is the cause rather than a shortage of time.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "It bound the subject kind to a literal for the whole of phase 3",
+          "disposition": "rationale",
+          "why": "the history of the defect this row was written after"
+        },
+        {
+          "clause": "so no control outcome was ever written, band 1 was withheld on every night with an effective count of nought",
+          "disposition": "rationale",
+          "why": "what that defect produced"
+        },
+        {
+          "clause": "and the panel named a horizon that had already closed .",
+          "disposition": "rationale",
+          "why": "the last of what it produced"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "The vendor holds nothing on a name",
+      "clauses": [
+        {
+          "clause": "The name is stamped as looked-up and counted as one the vendor had nothing on, separately from the resolved.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Not an error and not a retry: a fund trust has no sector for ever",
+          "disposition": "rationale",
+          "why": "why absence is not an error"
+        },
+        {
+          "clause": "and a walk that treated absence as failure would ask again every night for the life of the lab.",
+          "disposition": "rationale",
+          "why": "what treating it as failure would cost"
+        },
+        {
+          "clause": "The parse admits the vendor's absence words in a numeric field and a field present but blank",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and still throws on a string it cannot read",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because a capitalisation delivered as prose is a shape change rather than an absence.",
+          "disposition": "rationale",
+          "why": "why a prose capitalisation is a shape change"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A vendor refuses one name mid-walk",
+      "clauses": [
+        {
+          "clause": "That name costs that name.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "It is counted, printed",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and left unstamped so the next pass asks exactly it",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "the walk continues and the run is recorded partial with the skipped count, never clean.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The same shape as a detector erroring on one stock",
+          "disposition": "rationale",
+          "why": "the shape it shares with another row"
+        },
+        {
+          "clause": "and it is here because the first live night lost 86 of 234 names to one that threw.",
+          "disposition": "rationale",
+          "why": "the night that prompted the row"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "An input the session asked for arrives after the session",
+      "clauses": [
+        {
+          "clause": "It is attributed to that session if it arrives inside the lateness bound",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and refused beyond it.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The bound is an authored value read from the parameters table rather than written into the stage, the lateness is recorded on the row in minutes so a figure resting on late answers can be summed or excluded",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and the prior state is kept so any corrected row can be put back through the same writer that corrected it.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Nothing gating is ever recomputed .",
+          "disposition": "unreached",
+          "why": "the refusal of a gating check is CheckRecomputer's own and this verdict reaches the lateness bound, the recorded minutes and the restore"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "The vendor answers 200 with a body the parse cannot read",
+      "clauses": [
+        {
+          "clause": "The capture refuses it and names the shape rather than storing it as a working example.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The trigger is the parse, not the status.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The response that killed the first sector walk came back 200",
+          "disposition": "rationale",
+          "why": "the response that prompted the row"
+        },
+        {
+          "clause": "so a guard on status would have filed it as a good response and the fixture would have grown a body the parser has never seen.",
+          "disposition": "rationale",
+          "why": "what a status guard would have done with it"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A migration adds a column recording when the lab observed something",
+      "clauses": [
+        {
+          "clause": "It has to be named in the point-in-time check's stamped list",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which is reconciled in both directions: every table named carries the column it names",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and every stamped column a migration creates is named.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Fourteen tables today.",
+          "disposition": "unreached",
+          "why": "the document states fourteen tables and the check names twenty-eight; the figure is stale and no count check reaches a number stated inside a table cell"
+        },
+        {
+          "clause": "The reverse direction is the one that matters",
+          "disposition": "rationale",
+          "why": "which direction matters"
+        },
+        {
+          "clause": "because a table gaining a stamp and joining the corpus unnoticed is how four of them sat outside the list, one of them since 2.7.",
+          "disposition": "rationale",
+          "why": "the four tables that sat outside the list"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A rebuild writes no rows",
+      "clauses": [
+        {
+          "clause": "It reports what it attempted and what it skipped and exits non-zero when the two are equal, naming the supported route.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Some skipped and some written is not a failure and is still reported.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "An account-wide panel",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which carries no direction, is constrained by a partial unique index rather than by the primary key",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because SQLite treats nulls as distinct and the key it declares does not reach those rows.",
+          "disposition": "rationale",
+          "why": "why SQLite's treatment of nulls forces the partial index"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A stage writes after the UTC date rolls",
+      "clauses": [
+        {
+          "clause": "The row is still inside its own session.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "A point-in-time bound closes a session at the last instant of its own day in the session zone, never at T23:59:59.999Z",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which is 19:59:59 Eastern in daylight time and 18:59:59 in standard time.",
+          "disposition": "rationale",
+          "why": "what the Eastern offsets are"
+        },
+        {
+          "clause": "The literal form truncated every session at 20:00 Eastern and moved the truncation an hour twice a year: measured on 2026-08-28, a scoreboard read for the session of 2026-08-27 returned none of the nine panels built for it at 21:50 Eastern.",
+          "disposition": "rationale",
+          "why": "the measurement that found the literal form"
+        },
+        {
+          "clause": "One function builds the instant and every bound calls it",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because a boundary computed two ways is worse than either way",
+          "disposition": "rationale",
+          "why": "why one function rather than two"
+        },
+        {
+          "clause": "and from 5.8 every store reader takes the zone it bounds in as a parameter and names no constant",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "so the configured zone is the zone on every read rather than on the stages alone .",
+          "disposition": "rationale",
+          "why": "the consequence of the zone being a parameter"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "The store is at a schema version other than the build's",
+      "clauses": [
+        {
+          "clause": "Every stage but three refuses before it opens the store, naming the version found and the version needed.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The three are migrate",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which is the repair, snapshot-db",
+          "disposition": "rationale",
+          "why": "what snapshot-db is for"
+        },
+        {
+          "clause": "which the RUNBOOK runs before every migration and which therefore has to work on a store that is behind",
+          "disposition": "rationale",
+          "why": "why snapshot-db has to work on a store behind"
+        },
+        {
+          "clause": "and list-stages",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which reads nothing.",
+          "disposition": "rationale",
+          "why": "what list-stages reads"
+        },
+        {
+          "clause": "A store ahead of the build is refused on the same footing as one behind it.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The status band states the mismatch outright rather than printing the two numbers and leaving them to be compared.",
+          "disposition": "unreached",
+          "why": "the status band is a surface and this verdict reads Program.cs; no surface claim carries the band's sentence"
+        },
+        {
+          "clause": "Written after 2026-08-28, when migrations 031 and 032 landed and the live store was never migrated: detect-long, vectorize, controls and cap each died on no such column: degraded_because, one slot after the next",
+          "disposition": "rationale",
+          "why": "the night the row was written after"
+        },
+        {
+          "clause": "and the night produced no setups at all against inputs that were entirely clean.",
+          "disposition": "rationale",
+          "why": "what that night produced"
+        },
+        {
+          "clause": "Every message named a column",
+          "disposition": "rationale",
+          "why": "what every message named"
+        },
+        {
+          "clause": "which says what broke and not why.",
+          "disposition": "rationale",
+          "why": "what naming a column does not say"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "Someone edits the baseline",
+      "clauses": [
+        {
+          "clause": "Not permitted while variants run.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "Doing so closes every open variant as unresolved and starts a new generation",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "because they were being compared against a rule that no longer exists.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "DailyBarIngestor",
+      "clauses": [
+        {
+          "clause": "Nightly 17:30",
+          "disposition": "unreached",
+          "why": "the scheduled time is a property of the operator's scheduler, which no check in this corpus reaches"
+        },
+        {
+          "clause": "and 17:45 for the refetch Pulls the whole market’s closing prices in one bulk request.",
+          "disposition": "unreached",
+          "why": "the shape of the bulk request is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Also owns the per-ticker history refetch",
+          "disposition": "unreached",
+          "why": "ownership of the refetch is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "which is how a corporate action is honoured and how the one-time backfill is done",
+          "disposition": "rationale",
+          "why": "what the refetch is for"
+        },
+        {
+          "clause": "because a second component issuing the same insert would be a second writer of the same table",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "ActionIngestor",
+      "clauses": [
+        {
+          "clause": "Nightly 17:20 Splits and dividends",
+          "disposition": "unreached",
+          "why": "the scheduled time is a property of the operator's scheduler, which no check in this corpus reaches"
+        },
+        {
+          "clause": "and raises a rebuild demand for any action that moves the adjusted close.",
+          "disposition": "unreached",
+          "why": "the raising of a rebuild demand is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "It raises the demand and never satisfies it",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "SpreadSnapshotter",
+      "clauses": [
+        {
+          "clause": "10:15 and 15:45, inside the session Bid-ask spread for the night's capped names, sampled twice.",
+          "disposition": "unreached",
+          "why": "the scheduled times and the sampling count are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "The only job that runs while the market is open",
+          "disposition": "unreached",
+          "why": "being the only job inside the session is not asserted anywhere"
+        },
+        {
+          "clause": "and unrecoverable if missed.",
+          "disposition": "rationale",
+          "why": "the consequence of missing it"
+        },
+        {
+          "clause": "The first sample is past the opening auction, whose quotes describe an event rather than a name",
+          "disposition": "rationale",
+          "why": "why the first sample is where it is"
+        },
+        {
+          "clause": "and inside the first hour, where a pullback trigger most often fires",
+          "disposition": "rationale",
+          "why": "the second half of that reason"
+        },
+        {
+          "clause": "the second is late enough to catch a book that widened through the day and outside the closing auction.",
+          "disposition": "rationale",
+          "why": "why the second sample is where it is"
+        },
+        {
+          "clause": "Two rather than one because a single quote cannot be checked",
+          "disposition": "rationale",
+          "why": "why two rather than one"
+        },
+        {
+          "clause": "and two rather than three because a third buys the shape of the curve rather than a check on its level, at sixty more unrecoverable calls a session for ever",
+          "disposition": "rationale",
+          "why": "why two rather than three"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "IndicatorEngine",
+      "clauses": [
+        {
+          "clause": "Nightly 18:00 Moving averages, daily range, true range and dollar volume, computed locally.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the computed set are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Refuses to run for a stock with a rebuild demand outstanding",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "and satisfies the demand once the history has been refetched",
+          "disposition": "unreached",
+          "why": "satisfying the demand is not asserted by a catalogue verdict"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "PlanBuilder",
+      "clauses": [
+        {
+          "clause": "Nightly 18:30 One committed plan per capped candidate, sized here.",
+          "disposition": "unreached",
+          "why": "the scheduled time and one plan per candidate are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Per version per candidate from 5.1",
+          "disposition": "unreached",
+          "why": "per version per candidate cannot be asserted before 5.1 builds variants"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "RunLogger",
+      "clauses": [
+        {
+          "clause": "Every stage Sole writer of the run log.",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        },
+        {
+          "clause": "Stages call it rather than writing the table themselves",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        },
+        {
+          "clause": "and rows written is measured from the store rather than self-reported",
+          "disposition": "unreached",
+          "why": "rows written being measured from the store rather than self-reported is not asserted by a catalogue verdict"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "SessionReplayClock",
+      "clauses": [
+        {
+          "clause": "With the resolver Walks the stored minute bars for a session, every name at once, one minute at a time.",
+          "disposition": "unreached",
+          "why": "the walk's behaviour is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Owns no table",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "VwapEngine",
+      "clauses": [
+        {
+          "clause": "Nightly 21:00 The anchored average price.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the anchored average are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "It wrote a running session average onto every stored minute from 4.4 and stopped at 4.7",
+          "disposition": "rationale",
+          "why": "a behaviour the component no longer has"
+        },
+        {
+          "clause": "because no reader for it was ever named and a running average is derivable from the stored minutes whenever one is wanted",
+          "disposition": "rationale",
+          "why": "why it was removed"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "RiskGate",
+      "clauses": [
+        {
+          "clause": "21:10 as a slot, on trigger as an act Enforces every cap and may reduce or block a plan's size, never recompute it.",
+          "disposition": "unreached",
+          "why": "the caps are asserted by the limits claims and never recomputing is not asserted by this verdict"
+        },
+        {
+          "clause": "The only thing that may open a position.",
+          "disposition": "elsewhere",
+          "by": "order-provenance"
+        },
+        {
+          "clause": "The runbook and the dispatcher put it at 21:10 and this row said on trigger",
+          "disposition": "rationale",
+          "why": "how the two placements are both true"
+        },
+        {
+          "clause": "and both are true of different things: the orders slot runs once after the close over the session's replay",
+          "disposition": "rationale",
+          "why": "what the orders slot does"
+        },
+        {
+          "clause": "and inside that walk the gate acts at the minute each trigger was reached, in the order the triggers happened",
+          "disposition": "rationale",
+          "why": "what the gate does inside the walk"
+        },
+        {
+          "clause": "which is why a full book blocks the later ones",
+          "disposition": "rationale",
+          "why": "the consequence for the later triggers"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "PaperBroker",
+      "clauses": [
+        {
+          "clause": "Nightly 21:15 Fills every entry at a deliberately pessimistic price.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the pessimistic price are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Every exit is PositionManager's from 4.8",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        },
+        {
+          "clause": "because the exit is whichever rule is reached first and that comparison cannot be made by two components",
+          "disposition": "rationale",
+          "why": "why one component owns the exit"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "PositionManager",
+      "clauses": [
+        {
+          "clause": "Nightly 21:20 Trails, trims and exits, including the give-up point.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the three behaviours are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Separate rule sets per direction.",
+          "disposition": "unreached",
+          "why": "separate rule sets per direction are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "After PaperBroker",
+          "disposition": "rationale",
+          "why": "the ordering"
+        },
+        {
+          "clause": "because a position has to exist before it can be managed",
+          "disposition": "rationale",
+          "why": "why the ordering is that way"
+        },
+        {
+          "clause": "and it walks the same session again so an entry priced five minutes earlier can be exited in the session it opened in",
+          "disposition": "rationale",
+          "why": "why it walks the session again"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "CheckRecomputer",
+      "clauses": [
+        {
+          "clause": "By hand, after a stage failed Recomputes one recorded-not-required check for one night, from inputs bounded to that night",
+          "disposition": "unreached",
+          "why": "the recompute behaviour is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "and marks the row as corrected.",
+          "disposition": "unreached",
+          "why": "the corrected mark is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Refuses a gating check outright",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "and refuses any row whose input was stamped after the setup's own date",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "which is what makes it a repair rather than a rewrite.",
+          "disposition": "rationale",
+          "why": "what makes it a repair"
+        },
+        {
+          "clause": "On every run, dry or applied, it reads the night's column against the whole scan population and reports the split it holds rather than one number",
+          "disposition": "unreached",
+          "why": "the population split it reports is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "because 2026-08-27's `cluster` column is three populations under one name and it may revisit none of them",
+          "disposition": "rationale",
+          "why": "why that column needs the split"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "SetupJournal",
+      "clauses": [
+        {
+          "clause": "Nightly 18:25 Seals the night: every setup row complete, its evidence frozen",
+          "disposition": "unreached",
+          "why": "the scheduled time and the sealing are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "and no column written that belongs to a later stage or to a person.",
+          "disposition": "unreached",
+          "why": "the columns it must not write are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Writes nothing",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        },
+        {
+          "clause": "because a component enforcing immutability by writing would be the second writer of the thing it protects",
+          "disposition": "rationale",
+          "why": "why a writer could not enforce immutability"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "TradeJournal",
+      "clauses": [
+        {
+          "clause": "Nightly 21:25 Closes trades and states the result in R after the borrow a short is charged.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the result in R are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "After PositionManager",
+          "disposition": "rationale",
+          "why": "the ordering"
+        },
+        {
+          "clause": "because a trade exists when a position closes",
+          "disposition": "rationale",
+          "why": "why the ordering is that way"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "PlanAudit",
+      "clauses": [
+        {
+          "clause": "Nightly 21:26 Holds the plan against what happened, in three pairs.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the three pairs are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "After TradeJournal",
+          "disposition": "rationale",
+          "why": "the ordering"
+        },
+        {
+          "clause": "because the audit points at a trade and because a result written first is one the audit cannot change",
+          "disposition": "rationale",
+          "why": "why the ordering is that way"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "ForwardReturnFiller",
+      "clauses": [
+        {
+          "clause": "Nightly 21:30 Fills 1, 3, 5 and 10 day outcomes on every setup, traded or not",
+          "disposition": "unreached",
+          "why": "the scheduled time and the four horizons are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "and on every control drawn against one",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "LossClassifier",
+      "clauses": [
+        {
+          "clause": "Nightly 21:35 Two passes: the mechanism of every loss that closed tonight",
+          "disposition": "unreached",
+          "why": "the scheduled time and the first pass are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "and the aftermath of every earlier loss whose ten-session horizon has since closed.",
+          "disposition": "unreached",
+          "why": "the second pass is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "After the forward returns",
+          "disposition": "rationale",
+          "why": "the ordering"
+        },
+        {
+          "clause": "because half of what it answers is one of them",
+          "disposition": "rationale",
+          "why": "why the ordering is that way"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "CeilingCalculator",
+      "clauses": [
+        {
+          "clause": "Weekly Computes the win-rate ceiling from the outcome distribution, per direction and from the path rather than the terminal return",
+          "disposition": "unreached",
+          "why": "the weekly cadence and the path-based computation are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "so a setup that ended ahead having first been stopped out does not count toward a bound no rule could reach",
+          "disposition": "rationale",
+          "why": "why the path rather than the terminal return"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "VariantAdmitter",
+      "clauses": [
+        {
+          "clause": "Manual The human step.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "Writes the target and the sample, once",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "Chart page",
+      "clauses": [
+        {
+          "clause": "On request One stock&#39",
+          "disposition": "unreached",
+          "why": "the page's content is not asserted by a route verdict, and this clause is a splitter artifact: the cell writes its apostrophe as an entity whose semicolon reads as a clause boundary"
+        },
+        {
+          "clause": "s window: candles on the adjusted basis, the three averages",
+          "disposition": "unreached",
+          "why": "the page's content is not asserted by a route verdict"
+        },
+        {
+          "clause": "and the figures the lab stored for that session",
+          "disposition": "unreached",
+          "why": "the page's content is not asserted by a route verdict"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "LabSetups",
+      "clauses": [
+        {
+          "clause": "On request What the setup inspector reads: a night’s setups, both directions kept apart, each with every check’s verdict and a window to read it against.",
+          "disposition": "unreached",
+          "why": "what the inspector reads is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Also the sole writer of the two agreement columns",
+          "disposition": "elsewhere",
+          "by": "writer-ownership"
+        },
+        {
+          "clause": "which is the one write the read surface makes",
+          "disposition": "rationale",
+          "why": "what makes that write the exception"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "ControlSampler",
+      "clauses": [
+        {
+          "clause": "Nightly 18:26 Draws matched control stocks nightly, loose and tight, five per set by deterministic nearest neighbour, before the cap so they answer for the flagged population rather than the kept sixty.",
+          "disposition": "unreached",
+          "why": "the scheduled time and the draw are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "Both sets draw from the setup's own session, the tight set within the night because a within-night draw controls the market mood exactly",
+          "disposition": "unreached",
+          "why": "the two sets' sessions are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "and each drawn row records the session it came from .",
+          "disposition": "unreached",
+          "why": "the recorded session is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "A name is in the pool only where the store holds a bar for it dated on the session, from 5.8: an indicated name that did not trade that day is not a control",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "and the run says how many were kept out",
+          "disposition": "unreached",
+          "why": "the kept-out count is not asserted by a catalogue verdict"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "ScoreboardBuilder",
+      "clauses": [
+        {
+          "clause": "Nightly 21:50 Computes the scoreboard panels and stores what each showed",
+          "disposition": "unreached",
+          "why": "the scheduled time and the stored panels are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "so a panel can be read back as it stood.",
+          "disposition": "rationale",
+          "why": "why a panel is stored"
+        },
+        {
+          "clause": "Every panel carries its own row count and, where it has an interval, the effective observations that interval was really built on.",
+          "disposition": "unreached",
+          "why": "the per-panel counts are not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "A rebuild asked for by name writes a new generation of the date's panels beside the old and never deletes one",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "a second build not asked for writes nothing and fails",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "Lab scoreboard page",
+      "clauses": [
+        {
+          "clause": "On request The four bands.",
+          "disposition": "unreached",
+          "why": "the four bands are content and a route verdict does not reach them"
+        },
+        {
+          "clause": "Is the pattern real, can the lab sort it, is the loop learning",
+          "disposition": "rationale",
+          "why": "what the bands ask"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P1",
+      "clauses": [
+        {
+          "clause": "UniverseBuilder, DailyBarIngestor, ActionIngestor, IndexIngestor, IndicatorEngine, RunLogger, the phase report harness and golden fixture, web shell, chart page A web shell with routing, navigation and one shared chart component",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "so no later checkpoint invents its own.",
+          "disposition": "rationale",
+          "why": "why the shell is shared"
+        },
+        {
+          "clause": "Then daily charts with the three averages and the daily range for any stock, drawn from your own stored prices.",
+          "disposition": "unreached",
+          "why": "the chart page's content is not asserted by a build-order verdict"
+        },
+        {
+          "clause": "You compare one against a chart you already trust.",
+          "disposition": "rationale",
+          "why": "an instruction to the reader"
+        },
+        {
+          "clause": "Indicator values for the fixture's 30 tickers diffed against frozen expectations.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "Every component named in the catalogue asserted to exist and be registered.",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "Every limit in the parameters table asserted against its config value.",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "Anything it cannot examine listed as unexamined.",
+          "disposition": "elsewhere",
+          "by": "coverage-reported"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P2",
+      "clauses": [
+        {
+          "clause": "ScanEngine, TierClassifier, SectorResolver, ThemeClusterer, RegimeLabeler, LongSetupDetector, ShortSetupDetector, SignalVectorizer, SetupCapper, setup inspector, LabSetups Last night's flagged setups, both directions, as a gallery of marked-up charts showing which checks passed and which failed.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "You page through by keyboard and record agree or disagree per setup.",
+          "disposition": "rationale",
+          "why": "an instruction to the reader"
+        },
+        {
+          "clause": "This is where the strategy actually transfers into code.",
+          "disposition": "rationale",
+          "why": "why the phase matters"
+        },
+        {
+          "clause": "Fixture setups diffed check by check",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "so a change to any gate shows up as a named difference rather than a count.",
+          "disposition": "rationale",
+          "why": "why the diff is per check"
+        },
+        {
+          "clause": "The ten long and ten short check names asserted to exist in the detectors.",
+          "disposition": "elsewhere",
+          "by": "check-completeness"
+        },
+        {
+          "clause": "Your agreement rate reported as a number.",
+          "disposition": "unreached",
+          "why": "the inspector's agreement rate is a figure on a page and no surface claim carries it"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P3",
+      "clauses": [
+        {
+          "clause": "SetupJournal, ForwardReturnFiller, ControlSampler, CeilingCalculator, ScoreboardBuilder, scoreboard page, CheckRecomputer The same gallery with follow-up returns filling in behind it, plus the scoreboard's first two bands live against matched controls.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "This is the project's own decision point.",
+          "disposition": "rationale",
+          "why": "why the phase matters"
+        },
+        {
+          "clause": "Forward returns and control draws diffed against the fixture, including the holiday case.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "The computed ceiling recomputed and compared.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "Confirms `setup` is still empty of anything reconstructed from history.",
+          "disposition": "unreached",
+          "why": "the evidence store holding nothing reconstructed is counted by the reconstructed read itself before and after, which is a property of that run rather than of the table"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P4",
+      "clauses": [
+        {
+          "clause": "IntradayFetcher, SpreadSnapshotter, WatchlistPublisher, watchlist page, VwapEngine, PlanBuilder, TriggerResolver, SessionReplayClock, RiskGate, PaperBroker, PositionManager, PlanAudit, TradeJournal, LossClassifier, trade journal page The two captures come first",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and the watchlist still arrives before the trading machinery.",
+          "disposition": "rationale",
+          "why": "the ordering"
+        },
+        {
+          "clause": "Minute bars and spreads exist only from the night capture begins and a screen can be built any evening",
+          "disposition": "rationale",
+          "why": "why the two captures come first"
+        },
+        {
+          "clause": "so the phase opens on the two unrecoverable inputs",
+          "disposition": "rationale",
+          "why": "the consequence of that"
+        },
+        {
+          "clause": "the watchlist is third",
+          "disposition": "rationale",
+          "why": "where the watchlist sits"
+        },
+        {
+          "clause": "which keeps what the original ordering was protecting, that every checkpoint after it lands on a screen you already have.",
+          "disposition": "rationale",
+          "why": "what the ordering protects"
+        },
+        {
+          "clause": "Then simulated trades, each with an intraday chart showing trigger, fill, give-up point and exit, plus planned against executed and the classified loss cause.",
+          "disposition": "unreached",
+          "why": "the trade journal page's content is not asserted by a build-order verdict"
+        },
+        {
+          "clause": "The fixture gains a session of minute bars",
+          "disposition": "elsewhere",
+          "by": "fixture-inputs"
+        },
+        {
+          "clause": "so fills, stops, gap losses and the contention case are diffed rather than eyeballed.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        },
+        {
+          "clause": "Order provenance asserted.",
+          "disposition": "elsewhere",
+          "by": "order-provenance"
+        },
+        {
+          "clause": "Realised risk against intended risk reported per position.",
+          "disposition": "unreached",
+          "why": "realised against intended risk is a figure on a page and no surface claim carries it"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P5",
+      "clauses": [
+        {
+          "clause": "VariantResolver, VariantScorer, VariantAdmitter, ReplayHarness, HoldoutRegistry, research ledger page Hand-written versions in both families scoring nightly against the baseline, with the difference series visible and the holdout register showing what has been spent, both on the research ledger at 5.5.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Still no AI anywhere.",
+          "disposition": "unreached",
+          "why": "the absence of an AI component in this phase is not asserted anywhere"
+        },
+        {
+          "clause": "The harness re-run of the baseline's own rule must reproduce the baseline's historical selections exactly.",
+          "disposition": "unreached",
+          "why": "the replay harness is not built, so its reproduction of the baseline's selections cannot be asserted"
+        },
+        {
+          "clause": "If it does not, the harness and the live detector disagree and every replay result is worthless.",
+          "disposition": "rationale",
+          "why": "the consequence if it did not"
+        }
+      ]
+    },
+    {
+      "table": "Build order",
+      "subject": "P6",
+      "clauses": [
+        {
+          "clause": "TwinPairFinder, ContextPacker, ResearcherSeat, ProposalRegistry, SignalBackfiller, SignalAdmissionTest, AcceptanceGate, pack comparison page Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "and proposal hit rate compared across pack versions.",
+          "disposition": "unreached",
+          "why": "phase 6 is not built"
+        },
+        {
+          "clause": "The pack built from the fixture is byte-stable across runs",
+          "disposition": "unreached",
+          "why": "phase 6 is not built"
+        },
+        {
+          "clause": "so a pack change is a deliberate change.",
+          "disposition": "rationale",
+          "why": "why byte-stability matters"
+        },
+        {
+          "clause": "The planted null signal is present.",
+          "disposition": "unreached",
+          "why": "phase 6 is not built"
+        },
+        {
+          "clause": "No component outside the proposal store accepts a write from the researcher.",
+          "disposition": "unreached",
+          "why": "phase 6 is not built"
+        }
+      ]
+    },
+    {
+      "table": "The phase report",
+      "subject": "Document conformance",
+      "clauses": [
+        {
+          "clause": "The component catalogue, the limits table, the check lists and the call budget in this document are structured tables.",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "The report parses them and asserts each claim against the code: every component named exists and is registered, every limit matches its config value, every named check exists in the detector, every declared writer is the only writer.",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        }
+      ]
+    },
+    {
+      "table": "The phase report",
+      "subject": "Fixture diff",
+      "clauses": [
+        {
+          "clause": "A committed golden fixture holds real bars for a small set of tickers over a fixed window, with expected outputs frozen beside them.",
+          "disposition": "elsewhere",
+          "by": "fixture-inputs"
+        },
+        {
+          "clause": "The pipeline runs against it and the report diffs actual against expected, stage by stage.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay"
+        }
+      ]
+    },
+    {
+      "table": "The phase report",
+      "subject": "Coverage",
+      "clauses": [
+        {
+          "clause": "What each check actually examined, not only whether it passed.",
+          "disposition": "elsewhere",
+          "by": "coverage-reported"
+        },
+        {
+          "clause": "A claim the report could not examine is listed as unexamined",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "which is not a pass.",
+          "disposition": "rationale",
+          "why": "emphasis that unexamined is not a pass"
+        },
+        {
+          "clause": "A claim the build plan places at a checkpoint that has not landed is listed as out of scope and counted separately",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "because collapsing the two would let a later checkpoint&#39",
+          "disposition": "rationale",
+          "why": "why the two are counted apart"
+        },
+        {
+          "clause": "s rows hide the one row nobody can check.",
+          "disposition": "rationale",
+          "why": "the tail of that reason, split by the escaped apostrophe in the cell"
+        },
+        {
+          "clause": "Each of those names the checkpoint that ends it",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "and the report groups them by it",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "so the count falls as checkpoints land rather than resting as a permanent number.",
+          "disposition": "rationale",
+          "why": "the consequence of grouping"
+        },
+        {
+          "clause": "Out of scope carries a ceiling of 52 and the run fails above it",
+          "disposition": "unreached",
+          "why": "the ceiling is enforced by PhaseReportStage reading the figure from this document, and no test exercises the failure"
+        },
+        {
+          "clause": "because it is the one bucket where scope narrows without going red: at 42% of the claims it is larger than the passing set",
+          "disposition": "rationale",
+          "why": "why out of scope is the bucket that needs a ceiling"
+        },
+        {
+          "clause": "and a claim moving quietly into it is a claim nobody has to answer for.",
+          "disposition": "rationale",
+          "why": "what a claim moving into it would mean"
+        },
+        {
+          "clause": "Every out-of-scope claim also states its own reason",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        },
+        {
+          "clause": "and one without a reason fails the run rather than being counted.",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Timezone identifiers",
+      "clauses": [
+        {
+          "clause": "Every session boundary, every nightly job trigger, every \"was this bar in regular hours\" test IANA names only, never Windows names.",
+          "disposition": "unreached",
+          "why": "IANA-only is not asserted; this verdict reaches the globalization setting that keeps the lookup working"
+        },
+        {
+          "clause": "Do not enable invariant globalization",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which is the setting that makes IANA lookup fail silently.",
+          "disposition": "rationale",
+          "why": "why the setting matters"
+        },
+        {
+          "clause": "One clock abstraction, everything stored in UTC, conversion only where a session boundary is being decided",
+          "disposition": "elsewhere",
+          "by": "clock-usage"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Filesystem case sensitivity",
+      "clauses": [
+        {
+          "clause": "macOS is insensitive by default, Linux is not Lowercase names for every path the application composes or reads at runtime: the data root and everything under it, the golden fixture, artifacts/ and tools/.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": ".NET source and project directories keep the framework’s PascalCase",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which the repository layout mandates.",
+          "disposition": "rationale",
+          "why": "why the exception exists"
+        },
+        {
+          "clause": "Enforced by the path-casing check",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which asserts each path literal against the on-disk path byte for byte rather than asserting lowercase, since exact match is the stronger property.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "A mismatch that works on both your machines will fail the first time it touches a Linux CI runner",
+          "disposition": "elsewhere",
+          "by": "two-platform"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Path separators and roots",
+      "clauses": [
+        {
+          "clause": "Anywhere a path is composed or persisted One configured data root, path composition through the platform API",
+          "disposition": "unreached",
+          "why": "composition through the platform API is not asserted; this verdict reaches the stored-row half"
+        },
+        {
+          "clause": "and no absolute path ever written into a database row",
+          "disposition": "reaches"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Scheduling",
+      "clauses": [
+        {
+          "clause": "Task Scheduler against launchd Scheduling stays outside the application.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "One CLI entrypoint per job, invoked by whatever the platform provides.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "The app holds no timer logic",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "which also makes a failed 6pm job easy to rerun by hand",
+          "disposition": "rationale",
+          "why": "a consequence rather than a property"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Native dependencies",
+      "clauses": [
+        {
+          "clause": "Apple Silicon needs arm64 builds SQLite and Parquet are fine on both.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Avoid anything requiring a native server install, since that is the part of a migration that costs a weekend",
+          "disposition": "rationale",
+          "why": "advice about what to avoid rather than a property"
+        }
+      ]
+    },
+    {
+      "table": "Running on Windows and macOS",
+      "subject": "Line endings",
+      "clauses": [
+        {
+          "clause": "Any file the lab writes and later parses Write LF, read either.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Configure it in the repo rather than relying on the editor",
+          "disposition": "reaches"
+        }
+      ]
+    }
+  ]
+}
