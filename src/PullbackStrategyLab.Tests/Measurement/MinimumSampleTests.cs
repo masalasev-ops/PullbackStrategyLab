@@ -11,7 +11,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// measured the dispersion it turns on and nothing had stated the power it was sized for. A pinned
 /// constant proves the documents agree with the code, never that either is right, so what is
 /// asserted here is the arithmetic itself and the properties it has to have.
-/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+/// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
 /// </summary>
 public sealed class MinimumSampleTests
 {
@@ -25,9 +25,15 @@ public sealed class MinimumSampleTests
     [Fact]
     public void The_stated_inputs_give_the_stated_minimum()
     {
+        // The fixture's own dispersion still gives 262 through the arithmetic, which is what the
+        // fixture expectation holds. The pin is no longer that figure: since 5.0(b) it is the
+        // effective count at which the bootstrap actually run reaches 90% power over the flagged
+        // population's dispersion, so it is the normal-theory step at that dispersion and more.
         Assert.Equal(262, MinimumSample.Of(0.099811d));
-        Assert.Equal(
-            MeasurementParameters.MinimumEffectiveObservations, MinimumSample.Of(0.099811d));
+        Assert.Equal(936, MinimumSample.Of(0.188681d));
+        Assert.True(
+            MeasurementParameters.MinimumEffectiveObservations >= MinimumSample.Of(0.188681d),
+            "the pin carries the bootstrap's factor on top of the normal-theory step and cannot be below it");
     }
 
     /// <summary>
@@ -72,9 +78,12 @@ public sealed class MinimumSampleTests
             MinimumSample.Of(
                 0.099811d, Claimed, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90));
 
+        // Like against like: the normal-theory step at the flagged dispersion, at two points against
+        // the claimed 1.65, so the two-point figure is the smaller of the pair at the same dispersion.
         Assert.True(
-            MeasurementParameters.MinimumEffectiveObservations < 385,
-            "the ratified sample is sized on the two points worth trading, so it must be the smaller");
+            MinimumSample.Of(0.188681d)
+                < MinimumSample.Of(0.188681d, Claimed, MinimumSample.ZAlphaTwoSided95, MinimumSample.ZBetaPower90),
+            "the sample is sized on the two points worth trading, so it must be the smaller");
     }
 
     /// <summary>

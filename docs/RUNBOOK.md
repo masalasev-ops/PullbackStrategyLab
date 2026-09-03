@@ -210,7 +210,7 @@ weeks standing, because the gap narrowing over time is the thing worth looking a
 
 Open the scoreboard. Band 1 is the one that matters. If the tight-control comparison has been flat for a quarter, that is the project's answer and it is worth taking seriously rather than waiting for it to improve.
 
-**Band 1 states both halves of the decision point's trigger and neither substitutes for the other.** Each panel reads `n <rows> rows, <effective> effective of 262 needed, over <sessions> session(s) of 20 needed`, and below it either the sentence saying both conditions are reached or the one naming what it is short of. Sessions are what the block bootstrap needs before an interval exists at all; effective observations are what the decision needs before the interval means anything. A fortnight of very wide nights reaches the second before the first, and a year of thin ones does the reverse, so the panel says which one is holding rather than leaving it to be worked out.
+**Band 1 states both halves of the decision point's trigger and neither substitutes for the other.** Each panel reads `n <rows> rows, <effective> effective of 1802 needed, over <sessions> session(s) of 20 needed`, and below it either the sentence saying both conditions are reached or the one naming what it is short of. Sessions are what the block bootstrap needs before an interval exists at all; effective observations are what the decision needs before the interval means anything. A fortnight of very wide nights reaches the second before the first, and a year of thin ones does the reverse, so the panel says which one is holding rather than leaving it to be worked out.
 
 ### After a merge that carries a migration
 

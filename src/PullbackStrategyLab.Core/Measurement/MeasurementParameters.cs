@@ -67,26 +67,29 @@ public static class MeasurementParameters
     /// claimed.
     ///
     /// It is a judgement rather than a measurement, and it is the lever the minimum is most sensitive
-    /// to: the sample goes as the inverse square of it, so at the ratified power three points would
-    /// need 117 observations where two needs 262.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// to: the sample goes as the inverse square of it, so a figure derived at two points is derived
+    /// at that lever's setting and moves with it.
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     public const double DetectableDifference = 0.02d;
 
     /// <summary>
     /// How many effective observations band 1 needs before it is allowed to answer.
     ///
-    /// <b>Derived from two measurements and two ratified judgements.</b> It falls out of the
-    /// dispersion measured over the fixture's own bars, the two-point difference above, the 95% the
-    /// interval already uses and 90% power. Every digit traces to one of those four, which is what
-    /// the figure it replaces could not say.
+    /// <b>Derived at 5.0(b) against the interval band 1 actually computes, over the flagged
+    /// population's own dispersion.</b> The paired dispersion measured over the calibration store's
+    /// flagged rows is 0.188681 on the long side, nearly twice the universe figure the 262 rested
+    /// on, which alone puts the normal-theory minimum at 936; the studentised moving-block bootstrap
+    /// at a handful of blocks needs 1.925 times that to detect two points at 90% power, found by
+    /// simulating the estimator over series shaped like the store's nights. Every digit traces to a
+    /// named input or to that procedure, and `tools/derive-minimum-sample.py` reproduces it.
     ///
     /// <b>Counted in effective observations, and that is the half that was missing.</b> A minimum
     /// satisfied by rows is satisfiable by rows carrying far less than their own number of
     /// observations' worth of information, and nothing on the surface would say so.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
-    public const int MinimumEffectiveObservations = 262;
+    public const int MinimumEffectiveObservations = 1802;
 
     /// <summary>
     /// How many sessions band 1 needs before it is allowed to answer, which is the other half of
@@ -104,7 +107,7 @@ public static class MeasurementParameters
     /// neither substitutes for the other. A fortnight of very wide nights reaches the minimum sample
     /// before it reaches twenty sessions, and a year of thin ones does the reverse. A panel
     /// reporting one of them and calling it the trigger is reporting half a condition.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     public const int MinimumSessions = BootstrapBlockSessions * 2;
 

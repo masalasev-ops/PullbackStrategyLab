@@ -456,7 +456,7 @@ public sealed partial class StatedCountsCheck
             "rows of the carried obligations table falling due at 5.8"));
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations 5.0 holds",
-            InWords(buildPlan, "The other ", " fall due at 5.0"),
+            InWords(buildPlan, "The other ", " fall"),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.0", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.0"));
         // BUILD_PLAN.md, the question rows split in two. Both numbers in the sentence are asserted:

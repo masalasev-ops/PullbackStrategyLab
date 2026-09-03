@@ -12,7 +12,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// rows over fifty nights and still report sixty-five. The repair for a thin panel is more nights.
 /// The repair for a panel whose pairs move together is not, and the two are indistinguishable in
 /// the reported figure.
-/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+/// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
 ///
 /// <b>The exposure is not a second reading of the figure.</b>
 /// <see cref="PairedInterval.EffectiveObservations"/> returns

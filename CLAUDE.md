@@ -49,6 +49,9 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   slot-log-verdict.ps1  what a slot log says about a stage, read by the
                   two runner jobs so one predicate serves both
                   derive-indicators.py  one-time verification aid, not run by CI
+                  derive-authored-parameters.py  the same, for the authored-parameters figures
+                  derive-minimum-sample.py  the minimum sample's derivation, run once at 5.0(b)
+                  and re-run only to re-pin, which after the freeze closes every open version
 /fixtures         captured  the golden fixture's inputs, verbatim vendor responses
                   with a manifest naming the endpoint, query and instant of each
                   expectations.json  what the pipeline should produce over them,

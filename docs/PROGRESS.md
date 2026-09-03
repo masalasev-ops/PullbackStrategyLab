@@ -13743,3 +13743,113 @@ The tool:    `tools/derive-minimum-sample.py`, a one-time derivation aid on the 
              beside it, not run by CI, reading the live store read-only and printing every figure
              above. Committed with this entry so the specification and the instrument that runs it
              are one commit, and the result is the next.
+
+## 5.0(b) — 2026-09-03 — phase-5-0b-spec-pass — the spec pass: three decisions, the minimum sample re-derived at 1,802, and the corrections it owed
+
+The second part of 5.0. Named decisions and the corpus corrections that authorise them, over
+authored cases because no version exists and none can until 5.1. No component, no store, no
+migration, no threshold moved. **The one figure that moved is the minimum sample**, and it moved by
+derivation rather than by choice, on a specification committed before the run.
+
+Ruled:      **How a rule is written down, so one implementation serves the detector and the
+            harness.** `SelectionRule` in Core: the gate list as it stands and a named threshold
+            per quantity a gate compares, twelve on the long side and fourteen on the short, each
+            naming its gate, its family and the frozen signals a replay rebuilds it from. Both rule
+            files' `Evaluate` now take a rule, the no-argument form passes the baseline, and no gate
+            reads a constant. The baseline is built from the constants `pinned-constants` holds, so
+            document, detector and version start from one number. What a structural proposal would
+            require is stated and named out of scope (see: A selection rule is the gate list plus a
+            named threshold per gate, and one implementation reads it for the detector and the
+            harness alike).
+
+            **What "exactly one clause" means, asserted at admission.** `RuleAdmission.Assert`
+            returns admitted, naming the gate, the threshold and both values, or refused with one of
+            five distinct reasons: nothing moved, more than one moved and which, an execution or a
+            recorded threshold moved, an assembly-bound threshold widened, or a structural
+            difference. The gate at 5.1 that registers a version is described and not named (see: A
+            version is admitted when exactly one selection threshold differs from the baseline, and
+            the assertion names the gate that moved).
+
+            **A version's account is its own.** Fixed $100,000 notional, never compounding, one book
+            per version, the six limits applied over that book alone; the baseline's account is
+            V0's. One shared account would refuse the second version on the first's fills and turn
+            the paired difference into a race (see: Each live version has its own account, and the
+            six caps bind over that version's positions alone).
+
+Measured:   **The minimum sample, derived against the interval band 1 actually computes.** The
+            specification is the entry above this one, committed at `cbe4c99` before the run; the
+            run is `tools/derive-minimum-sample.py` over `data/live` read-only, 2026-09-03.
+
+            | figure | long | short |
+            |---|---|---|
+            | single-name dispersion, flagged rows, 10-session return | 0.172241 | 0.120655 |
+            | paired dispersion, times sqrt(1 + 1/5) | **0.188681** | 0.132171 |
+            | sessions holding twenty flagged names / observations | 499 / 30,698 | 242 / 13,444 |
+            | rows dropped for want of a tenth session | 548 | 344 |
+            | normal-theory minimum at that dispersion | **936** | 459 |
+
+            The larger side is the long, used on the precedent the 262 set. The universe figure the
+            262 rested on was 0.088371 single-name; a flagged name disperses nearly twice as far.
+            Clustering from the reconstructed read of 2026-08-31: within-night correlation 0.02514,
+            lag-one autocorrelation of night means 0.4579, fitted `phi` 0.7900, unclamped. Pairs a
+            night 53.5 from the calibration counts. **Power reached 90% at 202 nights**, 0.900 over
+            a thousand series with ten thousand draws each, and the effective observations those
+            series carry is **1,802**. The bootstrap factor over the normal-theory step is **1.925**.
+
+            **The prediction failed on size and held on direction.** It said between 350 and 1,200
+            with a factor between 1.1 and 2.5, and that the short side would be the larger. Both
+            corrections widened, the factor is inside its band, and the figure is half again the
+            band's ceiling because the dispersion correction alone crossed it. The short side was
+            not the larger. Recorded as failed rather than restated.
+
+            **Both prior rows close on the derivation having been specified and run.** The escape
+            did not fire: every input was named before the run and none needed the run to state.
+
+Pinned:     `MeasurementParameters.MinimumEffectiveObservations` 262 to **1,802**; the header stat,
+            the defaults paragraph and the parameters row in `ARCHITECTURE.html`; the two
+            statements in `BUILD_PLAN.md`, one in `SCHEMA.md` and one in `RUNBOOK.md`; three pins
+            in `pinned-constants`, one of which now holds the flagged dispersion through the
+            arithmetic against the normal-theory step and the pin above it. The 262 decision moved
+            to "Previously decided" under the derivation's decision, and its citations, fourteen in
+            code and three in specs, name the new one (see: The minimum sample is 1802 effective
+            observations, derived against the interval actually run over the flagged population's
+            dispersion). `MinimumSample.Of` is unchanged and the fixture's own expectation of it,
+            262 at the fixture's dispersion, stands as what that arithmetic gives over thirty names.
+
+Corrected:  **The execution minimum stays a derivation.** The 3.0(f) row is retitled to the subject
+            that survives it, 200 paired trades in rows until a trade exists to measure the
+            trade-level design effect over, restated in `ARCHITECTURE.html`'s parameters row and
+            defaults paragraph, and moved to 5.2, which carries it beside the execution scoring it
+            names unreachable. No number is authored for the conversion.
+
+            **The replay-tier Execution row states the ruling**: no execution variant is admitted in
+            this generation, and the two conditions that reopen it are named. **The RiskGate
+            catalogue row states both readings**: 21:10 as a slot, on trigger as an act inside the
+            resolver's walk. **`Schedule.CheckpointFor` applied before writing**: the 5.0 and 5.2
+            rows name none of the five phase 5 components, the admission gate and the harness are
+            described, and the avoidance is stated in the section preamble.
+
+Verified:   Over the authored gate cases: every case evaluates identically through the detector's
+            path and the rule's; moving any one of the twenty-six thresholds changes its own gate
+            and no other on every case, and every threshold is live; the two gate lists equal the
+            document's; every frozen signal a threshold names is an active signal SCHEMA defines.
+            Admission's five refusals and its one admission each read by name. Two books each at
+            the cap are each refused and an empty third is not.
+
+            **The phase report's expected move was stated before the run: nought.** Every
+            architecture edit is a cell of an existing row; no row or table was added, so the
+            register keyed on rows and tables reads the same 137 claims and 23 out of scope.
+            `tools/ci.ps1` green on Windows, **31 steps, 934 tests**, twenty-one more than the 913 before it.
+            `tools/verify-phase.ps1` **GREEN, still phase 4**: 137 claims, 114 passed, 23 out of
+            scope, 0 unexamined, as stated; one expectation moved, `authored.citingADecision` 12 to
+            13, because the execution sample row gained the citation the restatement owed, re-derived
+            through `tools/derive-authored-parameters.py` and recorded on the expectation.
+
+Carried:    **Two rows discharged, one moved, nothing raised.** The rows raised at 3.5 and 3.11 close
+            with this entry, discharged by the derivation of 2026-09-03 at `cbe4c99` and the pin in
+            this commit; the row raised at 3.0(f) moves from 5.0 to 5.2 under its surviving subject.
+            The table reads forty; fifteen due before the freeze, fourteen at 5.8 and one at 5.0,
+            being the aftermath act at 5.0(c); the operator's eight, unchanged. 5.1 says the
+            derivations landed and names the pin. The layout in `CLAUDE.md` lists the three
+            derivation aids under `/tools`, with the note that re-running the last one after the
+            freeze closes every open version. Next is 5.0(c).
