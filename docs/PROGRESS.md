@@ -13644,3 +13644,102 @@ Carried:    **One row raised, at 5.8**, which makes eighteen due before the free
             5.8, stated in the plan in every place `stated-counts` reads them. Nothing else is
             moved: the thirteen unregistered slots stay the operator's, on the row raised at 4.5,
             and this entry is the registration that row was waiting for somebody to write out.
+
+## 5.0(b) — 2026-09-03 — phase-5-0b-spec-pass — the minimum sample's derivation, specified before it runs
+
+Not a checkpoint entry. It writes the derivation questions 2 and 3 closed on, before anything
+computes it, so the result can be read against a specification rather than the specification
+against a result. Nothing is pinned here; the entry that follows the run pins. **If any step below
+turns out to need the run's own output to be stated, the escape fires**: that is recorded as the
+result, the two rows stay open saying so, and no number is authored.
+
+The figure:  **The smallest number of effective paired setup observations at which the interval
+             band 1 actually computes detects a two-point difference in ten-day forward return with
+             90% power**, where "effective" is what `PairedInterval.Disperse` counts and "actually
+             computes" is `PairedInterval.Of` with a block of ten sessions and ten thousand draws,
+             studentised, reading green on a 2.5th percentile lower bound above nought. The two
+             judgements are unchanged: two points, and 90% power at two-sided 95%. What changes is
+             that the dispersion is the flagged population's and the critical values are the
+             bootstrap's own rather than the normal's.
+             (see: A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze)
+
+Inputs:      **The dispersion, measured over the flagged population for the first time.** Every row
+             of `calibration_setup` in `data/live`, read-only, being the run of 2026-08-27: 32,533
+             long over 602 sessions and 16,917 short over 601, 2024-04-01 to 2026-08-24. For each
+             row the ten-session forward return is the store's adjusted close ten sessions after
+             the setup session over the setup session's adjusted close, less one, signed by the
+             direction, on the bars as the store holds them tonight; a row whose tenth session the
+             store does not hold is dropped. Per side, per session holding at least twenty flagged
+             names, which is `DispersionMinimumNames`, the cross-sectional residual variance is
+             pooled by degrees of freedom exactly as `ForwardDispersion.Of` pools it, and the
+             single-name figure is rounded to six places before the paired figure is taken from it
+             as `sqrt(1 + 1/5)` times it, because a setup is differenced against the mean of five
+             controls. Long and short are measured apart. **The larger of the two is the one used**,
+             on the precedent the 262 set between the fixture and the store, and both are recorded.
+
+             **The clustering, measured already and taken from the record rather than re-measured.**
+             The reconstructed read of 2026-08-31 measured, over the loose panels at sixty sessions,
+             a design effect of 3.40 at 96.5 pairs a night and an across-night discount of 0.3718 on
+             the long side, and 2.80 at 60.3 pairs and 0.2677 on the short side, gate set aside. From
+             these the within-night correlation is `ICC = (DE - 1) / (m - 1)`, 0.02513 long and
+             0.03035 short, and the lag-one autocorrelation of the night means is
+             `rho = (1 - serial) / (1 + serial)`, 0.4580 long and 0.5777 short.
+
+             **The pairs a night**, drawn with replacement from the calibration side's own per-session
+             flagged counts, all 602 or 601 of them, so a simulated night is as thick or as thin as
+             the store's nights were.
+
+Model:       A pair's difference on night `t` is `delta + u_t + e_i`, with `delta` the two points,
+             `e_i` independent normal with variance `sigma_e^2`, and `u_t` a night effect following
+             an AR(1) with coefficient `phi` and stationary variance `sigma_u^2`. The three are set
+             from the inputs and nothing else: `sigma_u^2 + sigma_e^2` is the paired dispersion
+             squared, `sigma_u^2` is `ICC` times it, and `phi` is what makes the lag-one
+             autocorrelation of the night means equal `rho`, being
+             `rho * (sigma_u^2 + sigma_e^2 / m_bar) / sigma_u^2`, clamped below 0.98 and with the
+             clamp reported if it binds. A night's mean difference and its within-night dispersion
+             are computed from its pairs, which is what the scoreboard hands the interval.
+
+Procedure:   For a candidate length of `N` nights, one thousand series are simulated and the
+             interval is computed over each as band 1 computes it: block means over the trailing
+             whole blocks for the observed scale, ten thousand resamples of `N / 10` blocks from
+             wrapping starts, each studentised by its own block-to-block error, the ratio's
+             percentiles taken at `floor(fraction * (draws - 1))`. **Power at `N` is the fraction of
+             the thousand whose lower bound clears nought.** `N` is searched upward from twenty
+             sessions, which is `MinimumSessions`, in steps of ten until power first reaches 90%,
+             then by single nights inside that decade; `N*` is the first length at which it holds.
+             The bootstrap's own draws use a different generator from the one `PairedInterval` seeds,
+             because a power figure is over the procedure and not over one seed, and the estimator
+             is restated in Python from the C# line by line, on the terms `derive-indicators.py`
+             restates the indicators.
+
+             **The figure is the effective observations those series carry at `N*`**: for each of
+             the thousand, `Disperse`'s arithmetic restated, being the nights squared over the sum of
+             reciprocal pair counts, divided by the design effect measured on that series and
+             multiplied by its serial discount; the mean over the thousand, rounded up. Rounded up
+             and never to a round number, on the grounds the 262 gave.
+
+             Three figures are reported so each correction is visible on its own: the normal-theory
+             minimum at the flagged dispersion, which is the dispersion correction alone; the
+             effective count at `N*`, which is both together; and the ratio between them, which is
+             the bootstrap's tails. The per-side dispersions, the fitted `phi`, whether the clamp
+             bound, and the pairs-a-night mean are printed beside them.
+
+Pinned:      `MeasurementParameters.MinimumEffectiveObservations` becomes the figure, the three
+             statements of it in `ARCHITECTURE.html` and the two in `pinned-constants` follow, the
+             262 decision moves to "Previously decided" under a decision named for the new figure
+             with this derivation as its reasoning, and `CHANGELOG.md` records the prior text.
+             `MinimumSample.Of` keeps the normal-theory arithmetic as the diagnostic it was and the
+             scoreboard reports against the pin, which is what it does today.
+
+Predicted:   Both corrections widen. The flagged dispersion is expected above the 0.099811 the 262
+             rests on, because every flagged name has cleared a daily range of 5% or more, so the
+             normal-theory figure alone is expected above 262. The bootstrap's tails at a handful of
+             blocks are wider than the normal's, so the effective count at `N*` is expected above
+             that again. **Stated as a band so it can fail: between 350 and 1,200 effective
+             observations, and the bootstrap factor between 1.1 and 2.5.** The short side's
+             dispersion is expected above the long's, and the short side to be the one used.
+
+The tool:    `tools/derive-minimum-sample.py`, a one-time derivation aid on the footing of the two
+             beside it, not run by CI, reading the live store read-only and printing every figure
+             above. Committed with this entry so the specification and the instrument that runs it
+             are one commit, and the result is the next.
