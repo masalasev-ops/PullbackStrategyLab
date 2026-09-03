@@ -13446,3 +13446,39 @@ Carried:    **Nothing raised.** The finding that data/live is behind the build i
             5.0(a) entry above and is the operator's act. The fourteen slots never dispatched are
             the row raised at 4.5, which names the four rejected slots, widened by the ten phase 4
             added after it; that row is at the operator and is not moved by this.
+
+## 5.0(a) — 2026-09-02 — phase-5-live-store-migrated — the live store migrated, on the operator's instruction, and a slot count corrected
+
+Not a checkpoint entry. It records an act on the running lab, taken by this session at the
+operator's instruction of 2026-09-02, and corrects one figure in the slot entry above it. Nothing
+in the build changes.
+
+Done:       **`data/live` migrated from schema 38 to 47 at 23:42 on 2026-09-02**, through
+            `tools/migrate` from `main` at `14f3b89`, with `PullbackStrategyLab__DataRoot` set to the
+            live root exactly as the dispatcher sets it. The tool took its own snapshot first,
+            `pullbackstrategylab-20260903-034251.db`, and then applied 039 through 047 in order.
+            Afterwards `user_version` reads 47, `integrity_check` reads ok, and the three counts a
+            migration must not touch are unchanged: `calibration_setup` 49,450, `setup` 200,
+            `daily_bar` 2,277,678. `trade_plan` exists for the first time in the live store. No
+            worker was running, the write-ahead log was empty, and the next scheduled slot is
+            17:15 on 2026-09-03, so the order the runbook requires, merge then migrate, before the
+            next slot, is the order this took.
+
+            What this ends is two nights of refusals: every slot of 2026-09-01 and 2026-09-02 that
+            ran from `main` stopped on the version gap, and the nights are not recoverable, as the
+            entry above says. What it does not do is dispatch the thirteen slots below.
+
+Corrected:  **The slot entry above says the scheduler registers sixteen slots and fourteen have never
+            been dispatched. It registers seventeen and thirteen have never been dispatched.**
+            `PullbackStrategyLab-ceiling` is registered, weekly at 08:00 on Saturdays, ran on
+            2026-08-29 with result 0, and is next due 2026-09-05; it appears in neither logged
+            evening because neither was a Saturday. The thirteen with no task at all are
+            spread-open, spread-close, plans, watchlist, intraday, vwap, resolve, orders, fills,
+            manage, trades, audit and losses, which is every slot phase 4 added plus the two spread
+            slots 4.3 reserved. Read off the Task Scheduler rather than the logs, which is where the
+            entry above should have read it: a log records dispatches, and a slot with no task
+            leaves no line to be absent from.
+
+Carried:    Nothing raised and nothing moved. The thirteen unregistered slots widen the row raised at
+            4.5, which is at the operator, and registering them is the operator's act on the same
+            terms as this migration was.
