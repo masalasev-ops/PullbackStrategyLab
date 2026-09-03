@@ -218,7 +218,7 @@ public static class PairedInterval
     /// 377, and 3.6 fires on this figure: the panel would report the minimum reached on a quarter of
     /// the evidence it claims. A night's pair count moves with the flagged count, with a degraded
     /// night, and with control fills that lag, so an even series is the case that will not happen.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     ///
     /// <b>Two discounts are then applied, both measured.</b>
     ///
@@ -241,7 +241,7 @@ public static class PairedInterval
     /// <b>Any minimum sample stated against this is counted here, not in rows.</b> A target reading
     /// "196 observations" is satisfiable by 196 rows carrying far less than 196 observations' worth
     /// of information, and nothing on the surface would say so.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     public static int EffectiveObservations(IReadOnlyList<Night> series) => Disperse(series).Effective;
 

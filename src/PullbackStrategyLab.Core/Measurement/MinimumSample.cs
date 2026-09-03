@@ -18,7 +18,7 @@ namespace PullbackStrategyLab.Core.Measurement;
 /// Naming which is which is the whole point of writing the arithmetic down rather than the number:
 /// a later session can move the two judgements and watch the minimum move with them, and cannot
 /// quietly move the fact.
-/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+/// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
 /// </summary>
 public static class MinimumSample
 {
@@ -50,7 +50,7 @@ public static class MinimumSample
     /// <b>Named as ratified so a later session does not read it as a default.</b> Eighty is what
     /// would otherwise be assumed to have been meant, and the whole reason this constant carries a
     /// paragraph is that the convention was rejected rather than not considered.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     public const double ZBetaPower90 = 1.281552d;
 

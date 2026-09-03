@@ -45,6 +45,9 @@ public sealed class ShellExecutableCheck
             ["tools/derive-authored-parameters.py"] =
                 "the independent restatement of the authored-parameters figures, run by hand when "
                 + "those figures are re-derived. Nothing invokes it either",
+            ["tools/derive-minimum-sample.py"] =
+                "the minimum sample's derivation, run once at 5.0(b) and by hand only to re-pin, "
+                + "which after the freeze closes every open version. Nothing invokes it either",
         };
 
     private const string ExecutableMode = "100755";

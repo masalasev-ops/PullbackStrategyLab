@@ -705,7 +705,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     /// will be in for every night of the wait.
     ///
     /// <b>And the case the old trigger got wrong: evidence far above the minimum, on five
-    /// sessions.</b> 3.6 fires on twenty sessions AND 262 effective observations, and the page
+    /// sessions.</b> 3.6 fires on twenty sessions AND the pinned minimum of effective observations, and the page
     /// compared the effective count alone before rendering the sentence of the whole condition. A
     /// panel at 900 observations over 5 sessions would have announced the project's own decision
     /// point on a reading the bootstrap refused to give an interval to. It is here rather than in

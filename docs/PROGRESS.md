@@ -13644,3 +13644,212 @@ Carried:    **One row raised, at 5.8**, which makes eighteen due before the free
             5.8, stated in the plan in every place `stated-counts` reads them. Nothing else is
             moved: the thirteen unregistered slots stay the operator's, on the row raised at 4.5,
             and this entry is the registration that row was waiting for somebody to write out.
+
+## 5.0(b) — 2026-09-03 — phase-5-0b-spec-pass — the minimum sample's derivation, specified before it runs
+
+Not a checkpoint entry. It writes the derivation questions 2 and 3 closed on, before anything
+computes it, so the result can be read against a specification rather than the specification
+against a result. Nothing is pinned here; the entry that follows the run pins. **If any step below
+turns out to need the run's own output to be stated, the escape fires**: that is recorded as the
+result, the two rows stay open saying so, and no number is authored.
+
+The figure:  **The smallest number of effective paired setup observations at which the interval
+             band 1 actually computes detects a two-point difference in ten-day forward return with
+             90% power**, where "effective" is what `PairedInterval.Disperse` counts and "actually
+             computes" is `PairedInterval.Of` with a block of ten sessions and ten thousand draws,
+             studentised, reading green on a 2.5th percentile lower bound above nought. The two
+             judgements are unchanged: two points, and 90% power at two-sided 95%. What changes is
+             that the dispersion is the flagged population's and the critical values are the
+             bootstrap's own rather than the normal's.
+             (see: A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze)
+
+Inputs:      **The dispersion, measured over the flagged population for the first time.** Every row
+             of `calibration_setup` in `data/live`, read-only, being the run of 2026-08-27: 32,533
+             long over 602 sessions and 16,917 short over 601, 2024-04-01 to 2026-08-24. For each
+             row the ten-session forward return is the store's adjusted close ten sessions after
+             the setup session over the setup session's adjusted close, less one, signed by the
+             direction, on the bars as the store holds them tonight; a row whose tenth session the
+             store does not hold is dropped. Per side, per session holding at least twenty flagged
+             names, which is `DispersionMinimumNames`, the cross-sectional residual variance is
+             pooled by degrees of freedom exactly as `ForwardDispersion.Of` pools it, and the
+             single-name figure is rounded to six places before the paired figure is taken from it
+             as `sqrt(1 + 1/5)` times it, because a setup is differenced against the mean of five
+             controls. Long and short are measured apart. **The larger of the two is the one used**,
+             on the precedent the 262 set between the fixture and the store, and both are recorded.
+
+             **The clustering, measured already and taken from the record rather than re-measured.**
+             The reconstructed read of 2026-08-31 measured, over the loose panels at sixty sessions,
+             a design effect of 3.40 at 96.5 pairs a night and an across-night discount of 0.3718 on
+             the long side, and 2.80 at 60.3 pairs and 0.2677 on the short side, gate set aside. From
+             these the within-night correlation is `ICC = (DE - 1) / (m - 1)`, 0.02513 long and
+             0.03035 short, and the lag-one autocorrelation of the night means is
+             `rho = (1 - serial) / (1 + serial)`, 0.4580 long and 0.5777 short.
+
+             **The pairs a night**, drawn with replacement from the calibration side's own per-session
+             flagged counts, all 602 or 601 of them, so a simulated night is as thick or as thin as
+             the store's nights were.
+
+Model:       A pair's difference on night `t` is `delta + u_t + e_i`, with `delta` the two points,
+             `e_i` independent normal with variance `sigma_e^2`, and `u_t` a night effect following
+             an AR(1) with coefficient `phi` and stationary variance `sigma_u^2`. The three are set
+             from the inputs and nothing else: `sigma_u^2 + sigma_e^2` is the paired dispersion
+             squared, `sigma_u^2` is `ICC` times it, and `phi` is what makes the lag-one
+             autocorrelation of the night means equal `rho`, being
+             `rho * (sigma_u^2 + sigma_e^2 / m_bar) / sigma_u^2`, clamped below 0.98 and with the
+             clamp reported if it binds. A night's mean difference and its within-night dispersion
+             are computed from its pairs, which is what the scoreboard hands the interval.
+
+Procedure:   For a candidate length of `N` nights, one thousand series are simulated and the
+             interval is computed over each as band 1 computes it: block means over the trailing
+             whole blocks for the observed scale, ten thousand resamples of `N / 10` blocks from
+             wrapping starts, each studentised by its own block-to-block error, the ratio's
+             percentiles taken at `floor(fraction * (draws - 1))`. **Power at `N` is the fraction of
+             the thousand whose lower bound clears nought.** `N` is searched upward from twenty
+             sessions, which is `MinimumSessions`, in steps of ten until power first reaches 90%,
+             then by single nights inside that decade; `N*` is the first length at which it holds.
+             The bootstrap's own draws use a different generator from the one `PairedInterval` seeds,
+             because a power figure is over the procedure and not over one seed, and the estimator
+             is restated in Python from the C# line by line, on the terms `derive-indicators.py`
+             restates the indicators.
+
+             **The figure is the effective observations those series carry at `N*`**: for each of
+             the thousand, `Disperse`'s arithmetic restated, being the nights squared over the sum of
+             reciprocal pair counts, divided by the design effect measured on that series and
+             multiplied by its serial discount; the mean over the thousand, rounded up. Rounded up
+             and never to a round number, on the grounds the 262 gave.
+
+             Three figures are reported so each correction is visible on its own: the normal-theory
+             minimum at the flagged dispersion, which is the dispersion correction alone; the
+             effective count at `N*`, which is both together; and the ratio between them, which is
+             the bootstrap's tails. The per-side dispersions, the fitted `phi`, whether the clamp
+             bound, and the pairs-a-night mean are printed beside them.
+
+Pinned:      `MeasurementParameters.MinimumEffectiveObservations` becomes the figure, the three
+             statements of it in `ARCHITECTURE.html` and the two in `pinned-constants` follow, the
+             262 decision moves to "Previously decided" under a decision named for the new figure
+             with this derivation as its reasoning, and `CHANGELOG.md` records the prior text.
+             `MinimumSample.Of` keeps the normal-theory arithmetic as the diagnostic it was and the
+             scoreboard reports against the pin, which is what it does today.
+
+Predicted:   Both corrections widen. The flagged dispersion is expected above the 0.099811 the 262
+             rests on, because every flagged name has cleared a daily range of 5% or more, so the
+             normal-theory figure alone is expected above 262. The bootstrap's tails at a handful of
+             blocks are wider than the normal's, so the effective count at `N*` is expected above
+             that again. **Stated as a band so it can fail: between 350 and 1,200 effective
+             observations, and the bootstrap factor between 1.1 and 2.5.** The short side's
+             dispersion is expected above the long's, and the short side to be the one used.
+
+The tool:    `tools/derive-minimum-sample.py`, a one-time derivation aid on the footing of the two
+             beside it, not run by CI, reading the live store read-only and printing every figure
+             above. Committed with this entry so the specification and the instrument that runs it
+             are one commit, and the result is the next.
+
+## 5.0(b) — 2026-09-03 — phase-5-0b-spec-pass — the spec pass: three decisions, the minimum sample re-derived at 1,802, and the corrections it owed
+
+The second part of 5.0. Named decisions and the corpus corrections that authorise them, over
+authored cases because no version exists and none can until 5.1. No component, no store, no
+migration, no threshold moved. **The one figure that moved is the minimum sample**, and it moved by
+derivation rather than by choice, on a specification committed before the run.
+
+Ruled:      **How a rule is written down, so one implementation serves the detector and the
+            harness.** `SelectionRule` in Core: the gate list as it stands and a named threshold
+            per quantity a gate compares, twelve on the long side and fourteen on the short, each
+            naming its gate, its family and the frozen signals a replay rebuilds it from. Both rule
+            files' `Evaluate` now take a rule, the no-argument form passes the baseline, and no gate
+            reads a constant. The baseline is built from the constants `pinned-constants` holds, so
+            document, detector and version start from one number. What a structural proposal would
+            require is stated and named out of scope (see: A selection rule is the gate list plus a
+            named threshold per gate, and one implementation reads it for the detector and the
+            harness alike).
+
+            **What "exactly one clause" means, asserted at admission.** `RuleAdmission.Assert`
+            returns admitted, naming the gate, the threshold and both values, or refused with one of
+            five distinct reasons: nothing moved, more than one moved and which, an execution or a
+            recorded threshold moved, an assembly-bound threshold widened, or a structural
+            difference. The gate at 5.1 that registers a version is described and not named (see: A
+            version is admitted when exactly one selection threshold differs from the baseline, and
+            the assertion names the gate that moved).
+
+            **A version's account is its own.** Fixed $100,000 notional, never compounding, one book
+            per version, the six limits applied over that book alone; the baseline's account is
+            V0's. One shared account would refuse the second version on the first's fills and turn
+            the paired difference into a race (see: Each live version has its own account, and the
+            six caps bind over that version's positions alone).
+
+Measured:   **The minimum sample, derived against the interval band 1 actually computes.** The
+            specification is the entry above this one, committed at `cbe4c99` before the run; the
+            run is `tools/derive-minimum-sample.py` over `data/live` read-only, 2026-09-03.
+
+            | figure | long | short |
+            |---|---|---|
+            | single-name dispersion, flagged rows, 10-session return | 0.172241 | 0.120655 |
+            | paired dispersion, times sqrt(1 + 1/5) | **0.188681** | 0.132171 |
+            | sessions holding twenty flagged names / observations | 499 / 30,698 | 242 / 13,444 |
+            | rows dropped for want of a tenth session | 548 | 344 |
+            | normal-theory minimum at that dispersion | **936** | 459 |
+
+            The larger side is the long, used on the precedent the 262 set. The universe figure the
+            262 rested on was 0.088371 single-name; a flagged name disperses nearly twice as far.
+            Clustering from the reconstructed read of 2026-08-31: within-night correlation 0.02514,
+            lag-one autocorrelation of night means 0.4579, fitted `phi` 0.7900, unclamped. Pairs a
+            night 53.5 from the calibration counts. **Power reached 90% at 202 nights**, 0.900 over
+            a thousand series with ten thousand draws each, and the effective observations those
+            series carry is **1,802**. The bootstrap factor over the normal-theory step is **1.925**.
+
+            **The prediction failed on size and held on direction.** It said between 350 and 1,200
+            with a factor between 1.1 and 2.5, and that the short side would be the larger. Both
+            corrections widened, the factor is inside its band, and the figure is half again the
+            band's ceiling because the dispersion correction alone crossed it. The short side was
+            not the larger. Recorded as failed rather than restated.
+
+            **Both prior rows close on the derivation having been specified and run.** The escape
+            did not fire: every input was named before the run and none needed the run to state.
+
+Pinned:     `MeasurementParameters.MinimumEffectiveObservations` 262 to **1,802**; the header stat,
+            the defaults paragraph and the parameters row in `ARCHITECTURE.html`; the two
+            statements in `BUILD_PLAN.md`, one in `SCHEMA.md` and one in `RUNBOOK.md`; three pins
+            in `pinned-constants`, one of which now holds the flagged dispersion through the
+            arithmetic against the normal-theory step and the pin above it. The 262 decision moved
+            to "Previously decided" under the derivation's decision, and its citations, fourteen in
+            code and three in specs, name the new one (see: The minimum sample is 1802 effective
+            observations, derived against the interval actually run over the flagged population's
+            dispersion). `MinimumSample.Of` is unchanged and the fixture's own expectation of it,
+            262 at the fixture's dispersion, stands as what that arithmetic gives over thirty names.
+
+Corrected:  **The execution minimum stays a derivation.** The 3.0(f) row is retitled to the subject
+            that survives it, 200 paired trades in rows until a trade exists to measure the
+            trade-level design effect over, restated in `ARCHITECTURE.html`'s parameters row and
+            defaults paragraph, and moved to 5.2, which carries it beside the execution scoring it
+            names unreachable. No number is authored for the conversion.
+
+            **The replay-tier Execution row states the ruling**: no execution variant is admitted in
+            this generation, and the two conditions that reopen it are named. **The RiskGate
+            catalogue row states both readings**: 21:10 as a slot, on trigger as an act inside the
+            resolver's walk. **`Schedule.CheckpointFor` applied before writing**: the 5.0 and 5.2
+            rows name none of the five phase 5 components, the admission gate and the harness are
+            described, and the avoidance is stated in the section preamble.
+
+Verified:   Over the authored gate cases: every case evaluates identically through the detector's
+            path and the rule's; moving any one of the twenty-six thresholds changes its own gate
+            and no other on every case, and every threshold is live; the two gate lists equal the
+            document's; every frozen signal a threshold names is an active signal SCHEMA defines.
+            Admission's five refusals and its one admission each read by name. Two books each at
+            the cap are each refused and an empty third is not.
+
+            **The phase report's expected move was stated before the run: nought.** Every
+            architecture edit is a cell of an existing row; no row or table was added, so the
+            register keyed on rows and tables reads the same 137 claims and 23 out of scope.
+            `tools/ci.ps1` green on Windows, **31 steps, 934 tests**, twenty-one more than the 913 before it.
+            `tools/verify-phase.ps1` **GREEN, still phase 4**: 137 claims, 114 passed, 23 out of
+            scope, 0 unexamined, as stated; one expectation moved, `authored.citingADecision` 12 to
+            13, because the execution sample row gained the citation the restatement owed, re-derived
+            through `tools/derive-authored-parameters.py` and recorded on the expectation.
+
+Carried:    **Two rows discharged, one moved, nothing raised.** The rows raised at 3.5 and 3.11 close
+            with this entry, discharged by the derivation of 2026-09-03 at `cbe4c99` and the pin in
+            this commit; the row raised at 3.0(f) moves from 5.0 to 5.2 under its surviving subject.
+            The table reads forty; fifteen due before the freeze, fourteen at 5.8 and one at 5.0,
+            being the aftermath act at 5.0(c); the operator's eight, unchanged. 5.1 says the
+            derivations landed and names the pin. The layout in `CLAUDE.md` lists the three
+            derivation aids under `/tools`, with the note that re-running the last one after the
+            freeze closes every open version. Next is 5.0(c).

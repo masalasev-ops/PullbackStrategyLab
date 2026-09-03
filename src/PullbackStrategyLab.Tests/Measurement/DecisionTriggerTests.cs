@@ -1,3 +1,4 @@
+using System.Globalization;
 using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Web.Shell;
@@ -31,7 +32,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// panel the bootstrap had refused to give an interval to at all. That is the corpus's sixth
 /// failure shape: nothing upstream is wrong, every count is correct, and the sentence on the
 /// surface is still false.
-/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+/// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
 /// </summary>
 public sealed class DecisionTriggerTests
 {
@@ -59,7 +60,7 @@ public sealed class DecisionTriggerTests
     [Fact]
     public void Evidence_alone_does_not_reach_the_trigger_when_the_sessions_are_short()
     {
-        PanelView panel = Band1(effective: 900, sessions: 5);
+        PanelView panel = Band1(effective: MeasurementParameters.MinimumEffectiveObservations + 638, sessions: 5);
 
         Assert.True(panel.ReachedObservations);
         Assert.False(panel.ReachedSessions);
@@ -79,7 +80,7 @@ public sealed class DecisionTriggerTests
         Assert.False(panel.ReachedObservations);
         Assert.True(panel.ReachedSessions);
         Assert.False(panel.Reached);
-        Assert.Equal("222 more effective observation(s)", panel.ShortOf);
+        Assert.Equal($"{(MeasurementParameters.MinimumEffectiveObservations - 40).ToString("N0", CultureInfo.InvariantCulture)} more effective observation(s)", panel.ShortOf);
     }
 
     /// <summary>Both short, and both named, because a reader waiting on two things is told both.</summary>
@@ -89,14 +90,14 @@ public sealed class DecisionTriggerTests
         PanelView panel = Band1(effective: 40, sessions: 5);
 
         Assert.False(panel.Reached);
-        Assert.Equal("15 more session(s) and 222 more effective observation(s)", panel.ShortOf);
+        Assert.Equal($"15 more session(s) and {(MeasurementParameters.MinimumEffectiveObservations - 40).ToString("N0", CultureInfo.InvariantCulture)} more effective observation(s)", panel.ShortOf);
     }
 
     /// <summary>Both met is the only state that reaches the trigger, and nothing is short of it.</summary>
     [Fact]
     public void The_trigger_is_reached_only_when_both_conditions_are()
     {
-        PanelView panel = Band1(effective: 262, sessions: 20);
+        PanelView panel = Band1(effective: MeasurementParameters.MinimumEffectiveObservations, sessions: 20);
 
         Assert.True(panel.Reached);
         Assert.Null(panel.ShortOf);
@@ -133,7 +134,7 @@ public sealed class DecisionTriggerTests
         PanelView panel = Band1(effective: 40, sessions: 5, rows: 1_740);
 
         Assert.Equal(
-            "n 1,740 rows, 40 effective of 262 needed, over 5 session(s) of 20 needed",
+            $"n 1,740 rows, 40 effective of {MeasurementParameters.MinimumEffectiveObservations.ToString("N0", CultureInfo.InvariantCulture)} needed, over 5 session(s) of 20 needed",
             panel.Count);
     }
 
@@ -168,7 +169,7 @@ public sealed class DecisionTriggerTests
     public void A_row_written_before_the_column_existed_is_never_reached_however_much_evidence_it_has()
     {
         var panel = new PanelView(
-            "band1.vsTight", "long", "0.0110", "-0.0030", "0.0250", 3_180, 900,
+            "band1.vsTight", "long", "0.0110", "-0.0030", "0.0250", 3_180, MeasurementParameters.MinimumEffectiveObservations + 638,
             "every flagged setup", MeasurementParameters.MinimumEffectiveObservations, null);
 
         Assert.True(panel.ReachedObservations);

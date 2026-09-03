@@ -368,22 +368,22 @@ public sealed class PinnedConstantsCheck
         // of them while nothing had measured the one input that is a fact.
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Selection variant sample",
             table.Cell("Selection variant sample")
-                .Contains("262 effective paired setup observations", StringComparison.Ordinal),
-            MeasurementParameters.MinimumEffectiveObservations == 262,
+                .Contains("1802 effective paired setup observations", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
-        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, 262 effective observations",
-            decisions.Contains("**262 effective observations**", StringComparison.Ordinal),
-            MeasurementParameters.MinimumEffectiveObservations == 262,
+        pins.Add(Pin.Text("DECISIONS.md, the minimum sample, 1802 effective observations",
+            decisions.Contains("**1802 effective observations**", StringComparison.Ordinal),
+            MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
         // The name carries the figure, so the name is pinned too. A decision whose title states a
         // number and a body that states a different one would resolve, cite and read cleanly.
         pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the figure in the decision's own name",
             decisions.Contains(
-                "**The minimum sample is 262 effective observations, ratified at two points and 90% power**",
+                "**The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion**",
                 StringComparison.Ordinal),
-            MeasurementParameters.MinimumEffectiveObservations == 262,
+            MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
         pins.Add(Pin.Text("DECISIONS.md, the minimum sample, two points of forward return",
@@ -399,13 +399,15 @@ public sealed class PinnedConstantsCheck
             decisions.Contains("1.281552", StringComparison.Ordinal),
             MinimumSample.ZBetaPower90 == 1.281552d, "MinimumSample.ZBetaPower90"));
 
-        // The measured input, pinned against the fixture expectation rather than against a constant.
-        // It is the one number here that is a fact rather than a judgement, so the thing it has to
-        // agree with is the derivation, not a value typed into the source.
+        // The measured input, pinned against the derivation's own normal-theory step rather than
+        // against a constant. It is the one number here that is a fact rather than a judgement, and
+        // since 5.0(b) the pin carries the bootstrap's factor on top of it, so what has to agree is
+        // the dispersion put through the arithmetic against the step the decision states, and the
+        // pin has to be at least that.
         pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the measured paired dispersion",
-            decisions.Contains("**0.099811**", StringComparison.Ordinal),
-            MinimumSample.Of(0.099811d) == MeasurementParameters.MinimumEffectiveObservations,
-            "the dispersion DECISIONS states, put through MinimumSample.Of"));
+            decisions.Contains("**0.188681**", StringComparison.Ordinal),
+            MinimumSample.Of(0.188681d) == 936 && MeasurementParameters.MinimumEffectiveObservations >= 936,
+            "the flagged dispersion DECISIONS states, put through MinimumSample.Of, and the pin above it"));
 
         // The trading rows 4.15 answered and 4.4, 4.7, 4.8, 4.10 and 4.16 built. Every one of them
         // was pinned by nothing until 4.18: 4.15's row listed the mapping of each row to the checkpoint

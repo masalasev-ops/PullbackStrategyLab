@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Tests.Measurement;
 /// <b>The pessimistic reading is now the limiting case rather than the assumption</b>, and that is
 /// what these assert: a night that cannot say how its own pairs dispersed still counts as one, and a
 /// night whose pairs all move together collapses back to about one however many pairs it holds.
-/// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+/// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
 /// </summary>
 public sealed class EffectiveObservationsTests
 {
@@ -188,7 +188,7 @@ public sealed class EffectiveObservationsTests
     /// against the even series' 1,816 over 3,200 rows. The ratio is the harmonic mean over the
     /// arithmetic one, 9.41 against 42.5. Before this was corrected the uneven series read 965: the
     /// row sum under the same discounts, four and a half times what the estimate carries.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     [Fact]
     public void An_uneven_series_is_worth_its_harmonic_mean_rather_than_its_row_count()

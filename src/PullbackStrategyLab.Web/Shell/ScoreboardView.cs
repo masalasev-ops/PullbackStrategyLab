@@ -146,7 +146,7 @@ public sealed record PanelView(
     /// is withheld until an interval means anything; the counts are not, because a number climbing
     /// from nothing tells a reader how far off the answer is and whether the overlap is costing
     /// forty percent or eighty-five. A calendar could say neither.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     public string Count
     {
@@ -197,7 +197,7 @@ public sealed record PanelView(
     ///
     /// Null where the panel carries neither minimum, and null is not false: "this panel answers no
     /// question a checkpoint waits on" and "it waits and has not arrived" are different sentences.
-    /// see: The minimum sample is 262 effective observations, ratified at two points and 90% power
+    /// see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
     /// </summary>
     /// <remarks>
     /// <b>A panel missing one of the two counts is never "reached", and that is deliberate rather

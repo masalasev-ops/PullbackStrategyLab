@@ -92,14 +92,14 @@ Flagged setups returning 2% is not a result if everything returned 2%. The loose
 Ruled by the operator on 2026-08-31, superseding **The tight control set draws from any session sharing the market mood, and the loose set stays within the night**. Both sets now draw from the setup's own session. The tight set matches on the trend ladder, which varies across a night's pool and is what makes it tighter than the loose one; the market mood is not matched by exclusion because it does not need to be.
 
 **Within one session every name carries the same market move.** That sentence is already in this register, where it derives the dispersion the minimum sample is built on, and it is the whole of this decision read from the other end. The mood is a property of the session, so over a single night's pool it is a constant, and a constant is the strongest control there is: a within-night tight set holds the mood fixed at the subject's own value on every row, exactly, with no residual to carry.
-(see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+(see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion)
 
 **The superseded ruling read that invariance as an absence of control, and it is the presence of a perfect one.** Its reasoning was that a dimension which always matches reads in the record as a dimension that was checked, so the choice was to make the mood an active filter or to drop it. That framing has the sign wrong. A dimension that always matches within the population being compared is not an unperformed comparison; it is a comparison whose answer is guaranteed, which is what matching is for. Reaching into other sessions to make the mood vary so that excluding on it would do work is making a dimension active by first making it uncontrolled.
 
 **What the reach cost is the cancellation the pairing exists to produce**, and it is measured rather than argued. The paired difference removes the market factor common to a night by construction, and that is the only reason a night is worth more than one observation. A tight control drawn from another session does not share the subject's night, so its side of the difference carries a different market move and the factor stops cancelling. Every pair on a night then carries the same uncancelled term, which inflates the within-night design effect, and the term persists across overlapping ten-day windows, which cuts the across-night factor. Measured over reconstructed history on 2026-08-31, over identical rows and nights: at 60 sessions the loose panel ran at an across-night factor of 0.3718 and a design effect of 3.40 for 428 effective observations, and the tight panel at 0.1108 and 6.71 for 65. At 120 sessions the tight design effect was 10.31 against the loose set's 3.75. The tight comparison was worth about a seventh of the loose one over the same 4,824 rows.
 
 **That is not a cost worth a dimension that was already controlled.** The minimum sample is stated in effective observations precisely so that rows carrying less information cannot be spent as though they carried more, and at the measured rate the tight panels needed 202 to 1,030 forward nights to reach 262 against a band 1 condition of twenty sessions. A ruling that puts the project's central question out of reach in exchange for excluding rows that a constant had already excluded is the wrong side of the trade in both terms.
-(see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+(see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion)
 
 **The tight set is still tighter than the loose one, on the dimension that varies.** The trend ladder is a property of the name rather than of the session, so a night's pool holds all three grades and matching on it excludes candidates. That is the question the tight set was built to ask, which is whether the pattern is worth anything beyond owning stocks in uptrends, and it is unaffected by this decision. What is dropped is only the reach.
 
@@ -178,46 +178,18 @@ A Newey-West style adjustment with the lag set from the horizon was the alternat
 
 **What a later session should take from this.** Two independent implementations agreeing proves transcription and nothing else. `tools/derive-indicators.py` restated this interval and hard-coded the same two strides, so the DERIVED tier reported agreement about the wrong algorithm for the whole of phase 3. Where a method is named rather than tabulated, assert the property the name implies: more draws must buy more resamples, and an interval must not clear zero far more often than its own confidence claims.
 
-**The minimum sample is 262 effective observations, ratified at two points and 90% power**
-A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. Two of those are judgements and belong to a person. The third is a fact about the market, and until the decision this supersedes nothing in the corpus had measured it.
+**The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion**
+Derived at 5.0(b) on 2026-09-03, on the specification committed before the run at `cbe4c99`, closing the rows raised at 3.5 and 3.11 and superseding **the 262**, whose arithmetic stands as the normal-theory step inside this one. The two judgements are unchanged: two points of ten-day forward return, at two-sided 95% with 90% power. What changed is the two things the rows said were wrong: the dispersion is the flagged population's, and the critical values are the bootstrap's own.
 
-**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+**The dispersion, over the flagged population for the first time.** Every calibration row's ten-session forward return on the store's adjusted closes, signed by direction, residualised within its session and pooled by degrees of freedom over sessions holding at least twenty flagged names, exactly as `ForwardDispersion.Of` pools it. Long: single-name **0.172241**, paired **0.188681**, over 499 sessions and 30,698 observations, 548 rows dropped for want of a tenth session. Short: **0.120655** and **0.132171** over 242 sessions and 13,444, 344 dropped. The universe figure the 262 rested on was 0.088371 single-name; a flagged name has cleared a daily range of 5% or more, and its forward return disperses nearly twice as far. **The larger side is the one used, which is the long side**, on the precedent the 262 set between the fixture and the store, and the prediction that it would be the short side failed. Through the unchanged arithmetic, `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the flagged dispersion alone gives **936** on the long side and 459 on the short.
 
-**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+**The bootstrap's tails, by simulation of the estimator band 1 runs.** The interval is a studentised moving-block bootstrap over a handful of blocks, and no normal-theory sample size describes its tails, so the derivation asks it directly: series of nights shaped like the store's, 53.5 pairs a night drawn from the calibration side's own counts, a night effect following an AR(1) fitted to the clustering the reconstructed read measured on 2026-08-31, being a within-night correlation of 0.02514 from a design effect of 3.40 and a lag-one autocorrelation of 0.4579 from an across-night discount of 0.3718, giving `phi` 0.7900, and a true difference of two points. `PairedInterval.Of` restated in Python, ten thousand draws, blocks of ten, studentised, the 2.5th percentile bound clearing nought. **Power reaches 90% at 202 nights**, at 0.900, and the effective observations those series carry, counted as `PairedInterval.Disperse` counts them, is **1802 effective observations**, rounded up. The bootstrap factor is **1.925** over the normal-theory step.
 
-**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+**Both corrections widened, as the rows said they would, and by more than predicted.** The specification predicted between 350 and 1,200 with a factor between 1.1 and 2.5; the dispersion correction alone crossed the band's ceiling, so the prediction failed on size and held on direction and on the factor. It is recorded as failed rather than restated.
 
-**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+**What is pinned and what is not.** `MeasurementParameters.MinimumEffectiveObservations` is 1802, the scoreboard reports against it, and every version registered from 5.1 writes it into its pre-registration where it is immutable, which is why this ran before the freeze (see: A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze). `MinimumSample.Of` keeps the normal-theory arithmetic as the diagnostic step it is, and the fixture's own expectation of it, 262 at the fixture's 0.099811, stands as what that arithmetic gives over thirty names. The derivation depends on a generative model, named above, and on one reconstructed read's clustering; a later session that re-measures either re-derives and re-pins, and after V0 is registered that closes every open version, which the decision above this one says in terms.
 
-| Input | Value | Kind |
-|---|---|---|
-| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, ratified |
-| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
-| `z_beta`, 90% power | 1.281552 | judgement, ratified |
-| `sigma_d`, the paired dispersion | 0.099811 | measured |
-
-Which gives **262 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 250 or 300 would be an authored step in a figure whose whole point is that no step in it is authored.
-
-**Two points, because it is the size of the effect being hunted rather than a target chosen for roundness.** The strategy's claimed expectancy is about 0.55R on a 3% stop, which is about 1.7 points of forward return. Detecting less than two points would be detecting something too small to trade after costs, so the threshold is set at what is worth having rather than at what is claimed.
-
-**One consequence of that, recorded because it is the half a later reader would otherwise have to derive.** 262 detects two points at 90% power. Against the 1.65 points the strategy actually claims, the same sample carries about **76% power**, and 90% power at 1.65 points would need 385. That is not an objection to the ratification, which deliberately sizes on what is worth trading rather than on what is claimed. It is stated so nobody reads "90% power" as 90% of finding the strategy's own claimed edge.
-
-**90% rather than the conventional 80%, because the costs here are asymmetric and in an unusual direction.** A false positive is caught downstream: the forward paired test and the variant machinery both sit after band 1, and a spurious reading does not survive them. **A false negative is caught by nothing**, because band 1 reading flat means the pattern has nothing in it and the project stops. There is no downstream from that.
-
-At about eleven effective observations a night, 90% costs roughly six sessions more than 80%. Six days against a one-in-ten chance of abandoning a working strategy is the cheapest power anyone will buy in this project. **The convention was rejected rather than not considered**, which is why the reasoning is here: 80% is what a later session will otherwise assume was meant.
-
-**The sensitivity, stated so the choice stays visible.** The sample goes as the inverse square of the difference and rises with the power demanded.
-
-| At two points, power | Effective observations |
-|---|---|
-| 70% | 154 |
-| 80% | 196 |
-| **90%, ratified** | **262** |
-| 95% | 324 |
-
-At 90% power, detecting three points needs 117 and detecting one and a half needs 466. Moving either input is a superseding decision, not an adjustment.
-
-Supersedes **The minimum sample is derived from a measured dispersion and counted in effective observations**, which left both judgements open and stood at 196 on an unratified 80%. The measurement, the population statements and the arithmetic are unchanged and are carried here in full; what changed is that the two judgements are now ratified and recorded with their reasoning, so a later session reads a choice rather than a convention.
+**The sensitivity is now a property of the procedure rather than of a formula**, so the table the superseded decision carried is not restated: at two points and 90% power the figure is 1802, and any other setting of the two judgements is a re-run of `tools/derive-minimum-sample.py` with those inputs, which prints every intermediate figure above.
 
 **Long and short are never pooled into one figure**
 In code, in a report, or on a screen. Short results carry a borrow assumption that long results do not, so a pooled number silently inherits it.
@@ -320,6 +292,15 @@ Every cap in the design is a percentage of equity and nothing stated what equity
 The number is set by share rounding rather than by ambition. At 0.75% risk, a three percent stop on a $400 stock is $12 a share, so $100,000 buys 62 shares and the rounding error is under one percent of intended risk. At $10,000 the same trade is six shares and the error is four percent, which pollutes the R figures the whole project is measured in. Below roughly $50,000 the arithmetic stops being trustworthy.
 
 It does not compound, and that matters more than the level. If equity tracked results, a version that ran well would size larger than one that ran badly, so the two would stop taking the same position on the same setup and the paired comparison would quietly stop being paired. The equity curve is reported as an output; it is never an input to sizing.
+
+**Each live version has its own account, and the six caps bind over that version's positions alone**
+Settled at 5.0(b) on 2026-09-03, over authored books, because no version exists and no position has ever been opened. Each live version has its own account: a fixed $100,000 notional that never compounds, its own book of open positions, and the six limits applied over that book and nothing else. The baseline's account is V0's, and a version registered at 5.1 starts with an empty one.
+
+**The alternative was one shared account, and it fails the pairing.** Versions select from one shared nightly candidate list so that their results can be differenced night by night, and two versions holding four positions each is eight against a cap of four. Under a shared account the second version's trigger is refused on the first's fills, so its score would measure which version fired first that morning rather than which rule selects better, and the refusal would be recorded as the caps binding when it was the comparison being broken. Under separate accounts the same candidate selected by both versions opens one position in each, sized identically from identical equity, and the two rows differ by nothing but the version, which is what a paired difference needs (see: Versions select from one shared nightly candidate list rather than each re-scanning).
+
+**What it means for the six caps, per version.** The two count caps, four open and two of them short, count that version's positions. The two proportional caps, 35% of equity in one position and 3% at risk across all, are fractions of that version's own $100,000. Risk per trade is the plan's, sized from the same equity, so every version's plan for a candidate carries the same share count and the size the gate places can differ only where that version's own book binds. The give-up distance cap is a gate at detection and is the same for every version by the one-threshold rule. So the population a cap is applied over is the version's own positions, stated in `RiskGate`'s book: the sole writer of orders is handed one version's book at a time and applies the limits to it, and a test proves two books each at the cap are each refused while an empty third is not, and that a version holding three is not refused for another's four. The parameters table already said one account per version; this is the decision that says what the caps do about it (see: Equity is a fixed $100,000 notional that never compounds).
+
+**No real money, so nothing is double-spent.** Eight paper positions across two paper accounts cost nothing, which is the whole reason the comparison can afford to be clean; the day this lab traded real capital the accounts would have to share one, and that day is not in the plan.
 
 Share counts round down, and the realised risk is recorded beside the intended risk on every position so the gap is visible rather than assumed away. The position row arrives at 4.7 and the journal that shows the pair to a person at 4.11; until then this is what is owed rather than what is displayed.
 
@@ -740,6 +721,24 @@ Answered by the operator on 2026-09-02, at the phase 5 sitting. A version differ
 
 **This bounds phase 6 and it says so in terms.** The researcher proposes threshold moves over the named gates, and a structural proposal is out of scope for this generation rather than a proposal that gets rejected on its merits. A signal request is unaffected, because it widens the library rather than the rule shape, and it is the channel the loop's own design says makes the system better over time.
 
+**A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike**
+Settled at 5.0(b) on 2026-09-03, over authored cases, because no version exists and none can until 5.1. It applies the rule that put the geometry in Core at 2.6 to the rule itself: a selection rule is written down once, as a record in Core, and one implementation turns evidence into verdicts under it.
+
+**The representation is the gate list as it stands and a named threshold per quantity a gate compares.** `SelectionRule` holds a direction, the gate names in the document's order, and a list of thresholds; each threshold names its gate, its value, which family may move it, which frozen signals a replay reads its quantity from, and whether the detector also applies it while assembling the evidence. The long side carries twelve thresholds over its ten gates and the short side fourteen over its ten, because `tradable` is two clauses and `tradable-shortable` four, `dip-shape` is a length and a depth, and `uptrend`, `downtrend`, `held-floor` and `no-reclaim` compare against a grade or against nought. The baselines are built from the rule constants and not copied from them, so the number `pinned-constants` holds against the documents, the number the detector applies and the number a version starts from are one number.
+
+**What makes it single is that the checks take the rule as a parameter and nothing else turns evidence into verdicts.** `LongPullbackRules.Evaluate(evidence)` is `Evaluate(evidence, SelectionRule.Long)` and the short side is its mirror; every gate reads its threshold through the rule and no gate reads a constant. The nightly detector passes the baseline, the harness at 5.3 passes a version's rule over evidence rebuilt from the frozen signals, and a test passes whatever it is proving. A second reader is what the acceptance test at 5.3 exists to refuse, and a representation that admitted two would make that test vacuous, because the baseline reproduced through one implementation says nothing about a version run through another. A test evaluates every authored gate case both ways and requires the verdicts to be identical, and a second asserts that moving any one threshold changes that threshold's gate and no other on every case.
+
+**Every threshold names the frozen signals its quantity is rebuilt from, and a test holds the names against SCHEMA.** A replay at 5.3 re-filters stored history from `setup_signal`, so a threshold whose quantity was frozen nowhere is one no replay can apply. The one narrowing is stated: `reached-ceiling`'s anchored clause is a level over minute bars nothing froze, so a replay judges that gate on the two average clauses and says so, which is the same narrowing a reconstructed session records. The thrust window is marked as applied in the assembly as well: hits outside it are never read, so a frozen row carries no hit beyond the baseline's ten sessions, and a version may tighten the window and not widen it.
+
+**What a structural proposal would require, and that it is out of scope now.** A different clause set needs a representation of what a gate computes and not only what it compares against, a harness that can rebuild that computation from frozen signals or from bars, and an acceptance test that reproduces the baseline through it; none of the three exists and the second is the one this generation cannot have over the stored history. So the record can express one gate's threshold at another value and cannot express another gate, and that is the boundary question 7 drew rather than an omission (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation).
+
+**A version is admitted when exactly one selection threshold differs from the baseline, and the assertion names the gate that moved**
+Settled at 5.0(b) on 2026-09-03, over authored cases. "Differs from the baseline by exactly one clause" means, over the representation above, that exactly one threshold's value differs and every other threshold, and the gate list, compares equal. It is mechanically assertable, which is why the sitting's answer took that form rather than a rule algebra, and it is asserted rather than described: `RuleAdmission.Assert` takes a candidate and the baseline and returns admitted, naming the gate, the threshold and the two values, or refused with the reason.
+
+**The failing shapes are refused with distinct reasons, so a version refused for one is not read as refused for another.** No threshold moved: the candidate is the baseline and not a version. More than one moved: refused, naming each. The threshold that moved is an execution threshold, being the give-up distance cap whose move changes the size of the R unit, or a recorded one, being the cluster threshold that gates nothing: refused, because neither is a selection change. The threshold is applied while the evidence is assembled and the move widens it: refused, because the frozen record cannot answer it. A different gate list or a different threshold set: refused as structural. A test offers each shape and reads each reason, and offers one moved selection threshold and reads the gate it names.
+
+**The gate at 5.1 that registers a version calls this and refuses on anything but admitted.** It is described here and not named, on the rule that a plan row names a component only where it builds it; the assertion lives in Core so that the gate, the harness and a test all read one answer, on the same grounds the rule itself does. What the assertion does not decide is whether the moved threshold is a good idea, which is the forward paired test's question and never admission's (see: Replay screens proposals and the forward paired test admits them).
+
 **Acceptance measures expectancy, never win rate**
 Win rate is reported alongside as a diagnostic. Any version raising win rate while lowering expectancy is rejected automatically. Widening the stop does exactly that, and this rule is written before any results exist on purpose.
 
@@ -754,7 +753,7 @@ Answered by the operator on 2026-09-02, at the phase 5 sitting, over the two row
 **The two are answered together because they compose.** Each alone gives a different figure and the pair gives a third, and answering them separately would leave nobody able to say which of the three was being asked for. One derivation applies both, one dated correction records it, and one pin holds the result.
 
 **It runs before the freeze, and that is the operative half.** 262 stands until the derivation replaces it. After V0 is registered a re-derivation is a change to a figure the pre-registration made immutable, so it closes every open version and starts a generation, where before the freeze it costs an afternoon. **If the derivation cannot be specified without first running it, that is recorded as the result** and the rows stay with the operator saying so, which is an answer rather than a deferral.
-(see: The minimum sample is 262 effective observations, ratified at two points and 90% power)
+(see: The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion)
 
 **The execution minimum is 200 paired trades and its conversion waits on a trade existing**
 Answered by the operator on 2026-09-02, at the phase 5 sitting, over the row raised at 3.0(f). The figure is **200 paired trades converted at the measured trade-level design effect**, which is unmeasurable until trades exist, so it is stated as a derivation rather than as a number and the row count stands in the meantime.
@@ -1027,6 +1026,50 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**The minimum sample is 262 effective observations, ratified at two points and 90% power**
+A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. Two of those are judgements and belong to a person. The third is a fact about the market, and until the decision this supersedes nothing in the corpus had measured it.
+
+**So the figure that stood was an estimate wearing a derivation's clothes.** ARCHITECTURE stated 160 paired setup observations "detecting about a two-point difference in ten-day forward return", and every reading of it treated the 160 as falling out of the two points. It did not. Nothing had taken the dispersion over anything, nothing said what power the sample was sized for, and nothing said whether the observations were rows or independent ones.
+
+**The dispersion is measured, over a named population.** Within one session every name carries the same market move, so the cross-sectional sample variance of that session's forward returns estimates the idiosyncratic variance directly: the common term cancels and the `n-1` denominator makes the estimate unbiased. That is the same cancellation the paired difference buys on the scoreboard, which is why it measures the right quantity rather than a near neighbour of it. Pooled by degrees of freedom across sessions, over the captured fixture's thirty names and 241 sessions, the single-name figure is **0.091115**. A setup's difference against the mean of five controls disperses by `sqrt(1 + 1/5)` times that, because the control mean carries noise of its own, giving **0.099811**.
+
+**And the population is stated because it is a floor rather than an estimate.** Thirty names, hand-picked for liquidity, still listed at the end of the year. A universe with delistings in it disperses further, so the real figure is larger and the minimum it produces is larger. Measured again over the calibration store's 1,671 names clearing the liquidity floor across 742 sessions, the single-name figure is 0.088371, below the fixture's; that store carries survivorship bias by construction, so the two are recorded as agreeing rather than as one confirming the other, and the larger of the two is the one used.
+
+**The arithmetic, with every input named.** `n = ((z_alpha + z_beta) * sigma_d / delta)^2`, the one-sample form, because pairing has already turned two populations into one series tested against zero and the two-sample factor of two would double the answer for nothing.
+
+| Input | Value | Kind |
+|---|---|---|
+| `delta`, the difference worth detecting | two points of ten-day forward return | judgement, ratified |
+| `z_alpha`, two-sided 95% | 1.959964 | fixed by the interval, which reads green on a 2.5th percentile bound |
+| `z_beta`, 90% power | 1.281552 | judgement, ratified |
+| `sigma_d`, the paired dispersion | 0.099811 | measured |
+
+Which gives **262 effective observations**, rounded up because a fractional observation cannot be had and up is the direction that asks for more evidence. Not rounded to a round number: 250 or 300 would be an authored step in a figure whose whole point is that no step in it is authored.
+
+**Two points, because it is the size of the effect being hunted rather than a target chosen for roundness.** The strategy's claimed expectancy is about 0.55R on a 3% stop, which is about 1.7 points of forward return. Detecting less than two points would be detecting something too small to trade after costs, so the threshold is set at what is worth having rather than at what is claimed.
+
+**One consequence of that, recorded because it is the half a later reader would otherwise have to derive.** 262 detects two points at 90% power. Against the 1.65 points the strategy actually claims, the same sample carries about **76% power**, and 90% power at 1.65 points would need 385. That is not an objection to the ratification, which deliberately sizes on what is worth trading rather than on what is claimed. It is stated so nobody reads "90% power" as 90% of finding the strategy's own claimed edge.
+
+**90% rather than the conventional 80%, because the costs here are asymmetric and in an unusual direction.** A false positive is caught downstream: the forward paired test and the variant machinery both sit after band 1, and a spurious reading does not survive them. **A false negative is caught by nothing**, because band 1 reading flat means the pattern has nothing in it and the project stops. There is no downstream from that.
+
+At about eleven effective observations a night, 90% costs roughly six sessions more than 80%. Six days against a one-in-ten chance of abandoning a working strategy is the cheapest power anyone will buy in this project. **The convention was rejected rather than not considered**, which is why the reasoning is here: 80% is what a later session will otherwise assume was meant.
+
+**The sensitivity, stated so the choice stays visible.** The sample goes as the inverse square of the difference and rises with the power demanded.
+
+| At two points, power | Effective observations |
+|---|---|
+| 70% | 154 |
+| 80% | 196 |
+| **90%, ratified** | **262** |
+| 95% | 324 |
+
+At 90% power, detecting three points needs 117 and detecting one and a half needs 466. Moving either input is a superseding decision, not an adjustment.
+
+Supersedes **The minimum sample is derived from a measured dispersion and counted in effective observations**, which left both judgements open and stood at 196 on an unratified 80%. The measurement, the population statements and the arithmetic are unchanged and are carried here in full; what changed is that the two judgements are now ratified and recorded with their reasoning, so a later session reads a choice rather than a convention.
+
+Superseded on 2026-09-03 by **The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion**. The arithmetic and the two judgements stand inside the new derivation; what moved is the population the dispersion is measured over and the tails the critical values come from, which are the two rows raised at 3.5 and 3.11.
+
 
 **The corpus is eight documents plus one artefact, and a ninth requires retiring one**
 Five specs, three records, one artefact. A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.

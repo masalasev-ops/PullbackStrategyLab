@@ -2059,3 +2059,43 @@ Why:  The sentence described a pending ruling after the ruling was given, and it
 Was:  The carried obligations table held forty-one rows, seventeen due before the freeze in every place the count is stated, thirteen of them at 5.8, and the repair pile's deliverable named three kinds of part.
 Now:  Forty-two rows and eighteen before the freeze, fourteen at 5.8, with a fourth kind of part named in the pile: the two readers of the cap that report "never capped" on a night the cap ran and published none.
 Why:  Raised at 5.0(a) on 2026-09-03 while stating what the first evening of the thirteen unregistered slots should write. The capper's null on a non-candidate row is SCHEMA's rule and the decision cited is the cap's, so the repair belongs in the two stages that read the rule as an absence; a carried obligation is recorded in the plan when it is created rather than remembered.
+
+### 2026-09-03 — ARCHITECTURE.html — cites The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
+Was:  The header stat, the defaults paragraph and the parameters table stated 262 effective paired setup observations, detecting two points at 90% power "against a dispersion measured rather than assumed", citing the 262 decision.
+Now:  1802 in all three places, detecting two points at 90% power against the flagged population's dispersion and through the bootstrap the interval actually runs, citing the derivation's decision.
+Why:  The 262 was normal theory over the universe's dispersion, and the rows raised at 3.5 and 3.11 said so from both sides. The derivation specified at 5.0(b) before it ran measures the flagged dispersion, nearly twice the universe's, and simulates the studentised moving-block bootstrap to 90% power; the figure is what the run produced and no step in it is authored.
+
+### 2026-09-03 — ARCHITECTURE.html — cites The execution minimum is 200 paired trades and its conversion waits on a trade existing
+Was:  The parameters table's execution sample row read "200 paired trades", detecting about a 0.35R difference, and the defaults paragraph said execution variants settle at 200 paired trades.
+Now:  200 paired trades converted at the measured trade-level design effect once a trade exists, stated in rows until then, with the conversion named as waiting on a trade and no number authored for it.
+Why:  The sitting ruled the figure a derivation rather than a value, and the row that raised it at 3.0(f) said the corpus's unit is effective observations. Stating the row count as a row count keeps the pin honest about what it holds.
+
+### 2026-09-03 — ARCHITECTURE.html — cites No execution variant is admitted in this generation, and the condition that would reopen it is named
+Was:  The replay-tier table's Execution row said the change is forward only because minute bars exist for no night before capture began, and that the gap does not expire.
+Now:  The same, followed by the ruling: no execution variant is admitted in this generation, and the two conditions that would reopen it are named.
+Why:  The row stated the constraint and not what the operator decided about it. A reader planning an execution variant from the table alone would have found a route described as slow rather than one closed by decision.
+
+### 2026-09-03 — ARCHITECTURE.html — cites RiskGate is the sole writer of orders, for both directions and every version
+Was:  The catalogue's RiskGate row gave its slot as "On trigger", where the runbook and the dispatcher schedule `orders` at 21:10.
+Now:  "21:10 as a slot, on trigger as an act", with the sentence saying both are true of different things: the slot runs once over the session's replay, and inside that walk the gate acts at the minute each trigger was reached, in the order the triggers happened.
+Why:  Both readings were correct and the row left a reader to reconcile them. 5.0(a)'s registration report found the disagreement and reported it; this is the correction the report owed.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze
+Was:  The carried obligations table held forty-two rows, eighteen due before the freeze, four of them at 5.0: the aftermath act, the two minimum-sample rows raised at 3.5 and 3.11, and the 3.0(f) row still titled for the 160-observation minimum. 5.1 said the freeze waited on the two derivations at 5.0(b), and 5.2 said nothing about the execution minimum. Two sentences stated the trigger as 262 effective observations.
+Now:  Forty rows, fifteen due before the freeze, one at 5.0. The 3.5 and 3.11 rows are discharged by the derivation of 2026-09-03; the 3.0(f) row is retitled to the execution minimum it now carries, restated in rows with the conversion waiting on a trade, and moved to 5.2, which says it carries it. 5.1 says the derivations landed and names the pin. The trigger reads 1802.
+Why:  The rows closed on the derivation being specified and run, which it was, on the specification committed before the run. A discharged obligation leaves the table in the commit that discharges it, and the conversion the sitting left owed sits with the checkpoint whose condition it shares.
+
+### 2026-09-03 — SCHEMA.md — cites The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
+Was:  The scoreboard's `n_minimum_sessions` note said checkpoint 3.6 fires on at least twenty sessions and at least 262 effective observations, and the `n_minimum` note cited the 262 decision.
+Now:  1802, and the citation names the derivation's decision.
+Why:  The pin moved and the notes state it; a stale figure in a column note reads as the column's meaning.
+
+### 2026-09-03 — RUNBOOK.md — cites The minimum sample is 1802 effective observations, derived against the interval actually run over the flagged population's dispersion
+Was:  The morning reading said each band 1 panel reads "<effective> effective of 262 needed".
+Now:  "of 1802 needed".
+Why:  The panel reads the pin, and the pin moved.
+
+### 2026-09-03 — CLAUDE.md — cites A minimum sample is derived from the store rather than authored, and the derivation is written before the freeze
+Was:  The repository layout listed `derive-indicators.py` alone among the one-time aids under `/tools`.
+Now:  It lists `derive-authored-parameters.py` beside it and `derive-minimum-sample.py`, the derivation's instrument, with the note that re-running the last re-pins and that after the freeze a re-pin closes every open version.
+Why:  A tool a later session would reach for is listed where the layout is stated, and the one whose re-run has a cost says so at the point it is named.
