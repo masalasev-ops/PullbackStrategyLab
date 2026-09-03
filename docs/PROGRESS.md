@@ -14197,3 +14197,35 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about 
             read by the scoreboard alone. Next are the two `ControlSampler` rows raised at 3.5,
             which are the ones that can touch the derivation's inputs and are measured before they
             are repaired.
+
+## 5.8 — 2026-09-03 — phase-5-8-draw-instant — the pile, part seven: the draw instant the query ignored, gone since 3.9 and named for what it holds
+
+Not a checkpoint entry. The seventh part of the repair pile. Population: **the one read the
+control draw makes of `indicator_daily`**, `StoredFigures.Candidates`, and the three sites that
+call it.
+
+Built:      **The row's subject left the code at 3.9(a)(c), commit `36a0465`**, when the boundary
+            was closed in Eastern time: `Figures(connection, asOf, drawnAt)` became
+            `ISessionFigures.Candidates(asOf, sessionZone)`, the draw instant is threaded nowhere,
+            and the 4.2 record found no such member and repointed the row rather than striking it,
+            which is the one act this corpus never permits. What survived was a remnant: the SQL
+            parameter that bounds `computed_at` was still named `@drawn_at` while holding the end
+            of the session, which is a name claiming a bound the query does not apply, one level
+            down from the signature the row complained of. It is `@computed_before` now, the name
+            every other bounded read in the store uses (see: A reader's signature does not establish
+            point-in-time; the query does). No value, no bound and no behaviour changed.
+
+Verified:   The build compiles and the control sampler's tests are unchanged and green, because
+            the rename is of a parameter and not of what it holds. No expectation moved and the
+            phase report's expected move was stated in advance as nought. `tools/ci.ps1` green on
+            Windows, **31 steps, 950 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,514 with 0 unexamined; 1,457 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.7 leaves the table with this
+            commit, naming `36a0465` for its subject and this commit for the remnant. The table
+            reads thirty-two; seven due before the freeze, all at 5.8; the operator's eight,
+            unchanged. Nothing this part touched is an input to the minimum sample's derivation.
+            Next are the two `ControlSampler` rows raised at 3.5, and before either is repaired the
+            reconstructed read of 2026-08-31 is re-run on a store copy, before and after, so whether
+            the repair moves the population the derivation's clustering figures came from is a
+            measurement rather than a reading.
