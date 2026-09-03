@@ -465,7 +465,7 @@ public sealed class PositionManager
         decimal pnl = (perShare * shares) + holding.TrimRealisedPnl;
         double realisedR = holding.RiskRealised == 0m ? 0d : (double)(pnl / holding.RiskRealised);
 
-        string fillId = $"{holding.SetupId}:exit";
+        string fillId = $"{holding.PlanId}:exit";
         holding.IsClosed = true;
 
         writes.Add(tx =>
@@ -516,7 +516,7 @@ public sealed class PositionManager
             SetupDirection.Short, holding.TrimLevel!.Value, openedThrough: null, quote.BasisPoints);
 
         decimal pnl = (holding.EntryPrice - fill.Price) * shares;
-        string fillId = $"{holding.SetupId}:trim";
+        string fillId = $"{holding.PlanId}:trim";
 
         holding.RecordTrim(shares, pnl);
 
@@ -648,11 +648,11 @@ public sealed class PositionManager
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO fill (
-                fill_id, position_id, setup_id, session_date, ticker, direction, leg, filled_at,
+                fill_id, position_id, plan_id, setup_id, variant_id, session_date, ticker, direction, leg, filled_at,
                 basis, resting_price, price, slippage, shares, spread_bps, spread_pass,
                 quote_lag_seconds, straddle_seconds, observed_at)
             VALUES (
-                @fill_id, @position_id, @setup_id, @session_date, @ticker, @direction, @leg, @filled_at,
+                @fill_id, @position_id, @plan_id, @setup_id, @variant_id, @session_date, @ticker, @direction, @leg, @filled_at,
                 @basis, @resting_price, @price, @slippage, @shares, @spread_bps, @spread_pass,
                 @quote_lag_seconds, @straddle_seconds, @observed_at)
             ON CONFLICT (fill_id) DO NOTHING;
@@ -660,6 +660,8 @@ public sealed class PositionManager
 
         command.Parameters.AddWithValue("@fill_id", fillId);
         command.Parameters.AddWithValue("@position_id", holding.PositionId);
+        command.Parameters.AddWithValue("@plan_id", holding.PlanId);
+        command.Parameters.AddWithValue("@variant_id", holding.VariantId);
         command.Parameters.AddWithValue("@setup_id", holding.SetupId);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue("@ticker", holding.Ticker);
@@ -757,6 +759,8 @@ public sealed class PositionManager
 
         private Holding(
             string positionId,
+            string planId,
+            string variantId,
             string setupId,
             string ticker,
             string direction,
@@ -775,6 +779,8 @@ public sealed class PositionManager
             DateOnly sessionDate)
         {
             PositionId = positionId;
+            PlanId = planId;
+            VariantId = variantId;
             SetupId = setupId;
             Ticker = ticker;
             Direction = direction;
@@ -805,6 +811,11 @@ public sealed class PositionManager
 
         /// <summary>Whether this walk armed the exit, as opposed to reading an arm off the store.</summary>
         public bool ArmedThisWalk { get; private set; }
+
+        /// <summary>The plan this position belongs to, and the version that plan belongs to.</summary>
+        public string PlanId { get; }
+
+        public string VariantId { get; }
 
         public string SetupId { get; }
 
@@ -882,6 +893,8 @@ public sealed class PositionManager
 
             return new Holding(
                 position.PositionId,
+                position.PlanId,
+                position.VariantId,
                 position.SetupId,
                 position.Ticker,
                 position.Direction,

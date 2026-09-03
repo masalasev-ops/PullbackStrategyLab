@@ -29,6 +29,7 @@ param(
     # four stages built between 4.1 and 4.4 could not be dispatched at all.
     [ValidateSet('spread-open', 'spread-close', 'universe', 'actions', 'bars', 'rebuild', 'index',
                  'indicators', 'scans', 'sectors', 'regime', 'detect', 'seal', 'controls', 'cap',
+                 'versions',
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scoreboard',
@@ -81,6 +82,11 @@ $slots = @{
     'seal'       = @(@('vectorize'), @('journal'))
     'controls'   = @(, @('controls'))
     'cap'        = @(, @('cap'))
+    # 18:28, after the cap and before the plans. It writes nothing: which versions are live on a
+    # night is a function of the register and the night's date, and storing that answer would be a
+    # second copy of the register that could disagree with it. It is a slot so that a night whose
+    # register is empty says so before the stage that depends on it runs rather than after.
+    'versions'   = @(, @('resolve-variants'))
     # 18:30, after the cap and before the watchlist publishes what it wrote. Absent from this map
     # until 4.5, so the stage built at 4.16 was scheduled by the runbook, dispatched by the worker
     # and run by nothing.

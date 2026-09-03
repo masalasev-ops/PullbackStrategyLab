@@ -2289,3 +2289,13 @@ Why:  A discharged obligation leaves the table in the commit that discharges it,
 Was:  The recovery row for a stage failing on a missing column said to migrate and then rerun that night's stages for their own date, in slot order, with no stage excepted.
 Now:  It excepts `universe-build`, and says why: it reads the vendor's symbol list at run time, so a rerun stamps a past session with today's membership and writes a row nothing can tell from one the night produced, where a missing snapshot is a hole somebody can see. Without it there is no universe for that session and the detection chain has nothing to run over.
 Why:  The instruction as written would have manufactured survivorship bias while repairing a lost night, which is the one failure the snapshot exists to prevent. Found on 2026-09-03 recovering the nights of 2026-09-01 and 2026-09-02.
+
+### 2026-09-03 — ARCHITECTURE.html — cites An approved proposal creates a new version from zero, and a running version is never edited
+Was:  The PlanBuilder catalogue row read "One committed plan per capped candidate, sized here. Per version per candidate from 5.1".
+Now:  "One committed plan per capped candidate per live version, sized here", with the reason the size is the same under every version while only selection versions exist.
+Why:  5.1 built the fan-out, so the row states what the stage does rather than what it will do.
+
+### 2026-09-03 — SCHEMA.md — cites An approved proposal creates a new version from zero, and a running version is never edited
+Was:  `trade_plan` was keyed on `setup_id` with a paragraph saying there is no variant column because there is one baseline and no versions; the six tables below it carried no plan or version column; the research section declared `variant` at store level with no column table; `plan_run` counted `planned` alone.
+Now:  `trade_plan` is keyed on `plan_id`, one per setup per live version, with `setup_id` carried; the six tables below it carry `plan_id` and `variant_id`; `variant` gains its column table; `plan_run` gains `candidates_planned` beside `planned`.
+Why:  Columns are owed at the checkpoint that builds them, and 5.1 is that checkpoint.

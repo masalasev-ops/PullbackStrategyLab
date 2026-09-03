@@ -180,14 +180,14 @@ public sealed class PlanAudit
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO plan_audit (
-                trade_id, setup_id, ticker, direction,
+                trade_id, plan_id, setup_id, variant_id, ticker, direction,
                 planned_trigger, executed_entry, entry_difference, entry_difference_bps, entry_basis,
                 exit_resting_price, executed_exit, exit_difference, exit_difference_bps, exit_basis,
                 exit_reason, planned_give_up, give_up_difference, give_up_difference_bps,
                 planned_shares, executed_shares, shares_difference, reduced_because,
                 risk_intended, risk_realised, risk_difference, observed_at)
             VALUES (
-                @trade_id, @setup_id, @ticker, @direction,
+                @trade_id, @plan_id, @setup_id, @variant_id, @ticker, @direction,
                 @planned_trigger, @executed_entry, @entry_difference, @entry_difference_bps, @entry_basis,
                 @exit_resting_price, @executed_exit, @exit_difference, @exit_difference_bps, @exit_basis,
                 @exit_reason, @planned_give_up, @give_up_difference, @give_up_difference_bps,
@@ -200,6 +200,8 @@ public sealed class PlanAudit
         decimal riskRealised = trade.RiskRealised;
 
         command.Parameters.AddWithValue("@trade_id", trade.TradeId);
+        command.Parameters.AddWithValue("@plan_id", trade.PlanId);
+        command.Parameters.AddWithValue("@variant_id", trade.VariantId);
         command.Parameters.AddWithValue("@setup_id", trade.SetupId);
         command.Parameters.AddWithValue("@ticker", trade.Ticker);
         command.Parameters.AddWithValue("@direction", trade.Direction);

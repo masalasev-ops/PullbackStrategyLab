@@ -43,6 +43,8 @@ public static class Program
         builder.Services.AddSingleton<VwapEngine>();
         builder.Services.AddSingleton<WatchlistPublisher>();
         builder.Services.AddSingleton<PlanBuilder>();
+        builder.Services.AddSingleton<VariantAdmitter>();
+        builder.Services.AddSingleton<VariantResolver>();
         builder.Services.AddSingleton<TriggerResolver>();
         builder.Services.AddSingleton<RiskGate>();
         builder.Services.AddSingleton<PaperBroker>();
@@ -225,6 +227,8 @@ public static class Program
         [VwapEngine.Name] = (services, rest) => services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
         [WatchlistPublisher.Name] = (services, rest) => services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
         [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
+        [VariantAdmitter.Name] = (services, rest) => services.GetRequiredService<VariantAdmitter>().Run(rest),
+        [VariantResolver.Name] = (services, rest) => services.GetRequiredService<VariantResolver>().Run(rest),
         [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
         [RiskGate.Name] = (services, rest) => services.GetRequiredService<RiskGate>().Run(rest),
         [PaperBroker.Name] = (services, rest) => services.GetRequiredService<PaperBroker>().Run(rest),
@@ -291,6 +295,8 @@ public static class Program
         // and `architecture-conformance` treats this list as a second way of being registered
         // rather than as a roster to reconcile. It now reconciles in both directions.
         PlanBuilder.Name,
+        VariantAdmitter.Name,
+        VariantResolver.Name,
         TriggerResolver.Name,
         RiskGate.Name,
         PaperBroker.Name,

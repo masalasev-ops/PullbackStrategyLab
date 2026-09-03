@@ -164,12 +164,12 @@ public sealed class TradeJournal
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO trade (
-                trade_id, position_id, setup_id, ticker, direction, opened_session, closed_session,
+                trade_id, position_id, plan_id, setup_id, variant_id, ticker, direction, opened_session, closed_session,
                 held_calendar_days, held_sessions, entry_price, exit_price, exit_reason, shares,
                 trimmed_shares, value_at_entry, risk_realised, gross_pnl, borrow_rate_assumed,
                 borrow_cost, net_pnl, result_r, exit_armed_session, armed_sessions_waited, observed_at)
             VALUES (
-                @trade_id, @position_id, @setup_id, @ticker, @direction, @opened_session, @closed_session,
+                @trade_id, @position_id, @plan_id, @setup_id, @variant_id, @ticker, @direction, @opened_session, @closed_session,
                 @held_calendar_days, @held_sessions, @entry_price, @exit_price, @exit_reason, @shares,
                 @trimmed_shares, @value_at_entry, @risk_realised, @gross_pnl, @borrow_rate_assumed,
                 @borrow_cost, @net_pnl, @result_r, @exit_armed_session, @armed_sessions_waited, @observed_at)
@@ -178,6 +178,8 @@ public sealed class TradeJournal
 
         command.Parameters.AddWithValue("@trade_id", position.PositionId);
         command.Parameters.AddWithValue("@position_id", position.PositionId);
+        command.Parameters.AddWithValue("@plan_id", position.PlanId);
+        command.Parameters.AddWithValue("@variant_id", position.VariantId);
         command.Parameters.AddWithValue("@setup_id", position.SetupId);
         command.Parameters.AddWithValue("@ticker", position.Ticker);
         command.Parameters.AddWithValue("@direction", position.Direction);

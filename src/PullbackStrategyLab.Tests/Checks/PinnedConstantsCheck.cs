@@ -377,6 +377,24 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
+        // The execution family's minimum, pinned at 5.1 by VariantAdmitter existing to write it.
+        // A row count rather than an effective figure, and the store carries the unit beside it so
+        // the two minima cannot be read as comparable.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Execution variant sample",
+            table.Cell("Execution variant sample")
+                .Contains("200 paired trades", StringComparison.Ordinal),
+            MeasurementParameters.ExecutionMinimumPairedTrades == 200,
+            "MeasurementParameters.ExecutionMinimumPairedTrades"));
+
+        // Accounts, which is a cap's scope rather than a cap. Every limit RiskGate applies is
+        // counted within one book and a book belongs to a version, so two versions holding one name
+        // are two positions neither of which can see the other. The document states it in words and
+        // the constant is what the gate's scoping is written against.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Accounts",
+            table.Cell("Accounts").Contains("One per version, both directions", StringComparison.Ordinal),
+            RiskCaps.AccountsPerVersion == 1,
+            "RiskCaps.AccountsPerVersion"));
+
         // The name carries the figure, so the name is pinned too. A decision whose title states a
         // number and a body that states a different one would resolve, cite and read cleanly.
         pins.Add(Pin.Text("DECISIONS.md, the minimum sample, the figure in the decision's own name",
@@ -717,8 +735,6 @@ public sealed class PinnedConstantsCheck
     /// </summary>
     public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
     [
-        ("Accounts", "5.1", "VariantAdmitter, which registers a version and the account it trades"),
-        ("Execution variant sample", "5.1", "VariantAdmitter, which writes the pre-registered minimum"),
         ("Holdout windows", "5.4", "HoldoutRegistry"),
         ("Twin-pair threshold", "6.3", "TwinPairFinder"),
         ("Signal correlation limit", "6.2", "SignalAdmissionTest"),

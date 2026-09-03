@@ -85,4 +85,21 @@ public static class RiskCaps
 
     /// <summary>The money that may be at risk at once, being the account at <see cref="MaxTotalRiskFraction"/>.</summary>
     public static decimal MaxTotalRisk => PositionSizing.NotionalEquity * MaxTotalRiskFraction;
+
+    /// <summary>
+    /// How many simulated accounts a version trades, which is one, both directions in it.
+    ///
+    /// <b>It is a cap's scope rather than a cap, and that is why it lives here.</b> Every limit
+    /// above is counted within one account: the open-position count, the short count and the total
+    /// risk are all questions about a book, and a book belongs to a version. Two versions holding
+    /// the same name at once are two positions in two accounts, each capped by this same code and
+    /// neither aware of the other, which is the only reading under which a difference series
+    /// measures the rule rather than the contention between rules.
+    ///
+    /// <b>Both directions share the account, and that is the point of it.</b> The caps only mean
+    /// anything if a short and a long compete for the same budget. Reporting stays separate by
+    /// direction, which is a different question and is answered by never pooling the two figures.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    public const int AccountsPerVersion = 1;
 }

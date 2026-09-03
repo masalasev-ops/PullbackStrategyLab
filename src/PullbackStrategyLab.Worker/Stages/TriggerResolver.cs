@@ -282,14 +282,16 @@ public sealed class TriggerResolver
         // finds its own rows and writes none.
         command.CommandText = """
             INSERT INTO trigger_resolution (
-                setup_id, live_session, ticker, direction, outcome,
+                plan_id, setup_id, variant_id, live_session, ticker, direction, outcome,
                 touched_at, minutes_walked, unresolved_because, observed_at)
             VALUES (
-                @setup_id, @live_session, @ticker, @direction, @outcome,
+                @plan_id, @setup_id, @variant_id, @live_session, @ticker, @direction, @outcome,
                 @touched_at, @minutes_walked, @unresolved_because, @observed_at)
-            ON CONFLICT (setup_id) DO NOTHING;
+            ON CONFLICT (plan_id) DO NOTHING;
             """;
 
+        command.Parameters.AddWithValue("@plan_id", plan.PlanId);
+        command.Parameters.AddWithValue("@variant_id", plan.VariantId);
         command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(plan.LiveSession));
         command.Parameters.AddWithValue("@ticker", plan.Ticker);

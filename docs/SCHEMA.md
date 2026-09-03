@@ -757,7 +757,9 @@ shape.
 
 | Column | Form | Why |
 |---|---|---|
-| `setup_id` | TEXT, the key | One plan per capped candidate. A second write is refused by the key rather than by the stage remembering to check |
+| `plan_id` | TEXT, the key | One plan per capped candidate **per live version** from 5.1. A second write for one pair is refused by the key rather than by the stage remembering to check |
+| `setup_id` | TEXT | The candidate the plan was written for, carried rather than keyed since the fan-out |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `as_of` | TEXT | The evening the plan was written on |
 | `live_session` | TEXT | The session it is live in, stored rather than derived |
 | `trigger_price`, `give_up_price`, `give_up_distance` | TEXT | Prices, and the distance between them in money. **The final pullback session's regular-hours extremes with the give-up point 0.1 ADR beyond, from 4.18, and not `setup.trigger_price` and `setup.stop_price`**, which are the screening geometry a whole dip wide and were what this stage copied here from 4.16 until the 4.13 sign-off found it (see: The order prices are derived from the final pullback session's minutes, not from the screening geometry) |
@@ -798,6 +800,8 @@ Columns of `trigger_resolution`. Built at 4.5, and the columns are the ones that
 | Column | Form | Why |
 |---|---|---|
 | `setup_id` | TEXT, the key | One resolution per plan. A plan is live in exactly one session, so a resolution per plan is a resolution per plan per session with the second half derivable |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `live_session` | TEXT | The session that was walked, read from the plan rather than stepped to |
 | `outcome` | TEXT, one of three | `touched`, `not_touched`, `unresolvable`. Three and not two, because no fill and cannot-resolve are different answers |
 | `touched_at` | TEXT NULL | The minute the trigger was reached, and the only thing that carries a time. Constrained to be present exactly when the outcome is `touched` |
@@ -832,6 +836,8 @@ Columns of `trade_order`. Built at 4.6, and the columns are the ones that checkp
 | Column | Form | Why |
 |---|---|---|
 | `order_id` | TEXT, the key | One order per plan. A plan triggers at most once, because the resolver records the first minute that reached the trigger and no later one moves it |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `setup_id` | TEXT, unique | The plan this order came from, which is what `plan_audit` joins on at 4.9 |
 | `triggered_at` | TEXT | The minute the trigger was reached, read from `trigger_resolution` |
 | `status` | TEXT, one of two | `placed` or `blocked`. A blocked order is a row and never an absence |
@@ -874,6 +880,8 @@ Columns of `position`. Built at 4.7, and the columns are the ones that checkpoin
 | Column | Form | Why |
 |---|---|---|
 | `position_id` | TEXT, the key | One position per plan today, so the key is the plan's own identifier. 5.1 fans plans out per variant and this follows `trade_plan`'s |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `setup_id` | TEXT, unique | A second position for one plan is unexpressible rather than merely unwritten |
 | `order_id` | TEXT | The order this came from, so a position reads back to the cap that granted it |
 | `ticker`, `direction` | TEXT | The name and the side, carried so a position reads without a join |
@@ -925,6 +933,8 @@ the same rules.
 | Column | Form | Why |
 |---|---|---|
 | `fill_id` | TEXT, the key | One per end of a trade |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `position_id`, `setup_id` | TEXT | What it belongs to |
 | `session_date` | TEXT | The session the fill happened in, which for an exit is not the session the position opened in |
 | `ticker`, `direction` | TEXT | The name and the side, carried so a fill reads without a join |
@@ -966,6 +976,7 @@ Grain: session + observation. What one evening's plan stage did, at 18:30.
 | `session_date`, `observed_at` | TEXT | PK |
 | `live_session` | TEXT | the session the evening's plans are live in, stored rather than stepped to |
 | `candidates`, `planned` | INTEGER | capped candidates, and plans written for them |
+| `candidates_planned` | INTEGER NULL | The candidates behind the plans, which is the same number as `planned` only while one version is live. `planned` counted candidates until the fan-out and counts plans now, so a night with two versions would read as twice the funnel from the one figure. Null on every row written before 5.1, because the two were one number then and inventing a value would state a figure nobody measured |
 | `refused_absent_geometry`, `refused_equal_prices`, `refused_below_one_share` | INTEGER | the three reasons a candidate got no plan, counted apart |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | which of the three shapes of nothing the night was |
 
@@ -1033,6 +1044,8 @@ Columns of `trade`. Built at 4.9. One row per closed position, written the eveni
 | Column | Form | Why |
 |---|---|---|
 | `trade_id` | TEXT, the key | One trade per position, so the key is the position's own identifier, which is the plan's. 5.1 fans plans out per variant and this follows |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `position_id`, `setup_id` | TEXT, unique | A second trade for one position is unexpressible rather than merely unwritten |
 | `ticker`, `direction` | TEXT | Carried so a trade reads without a join, which is the point of the table |
 | `opened_session`, `closed_session` | TEXT | The two ends |
@@ -1060,6 +1073,8 @@ Columns of `plan_audit`. Built at 4.9. Three pairs answering three different que
 | Column | Form | Why |
 |---|---|---|
 | `trade_id` | TEXT, the key | The trade it audits, and a foreign key into it, which is what makes the ordering between the two stages expressible rather than remembered |
+| `plan_id` | TEXT | The plan this row belongs to, and the key everything below the plan is joined on from 5.1. One per setup per live version |
+| `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `setup_id`, `ticker`, `direction` | TEXT | Carried so an audit reads without a join |
 | `planned_trigger`, `executed_entry`, `entry_difference`, `entry_difference_bps`, `entry_basis` | TEXT / REAL | **The first question, execution at the entry.** The price the instruction named against the price it got, positive where the trade was worse off. Basis points beside the money because six cents on a six-dollar stock and six cents on a four-hundred-dollar one are two different facts. `entry_basis` is `slipped` or `gapped`, so a gap is never read as slippage |
 | `exit_resting_price`, `executed_exit`, `exit_difference`, `exit_difference_bps`, `exit_basis`, `exit_reason` | TEXT / REAL | The same question at the exit, against the price the exit rule named rather than against the plan's stop |
@@ -1145,6 +1160,24 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness |
 | `holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once) |
+
+### The register of rule versions
+
+Columns of `variant`. Built at 5.1, and the columns are the ones that checkpoint owes rather than the
+whole eventual shape.
+
+| Column | Form | Why |
+|---|---|---|
+| `variant_id` | TEXT, the key | One row per version. The baseline is a version like any other, so a plan always belongs to something |
+| `generation` | INTEGER | The generation the version belongs to. Editing the baseline closes every open version as unresolved and starts a new one, so a version is only ever comparable to versions of its own (see: An approved proposal creates a new version from zero, and a running version is never edited) |
+| `family` | TEXT | `baseline`, `selection` or `execution`. A selection change is scored on forward return and an execution change on R per trade, and the two are not comparable (see: Two experiment families, selection and execution, scored differently and never mixed in one version) |
+| `definition` | TEXT | What the version changes, in words. A version with no definition is a row nothing can settle |
+| `target` | TEXT | What would settle it, written at creation and never again. A target that can move after the result is not a target |
+| `minimum_sample` | INTEGER | The pre-registered minimum, written at creation and never again |
+| `minimum_sample_unit` | TEXT | What that integer counts: `effective_paired_setup_observations` for the baseline and a selection version, `paired_trades` for an execution one. **Beside the figure rather than inferred**, because 1802 effective observations and 200 rows are not comparable and one integer column with no unit would make them look it (see: The execution minimum is 200 paired trades and its conversion waits on a trade existing) |
+| `status` | TEXT | `open`, `accepted`, `rejected` or `unresolved`. The fourth is closed without an answer, which is what editing the baseline does, and it is not a rejection: a rejected version was measured and fell short, an unresolved one was never measured because what it was compared against stopped existing |
+| `resolved_at` | TEXT NULL | When it was settled, present exactly when the status is not `open`. AcceptanceGate writes this and `status` and has no path to any column above |
+| `created_at` | TEXT | When the version was registered, which is what a point-in-time read of a night bounds on. A replay of an evening sees the versions that evening had and no others |
 
 
 ---

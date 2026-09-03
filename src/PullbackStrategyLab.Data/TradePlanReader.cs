@@ -76,7 +76,7 @@ public sealed class TradePlanReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT setup_id, as_of, live_session, ticker, direction,
+            SELECT plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                    trigger_price, give_up_price, give_up_distance, shares,
                    equity, risk_fraction, risk_budget, risk_at_stake, observed_at
               FROM trade_plan
@@ -113,7 +113,7 @@ public sealed class TradePlanReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT setup_id, as_of, live_session, ticker, direction,
+            SELECT plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                    trigger_price, give_up_price, give_up_distance, shares,
                    equity, risk_fraction, risk_budget, risk_at_stake, observed_at
               FROM trade_plan
@@ -139,19 +139,21 @@ public sealed class TradePlanReader
         {
             plans.Add(new StoredTradePlan(
                 reader.GetString(0),
-                StoreText.StorageTextToDate(reader.GetString(1)),
-                StoreText.StorageTextToDate(reader.GetString(2)),
-                reader.GetString(3),
-                reader.GetString(4),
-                StoreText.StorageTextToPrice(reader.GetString(5)),
-                StoreText.StorageTextToPrice(reader.GetString(6)),
+                reader.GetString(1),
+                reader.GetString(2),
+                StoreText.StorageTextToDate(reader.GetString(3)),
+                StoreText.StorageTextToDate(reader.GetString(4)),
+                reader.GetString(5),
+                reader.GetString(6),
                 StoreText.StorageTextToPrice(reader.GetString(7)),
-                reader.GetInt32(8),
+                StoreText.StorageTextToPrice(reader.GetString(8)),
                 StoreText.StorageTextToPrice(reader.GetString(9)),
-                StoreText.StorageTextToRatio(reader.GetString(10)),
+                reader.GetInt32(10),
                 StoreText.StorageTextToPrice(reader.GetString(11)),
-                StoreText.StorageTextToPrice(reader.GetString(12)),
-                StoreText.StorageTextToTimestamp(reader.GetString(13))));
+                StoreText.StorageTextToRatio(reader.GetString(12)),
+                StoreText.StorageTextToPrice(reader.GetString(13)),
+                StoreText.StorageTextToPrice(reader.GetString(14)),
+                StoreText.StorageTextToTimestamp(reader.GetString(15))));
         }
 
         return plans;
@@ -205,6 +207,8 @@ public sealed class TradePlanReader
 
 /// <summary>One plan as the store holds it.</summary>
 public sealed record StoredTradePlan(
+    string PlanId,
+    string VariantId,
     string SetupId,
     DateOnly AsOf,
     DateOnly LiveSession,

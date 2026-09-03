@@ -244,7 +244,9 @@
         "SCHEMA.md, store configuration, journal_mode": 1,
         "SCHEMA.md, store configuration, synchronous": 1,
         "SCHEMA.md, the three index symbols": 1,
-        "rows of the authored parameters table placed as pinned, deferred or exempt": 46
+        "rows of the authored parameters table placed as pinned, deferred or exempt": 46,
+        "ARCHITECTURE.html, authored parameters, Execution variant sample": 1,
+        "ARCHITECTURE.html, authored parameters, Accounts": 1
       }
     },
     "point-in-time": {

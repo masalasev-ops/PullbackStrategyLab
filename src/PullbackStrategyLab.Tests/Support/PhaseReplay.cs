@@ -80,6 +80,15 @@ public sealed class PhaseReplay : IDisposable
         _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
         new MigrationRunner(_connections).Apply();
 
+        // A plan belongs to a version from 5.1 and the store's key says so, so the fixture
+        // registers the baseline before anything writes a plan. The lab does not do this for
+        // itself: registering a version is VariantAdmitter's, and a migration that seeded one
+        // would start an experiment nobody chose to start.
+        using (SqliteConnection seed = _connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+        }
+
         _http = new HttpClient(_handler) { BaseAddress = new Uri(new PullbackStrategyLabOptions().Vendor.BaseAddress) };
         Vendor = new EodhdClient(_http, WithToken());
     }
