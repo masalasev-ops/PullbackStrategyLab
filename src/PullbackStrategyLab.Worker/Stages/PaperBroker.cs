@@ -289,8 +289,10 @@ public sealed class PaperBroker
 
         Fill fill = FillModel.Entry(plan.Direction, plan.TriggerPrice, gapped, quote?.BasisPoints ?? 0d);
 
-        string positionId = plan.SetupId;
-        string fillId = $"{plan.SetupId}:entry";
+        // The position is the plan's, not the setup's: two versions holding one name are two
+        // positions in two simulated accounts, and a setup-derived id would collide on the second.
+        string positionId = plan.PlanId;
+        string fillId = $"{plan.PlanId}:entry";
         int shares = order.Shares;
 
         decimal riskIntended = shares * plan.GiveUpDistance;
@@ -327,11 +329,11 @@ public sealed class PaperBroker
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO position (
-                position_id, setup_id, order_id, ticker, direction, status, opened_session, opened_at,
+                position_id, plan_id, setup_id, variant_id, order_id, ticker, direction, status, opened_session, opened_at,
                 shares, entry_fill_id, entry_price, value_at_entry, fraction_at_entry,
                 risk_intended, risk_realised, borrow_rate_assumed, borrow_availability, observed_at)
             VALUES (
-                @position_id, @setup_id, @order_id, @ticker, @direction, 'open', @opened_session, @opened_at,
+                @position_id, @plan_id, @setup_id, @variant_id, @order_id, @ticker, @direction, 'open', @opened_session, @opened_at,
                 @shares, @entry_fill_id, @entry_price, @value_at_entry, @fraction_at_entry,
                 @risk_intended, @risk_realised, @borrow_rate_assumed, @borrow_availability, @observed_at)
             ON CONFLICT (position_id) DO NOTHING;
@@ -340,6 +342,8 @@ public sealed class PaperBroker
         bool isShort = string.Equals(plan.Direction, SetupDirection.Short, StringComparison.Ordinal);
 
         command.Parameters.AddWithValue("@position_id", positionId);
+        command.Parameters.AddWithValue("@plan_id", plan.PlanId);
+        command.Parameters.AddWithValue("@variant_id", plan.VariantId);
         command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@order_id", order.OrderId);
         command.Parameters.AddWithValue("@ticker", plan.Ticker);
@@ -374,17 +378,19 @@ public sealed class PaperBroker
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO position (
-                position_id, setup_id, order_id, ticker, direction, status, opened_session,
+                position_id, plan_id, setup_id, variant_id, order_id, ticker, direction, status, opened_session,
                 shares, unfilled_because, borrow_rate_assumed, borrow_availability, observed_at)
             VALUES (
-                @position_id, @setup_id, @order_id, @ticker, @direction, 'unfilled', @opened_session,
+                @position_id, @plan_id, @setup_id, @variant_id, @order_id, @ticker, @direction, 'unfilled', @opened_session,
                 0, @unfilled_because, @borrow_rate_assumed, @borrow_availability, @observed_at)
             ON CONFLICT (position_id) DO NOTHING;
             """;
 
         bool isShort = string.Equals(plan.Direction, SetupDirection.Short, StringComparison.Ordinal);
 
-        command.Parameters.AddWithValue("@position_id", plan.SetupId);
+        command.Parameters.AddWithValue("@position_id", plan.PlanId);
+        command.Parameters.AddWithValue("@plan_id", plan.PlanId);
+        command.Parameters.AddWithValue("@variant_id", plan.VariantId);
         command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@order_id", order.OrderId);
         command.Parameters.AddWithValue("@ticker", plan.Ticker);
@@ -418,11 +424,11 @@ public sealed class PaperBroker
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO fill (
-                fill_id, position_id, setup_id, session_date, ticker, direction, leg, filled_at,
+                fill_id, position_id, plan_id, setup_id, variant_id, session_date, ticker, direction, leg, filled_at,
                 basis, resting_price, price, slippage, shares, spread_bps, spread_pass,
                 quote_lag_seconds, straddle_seconds, observed_at)
             VALUES (
-                @fill_id, @position_id, @setup_id, @session_date, @ticker, @direction, 'entry', @filled_at,
+                @fill_id, @position_id, @plan_id, @setup_id, @variant_id, @session_date, @ticker, @direction, 'entry', @filled_at,
                 @basis, @resting_price, @price, @slippage, @shares, @spread_bps, @spread_pass,
                 @quote_lag_seconds, @straddle_seconds, @observed_at)
             ON CONFLICT (fill_id) DO NOTHING;
@@ -430,6 +436,8 @@ public sealed class PaperBroker
 
         command.Parameters.AddWithValue("@fill_id", fillId);
         command.Parameters.AddWithValue("@position_id", positionId);
+        command.Parameters.AddWithValue("@plan_id", plan.PlanId);
+        command.Parameters.AddWithValue("@variant_id", plan.VariantId);
         command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue("@ticker", plan.Ticker);

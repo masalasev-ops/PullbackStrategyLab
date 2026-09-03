@@ -24,7 +24,10 @@ public sealed class TradeReader
         trade_id, position_id, setup_id, ticker, direction, opened_session, closed_session,
         held_calendar_days, held_sessions, entry_price, exit_price, exit_reason, shares,
         trimmed_shares, value_at_entry, risk_realised, gross_pnl, borrow_rate_assumed, borrow_cost,
-        net_pnl, result_r, exit_armed_session, armed_sessions_waited, observed_at
+        net_pnl, result_r, exit_armed_session, armed_sessions_waited, observed_at,
+        -- Appended so no ordinal above moves. A trade belongs to a plan from 5.1 and the plan
+        -- belongs to a version; the setup stays carried beside them.
+        plan_id, variant_id
         """;
 
     private const string AuditColumns = """
@@ -271,7 +274,9 @@ public sealed class TradeReader
                 reader.GetDouble(20),
                 reader.IsDBNull(21) ? null : StoreText.StorageTextToDate(reader.GetString(21)),
                 reader.IsDBNull(22) ? null : reader.GetInt32(22),
-                StoreText.StorageTextToTimestamp(reader.GetString(23))));
+                StoreText.StorageTextToTimestamp(reader.GetString(23)),
+                reader.GetString(24),
+                reader.GetString(25)));
         }
 
         return trades;
@@ -313,7 +318,9 @@ public sealed record StoredTrade(
     double ResultR,
     DateOnly? ExitArmedSession,
     int? ArmedSessionsWaited,
-    DateTimeOffset ObservedAt);
+    DateTimeOffset ObservedAt,
+    string PlanId,
+    string VariantId);
 
 /// <summary>
 /// One trade's plan held against what happened, in three pairs that answer three questions.

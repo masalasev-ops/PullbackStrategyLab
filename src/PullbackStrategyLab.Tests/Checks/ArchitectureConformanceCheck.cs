@@ -1633,6 +1633,47 @@ public sealed partial class ArchitectureConformanceCheck
     /// behaviour unlosable: a component can stop writing a reason and the store will refuse the row,
     /// where a scan of the component passes on a helper nothing calls.
     /// </summary>
+    /// <summary>
+    /// That two versions selecting one stock get two books, read from the migration that keys it.
+    ///
+    /// The property is negative in shape, which is why it is read from the schema rather than by
+    /// looking for a statement: what makes the second order possible is the <b>absence</b> of a
+    /// uniqueness constraint on the setup below the plan, together with the presence of one on the
+    /// plan. A scan for an insert would pass with the old key still in place.
+    /// </summary>
+    private static bool TwoVersionsGetTwoBooks()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("variant-and-the-fan-out", StringComparison.Ordinal)).Sql;
+
+        // The plan is unique per setup per version, and every table below it keys on the plan and
+        // carries the version.
+        return migration.Contains("UNIQUE (setup_id, variant_id)", StringComparison.Ordinal)
+            && migration.Contains("plan_id         TEXT    NOT NULL UNIQUE", StringComparison.Ordinal)
+            && migration.Contains("plan_id              TEXT    NOT NULL UNIQUE", StringComparison.Ordinal)
+            && migration.Contains("plan_id               TEXT    NOT NULL UNIQUE", StringComparison.Ordinal)
+            && migration.Contains("plan_id                    TEXT    NOT NULL UNIQUE", StringComparison.Ordinal)
+            && !migration.Contains("setup_id        TEXT    NOT NULL UNIQUE", StringComparison.Ordinal)
+            && !migration.Contains("setup_id             TEXT    NOT NULL UNIQUE", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// That the register can express a closed generation, which is the assertable half of the
+    /// baseline-edit row until something edits a baseline.
+    /// </summary>
+    private static bool TheRegisterCanCloseAGeneration()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("variant-and-the-fan-out", StringComparison.Ordinal)).Sql;
+
+        string reader = RepositoryLayout.Read(
+            System.IO.Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "VariantReader.cs"));
+
+        return migration.Contains("generation           INTEGER NOT NULL", StringComparison.Ordinal)
+            && migration.Contains("'unresolved'", StringComparison.Ordinal)
+            && reader.Contains("registered.Max(v => v.Generation)", StringComparison.Ordinal);
+    }
+
     private static bool TheGateWritesABlockedRowWithItsReason()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
@@ -1779,6 +1820,33 @@ public sealed partial class ArchitectureConformanceCheck
             // reason and a reason with no cap, so the behaviour cannot be lost by an edit to the
             // component. The behavioural half is RiskGateTests, which runs five triggers against
             // four slots and reads the blocked row back with the cap that bound.
+            // The fan-out, read from the migration that keys it rather than from the stage that
+            // writes it. Two versions selecting one stock produce two plans, and everything below
+            // the plan keys on the plan, so the second order is admitted by the key rather than by
+            // a stage being careful. Before 5.1 every one of those tables carried a uniqueness
+            // constraint on the setup and would have refused it.
+            "Two variants pick the same stock" => TwoVersionsGetTwoBooks()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "everything below the plan keys on the plan and carries the version, so two versions "
+                    + "selecting one name are two orders in two accounts that the same code caps and nothing "
+                    + "combines")
+                : Claim.Failed("Failure behaviour", condition,
+                    "a table below the plan has gone back to keying on the setup, so the second version's row "
+                    + "for a name the first already holds would be refused and the night would lose it silently"),
+
+            // The generation, read from the register's own shape. The act of editing the baseline
+            // has no component until somebody edits one, so what is assertable today is that the
+            // store can express the consequence: a fourth status that is not a rejection, a
+            // generation on every row, and a live set that is one generation rather than all of them.
+            "Someone edits the baseline" => TheRegisterCanCloseAGeneration()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the register carries a generation on every version and admits `unresolved` as a status "
+                    + "distinct from rejected, and the live set is the generation in force rather than every "
+                    + "version ever registered")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the register can no longer express a closed generation, so editing the baseline would "
+                    + "either lose the versions it invalidates or leave them reading as rejected"),
+
             "Risk gate blocks an order" => TheGateWritesABlockedRowWithItsReason()
                 ? Claim.Passed("Failure behaviour", condition,
                     "a refused order is a row with the cap that bound and the figures that cap saw, and the store "

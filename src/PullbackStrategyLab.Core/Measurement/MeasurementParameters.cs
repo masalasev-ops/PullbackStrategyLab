@@ -131,4 +131,20 @@ public static class MeasurementParameters
     /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
     /// </summary>
     public const int LatenessBoundHours = 24;
+
+    /// <summary>
+    /// The execution family's minimum sample, in paired trades.
+    ///
+    /// <b>A row count, and the record says so rather than dressing it as an effective figure.</b>
+    /// The corpus's unit is effective observations because overlapping labels and a shared market
+    /// factor make a row worth less than its own number, and the setup-level discount was measured
+    /// at 3.40 rather than assumed at 1. No trade has ever fired, so nothing about a design effect
+    /// over trades can be measured today, and stating one would invent the quantity the setup-level
+    /// measurement refused to assume. What a version's pre-registration carries until then is this
+    /// count, with `minimum_sample_unit` on the row saying it is a count.
+    ///
+    /// It detects about a 0.35R difference, in rows.
+    /// see: The execution minimum is 200 paired trades and its conversion waits on a trade existing
+    /// </summary>
+    public const int ExecutionMinimumPairedTrades = 200;
 }

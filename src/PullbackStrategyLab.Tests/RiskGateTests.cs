@@ -4,6 +4,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -34,6 +35,15 @@ public sealed class RiskGateTests : IDisposable
     {
         _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
         new MigrationRunner(_connections).Apply();
+
+        // A plan belongs to a version from 5.1 and the store's key says so, so the fixture
+        // registers the baseline before anything writes a plan. The lab does not do this for
+        // itself: registering a version is VariantAdmitter's, and a migration that seeded one
+        // would start an experiment nobody chose to start.
+        using (SqliteConnection seed = _connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+        }
     }
 
     public void Dispose() => _root.Dispose();
@@ -502,10 +512,14 @@ public sealed class RiskGateTests : IDisposable
         using SqliteCommand resolution = connection.CreateCommand();
         resolution.CommandText = """
             INSERT INTO trigger_resolution (
-                setup_id, live_session, ticker, direction, outcome,
+                plan_id, variant_id, setup_id, live_session, ticker, direction, outcome,
                 touched_at, minutes_walked, unresolved_because, observed_at)
-            VALUES (@setup_id, @live_session, @ticker, @direction, 'touched', @touched_at, 390, NULL, @observed_at);
+            VALUES (@plan_id, @variant_id, @setup_id, @live_session, @ticker, @direction, 'touched', @touched_at, 390, NULL, @observed_at);
             """;
+        resolution.Parameters.AddWithValue(
+            "@plan_id",
+            PlanIdentity.For($"{Evening:yyyy-MM-dd}-{ticker}-{direction}", TestVersions.SeedBaseline(connection)));
+        resolution.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         resolution.Parameters.AddWithValue("@setup_id", $"{Evening:yyyy-MM-dd}-{ticker}-{direction}");
         resolution.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(Session));
         resolution.Parameters.AddWithValue("@ticker", ticker);
@@ -566,14 +580,16 @@ public sealed class RiskGateTests : IDisposable
         using SqliteCommand plan = connection.CreateCommand();
         plan.CommandText = """
             INSERT INTO trade_plan (
-                setup_id, as_of, live_session, ticker, direction,
+                plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                 trigger_price, give_up_price, give_up_distance, shares,
                 equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
             VALUES (
-                @setup_id, @as_of, @live_session, @ticker, @direction,
+                @plan_id, @variant_id, @setup_id, @as_of, @live_session, @ticker, @direction,
                 @trigger, @give_up, @distance, @shares,
                 @equity, @fraction, @budget, @at_stake, @observed_at);
             """;
+        plan.Parameters.AddWithValue("@plan_id", PlanIdentity.For(setupId, TestVersions.SeedBaseline(connection)));
+        plan.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         plan.Parameters.AddWithValue("@setup_id", setupId);
         plan.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(Evening));
         plan.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(Session));

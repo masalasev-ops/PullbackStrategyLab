@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Data;
@@ -180,7 +181,14 @@ public sealed class PlanBuilder
                         : NeverCapped
                 : null;
 
+        // The versions this evening fans a plan out to, read from the register as it stood tonight.
+        // One row per candidate per version, so `planned` counts plans and `candidatesPlanned`
+        // counts candidates, and the two are equal only while one version is live. Reporting one
+        // number for both would make a night with two versions read as twice the funnel.
+        IReadOnlyList<StoredVariant> live = VariantReader.LiveOn(connection, asOf, _options.SessionZone);
+
         int planned = 0;
+        int candidatesPlanned = 0;
         int absentGeometry = 0;
         int equalPrices = 0;
         int belowOneShare = 0;
@@ -229,8 +237,13 @@ public sealed class PlanBuilder
                 continue;
             }
 
-            Insert(connection, transaction, setup, liveSession, prices, shares, observedAt);
-            planned++;
+            foreach (StoredVariant variant in live)
+            {
+                Insert(connection, transaction, setup, variant, liveSession, prices, shares, observedAt);
+                planned++;
+            }
+
+            candidatesPlanned++;
         }
 
         transaction.Commit();
@@ -244,11 +257,11 @@ public sealed class PlanBuilder
         RunSummary summary = run.Complete(outcome);
 
         RecordRun(
-            connection, asOf, liveSession, capped.Count, planned,
+            connection, asOf, liveSession, capped.Count, planned, candidatesPlanned,
             absentGeometry, equalPrices, belowOneShare, outcome, stoppedBecause, observedAt);
 
         return new PlanRunResult(
-            asOf, liveSession, capped.Count, planned,
+            asOf, liveSession, capped.Count, planned, candidatesPlanned, live.Count,
             absentGeometry, equalPrices, belowOneShare,
             summary.RowsWritten, outcome, stoppedBecause);
     }
@@ -300,10 +313,22 @@ public sealed class PlanBuilder
         return OrderPrices.For(setup.Direction, session.High, session.Low, figures.AverageDailyRange * session.Close);
     }
 
+    /// <summary>
+    /// One plan, for one candidate under one version.
+    ///
+    /// <b>The size is the same under every version and that is not an oversight.</b> A selection
+    /// version changes which stocks are picked and leaves entry and exit alone, so two versions
+    /// planning the same candidate on the same evening plan it identically; what differs is which
+    /// candidates each has. An execution version would size differently and none is admitted in this
+    /// generation, so the fan-out ships with the geometry computed once per candidate rather than
+    /// once per plan. The day an execution version is admitted, the prices move inside this loop.
+    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+    /// </summary>
     private static void Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
         StoredSetup setup,
+        StoredVariant variant,
         DateOnly liveSession,
         OrderPrices.Pair prices,
         int shares,
@@ -315,20 +340,23 @@ public sealed class PlanBuilder
         command.Transaction = transaction;
 
         // Insert only, and nothing in this lab updates a plan. The conflict clause is what makes a
-        // rerun write nothing; the key is what makes a second plan for one candidate unexpressible.
+        // rerun write nothing; the key is what makes a second plan for one candidate under one
+        // version unexpressible, which is what the setup-keyed table said before the fan-out.
         // see: The plan is written before the session and is immutable after publication
         command.CommandText = """
             INSERT INTO trade_plan (
-                setup_id, as_of, live_session, ticker, direction,
+                plan_id, setup_id, variant_id, as_of, live_session, ticker, direction,
                 trigger_price, give_up_price, give_up_distance, shares,
                 equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
             VALUES (
-                @setup_id, @as_of, @live_session, @ticker, @direction,
+                @plan_id, @setup_id, @variant_id, @as_of, @live_session, @ticker, @direction,
                 @trigger_price, @give_up_price, @give_up_distance, @shares,
                 @equity, @risk_fraction, @risk_budget, @risk_at_stake, @observed_at)
-            ON CONFLICT (setup_id) DO NOTHING;
+            ON CONFLICT (setup_id, variant_id) DO NOTHING;
             """;
 
+        command.Parameters.AddWithValue("@plan_id", PlanIdentity.For(setup.SetupId, variant.VariantId));
+        command.Parameters.AddWithValue("@variant_id", variant.VariantId);
         command.Parameters.AddWithValue("@setup_id", setup.SetupId);
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(setup.AsOf));
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
@@ -353,6 +381,7 @@ public sealed class PlanBuilder
         DateOnly liveSession,
         int candidates,
         int planned,
+        int candidatesPlanned,
         int absentGeometry,
         int equalPrices,
         int belowOneShare,
@@ -363,11 +392,11 @@ public sealed class PlanBuilder
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO plan_run (
-                session_date, live_session, candidates, planned,
+                session_date, live_session, candidates, planned, candidates_planned,
                 refused_absent_geometry, refused_equal_prices, refused_below_one_share,
                 outcome, stopped_because, observed_at)
             VALUES (
-                @session_date, @live_session, @candidates, @planned,
+                @session_date, @live_session, @candidates, @planned, @candidates_planned,
                 @refused_absent_geometry, @refused_equal_prices, @refused_below_one_share,
                 @outcome, @stopped_because, @observed_at)
             ON CONFLICT (session_date, observed_at) DO NOTHING;
@@ -375,6 +404,7 @@ public sealed class PlanBuilder
 
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
+        command.Parameters.AddWithValue("@candidates_planned", candidatesPlanned);
         command.Parameters.AddWithValue("@candidates", candidates);
         command.Parameters.AddWithValue("@planned", planned);
         command.Parameters.AddWithValue("@refused_absent_geometry", absentGeometry);
@@ -392,7 +422,12 @@ public sealed record PlanRunResult(
     DateOnly AsOf,
     DateOnly LiveSession,
     int Candidates,
+    // Plans and the candidates behind them, which are the same number only while one version is
+    // live. `Planned` counted candidates until the fan-out and counts plans now, so a night with two
+    // versions would read as twice the funnel to anybody reading the one figure.
     int Planned,
+    int CandidatesPlanned,
+    int LiveVersions,
     int RefusedAbsentGeometry,
     int RefusedEqualPrices,
     int RefusedBelowOneShare,

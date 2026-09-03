@@ -224,15 +224,19 @@ public sealed class RiskGate
         // order for one plan is unexpressible rather than merely unwritten.
         command.CommandText = """
             INSERT INTO trade_order (
-                order_id, setup_id, live_session, ticker, direction, triggered_at, status,
+                order_id, plan_id, setup_id, variant_id, live_session, ticker, direction, triggered_at, status,
                 planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at)
             VALUES (
-                @order_id, @setup_id, @live_session, @ticker, @direction, @triggered_at, @status,
+                @order_id, @plan_id, @setup_id, @variant_id, @live_session, @ticker, @direction, @triggered_at, @status,
                 @planned_shares, @shares, @risk_at_stake, @bound_by, @blocked_because, @observed_at)
             ON CONFLICT (order_id) DO NOTHING;
             """;
 
-        command.Parameters.AddWithValue("@order_id", plan.SetupId);
+        // The order is the plan's, not the setup's. Two versions triggering one name are two
+        // orders in two simulated accounts, and a setup-derived id would collide on the second.
+        command.Parameters.AddWithValue("@order_id", plan.PlanId);
+        command.Parameters.AddWithValue("@plan_id", plan.PlanId);
+        command.Parameters.AddWithValue("@variant_id", plan.VariantId);
         command.Parameters.AddWithValue("@setup_id", plan.SetupId);
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(plan.LiveSession));
         command.Parameters.AddWithValue("@ticker", plan.Ticker);

@@ -4,6 +4,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -50,6 +51,15 @@ public sealed class OrderProvenanceCheck : IDisposable
         _output = output;
         _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
         new MigrationRunner(_connections).Apply();
+
+        // A plan belongs to a version from 5.1 and the store's key says so, so the fixture
+        // registers the baseline before anything writes a plan. The lab does not do this for
+        // itself: registering a version is VariantAdmitter's, and a migration that seeded one
+        // would start an experiment nobody chose to start.
+        using (SqliteConnection seed = _connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+        }
     }
 
     public void Dispose() => _root.Dispose();
@@ -245,14 +255,17 @@ public sealed class OrderProvenanceCheck : IDisposable
         {
             plan.CommandText = """
                 INSERT INTO trade_plan (
-                    setup_id, as_of, live_session, ticker, direction,
+                    plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                     trigger_price, give_up_price, give_up_distance, shares,
                     equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
                 VALUES (
-                    @setup_id, @as_of, @live_session, @ticker, @direction,
+                    @plan_id, @variant_id, @setup_id, @as_of, @live_session, @ticker, @direction,
                     @trigger, @give_up, @distance, @shares,
                     @equity, @fraction, @budget, @at_stake, @observed_at);
                 """;
+            plan.Parameters.AddWithValue(
+                "@plan_id", PlanIdentity.For(setupId, TestVersions.SeedBaseline(connection)));
+            plan.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
             plan.Parameters.AddWithValue("@setup_id", setupId);
             plan.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(Evening));
             plan.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(Session));
@@ -282,10 +295,13 @@ public sealed class OrderProvenanceCheck : IDisposable
         using SqliteCommand resolution = connection.CreateCommand();
         resolution.CommandText = """
             INSERT INTO trigger_resolution (
-                setup_id, live_session, ticker, direction, outcome,
+                plan_id, setup_id, variant_id, live_session, ticker, direction, outcome,
                 touched_at, minutes_walked, unresolved_because, observed_at)
-            VALUES (@setup_id, @live_session, @ticker, @direction, 'touched', @touched_at, 390, NULL, @observed_at);
+            VALUES (@plan_id, @setup_id, @variant_id, @live_session, @ticker, @direction, 'touched', @touched_at, 390, NULL, @observed_at);
             """;
+        resolution.Parameters.AddWithValue(
+            "@plan_id", PlanIdentity.For(setupId, TestVersions.SeedBaseline(connection)));
+        resolution.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         resolution.Parameters.AddWithValue("@setup_id", setupId);
         resolution.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(Session));
         resolution.Parameters.AddWithValue("@ticker", ticker);
@@ -314,12 +330,14 @@ public sealed class OrderProvenanceCheck : IDisposable
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO trade_order (
-                order_id, setup_id, live_session, ticker, direction, triggered_at, status,
-                planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at)
-            SELECT @order_id, p.setup_id, p.live_session, p.ticker, p.direction, @triggered_at, 'placed',
+                order_id, plan_id, setup_id, variant_id, live_session, ticker, direction,
+                triggered_at, status, planned_shares, shares, risk_at_stake, bound_by,
+                blocked_because, observed_at)
+            SELECT @order_id, p.plan_id, p.setup_id, p.variant_id, p.live_session, p.ticker,
+                   p.direction, @triggered_at, 'placed',
                    p.shares, p.shares, p.risk_at_stake, NULL, NULL, @observed_at
               FROM trade_plan p
-             WHERE p.setup_id NOT IN (SELECT setup_id FROM trade_order)
+             WHERE p.plan_id NOT IN (SELECT plan_id FROM trade_order)
              LIMIT 1;
             """;
         command.Parameters.AddWithValue("@order_id", orderId);

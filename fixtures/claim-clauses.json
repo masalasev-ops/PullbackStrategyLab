@@ -218,11 +218,11 @@
       "clauses": [
         {
           "clause": "Two orders in two separate simulated accounts, both tagged, both capped by the same code.",
-          "disposition": "deferred"
+          "disposition": "reaches"
         },
         {
           "clause": "Never combined.",
-          "disposition": "deferred"
+          "disposition": "reaches"
         }
       ]
     },
@@ -614,15 +614,17 @@
       "clauses": [
         {
           "clause": "Not permitted while variants run.",
-          "disposition": "deferred"
+          "disposition": "unreached",
+          "why": "nothing enforces that a baseline is not edited while versions run; the act has no component until something edits one, and what 5.1 builds is the register that can express the consequence"
         },
         {
           "clause": "Doing so closes every open variant as unresolved and starts a new generation",
-          "disposition": "deferred"
+          "disposition": "reaches"
         },
         {
           "clause": "because they were being compared against a rule that no longer exists.",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the reason the open versions are closed rather than kept"
         }
       ]
     },
@@ -750,14 +752,18 @@
       "subject": "PlanBuilder",
       "clauses": [
         {
-          "clause": "Nightly 18:30 One committed plan per capped candidate, sized here.",
+          "clause": "Nightly 18:30 One committed plan per capped candidate per live version, sized here.",
           "disposition": "unreached",
-          "why": "the scheduled time and one plan per candidate are not asserted by a catalogue verdict"
+          "why": "the scheduled time is a property of the operator's scheduler, and one plan per candidate per live version is asserted by the fan-out row in Failure behaviour rather than by a catalogue verdict"
         },
         {
-          "clause": "Per version per candidate from 5.1",
-          "disposition": "unreached",
-          "why": "per version per candidate cannot be asserted before 5.1 builds variants"
+          "clause": "The size is the same under every version while only selection versions exist",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "because a selection change alters which stocks are picked and leaves entry and exit alone",
+          "disposition": "rationale",
+          "why": "why a selection change leaves the size alone"
         }
       ]
     },
@@ -1080,11 +1086,13 @@
       "clauses": [
         {
           "clause": "Manual The human step.",
-          "disposition": "deferred"
+          "disposition": "unreached",
+          "why": "that the step is manual is a fact about what no slot runs, and a catalogue verdict reaches the component's existence and registration only"
         },
         {
           "clause": "Writes the target and the sample, once",
-          "disposition": "deferred"
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
         }
       ]
     },

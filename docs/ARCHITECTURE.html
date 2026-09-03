@@ -821,7 +821,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>SignalVectorizer</b></td><td>Nightly 18:25</td><td>Freezes the point-in-time signal row that makes replay possible</td></tr>
 <tr><td><b>SetupCapper</b></td><td>Nightly 18:28</td><td>Truncates the night to 60, forty long and twenty short</td></tr>
 <tr><td><b>VariantResolver</b></td><td>Nightly 18:30</td><td>Resolves which rule versions are live tonight</td></tr>
-<tr><td><b>PlanBuilder</b></td><td>Nightly 18:30</td><td>One committed plan per capped candidate, sized here. Per version per candidate from 5.1</td></tr>
+<tr><td><b>PlanBuilder</b></td><td>Nightly 18:30</td><td>One committed plan per capped candidate per live version, sized here. The size is the same under every version while only selection versions exist, because a selection change alters which stocks are picked and leaves entry and exit alone</td></tr>
 <tr><td><b>WatchlistPublisher</b></td><td>Nightly 18:40</td><td>Publishes the morning watchlist</td></tr>
 <tr><td><b>RunLogger</b></td><td>Every stage</td><td>Sole writer of the run log. Stages call it rather than writing the table themselves, and rows written is measured from the store rather than self-reported</td></tr>
 <tr><td><b>SessionReplayClock</b></td><td>With the resolver</td><td>Walks the stored minute bars for a session, every name at once, one minute at a time. Owns no table</td></tr>

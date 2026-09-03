@@ -4,6 +4,7 @@ using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -38,6 +39,15 @@ public sealed class TriggerResolverTests : IDisposable
     {
         _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
         new MigrationRunner(_connections).Apply();
+
+        // A plan belongs to a version from 5.1 and the store's key says so, so the fixture
+        // registers the baseline before anything writes a plan. The lab does not do this for
+        // itself: registering a version is VariantAdmitter's, and a migration that seeded one
+        // would start an experiment nobody chose to start.
+        using (SqliteConnection seed = _connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+        }
     }
 
     public void Dispose() => _root.Dispose();
@@ -469,10 +479,14 @@ public sealed class TriggerResolverTests : IDisposable
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO trigger_resolution
-                (setup_id, live_session, ticker, direction, outcome, touched_at,
+                (plan_id, setup_id, variant_id, live_session, ticker, direction, outcome, touched_at,
                  minutes_walked, unresolved_because, observed_at)
-            VALUES (@id, @session, 'AAPL', 'long', 'touched', NULL, 5, NULL, @observed);
+            VALUES (@plan_id, @id, @variant_id, @session, 'AAPL', 'long', 'touched', NULL, 5, NULL, @observed);
             """;
+        command.Parameters.AddWithValue(
+            "@plan_id",
+            PlanIdentity.For(SetupId("AAPL", SetupDirection.Long), TestVersions.SeedBaseline(connection)));
+        command.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         command.Parameters.AddWithValue("@id", SetupId("AAPL", SetupDirection.Long));
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(Session));
         command.Parameters.AddWithValue("@observed", StoreText.TimestampToStorageText(_clock.UtcNow));
@@ -555,14 +569,16 @@ public sealed class TriggerResolverTests : IDisposable
         using SqliteCommand plan = connection.CreateCommand();
         plan.CommandText = """
             INSERT INTO trade_plan (
-                setup_id, as_of, live_session, ticker, direction,
+                plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                 trigger_price, give_up_price, give_up_distance, shares,
                 equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
             VALUES (
-                @setup_id, @as_of, @live_session, @ticker, @direction,
+                @plan_id, @variant_id, @setup_id, @as_of, @live_session, @ticker, @direction,
                 @trigger, @give_up, @distance, @shares,
                 @equity, @fraction, @budget, @at_stake, @observed_at);
             """;
+        plan.Parameters.AddWithValue("@plan_id", PlanIdentity.For(setupId, TestVersions.SeedBaseline(connection)));
+        plan.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         plan.Parameters.AddWithValue("@setup_id", setupId);
         plan.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(written));
         plan.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(Session));

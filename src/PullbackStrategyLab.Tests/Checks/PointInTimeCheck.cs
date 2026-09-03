@@ -78,6 +78,15 @@ public sealed class PointInTimeCheck
             // property of the read.
             ["trade_plan"] = "observed_at",
 
+            // The register is read to decide an answer, and it is the answer everything below the
+            // plan hangs on. PlanBuilder asks which versions were live on a night, so a replay of an
+            // evening that saw a version registered afterwards would fan a plan out to a version the
+            // night had never heard of and then difference against it. `created_at` is the stamp
+            // rather than `resolved_at`: settling a version is AcceptanceGate writing an outcome long
+            // after the nights it accumulated over, and bounding the live set on it would erase a
+            // resolved version from the nights it actually ran on.
+            ["variant"] = "created_at",
+
             // A resolution is an observation about a session, and it is read to decide an answer:
             // 4.6 fills the earliest trigger of a session and blocks the later ones, so a replay
             // standing at an old date that saw a resolution written after it would fill an order the

@@ -30,7 +30,11 @@ public sealed class PositionReader
         risk_realised, unfilled_because, borrow_rate_assumed, borrow_availability, closed_session,
         closed_at, exit_fill_id, exit_price, exit_reason, realised_pnl, realised_r, observed_at,
         closed_observed_at, trim_fill_id, trimmed_at, trimmed_shares, trim_price, trim_realised_pnl,
-        trim_observed_at, exit_armed_session, exit_armed_reason
+        trim_observed_at, exit_armed_session, exit_armed_reason,
+        -- Appended rather than placed beside `setup_id`, so no ordinal below this line moves. The
+        -- plan is what a position belongs to from 5.1 and the setup is what the plan was written
+        -- for, and both are carried.
+        plan_id, variant_id
         """;
 
     private readonly StoreConnectionFactory _connections;
@@ -485,7 +489,9 @@ public sealed class PositionReader
                 trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(31)) : null,
                 trimIsVisible ? trimObservedAt : null,
                 armIsVisible ? armedSession : null,
-                armIsVisible && !reader.IsDBNull(34) ? reader.GetString(34) : null));
+                armIsVisible && !reader.IsDBNull(34) ? reader.GetString(34) : null,
+                reader.GetString(35),
+                reader.GetString(36)));
         }
 
         return positions;
@@ -541,7 +547,10 @@ public sealed record StoredPosition(
     decimal? TrimRealisedPnl,
     DateTimeOffset? TrimObservedAt,
     DateOnly? ExitArmedSession,
-    string? ExitArmedReason)
+    string? ExitArmedReason,
+    // Last, matching the column list, so no ordinal above this line moved when the fan-out landed.
+    string PlanId,
+    string VariantId)
 {
     /// <summary>What is still held, which is what an exit closes and what a further trim could not.</summary>
     public int SharesRemaining => Shares - (TrimmedShares ?? 0);

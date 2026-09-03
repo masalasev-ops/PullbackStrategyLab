@@ -14734,3 +14734,83 @@ Carried:    **Nothing raised.** The two nights are a fault in the running lab an
             already committed, being the production checkout, the 17:00 update and the middle step
             in the migration order, and none of those would have saved these two: only migrating
             would have.
+
+## 5.1 — 2026-09-03 — phase-5-1-variant-store — the version register, and a plan that belongs to one
+
+**A checkpoint entry.** The `variant` store, VariantAdmitter registering a version and VariantResolver
+deciding which are live, and one plan per live version per capped candidate. Population: **the seven
+tables below and including `trade_plan`, every one of them empty in every store that exists**, because
+the funnel has passed a median of nought candidates a night since it was built and no trade has ever
+fired.
+
+Built:      **The register, and the pre-registration the store makes immutable.** `variant` carries a
+            generation, a family, a definition, a target, a minimum sample and the unit that sample is
+            counted in. VariantAdmitter inserts and nothing may write those columns again;
+            AcceptanceGate will write `status` and `resolved_at` and has no path to any of the others.
+            A second registration is refused by the key and a second baseline in one generation by a
+            partial unique index, so neither rests on a stage remembering to check (see: Targets and
+            minimum samples are written at creation and are immutable).
+
+            **The minimum is derived from the family rather than typed.** An operator who could type
+            it could type a different one, and the value of a pre-registered figure is that it is the
+            figure the corpus derived. `minimum_sample_unit` sits beside it because the two families
+            count different things, and one integer with no unit would make 1802 effective
+            observations and 200 rows read as comparable (see: The execution minimum is 200 paired
+            trades and its conversion waits on a trade existing).
+
+            **The fan-out is a key change and not a stage change, which is the design.** Until now one
+            capped candidate produced one plan, so the setup's identifier served as the plan's and
+            `trigger_resolution`, `trade_order`, `position`, `trade` and `plan_audit` each carried a
+            uniqueness constraint on the setup. Two versions selecting one stock produce two plans and
+            every one of those constraints would have refused the second, losing a version's order
+            with nothing saying so. `trade_plan` now has its own `plan_id`, one per setup per version,
+            and everything below it keys on that; `setup_id` stays carried on every row it was on.
+            Migration 051 rebuilds the seven and moves no row in any store that exists.
+
+            **An execution version is refused by name and the message says what would reopen it.**
+            Both routes by which one earns its place are closed, so admitting one would put a row in
+            the register that cannot be screened, scored or resolved (see: No execution variant is
+            admitted in this generation, and the condition that would reopen it is named).
+
+            **`resolve-variants` writes nothing and is a slot at 18:28.** Which versions are live is a
+            function of the register and the night's date, so storing the answer would be a second
+            copy that could disagree with it. It is a slot so that a night whose register is empty
+            says so before the stage that depends on it runs. A night with no baseline is partial and
+            names which of the two states it is.
+
+            **Both authored figures deferred here are pinned**: the execution minimum at 200 paired
+            trades, and Accounts at one per version with both directions inside it, which is a cap's
+            scope rather than a cap and is what makes two versions two books.
+
+Verified:   Twelve tests added across the register, the fan-out and the two new components,
+            including two versions selecting one candidate producing two plans with one geometry and
+            two identities. `tools/ci.ps1` green on Windows, **31 steps, 980 tests**, from 968.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, **118 passed**, 0 failed, 19
+            out of scope, **0 unexamined**. The passing count rises by four and the out-of-scope
+            count falls by four, which is the four claims this checkpoint brings into scope.
+
+            **One expectation moved and it was stated in advance**: `store.schemaVersion` from 50 to
+            51, which is a fact about how many migrations exist. The four claims deferred to this
+            checkpoint come into scope with it, and two of them needed arms written here rather than
+            inheriting one: the fan-out row is asserted from the migration that keys it, because what
+            makes the second order possible is the absence of a constraint and a scan for an insert
+            would pass with the old key in place.
+
+            **A defect in the migration, found by the suite and worth recording.** SQLite's
+            `ALTER TABLE ... RENAME TO` rewrites the name inside other tables' foreign-key clauses, so
+            renaming `trade` out of the way silently repointed `plan_audit` at the transient and
+            dropping it left `plan_audit` naming a table that does not exist. Every later statement
+            against it failed to prepare. `PRAGMA legacy_alter_table = ON` for the file makes a rename
+            only a rename, which is what this corpus's rename-out-of-the-way rebuild has always
+            assumed and what four earlier rebuilds got away with because nothing referenced them.
+
+Carried:    **Nothing raised.** The obligations table reads twenty-five and nought are due before the
+            freeze, which is what 5.8 discharged.
+
+            **What this checkpoint does not do is register V0**, and the consequence is stated rather
+            than left to be discovered: a plan belongs to a version, so until the baseline is
+            registered the `plans` slot writes nothing and `resolve-variants` reports the night
+            partial saying why. That costs nothing today, the funnel passing nought candidates a
+            night, and it means the freeze is a precondition for the trading half of the pipeline
+            rather than a step after it. Registering it is the operator's, against a live store
+            migrated to 51, and it is the one act in this phase that cannot be undone.

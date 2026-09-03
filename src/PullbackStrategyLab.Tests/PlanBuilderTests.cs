@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -34,6 +35,15 @@ public sealed class PlanBuilderTests : IDisposable
     {
         _connections = new StoreConnectionFactory(new PullbackStrategyLabPaths(_root.Path));
         new MigrationRunner(_connections).Apply();
+
+        // A plan belongs to a version from 5.1 and the store's key says so, so the fixture
+        // registers the baseline before anything writes a plan. The lab does not do this for
+        // itself: registering a version is VariantAdmitter's, and a migration that seeded one
+        // would start an experiment nobody chose to start.
+        using (SqliteConnection seed = _connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+        }
     }
 
     public void Dispose() => _root.Dispose();
@@ -286,7 +296,7 @@ public sealed class PlanBuilderTests : IDisposable
     /// remembering to check.
     /// </summary>
     [Fact]
-    public void A_second_plan_for_one_candidate_is_refused_by_the_key()
+    public void A_second_plan_for_one_candidate_under_one_version_is_refused_by_the_key()
     {
         Candidate("AAPL", "long", trigger: 102.50m, giveUp: 100.00m);
         Stage().Build(Evening);
@@ -295,14 +305,18 @@ public sealed class PlanBuilderTests : IDisposable
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO trade_plan (
-                setup_id, as_of, live_session, ticker, direction,
+                plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
                 trigger_price, give_up_price, give_up_distance, shares,
                 equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
             VALUES (
-                @id, '2026-08-25', '2026-08-26', 'AAPL', 'long',
+                @plan_id, @variant_id, @id, '2026-08-25', '2026-08-26', 'AAPL', 'long',
                 '99.0000', '98.0000', '1.0000', 750,
                 '100000.0000', '0.007500', '750.0000', '750.0000', '2026-08-25T22:30:00.0000000+00:00');
             """;
+        command.Parameters.AddWithValue(
+            "@plan_id",
+            PlanIdentity.For(Plans().Single().SetupId, TestVersions.SeedBaseline(connection)));
+        command.Parameters.AddWithValue("@variant_id", TestVersions.Baseline);
         command.Parameters.AddWithValue("@id", Plans().Single().SetupId);
 
         SqliteException thrown = Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
@@ -490,6 +504,45 @@ public sealed class PlanBuilderTests : IDisposable
     }
 
     // ---- helpers -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Two live versions selecting one candidate are two plans, and the key admits both.
+    ///
+    /// <b>The behavioural half of the fan-out.</b> Reading the migration says the constraint moved
+    /// from the setup to the plan; this says a night actually writes both rows, with one geometry
+    /// and two identities. Before 5.1 the second was refused by `trade_plan`'s own key and the
+    /// night would have lost it.
+    /// </summary>
+    [Fact]
+    public void Two_live_versions_selecting_one_candidate_are_two_plans()
+    {
+        Candidate("AAPL", "long", trigger: 102.50m, giveUp: 100.00m);
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            using SqliteCommand second = connection.CreateCommand();
+            second.CommandText = """
+                INSERT INTO variant (
+                    variant_id, generation, family, definition, target,
+                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
+                VALUES ('F1a', 0, 'selection', 'a widened gate', 'two points of forward return', 1802,
+                        'effective_paired_setup_observations', 'open', NULL, '2000-01-01T00:00:00.000Z');
+                """;
+            second.ExecuteNonQuery();
+        }
+
+        PlanRunResult run = Stage().Build(Evening);
+
+        Assert.Equal(2, run.LiveVersions);
+        Assert.Equal(2, run.Planned);
+        Assert.Equal(1, run.CandidatesPlanned);
+
+        IReadOnlyList<StoredTradePlan> plans = Plans();
+        Assert.Equal(2, plans.Count);
+        Assert.Single(plans.Select(p => p.SetupId).Distinct());
+        Assert.Equal(2, plans.Select(p => p.PlanId).Distinct().Count());
+        Assert.Equal(["F1a", TestVersions.Baseline], plans.Select(p => p.VariantId).Order().ToArray());
+    }
 
     private IReadOnlyList<StoredTradePlan> Plans()
     {
