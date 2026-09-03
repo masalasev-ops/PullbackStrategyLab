@@ -72,6 +72,8 @@ public sealed class ControlSampler
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Setups} setup(s), {result.Pool} candidate(s) in the pool");
         Console.WriteLine($"{Name}: {result.Loose} loose and {result.Tight} tight control(s) drawn");
         Console.WriteLine($"{Name}: {result.ShortOfFive} set(s) came up short of {MeasurementParameters.ControlsPerSet}");
+        Console.WriteLine(
+            $"{Name}: {result.KeptOutForWantOfABar} indicated name(s) kept out of the pool for want of a bar on the session");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
 
         return result.Outcome == RunOutcome.Failed ? 1 : 0;
@@ -172,7 +174,8 @@ public sealed class ControlSampler
 
         return new ControlResult(
             asOf, setups.Count, pool.Count, loose, tight, shortOfFive,
-            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
+            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean,
+            source.KeptOutForWantOfABar(asOf, _options.SessionZone));
     }
 
     /// <summary>
@@ -248,4 +251,5 @@ public sealed record ControlResult(
     int ShortOfFive,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    int KeptOutForWantOfABar = 0);

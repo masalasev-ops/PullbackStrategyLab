@@ -235,6 +235,15 @@ public sealed class TightDrawDiagnosisTests : IDisposable
             + "NULL, NULL, NULL, NULL) ON CONFLICT (ticker) DO NOTHING",
             ("@t", ticker));
 
+        // A bar dated on the session, because from 5.8 the pool admits a name only where the
+        // store holds one: an indicated name that did not trade that day is not a control.
+        Execute("""
+            INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+            VALUES (@t, @d, '100', '101', '99', '100', '100', 1000000, @obs)
+            ON CONFLICT (ticker, bar_date, observed_at) DO NOTHING
+            """,
+            ("@t", ticker), ("@d", Session(session)), ("@obs", Observed));
+
         Execute("""
             INSERT INTO indicator_daily
                 (ticker, as_of, computed_at, ema_9, ema_21, ema_50, atr_14, adr_20,

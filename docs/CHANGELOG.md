@@ -2194,3 +2194,13 @@ Why:  A discharged obligation leaves the table in the commit that discharges it.
 Was:  The carried obligations table held thirty-three rows, with the dead draw-instant row raised at 3.7 due at 5.8; eight due before the freeze; four repairs and four others.
 Now:  Thirty-two rows. The 3.7 row is discharged by the seventh part of 5.8 on 2026-09-03, its subject having left the code at 3.9(a)(c) and its last remnant, a parameter named for a bound it did not hold, renamed here; seven due before the freeze in each place the count is stated; three repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it, and the 4.2 record had already found the subject gone and repointed the row rather than striking it, which is the one act the corpus never permits.
+
+### 2026-09-03 — ARCHITECTURE.html — cites The tight control set draws within the night, because a within-night draw controls the market mood exactly
+Was:  The ControlSampler catalogue row said the tight set draws from any session at or before the setup's sharing the market mood, which is the reach the ruling of 2026-08-31 reversed, and said nothing about which indicated names may be in the pool.
+Now:  Both sets draw from the setup's own session, the tight set within the night, citing the ruling; and a name is in the pool only where the store holds a bar for it dated on the session, with the run saying how many were kept out.
+Why:  The first half is a sentence the decision superseded on 2026-08-31 and the row kept, found while editing the row for the second half at 5.8; the second half is what the eighth part of the pile built.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A gate handed an absent or degenerate quantity fails rather than passing
+Was:  The carried obligations table held thirty-two rows, with the control-draw row raised at 3.5 due at 5.8; seven due before the freeze; three repairs and four others.
+Now:  Thirty-one rows. The 3.5 draw row is discharged by the eighth part of 5.8 on 2026-09-03, measured first against the reconstructed read's own population and found to move nothing in it; six due before the freeze in each place the count is stated; two repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.

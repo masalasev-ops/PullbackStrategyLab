@@ -265,13 +265,26 @@ public sealed class ControlSamplerTests : IDisposable
             """,
             ("@d", Session(session)), ("@l", label));
 
-    /// <summary>One name's figures on one session, above the liquidity floor and on one ladder grade.</summary>
-    private void Name(string ticker, DateOnly session, decimal turnover, decimal range, string ladder)
+    /// <summary>
+    /// One name's figures on one session, above the liquidity floor and on one ladder grade, with a
+    /// bar dated on the session unless the case is the one name that did not trade that day.
+    /// </summary>
+    private void Name(string ticker, DateOnly session, decimal turnover, decimal range, string ladder, bool withBar = true)
     {
         Execute(
             "INSERT INTO security VALUES (@t, @t, 'NASDAQ', 'Common Stock', '2020-01-01', "
             + "NULL, NULL, NULL, NULL) ON CONFLICT (ticker) DO NOTHING",
             ("@t", ticker));
+
+        if (withBar)
+        {
+            Execute("""
+                INSERT INTO daily_bar (ticker, bar_date, open, high, low, close, adj_close, volume, observed_at)
+                VALUES (@t, @d, '100', '101', '99', '100', '100', 1000000, @obs)
+                ON CONFLICT (ticker, bar_date, observed_at) DO NOTHING
+                """,
+                ("@t", ticker), ("@d", Session(session)), ("@obs", Observed));
+        }
 
         Execute("""
             INSERT INTO indicator_daily
@@ -284,6 +297,30 @@ public sealed class ControlSamplerTests : IDisposable
             ("@adr", range.ToString(CultureInfo.InvariantCulture)),
             ("@dv", turnover.ToString(CultureInfo.InvariantCulture)),
             ("@grade", ladder));
+    }
+
+    /// <summary>
+    /// A name indicated on the session with no bar dated on it is not in the pool and is counted out.
+    ///
+    /// <b>The row raised at 3.5.</b> The indicator engine writes a row for a universe member whose
+    /// last bar is older than the session, so a halted or vendor-omitted name was indicated,
+    /// drawable, and then a control whose window the fill refused, leaving the set thinner than five
+    /// with nothing saying which name went missing or why. The pool now asks for the bar, which is
+    /// what TierClassifier already asks and what the calibration pool has always asked. Nearer the
+    /// subject than any name on the night, so a draw that admitted it would take it first.
+    /// </summary>
+    [Fact]
+    public void A_name_with_no_bar_on_the_session_is_not_in_the_pool_and_is_counted_out()
+    {
+        SeedNight();
+        Name("HALTED", Tonight, 100_000_000m, 2.0m, TierClassifier.Rising, withBar: false);
+
+        ControlResult result = Sampler().Draw(Tonight);
+
+        Assert.Equal(1, result.KeptOutForWantOfABar);
+        Assert.DoesNotContain(Controls("loose"), c => c.Ticker == "HALTED");
+        Assert.DoesNotContain(Controls("tight"), c => c.Ticker == "HALTED");
+        Assert.Equal(MeasurementParameters.ControlsPerSet, Controls("loose").Count);
     }
 
     private void Flag(string ticker, DateOnly session, string direction) =>

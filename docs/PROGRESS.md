@@ -14229,3 +14229,45 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.7 leaves
             reconstructed read of 2026-08-31 is re-run on a store copy, before and after, so whether
             the repair moves the population the derivation's clustering figures came from is a
             measurement rather than a reading.
+
+## 5.8 — 2026-09-03 — phase-5-8-control-draw — the pile, part eight: a name that did not trade on the night is not drawn as a control, measured first against the derivation's own population
+
+Not a checkpoint entry. The eighth part of the repair pile, and the first of the two that could
+have moved a figure the minimum sample's derivation was run against, so it was measured before it
+was built. Population: **the 2,000 evidence controls in the live store on 2026-09-03, and the
+175,090 controls of the reconstructed read of 2026-08-31, re-run today on a store copy over the
+same 120 sessions and reproducing that record's panels exactly**, long/loose at -0.0015 with 460
+effective and 175,090 drawn.
+
+Measured:   **Before the repair, the draw defect had fired on no control in either population.**
+            Of the 2,000 evidence controls, none was drawn for a session its name held no bar on;
+            of the 175,090 reconstructed controls, none, because the calibration pool admits a name
+            only when its latest bar is the session itself, which is the shape the evidence draw
+            lacked. **After the repair, the reconstructed read on a fresh copy draws the same
+            175,090 controls and states the same six panels to the figure**, so the population the
+            derivation's clustering figures came from is where it was and the pin of 1,802 rests on
+            it unmoved. The comparison is in the entry's own terms: same sessions, same drawn count,
+            same means, rows, nights and effective observations on every panel.
+
+Built:      `StoredFigures.Candidates` admits a name into the evidence pool only where the store
+            holds a bar for it dated on the session, which is what `TierClassifier` already refuses
+            on and what the fill already refuses a window for; a halted or vendor-omitted name is
+            no longer indicated, drawable and then thinner-than-five at the fill. The sampler counts
+            the names the bar rule kept out of the pool and says so.
+
+Verified:   Over an authored night: a name with an indicator row and no bar on the session is not
+            in the pool and is counted out, and the loose set is still five. One test added, and
+            the two test files that seeded indicator rows with no bars now seed the bar, all green.
+            **And a sentence the ruling of 2026-08-31 reversed was still in the catalogue row**: it
+            said the tight set draws from any earlier session sharing the mood, which is the reach
+            that ruling ended; corrected while editing the row, citing the decision, with the prior
+            text in the changelog. No expectation moved and the phase report's expected move was stated in advance
+            as nought: the fixture's one captured night has a bar for every indicated name.
+            `tools/ci.ps1` green on Windows, **31 steps, 951 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,520 with 0 unexamined; 1,457 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about the draw leaves the
+            table with this commit. The table reads thirty-one; six due before the freeze, all at
+            5.8; the operator's eight, unchanged. Next is the control whose horizon can never close,
+            raised at 3.5, which the same measurement found on 2,504 of the reconstructed read's
+            controls and which is counted rather than replaced for the reason the next entry gives.
