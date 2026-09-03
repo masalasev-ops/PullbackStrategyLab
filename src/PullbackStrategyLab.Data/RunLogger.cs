@@ -183,6 +183,40 @@ public sealed class RunLogger
     /// itself an unended run, so an unbounded read would have every night report itself degraded.
     /// see: Averages are computed locally, never through the vendor's technical endpoint
     /// </summary>
+    /// <summary>
+    /// Whether a stage ran to an end on a session's own day, whatever it wrote.
+    ///
+    /// <b>The reader the two cap readers needed, from 5.8.</b> `SetupCapper` writes its decision
+    /// on candidate rows only, and SCHEMA says both columns are null on a setup that failed a gate,
+    /// so a night with no candidate leaves no cap decision anywhere; the stages reading the cap
+    /// then said the night was never capped, which their own comments reserve for a stage that did
+    /// not run. The cap's own run row is the one thing that tells the two nights apart, and it is
+    /// read here rather than by each reader, on the terms every statement against this table lives
+    /// in this class.
+    /// </summary>
+    public static bool StageRanOn(SqliteConnection connection, string stage, DateOnly session, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stage);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionZone);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM run_log
+             WHERE stage = @stage
+               AND ended_at IS NOT NULL
+               AND started_at >= @start_of_day
+               AND started_at <= @end_of_day;
+            """;
+        command.Parameters.AddWithValue("@stage", stage);
+        command.Parameters.AddWithValue(
+            "@start_of_day", StoreText.TimestampToStorageText(SessionBoundaries.At(session, TimeOnly.MinValue, sessionZone)));
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(session, sessionZone));
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
+    }
+
     public static IReadOnlyList<string> IncompleteStagesOf(
         SqliteConnection connection, DateOnly session, string sessionZone)
     {
