@@ -770,7 +770,8 @@ public sealed class PhaseReplay : IDisposable
         Record("forward.subjects", filled.Subjects);
         Record("forward.written", filled.Written);
         Record("forward.notYetElapsed", filled.NotYetElapsed);
-        Record("forward.acrossAHoliday", filled.AcrossAHoliday);
+        Record("forward.setupsLaterThanTheCalendarStep", filled.SetupsLaterThanTheCalendarStep);
+        Record("forward.controlsLaterThanTheCalendarStep", filled.ControlsLaterThanTheCalendarStep);
         Record("forward.excursionsUndefined", filled.ExcursionsUndefined);
 
         // 16b. The loss classification, at 21:35, after the forward returns because half of what it

@@ -2007,12 +2007,20 @@
       "note": "None, and it has to stay none. A fixture ticker that falls out of the universe gets no indicator row, and the diff would stay green over a shrinking subject."
     },
     {
-      "id": "forward.acrossAHoliday",
-      "tier": "FROZEN",
+      "id": "forward.setupsLaterThanTheCalendarStep",
+      "tier": "DERIVED",
       "value": "0",
-      "checkpoint": "3.2",
-      "producedBy": "the nightly fill over the fixture, whose single captured night has no elapsed horizon",
-      "note": "outcomes whose session differed from the calendar horizon. Nought here because nothing was written; the holiday case is carried by the authored subjects, which is why they exist"
+      "checkpoint": "5.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures: forward.written is 0, because the single captured night has no elapsed horizon, so no setup outcome landed on any session, later than its calendar step or not.",
+      "note": "Setup outcomes whose session is later than the calendar step from the setup's own session, which is every weekend as well as a holiday. Was forward.acrossAHoliday until 5.8, FROZEN at 3.2 and pooled across both subject kinds under a name that said a holiday; the row raised at 3.5 asked that the step be named for what it is and the counter split, and the case a slip produces is carried by the authored subjects and by the filler's own test"
+    },
+    {
+      "id": "forward.controlsLaterThanTheCalendarStep",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "5.8",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures: accumulation.forward.controlsWritten is 0 on the same grounds, so no control outcome landed on any session.",
+      "note": "The same figure over the controls, counted apart from the setups because the two are different populations and the one counter still pooled across them was this one"
     },
     {
       "id": "forward.excursionsUndefined",

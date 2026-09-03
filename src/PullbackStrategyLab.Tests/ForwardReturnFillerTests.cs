@@ -155,6 +155,43 @@ public sealed class ForwardReturnFillerTests : IDisposable
         Assert.True(control > 0m);
     }
 
+    /// <summary>
+    /// The intended date is a calendar step and the slip past it is counted per subject kind.
+    ///
+    /// <b>Named for what it is, from 5.8.</b> The counter was `AcrossAHoliday` and the sentence
+    /// beside the column said the two dates differ across a holiday, while the step is the subject's
+    /// session plus the horizon in calendar days, which lands on a Saturday for the five-session
+    /// horizon of any Monday and past the tenth session for every horizon of ten. Flagged on a
+    /// Monday with bars that skip weekends, the setup slips on two of its four horizons and each of
+    /// its two controls on two of theirs, and the two figures are stated apart because the one
+    /// counter still pooled across both kinds was this one.
+    /// see: An intended date is a calendar step from the subject's session, stated as such, and the slip past it is counted per subject kind
+    /// </summary>
+    [Fact]
+    public void The_slip_past_the_calendar_step_is_counted_per_subject_kind()
+    {
+        Seed("HOOD", "long", ["COIN", "SOFI"]);
+
+        FillResult filled = Stage().Fill(FillOn);
+
+        Assert.Equal(2, filled.SetupsLaterThanTheCalendarStep);
+        Assert.Equal(4, filled.ControlsLaterThanTheCalendarStep);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText =
+            "SELECT intended_date, actual_date FROM forward_return "
+            + "WHERE subject_kind = 'setup' AND horizon_days = 5";
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        Assert.True(reader.Read());
+
+        // Monday the 2nd plus five calendar days is Saturday the 7th; the fifth session after it
+        // is Monday the 9th.
+        Assert.Equal("2026-03-07", reader.GetString(0));
+        Assert.Equal("2026-03-09", reader.GetString(1));
+    }
+
     /// <summary>The store refuses the excursions without the reason, and the reason without the excursions.</summary>
     [Fact]
     public void The_store_refuses_excursions_and_their_absence_stated_together()

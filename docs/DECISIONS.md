@@ -247,6 +247,13 @@ Taken at 5.8 on 2026-09-03, closing the row raised at 3.12. `computed_at` joins 
 **What it costs is stated.** A rebuilt date holds one row per panel per generation, and every reader of the table that is not bounded on the instant has to say which generation it means; the API's read does, and the suite's three hand-written reads stand over stores with one generation each.
 (see: Nothing in the corpus is struck through)
 
+**An intended date is a calendar step from the subject's session, stated as such, and the slip past it is counted per subject kind**
+Taken at 5.8 on 2026-09-03, closing the row raised at 3.5. `intended_date` is the subject's own session plus the horizon in calendar days, which is what it has been since 3.2 on every row the store holds, and the column and the sentence beside it now say so. The counter that read `AcrossAHoliday` names what it counts, an outcome that landed on a session later than the calendar step, and is kept per subject kind.
+
+**A calendar step rather than a session step, because the store already holds the first and the second would be a rewrite wearing a rename.** A session step would put the intended date on the session the horizon actually lands on, which is `actual_date` already, and would leave nothing for the pair to differ by; the value of storing both is that the difference is visible. What was wrong was the name: the step is later than a session on every weekend and not only across a holiday, so a synthetic run with no holiday in it counted most of its rows as slipped and read as a store full of holidays. The row raised at 3.5 asked which the date was and that it be said, and this says it.
+
+**Per subject kind, because it was the one counter still pooled across both.** A setup and its controls are different populations on every other figure the fill reports, and a slip count that added them would state a figure over a mixed population, which is the fifth failure shape with a run row as the subject (see: Long and short are never pooled into one figure).
+
 ## What is traded
 
 **Two directions are tested, with separate detectors, separate management and separate scoring**

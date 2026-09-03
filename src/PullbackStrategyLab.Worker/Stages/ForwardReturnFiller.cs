@@ -93,7 +93,9 @@ public sealed class ForwardReturnFiller
         Console.WriteLine($"{Name}: {result.Written} setup outcome(s) written, {result.NotYetElapsed} horizon(s) not yet elapsed");
         Console.WriteLine($"{Name}: {result.ControlSubjects} control(s) considered");
         Console.WriteLine($"{Name}: {result.ControlsWritten} control outcome(s) written, {result.ControlHorizonsNotYetElapsed} horizon(s) not yet elapsed");
-        Console.WriteLine($"{Name}: {result.AcrossAHoliday} landed on a session later than the calendar horizon");
+        Console.WriteLine(
+            $"{Name}: {result.SetupsLaterThanTheCalendarStep} setup and {result.ControlsLaterThanTheCalendarStep} control "
+            + "outcome(s) landed on a session later than the calendar step");
         Console.WriteLine(
             $"{Name}: {result.ExcursionsUndefined} written with no excursions, the subject having no range on its "
             + "own session, and the reason on the row");
@@ -135,7 +137,8 @@ public sealed class ForwardReturnFiller
         int notYetElapsed = 0;
         int controlsWritten = 0;
         int controlHorizonsNotYetElapsed = 0;
-        int acrossAHoliday = 0;
+        int setupsLaterThanTheCalendarStep = 0;
+        int controlsLaterThanTheCalendarStep = 0;
         int withoutABarOnTheirOwnSession = 0;
         int excursionsUndefined = 0;
 
@@ -180,15 +183,25 @@ public sealed class ForwardReturnFiller
                         continue;
                     }
 
-                    // Where a naive calendar step lands, which is what the horizon would have been
-                    // over an unbroken run of trading days. Stored beside the session actually used
-                    // so a follow-up that crossed a weekend or a holiday says so rather than being
-                    // silently later than it claims.
+                    // The calendar step: the subject's own session plus the horizon in calendar
+                    // days, which is what the horizon would have been over an unbroken run of
+                    // sessions and is a session itself only by accident. Stored beside the session
+                    // actually used so a horizon that landed later says so, and counted per subject
+                    // kind, because the step is later than a session on every weekend and not only
+                    // across a holiday, which is what the counter's old name claimed.
+                    // see: An intended date is a calendar step from the subject's session, stated as such, and the slip past it is counted per subject kind
                     DateOnly intended = subject.AsOf.AddDays(horizon);
 
                     if (intended != outcome.ActualDate)
                     {
-                        acrossAHoliday++;
+                        if (isControl)
+                        {
+                            controlsLaterThanTheCalendarStep++;
+                        }
+                        else
+                        {
+                            setupsLaterThanTheCalendarStep++;
+                        }
                     }
 
                     int rows = Insert(connection, transaction, subject, horizon, intended, outcome, filledAt, tables);
@@ -218,11 +231,11 @@ public sealed class ForwardReturnFiller
         RunSummary summary = run.Complete(RunOutcome.Clean);
 
         return new FillResult(
-            asOf, setups.Count, written, notYetElapsed, acrossAHoliday,
+            asOf, setups.Count, written, notYetElapsed, setupsLaterThanTheCalendarStep,
             controls.Count, controlsWritten, controlHorizonsNotYetElapsed,
             withoutABarOnTheirOwnSession,
             summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean,
-            excursionsUndefined);
+            excursionsUndefined, controlsLaterThanTheCalendarStep);
     }
 
     /// <summary>
@@ -564,7 +577,7 @@ public sealed record FillResult(
     int Subjects,
     int Written,
     int NotYetElapsed,
-    int AcrossAHoliday,
+    int SetupsLaterThanTheCalendarStep,
     int ControlSubjects,
     int ControlsWritten,
     int ControlHorizonsNotYetElapsed,
@@ -572,4 +585,5 @@ public sealed record FillResult(
     int RowsWritten,
     int CallsUsed,
     RunOutcome Outcome,
-    int ExcursionsUndefined = 0);
+    int ExcursionsUndefined = 0,
+    int ControlsLaterThanTheCalendarStep = 0);
