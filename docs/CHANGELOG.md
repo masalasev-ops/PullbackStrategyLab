@@ -2224,3 +2224,13 @@ Why:  The check gained the scan at 5.8, with a behavioural test behind it, and t
 Was:  The carried obligations table held thirty rows, with the session-zone row raised at 3.9 due at 5.8; five due before the freeze; one repair and four others.
 Now:  Twenty-nine rows. The 3.9 row is discharged by the tenth part of 5.8 on 2026-09-03; four due before the freeze in each place the count is stated; no repair to a stored figure and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — ARCHITECTURE.html — cites The order prices are derived from the final pullback session's minutes, not from the screening geometry
+Was:  The watchlist box in "The screens" listed each row as ticker, chart thumbnail, trigger, give-up price, distance in % and in ADR units, share count and check strip, and the ADR units key said the give-up distance is shown as a percentage and as a fraction of the daily range. Nothing said which of the two pairs a row's prices were.
+Now:  The box lists the trigger and give-up price marked as the plan's or the screen's and the screen's distance in ADR units; the ADR units key says the distance is the screening geometry's and is named for it; and a "Whose prices" key states that each watchlist row and each card show the plan's pair where a plan was written and the detector's where none was, marked as which, so the two screens never disagree.
+Why:  The row raised at 4.13 found that the corpus never wrote down which pair the two price columns hold, so surface-claims had no sentence to assert against them; these are the sentences, and each is declared as a claim read off the rendered page.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held twenty-nine rows, with the two-screens row raised at 4.13 due at 5.8; four due before the freeze; the paragraph named the two screens among the four that are not repairs.
+Now:  Twenty-eight rows. The 4.13 row is discharged by the eleventh part of 5.8 on 2026-09-03; three due before the freeze in each place the count is stated; the paragraph names three that are not repairs.
+Why:  A discharged obligation leaves the table in the commit that discharges it.

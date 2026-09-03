@@ -54,7 +54,7 @@ else
                         <table class="watchlist @kind">
                             <tr>
                                 <th>Rank</th><th>Ticker</th><th>Trigger</th><th>Give up</th>
-                                <th>Distance</th><th>Shares</th><th>Failed</th>
+                                <th>@WatchlistRowView.ScreenDistanceHeading (ADR)</th><th>Shares</th><th>Failed</th>
                             </tr>
                             @foreach (WatchlistRowView row in rows)
                             {
@@ -64,8 +64,10 @@ else
                                     @* The plan's prices where a plan was written and the
                                        detector's where none was, from 4.18: the two differ, and
                                        the one a resting order is placed at is the plan's. *@
-                                    <td>@row.Price(row.PublishedTrigger)</td>
-                                    <td>@row.Price(row.PublishedGiveUp)</td>
+                                    <td>@row.Price(row.PublishedTrigger) @Html.Raw(row.PairMark)</td>
+                                    <td>@row.Price(row.PublishedGiveUp) @Html.Raw(row.PairMark)</td>
+                                    @* The screening geometry's distance, named for it in the heading:
+                                       on a planned row the two prices beside it are the plan's. *@
                                     <td>@row.Price(row.StopDistanceRanges)</td>
                                     @* The size the plan committed to, from 4.11. Not the size that
                                        will be placed: RiskGate may reduce it at the trigger or

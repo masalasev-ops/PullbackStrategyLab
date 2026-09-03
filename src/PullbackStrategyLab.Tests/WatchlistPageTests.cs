@@ -162,18 +162,26 @@ public sealed class WatchlistPageTests : IClassFixture<WebApplicationFactory<Lab
     {
         string html = await Render();
 
-        Assert.Contains("<td>119.10</td>", html, StringComparison.Ordinal);
-        Assert.Contains("<td>116.35</td>", html, StringComparison.Ordinal);
-        Assert.Contains("<td>84.60</td>", html, StringComparison.Ordinal);
-        Assert.Contains("<td>86.90</td>", html, StringComparison.Ordinal);
+        // And from 5.8 each price says whose it is, because the column holds the plan's pair on a
+        // planned row and the detector's on the rest, which is a mixed population under one heading
+        // unless each cell says which.
+        Assert.Contains("<td>119.10 <span class=\"pair\">plan</span></td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>116.35 <span class=\"pair\">plan</span></td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>84.60 <span class=\"pair\">plan</span></td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>86.90 <span class=\"pair\">plan</span></td>", html, StringComparison.Ordinal);
 
-        Assert.DoesNotContain("<td>118.50</td>", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("<td>112.25</td>", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(">118.50", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(">112.25", html, StringComparison.Ordinal);
 
-        // The greyed long and the equal-pair short have no plan and show what the detector computed.
-        Assert.Contains("<td>205.00</td>", html, StringComparison.Ordinal);
-        Assert.Contains("<td>199.00</td>", html, StringComparison.Ordinal);
-        Assert.Equal(2, Occurrences(html, "<td>40.00</td>"));
+        // The greyed long and the equal-pair short have no plan and show what the detector computed,
+        // marked as the screen's.
+        Assert.Contains("<td>205.00 <span class=\"pair\">screen</span></td>", html, StringComparison.Ordinal);
+        Assert.Contains("<td>199.00 <span class=\"pair\">screen</span></td>", html, StringComparison.Ordinal);
+
+        // The distance beside them is the screening geometry's, and its heading says so rather than
+        // letting 0.31 ADR read as the distance between 119.10 and 116.35, which is 6.25 ranges of it.
+        Assert.Contains("<th>Screen distance (ADR)</th>", html, StringComparison.Ordinal);
+        Assert.Equal(2, Occurrences(html, "<td>40.00 <span class=\"pair\">screen</span></td>"));
     }
 
     private async Task<string> Render()
