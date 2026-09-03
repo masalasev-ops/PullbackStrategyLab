@@ -484,6 +484,7 @@ public sealed class SignalVectorizer
     /// The magnitude is read back from the row rather than recomputed. ScanEngine already did this
     /// arithmetic and storing it is what makes the rank auditable; recomputing here would put the
     /// same formula in two places in the one situation where a disagreement is invisible.
+    /// see: The thrust is the most recent qualifying hit inside the window, then rank, and the extreme clause of the order-price decision does not ship
     /// </summary>
     private static void Thrust(
         SqliteConnection connection,

@@ -442,6 +442,7 @@ public sealed class CheckRecomputer
     /// the thrust can sit on an earlier session than the setup, so the session is part of the key
     /// rather than assumed to be the as-of.
     /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// see: The thrust is the most recent qualifying hit inside the window, then rank, and the extreme clause of the order-price decision does not ship
     /// </summary>
     private static ClusterCounts ClusterInputs(
         SqliteConnection connection,

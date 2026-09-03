@@ -326,6 +326,7 @@ public sealed class LongSetupDetector
         StoredIndicators? figures = source.Indicators(ticker, asOf, bars);
 
         // The thrust: the most recent hit on an upward mover scan inside the window.
+        // see: The thrust is the most recent qualifying hit inside the window, then rank, and the extreme clause of the order-price decision does not ship
         DateOnly windowStart = bars.Count >= LongPullbackRules.ThrustWindowSessions
             ? bars[^LongPullbackRules.ThrustWindowSessions].BarDate
             : bars[0].BarDate;
