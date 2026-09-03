@@ -213,6 +213,62 @@ public sealed class CeilingCalculatorTests : IDisposable
     }
 
     /// <summary>
+    /// A recomputation of a week that already carries its bound writes nothing and does not report
+    /// clean, and the first bound stands.
+    ///
+    /// <b>The form 3.9(e) wrote for the scoreboard, applied here at 5.8.</b> The insert did nothing
+    /// on conflict under a comment saying a recomputed week replaces its own row, and reported a
+    /// clean run either way. Both computes in one test, because a run that failed on an empty store
+    /// would satisfy the second assertion without the property holding at all.
+    /// </summary>
+    [Fact]
+    public void A_recomputation_of_a_week_with_a_bound_writes_nothing_and_does_not_report_clean()
+    {
+        Seed("AAA", "long", returnSigned: 0.08m, maeAtr: -1.0m, stopDistanceRanges: 1.00m);
+
+        CeilingResult first = Stage().Compute(AsOf);
+
+        Assert.Equal(1, first.Attempted);
+        Assert.Equal(0, first.Skipped);
+        Assert.Equal("clean", first.Outcome.ToStorageText());
+
+        // A second subject arrives; the recomputation would bound over two and is refused.
+        Seed("BBB", "long", returnSigned: -0.05m, maeAtr: -2.0m, stopDistanceRanges: 1.00m);
+
+        CeilingResult again = Stage().Compute(AsOf);
+
+        Assert.Equal(1, again.Attempted);
+        Assert.Equal(1, again.Skipped);
+        Assert.Equal("failed", again.Outcome.ToStorageText());
+        Assert.Equal(1, Count("SELECT COUNT(*) FROM ceiling_bound"));
+        Assert.Equal(1, Count("SELECT subjects FROM ceiling_bound"));
+    }
+
+    /// <summary>The command exits non-zero on a recomputation that wrote nothing, and says what stands.</summary>
+    [Fact]
+    public void The_command_exits_non_zero_on_a_recomputation_that_wrote_nothing()
+    {
+        Seed("AAA", "long", returnSigned: 0.08m, maeAtr: -1.0m, stopDistanceRanges: 1.00m);
+        Assert.Equal(0, Stage().Run([AsOf.ToString("yyyy-MM-dd")]));
+
+        StringWriter errors = new();
+        TextWriter previous = Console.Error;
+        Console.SetError(errors);
+
+        try
+        {
+            Assert.Equal(1, Stage().Run([AsOf.ToString("yyyy-MM-dd")]));
+        }
+        finally
+        {
+            Console.SetError(previous);
+        }
+
+        Assert.Contains("nothing was recomputed", errors.ToString(), StringComparison.Ordinal);
+        Assert.Contains("The first bound written for a week stands", errors.ToString(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A subject whose excursions could not be measured is out of the population, on the same terms
     /// as one with no give-up distance, rather than read as nought adverse and counted as having
     /// survived. Until 050 the store held nought for that row and this bound would have counted it.

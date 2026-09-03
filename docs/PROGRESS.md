@@ -14156,3 +14156,44 @@ Carried:    **One row discharged, nothing raised, and one unbacked scan added on
             part touched is an input to the minimum sample's derivation: no value changed on any
             row or in any figure. Next is the ceiling calculator's insert that does nothing on
             conflict, raised at 3.5.
+
+## 5.8 — 2026-09-03 — phase-5-8-ceiling-recompute — the pile, part six: a recomputed bound that wrote nothing says so, and the form is written down
+
+Not a checkpoint entry. The sixth part of the repair pile. Population: **the `ceiling_bound` rows
+the store holds, one per week and direction that had a closed subject, and the twenty-five stages
+whose inserts do nothing on conflict**, of which two compute a figure from other rows and
+twenty-three record an observation.
+
+Ruled:      **The first bound written for a week stands, and a recomputation is refused loudly.**
+            The comment said a recomputed week replaces its own row and the statement did nothing
+            on conflict; the row raised at 3.5 said which of the two was intended is a decision
+            rather than a typo and that the behaviour was probably the right one. The behaviour is
+            kept and the sentence corrected to it, because the gap a reader watches narrow is
+            between bounds each computed once, and because the alternative, a generation per
+            recomputation as the scoreboard took at part two, has nobody asking for it. Stated here
+            as a mechanism settled under the row's own lean and not a ruling the operator gave.
+
+Built:      `CeilingCalculator` counts what it attempted and what it skipped, fails when the two are
+            equal, and its command exits non-zero saying what stands and why, which is the form
+            3.9(e) wrote for the scoreboard. **The form is written down** in ARCHITECTURE's
+            failure-behaviour section: a stage that records an observation writes it once and its
+            no-op is the property, which every rerun test in the suite asserts; a stage that
+            computes a figure from other rows reports attempted and skipped and fails when they are
+            equal. The scoreboard and the ceiling are the two of the second kind, and the sentence
+            says a later stage of that kind joins them on the day it is written.
+
+Verified:   Over an authored week: the first compute bounds one subject and is clean; a second
+            subject arrives and the recomputation attempts one, skips one, fails, and the stored
+            bound still says one subject. The command exits non-zero the second time and names what
+            stands. Two tests added to the ceiling's ten, all green. No expectation moved and the
+            phase report's expected move was stated in advance as nought. `tools/ci.ps1` green on
+            Windows, **31 steps, 950 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,516 with 0 unexamined; 1,457 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about the ceiling's insert
+            leaves the table with this commit. The table reads thirty-three; eight due before the
+            freeze, all at 5.8; the operator's eight, unchanged. Nothing this part touched is an
+            input to the minimum sample's derivation: no stored value changed and the ceiling is
+            read by the scoreboard alone. Next are the two `ControlSampler` rows raised at 3.5,
+            which are the ones that can touch the derivation's inputs and are measured before they
+            are repaired.
