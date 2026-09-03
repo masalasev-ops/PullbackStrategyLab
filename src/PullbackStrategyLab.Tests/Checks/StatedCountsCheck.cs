@@ -138,6 +138,11 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"Split on 2026-09-02 from the row raised at", RegexOptions.CultureInvariant)]
     private static partial Regex SplitQuestionRow();
 
+    /// <summary>The sentence stating how many of the obligations due before the freeze are two rows,
+    /// with the total it states them out of.</summary>
+    [GeneratedRegex(@"\*\*Of the (?<total>[a-z-]+), (?<n>[a-z-]+) (?:is|are) two rows", RegexOptions.CultureInvariant)]
+    private static partial Regex SplitSentence();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -429,7 +434,7 @@ public sealed partial class StatedCountsCheck
 
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations 5.8 holds",
-            InWords(buildPlan, "**The repair pile**, being ", " of the eighteen"),
+            InWords(buildPlan, "**The repair pile**, being ", " of the "),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.8", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.8"));
         claims.Add(new Claim(
@@ -437,9 +442,23 @@ public sealed partial class StatedCountsCheck
             InWords(buildPlan, "The other ", " fall due at 5.0"),
             obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("5.0", StringComparison.Ordinal)),
             "rows of the carried obligations table falling due at 5.0"));
+        // BUILD_PLAN.md, the question rows split in two. Both numbers in the sentence are asserted:
+        // the total is the count due before the freeze, stated a fourth time here, and the split
+        // count is derived from the ruling halves that still name what they were split from. The
+        // anchor was the literal "eighteen" until 5.0(a) discharged one of the eighteen, which is a
+        // number the sentence states and an anchor cannot see going stale.
+        Match split = SplitSentence().Match(buildPlan);
+        Assert.True(split.Success,
+            "BUILD_PLAN.md has no \"**Of the <count>, <count> is two rows\" sentence, which states the "
+            + "count due before the freeze and how many of them are split in two.");
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the split sentence's total",
+            FromWordsOrFail(split.Groups["total"].Value),
+            dueBeforeTheFreeze,
+            "rows of the carried obligations table falling due before the freeze"));
         claims.Add(new Claim(
             "BUILD_PLAN.md, the question rows split in two",
-            InWords(buildPlan, "**Of the eighteen, ", " is two rows each"),
+            FromWordsOrFail(split.Groups["n"].Value),
             SplitQuestionRow().Matches(buildPlan).Count,
             "obligation rows carrying the ruling half of a split question"));
 
