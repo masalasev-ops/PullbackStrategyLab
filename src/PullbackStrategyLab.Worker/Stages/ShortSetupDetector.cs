@@ -320,6 +320,7 @@ public sealed class ShortSetupDetector
         StoredIndicators? figures = source.Indicators(ticker, asOf, bars);
 
         // The thrust: the most recent hit on a downward mover scan inside the window.
+        // see: The thrust is the most recent qualifying hit inside the window, then rank, and the extreme clause of the order-price decision does not ship
         DateOnly windowStart = bars.Count >= ShortPullbackRules.ThrustWindowSessions
             ? bars[^ShortPullbackRules.ThrustWindowSessions].BarDate
             : bars[0].BarDate;

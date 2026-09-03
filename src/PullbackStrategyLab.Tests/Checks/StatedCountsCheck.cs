@@ -143,6 +143,11 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"\*\*Of the (?<total>[a-z-]+), (?<n>[a-z-]+) (?:is|are) two rows", RegexOptions.CultureInvariant)]
     private static partial Regex SplitSentence();
 
+    /// <summary>The reading beside the operator's table: how many of its rows are phase 5 questions,
+    /// out of how many rows.</summary>
+    [GeneratedRegex(@"put here[^*]{0,160}\*\*(?<n>[a-z-]+) of the (?<total>[a-z-]+) rows is a phase 5 question\*\*", RegexOptions.CultureInvariant)]
+    private static partial Regex OperatorReading();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -426,9 +431,21 @@ public sealed partial class StatedCountsCheck
             questionsAtTheOperator,
             operatorQuestions.Count(r => r.Count > 1 && MarkedQuestion().IsMatch(r[1])),
             "rows of the operator's table marked as a phase 5 question"));
+        // Both numbers in the reading are derived. It anchored on the literal "of the nine rows" until
+        // question 6 was answered and the nine became eight, which is the third literal anchor 5.0(a)
+        // found in this file: a number the sentence states is a number an anchor cannot see go stale.
+        Match reading = OperatorReading().Match(buildPlan);
+        Assert.True(reading.Success,
+            "BUILD_PLAN.md has no \"**<count> of the <count> rows is a phase 5 question**\" sentence beside "
+            + "the operator's table.");
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the operator's reading's total",
+            FromWordsOrFail(reading.Groups["total"].Value),
+            operatorQuestions.Count,
+            "rows of the operator's table"));
         claims.Add(new Claim(
             "BUILD_PLAN.md, the phase 5 questions the operator's reading states",
-            InWords(buildPlan, "put here: **", " of the nine rows is a phase 5 question**"),
+            FromWordsOrFail(reading.Groups["n"].Value),
             questionsAtTheOperator,
             "rows of the carried obligations table marked as a phase 5 question and due at the operator"));
 

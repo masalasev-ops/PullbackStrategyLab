@@ -13295,3 +13295,154 @@ Carried:    **One row discharged and nothing raised.** The measurement raised at
             with the extreme" should mean if it does, because the literal reading is the one measured
             and it is the origin it moves most. 5.0(b) does not wait on the answer: it changes which
             hit a detector reads and nothing about how a rule is expressed. 5.8 and 5.1 do.
+
+## 5.0(a) — 2026-09-02 — phase-5-question-6-and-slot-refs — question 6 answered: the thrust rule does not move, and the shipped rule is written down
+
+The ruling half of the thrust rule, answered by the operator on 2026-09-02 with the 5.0(a) figures in
+front of them, recorded as a named decision in the same commit that closes its register row.
+**Nothing ships**: the detectors and the vectorizer take the most recent qualifying hit, then rank,
+exactly as they did last night, and the once-only threshold adjustment stays unspent.
+
+Ruled:      **The thrust-selection rule does not move**, and the clause of the order-price decision
+            that said otherwise is superseded by name while its other three clauses stand (see: The
+            thrust is the most recent qualifying hit inside the window, then rank, and the extreme
+            clause of the order-price decision does not ship). Two reasons, and the decision carries
+            both because they fail separately. The first is the measurement: the extreme rule moves
+            the trigger and stop on 3,142 long rows and 1,610 short rows over the 602 calibration
+            sessions, none of them a candidate; the 24 long survivors are the same 24 rows under both
+            rules on every price, and short survives nought under both. The second is a property of
+            the rule and not of this store: the literal extreme prefers a one-session hit that is the
+            peak of a twenty-session run, so the dip is measured against one day's move rather than
+            the whole run, which is what took `dip-shape` from 3,182 to 2,952.
+
+            **The span-reaching reading is not measured and not adopted**, and the decision says why
+            rather than leaving it as a reading nobody got to: it could only move rows no gate
+            passes, because the survivor set has been shown insensitive to which thrust is chosen,
+            and a reading that cannot change a candidate is not worth a calibration run.
+
+Documented: **The shipped rule was written nowhere, and now it is written in four places that cite
+            one decision.** The decision states it: the most recent hit inside the ten-session
+            window among the setup's own side's three scans, ties on one session broken by rank
+            ascending, with the geometry run from that hit over that scan's span and the anchored
+            average anchored off it. `LongSetupDetector`, `ShortSetupDetector`, `SignalVectorizer`
+            and `CheckRecomputer` each cite it at the line that reads the hit, so `decision-resolves`
+            holds the four to one name. `ARCHITECTURE.html`'s trigger-and-stop derivation row no
+            longer says the clause is answered and not yet built; it says it was withdrawn and what
+            the rule is.
+
+Verified:   `tools/ci.ps1` green on Windows, **31 steps, 913 tests**. `tools/verify-phase.ps1` **GREEN,
+            still phase 4**: 137 claims, 114 passed, 23 out of scope, 0 unexamined, 1,453 expectations,
+            0 changed. No shipped behaviour changed; the four code edits are citations.
+
+Carried:    **One row closed and nothing raised.** Question 6 leaves the carried obligations table
+            and the operator's table in the same commit; the operator's heading reads eight, the
+            table forty-one, and no row in either table is a phase 5 question any more. 5.8 and 5.1
+            say they are no longer gated on it, in their own rows. `stated-counts` read the operator's
+            reading off the literal "of the nine rows", the third literal anchor this checkpoint has
+            found, and now derives both numbers in that sentence too; one claim added, floored at
+            one. Seventeen due before the freeze, unchanged, and every one of them is now a
+            derivation or a repair rather than a judgement.
+
+## 5.0(a) — 2026-09-02 — phase-5-question-6-and-slot-refs — what ran from a branch, per evening and per slot, and what the guard did each time
+
+Not a checkpoint entry. A measurement of the running lab rather than of the build, prompted by the
+5.0(a) report noticing branch names in the night's log. Read off the two night logs, the store's
+`run_log`, the snapshot directory and the repository's reflog, and not reasoned from the guard's
+existence. Nothing is fixed here and the guard is not touched.
+
+Population: **Every slot dispatch from the first night the job ran, 2026-08-27, to 2026-09-02.** A
+            night log exists only from 2026-09-01, because the log file and the guard landed
+            together at 4.2 at 01:30 that morning, so for the evenings before it the ref is read
+            from the reflog, which records every checkout with its instant, set against `run_log`,
+            which records every stage with its start instant and what it wrote. A stage the guard
+            refuses never starts the worker, so it leaves a log line and no `run_log` row; that
+            asymmetry is what makes the two sources reconcile rather than duplicate.
+
+Per         **2026-08-27, the first night, every slot from 17:15 to 21:50, ref `phase-3-measurement`.**
+evening:    The tree was on that branch from 01:05 to 23:37 that day, so all twenty-one stages of the
+            night ran from it, at whichever commit the session had reached by each slot's minute.
+            They wrote the first night of evidence: universe 2,042 rows, actions 20, daily-bars
+            2,015, backfill 6,075, index-bars 15, indicators 1,973, scans 300, tiers 1,963, sectors
+            failed after 149 calls, clusters 0, regime 1, detect-long 40 setups, detect-short 4,
+            vectorize 1,406 signals, controls 440, cap 0, forward-returns 0, scoreboard 9 panels.
+            The dispatcher's own comment places this night on 2026-08-28; the reflog and `run_log`
+            place it on the evening of the 27th, and the comment is the one that is wrong by a day.
+
+            **2026-08-28, every slot from 17:15 to 21:50, ref `phase-3-verification-repair`.** The
+            tree was on it from 15:10 on the 28th to 01:40 on the 29th. Wrote universe 2,009,
+            actions 34, daily-bars 2,005, backfill 12,821, index-bars 6, indicators 1,989, scans
+            300, tiers 1,955, sectors 141 calls, clusters 0, regime 1; then detect-long, vectorize,
+            controls and cap **failed on the column migrations 031 and 032 had added to the code and
+            not to the store**, which is the seventh shape and is on the record at 3.15; then
+            forward-returns 483 and scoreboard 11. The repair re-run at 00:03 on the 29th, being
+            detect-long 47, detect-short 26, vectorize 2,362, controls 730, cap 0, forward-returns
+            0 and a failed scoreboard, also ran from that branch.
+
+            **2026-08-29 and 2026-08-30, a weekend, no slots.** One snapshot at 22:02 on the 30th ran
+            with the tree on `phase-3-tight-set-starvation`; a snapshot is a read-only copy of the
+            store and wrote nothing into it.
+
+            **2026-08-31, three slots of eighteen, ref `phase-3-delisted-complete`.** The tree left
+            `main` at 18:23:04 and returned at 18:29:11, and the seal, controls and cap slots fire at
+            18:25, 18:26 and 18:28: vectorize wrote 2,691 signals, journal sealed the night, controls
+            wrote 830, cap wrote 0. The fifteen slots before them and the forward, scoreboard and
+            snapshot slots after them ran from `main`. The 55 long and 28 short setups of that night
+            were written by `main`; what the branch wrote is their signals and their controls.
+
+            **2026-09-01, guard present, two branch dispatches, both refused.** A hand-run universe
+            slot at 09:59 from `phase-4-inverted-job-and-vendor-facts`, refused, nothing written. The
+            evening's fourteen slots ran from `main` and every one refused on the store's schema, 38
+            against a build at 40 and then 42, so nothing was written all night. The 22:00 snapshot
+            slot fired with the tree on `phase-4-risk-gate`, refused: **no snapshot that night**,
+            which cost nothing, because nothing had written to the store since the snapshot of the
+            31st.
+
+            **2026-09-02, guard present, five branch dispatches, all refused.** bars at 17:30 from
+            `phase-5-plan-attribution`; index, indicators, scans and sectors from
+            `phase-5-sitting-answers` between 17:50 and 18:12. The eleven slots that ran from `main`
+            all refused on schema 38 against 47. The 22:00 snapshot ran from `main` and wrote one,
+            2,401,052 rows across 26 tables, counts matched. Nothing else was written all night.
+
+            **Fourteen of the thirty slots have never been dispatched on either logged evening**:
+            spread-open, spread-close, plans, watchlist, intraday, vwap, resolve, orders, fills,
+            manage, trades, audit, losses and ceiling. The scheduler registers sixteen. That is not a
+            branch finding, and it is stated because the recoverability below turns on it.
+
+Recoverable **Recorded nights are evidence and stay as written, whichever ref wrote them.** The
+and not:    setups of the 27th, the 28th and the 31st are immutable rows, and their signals and
+            controls were frozen once. Nothing re-runs them, and the ref is now beside them on the
+            record, which is what a reader needs.
+
+            **The nights of 2026-09-01 and 2026-09-02 are not recoverable as nights.** No universe
+            snapshot was taken, so no setup can ever be recorded for them: a night the lab was not
+            running has no snapshot and may not be given one (see: The evidence store holds only
+            setups flagged forward, never setups reconstructed from history). Their daily bars are
+            recoverable, because the vendor sells a name's whole history and `backfill` refetches
+            it per name at one call each, inside the ceiling.
+
+            **Minute bars are re-fetchable inside the vendor's horizon, and none has been fetched
+            yet.** `intraday_bar` holds nought rows, because the intraday slot has never been
+            dispatched. As at 2026-09-01 the vendor's one-minute history reaches back to 2026-05-05,
+            so the flagged names of the three recorded nights, 44, 73 and 83 of them, can still be
+            filled on 4.5's terms once the slot runs; the two unrecorded nights have no flagged set
+            to fetch for.
+
+            **Spread samples are not re-takable at all, and none has been taken.** `spread_snapshot`
+            holds nought rows. The two spread slots fire inside the session, a quote has no history
+            to buy back, and every session since 4.3 landed is a sample that never existed.
+
+The guard:  **Absent before 4.2, and present-and-refused at every branch dispatch since.** It is none
+            of the three defects: not absent, since it is in the dispatcher at every dispatch from
+            2026-09-01; not bypassed, since `-AllowBranch` appears in no log line; not
+            present-and-passed, since every one of the seven branch dispatches after it landed
+            reads "refusing" and left no `run_log` row. The three nights that did run from a branch
+            are all before it existed, and the dispatcher's own comment names the first of them as
+            the reason it was written. What the guard costs is the refused slot itself: a session
+            that leaves the tree on its branch at 17:30 forfeits that slot for the night, and on
+            2026-09-01 that was the snapshot. That is the hazard the row at 3.12 carries and this
+            entry measures rather than repairs.
+
+Carried:    **Nothing raised.** The finding that data/live is behind the build is already in the
+            5.0(a) entry above and is the operator's act. The fourteen slots never dispatched are
+            the row raised at 4.5, which names the four rejected slots, widened by the ten phase 4
+            added after it; that row is at the operator and is not moved by this.
