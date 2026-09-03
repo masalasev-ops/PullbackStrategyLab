@@ -14041,3 +14041,39 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.12 leave
             back into it. **Restating 2026-08-28 itself is the operator's act**, being a run against
             the live store, and the command is the runbook's row. Next is the stored nought where an
             excursion is undefined, raised at 3.5.
+
+## 5.8 — 2026-09-03 — phase-5-8-excursions-absent — the pile, part three: an unmeasurable excursion is null with its reason, never nought
+
+Not a checkpoint entry. The third part of the repair pile, the third stored figure in the order the
+harm runs. Population: **the 1,286 `forward_return` rows the live store holds**, read on
+2026-09-03, of which none carries the nought pair the conflation would have written, so the repair
+is to the shape the freeze would have made permanent rather than to a value already in it.
+
+Built:      **Migration 050 rebuilds `forward_return`** with `mfe_atr` and `mae_atr` nullable,
+            `excursions_absent_because` beside them, and two constraints: the pair is null together,
+            and the reason is present on exactly the rows that have none. The filler writes null and
+            the reason where the subject's own session has no range to state the path in, counts
+            the row in its result and its console line, and the calibration side, which took this
+            shape at 036, is now the same shape as the evidence side. **The ceiling leaves such a
+            row out**, on the same terms as a setup with no give-up distance, rather than reading
+            nought adverse as having survived (see: A gate handed an absent or degenerate quantity
+            fails rather than passing).
+
+Verified:   Over an authored subject with a range of nought: the row carries no excursions and the
+            reason, the run counts it, and its control, which has a range, carries its excursions
+            and no reason. The store refuses the reason on a row that has excursions. The ceiling
+            over one measured subject and one with none bounds the one. Four tests, all green;
+            the calibration test's forward figures are unchanged. `store.schemaVersion` moved from 49
+            to 50 as stated in advance, and `forward.excursionsUndefined` is added at 5.8, a
+            structural nought derived from the fixture's own indicator rows; nothing else moved.
+            `tools/ci.ps1` green on Windows, **31 steps, 945 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,500 with 0 unexamined; 1,456 expectations, two changed since the last commit, being the schema version and the one added.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.5 leaves the table with this
+            commit. The table reads thirty-six; eleven due before the freeze, all at 5.8; the
+            operator's eight, unchanged. Nothing this part touched is an input to the minimum
+            sample's derivation: the derivation reads the ten-session return and never an
+            excursion, and no stored row changed value. **The live store needs migrating** to 50,
+            with 048 and 049 before it, which is the operator's act on the terms of 2026-09-02, and
+            until it is every stage refuses before opening the store and names both versions. Next
+            is `intended_date`, raised at 3.5.

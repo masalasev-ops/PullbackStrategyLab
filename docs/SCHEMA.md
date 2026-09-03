@@ -421,7 +421,7 @@ Grain: subject + kind + horizon. What a reconstructed setup and its controls did
 | `subject_id`, `subject_kind`, `horizon_days` | TEXT / TEXT / INTEGER | PK |
 | `intended_date`, `actual_date` | TEXT | |
 | `return_signed` | TEXT | signed by the setup's direction, as on the evidence side |
-| `mfe_atr`, `mae_atr` | TEXT | **nullable here and NOT NULL on the evidence side** |
+| `mfe_atr`, `mae_atr` | TEXT | **nullable here, as on the evidence side from 050**; until then the evidence side was NOT NULL and coalesced an undefined pair to nought |
 | `excursions_absent_because` | TEXT | why the two above are null, on every row that has none |
 | `filled_at` | TEXT | |
 
@@ -501,7 +501,8 @@ Grain: (setup or control) + horizon. Signed by direction, so a short that fell i
 | `horizon_days` | INTEGER | 1, 3, 5, 10 |
 | `intended_date`, `actual_date` | TEXT | differ across a holiday, and both are stored |
 | `return_signed` | TEXT | signed by direction, so a short that fell is positive |
-| `mfe_atr`, `mae_atr` | TEXT | best and worst reached along the way, in ATR |
+| `mfe_atr`, `mae_atr` | TEXT NULL | best and worst reached along the way, in ATR. **Null together where the subject has no range to state them in**, from 050, and never nought for that: a nought here read as a path that never went against its entry, which is a different fact from one that could not be measured (see: A gate handed an absent or degenerate quantity fails rather than passing) |
+| `excursions_absent_because` | TEXT NULL | why the two above are null, on exactly the rows that have none, which the table asserts in both directions. The evidence side took this shape at 050; the calibration side had it from 036 |
 | `filled_at` | TEXT | when the lab could first have known this, which is what bounds the read |
 
 Insert ForwardReturnFiller · PK (`subject_id`, `subject_kind`, `horizon_days`)

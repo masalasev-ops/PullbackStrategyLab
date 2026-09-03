@@ -95,6 +95,9 @@ public sealed class ForwardReturnFiller
         Console.WriteLine($"{Name}: {result.ControlsWritten} control outcome(s) written, {result.ControlHorizonsNotYetElapsed} horizon(s) not yet elapsed");
         Console.WriteLine($"{Name}: {result.AcrossAHoliday} landed on a session later than the calendar horizon");
         Console.WriteLine(
+            $"{Name}: {result.ExcursionsUndefined} written with no excursions, the subject having no range on its "
+            + "own session, and the reason on the row");
+        Console.WriteLine(
             $"{Name}: {result.WithoutABarOnTheirOwnSession} skipped for having no bar on their own session");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
 
@@ -134,6 +137,7 @@ public sealed class ForwardReturnFiller
         int controlHorizonsNotYetElapsed = 0;
         int acrossAHoliday = 0;
         int withoutABarOnTheirOwnSession = 0;
+        int excursionsUndefined = 0;
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
@@ -189,6 +193,14 @@ public sealed class ForwardReturnFiller
 
                     int rows = Insert(connection, transaction, subject, horizon, intended, outcome, filledAt, tables);
 
+                    // An evidence row written with no excursions, counted so a night where a
+                    // flagged name had no range is visible in the run rather than in a null.
+                    if (rows > 0 && tables.ExcursionsAvailable
+                        && (outcome.MaximumFavourableExcursion is null || outcome.MaximumAdverseExcursion is null))
+                    {
+                        excursionsUndefined++;
+                    }
+
                     if (isControl)
                     {
                         controlsWritten += rows;
@@ -209,7 +221,8 @@ public sealed class ForwardReturnFiller
             asOf, setups.Count, written, notYetElapsed, acrossAHoliday,
             controls.Count, controlsWritten, controlHorizonsNotYetElapsed,
             withoutABarOnTheirOwnSession,
-            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
+            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean,
+            excursionsUndefined);
     }
 
     /// <summary>
@@ -458,9 +471,9 @@ public sealed class ForwardReturnFiller
             ? """
                 INSERT INTO forward_return
                     (subject_id, subject_kind, horizon_days, intended_date, actual_date,
-                     return_signed, mfe_atr, mae_atr, filled_at)
+                     return_signed, mfe_atr, mae_atr, excursions_absent_because, filled_at)
                 VALUES (@subject_id, @subject_kind, @horizon_days, @intended_date, @actual_date,
-                        @return_signed, @mfe_atr, @mae_atr, @filled_at)
+                        @return_signed, @mfe_atr, @mae_atr, @absent, @filled_at)
                 ON CONFLICT (subject_id, subject_kind, horizon_days) DO NOTHING
               """
             : """
@@ -482,10 +495,20 @@ public sealed class ForwardReturnFiller
 
         if (tables.ExcursionsAvailable)
         {
+            // Null with the reason beside it where the subject has no range to express the path
+            // in, never nought: a nought here read as a path that never moved, which is a different
+            // fact from one that could not be measured, and the store now refuses one without the
+            // other. Until 5.8 both were coalesced to nought on this side alone.
+            // see: A gate handed an absent or degenerate quantity fails rather than passing
+            bool undefined = outcome.MaximumFavourableExcursion is null || outcome.MaximumAdverseExcursion is null;
+
             command.Parameters.AddWithValue(
-                "@mfe_atr", StoreText.RatioToStorageText(outcome.MaximumFavourableExcursion ?? 0m));
+                "@mfe_atr",
+                undefined ? DBNull.Value : StoreText.RatioToStorageText(outcome.MaximumFavourableExcursion!.Value));
             command.Parameters.AddWithValue(
-                "@mae_atr", StoreText.RatioToStorageText(outcome.MaximumAdverseExcursion ?? 0m));
+                "@mae_atr",
+                undefined ? DBNull.Value : StoreText.RatioToStorageText(outcome.MaximumAdverseExcursion!.Value));
+            command.Parameters.AddWithValue("@absent", undefined ? ExcursionsUndefined : DBNull.Value);
         }
         else
         {
@@ -494,6 +517,17 @@ public sealed class ForwardReturnFiller
 
         return command.ExecuteNonQuery();
     }
+
+    /// <summary>
+    /// Why an evidence row carries no excursions, recorded on the row rather than as a nought.
+    ///
+    /// The subject's own session holds no ATR, or holds one of nought: `indicator_daily` has no
+    /// row for it inside the fill's bound, or the range it computed is nought, and a path cannot be
+    /// stated in a range that does not exist.
+    /// </summary>
+    public const string ExcursionsUndefined =
+        "no ATR on the subject's own session: indicator_daily holds no row for it inside the fill's "
+        + "bound, or holds a range of nought, so the path cannot be stated in the subject's own range";
 
     /// <summary>Why a reconstructed row carries no excursions, recorded on the row rather than in prose.</summary>
     public const string ExcursionsAbsent =
@@ -537,4 +571,5 @@ public sealed record FillResult(
     int WithoutABarOnTheirOwnSession,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+    int ExcursionsUndefined = 0);
