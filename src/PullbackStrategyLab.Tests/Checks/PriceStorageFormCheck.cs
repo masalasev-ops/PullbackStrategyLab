@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
@@ -117,6 +118,181 @@ public sealed partial class PriceStorageFormCheck
     [GeneratedRegex(@"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?<table>[A-Za-z_][A-Za-z0-9_]*)",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex CreateTableKeyword();
+
+    /// <summary>
+    /// The stored columns that hold a ratio rather than a price, each with the SCHEMA row that says
+    /// so. A read of one of these through the price crossing is the other half of the decimal rule
+    /// going quietly wrong: the value is identical, the name at the point of use is not, and the
+    /// name is what stops a percentage being written where a fraction was meant.
+    ///
+    /// Hand-named rather than parsed from SCHEMA, because SCHEMA says "fraction" in a note on some
+    /// rows and "in ATR" or "signed by direction" on others, and a list that has to be argued for
+    /// in a diff is the shape every other exemption list in this file takes.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> RatioColumns { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["return_signed"] = "forward_return: a return, signed by direction, as a fraction of the close",
+        ["mfe_atr"] = "forward_return: the best point reached, in ATR",
+        ["mae_atr"] = "forward_return: the worst point reached, in ATR",
+        ["bound"] = "ceiling_bound: the fraction a system with perfect foresight could have won",
+        ["achieved"] = "ceiling_bound: the fraction actually won over the same rows",
+        ["adr_20"] = "indicator_daily: the average daily range as a fraction, 0.068 not 6.8",
+        ["stop_distance_ranges"] = "setup: the give-up distance in daily ranges",
+        ["trigger_distance_ranges"] = "setup: the trigger distance in daily ranges",
+        ["magnitude"] = "scan_hit: the ratio the rank was taken on",
+        ["forward_return_signed"] = "loss_class: the ten-session return from the trigger, a fraction of it",
+        ["one_r_in_return"] = "loss_class: one unit of risk as a fraction of the trigger",
+        ["exit_return_signed"] = "loss_class: the return to the exit, a fraction of the trigger",
+    };
+
+    /// <summary>
+    /// Every read of a ratio column in the shipped source goes through the ratio crossing.
+    ///
+    /// <b>The row raised at 3.5, made a scan rather than a repair.</b> `ScoreboardBuilder` read
+    /// `return_signed`, `bound` and `achieved` through `StorageTextToPrice`, and `CeilingCalculator`
+    /// read `return_signed`, `mae_atr`, `adr_20` and `stop_distance_ranges` the same way, for as long
+    /// as those readers existed. The values are identical either way, so nothing was wrong and
+    /// nothing could have said so; what was broken was the convention the decimal rule rests on,
+    /// which is that a crossing is named for what it carries. Repaired at 5.8 and asserted here, so
+    /// the next reader written the same way fails on the day it is written.
+    ///
+    /// A read is mapped to its column by position: the nearest preceding SELECT list in the same
+    /// file, split at its top-level commas, at the ordinal the reader asks for. That is how the
+    /// readers in this codebase are written, and the proof test exercises the mapping.
+    /// </summary>
+    [Fact]
+    [Trait("check", "price-storage-form")]
+    public void Every_ratio_column_is_read_through_the_ratio_crossing()
+    {
+        string[] files =
+        [
+            .. new[] { "PullbackStrategyLab.Worker", "PullbackStrategyLab.Api", "PullbackStrategyLab.Data", "PullbackStrategyLab.Web" }
+                .SelectMany(p => Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Source, p), "*.cs", SearchOption.AllDirectories))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                         && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal),
+        ];
+
+        var offences = new List<string>();
+        int reads = 0;
+
+        foreach (string file in files)
+        {
+            (int found, IReadOnlyList<string> wrong) = RatioReadsThroughThePriceCrossing(File.ReadAllText(file), RatioColumns.Keys);
+            reads += found;
+            offences.AddRange(wrong.Select(w => $"{RepositoryLayout.Relative(file)}: {w}"));
+        }
+
+        // Stated in advance: the shipped source reads well over fifty columns through the price
+        // crossing, so a parser that stopped matching would find no offences and no reads.
+        Assert.True(reads >= 50,
+            $"only {reads} read(s) through the price crossing were found across the shipped source, so the "
+            + "parser stopped matching rather than the reads going away.");
+
+        Assert.True(offences.Count == 0,
+            $"{offences.Count} ratio column(s) are read through the price crossing:\n  "
+            + string.Join("\n  ", offences)
+            + "\n  Read each through StoreText.StorageTextToRatio, which is named for what it carries.");
+    }
+
+    /// <summary>
+    /// The reads through the price crossing in one source text, and those of them whose column is
+    /// one of <paramref name="ratioColumns"/>, mapped by position against the nearest preceding
+    /// SELECT list.
+    /// </summary>
+    public static (int Reads, IReadOnlyList<string> Offences) RatioReadsThroughThePriceCrossing(
+        string source, IEnumerable<string> ratioColumns)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(ratioColumns);
+
+        HashSet<string> ratios = [.. ratioColumns];
+        var offences = new List<string>();
+        int reads = 0;
+
+        foreach (Match read in PriceCrossingRead().Matches(source))
+        {
+            reads++;
+            int ordinal = int.Parse(read.Groups["ordinal"].Value, CultureInfo.InvariantCulture);
+
+            Match select = SelectList().Matches(source[..read.Index]).Cast<Match>().LastOrDefault()
+                ?? Match.Empty;
+
+            if (!select.Success)
+            {
+                continue;
+            }
+
+            IReadOnlyList<string> columns = SplitColumns(select.Groups["list"].Value);
+
+            if (ordinal >= columns.Count)
+            {
+                continue;
+            }
+
+            string column = ColumnName(columns[ordinal]);
+
+            if (ratios.Contains(column))
+            {
+                offences.Add($"{column} at ordinal {ordinal} of the SELECT before line "
+                    + $"{source[..read.Index].Count(c => c == '\n') + 1} is read through StorageTextToPrice");
+            }
+        }
+
+        return (reads, offences);
+    }
+
+    /// <summary>A SELECT list split at its top-level commas, so a function call inside one column stays one column.</summary>
+    private static IReadOnlyList<string> SplitColumns(string list)
+    {
+        var columns = new List<string>();
+        int depth = 0;
+        int start = 0;
+
+        for (int i = 0; i < list.Length; i++)
+        {
+            switch (list[i])
+            {
+                case '(':
+                    depth++;
+                    break;
+                case ')':
+                    depth--;
+                    break;
+                case ',' when depth == 0:
+                    columns.Add(list[start..i]);
+                    start = i + 1;
+                    break;
+            }
+        }
+
+        columns.Add(list[start..]);
+        return columns;
+    }
+
+    /// <summary>
+    /// The name a column reads back as: its alias where it has one, otherwise the last identifier
+    /// in the expression with any table prefix removed.
+    /// </summary>
+    private static string ColumnName(string expression)
+    {
+        string trimmed = expression.Trim();
+        Match alias = Regex.Match(trimmed, @"\sAS\s+(?<name>\w+)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        if (alias.Success)
+        {
+            return alias.Groups["name"].Value;
+        }
+
+        MatchCollection identifiers = Regex.Matches(trimmed, @"\b(?<name>[A-Za-z_]\w*)\b", RegexOptions.CultureInvariant);
+        return identifiers.Count == 0 ? trimmed : identifiers[^1].Groups["name"].Value;
+    }
+
+    [GeneratedRegex(@"StorageTextToPrice\(\s*reader\.GetString\(\s*(?<ordinal>\d+)\s*\)\s*\)", RegexOptions.CultureInvariant)]
+    private static partial Regex PriceCrossingRead();
+
+    [GeneratedRegex(@"\bSELECT\s+(?<list>.*?)\s+FROM\b", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex SelectList();
 
     [Fact]
     [Trait("check", "price-storage-form")]
@@ -246,10 +422,14 @@ public sealed partial class PriceStorageFormCheck
             .Examined("tables declared across them", tables)
             .Examined("column declarations checked for REAL affinity", columns)
             .Examined("of those added by ALTER TABLE rather than declared at creation", addedLater)
-            .NoSourceScan(
-                "the migration text is the declaration itself. The store is built by executing exactly these "
-                + "statements, so a column's affinity cannot differ from what the statement says, and removing "
-                + "the declaration removes the column");
+            .Scan(
+                "every ratio column a shipped statement selects is read back through the ratio crossing and not the price one",
+                CheckCoverage.Backing.None(
+                    "the two crossings parse the same text to the same decimal, so no behaviour differs when a "
+                    + "ratio goes through the price one and no behavioural test can tell them apart. What the "
+                    + "convention buys is the name at the point of use, which is what stops 6.8 being written "
+                    + "where 0.068 was meant, and a name is only assertable by reading the source. The scan's "
+                    + "own parsing is proved by CheckProofTests.The_crossing_scanner_maps_a_read_to_the_column_it_selects"));
 
         if (Exempt.Count > 0)
         {

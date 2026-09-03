@@ -14114,3 +14114,45 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about 
             input to the minimum sample's derivation: no stored value changed and the derivation
             reads `actual_date`'s close and never the step. Next is the ratio read back through the
             price crossing, raised at 3.5.
+
+## 5.8 — 2026-09-03 — phase-5-8-ratio-crossing — the pile, part five: every ratio is read back through the crossing named for it
+
+Not a checkpoint entry. The fifth part of the repair pile. Population: **the ninety-nine reads
+through the price crossing and the five through the ratio crossing in the shipped source on
+2026-09-03**, of which seven read a ratio column through the price one: `return_signed`, `bound`
+and `achieved` in `ScoreboardBuilder`, and `return_signed`, `mae_atr`, `adr_20` and
+`stop_distance_ranges` in `CeilingCalculator`. No stored value is involved: the two crossings parse
+the same text to the same decimal, and what was broken was the convention the decimal rule rests
+on, that a crossing is named for what it carries.
+
+Built:      The seven reads go through `StorageTextToRatio`, and `price-storage-form` gains a
+            second assertion: every ratio column a shipped statement selects is read back through
+            the ratio crossing. Twelve ratio columns are hand-named in the check with the SCHEMA row
+            that says each is a ratio, on the terms every other list in that file is argued for in
+            a diff. A read is mapped to its column by position against the nearest preceding SELECT
+            list, split at its top-level commas, through an alias prefix, a function call and an
+            alias. The scan is declared with no behavioural backing and says why: no behaviour
+            differs when a ratio goes through the price crossing, so no behavioural test can tell
+            them apart, and the name at the point of use is only assertable by reading the source.
+            The roster row in `CLAUDE.md` says what the check now asserts.
+
+Verified:   The scan over the shipped source finds ninety-nine reads through the price crossing and
+            no offence, with the floor stated in advance so a parser that stopped matching would
+            fail rather than pass on nothing. The proof is over an authored reader holding the
+            repaired shape: a ratio read through the price crossing is flagged at its ordinal, a
+            price read the same way is not, a ratio read correctly is neither counted nor flagged,
+            and with the ratio taken off the list nothing is flagged, which is the assertion failing
+            when its subject is removed. Two tests added, all green. No expectation moved and the
+            phase report's expected move was stated in advance as nought. `tools/ci.ps1` green on
+            Windows, **31 steps, 948 tests**. `tools/verify-phase.ps1`
+            **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,514 with 0 unexamined; 1,457 expectations, none changed since the last commit.
+
+Carried:    **One row discharged, nothing raised, and one unbacked scan added on purpose.** The row
+            raised at 3.5 about the crossings leaves the table with this commit. The table reads
+            thirty-four; nine due before the freeze, all at 5.8; the operator's eight, unchanged.
+            The source-scan row raised at 2.11, later in this pile, counts one more scan inside a
+            check declaring `Backing.None`, with the reason on the declaration; it is reported and
+            does not fail the run, on the terms CLAUDE.md sets for an unbacked scan. Nothing this
+            part touched is an input to the minimum sample's derivation: no value changed on any
+            row or in any figure. Next is the ceiling calculator's insert that does nothing on
+            conflict, raised at 3.5.

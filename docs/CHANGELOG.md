@@ -2169,3 +2169,13 @@ Why:  The sentence named the rare case and the column produced the common one on
 Was:  The carried obligations table held thirty-six rows, with the intended-date row raised at 3.5 due at 5.8; eleven due before the freeze; seven repairs and four others.
 Now:  Thirty-five rows. The 3.5 intended-date row is discharged by the fourth part of 5.8 on 2026-09-03; ten due before the freeze in each place the count is stated; six repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The `price-storage-form` roster row asserted that no migration declares a price or money column REAL.
+Now:  It also asserts that every ratio column a shipped statement selects is read back through the ratio crossing rather than the price one.
+Why:  The check gained the assertion at 5.8, part five, and the roster lists every check that runs with what it asserts, so a row that said less than its check would disagree with the phase report.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held thirty-five rows, with the ratio-crossing row raised at 3.5 due at 5.8; ten due before the freeze; six repairs and four others.
+Now:  Thirty-four rows. The 3.5 ratio-crossing row is discharged by the fifth part of 5.8 on 2026-09-03; nine due before the freeze in each place the count is stated; five repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.
