@@ -2129,3 +2129,23 @@ Why:  The component now does it, and a catalogue row that omits a stage's output
 Was:  The carried obligations table held thirty-nine rows, with the mixed cluster column raised at 3.8 due at 5.8; fourteen due before the freeze; the paragraph read ten repairs and four others.
 Now:  Thirty-eight rows. The 3.8 row is discharged by the first part of 5.8 on 2026-09-03, on its own fallback clause; thirteen due before the freeze in each place the count is stated; nine repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it, and the row named its own fallback for the case where no ruling had been taken, which is the case.
+
+### 2026-09-03 — SCHEMA.md — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  `scoreboard` was grained date + panel, keyed on (`as_of`, `panel`, `direction`) with the account-wide unique index on (`as_of`, `panel`), and `computed_at` was the bound a read took.
+Now:  Grained date + panel + generation: `computed_at` is in the key and in the account-wide index, a rebuild is a second row per panel under its own instant, and a reader takes the latest at or before its bound.
+Why:  The only route to restating a night was deleting its panels or restoring a snapshot, neither of which any declared writer does, and both of which lose the reading the night showed. The decision follows the grain sentence the table already carried.
+
+### 2026-09-03 — RUNBOOK.md — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  The recovery table had no row for a night whose scoreboard ran before an input it counts arrived; the stage's own failure message offered a restore or a delete.
+Now:  A row naming `scoreboard --rebuild <date>`, what it writes, what the page then reads, and that a second build without the flag writes nothing and fails on purpose.
+Why:  2026-08-28's band 0 has stated the night that was lost since 3.12 with no supported way to restate it, and the row is the operator's instruction.
+
+### 2026-09-03 — ARCHITECTURE.html — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  The ScoreboardBuilder catalogue row described the panels and their counts.
+Now:  It adds that a rebuild asked for by name writes a new generation beside the old and never deletes one, and that a second build not asked for writes nothing and fails.
+Why:  The component now does it, and the catalogue is where a reader finds what a stage will and will not do to the store.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  The carried obligations table held thirty-eight rows, with the recovered-night scoreboard row raised at 3.12 due at 5.8; thirteen due before the freeze; nine repairs and four others.
+Now:  Thirty-seven rows. The 3.12 row is discharged by the second part of 5.8 on 2026-09-03; twelve due before the freeze in each place the count is stated; eight repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it.

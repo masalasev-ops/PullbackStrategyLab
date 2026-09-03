@@ -47,15 +47,24 @@ public static class LabScoreboard
         // a day from panels the reader may not see, or read a later rebuild of the day it picked.
         // Latent rather than live until 3.8, because nothing had rebuilt a scoreboard for a past
         // date, and the repair this checkpoint adds is exactly the operation that does.
+        // And of that day, the latest generation of each panel the reader may see. A rebuild
+        // writes every panel again under its own instant beside the old, so a panel has one row per
+        // generation and a read standing between two builds takes the earlier, exactly as it stood.
+        // see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
         command.CommandText = """
-            SELECT panel, direction, figure, low, high, n_rows, n_effective, population, n_minimum,
-                   withheld_because, n_sessions, n_minimum_sessions
-              FROM scoreboard
-             WHERE computed_at <= @computed_before
-               AND as_of = (SELECT MAX(as_of)
-                              FROM scoreboard
-                             WHERE as_of <= @as_of AND computed_at <= @computed_before)
-             ORDER BY panel, direction
+            SELECT s.panel, s.direction, s.figure, s.low, s.high, s.n_rows, s.n_effective, s.population,
+                   s.n_minimum, s.withheld_because, s.n_sessions, s.n_minimum_sessions
+              FROM scoreboard s
+             WHERE s.computed_at <= @computed_before
+               AND s.as_of = (SELECT MAX(as_of)
+                                FROM scoreboard
+                               WHERE as_of <= @as_of AND computed_at <= @computed_before)
+               AND s.computed_at = (SELECT MAX(g.computed_at)
+                                      FROM scoreboard g
+                                     WHERE g.as_of = s.as_of AND g.panel = s.panel
+                                       AND g.direction IS s.direction
+                                       AND g.computed_at <= @computed_before)
+             ORDER BY s.panel, s.direction
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));

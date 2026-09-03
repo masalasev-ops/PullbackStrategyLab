@@ -13993,3 +13993,51 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.8 leaves
             sample's derivation: the flagged dispersion is over calibration rows the cluster column
             does not select, and no calibration figure was re-run. Next is the session zone the
             store readers name, being the second stored figure in the order the harm runs.
+
+## 5.8 — 2026-09-03 — phase-5-8-scoreboard-generations — the pile, part two: a night's scoreboard can be restated, and the reading it showed stays
+
+Not a checkpoint entry. The second part of the repair pile, the second stored figure in the order
+the harm runs. Population: **the scoreboard panels of every night the store holds, and 2026-08-28's
+band 0 in particular**, which reads one night recorded and forty-four setups on file, computed
+before that night's seventy-three setups existed, and has had no supported way to be restated
+since 3.12.
+
+Ruled:      **A rebuild is a new generation beside the old, never a replacement.** `computed_at`
+            joins the scoreboard's key by migration 049, `scoreboard --rebuild <date>` writes every
+            panel of the date again under its own instant, and the page's reader takes the latest
+            generation at or before its bound, so a reader bounded on the night still sees what the
+            night showed. Nothing deletes a panel and no declared writer gains a delete. Recorded as
+            a named decision because the stage's own message offered the other mechanism, and the
+            reasoning is that it follows from three rules already taken rather than from a choice:
+            the table's grain sentence, the correction-by-new-entry rule, and the bar tables'
+            later-stamp-wins form (see: A scoreboard rebuild writes a new generation of the date's
+            panels, and the stale generation stays readable as it stood). **This is a mechanism the
+            session settled under recorded rules and not a ruling the operator gave**, stated here
+            so it can be overturned by a decision rather than discovered.
+
+Built:      The flag, the presence test moved from the insert's conflict to a read in the same
+            transaction, the account-wide unique index carrying the instant, the reader's
+            latest-generation clause, and the failure message naming the flag where it named a
+            restore or a delete. The ordinary build still writes nothing and fails on a date that
+            carries any generation, so an accidental rerun cannot open one. The runbook's recovery
+            table gains the row, SCHEMA states the grain and the key, and the catalogue row says what
+            the stage will and will not do.
+
+Verified:   Over an authored night: built, rebuilt the next morning after a setup arrived, and read
+            three ways. The night's own read returns the first generation with nought setups on
+            file; the next day's read returns the second with one, and exactly one row per panel;
+            both generations are on file and an ordinary build after the rebuild writes nothing and
+            fails. The account-wide panels are one per generation and distinct within each. The
+            command's failure names the flag. `store.schemaVersion` moved from 48 to 49 as stated in
+            advance, and no other expectation moved. Two tests replace one that deleted the panels
+            by hand, which was the shape the corpus refuses: a property asserted by a statement no
+            operator could run. `tools/ci.ps1` green on Windows, **31 steps, 942
+            tests**. `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,473 with 0 unexamined; 1,455 expectations, one changed since the last commit, being the schema version.
+
+Carried:    **One row discharged, nothing raised.** The row raised at 3.12 leaves the table with this
+            commit. The table reads thirty-seven; twelve due before the freeze, all at 5.8; the
+            operator's eight, unchanged. Nothing this part touched is an input to the minimum
+            sample's derivation: the scoreboard is read from the measurement and feeds nothing
+            back into it. **Restating 2026-08-28 itself is the operator's act**, being a run against
+            the live store, and the command is the runbook's row. Next is the stored nought where an
+            excursion is undefined, raised at 3.5.
