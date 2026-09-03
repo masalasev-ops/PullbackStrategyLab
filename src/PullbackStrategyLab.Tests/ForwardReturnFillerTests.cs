@@ -265,6 +265,33 @@ public sealed class ForwardReturnFillerTests : IDisposable
     /// horizon, and a ten-session return measured over one session is a different quantity pooled
     /// with the right ones.
     /// </summary>
+    /// <summary>
+    /// A horizon the market has reached and the subject's own series has not can never close, and is
+    /// counted apart from one that has not yet elapsed.
+    ///
+    /// <b>The row raised at 3.5.</b> `ForwardOutcome.Of` returns null for both, so a control halted
+    /// for a run of sessions, dropped from the universe or delisted since contributed nothing to its
+    /// subject's control mean while the counter read it as waiting, and a comparison that had
+    /// narrowed said nothing. Counted rather than replaced, because replacing it changes which
+    /// names the paired difference is taken against, which is the population the minimum sample's
+    /// derivation rests on. Here COIN's series stops after four sessions while HOOD's and SOFI's run
+    /// twenty: COIN's one- and three-session horizons close, its five- and ten-session horizons
+    /// never can, and nothing of COIN's is written for those two.
+    /// </summary>
+    [Fact]
+    public void A_horizon_the_market_reached_and_the_subject_did_not_can_never_close_and_is_counted_apart()
+    {
+        Seed("HOOD", "long", ["COIN", "SOFI"], barsFor: new Dictionary<string, int> { ["COIN"] = 4 });
+
+        FillResult filled = Stage().Fill(FillOn);
+
+        Assert.Equal(ForwardOutcome.Horizons.Count, filled.Written);
+        Assert.Equal(0, filled.SetupHorizonsCannotClose);
+        Assert.Equal(2, filled.ControlHorizonsCannotClose);
+        Assert.Equal(0, filled.ControlHorizonsNotYetElapsed);
+        Assert.Equal((ForwardOutcome.Horizons.Count * 2) - 2, filled.ControlsWritten);
+    }
+
     [Fact]
     public void An_unclosed_horizon_is_left_for_a_later_night_for_both_kinds()
     {
@@ -292,7 +319,8 @@ public sealed class ForwardReturnFillerTests : IDisposable
         string direction,
         IReadOnlyList<string> controls,
         decimal setupAtr = 2m,
-        decimal controlAtr = 2m)
+        decimal controlAtr = 2m,
+        IReadOnlyDictionary<string, int>? barsFor = null)
     {
         using SqliteConnection connection = _connections.OpenWrite();
 
@@ -308,7 +336,11 @@ public sealed class ForwardReturnFillerTests : IDisposable
             decimal price = 100m;
             DateOnly day = Flagged;
 
-            for (int i = 0; i < 20; i++)
+            // Twenty bars unless the case is a name whose series ends early, which is the shape a
+            // halted or delisted control takes.
+            int bars = barsFor is not null && barsFor.TryGetValue(name, out int fewer) ? fewer : 20;
+
+            for (int i = 0; i < bars; i++)
             {
                 while (day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
                 {

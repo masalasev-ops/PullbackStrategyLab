@@ -14271,3 +14271,53 @@ Carried:    **One row discharged, nothing raised.** The row raised at 3.5 about 
             5.8; the operator's eight, unchanged. Next is the control whose horizon can never close,
             raised at 3.5, which the same measurement found on 2,504 of the reconstructed read's
             controls and which is counted rather than replaced for the reason the next entry gives.
+
+## 5.8 — 2026-09-03 — phase-5-8-horizon-cannot-close — the pile, part nine: a control whose horizon can never close is counted apart, and not replaced
+
+Not a checkpoint entry. The ninth part of the repair pile, and the second that could have moved a
+figure the derivation was run against. Population: **the 175,090 controls of the reconstructed
+read of 2026-08-31, re-run on a store copy today, of which 2,504 are names whose own series holds
+fewer than eleven bars from their session while the store holds eleven or more sessions after it**;
+and the 2,000 evidence controls, of which none is yet old enough for the question to arise.
+
+Ruled:      **Counted, not replaced, and the reason is the pin.** A control whose series ended is a
+            name halted for a run of sessions, dropped from the universe, or delisted since, and it
+            contributes nothing to its subject's control mean while the counter read it as not yet
+            elapsed. Two repairs were open: make the state visible, or draw a replacement so the set
+            is five again. The second changes which names the paired difference is taken against,
+            and the 2,504 are 1.4% of the population the derivation's clustering figures were
+            computed over, so it would put the pin of 1,802 on a population the pile had moved,
+            which is the case the operator's instruction for this run names as a stop. The first
+            changes no value on any row and no figure on any panel, and it is what landed. **Whether
+            the 2,504 should be replaced is reported rather than decided**, with the figure in front
+            of the operator, and a replacement rule would be a decision that re-derives the sample.
+
+Built:      `ForwardReturnFiller` tells the two states apart: a horizon is not yet elapsed where the
+            store holds fewer sessions after the subject's own than the horizon needs, and cannot
+            close where the store holds enough sessions after it and the subject's own series has
+            none of them. The second is counted per subject kind, printed on the run, and carried in
+            the fill's result, so a night whose controls were the ones that got halted says how many.
+            Nothing is written for it: an outcome that cannot be measured is not a row, on the terms
+            the recording floor sets for a figure the lab does not have.
+
+Verified:   Over an authored fill: a control whose bars stop three sessions after its own while the
+            market goes on for twenty is counted as unable to close at the ten-session horizon and
+            not as waiting, its subject's outcome is written, and the same control with a full
+            series is neither. One test added, all green. **The suite's existing not-yet-elapsed
+            test caught the first draft of the counter**: the market's session count was bounded
+            on the fill instant and not on the fill's own date, so a fill run for an early date read
+            every later session as reached and called a waiting horizon unable to close; it is
+            bounded on the date as the subject's own path is. The reconstructed read after part
+            eight states the same six panels as before it, and this part changes no value on any
+            row, so the population is where it was. Two
+            expectations are added at 5.8 for the two counters, both `DERIVED` noughts over a fixture
+            holding no session after any subject's own, and nothing else moved, as stated in advance.
+            `tools/ci.ps1` green on Windows, **31 steps, 952 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: 137 claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**; coverage examined 8,525 with 0 unexamined; 1,459 expectations, two changed since the last commit, being the two added.
+
+Carried:    **One row discharged on its visible half, nothing raised, and one question reported.**
+            The row raised at 3.5 about the horizon leaves the table with this commit. The table
+            reads thirty; five due before the freeze, all at 5.8; the operator's eight, unchanged.
+            The question of replacing a control whose series ended is put to the operator in this
+            run's report with the figure, and is not opened as a row, because opening one is the
+            sitting's act and not a build session's.

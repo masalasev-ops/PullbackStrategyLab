@@ -2204,3 +2204,8 @@ Why:  The first half is a sentence the decision superseded on 2026-08-31 and the
 Was:  The carried obligations table held thirty-two rows, with the control-draw row raised at 3.5 due at 5.8; seven due before the freeze; three repairs and four others.
 Now:  Thirty-one rows. The 3.5 draw row is discharged by the eighth part of 5.8 on 2026-09-03, measured first against the reconstructed read's own population and found to move nothing in it; six due before the freeze in each place the count is stated; two repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — BUILD_PLAN.md — cites Long and short are never pooled into one figure
+Was:  The carried obligations table held thirty-one rows, with the horizon-cannot-close row raised at 3.5 due at 5.8; six due before the freeze; two repairs and four others.
+Now:  Thirty rows. The 3.5 horizon row is discharged by the ninth part of 5.8 on 2026-09-03 on its visible half, the state counted apart per subject kind and the replacement question put to the operator with its figure; five due before the freeze in each place the count is stated; one repair and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it, and the half that would move the derivation's population is reported rather than taken.

@@ -150,7 +150,7 @@ public sealed partial class StatedCountsCheck
 
     /// <summary>The paragraph under the phase 5 table splitting the rows due before the freeze into
     /// repairs to a frozen figure and the rest, with both counts.</summary>
-    [GeneratedRegex(@"(?<repairs>[A-Za-z-]+) are repairs to stored figures[\s\S]{0,600}?The other (?<rest>[a-z-]+)\s+are not repairs",
+    [GeneratedRegex(@"(?<repairs>[A-Za-z-]+) (?:are repairs to stored figures|is a repair to a stored figure)[\s\S]{0,600}?The other (?<rest>[a-z-]+)\s+are not repairs",
         RegexOptions.CultureInvariant)]
     private static partial Regex RepairsAndTheRest();
 

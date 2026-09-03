@@ -773,6 +773,8 @@ public sealed class PhaseReplay : IDisposable
         Record("forward.setupsLaterThanTheCalendarStep", filled.SetupsLaterThanTheCalendarStep);
         Record("forward.controlsLaterThanTheCalendarStep", filled.ControlsLaterThanTheCalendarStep);
         Record("forward.excursionsUndefined", filled.ExcursionsUndefined);
+        Record("forward.setupHorizonsCannotClose", filled.SetupHorizonsCannotClose);
+        Record("forward.controlHorizonsCannotClose", filled.ControlHorizonsCannotClose);
 
         // 16b. The loss classification, at 21:35, after the forward returns because half of what it
         //      answers is one of them: what closed tonight, and what has since had a horizon close.
