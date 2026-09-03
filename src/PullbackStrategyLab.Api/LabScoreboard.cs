@@ -21,7 +21,7 @@ namespace PullbackStrategyLab.Api;
 /// </summary>
 public static class LabScoreboard
 {
-    public static ScoreboardResponse Read(StoreConnectionFactory connections, DateOnly asOf)
+    public static ScoreboardResponse Read(StoreConnectionFactory connections, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connections);
 
@@ -67,7 +67,7 @@ public static class LabScoreboard
              ORDER BY s.panel, s.direction
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

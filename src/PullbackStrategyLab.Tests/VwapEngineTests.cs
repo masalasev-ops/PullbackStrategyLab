@@ -207,7 +207,7 @@ public sealed class VwapEngineTests : IDisposable
         Assert.Equal(RunOutcome.Clean, result.Outcome);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        StoredVwapRun? run = AnchoredVwapReader.LatestRun(connection, Session, Session);
+        StoredVwapRun? run = AnchoredVwapReader.LatestRun(connection, Session, Session, SessionBoundaries.UsEquities);
 
         Assert.NotNull(run);
         Assert.Equal(0, run.AnchorsAsked);
@@ -236,13 +236,13 @@ public sealed class VwapEngineTests : IDisposable
     private StoredAnchoredVwap? Anchored(string ticker)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return AnchoredVwapReader.Latest(connection, ticker, PriorSession, Session);
+        return AnchoredVwapReader.Latest(connection, ticker, PriorSession, Session, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredIntradayBar> Bars(string ticker, DateOnly session, bool regularOnly = true)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return IntradayBarReader.Read(connection, ticker, session, Session, regularOnly);
+        return IntradayBarReader.Read(connection, ticker, session, Session, SessionBoundaries.UsEquities, regularOnly);
     }
 
     /// <summary>

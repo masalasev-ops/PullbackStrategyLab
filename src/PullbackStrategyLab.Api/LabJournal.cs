@@ -32,7 +32,7 @@ namespace PullbackStrategyLab.Api;
 /// </summary>
 public static class LabJournal
 {
-    public static JournalResponse Read(StoreConnectionFactory connections, DateOnly asOf)
+    public static JournalResponse Read(StoreConnectionFactory connections, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connections);
 
@@ -43,7 +43,7 @@ public static class LabJournal
 
         using SqliteConnection connection = connections.OpenReadOnly();
 
-        IReadOnlyList<StoredTrade> trades = TradeReader.AllClosed(connection, asOf);
+        IReadOnlyList<StoredTrade> trades = TradeReader.AllClosed(connection, asOf, sessionZone);
 
         if (trades.Count == 0)
         {
@@ -51,11 +51,11 @@ public static class LabJournal
         }
 
         Dictionary<string, StoredPlanAudit> audits = TradeReader
-            .AuditsOf(connection, [.. trades.Select(t => t.TradeId)], asOf)
+            .AuditsOf(connection, [.. trades.Select(t => t.TradeId)], asOf, sessionZone)
             .ToDictionary(a => a.TradeId, StringComparer.Ordinal);
 
         Dictionary<string, StoredLossClass> causes = LossClassReader
-            .All(connection, asOf)
+            .All(connection, asOf, sessionZone)
             .ToDictionary(l => l.TradeId, StringComparer.Ordinal);
 
         var longSide = new List<TradeResponse>();
@@ -79,7 +79,7 @@ public static class LabJournal
             Expectancy(shortSide),
             longSide,
             shortSide,
-            SlotsTheCapsCouldNotSee(connection, asOf));
+            SlotsTheCapsCouldNotSee(connection, asOf, sessionZone));
     }
 
     /// <summary>
@@ -141,7 +141,7 @@ public static class LabJournal
     /// table. It is exempt from the point-in-time list as a run row, and the figure it carries is a
     /// count of positions rather than a measurement of the market.
     /// </summary>
-    private static int SlotsTheCapsCouldNotSee(SqliteConnection connection, DateOnly asOf)
+    private static int SlotsTheCapsCouldNotSee(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -151,7 +151,7 @@ public static class LabJournal
             """;
 
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }

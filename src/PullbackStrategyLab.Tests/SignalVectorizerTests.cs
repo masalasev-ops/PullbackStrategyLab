@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Checks;
 using PullbackStrategyLab.Tests.Support;
@@ -215,7 +216,7 @@ public sealed class SignalVectorizerTests : IDisposable
     private string ValueOf(string setupId, string signal)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return SetupSignalReader.Read(connection, AsOf)
+        return SetupSignalReader.Read(connection, AsOf, SessionBoundaries.UsEquities)
             .Single(s => s.SetupId == setupId && s.SignalName == signal)
             .Value;
     }

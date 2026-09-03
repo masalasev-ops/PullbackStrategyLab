@@ -196,7 +196,7 @@ public sealed class PlanBuilder
             // A candidate whose bar or range the store does not hold is refused as an absent
             // geometry rather than planned on a stand-in, which cannot happen to a row the detector
             // flagged from those same figures and is counted where it would show if it did.
-            OrderPrices.Pair? prices = PricesFor(connection, setup, asOf);
+            OrderPrices.Pair? prices = PricesFor(connection, setup, asOf, _options.SessionZone);
 
             if (prices is null)
             {
@@ -266,14 +266,14 @@ public sealed class PlanBuilder
     /// unit the row was flagged in.
     /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
     /// </summary>
-    private static OrderPrices.Pair? PricesFor(SqliteConnection connection, StoredSetup setup, DateOnly asOf)
+    private static OrderPrices.Pair? PricesFor(SqliteConnection connection, StoredSetup setup, DateOnly asOf, string sessionZone)
     {
         StoredDailyBar? session = DailyBarReader.Latest(
             connection,
             setup.Ticker,
             asOf,
-            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities)));
-        StoredIndicators? figures = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf);
+            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(asOf, sessionZone)));
+        StoredIndicators? figures = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf, sessionZone);
 
         if (session is null || figures is null || figures.AverageDailyRange <= 0m || session.Close <= 0m)
         {

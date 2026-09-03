@@ -31,15 +31,15 @@ public sealed class IntradayBarReader
     /// deliberately: they are as unrecoverable as any other and a later question may want them.
     /// </summary>
     public IReadOnlyList<StoredIntradayBar> Read(
-        string ticker, DateOnly sessionDate, DateOnly asOf, bool regularOnly = true)
+        string ticker, DateOnly sessionDate, DateOnly asOf, string sessionZone, bool regularOnly = true)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, ticker, sessionDate, asOf, regularOnly);
+        return Read(connection, ticker, sessionDate, asOf, sessionZone, regularOnly);
     }
 
     /// <summary>The same read from a connection the caller already holds.</summary>
     public static IReadOnlyList<StoredIntradayBar> Read(
-        SqliteConnection connection, string ticker, DateOnly sessionDate, DateOnly asOf, bool regularOnly = true)
+        SqliteConnection connection, string ticker, DateOnly sessionDate, DateOnly asOf, string sessionZone, bool regularOnly = true)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -64,7 +64,7 @@ public sealed class IntradayBarReader
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
         command.Parameters.AddWithValue("@regular_only", regularOnly ? 1 : 0);
 
         var bars = new List<StoredIntradayBar>();
@@ -97,6 +97,7 @@ public sealed class IntradayBarReader
         IReadOnlyCollection<string> tickers,
         DateOnly sessionDate,
         DateOnly asOf,
+        string sessionZone,
         bool regularOnly = true)
     {
         ArgumentNullException.ThrowIfNull(connection);
@@ -138,7 +139,7 @@ public sealed class IntradayBarReader
 
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
         command.Parameters.AddWithValue("@regular_only", regularOnly ? 1 : 0);
 
         var bars = new List<StoredIntradayBar>();
@@ -161,7 +162,7 @@ public sealed class IntradayBarReader
     /// row either way.
     /// </summary>
     public static StoredIntradayFetch? LatestFetch(
-        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf)
+        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -177,7 +178,7 @@ public sealed class IntradayBarReader
             """;
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

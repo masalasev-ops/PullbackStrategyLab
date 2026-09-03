@@ -29,15 +29,15 @@ public sealed class AnchoredVwapReader
     }
 
     /// <summary>One name's level for one anchor, as last observed by the end of the as-of.</summary>
-    public StoredAnchoredVwap? Latest(string ticker, DateOnly anchorSession, DateOnly asOf)
+    public StoredAnchoredVwap? Latest(string ticker, DateOnly anchorSession, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Latest(connection, ticker, anchorSession, asOf);
+        return Latest(connection, ticker, anchorSession, asOf, sessionZone);
     }
 
     /// <summary>The same read from a connection the caller already holds.</summary>
     public static StoredAnchoredVwap? Latest(
-        SqliteConnection connection, string ticker, DateOnly anchorSession, DateOnly asOf)
+        SqliteConnection connection, string ticker, DateOnly anchorSession, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -58,7 +58,7 @@ public sealed class AnchoredVwapReader
         command.Parameters.AddWithValue("@anchor_session", StoreText.DateToStorageText(anchorSession));
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -82,7 +82,7 @@ public sealed class AnchoredVwapReader
     /// What the engine recorded for one session, as last observed by the end of the as-of, or null
     /// where none ran.
     /// </summary>
-    public static StoredVwapRun? LatestRun(SqliteConnection connection, DateOnly sessionDate, DateOnly asOf)
+    public static StoredVwapRun? LatestRun(SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -98,7 +98,7 @@ public sealed class AnchoredVwapReader
             """;
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 

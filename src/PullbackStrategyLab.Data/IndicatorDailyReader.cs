@@ -30,13 +30,13 @@ public sealed class IndicatorDailyReader
     /// One ticker's indicators for one session, as they stood at the end of
     /// <paramref name="asOf"/>, or null if nothing had been computed by then.
     /// </summary>
-    public StoredIndicators? Read(string ticker, DateOnly session, DateOnly asOf)
+    public StoredIndicators? Read(string ticker, DateOnly session, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, ticker, session, asOf);
+        return Read(connection, ticker, session, asOf, sessionZone);
     }
 
-    public static StoredIndicators? Read(SqliteConnection connection, string ticker, DateOnly session, DateOnly asOf)
+    public static StoredIndicators? Read(SqliteConnection connection, string ticker, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -54,7 +54,7 @@ public sealed class IndicatorDailyReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        command.Parameters.AddWithValue("@computed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@computed_before", EndOf(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
         return reader.Read() ? Map(reader) : null;
@@ -98,7 +98,7 @@ public sealed class IndicatorDailyReader
     /// see: A reader's signature does not establish point-in-time; the query does
     /// </summary>
     public static StoredIndicators? LatestBefore(
-        SqliteConnection connection, string ticker, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, string ticker, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -116,7 +116,7 @@ public sealed class IndicatorDailyReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        command.Parameters.AddWithValue("@computed_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@computed_before", EndOf(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
         return reader.Read() ? Map(reader) : null;
@@ -135,7 +135,7 @@ public sealed class IndicatorDailyReader
         StoreText.StorageTextToPrice(reader.GetString(9)),
         reader.IsDBNull(10) ? null : reader.GetString(10));
 
-    private static string EndOf(DateOnly date) => StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
+    private static string EndOf(DateOnly date, string sessionZone) => StoreText.EndOfSession(date, sessionZone);
 }
 
 /// <summary>

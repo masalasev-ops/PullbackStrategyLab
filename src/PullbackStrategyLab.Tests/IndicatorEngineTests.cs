@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -331,7 +332,7 @@ public sealed class IndicatorEngineTests : IDisposable
 
         // Stamped rather than cleared: the row stays and says when it was honoured.
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Empty(IndicatorRebuildReader.Open(connection, rebuiltOn));
+        Assert.Empty(IndicatorRebuildReader.Open(connection, rebuiltOn, SessionBoundaries.UsEquities));
         Assert.Equal(1, CountRows("indicator_rebuild"));
     }
 
@@ -472,7 +473,7 @@ public sealed class IndicatorEngineTests : IDisposable
         StoredIndicators original;
         using (SqliteConnection connection = _connections.OpenReadOnly())
         {
-            original = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(connection, "AAA", AsOf, AsOf));
+            original = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(connection, "AAA", AsOf, AsOf, SessionBoundaries.UsEquities));
         }
 
         // The action, a session later, and the vendor's adjusted series moves with it.
@@ -497,8 +498,8 @@ public sealed class IndicatorEngineTests : IDisposable
         // Two observations of the same session, and neither has replaced the other.
         Assert.Equal(2, CountRowsFor("AAA", AsOf));
 
-        StoredIndicators asItWasThen = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, AsOf));
-        StoredIndicators asItIsNow = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, rebuiltOn));
+        StoredIndicators asItWasThen = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, AsOf, SessionBoundaries.UsEquities));
+        StoredIndicators asItIsNow = Assert.IsType<StoredIndicators>(IndicatorDailyReader.Read(read, "AAA", AsOf, rebuiltOn, SessionBoundaries.UsEquities));
 
         Assert.Equal(original.EmaShort, asItWasThen.EmaShort);
         Assert.NotEqual(original.EmaShort, asItIsNow.EmaShort);

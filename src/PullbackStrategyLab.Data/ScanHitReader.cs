@@ -20,14 +20,14 @@ public sealed class ScanHitReader
         _connections = connections ?? throw new ArgumentNullException(nameof(connections));
 
     /// <summary>One night's hits on one scan, in rank order.</summary>
-    public IReadOnlyList<StoredScanHit> Read(DateOnly asOf, string scan)
+    public IReadOnlyList<StoredScanHit> Read(DateOnly asOf, string scan, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, asOf, scan);
+        return Read(connection, asOf, scan, sessionZone);
     }
 
     /// <summary>The same read, from a connection the caller already holds.</summary>
-    public static IReadOnlyList<StoredScanHit> Read(SqliteConnection connection, DateOnly asOf, string scan)
+    public static IReadOnlyList<StoredScanHit> Read(SqliteConnection connection, DateOnly asOf, string scan, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(scan);
@@ -42,7 +42,7 @@ public sealed class ScanHitReader
             """;
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
         command.Parameters.AddWithValue("@scan", scan);
 
         return Read(command);
@@ -60,7 +60,7 @@ public sealed class ScanHitReader
         SqliteConnection connection,
         string ticker,
         DateOnly asOf,
-        DateOnly from)
+        DateOnly from, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -77,7 +77,7 @@ public sealed class ScanHitReader
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Read(command);
     }

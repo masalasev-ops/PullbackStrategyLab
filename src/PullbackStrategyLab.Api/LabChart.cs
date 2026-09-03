@@ -44,7 +44,7 @@ public static class LabChart
         string ticker,
         DateOnly asOf,
         int sessions,
-        DateTimeOffset observedBefore)
+        DateTimeOffset observedBefore, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connections);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -106,7 +106,7 @@ public static class LabChart
             period,
             [.. Averages.ExponentialSeries(adjustedClose, period, WarmupSessions).Skip(drawnFrom)]);
 
-        StoredIndicators? readout = IndicatorDailyReader.Read(connection, ticker, asOf, asOf);
+        StoredIndicators? readout = IndicatorDailyReader.Read(connection, ticker, asOf, asOf, sessionZone);
 
         return new ChartResponse(
             ticker,

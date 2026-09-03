@@ -482,26 +482,26 @@ public sealed class TradeJournalTests : IDisposable
     private IReadOnlyList<StoredTrade> Trades(DateOnly session, DateOnly? asOf = null)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return TradeReader.ClosedIn(connection, session, asOf ?? ThirdSession);
+        return TradeReader.ClosedIn(connection, session, asOf ?? ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredPlanAudit> Audits(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        string[] ids = [.. TradeReader.ClosedIn(connection, session, ThirdSession).Select(t => t.TradeId)];
-        return TradeReader.AuditsOf(connection, ids, ThirdSession);
+        string[] ids = [.. TradeReader.ClosedIn(connection, session, ThirdSession, SessionBoundaries.UsEquities).Select(t => t.TradeId)];
+        return TradeReader.AuditsOf(connection, ids, ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredPosition> Positions(DateOnly openedSession)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.ForOpenedSession(connection, openedSession, ThirdSession);
+        return PositionReader.ForOpenedSession(connection, openedSession, ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredFill> Fills(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.FillsOf(connection, session, ThirdSession);
+        return PositionReader.FillsOf(connection, session, ThirdSession, SessionBoundaries.UsEquities);
     }
 
     private static string SetupIdOf(string ticker, string direction, DateOnly evening) =>

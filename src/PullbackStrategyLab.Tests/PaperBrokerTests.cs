@@ -519,19 +519,19 @@ public sealed class PaperBrokerTests : IDisposable
     private IReadOnlyList<StoredPosition> Positions(DateOnly openedSession, DateOnly? asOf = null)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? NextSession.AddDays(1));
+        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? NextSession.AddDays(1), SessionBoundaries.UsEquities);
     }
 
     private int PositionsOpenComingInto(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.OpenComingInto(connection, session, session).Count;
+        return PositionReader.OpenComingInto(connection, session, session, SessionBoundaries.UsEquities).Count;
     }
 
     private IReadOnlyList<StoredFill> Fills(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.FillsOf(connection, session, NextSession.AddDays(1));
+        return PositionReader.FillsOf(connection, session, NextSession.AddDays(1), SessionBoundaries.UsEquities);
     }
 
     private static string SetupIdOf(string ticker, string direction, DateOnly evening) =>

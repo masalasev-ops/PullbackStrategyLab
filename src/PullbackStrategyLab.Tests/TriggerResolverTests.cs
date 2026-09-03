@@ -167,7 +167,7 @@ public sealed class TriggerResolverTests : IDisposable
 
         using SqliteConnection connection = factory.OpenReadOnly();
         DateTimeOffset? overTheTruncatedDay =
-            TriggerResolutionReader.ForLiveSession(connection, Session, Session).Single().TouchedAt;
+            TriggerResolutionReader.ForLiveSession(connection, Session, Session, SessionBoundaries.UsEquities).Single().TouchedAt;
 
         Assert.Equal(At(new TimeOnly(9, 31)), overTheWholeDay);
         Assert.Equal(overTheWholeDay, overTheTruncatedDay);
@@ -188,8 +188,8 @@ public sealed class TriggerResolverTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(IntradayBarReader.ReadSession(connection, ["AAPL"], Session, Session));
-        Assert.Single(IntradayBarReader.ReadSession(connection, ["AAPL"], Session, Session.AddDays(2)));
+        Assert.Empty(IntradayBarReader.ReadSession(connection, ["AAPL"], Session, Session, SessionBoundaries.UsEquities));
+        Assert.Single(IntradayBarReader.ReadSession(connection, ["AAPL"], Session, Session.AddDays(2), SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -451,9 +451,9 @@ public sealed class TriggerResolverTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(-1)));
-        Assert.Single(TriggerResolutionReader.ForLiveSession(connection, Session, Session));
-        Assert.Single(TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(1)));
+        Assert.Empty(TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(-1), SessionBoundaries.UsEquities));
+        Assert.Single(TriggerResolutionReader.ForLiveSession(connection, Session, Session, SessionBoundaries.UsEquities));
+        Assert.Single(TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(1), SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -492,7 +492,7 @@ public sealed class TriggerResolverTests : IDisposable
     private IReadOnlyList<StoredTriggerResolution> Resolutions()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(1));
+        return TriggerResolutionReader.ForLiveSession(connection, Session, Session.AddDays(1), SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredTriggerRun> Runs()

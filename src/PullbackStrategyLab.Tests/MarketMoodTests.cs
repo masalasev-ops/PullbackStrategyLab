@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Measurement;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -93,9 +94,9 @@ public sealed class MarketMoodTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenWrite();
 
-        Assert.Empty(IndexBarReader.Read(connection, "SPY", Session, RegimeLabeler.HistorySessions));
+        Assert.Empty(IndexBarReader.Read(connection, "SPY", Session, RegimeLabeler.HistorySessions, SessionBoundaries.UsEquities));
         Assert.NotEmpty(IndexBarReader.Read(
-            connection, "SPY", Session, RegimeLabeler.HistorySessions, BackfilledAt));
+            connection, "SPY", Session, RegimeLabeler.HistorySessions, BackfilledAt, SessionBoundaries.UsEquities));
 
         MoodScore unbounded = MarketMood.Of(
             NightlyTrackers(connection), Session, RegimeLabeler.HistorySessions, 12, 4);
@@ -109,7 +110,7 @@ public sealed class MarketMoodTests : IDisposable
         [.. Trackers.Select(symbol =>
         {
             IReadOnlyList<StoredDailyBar> bars =
-                IndexBarReader.Read(connection, symbol, Session, RegimeLabeler.HistorySessions);
+                IndexBarReader.Read(connection, symbol, Session, RegimeLabeler.HistorySessions, SessionBoundaries.UsEquities);
             return new MarketMood.Tracker(
                 [.. bars.Select(b => b.AdjustedClose)], bars.Count == 0 ? default : bars[^1].BarDate);
         })];
@@ -118,7 +119,7 @@ public sealed class MarketMoodTests : IDisposable
         [.. Trackers.Select(symbol =>
         {
             IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(
-                connection, symbol, Session, RegimeLabeler.HistorySessions, BackfilledAt);
+                connection, symbol, Session, RegimeLabeler.HistorySessions, BackfilledAt, SessionBoundaries.UsEquities);
             return new MarketMood.Tracker(
                 [.. bars.Select(b => b.AdjustedClose)], bars.Count == 0 ? default : bars[^1].BarDate);
         })];

@@ -132,7 +132,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | Check | Runs | Asserts |
 |---|---|---|
 | `writer-ownership` | every CI run | Every store has exactly one declared writer per operation, verified in both directions against SCHEMA |
-| `point-in-time` | every CI run | No read answers with an observation the lab could not have had by its own date. Three halves: every public read on a store reader takes a date, every hand-written statement selecting from a stamped table bounds that stamp, and a row observed after the as-of is invisible until the as-of moves past it |
+| `point-in-time` | every CI run | No read answers with an observation the lab could not have had by its own date. Three halves: every public read on a store reader takes a date, every hand-written statement selecting from a stamped table bounds that stamp, and a row observed after the as-of is invisible until the as-of moves past it. And no store reader names the session zone constant, so every bound is computed in the zone the reader is given |
 | `decision-resolves` | every CI run | Every decision name cited in code or docs matches a bold decision name in DECISIONS.md exactly, and no two decisions share a name |
 | `no-superseded-citation` | every CI run | No cited name resolves to a decision under "Previously decided" |
 | `changelog-reconciles` | every CI run | Every commit that deleted a line from a spec also changed `CHANGELOG.md`, read from the history. Ten phase-3 commits are exempt by hash |

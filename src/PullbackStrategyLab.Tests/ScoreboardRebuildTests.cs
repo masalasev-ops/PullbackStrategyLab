@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -144,7 +145,7 @@ public sealed class ScoreboardRebuildTests : IDisposable
 
         // Read as of the day the rebuild ran, the rebuilt generation, and exactly one row per panel.
         Assert.Equal("1", SetupsOnFile(asOf: AsOf.AddDays(1)));
-        ScoreboardResponse afterwards = LabScoreboard.Read(_connections, AsOf.AddDays(1));
+        ScoreboardResponse afterwards = LabScoreboard.Read(_connections, AsOf.AddDays(1), SessionBoundaries.UsEquities);
         Assert.Equal(first.Attempted, afterwards.Health.Count + afterwards.Long.Count + afterwards.Short.Count);
     }
 
@@ -255,7 +256,7 @@ public sealed class ScoreboardRebuildTests : IDisposable
 
     /// <summary>Band 0's setups-on-file figure, read through the page's own reader as of a date.</summary>
     private string SetupsOnFile(DateOnly asOf) =>
-        LabScoreboard.Read(_connections, asOf).Health
+        LabScoreboard.Read(_connections, asOf, SessionBoundaries.UsEquities).Health
             .Single(p => string.Equals(p.Name, "band0.setupsOnFile", StringComparison.Ordinal))
             .Figure;
 

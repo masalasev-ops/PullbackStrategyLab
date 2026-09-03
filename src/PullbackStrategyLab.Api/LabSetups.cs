@@ -58,6 +58,7 @@ public sealed class LabSetups
     public SetupsResponse Read(
         DateOnly asOf,
         DateTimeOffset observedBefore,
+        string sessionZone,
         string? failedCheck = null)
     {
         StoreConnectionFactory connections = _connections;
@@ -87,7 +88,7 @@ public sealed class LabSetups
         // Reading by live session would return the plans written last night, which is the set every
         // row on this page is not about.
         IReadOnlyDictionary<string, StoredTradePlan> planned = TradePlanReader
-            .WrittenOn(connection, asOf, asOf)
+            .WrittenOn(connection, asOf, asOf, sessionZone)
             .ToDictionary(plan => plan.SetupId, StringComparer.Ordinal);
 
         SetupView[] all =

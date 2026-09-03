@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
@@ -52,12 +53,12 @@ public sealed class ScanHitStampTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Single(ScanHitReader.Read(connection, Session, "gainer"));
-        Assert.Empty(ScanHitReader.ForTicker(connection, "AAA", Later, Session));
+        Assert.Single(ScanHitReader.Read(connection, Session, "gainer", SessionBoundaries.UsEquities));
+        Assert.Empty(ScanHitReader.ForTicker(connection, "AAA", Later, Session, SessionBoundaries.UsEquities));
 
         // And its own session still finds it through the window read, so the refusal is about the
         // reading session rather than about which method asked.
-        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Session, Session));
+        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Session, Session, SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -71,7 +72,7 @@ public sealed class ScanHitStampTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Later, Session));
+        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Later, Session, SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -89,10 +90,10 @@ public sealed class ScanHitStampTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(ScanHitReader.Read(connection, Session, "gainer"));
+        Assert.Empty(ScanHitReader.Read(connection, Session, "gainer", SessionBoundaries.UsEquities));
 
         // And a later session sees it, so the row is not simply lost.
-        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Later, Session));
+        Assert.Single(ScanHitReader.ForTicker(connection, "AAA", Later, Session, SessionBoundaries.UsEquities));
     }
 
     /// <summary>

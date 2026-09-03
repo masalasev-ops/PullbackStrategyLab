@@ -38,7 +38,7 @@ public static class LabStatus
         // quota day rather than as a UTC date because the run beside it is bounded on a session, and
         // the two windows do not have the same edges.
         int callsUsed = RunLogger.CallsUsedOn(connection, VendorQuotaDay.Containing(clock.UtcNow));
-        OpenPositions? book = BookAt(connection);
+        OpenPositions? book = BookAt(connection, sessionZone);
 
         return new StatusResponse(
             "ready",
@@ -73,7 +73,7 @@ public static class LabStatus
     /// what would be lost, not what was meant to be.
     /// see: Equity is a fixed $100,000 notional that never compounds
     /// </summary>
-    private static OpenPositions? BookAt(SqliteConnection connection)
+    private static OpenPositions? BookAt(SqliteConnection connection, string sessionZone)
     {
         string? session = LatestSession(connection);
 
@@ -83,7 +83,7 @@ public static class LabStatus
         }
 
         IReadOnlyList<StoredPosition> open =
-            PositionReader.OpenAt(connection, StoreText.StorageTextToDate(session));
+            PositionReader.OpenAt(connection, StoreText.StorageTextToDate(session), sessionZone);
 
         decimal risk = open.Sum(p => p.RiskRealised ?? 0m);
 

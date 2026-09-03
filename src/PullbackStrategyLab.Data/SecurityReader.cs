@@ -30,7 +30,7 @@ public static class SecurityReader
     /// at all, so a name nobody has looked up is the one place an absent figure must not become a
     /// tradable verdict.
     /// </summary>
-    public static decimal? MarketCap(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static decimal? MarketCap(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -44,14 +44,14 @@ public static class SecurityReader
                AND sector_resolved_at <= @resolved_before
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
-        command.Parameters.AddWithValue("@resolved_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@resolved_before", EndOf(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
         return reader.Read() ? StoreText.StorageTextToPrice(reader.GetString(0)) : null;
     }
 
     /// <summary>One name's industry as it stood at the end of <paramref name="asOf"/>, or null.</summary>
-    public static string? Industry(SqliteConnection connection, string ticker, DateOnly asOf)
+    public static string? Industry(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
@@ -65,11 +65,11 @@ public static class SecurityReader
                AND sector_resolved_at <= @resolved_before
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
-        command.Parameters.AddWithValue("@resolved_before", EndOf(asOf));
+        command.Parameters.AddWithValue("@resolved_before", EndOf(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
         return reader.Read() ? reader.GetString(0) : null;
     }
 
-    private static string EndOf(DateOnly date) => StoreText.EndOfSession(date, SessionBoundaries.UsEquities);
+    private static string EndOf(DateOnly date, string sessionZone) => StoreText.EndOfSession(date, sessionZone);
 }

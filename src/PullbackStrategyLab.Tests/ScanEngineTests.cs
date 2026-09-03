@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Indicators;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -55,8 +56,8 @@ public sealed class ScanEngineTests : IDisposable
         Stage().Scan(AsOf);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        IReadOnlyList<StoredScanHit> laggards = ScanHitReader.Read(connection, AsOf, "laggard");
-        IReadOnlyList<StoredScanHit> leaders = ScanHitReader.Read(connection, AsOf, "leader");
+        IReadOnlyList<StoredScanHit> laggards = ScanHitReader.Read(connection, AsOf, "laggard", SessionBoundaries.UsEquities);
+        IReadOnlyList<StoredScanHit> leaders = ScanHitReader.Read(connection, AsOf, "leader", SessionBoundaries.UsEquities);
 
         Assert.Equal("FALLER", laggards[0].Ticker);
         Assert.True(laggards[0].Magnitude < 0m);

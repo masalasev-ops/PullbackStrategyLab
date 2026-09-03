@@ -21,14 +21,14 @@ public sealed class SetupSignalReader
         _connections = connections ?? throw new ArgumentNullException(nameof(connections));
 
     /// <summary>Every signal frozen against the setups of one session, by setup then name.</summary>
-    public IReadOnlyList<StoredSetupSignal> Read(DateOnly asOf)
+    public IReadOnlyList<StoredSetupSignal> Read(DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, asOf);
+        return Read(connection, asOf, sessionZone);
     }
 
     /// <summary>The same read, from a connection the caller already holds.</summary>
-    public static IReadOnlyList<StoredSetupSignal> Read(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<StoredSetupSignal> Read(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -48,7 +48,7 @@ public sealed class SetupSignalReader
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue(
-            "@computed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@computed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         var signals = new List<StoredSetupSignal>();
         using SqliteDataReader reader = command.ExecuteReader();

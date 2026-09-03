@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -95,8 +96,8 @@ public sealed class IndexIngestorTests : IDisposable
 
         // The same property the daily bars hold, and the reason is the same: a replay of the
         // night the lab acted has to see what the lab saw.
-        Assert.Equal(400m, IndexBarReader.Read(connection, "SPY", AsOf, 5).Single().Close);
-        Assert.Equal(401m, IndexBarReader.Read(connection, "SPY", AsOf.AddDays(2), 5).Single().Close);
+        Assert.Equal(400m, IndexBarReader.Read(connection, "SPY", AsOf, 5, SessionBoundaries.UsEquities).Single().Close);
+        Assert.Equal(401m, IndexBarReader.Read(connection, "SPY", AsOf.AddDays(2), 5, SessionBoundaries.UsEquities).Single().Close);
     }
 
     [Fact]

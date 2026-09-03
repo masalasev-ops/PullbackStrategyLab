@@ -31,7 +31,7 @@ namespace PullbackStrategyLab.Api;
 public static class LabTradeChart
 {
     public static TradeChartResponse Read(
-        StoreConnectionFactory connections, string tradeId, DateOnly asOf)
+        StoreConnectionFactory connections, string tradeId, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connections);
         ArgumentException.ThrowIfNullOrWhiteSpace(tradeId);
@@ -43,7 +43,7 @@ public static class LabTradeChart
 
         using SqliteConnection connection = connections.OpenReadOnly();
 
-        StoredTrade? trade = TradeReader.AllClosed(connection, asOf)
+        StoredTrade? trade = TradeReader.AllClosed(connection, asOf, sessionZone)
             .FirstOrDefault(t => string.Equals(t.TradeId, tradeId, StringComparison.Ordinal));
 
         if (trade is null)
@@ -52,10 +52,10 @@ public static class LabTradeChart
         }
 
         IReadOnlyList<StoredTradePlan> plans =
-            TradePlanReader.ForSetups(connection, [trade.SetupId], asOf);
+            TradePlanReader.ForSetups(connection, [trade.SetupId], asOf, sessionZone);
 
         IReadOnlyList<StoredIntradayBar> bars = IntradayBarReader.ReadSession(
-            connection, [trade.Ticker], trade.ClosedSession, asOf);
+            connection, [trade.Ticker], trade.ClosedSession, asOf, sessionZone);
 
         if (bars.Count == 0)
         {

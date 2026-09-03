@@ -27,20 +27,20 @@ public sealed class SpreadSnapshotReader
     }
 
     /// <summary>One name's spreads for one session, as last observed by the end of the as-of.</summary>
-    public SessionSpread Read(string ticker, DateOnly sessionDate, DateOnly asOf)
+    public SessionSpread Read(string ticker, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return Read(connection, ticker, sessionDate, asOf);
+        return Read(connection, ticker, sessionDate, asOf, sessionZone);
     }
 
     /// <summary>The same read from a connection the caller already holds.</summary>
     public static SessionSpread Read(
-        SqliteConnection connection, string ticker, DateOnly sessionDate, DateOnly asOf)
+        SqliteConnection connection, string ticker, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
 
-        SamplingOf(connection, sessionDate, asOf).ThrowIfNothingWasSampled(sessionDate);
+        SamplingOf(connection, sessionDate, asOf, sessionZone).ThrowIfNothingWasSampled(sessionDate);
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -61,7 +61,7 @@ public sealed class SpreadSnapshotReader
             """;
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, Core.Time.SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         var samples = new List<SpreadSample>();
         using SqliteDataReader reader = command.ExecuteReader();
@@ -80,7 +80,7 @@ public sealed class SpreadSnapshotReader
                 reader.IsDBNull(8) ? null : StoreText.StorageTextToTimestamp(reader.GetString(8))));
         }
 
-        return new SessionSpread(ticker, sessionDate, samples, PassesOf(connection, sessionDate, asOf));
+        return new SessionSpread(ticker, sessionDate, samples, PassesOf(connection, sessionDate, asOf, sessionZone));
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public sealed class SpreadSnapshotReader
     /// tell apart.
     /// </summary>
     public static IReadOnlyList<string> PassesOf(
-        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf)
+        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -105,7 +105,7 @@ public sealed class SpreadSnapshotReader
              ORDER BY pass;
             """;
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
-        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, Core.Time.SessionBoundaries.UsEquities));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         var passes = new List<string>();
         using SqliteDataReader reader = command.ExecuteReader();
@@ -125,8 +125,8 @@ public sealed class SpreadSnapshotReader
     /// sampled at all without naming a stock, which is the question the failure behaviour is about.
     /// </summary>
     public static SessionSampling SamplingOf(
-        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf) =>
-        new(sessionDate, PassesOf(connection, sessionDate, asOf));
+        SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone) =>
+        new(sessionDate, PassesOf(connection, sessionDate, asOf, sessionZone));
 }
 
 /// <summary>

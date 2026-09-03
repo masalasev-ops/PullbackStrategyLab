@@ -114,7 +114,7 @@ public sealed class RiskGate
         // Earliest trigger first, ticker breaking a tie, which is the reader's own order and is the
         // order the caps have to be applied in.
         IReadOnlyList<StoredTriggerResolution> resolutions =
-            TriggerResolutionReader.ForLiveSession(connection, sessionDate, sessionDate);
+            TriggerResolutionReader.ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone);
 
         StoredTriggerResolution[] triggers =
             [.. resolutions.Where(r => string.Equals(r.Outcome, "touched", StringComparison.Ordinal))];
@@ -128,11 +128,11 @@ public sealed class RiskGate
         }
 
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForLiveSession(connection, sessionDate, sessionDate)
+            .ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         var tally = new Tally();
-        OpenBook book = BookComingInto(connection, sessionDate);
+        OpenBook book = BookComingInto(connection, sessionDate, _options.SessionZone);
         string? stoppedBecause = null;
 
         using SqliteTransaction transaction = connection.BeginTransaction();
@@ -196,12 +196,12 @@ public sealed class RiskGate
     /// price it actually filled at to the give-up point the plan named, because that is what would
     /// be lost rather than what was intended to be.
     /// </summary>
-    private static OpenBook BookComingInto(SqliteConnection connection, DateOnly sessionDate)
+    private static OpenBook BookComingInto(SqliteConnection connection, DateOnly sessionDate, string sessionZone)
     {
         OpenBook book = OpenBook.Empty;
 
         foreach (StoredPosition position in
-                 PositionReader.OpenComingInto(connection, sessionDate, sessionDate))
+                 PositionReader.OpenComingInto(connection, sessionDate, sessionDate, sessionZone))
         {
             book = book.With(position.Direction, position.RiskRealised ?? 0m);
         }

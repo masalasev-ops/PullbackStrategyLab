@@ -457,8 +457,8 @@ public sealed class RiskGateTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(TradeOrderReader.ForLiveSession(connection, Session, Session.AddDays(-1)));
-        Assert.Single(TradeOrderReader.ForLiveSession(connection, Session, Session));
+        Assert.Empty(TradeOrderReader.ForLiveSession(connection, Session, Session.AddDays(-1), SessionBoundaries.UsEquities));
+        Assert.Single(TradeOrderReader.ForLiveSession(connection, Session, Session, SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -484,7 +484,7 @@ public sealed class RiskGateTests : IDisposable
     private IReadOnlyList<StoredTradeOrder> Orders()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return TradeOrderReader.ForLiveSession(connection, Session, Session);
+        return TradeOrderReader.ForLiveSession(connection, Session, Session, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredOrderRun> Runs()

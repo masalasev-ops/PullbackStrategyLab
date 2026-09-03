@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -136,8 +137,8 @@ public sealed class DailyBarIngestorTests : IDisposable
 
         // The single most important property in the system. A read as of the night itself sees
         // 100, because that is what the lab had; a read as of today sees the correction.
-        Assert.Equal(100m, reader.Read("AAA", BarDate, sessions: 5).Single().Close);
-        Assert.Equal(101m, reader.Read("AAA", BarDate.AddDays(2), sessions: 5).Single().Close);
+        Assert.Equal(100m, reader.Read("AAA", BarDate, sessions: 5, SessionBoundaries.UsEquities).Single().Close);
+        Assert.Equal(101m, reader.Read("AAA", BarDate.AddDays(2), sessions: 5, SessionBoundaries.UsEquities).Single().Close);
     }
 
     [Fact]
@@ -154,8 +155,34 @@ public sealed class DailyBarIngestorTests : IDisposable
 
         var reader = new DailyBarReader(_connections);
 
-        Assert.Single(reader.Read("AAA", BarDate, sessions: 10));
-        Assert.Equal(2, reader.Read("AAA", BarDate.AddDays(1), sessions: 10).Count);
+        Assert.Single(reader.Read("AAA", BarDate, sessions: 10, SessionBoundaries.UsEquities));
+        Assert.Equal(2, reader.Read("AAA", BarDate.AddDays(1), sessions: 10, SessionBoundaries.UsEquities).Count);
+    }
+
+    /// <summary>
+    /// A read bounds on the zone it is given, and the zone changes the answer.
+    ///
+    /// <b>The row raised at 3.9, as a behaviour rather than a grep.</b> A store reader is a static
+    /// helper with no configuration to read, so nine methods across five readers, twenty-two across
+    /// sixteen by 5.8, passed a constant where the stages passed the configured zone, and the two
+    /// were the same string only because the option defaults to the constant. The bar here is
+    /// observed at 21:30Z on its own date: inside the session when the bound is computed in Eastern
+    /// time, whose day ends at 04:00Z the next morning, and after it when computed in Tokyo, whose
+    /// day ended at 15:00Z. A reader that named a constant would give the Eastern answer to both.
+    /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
+    /// </summary>
+    [Fact]
+    public async Task A_read_bounds_on_the_zone_it_is_given_and_not_on_a_constant()
+    {
+        var vendor = new FakeMarketDataVendor();
+        vendor.Bar(BarDate, "AAA", close: 100m, volume: 1_000);
+
+        await Ingestor(vendor).IngestAsync(BarDate);
+
+        var reader = new DailyBarReader(_connections);
+
+        Assert.Single(reader.Read("AAA", BarDate, sessions: 10, "America/New_York"));
+        Assert.Empty(reader.Read("AAA", BarDate, sessions: 10, "Asia/Tokyo"));
     }
 
     [Fact]
@@ -170,7 +197,7 @@ public sealed class DailyBarIngestorTests : IDisposable
             await ingestor.IngestAsync(d);
         }
 
-        IReadOnlyList<StoredDailyBar> bars = new DailyBarReader(_connections).Read("AAA", BarDate, sessions: 3);
+        IReadOnlyList<StoredDailyBar> bars = new DailyBarReader(_connections).Read("AAA", BarDate, sessions: 3, SessionBoundaries.UsEquities);
 
         Assert.Equal(3, bars.Count);
         Assert.True(bars[0].BarDate < bars[1].BarDate && bars[1].BarDate < bars[2].BarDate);

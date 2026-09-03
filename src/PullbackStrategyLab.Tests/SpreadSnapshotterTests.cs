@@ -155,7 +155,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         // The row is written anyway, which is what keeps a session that ran and asked for nothing
         // distinguishable from a session nobody sampled.
         using SqliteConnection connection = _connections.OpenReadOnly();
-        Assert.Single(SpreadSnapshotReader.PassesOf(connection, Session, Session));
+        Assert.Single(SpreadSnapshotReader.PassesOf(connection, Session, Session, SessionBoundaries.UsEquities));
     }
 
     // ---- the population ------------------------------------------------------------------
@@ -206,7 +206,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         await Snapshotter(vendor).SnapshotAsync(Session, SpreadSnapshotter.AfterOpenPass);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, Session, Session);
+        SessionSampling sampling = SpreadSnapshotReader.SamplingOf(connection, Session, Session, SessionBoundaries.UsEquities);
 
         Assert.True(sampling.IsDegraded);
         Assert.False(sampling.IsComplete);
@@ -214,7 +214,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         Assert.Equal([SpreadSnapshotter.AfterOpenPass], sampling.Passes);
 
         // Degraded is not an error. One sample is a real answer and the reader returns it.
-        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session);
+        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
         Assert.Single(spread.Usable);
     }
 
@@ -233,7 +233,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         await Snapshotter(vendor).SnapshotAsync(Session, SpreadSnapshotter.BeforeClosePass);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session);
+        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
 
         Assert.True(spread.Sampling.IsComplete);
         Assert.Equal(2, spread.Usable.Count);
@@ -249,10 +249,10 @@ public sealed class SpreadSnapshotterTests : IDisposable
         using SqliteConnection connection = _connections.OpenReadOnly();
 
         InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
-            () => SpreadSnapshotReader.Read(connection, "AAPL", Session, Session));
+            () => SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities));
 
         Assert.Contains("hole in the evidence", refused.Message, StringComparison.Ordinal);
-        Assert.True(SpreadSnapshotReader.SamplingOf(connection, Session, Session).IsUnsampled);
+        Assert.True(SpreadSnapshotReader.SamplingOf(connection, Session, Session, SessionBoundaries.UsEquities).IsUnsampled);
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         Assert.Equal(1, result.Unquoted);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session);
+        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
 
         SpreadSample sample = Assert.Single(spread.Samples);
         Assert.Null(sample.SpreadBasisPoints);
@@ -375,7 +375,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         await Snapshotter(vendor).SnapshotAsync(Session, SpreadSnapshotter.AfterOpenPass);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session);
+        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
 
         Assert.Null(Assert.Single(spread.Samples).SpreadBasisPoints);
     }
@@ -428,7 +428,7 @@ public sealed class SpreadSnapshotterTests : IDisposable
         await Snapshotter(vendor).SnapshotAsync(Session, SpreadSnapshotter.BeforeClosePass);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
-        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session);
+        SessionSpread spread = SpreadSnapshotReader.Read(connection, "AAPL", Session, Session, SessionBoundaries.UsEquities);
 
         Assert.Equal(
             [SpreadSnapshotter.AfterOpenPass, SpreadSnapshotter.BeforeClosePass],

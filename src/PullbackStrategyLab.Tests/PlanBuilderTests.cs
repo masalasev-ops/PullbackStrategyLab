@@ -343,13 +343,13 @@ public sealed class PlanBuilderTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening));
-        Assert.Single(TradePlanReader.ForLiveSession(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26)));
+        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening, SessionBoundaries.UsEquities));
+        Assert.Single(TradePlanReader.ForLiveSession(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
 
         // The evening is not the live session, so asking the wrong question returns nothing rather
         // than the same row twice.
-        Assert.Empty(TradePlanReader.ForLiveSession(connection, Evening, Evening));
-        Assert.Empty(TradePlanReader.WrittenOn(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26)));
+        Assert.Empty(TradePlanReader.ForLiveSession(connection, Evening, Evening, SessionBoundaries.UsEquities));
+        Assert.Empty(TradePlanReader.WrittenOn(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
     }
 
     /// <summary>
@@ -370,9 +370,9 @@ public sealed class PlanBuilderTests : IDisposable
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
-        Assert.Empty(TradePlanReader.WrittenOn(connection, Evening, Evening.AddDays(-1)));
-        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening));
-        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening.AddDays(1)));
+        Assert.Empty(TradePlanReader.WrittenOn(connection, Evening, Evening.AddDays(-1), SessionBoundaries.UsEquities));
+        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening, SessionBoundaries.UsEquities));
+        Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening.AddDays(1), SessionBoundaries.UsEquities));
     }
 
     // ---- the population ------------------------------------------------------------------
@@ -460,7 +460,7 @@ public sealed class PlanBuilderTests : IDisposable
     private IReadOnlyList<StoredTradePlan> Plans()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return TradePlanReader.WrittenOn(connection, Evening, Evening);
+        return TradePlanReader.WrittenOn(connection, Evening, Evening, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredPlanRun> Runs()

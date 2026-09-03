@@ -22,10 +22,10 @@ public sealed class TradeOrderReader
     public TradeOrderReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The orders of <paramref name="liveSession"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTradeOrder> ForLiveSession(DateOnly liveSession, DateOnly asOf)
+    public IReadOnlyList<StoredTradeOrder> ForLiveSession(DateOnly liveSession, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ForLiveSession(connection, liveSession, asOf);
+        return ForLiveSession(connection, liveSession, asOf, sessionZone);
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public sealed class TradeOrderReader
     /// see: Plans are resting orders and fills go in time order when the caps bind
     /// </summary>
     public static IReadOnlyList<StoredTradeOrder> ForLiveSession(
-        SqliteConnection connection, DateOnly liveSession, DateOnly asOf)
+        SqliteConnection connection, DateOnly liveSession, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -53,7 +53,7 @@ public sealed class TradeOrderReader
 
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Materialise(command);
     }
@@ -95,7 +95,7 @@ public sealed class TradeOrderReader
     /// was added for one checkpoint earlier.
     /// </summary>
     public static IReadOnlyList<StoredTradeOrder> ForSetups(
-        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf)
+        SqliteConnection connection, IReadOnlyCollection<string> setupIds, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(setupIds);
@@ -125,7 +125,7 @@ public sealed class TradeOrderReader
         }
 
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         return Materialise(command);
     }

@@ -653,7 +653,7 @@ public sealed class LossClassifierTests : IDisposable
     private StoredTrade Trade(string tradeId, DateOnly asOf)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return TradeReader.AllClosed(connection, asOf).Single(t => t.TradeId == tradeId);
+        return TradeReader.AllClosed(connection, asOf, SessionBoundaries.UsEquities).Single(t => t.TradeId == tradeId);
     }
 
     /// <summary>A long opened and stopped out in one session, which is the ordinary loss.</summary>
@@ -737,7 +737,7 @@ public sealed class LossClassifierTests : IDisposable
     private IReadOnlyList<StoredLossClass> Losses(DateOnly session, DateOnly? asOf = null)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return LossClassReader.ClosedIn(connection, session, asOf ?? Later);
+        return LossClassReader.ClosedIn(connection, session, asOf ?? Later, SessionBoundaries.UsEquities);
     }
 
     private static string SetupIdOf(string ticker, string direction) =>

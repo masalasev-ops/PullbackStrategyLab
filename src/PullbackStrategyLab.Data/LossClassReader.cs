@@ -32,15 +32,15 @@ public sealed class LossClassReader
     public LossClassReader(StoreConnectionFactory connections) => _connections = connections;
 
     /// <summary>The losses closed in <paramref name="session"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredLossClass> ClosedIn(DateOnly session, DateOnly asOf)
+    public IReadOnlyList<StoredLossClass> ClosedIn(DateOnly session, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return ClosedIn(connection, session, asOf);
+        return ClosedIn(connection, session, asOf, sessionZone);
     }
 
     /// <summary>The same read from a connection the caller already holds.</summary>
     public static IReadOnlyList<StoredLossClass> ClosedIn(
-        SqliteConnection connection, DateOnly session, DateOnly asOf)
+        SqliteConnection connection, DateOnly session, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -54,9 +54,9 @@ public sealed class LossClassReader
             """;
 
         command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public sealed class LossClassReader
     /// are still waiting on a horizon. Unbounded by session on purpose: a row inserted weeks ago is
     /// exactly the one whose aftermath is now knowable.
     /// </summary>
-    public static IReadOnlyList<StoredLossClass> All(SqliteConnection connection, DateOnly asOf)
+    public static IReadOnlyList<StoredLossClass> All(SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -78,9 +78,9 @@ public sealed class LossClassReader
              ORDER BY closed_session DESC, direction, ticker
             """;
 
-        Bound(command, asOf);
+        Bound(command, asOf, sessionZone);
 
-        return Read(command, asOf);
+        return Read(command, asOf, sessionZone);
     }
 
     /// <summary>
@@ -133,9 +133,9 @@ public sealed class LossClassReader
         return runs;
     }
 
-    private static void Bound(SqliteCommand command, DateOnly asOf) =>
+    private static void Bound(SqliteCommand command, DateOnly asOf, string sessionZone) =>
         command.Parameters.AddWithValue(
-            "@observed_before", StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
 
     /// <summary>
     /// Materialise the rows, projecting an aftermath the as-of could not have seen back to absent.
@@ -144,10 +144,10 @@ public sealed class LossClassReader
     /// <see cref="PositionReader"/> projects a close: the row existed and carried a mechanism, which
     /// is the fact a reader of that date needs, so it cannot simply be filtered out.
     /// </summary>
-    private static IReadOnlyList<StoredLossClass> Read(SqliteCommand command, DateOnly asOf)
+    private static IReadOnlyList<StoredLossClass> Read(SqliteCommand command, DateOnly asOf, string sessionZone)
     {
         DateTimeOffset bound = StoreText.StorageTextToTimestamp(
-            StoreText.EndOfSession(asOf, SessionBoundaries.UsEquities));
+            StoreText.EndOfSession(asOf, sessionZone));
 
         var rows = new List<StoredLossClass>();
         using SqliteDataReader reader = command.ExecuteReader();

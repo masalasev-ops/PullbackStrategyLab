@@ -167,7 +167,7 @@ public sealed class SignalVectorizer
         foreach (StoredSetup setup in setups)
         {
             IReadOnlySet<string> existing = SetupSignalReader.NamesFor(connection, setup.SetupId);
-            IReadOnlyDictionary<string, string> values = Values(connection, setup, asOf);
+            IReadOnlyDictionary<string, string> values = Values(connection, setup, asOf, _options.SessionZone);
 
             foreach (string name in Frozen)
             {
@@ -206,7 +206,7 @@ public sealed class SignalVectorizer
     private static IReadOnlyDictionary<string, string> Values(
         SqliteConnection connection,
         StoredSetup setup,
-        DateOnly asOf)
+        DateOnly asOf, string sessionZone)
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -237,7 +237,7 @@ public sealed class SignalVectorizer
             values["stop_distance_ranges"] = StoreText.RatioToStorageText(giveUp);
         }
 
-        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, setup.Ticker, asOf, HistorySessions);
+        IReadOnlyList<StoredDailyBar> bars = DailyBarReader.Read(connection, setup.Ticker, asOf, HistorySessions, sessionZone);
         if (bars.Count == 0)
         {
             return values;
@@ -246,7 +246,7 @@ public sealed class SignalVectorizer
         StoredDailyBar last = bars[^1];
         values["close_adjusted"] = StoreText.PriceToStorageText(last.AdjustedClose);
 
-        StoredIndicators? indicators = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf);
+        StoredIndicators? indicators = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf, sessionZone);
         if (indicators is not null)
         {
             if (indicators.LadderGrade is not null)
@@ -304,16 +304,16 @@ public sealed class SignalVectorizer
             values["ema_gap_21_50_avg_20"] = gapAverage;
         }
 
-        string? age = ListingAge(connection, setup.Ticker, asOf);
+        string? age = ListingAge(connection, setup.Ticker, asOf, sessionZone);
         if (age is not null)
         {
             values["listing_age_sessions"] = age;
         }
 
-        Thrust(connection, setup, asOf, bars, indicators, values);
+        Thrust(connection, setup, asOf, bars, indicators, values, sessionZone);
         Regime(connection, asOf, values);
         Shape(connection, setup, asOf, bars, indicators, values);
-        TheName(connection, setup.Ticker, asOf, values);
+        TheName(connection, setup.Ticker, asOf, values, sessionZone);
 
         return values;
     }
@@ -413,18 +413,18 @@ public sealed class SignalVectorizer
         SqliteConnection connection,
         string ticker,
         DateOnly asOf,
-        Dictionary<string, string> values)
+        Dictionary<string, string> values, string sessionZone)
     {
         // Through the reader, which bounds both on when the lookup was made. Read unbounded, these
         // two would freeze an industry and a capitalisation resolved after the night they are
         // evidence about, which is the point-in-time rule broken in the one row written to survive
         // it: everything else the lab can recompute, and a frozen signal is what nobody recomputes.
-        if (SecurityReader.Industry(connection, ticker, asOf) is string industry)
+        if (SecurityReader.Industry(connection, ticker, asOf, sessionZone) is string industry)
         {
             values["industry"] = industry;
         }
 
-        if (SecurityReader.MarketCap(connection, ticker, asOf) is decimal cap)
+        if (SecurityReader.MarketCap(connection, ticker, asOf, sessionZone) is decimal cap)
         {
             values["market_cap"] = StoreText.PriceToStorageText(cap);
         }
@@ -441,7 +441,7 @@ public sealed class SignalVectorizer
             cluster.Parameters.AddWithValue("@ticker", ticker);
             cluster.Parameters.AddWithValue("@as_of", on);
             cluster.Parameters.AddWithValue(
-                "@observed_before", StoreText.EndOfSession(StoreText.StorageTextToDate(on), SessionBoundaries.UsEquities));
+                "@observed_before", StoreText.EndOfSession(StoreText.StorageTextToDate(on), sessionZone));
             cluster.Parameters.AddWithValue("@scan", scan);
 
             if (cluster.ExecuteScalar() is long count)
@@ -492,7 +492,7 @@ public sealed class SignalVectorizer
         DateOnly asOf,
         IReadOnlyList<StoredDailyBar> bars,
         StoredIndicators? indicators,
-        Dictionary<string, string> values)
+        Dictionary<string, string> values, string sessionZone)
     {
         // The window's near edge, taken from the bars so it is sessions rather than days.
         DateOnly from = bars.Count >= ThrustWindowSessions
@@ -503,7 +503,7 @@ public sealed class SignalVectorizer
             ? ["gainer", "gapper", "leader"]
             : ["decliner", "gapdown", "laggard"];
 
-        StoredScanHit? thrust = ScanHitReader.ForTicker(connection, setup.Ticker, asOf, from)
+        StoredScanHit? thrust = ScanHitReader.ForTicker(connection, setup.Ticker, asOf, from, sessionZone)
             .Where(hit => side.Contains(hit.Scan, StringComparer.Ordinal))
             .OrderByDescending(hit => hit.AsOf)
             .ThenBy(hit => hit.Rank)
@@ -569,8 +569,8 @@ public sealed class SignalVectorizer
     /// first saw the ticker, so it read 1 for every name on the fixture's only night while the check
     /// had cleared a floor of ninety.
     /// </summary>
-    private static string? ListingAge(SqliteConnection connection, string ticker, DateOnly asOf) =>
-        DailyBarReader.SessionsStored(connection, ticker, asOf)
+    private static string? ListingAge(SqliteConnection connection, string ticker, DateOnly asOf, string sessionZone) =>
+        DailyBarReader.SessionsStored(connection, ticker, asOf, sessionZone)
             .ToString(CultureInfo.InvariantCulture);
 
     private static void Insert(

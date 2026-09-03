@@ -105,7 +105,7 @@ public sealed class PlanAudit
         DateTimeOffset observedAt = run.StartedAt;
         var tally = new Tally();
 
-        StoredTrade[] trades = [.. TradeReader.ClosedIn(connection, sessionDate, sessionDate)];
+        StoredTrade[] trades = [.. TradeReader.ClosedIn(connection, sessionDate, sessionDate, _options.SessionZone)];
         tally.TradesRead = trades.Length;
 
         if (trades.Length == 0)
@@ -116,15 +116,15 @@ public sealed class PlanAudit
         string[] setupIds = [.. trades.Select(t => t.SetupId)];
 
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, setupIds, sessionDate)
+            .ForSetups(connection, setupIds, sessionDate, _options.SessionZone)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
         Dictionary<string, StoredTradeOrder> orders = TradeOrderReader
-            .ForSetups(connection, setupIds, sessionDate)
+            .ForSetups(connection, setupIds, sessionDate, _options.SessionZone)
             .ToDictionary(o => o.SetupId, StringComparer.Ordinal);
 
         ILookup<string, StoredFill> fills = PositionReader
-            .FillsFor(connection, [.. trades.Select(t => t.PositionId)], sessionDate)
+            .FillsFor(connection, [.. trades.Select(t => t.PositionId)], sessionDate, _options.SessionZone)
             .ToLookup(f => f.PositionId, StringComparer.Ordinal);
 
         using SqliteTransaction transaction = connection.BeginTransaction();

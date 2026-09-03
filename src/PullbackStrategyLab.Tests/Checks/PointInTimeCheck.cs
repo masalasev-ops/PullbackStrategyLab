@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Sqlite;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -421,6 +422,23 @@ public sealed class PointInTimeCheck
         // 2. The statements written by hand, outside the readers. This is the half a signature
         //    cannot hold: a query beside a reader is not bound by the reader's shape.
         int statementsExamined = 0;
+
+        // The store readers, read for the one thing a reader must not carry: a session zone of
+        // its own. A reader is a static helper with no configuration to read, so from 5.8 it takes
+        // the zone it bounds in as a parameter; a constant here is a bound computed in a zone the
+        // configuration cannot reach, which is the row raised at 3.9.
+        string[] readerSources =
+        [
+            .. Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data"), "*.cs")
+                .Order(StringComparer.Ordinal),
+        ];
+        int readerFiles = readerSources.Length;
+        List<string> readersNamingTheConstant =
+        [
+            .. readerSources
+                .Where(f => File.ReadAllText(f).Contains("SessionBoundaries.UsEquities", StringComparison.Ordinal))
+                .Select(RepositoryLayout.Relative),
+        ];
         int stampedStatements = 0;
         int interpolatedTables = 0;
         var exemptionsMatched = new HashSet<StatementExemption>();
@@ -593,7 +611,21 @@ public sealed class PointInTimeCheck
                     "VendorQuotaDayTests.The_two_spends_of_one_evening_land_in_the_quota_days_they_belong_to",
                     "two spends on one evening, one before the UTC date rolls and one after, are counted into "
                     + "two quota days and read back as one session. That is the property; this scan is what "
-                    + "says the expression that used to answer both questions is in no file"));
+                    + "says the expression that used to answer both questions is in no file"))
+            .Context("store reader files read for the session zone constant", readerFiles)
+            .Scan("no store reader names the session zone constant, so every bound is computed in the zone it is given",
+                CheckCoverage.Backing.Test(
+                    "DailyBarIngestorTests.A_read_bounds_on_the_zone_it_is_given_and_not_on_a_constant",
+                    "one bar observed late in the evening is inside the session when the reader is given the "
+                    + "Eastern zone and after it when given Tokyo, so the zone the reader is handed is the zone "
+                    + "the bound is computed in. The scan is what says no reader has a constant to fall back on: "
+                    + "until 5.8 twenty-two reader methods across sixteen readers passed one, and the "
+                    + "configured zone could not have reached them"));
+
+        Assert.True(readersNamingTheConstant.Count == 0,
+            $"{readersNamingTheConstant.Count} store reader(s) name SessionBoundaries.UsEquities rather than taking the zone "
+            + "they bound in:\n  " + string.Join("\n  ", readersNamingTheConstant)
+            + "\n  Thread the configured zone through the signature, as every other reader does from 5.8.");
 
         // Calibration mode reconstructs against membership as it stands today, deliberately, which
         // is why its rows go to a table nothing downstream reads. It is out of scope by design
@@ -849,7 +881,7 @@ public sealed class PointInTimeCheck
 
         using SqliteConnection read = connections.OpenReadOnly();
 
-        StoredDailyBar onTheNight = DailyBarReader.Read(read, "AAAA", asOf, 1)[0];
+        StoredDailyBar onTheNight = DailyBarReader.Read(read, "AAAA", asOf, 1, SessionBoundaries.UsEquities)[0];
         StoredDailyBar afterwards = DailyBarReader.Read(read, "AAAA", asOf, 1, tomorrow)[0];
 
         return (onTheNight.Close == 10.50m, afterwards.Close == 99.00m);
