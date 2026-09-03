@@ -14657,3 +14657,80 @@ Carried:    **Nothing raised and nothing left.** The carried obligations table r
             **What 5.1 waits on is the operator and not the build.** The freeze is 5.1's own
             deliverable, it writes 1802 into every version's pre-registration, and it is the one act
             in this phase that cannot be undone.
+
+## 5.8 — 2026-09-03 — phase-5-lost-nights — the two nights the lab wrote nothing, and the half of them that cannot be bought back
+
+Not a checkpoint entry. An operational record, filed here because the fault is in the running lab
+and the running lab is in nothing the verification harness reads. Population: **the sessions of
+2026-09-01 and 2026-09-02, and the seventeen scheduled tasks that ran across both.**
+
+Lost:       **Both nights, every stage, and the lab flagged nothing.** The live store sat at
+            `user_version` 38 while the build moved to 40, then 42, then 47. Every stage but
+            `migrate`, `snapshot-db` and `list-stages` refuses before opening a store whose version
+            is not the build's, so each one refused, named both numbers, and wrote nothing. The
+            refusals are in `data/live/logs/nightly-2026-09-01.log` and `nightly-2026-09-02.log`,
+            which nothing reads.
+
+            **Five slot-runs of the two went to a different fault**, the tree guard: the nightly
+            runs from the working tree and a phase branch was checked out, `phase-4-risk-gate` for
+            the snapshot slot on 2026-09-01 and `phase-5-sitting-answers` for the index, indicators,
+            scans and sectors slots between 17:50 and 18:12 on 2026-09-02. That is the fault the
+            production checkout closes, and it is the smaller of the two: the schema mismatch
+            refused about fifteen.
+
+            **The store was migrated at 23:42 on 2026-09-02, after that night was over.** The
+            snapshot `pullbackstrategylab-20260903-034251.db` is at 38 and the store came back at
+            47, so the repair happened and the night was not rerun. Nothing said it should be.
+
+Recovered:  **668 vendor calls on 2026-09-03, all clean**, after `tools/migrate` took the store from
+            47 to 50 at 12:00:11Z on the three migrations that landed overnight. `actions` for both
+            dates, 200 calls each, 47 and 14 actions written **and 61 rebuild demands raised**: those
+            were sitting unobserved, and an unprocessed action blocks its ticker's calculations
+            rather than quietly adjusting them, so tonight would have detected over a universe
+            silently short by 61 names. `daily-bars` for both dates, 100 calls each, 2,004 rows each,
+            closing the hole in the series that tonight's averages would otherwise have been computed
+            across. `index-bars` for both, 3 calls each. `backfill --rebuild`, 62 calls and 45,752
+            bars. `forward-returns`, no calls and **2,199 outcomes** that had been waiting on the
+            missing bars, of which 190 setup and 1,899 control landed on a session later than their
+            calendar step.
+
+            **One name had been blocked for a week.** `MBGL` has carried an unsatisfied dividend
+            demand since 2026-08-27 and nothing surfaced it; its bars were fetched in tonight's
+            backfill and the demand clears when `indicators` next runs.
+
+Lost for    **The universe snapshots, and with them the nights themselves.** `universe_snapshot`
+good:       holds 2026-08-25, 08-27, 08-28 and 08-31 and nothing after, because `universe-build`
+            refused on both nights too. ARCHITECTURE says of that stage that the snapshot is written
+            every night without exception and that unlike everything else there it cannot be
+            reconstructed later, and this is what that sentence is for.
+
+            **So the nights were not rerun, and that is a decision rather than an omission.**
+            `universe-build` reads the vendor's symbol list at run time, so a rerun would stamp
+            those past sessions with today's membership and write rows nothing could tell from ones
+            the nights produced. A missing snapshot is a hole somebody can see; a snapshot of the
+            wrong day is survivorship bias nothing can find afterwards, which is the whole reason
+            the snapshot exists (see: The evidence store holds only setups flagged forward, never
+            setups reconstructed from history). RUNBOOK's recovery row now carries the exception.
+
+            **It was confirmed rather than assumed.** `indicators 2026-09-01` was run and reported
+            nought universe members, so the detection chain could not have run for those dates even
+            had point-in-time allowed it. Nothing downstream of `indicators` was run for either date,
+            and no run row was written that would make a lost night read as a quiet one.
+
+            Setups on file remain 2026-08-27, 2026-08-28 and 2026-08-31. Two trading sessions of
+            evidence do not exist.
+
+Verified:   Nothing here is verified by a check, and that is the entry's point: every subject in it
+            is the running lab. What the commit does carry is a spec edit, so `tools/ci.ps1` green on
+            Windows, **31 steps, 968 tests**, and `tools/verify-phase.ps1` **GREEN** on phase 5: 137
+            claims, 114 passed, 0 failed, 23 out of scope, **0 unexamined**. Expected move stated in
+            advance as nought, and none moved. The figures the entry states about the two nights come
+            from the night logs, the store and the run rows of 2026-09-03, each named where it is
+            used.
+
+Carried:    **Nothing raised.** The two nights are a fault in the running lab and not in the build,
+            and this corpus asserts nothing against the running lab by design: a green report is a
+            statement about the build and never about the lab. What reduces the chance of a third is
+            already committed, being the production checkout, the 17:00 update and the middle step
+            in the migration order, and none of those would have saved these two: only migrating
+            would have.
