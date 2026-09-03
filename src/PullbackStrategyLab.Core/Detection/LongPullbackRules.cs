@@ -58,29 +58,38 @@ public static class LongPullbackRules
     /// and a check whose input is null fails with the reason rather than passing by default: a
     /// missing figure is not a cleared threshold.
     /// </summary>
-    public static IReadOnlyList<CheckResult> Evaluate(LongEvidence evidence)
+    public static IReadOnlyList<CheckResult> Evaluate(LongEvidence evidence) => Evaluate(evidence, SelectionRule.Long);
+
+    /// <summary>
+    /// Every check under one selection rule, which is the single implementation the detector, the
+    /// harness at 5.3 and a test all read. The overload above passes the baseline; a version passes
+    /// its own rule; nothing else turns long evidence into verdicts.
+    /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
+    /// </summary>
+    public static IReadOnlyList<CheckResult> Evaluate(LongEvidence evidence, SelectionRule rule)
     {
         ArgumentNullException.ThrowIfNull(evidence);
+        ArgumentNullException.ThrowIfNull(rule);
 
         return
         [
-            Tradable(evidence),
-            MovesEnough(evidence),
+            Tradable(evidence, rule),
+            MovesEnough(evidence, rule),
             Uptrend(evidence),
-            Thrust(evidence),
-            DipShape(evidence),
-            HeldFloor(evidence),
-            Contraction(evidence),
-            TriggerNear(evidence),
-            ExitTight(evidence),
-            Cluster(evidence),
+            Thrust(evidence, rule),
+            DipShape(evidence, rule),
+            HeldFloor(evidence, rule),
+            Contraction(evidence, rule),
+            TriggerNear(evidence, rule),
+            ExitTight(evidence, rule),
+            Cluster(evidence, rule),
         ];
     }
 
-    private static CheckResult Tradable(LongEvidence e) =>
+    private static CheckResult Tradable(LongEvidence e, SelectionRule rule) =>
         e.MedianDollarVolume is not decimal volume || e.Close is not decimal close
             ? CheckResult.Unknown("tradable", "no indicator row or no bar for the session")
-            : new CheckResult("tradable", volume >= LiquidityFloor && close > PriceFloor, volume)
+            : new CheckResult("tradable", volume >= rule.Value(SelectionRule.LiquidityFloor) && close > rule.Value(SelectionRule.PriceFloor), volume)
             {
                 // Two clauses, not four. The long gate tests turnover and price; the short one adds
                 // capitalisation and listing age. The reading beside this check said "of four
@@ -88,27 +97,27 @@ public static class LongPullbackRules
                 // than derived from the gate, and it was wrong for this one.
                 Clauses =
                 [
-                    new ClauseResult("liquidity", volume >= LiquidityFloor, volume),
-                    new ClauseResult("price", close > PriceFloor, close),
+                    new ClauseResult("liquidity", volume >= rule.Value(SelectionRule.LiquidityFloor), volume),
+                    new ClauseResult("price", close > rule.Value(SelectionRule.PriceFloor), close),
                 ],
             };
 
-    private static CheckResult MovesEnough(LongEvidence e) =>
+    private static CheckResult MovesEnough(LongEvidence e, SelectionRule rule) =>
         e.AverageDailyRange is not decimal adr
             ? CheckResult.Unknown("moves-enough", "no indicator row for the session")
-            : new CheckResult("moves-enough", adr >= DailyRangeFloor, adr);
+            : new CheckResult("moves-enough", adr >= rule.Value(SelectionRule.DailyRangeFloor), adr);
 
     private static CheckResult Uptrend(LongEvidence e) =>
         e.LadderGrade is null
             ? CheckResult.Unknown("uptrend", "the ladder grade has not been written for this session")
             : new CheckResult("uptrend", e.LadderGrade == "rising", null, e.LadderGrade);
 
-    private static CheckResult Thrust(LongEvidence e) =>
+    private static CheckResult Thrust(LongEvidence e, SelectionRule rule) =>
         e.SessionsSinceThrust is not int sessions
             ? new CheckResult("thrust", false, null, "no upward mover scan hit in the window")
-            : new CheckResult("thrust", sessions <= ThrustWindowSessions, sessions);
+            : new CheckResult("thrust", sessions <= rule.Value(SelectionRule.ThrustWindowSessions), sessions);
 
-    private static CheckResult DipShape(LongEvidence e)
+    private static CheckResult DipShape(LongEvidence e, SelectionRule rule)
     {
         if (e.Pullback is not PullbackGeometry.Pullback pullback)
         {
@@ -118,8 +127,9 @@ public static class LongPullbackRules
         // Two conditions on one check, because the corpus states them as one: a dip of the right
         // length that gave back too much is the same failure as one of the wrong length. The value
         // recorded is the retrace, which is the half a threshold experiment would move.
-        bool rightLength = pullback.PullbackBars >= MinimumPullbackBars && pullback.PullbackBars <= MaximumPullbackBars;
-        bool shallowEnough = pullback.RetraceDepth is decimal depth && depth <= MaximumRetrace && depth >= 0m;
+        bool rightLength = pullback.PullbackBars >= rule.Value(SelectionRule.MinimumPullbackBars)
+            && pullback.PullbackBars <= rule.Value(SelectionRule.MaximumPullbackBars);
+        bool shallowEnough = pullback.RetraceDepth is decimal depth && depth <= rule.Value(SelectionRule.MaximumRetrace) && depth >= 0m;
 
         return new CheckResult(
             "dip-shape",
@@ -138,28 +148,28 @@ public static class LongPullbackRules
         };
     }
 
-    private static CheckResult HeldFloor(LongEvidence e) =>
+    private static CheckResult HeldFloor(LongEvidence e, SelectionRule rule) =>
         e.ClosesBeyondFloor is not int beyond
             ? CheckResult.Unknown("held-floor", "no 21-day average over the dip")
-            : new CheckResult("held-floor", beyond == 0, beyond);
+            : new CheckResult("held-floor", beyond <= rule.Value(SelectionRule.MaximumClosesBeyondFloor), beyond);
 
-    private static CheckResult Contraction(LongEvidence e) =>
+    private static CheckResult Contraction(LongEvidence e, SelectionRule rule) =>
         e.RangeTodayOverAverage is not decimal ratio
             ? CheckResult.Unknown("contraction", "no range average for the session")
-            : new CheckResult("contraction", ratio < 1m, ratio);
+            : new CheckResult("contraction", ratio < rule.Value(SelectionRule.MaximumRangeRatio), ratio);
 
-    private static CheckResult TriggerNear(LongEvidence e) =>
+    private static CheckResult TriggerNear(LongEvidence e, SelectionRule rule) =>
         e.TriggerDistanceRanges is not decimal distance
             ? CheckResult.Unknown("trigger-near", "no trigger or no daily range for the session")
-            : new CheckResult("trigger-near", distance <= TriggerReachRanges, distance);
+            : new CheckResult("trigger-near", distance <= rule.Value(SelectionRule.TriggerReachRanges), distance);
 
-    private static CheckResult ExitTight(LongEvidence e) =>
+    private static CheckResult ExitTight(LongEvidence e, SelectionRule rule) =>
         e.StopDistanceRanges is not decimal distance
             ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
-            : new CheckResult("exit-tight", distance <= GiveUpRanges, distance);
+            : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
 
-    private static CheckResult Cluster(LongEvidence e) =>
-        new("cluster", (e.ClusterCount ?? 0) >= ClusterThreshold, e.ClusterCount);
+    private static CheckResult Cluster(LongEvidence e, SelectionRule rule) =>
+        new("cluster", (e.ClusterCount ?? 0) >= rule.Value(SelectionRule.ClusterThreshold), e.ClusterCount);
 
     /// <summary>
     /// What the night knew about one name, on the long side.

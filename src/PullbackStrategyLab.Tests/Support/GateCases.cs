@@ -82,6 +82,17 @@ public static class GateCases
         return Evaluate(gateCase.Direction, With(Baseline(gateCase.Direction), gateCase.Set));
     }
 
+    /// <summary>The same case under a rule other than the baseline, which is what a version is.</summary>
+    public static IReadOnlyList<CheckResult> Evaluate(GateCase gateCase, SelectionRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(gateCase);
+        ArgumentNullException.ThrowIfNull(rule);
+        IReadOnlyDictionary<string, string> fields = With(Baseline(gateCase.Direction), gateCase.Set);
+        return string.Equals(gateCase.Direction, "long", StringComparison.Ordinal)
+            ? LongPullbackRules.Evaluate(LongEvidence(fields), rule)
+            : ShortPullbackRules.Evaluate(ShortEvidence(fields), rule);
+    }
+
     /// <summary>
     /// The verdicts over a direction's baseline with the named fields removed entirely.
     ///

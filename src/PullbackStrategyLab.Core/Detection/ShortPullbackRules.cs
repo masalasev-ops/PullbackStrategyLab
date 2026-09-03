@@ -66,22 +66,30 @@ public static class ShortPullbackRules
     public const int ClusterThreshold = LongPullbackRules.ClusterThreshold;
 
     /// <summary>Every check, in the document's order, each with the number it turned on.</summary>
-    public static IReadOnlyList<CheckResult> Evaluate(ShortEvidence evidence)
+    public static IReadOnlyList<CheckResult> Evaluate(ShortEvidence evidence) => Evaluate(evidence, SelectionRule.Short);
+
+    /// <summary>
+    /// Every check under one selection rule, on the long side's terms: the one implementation the
+    /// detector, the harness at 5.3 and a test all read.
+    /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
+    /// </summary>
+    public static IReadOnlyList<CheckResult> Evaluate(ShortEvidence evidence, SelectionRule rule)
     {
         ArgumentNullException.ThrowIfNull(evidence);
+        ArgumentNullException.ThrowIfNull(rule);
 
         return
         [
-            TradableShortable(evidence),
-            MovesEnough(evidence),
+            TradableShortable(evidence, rule),
+            MovesEnough(evidence, rule),
             Downtrend(evidence),
-            AveragesSqueezing(evidence),
-            Thrust(evidence),
-            BounceShape(evidence),
-            ReachedCeiling(evidence),
-            NoReclaim(evidence),
-            ExitTight(evidence),
-            Cluster(evidence),
+            AveragesSqueezing(evidence, rule),
+            Thrust(evidence, rule),
+            BounceShape(evidence, rule),
+            ReachedCeiling(evidence, rule),
+            NoReclaim(evidence, rule),
+            ExitTight(evidence, rule),
+            Cluster(evidence, rule),
         ];
     }
 
@@ -103,7 +111,7 @@ public static class ShortPullbackRules
     /// on the same pattern `reached-ceiling` uses for its anchored clause.
     /// see: A calibration run reconstructs against current membership and computes its indicators in memory
     /// </summary>
-    private static CheckResult TradableShortable(ShortEvidence e)
+    private static CheckResult TradableShortable(ShortEvidence e, SelectionRule rule)
     {
         if (e.MedianDollarVolume is not decimal volume
             || e.Close is not decimal close
@@ -121,10 +129,10 @@ public static class ShortPullbackRules
                 "no resolved market capitalisation for the session");
         }
 
-        bool passes = volume >= LiquidityFloor
-            && close > PriceFloor
-            && (e.MarketCapExempt || e.MarketCap > MarketCapFloor)
-            && listed >= MinimumSessionsListed;
+        bool passes = volume >= rule.Value(SelectionRule.LiquidityFloor)
+            && close > rule.Value(SelectionRule.PriceFloor)
+            && (e.MarketCapExempt || e.MarketCap > rule.Value(SelectionRule.MarketCapFloor))
+            && listed >= rule.Value(SelectionRule.MinimumSessionsListed);
 
         return new CheckResult(
             "tradable-shortable",
@@ -159,10 +167,10 @@ public static class ShortPullbackRules
     public const string ClausesRunWithoutTheCap =
         "liquidity, price and listing age only; the market-cap clause is exempt in calibration";
 
-    private static CheckResult MovesEnough(ShortEvidence e) =>
+    private static CheckResult MovesEnough(ShortEvidence e, SelectionRule rule) =>
         e.AverageDailyRange is not decimal adr
             ? CheckResult.Unknown("moves-enough", "no indicator row for the session")
-            : new CheckResult("moves-enough", adr >= DailyRangeFloor, adr);
+            : new CheckResult("moves-enough", adr >= rule.Value(SelectionRule.DailyRangeFloor), adr);
 
     private static CheckResult Downtrend(ShortEvidence e) =>
         e.LadderGrade is null
@@ -177,7 +185,7 @@ public static class ShortPullbackRules
     /// rule on the one side this check runs. The value recorded is the ratio, because that is the
     /// half a threshold experiment would move.
     /// </summary>
-    private static CheckResult AveragesSqueezing(ShortEvidence e)
+    private static CheckResult AveragesSqueezing(ShortEvidence e, SelectionRule rule)
     {
         if (e.GapOverAverageGap is not decimal ratio)
         {
@@ -186,23 +194,24 @@ public static class ShortPullbackRules
                 $"fewer than {SqueezeWindowSessions} sessions of averages, or an average gap of zero");
         }
 
-        return new CheckResult("averages-squeezing", ratio < 1m, ratio);
+        return new CheckResult("averages-squeezing", ratio < rule.Value(SelectionRule.MaximumSqueezeRatio), ratio);
     }
 
-    private static CheckResult Thrust(ShortEvidence e) =>
+    private static CheckResult Thrust(ShortEvidence e, SelectionRule rule) =>
         e.SessionsSinceThrust is not int sessions
             ? new CheckResult("thrust", false, null, "no downward mover scan hit in the window")
-            : new CheckResult("thrust", sessions <= ThrustWindowSessions, sessions);
+            : new CheckResult("thrust", sessions <= rule.Value(SelectionRule.ThrustWindowSessions), sessions);
 
-    private static CheckResult BounceShape(ShortEvidence e)
+    private static CheckResult BounceShape(ShortEvidence e, SelectionRule rule)
     {
         if (e.Bounce is not PullbackGeometry.Pullback bounce)
         {
             return CheckResult.Unknown("bounce-shape", "no thrust to measure a bounce against");
         }
 
-        bool rightLength = bounce.PullbackBars >= MinimumBounceBars && bounce.PullbackBars <= MaximumBounceBars;
-        bool shallowEnough = bounce.RetraceDepth is decimal depth && depth <= MaximumRecovery && depth >= 0m;
+        bool rightLength = bounce.PullbackBars >= rule.Value(SelectionRule.MinimumPullbackBars)
+            && bounce.PullbackBars <= rule.Value(SelectionRule.MaximumPullbackBars);
+        bool shallowEnough = bounce.RetraceDepth is decimal depth && depth <= rule.Value(SelectionRule.MaximumRetrace) && depth >= 0m;
 
         return new CheckResult(
             "bounce-shape",
@@ -241,7 +250,7 @@ public static class ShortPullbackRules
     /// ceiling, which is plausible, wrong and silent: the same shape as a gate passing on a quantity
     /// that was never there.
     /// </summary>
-    private static CheckResult ReachedCeiling(ShortEvidence e)
+    private static CheckResult ReachedCeiling(ShortEvidence e, SelectionRule rule)
     {
         if (e.DistanceToNearestAverageRanges is not decimal distance)
         {
@@ -260,7 +269,7 @@ public static class ShortPullbackRules
 
         return new CheckResult(
             "reached-ceiling",
-            nearest <= CeilingReachRanges,
+            nearest <= rule.Value(SelectionRule.CeilingReachRanges),
             nearest,
             e.DistanceToAnchoredRanges is not null ? ClausesRunWithTheAnchor
                 : e.Reconstructed ? ClausesRunInReconstruction
@@ -374,18 +383,18 @@ public static class ShortPullbackRules
             : CeilingClauses.Unrecorded;
     }
 
-    private static CheckResult NoReclaim(ShortEvidence e) =>
+    private static CheckResult NoReclaim(ShortEvidence e, SelectionRule rule) =>
         e.ClosesBeyondFloor is not int beyond
             ? CheckResult.Unknown("no-reclaim", "no 50-day average over the bounce")
-            : new CheckResult("no-reclaim", beyond == 0, beyond);
+            : new CheckResult("no-reclaim", beyond <= rule.Value(SelectionRule.MaximumClosesBeyondFloor), beyond);
 
-    private static CheckResult ExitTight(ShortEvidence e) =>
+    private static CheckResult ExitTight(ShortEvidence e, SelectionRule rule) =>
         e.StopDistanceRanges is not decimal distance
             ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
-            : new CheckResult("exit-tight", distance <= GiveUpRanges, distance);
+            : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
 
-    private static CheckResult Cluster(ShortEvidence e) =>
-        new("cluster", (e.ClusterCount ?? 0) >= ClusterThreshold, e.ClusterCount);
+    private static CheckResult Cluster(ShortEvidence e, SelectionRule rule) =>
+        new("cluster", (e.ClusterCount ?? 0) >= rule.Value(SelectionRule.ClusterThreshold), e.ClusterCount);
 
     /// <summary>
     /// What the night knew about one name, on the short side.
