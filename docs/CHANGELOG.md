@@ -2189,3 +2189,8 @@ Why:  The row raised at 3.5 asked that the general form be written down and appl
 Was:  The carried obligations table held thirty-four rows, with the ceiling-insert row raised at 3.5 due at 5.8; nine due before the freeze; five repairs and four others.
 Now:  Thirty-three rows. The 3.5 ceiling-insert row is discharged by the sixth part of 5.8 on 2026-09-03; eight due before the freeze in each place the count is stated; four repairs and four others.
 Why:  A discharged obligation leaves the table in the commit that discharges it.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A reader's signature does not establish point-in-time; the query does
+Was:  The carried obligations table held thirty-three rows, with the dead draw-instant row raised at 3.7 due at 5.8; eight due before the freeze; four repairs and four others.
+Now:  Thirty-two rows. The 3.7 row is discharged by the seventh part of 5.8 on 2026-09-03, its subject having left the code at 3.9(a)(c) and its last remnant, a parameter named for a bound it did not hold, renamed here; seven due before the freeze in each place the count is stated; three repairs and four others.
+Why:  A discharged obligation leaves the table in the commit that discharges it, and the 4.2 record had already found the subject gone and repointed the row rather than striking it, which is the one act the corpus never permits.

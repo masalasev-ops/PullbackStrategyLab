@@ -162,14 +162,14 @@ public sealed class StoredFigures : ISessionFigures
             SELECT i.ticker, i.dollar_volume_median_20, i.adr_20, i.ladder_grade
               FROM indicator_daily i
              WHERE i.as_of = @as_of
-               AND i.computed_at <= @drawn_at
+               AND i.computed_at <= @computed_before
                AND i.computed_at = (SELECT MAX(c.computed_at) FROM indicator_daily c
                                      WHERE c.ticker = i.ticker AND c.as_of = i.as_of
-                                       AND c.computed_at <= @drawn_at)
+                                       AND c.computed_at <= @computed_before)
              ORDER BY i.ticker
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-        command.Parameters.AddWithValue("@drawn_at", StoreText.EndOfSession(asOf, sessionZone));
+        command.Parameters.AddWithValue("@computed_before", StoreText.EndOfSession(asOf, sessionZone));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
