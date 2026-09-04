@@ -2366,3 +2366,27 @@ Now:  A new section, "What the three due at 5.5 were", recording each row and wh
       4.17".
 Why:  All three are discharged at 5.5. A discharged row left in the live table is the table asking for work
       nobody will ever come for, which is the direction `carried-obligations` fails in.
+
+### 2026-09-04 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The carried obligations table held twenty-two rows and nothing about what a page draws, and the
+      4.17 record read "None of the twenty-two rows above fall due at 4.17".
+Now:  Twenty-three rows and "None of the twenty-three". The row raised is that `surface-claims` reads a
+      rendered page for its text, so every figure, chart, band and line on the ledger and the journal is
+      unasserted, with both known instances and the two candidate instruments priced. Due at 6.8.
+Why:  The minute chart drew an empty white box from 4.11 to 5.5 and was found by a session looking at it,
+      not by an instrument. The 5.5 entry recorded the repair and no list carried the mechanism, so the
+      gap was in prose only and the register that is supposed to be where obligations live had nothing.
+
+### 2026-09-04 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Listed together because they are answered together or not at all. Each was moved here by a session
+      that had a good local reason to move it, and a due point that moves at every sign-off is permanent
+      while reading as pending. None can be taken by a build session: each is a judgement, a reading of a
+      screen, or an act on a machine."
+Now:  The same three facts, opening on the nine being listed individually because each carries its own
+      shape, blocker and filing place, and stating that eight of the nine block nothing in the build
+      order today while the ninth blocks one count on one side.
+Why:  "Answered together or not at all" is a claim about who answers them and was read as a claim about
+      when. The table's own last column says eight block nothing, so the batch reading holds eight rows
+      behind one, and a summary drawn from this sentence repeated it. The decision cited is the one
+      CLAUDE.md's separate-counting rule rests on: nine rows reported as one wait let the eight that
+      block nothing hide the one that does, which is the same fault as one number covering both.
