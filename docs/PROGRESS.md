@@ -15013,3 +15013,95 @@ Carried:    **The obligations table reads twenty-four.** One raised here; none f
             unexamined on the tree that produced every one of these nights, and both were right about
             their own subject. This is the seventh failure shape arriving a second time, and the row
             above is the first instrument the corpus has aimed at it.
+
+## 5.2 — 2026-09-04 — phase-5-2-slots-registered — the fifteen slots registered, and the four places that already agreed
+
+Not a checkpoint entry. It records an act on the running lab, taken by this session at the operator's
+instruction of 2026-09-03, on the terms the migration of 2026-09-02 was. **No stage was run and no
+store was opened.** What changes in the build is two paragraphs of `RUNBOOK.md` and this entry.
+
+Done:       **Fifteen scheduled tasks registered between 23:56 and 00:00 Eastern on the night of
+            2026-09-03**, taking the machine from seventeen to thirty-two, which is every slot
+            `tools/nightly.ps1` declares. `intraday` first and alone, on the operator's ordering and
+            for the operator's reason: it is the only slot whose input cannot be bought back. Then
+            `spread-open`, `spread-close`, `versions`, `plans`, `watchlist`, `vwap`, `resolve`,
+            `orders`, `fills`, `manage`, `trades`, `audit`, `losses` and `scores`. **None of the
+            seventeen was touched**, and each of the fifteen was checked for existence before it was
+            created rather than overwritten.
+
+            **The times are `RUNBOOK.md`'s and are not restated anywhere in what was run.** The
+            registration reads the slot's time from the schedule table's row for the stage that slot
+            runs, so a time this session believed and the document did not hold could not have been
+            installed.
+
+            **The configuration was read off a sibling rather than reassembled.** The seventeen were
+            registered with settings a fresh `New-ScheduledTaskSettingsSet` does not produce, being a
+            two-hour execution limit, batteries ignored in both directions and the unified scheduling
+            engine, so building the fifteen from parameters would have been a second configuration
+            that looked the same in the four fields anybody checks. Each was registered from the XML
+            `Export-ScheduledTask` returns for `PullbackStrategyLab-forward`, with four substitutions.
+
+Verified:   **Read back off the scheduler rather than off the registration.** `Export-ScheduledTask`
+            for the first one registered, diffed line by line against the sibling it was built from,
+            differs in exactly the four lines that must differ: the description, the URI, the start
+            boundary and the slot in the arguments. Every other line is identical, including the
+            principal, the logon type, the absent run level that means least privilege, the execution
+            limit, the instance policy, the idle settings, the five weekdays and the working
+            directory.
+
+            **All thirty-two collapse to one configuration group** when grouped on principal, logon
+            type, run level, execution limit, instance policy, start-when-available, both battery
+            settings, compatibility, weekly interval and working directory. The only field that
+            varies across the thirty-two is the day mask, 62 on the thirty-one weekday slots and 64
+            on `ceiling`, which is Saturday and is what the schedule says.
+
+            **Thirty-two tasks, thirty-two slots, reconciled in both directions** against the
+            parameter set `tools/nightly.ps1` validates on: nothing declared is unregistered, nothing
+            registered is undeclared, and no slot is registered twice. **Every one reads `Ready` and
+            every one carries a next run time.** The first occurrences run from 10:15 on Friday
+            2026-09-04 through 22:00, then `ceiling` at 08:00 on Saturday 2026-09-05.
+
+            **The start boundary is 2026-09-04 and that was a choice.** Registration happened four
+            minutes before midnight, so every slot time for 2026-09-03 was already in the past, and
+            these tasks carry `StartWhenAvailable` because their siblings do. A boundary dated
+            2026-09-03 could have been read as fifteen missed occurrences and fired the evening's
+            whole trading half at once, out of order, at midnight. Dating it to the next weekday
+            makes the first run of each slot its own scheduled one.
+
+Reported:   **One disagreement between `RUNBOOK.md` and the component catalogue, not resolved here.**
+            `VariantResolver` is "Nightly 18:30" in `ARCHITECTURE.html`'s catalogue and 18:28 in the
+            schedule table and in the dispatcher's own comment. The task was registered at 18:28, on
+            the instruction to take the time from the runbook, and 18:28 is also the only one of the
+            two that can be right: the resolver decides which versions are live and `plans` reads
+            that answer at 18:30, so a catalogue time equal to the reader's is a stage scheduled
+            against itself. Recorded rather than corrected, because it is the catalogue that is
+            wrong and a component's row is not this entry's subject.
+
+            **The other fourteen agree in all three places** that state a time for them: the schedule
+            table, the catalogue and the dispatcher's slot comments. The RiskGate disagreement the
+            entry of 2026-09-03 reported is gone, its catalogue row now reading "21:10 as a slot, on
+            trigger as an act", which is the distinction that row was missing.
+
+            **All thirty-two point at the working tree, and every one of them will need re-pointing
+            when the production checkout exists.** `tools/nightly.ps1` derives the data root from its
+            own location, so a task's arguments and working directory are what decide which tree runs
+            and which store is written. The checkout `RUNBOOK.md` specifies does not exist, so there
+            was no other tree to point at; re-pointing thirty-two tasks is now a known part of
+            creating it rather than something found afterwards, and `RUNBOOK.md` says so in the
+            section that specifies the checkout.
+
+Carried:    **Nothing raised and nothing discharged.** The obligations table still reads twenty-four
+            and the row raised at 5.2 stays open, due at 5.5. **Registering the tasks is not what
+            closes it**: the row is about a slot being declared in four places and called by nothing,
+            and what closes it is the night's own log being compared against the declared set. This
+            act removes today's instance of the fault and leaves the mechanism exactly where it was,
+            which is why the row was written about the mechanism.
+
+            **What the fifteen cannot recover.** Four flagged nights of minute bars for 127 distinct
+            names are gone at any price, and the spread passes of every session the lab has run were
+            never taken. The first evening this schedule runs whole is 2026-09-04, and it is the
+            first night `intraday_bar` can hold a row.
+
+            **Still the operator's**, and unchanged by this: the tasks run under an interactive logon
+            and a logged-out evening is a permanent hole in the evidence, which is due at the
+            operator; and the production checkout, its secrets copy and the 17:00 update task.

@@ -142,10 +142,23 @@ The job counts calls as it goes and stops rather than overrunning the ceiling. A
 
 ### The schedule as installed
 
-Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`,
-each running `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday 08:00 for
-`ceiling`. The machine's own timezone is Eastern, so the table's ET times are its local times and no
-conversion is involved; a machine in another zone converts them.
+**Thirty-two tasks named `PullbackStrategyLab-<slot>`, registered in two acts**: seventeen on
+2026-08-27 and the remaining fifteen on 2026-09-03, each running `tools/nightly.ps1 -Slot <slot>`,
+weekdays for the nightly slots and Saturday 08:00 for `ceiling`. The machine's own timezone is
+Eastern, so the table's ET times are its local times and no conversion is involved; a machine in
+another zone converts them.
+
+**The fifteen carry the configuration the seventeen carry rather than a second one.** Same principal,
+logon type, run level, two-hour execution limit, instance policy, weekly Monday-to-Friday trigger and
+working directory, built from the XML one of the seventeen exports rather than reassembled from
+parameters, so the two sets differ only in the four lines that must differ: the description, the URI,
+the start boundary and the slot in the arguments.
+
+**The count is written in two parts rather than as one number, and that is the point of it.** Between
+the two acts fifteen slots were declared in the slot table, the parameter set, the worker's stages
+and the schedule above, reconciled in every direction by `slot-roster`, and called by nothing. A
+paragraph reading thirty-two from the start would say nothing about the four nights that ran
+seventeen of them.
 
 `tools/nightly.ps1` maps a slot to the verbs that slot runs and nothing else. It addresses the store
 by absolute path, because `DataRoot` resolves through the working directory and a scheduled task's
@@ -216,6 +229,12 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 ### The production checkout
 
 **The schedule runs from `PullbackStrategyLab-nightly`, a clone from `origin` beside the working tree, and nothing else works in it.** `tools/nightly.ps1` derives the data root from its own location, so `data/live` lives under that checkout and `PullbackStrategyLab:DataRoot` stays unset. The working tree keeps `data/ci` and holds no live store at all, which is one fewer way to open the operator's data by accident.
+
+**The checkout does not exist yet and all thirty-two tasks point at the working tree.** That is
+the state as of 2026-09-03, not the arrangement above, which is what this section specifies and what
+step 7 of the move creates. Re-pointing all thirty-two is part of creating it, and it is an edit to
+each task's action rather than a re-registration: the arguments and the working directory are the
+only places a task names a tree.
 
 **`tools/update-nightly.ps1` fast-forwards it to the tip of `main` at 17:00**, fifteen minutes before the first slot, and is registered as its own scheduled task. It is not a slot: it spends no vendor call, runs no stage and writes nothing to the store, so it is deliberately absent from the schedule table above and from what `slot-roster` reconciles.
 

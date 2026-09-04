@@ -2329,3 +2329,13 @@ Why:  Each of the three was answered by this checkpoint's own work. The fourth c
 Was:  The carried obligations table held twenty-three rows, and its 4.17 line read "None of the twenty-three rows above".
 Now:  Twenty-four rows and "None of the twenty-four". The row raised is the mechanism by which a slot can be declared, accepted, documented and reconciled in four places and still be called by nothing.
 Why:  `slot-roster` reconciles four declarations of the slot set and all four agreed while fifteen of the thirty-two slots had never run once. Whether a scheduled task exists is a property of the machine, and no check in this corpus takes the machine as its subject.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  "The schedule runs from `PullbackStrategyLab-nightly`, a clone from `origin` beside the working tree" stood alone, in the present tense, as the arrangement in force.
+Now:  The same specification, with one paragraph before it saying the checkout does not exist yet, that all thirty-two tasks point at the working tree, and that re-pointing them is part of creating it.
+Why:  A section describing an arrangement nothing has built reads as a description of the running lab. The fifteen registered on 2026-09-03 point at the working tree because that is the only tree there is, and a consequence written down is not a discovery later.
+
+### 2026-09-03 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  "Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`, each running `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday 08:00 for `ceiling`."
+Now:  Thirty-two tasks registered in two acts, seventeen on 2026-08-27 and fifteen on 2026-09-03, with the configuration the fifteen were given and why the count is written in two parts.
+Why:  Fifteen slots were declared in four places and called by nothing until 2026-09-03. A paragraph reading thirty-two from the start would say nothing about the four nights that ran seventeen of them, which is the whole of what the obligation raised at 5.2 is about.
