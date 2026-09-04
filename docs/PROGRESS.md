@@ -15565,3 +15565,108 @@ Carried:    **Nothing raised and nothing repointed.** The obligations table read
             and the store's earliest session rather than from a run row, so an unrun registry no
             longer makes the page silent; what it still means is that no window will be recorded on
             the day it matures unless somebody runs the stage.
+## 5.5 — 2026-09-04 — phase-5-5-drawn-surfaces — a due point read off the build order, and the half of a surface nothing reads
+
+**Not a checkpoint entry.** It belongs to 5.5, which has landed. Two documents, no code, no test
+count and no ruling changes. A record is corrected by a new dated entry naming what it corrects, so
+the 5.5 entry above stands exactly as it was merged.
+
+Corrects:   **The 5.5 entry's `Carried` block reads "the next falls due at 5.8", and nothing falls
+            due at 5.8.** The count in the same sentence is right and the pointer beside it is not.
+            No row of the obligations table names 5.8, and 5.8's own row in `BUILD_PLAN.md` says so
+            in its first line: it is the repair pile, "nought of the nought obligations due before
+            the freeze". **The mistake is a due point inferred from the build order rather than read
+            off the table.** 5.8 was the next unbuilt checkpoint in the order at the moment the
+            sentence was written, and the sentence said "falls due" of it, which is a different
+            column entirely. Read off the last column instead: **nothing falls due at 5.6, 5.7 or
+            5.8, and the next numbered due point after 5.5 is 6.1**, which carries three rows. The
+            unnumbered due points are the operator's nine, the move's three and the first trade's
+            one, and none of those is a checkpoint at all.
+
+            **The same reading is why this entry lists the nine below rather than counting them.** A
+            pointer written from the build order rather than from the register is the same move that
+            turns nine rows with nine blockers into one wait, and both were made in the same pass.
+
+Raised:     **What a page says is checkable and what a page draws is not, so every figure, chart,
+            band and line on the ledger and the journal is unasserted.** `surface-claims` renders a
+            page and reads the text that came out, and it is the only check in this corpus whose
+            subject is a surface at all. What it reads a surface for is words. A drawn element is
+            outside it by construction, which is worse than being deferred: a deferred claim is
+            counted out of scope and names the checkpoint that ends it, and this is counted nowhere,
+            as neither examined nor unexamined nor out of scope.
+
+            **The row names both known instances, because one was found and one was written down and
+            neither was found by an instrument.** The minute picture on the trade chart has carried
+            `chart minutes` since 4.11 while every rule for the shared chart is written against
+            `candles`, so the element drew an empty white box for two checkpoints: the markup was
+            correct throughout, one `wick` and one `body` per bar and four `level` lines, and not one
+            of them had a stroke. It was found at 5.5 by a session adding a strip beside it and
+            repaired in the same commit, by looking. And `ARCHITECTURE.html` says
+            `band0.degradedRuns` reads red above five percent where the caption is a static string,
+            nothing computes the ratio and nothing renders anything red, which is the row raised at
+            3.5 and is the same fault with nobody having looked yet. **One is a page saying the right
+            words over a picture nobody could see; the other is a colour, and a colour is not a
+            word.**
+
+            **The 5.5 entry recorded the repair and no list carried the mechanism**, which is the gap
+            this closes. Its `Repaired` block states the fault plainly and says nothing in the corpus
+            would have found it, and then the checkpoint closed with "nothing raised". A fault
+            described in prose and absent from the register is a fault nobody will come for, and the
+            register is the one place `carried-obligations` reads.
+
+            **The instrument is priced and deliberately not built, and what it does not reach is
+            stated with it.** A count of the elements a rendered page carries, held against what the
+            view declares it draws, is reachable from the markup `surface-claims` already has in hand
+            and needs no browser, no screenshot and no second rendering path. **It would not have
+            caught the instance that raised it**: the minute chart rendered every element it
+            declared, so a count would have found them all present and passed. It catches a picture
+            that is not there and not a picture that cannot be seen. Reaching the second costs one
+            line more and is named beside it, being the classes a rendered element carries held
+            against the classes `lab.css` has rules for, which is a file in this repository and needs
+            nothing rendered at all. Both are in the row so that whichever is built is chosen rather
+            than inherited. **Due at 6.8**, where the scoreboard's panels are next opened and where
+            the band 0 instance already sits.
+
+Listed:     **The nine that are the operator's, by what each holds in the build order today.** Eight
+            of the nine hold nothing, and the ninth holds one count on one side. They were read as
+            answered together or not at all, which is a true statement about who can answer them and
+            was taken as a statement about when, and the register has said otherwise in its last
+            column throughout.
+
+            | Raised | The question | Held in the build order today |
+            |---|---|---|
+            | 1.1 | Does the vendor's quota reset on the UTC date the lab counts against | **Nothing.** The nightly spends about 803 against 5,000, so a boundary six hours out of step could not exhaust it |
+            | 1.6 | Three `CONFIRMED` indicator values, read off a charting platform | **Nothing.** The `CONFIRMED` tier stays empty, which costs verification breadth and holds no checkpoint |
+            | 2.9 | The `CONFIRMED` gallery expectations, from paging through a night | **Nothing.** Same tier, other half |
+            | 3.6 | The tasks run only while the user is logged on | **Nothing**, and it costs a whole night's evidence every time it fires, because `universe-build` writes who was listed and nothing reconstructs it. One elevated command closes it |
+            | 3.8 | Does a lazily-resolved attribute carry a validity date separate from its lookup instant | **Nothing.** The lateness bound reaches the case that mattered and this is the general question behind it |
+            | 3.14 | Whether the two live rows carrying a superseded `cluster` value are put right | **Nothing.** Both verdicts are unchanged, so what is wrong is a recorded value and not a gate |
+            | 3.3 | Whether to buy a shares-outstanding history for the short side's reconstructed sessions | **Nothing that is built.** 5.3 discharged the replay half by establishing that no calibration row carries a frozen signal at all |
+            | 4.5 | Which nights the four rejected slots did not run, and what of them is recoverable | **Nothing forward.** The dispatcher is fixed and `slot-roster` reconciles it every CI run. What is open is backward and already lost |
+            | 4.4 | Which fetch window `IntradayFetcher` buys, being one session as built, eight, twenty-seven, or the vendor's 120-day maximum | **Short's twenty-session count, and through it band 1 on the short side.** The one of the nine that sits in front of scheduled work |
+
+            **So the cost of leaving eight of them open is not a stalled build**, and saying so is the
+            point of listing them: what they cost is a tier with no entries twice over, a night lost
+            when somebody logs out, two rows of evidence carrying a number nobody would compute
+            today, a vendor boundary, a modelling question and nights already gone. **Answering the
+            ninth is what would move a count.** `BUILD_PLAN.md`'s own section had opened "Listed
+            together because they are answered together or not at all"; it now opens on their being
+            nine rows, with the eight and the one stated where a reader meets them.
+
+Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**,
+            unchanged from 5.5 because nothing under test moved. `tools/verify-phase.ps1` **GREEN**
+            on phase 5, **141 claims, 127 passed, 14 out of scope, 0 unexamined**, also unchanged:
+            claims come from `ARCHITECTURE.html`'s tables and this pass edits neither that document
+            nor a table in it.
+
+            **The obligations count moves from twenty-two to twenty-three, and every figure stating
+            it is derived rather than restated.** `stated-counts` reads the total off the table's own
+            rows and holds it against the one sentence that states it, in the 4.17 record, which now
+            reads twenty-three. **The nine is unchanged**, the row raised being due at 6.8 rather
+            than with the operator, and the count due at 6.8 goes from four to five.
+
+Carried:    **One raised, at 6.8, and nothing repointed and nothing discharged.** The obligations
+            table reads twenty-three.
+
+            **Nothing to run against the live store.** Two documents, no migration, no stage and no
+            vendor call.
