@@ -45,6 +45,7 @@ public static class Program
         builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<VariantAdmitter>();
         builder.Services.AddSingleton<ReplayHarness>();
+        builder.Services.AddSingleton<HoldoutRegistry>();
         builder.Services.AddSingleton<VariantResolver>();
         builder.Services.AddSingleton<VariantScorer>();
         builder.Services.AddSingleton<TriggerResolver>();
@@ -231,6 +232,7 @@ public static class Program
         [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
         [VariantAdmitter.Name] = (services, rest) => services.GetRequiredService<VariantAdmitter>().Run(rest),
         [ReplayHarness.Name] = (services, rest) => services.GetRequiredService<ReplayHarness>().Run(rest),
+        [HoldoutRegistry.Name] = (services, rest) => services.GetRequiredService<HoldoutRegistry>().Run(rest),
         [VariantResolver.Name] = (services, rest) => services.GetRequiredService<VariantResolver>().Run(rest),
         [VariantScorer.Name] = (services, rest) => services.GetRequiredService<VariantScorer>().Run(rest),
         [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
@@ -301,6 +303,7 @@ public static class Program
         PlanBuilder.Name,
         VariantAdmitter.Name,
         ReplayHarness.Name,
+        HoldoutRegistry.Name,
         VariantResolver.Name,
         VariantScorer.Name,
         TriggerResolver.Name,

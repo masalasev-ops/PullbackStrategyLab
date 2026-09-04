@@ -247,7 +247,8 @@
         "SCHEMA.md, the three index symbols": 1,
         "rows of the authored parameters table placed as pinned, deferred or exempt": 46,
         "ARCHITECTURE.html, authored parameters, Execution variant sample": 1,
-        "ARCHITECTURE.html, authored parameters, Accounts": 1
+        "ARCHITECTURE.html, authored parameters, Accounts": 1,
+        "ARCHITECTURE.html, authored parameters, Holdout windows": 1
       }
     },
     "point-in-time": {

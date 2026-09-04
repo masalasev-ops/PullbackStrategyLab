@@ -15255,3 +15255,108 @@ Carried:    **One raised, due at 6.1.** The authored fixture row's two halves, j
             nights whose horizons have not closed. A screen run tonight would read four sessions and
             report that the baseline selected nobody, which is the funnel's own state rather than
             anything about the harness.
+
+## 5.4 — 2026-09-04 — phase-5-4-holdout-registry — the eight windows, none of which exists
+
+**A checkpoint entry.** HoldoutRegistry, the eight quarterly windows, and a register that reports why
+it holds nothing. Population: **an authored store seeded with a first session and read from a clock
+stood at a chosen date, and the golden fixture's single market day of 2026-08-24**. **No window
+exists in either and none is asked for**: the register is created empty and a window becomes
+available the day its quarter completes, the lab first ran on 2026-08-27, and the first window
+matures on 2027-01-01 (see: Gate boundaries are exercised by authored cases and the captured fixture
+is not asked to do it).
+
+Built:      **The eight windows are the eight calendar quarters after the first quarter the lab could
+            have collected in full**, which is a narrower rule than the decision's "three months
+            after go-live" and is the one the authored parameter's "one calendar quarter each"
+            requires. The lab's first night falls inside 2026-Q3, so that quarter holds sessions
+            nobody recorded and is not a window: the first is **2026-Q4**, maturing 2027-01-01, and
+            the eighth is **2028-Q3**, maturing 2028-10-01. Anything looser would make the first
+            window a mixture of evidence and absence (see: Holdout windows are quarters of
+            forward-collected evidence, allocated as they mature, capped at eight).
+
+            **The first session is read from the store rather than authored as a go-live date.** A
+            constant would be a second statement of when the lab started, and the day the two
+            disagreed the register would name quarters nobody has evidence for.
+
+            **A spent window cannot be re-spent, and the store is what refuses it.** The spend is a
+            row in `holdout_spend` whose primary key is the window, so a second spend collides. That
+            is why it is not a nullable column on the window row: SCHEMA said "Update (spend, once)",
+            which states the rule and leaves the mechanism to whichever `UPDATE` statement carries
+            the right `WHERE` clause, and the next statement can be written without it. **Proved by
+            writing the second spend straight to the store**, underneath the stage, and reading back
+            SQLite's own constraint violation. Strip every check in the registry and the rule holds.
+
+            **The cap is the store's too.** `ordinal` is bounded one to eight by a CHECK and unique
+            by its own index, so a ninth window fails on the first and a second first fails on the
+            second, rather than eight being a number somebody counts to.
+
+            **Both tables are insert-only and neither has an update path.** A quarter's dates do not
+            change and a spend does not become untrue, and a window's availability is the absence of
+            a spend rather than a flag anything sets.
+
+Distinguished: **A register holding nothing has four causes and they are four different facts.** No
+            session recorded, so no quarter has begun. Sessions recorded and no quarter completed,
+            which is where this lab is and will be until 2027-01-01. Every matured window spent,
+            which is the designed dead end. And a quarter matured with nothing having recorded it,
+            which is a defect. **All four hold nought available**, and for the next three months the
+            second and the fourth will hold the same noughts on every other column too, so the
+            reason is stored on the run row rather than inferred from a count.
+
+            **What separates them is that the registry computes what should exist and compares.**
+            `matured` comes from the calendar and the store's own earliest session; `recorded` comes
+            from the register. A run that never happened leaves the two apart, and the read says
+            `NotRecorded` and reports partial where the ordinary state says `NoQuarterMaturedYet` and
+            reports clean.
+
+            **The read is separate from the run, and that separation is the point rather than a
+            convenience.** A stage that records the matured windows and then reports can never
+            report one missing, because it cured the defect in the act of looking for it. So
+            `Read` computes the comparison and writes nothing, and `Mature` records and then calls
+            the same code. It is the read the research ledger will make at 5.5 and the one an
+            operator makes on a morning the job did not fire, which is the only place the fourth
+            state is visible. On the same terms 4.2 told its first night from a night the scheduler
+            never fired.
+
+Answered:   **The failure-table claim deferred here.** "Holdout windows exhausted" is asserted rather
+            than deferred: the four reasons are distinct, the exhausted one names itself a designed
+            dead end, and `IsExhausted` reads that reason rather than the count, so a spent-out
+            register is told apart from one with nothing yet. The run stays clean, because a designed
+            dead end is not a failure.
+
+            **The authored-parameter row deferred here is pinned.** Both halves of it: the count
+            against `HoldoutWindows.Capacity` and the calendar quarter against `MonthsPerWindow`,
+            because a register of eight windows measured in something other than quarters would
+            satisfy a pin on the number alone.
+
+Verified:   Sixteen tests added. `tools/ci.ps1` green on Windows, **31 steps, 1,038 tests**, from
+            1,022. `tools/verify-phase.ps1` **GREEN** on phase 5.
+
+            **The ceiling was read against a figure stated in advance, and the figure was right.**
+            Before the run: out of scope 17 falling to **15**, being the two claims this checkpoint
+            retires and no others, with total claims unchanged at 141 because this checkpoint adds no
+            row to a claim table and no table to the document. The run read **141 claims, 126 passed,
+            0 failed, 15 out of scope, 0 unexamined**.
+
+            **The four clauses of the retired failure-behaviour row were reclassified**, having been
+            marked deferred while the claim was out of scope. Two are reached by the verdict, being
+            that the replay channel closes and that it is a designed dead end; one is rationale, that
+            the remaining channel is slower; and one is **unreached and says so**, being that the
+            forward hit rate is what remains, which needs band 3 and ProposalRegistry and can be
+            asserted by neither.
+
+            **Seventeen expectations, nine of them independently produced**, and all seventeen were
+            predicted before the run and all seventeen were right. The nine derived are the calendar:
+            the capacity and the months per window read by hand off the authored-parameters row, and
+            the schedule's first and last windows with their maturity dates derived by hand from the
+            fixture's own single market day. The eight frozen are what the register holds over the
+            fixture, which is nothing, **and the reason is among them**: a count of nought windows is
+            compatible with any schedule at all, so the two are stated apart.
+
+Carried:    **Nothing raised and nothing repointed.** The obligations table reads twenty-five and
+            none of them falls due here. Three fall due at 5.5.
+
+            **Nothing to run against the live store beyond the migration**, which takes it to 53. The
+            registry spends no vendor call. Run against the live store tonight it would read the
+            first session as 2026-08-27, find no quarter matured, record nothing and report why,
+            which is the same answer it will give every night until the first of January.

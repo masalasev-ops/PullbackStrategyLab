@@ -1160,7 +1160,9 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness. **Store built at 6.6**, which is where a proposal first exists to key a result on. ReplayHarness itself is built at 5.3 and writes nothing: a screen kills a proposal and never admits one, so until there is a proposal store there is nothing for a result row to belong to, and a screen run before then would be a third statement about a version with nothing reconciling the three (see: Replay screens proposals and the forward paired test admits them) |
-| `holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once) |
+| `holdout_window` | window id | Insert HoldoutRegistry. **No update path at all**: a window is a fact about the calendar and does not become untrue |
+| `holdout_spend` | window id | Insert HoldoutRegistry. **The key is the rule.** One row per window, so a second spend of the same window is refused by the store rather than by a stage remembering to look (see: Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight) |
+| `holdout_run` | observation | Insert HoldoutRegistry. What one run of the register did, and why it held nothing where it held nothing |
 
 ### The register of rule versions
 
@@ -1234,6 +1236,55 @@ Grain: session + observation. At 21:40, after the forward returns and before the
 *Declared in the Research ownership table above, on the same terms as the table before it.*
 
 ---
+
+### The holdout register
+
+Columns of `holdout_window`. Built at 5.4, and the columns are the ones that checkpoint owes rather
+than the whole eventual shape.
+
+Grain: window id. One calendar quarter of forward-collected evidence, written the day it matures.
+
+| Column | Type | Note |
+|---|---|---|
+| `window_id` | TEXT, the key | The quarter, as `2026-Q4`. A window's identity is the quarter and nothing else, so a register rebuilt from the same first session produces the same eight names in the same order |
+| `ordinal` | INTEGER | One to eight, oldest first, which is the order they are spent in. Bounded by a CHECK and unique by its own index, so a ninth window fails on the first and a second first fails on the second: the cap is a property of the store rather than a count somebody keeps |
+| `quarter_start`, `quarter_end` | TEXT | The quarter's own boundaries |
+| `matures_on` | TEXT | The first day after the quarter, which is the earliest date the window can be spent on. A window is not available on the last day of its own quarter, because that day's session has not closed |
+| `recorded_at` | TEXT | When the register wrote it down, which is what a point-in-time read of an evening bounds on |
+
+*Insert only. There is no path here that changes a row, because a quarter's dates do not change and the window's availability is the absence of a spend rather than a flag on this row.*
+
+### What a window was spent on
+
+Columns of `holdout_spend`. Built at 5.4.
+
+Grain: window id. One spend per window, ever.
+
+| Column | Type | Note |
+|---|---|---|
+| `window_id` | TEXT, the key | **The key is the rule.** A spent window is never reused for any purpose, and holding the spend as a row keyed on the window makes a second attempt a primary-key collision rather than an update nobody guarded. Held instead as a nullable column on the window row, the rule would live in whatever `UPDATE` statement happened to carry the right `WHERE` clause |
+| `spent_on` | TEXT | The decision it was spent on. A budget recording only that something was spent cannot say whether spending it was worth it |
+| `outcome` | TEXT | What came of that decision |
+| `spent_at` | TEXT | When, which is what a point-in-time read of an evening bounds on |
+
+### What one run of the register did
+
+Columns of `holdout_run`. Built at 5.4.
+
+Grain: observation.
+
+| Column | Type | Note |
+|---|---|---|
+| `observed_at` | TEXT, the key | When the run happened |
+| `as_of` | TEXT | The date the register was read as of |
+| `first_session` | TEXT NULL | The earliest session the evidence store holds, which is what the whole schedule is computed from. Null where it holds none, which is a state of its own: no quarter has begun |
+| `matured`, `recorded` | INTEGER | What the calendar says should exist against what the register holds. **Two numbers because a register holding nothing has two causes**: no quarter has completed yet, which is ordinary, and quarters have completed and nothing wrote them down, which is a defect. One count could not tell them apart and the two read identically for the first months |
+| `written` | INTEGER | How many this run recorded. Nought on every run after the one that recorded a window, because the insert is keyed and a rerun writes nothing |
+| `spent`, `available` | INTEGER | Of the recorded windows |
+| `outcome` | TEXT | `partial` where a matured window is missing from the register |
+| `empty_because` | TEXT NULL | Why no window is available, present exactly when none is, which the store holds as a CHECK. Three readings and they are different facts: no session recorded, no quarter matured yet, and every matured window spent, the last being the designed dead end |
+| `stopped_because` | TEXT NULL | Which matured windows the register does not hold |
+
 
 ## Cross-cutting
 

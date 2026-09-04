@@ -265,19 +265,21 @@
       "clauses": [
         {
           "clause": "No further pack-version decisions can be made by replay.",
-          "disposition": "deferred"
+          "disposition": "reaches"
         },
         {
           "clause": "The remaining channel is the forward hit rate",
-          "disposition": "deferred"
+          "disposition": "unreached",
+          "why": "the forward hit rate is band 3 and ProposalRegistry, neither of which is built, so nothing here can assert that it is the channel that remains; what this verdict reaches is that the replay channel closes and says so"
         },
         {
           "clause": "which is slower.",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "why the remaining channel is worse, not a property of anything"
         },
         {
           "clause": "This is a designed dead end, not a bug.",
-          "disposition": "deferred"
+          "disposition": "reaches"
         }
       ]
     },
