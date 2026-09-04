@@ -364,3 +364,86 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
     font-size: 14px;
     line-height: 1.5;
 }
+
+/*
+  The minute picture on the trade chart, which had no rules at all until 5.5.
+
+  An SVG <line> with no stroke declared draws nothing, and this element carries `chart minutes`
+  rather than `candles`, so none of the shared chart's rules above reached it: the picture built at
+  4.11 rendered an empty white box on every trade. Found while adding the daily strip beside it for
+  the missing-middle obligation, which would otherwise have shipped next to a chart nobody could
+  see. It is a fault on a surface and nothing in the corpus reads a surface for anything but the
+  text on it.
+*/
+.chart.minutes { border: 1px solid var(--rule); border-radius: 6px; background: #fff; width: 100%; height: auto; }
+.chart.minutes .wick { stroke-width: 1; }
+.chart.minutes .up .wick, .chart.minutes .body.up { stroke: var(--long); fill: var(--long); }
+.chart.minutes .down .wick, .chart.minutes .body.down { stroke: var(--short); fill: var(--short); }
+.chart.minutes .wick { stroke: var(--ink3); }
+
+/*
+  The four prices a trade turned on, drawn across both pictures. One rule set, because the minute
+  chart and the daily strip carry the same four levels and a reader moving between them should not
+  have to work out which colour means what twice.
+*/
+.chart.minutes .level, .candles .level { stroke-width: 1.2; stroke-dasharray: 4 3; }
+.chart.minutes .level.trigger, .candles .level.trigger { stroke: #2b6cb0; }
+.chart.minutes .level.give-up, .candles .level.give-up { stroke: var(--short); }
+.chart.minutes .level.fill, .candles .level.fill { stroke: #6b4fa0; stroke-dasharray: none; }
+.chart.minutes .level.exit, .candles .level.exit { stroke: var(--long); stroke-dasharray: none; }
+.chart.minutes .level-label, .candles .level-label { fill: var(--ink3); font-size: 10px; }
+
+.legend.levels .swatch.trigger { background: #2b6cb0; }
+.legend.levels .swatch.give-up { background: var(--short); }
+.legend.levels .swatch.fill { background: #6b4fa0; }
+.legend.levels .swatch.exit { background: var(--long); }
+.legend.levels { flex-wrap: wrap; gap: 10px 18px; margin: 10px 0 0; }
+
+/*
+  The research ledger. Four sections, and the shape carries two rules: a version's sides are
+  separate blocks with nothing that could hold a figure over both, and no element here is a running
+  mean of a difference series.
+*/
+table.ledger { border-collapse: collapse; width: 100%; font-size: 13px; margin: 0 0 14px; }
+table.ledger th {
+    text-align: left;
+    font-size: 11px;
+    color: var(--ink3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--rule);
+    padding: 4px 8px 4px 0;
+}
+table.ledger td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.ledger tr.resolved td { color: var(--ink3); }
+table.ledger tr.withheld td { color: var(--ink3); }
+table.ledger .figure { font-variant-numeric: tabular-nums; }
+table.ledger .moved { display: block; font-size: 11px; color: var(--ink3); margin-top: 2px; }
+table.ledger .withheld-because { display: block; font-size: 11px; color: var(--ink3); line-height: 1.35; }
+
+/* One side of one version. Two blocks side by side, and never a third holding a total. */
+.ledger.side { border-left: 3px solid var(--rule); padding: 0 0 0 12px; margin: 0 0 18px; }
+.ledger.side.long { border-left-color: var(--long); }
+.ledger.side.short { border-left-color: var(--short); }
+.ledger.side h4 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ledger.side .count { margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink2); }
+.ledger.side .over { margin: 2px 0 8px; font-size: 11px; color: var(--ink3); }
+.ledger.side .warns, .ledger.side .withheld-because {
+    font-size: 11px; color: var(--ink3); line-height: 1.35; margin: 0 0 8px;
+}
+
+/*
+  What the night did, on the morning screen.
+
+  It is styled at the weight of a banner rather than of an aside, on the same grounds the degraded
+  note is: a slot that never fired is the thing a person came to this page to be told, and the two
+  spread passes and the minute fetch lose something no later run can recover.
+*/
+.night { margin: 0 0 18px; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--rule); }
+.night.clean { background: var(--panel); }
+.night.ragged { border-left: 3px solid var(--warn, #9a6b00); background: var(--panel-2, #f3efe4); }
+.night h2 { margin: 0 0 4px; border-bottom: none; }
+.night .count { margin: 0 0 8px; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.night p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; }
+.night .warns { display: block; font-size: 12px; color: var(--ink2); }

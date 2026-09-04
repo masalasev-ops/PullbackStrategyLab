@@ -575,6 +575,9 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 _ when path.StartsWith("/setups", StringComparison.Ordinal) => Night,
                 _ when path.StartsWith("/scoreboard", StringComparison.Ordinal) => Panels,
                 _ when path.StartsWith("/journal", StringComparison.Ordinal) => Trades,
+                _ when path.StartsWith("/research", StringComparison.Ordinal) => Register,
+                _ when path.StartsWith("/night", StringComparison.Ordinal) => Slots,
+                _ when path.StartsWith("/chart/trade", StringComparison.Ordinal) => Held,
                 _ => Status,
             };
 
@@ -633,6 +636,163 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
               "plannedGiveUp": "105.00", "plannedShares": 196, "executedShares": 150,
               "reducedBecause": "total-risk",
               "lossMechanism": "ordinary", "aftermath": null, "aftermathBecause": null }
+          ]
+        }
+        """;
+
+
+    /// <summary>
+    /// A register carrying a version on both sides, a version that was rejected, and a holdout
+    /// budget that has been spent out.
+    ///
+    /// <b>Both sides on one version, and no live store could produce it.</b> A selection version
+    /// carries one direction, which the store holds as a CHECK, so the two-sided case can only be
+    /// authored. It is authored here because the claim is that a version touching both sides reports
+    /// two figures and never an average, and a body with one side in it would let the page satisfy
+    /// that claim by never having to render the second.
+    ///
+    /// <b>The rejected version is the other half of the register's purpose.</b> A variant that
+    /// misses its target closes as refuted and stays visible rather than quietly vanishing, and a
+    /// body holding only open versions would never exercise the sentence that says so.
+    ///
+    /// <b>The budget is exhausted rather than empty.</b> Spent out and empty-because-nothing-has-
+    /// matured render through the same line, and the spent state is the one that also exercises what
+    /// a window was spent on and what came of it.
+    /// </summary>
+    private const string Register = """
+        {
+          "asOf": "2026-08-24", "absent": null, "generation": 0,
+          "twinPairsArriveAt": "6.3",
+          "lastScoreRun": {
+            "sessionDate": "2026-08-24", "versionsLive": 2, "versionsScored": 1,
+            "nightsScored": 2, "nightsWaiting": 1, "longs": 1, "shorts": 1,
+            "unscoreable": 0, "outcome": "clean", "stoppedBecause": null },
+          "versions": [
+            { "variantId": "V0", "generation": 0, "family": "baseline",
+              "definition": "the rule as it stands", "target": "the reference every version is differenced against",
+              "minimumSample": 1802, "minimumSampleUnit": "effective_paired_setup_observations",
+              "status": "open", "resolvedAt": null, "createdAt": "2026-08-20",
+              "isBaseline": true, "live": true,
+              "direction": null, "gate": null, "thresholdName": null,
+              "thresholdFrom": null, "thresholdTo": null, "moved": null, "sides": [] },
+            { "variantId": "F1a", "generation": 0, "family": "selection",
+              "definition": "loosens the retrace ceiling", "target": "two points of forward return",
+              "minimumSample": 1802, "minimumSampleUnit": "effective_paired_setup_observations",
+              "status": "rejected", "resolvedAt": "2026-08-24", "createdAt": "2026-08-20",
+              "isBaseline": false, "live": true,
+              "direction": "long", "gate": "dip-shape", "thresholdName": "maximum-retrace",
+              "thresholdFrom": "0.40", "thresholdTo": "0.50",
+              "moved": "long dip-shape maximum-retrace from 0.40 to 0.50",
+              "sides": [
+                { "direction": "long", "nightsScored": 2, "nightsCarryingADifference": 1,
+                  "unscoreable": 1, "baselineOutsideCap": 0, "variantOutsideCap": 2,
+                  "nights": [
+                    { "sessionDate": "2026-08-24", "horizonDays": 10, "flagged": 11,
+                      "baselineSelected": 4, "variantSelected": 5, "bothSelected": 4,
+                      "baselineOnly": 0, "variantOnly": 1,
+                      "baselineMeanReturn": "0.0100", "variantMeanReturn": "0.0310",
+                      "meanDifference": "0.0210", "unscoreable": 1, "withheldBecause": null },
+                    { "sessionDate": "2026-08-25", "horizonDays": 10, "flagged": 9,
+                      "baselineSelected": 3, "variantSelected": 3, "bothSelected": 3,
+                      "baselineOnly": 0, "variantOnly": 0,
+                      "baselineMeanReturn": null, "variantMeanReturn": null,
+                      "meanDifference": null, "unscoreable": 0,
+                      "withheldBecause": "the scoring horizon has not closed" }
+                  ] },
+                { "direction": "short", "nightsScored": 1, "nightsCarryingADifference": 1,
+                  "unscoreable": 0, "baselineOutsideCap": 0, "variantOutsideCap": 0,
+                  "nights": [
+                    { "sessionDate": "2026-08-24", "horizonDays": 10, "flagged": 6,
+                      "baselineSelected": 2, "variantSelected": 1, "bothSelected": 1,
+                      "baselineOnly": 1, "variantOnly": 0,
+                      "baselineMeanReturn": "0.0050", "variantMeanReturn": "-0.0130",
+                      "meanDifference": "-0.0180", "unscoreable": 0, "withheldBecause": null }
+                  ] }
+              ] }
+          ],
+          "holdout": {
+            "capacity": 8, "matured": 1, "recorded": 1, "spent": 1, "available": 0,
+            "firstSession": "2026-08-27",
+            "emptyBecause": "every window that has matured has been spent, so no further pack-version decision can be made by replay and the remaining channel is the forward hit rate. This is a designed dead end rather than a bug",
+            "exhausted": true, "missing": [],
+            "windows": [
+              { "windowId": "2026-Q4", "ordinal": 1, "start": "2026-10-01", "end": "2026-12-31",
+                "maturesOn": "2027-01-01", "spentOn": "pack v1 against v2",
+                "outcome": "v2 proposed better and the window agreed", "spentAt": "2027-01-02" }
+            ] }
+        }
+        """;
+
+    /// <summary>
+    /// A night with one slot that never fired, one that did not end cleanly, and the one the store
+    /// cannot see.
+    ///
+    /// <b>The slot that never fired is the whole subject.</b> It is the state that cost four nights
+    /// of minute bars, it is the state no check in this corpus can reach, and a body in which every
+    /// slot ran would let the morning screen satisfy a claim about reporting it without ever having
+    /// to render one.
+    /// </summary>
+    private const string Slots = """
+        {
+          "asOf": "2026-08-24", "absent": null,
+          "ran": 1, "neverRan": 1, "notClean": 1, "unobservable": 1,
+          "unscheduled": ["ceiling"],
+          "slots": [
+            { "slot": "universe", "at": "17:15", "insideTheSession": false, "unobservable": null,
+              "stages": [ { "stage": "universe-build", "startedAt": "2026-08-24 17:15",
+                            "endedAt": "17:18", "outcome": "clean", "callsUsed": 2005,
+                            "unobservable": null } ] },
+            { "slot": "sectors", "at": "18:12", "insideTheSession": false, "unobservable": null,
+              "stages": [ { "stage": "sectors", "startedAt": "2026-08-24 18:12",
+                            "endedAt": "18:14", "outcome": "failed", "callsUsed": 149,
+                            "unobservable": null } ] },
+            { "slot": "intraday", "at": "20:30", "insideTheSession": false, "unobservable": null,
+              "stages": [ { "stage": "intraday-bars", "startedAt": null, "endedAt": null,
+                            "outcome": null, "callsUsed": 0, "unobservable": null } ] },
+            { "slot": "snapshot", "at": "22:00", "insideTheSession": false,
+              "unobservable": "snapshot-db copies the store and takes no run logger, so nothing it does reaches run_log and this report cannot say whether it ran. The night's own log is where that is written",
+              "stages": [ { "stage": "snapshot-db", "startedAt": null, "endedAt": null,
+                            "outcome": null, "callsUsed": 0,
+                            "unobservable": "snapshot-db copies the store and takes no run logger, so nothing it does reaches run_log and this report cannot say whether it ran. The night's own log is where that is written" } ] }
+          ]
+        }
+        """;
+
+
+    /// <summary>
+    /// A trade held past its own session, which no live store has ever produced.
+    ///
+    /// <b>Authored because the lab has never held one, and that is the whole reason the obligation
+    /// stood open.</b> 4.11 recorded that a position held four sessions has three sessions of
+    /// minutes nothing draws and that nothing was wrong yet, because every trade so far opened and
+    /// closed inside one session. A body drawn from any store the lab has would exercise the
+    /// one-session case and say nothing about the case the claim is about.
+    ///
+    /// <b>It carries no minutes and does carry daily bars.</b> That is the defensive half of the
+    /// read rather than the ordinary case: an exit fill is priced from the session's minutes, so a
+    /// closed trade usually does have them for its closing session. What the body exercises is that
+    /// the page draws the strip and says which half is missing, instead of going blank as it did
+    /// until 5.5.
+    /// </summary>
+    private const string Held = """
+        {
+          "tradeId": "t-held", "ticker": "AAA", "direction": "long",
+          "closedSession": "2026-08-27", "openedSession": "2026-08-24",
+          "exitReason": "trail", "nothing": null,
+          "heldSessions": 4, "sessionsWithNoMinutes": 3, "heldPastItsOwnSession": true,
+          "minutesAbsentBecause": "minute bars are bought for the session a plan is live in, which is the session the entry filled in, and for no session after it. This position was held past that session and the vendor sells no minute history to buy the rest back, so the daily strip is the whole picture of how it ended",
+          "bars": [],
+          "levels": [
+            { "name": "trigger", "price": "100.00", "what": "the price the plan committed to before the session opened" },
+            { "name": "give-up", "price": "95.00", "what": "the resting instruction the plan carried from 18:30, live from the moment the entry filled" },
+            { "name": "fill", "price": "100.10", "what": "what the entry actually got, in the session of 2026-08-24" },
+            { "name": "exit", "price": "112.40", "what": "what the exit got, on the trail rule" }
+          ],
+          "daily": [
+            { "date": "2026-08-24", "open": 99.0, "high": 101.5, "low": 98.5, "close": 101.0, "opened": true, "closed": false },
+            { "date": "2026-08-25", "open": 101.2, "high": 106.0, "low": 100.9, "close": 105.4, "opened": false, "closed": false },
+            { "date": "2026-08-26", "open": 105.5, "high": 114.0, "low": 105.0, "close": 113.2, "opened": false, "closed": false },
+            { "date": "2026-08-27", "open": 113.0, "high": 113.4, "low": 111.0, "close": 112.4, "opened": false, "closed": true }
           ]
         }
         """;

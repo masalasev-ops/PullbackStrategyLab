@@ -901,6 +901,8 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(ReplayFigures());
         measurements.AddRange(HoldoutFigures());
+        measurements.AddRange(LedgerFigures());
+        measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -2566,6 +2568,75 @@ public sealed class PhaseReplay : IDisposable
     }
 
     /// <summary>
+    /// The research ledger over the fixture, which is 5.5's deliverable.
+    ///
+    /// <b>The register holds one version and none of them has ever been scored.</b> The one is the
+    /// baseline this replay seeds so a plan has a version to belong to; nothing here admits a
+    /// selection version and nothing here runs the scorer. So what the figures assert is that the
+    /// ledger tells those states apart: a register holding no version, a register whose versions
+    /// carry no difference, and a scorer that never ran are three sentences and the page says which
+    /// one it is showing.
+    ///
+    /// <b>The holdout reading here is the second producer of a figure `holdout.*` already carries.</b>
+    /// It is the same comparison run through the read surface rather than through the stage, which is
+    /// exactly what makes it worth having: the two share the implementation in the Data assembly and
+    /// nothing else, so a read surface that stopped calling it would disagree with the stage here.
+    /// </summary>
+    private IReadOnlyList<Measurement> LedgerFigures()
+    {
+        ResearchResponse ledger = LabResearch.Read(_connections, AsOf, _options.Value.SessionZone);
+
+        return
+        [
+            new Measurement("ledger.versions", ledger.Versions.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("ledger.generation",
+                ledger.Generation?.ToString(CultureInfo.InvariantCulture) ?? "none"),
+            new Measurement("ledger.absent", ledger.Absent is null ? "none" : "no version registered"),
+            new Measurement("ledger.scoreRun", ledger.LastScoreRun is null ? "never ran" : "ran"),
+            new Measurement("ledger.twinPairsArriveAt", ledger.TwinPairsArriveAt),
+            new Measurement("ledger.holdout.available",
+                ledger.Holdout.Available.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("ledger.holdout.emptyBecause", EmptyReason(ledger.Holdout.EmptyBecause)),
+            new Measurement("ledger.holdout.firstSession",
+                ledger.Holdout.FirstSession ?? "none"),
+        ];
+    }
+
+    /// <summary>
+    /// What the morning report says about the fixture's own night.
+    ///
+    /// <b>The declared side of it is the part worth freezing, and the observed side is not.</b> How
+    /// many slots a session was due and how many stages a run report can see at all are facts about
+    /// the schedule, and they are derivable by hand from RUNBOOK's own tables without reading a line
+    /// of the code that produces them. What the fixture replay happened to run is a fact about the
+    /// replay, which changes whenever a checkpoint adds a stage to it, so it is reported as a count
+    /// rather than as a list of names nobody would maintain.
+    ///
+    /// <b>The as-of is a Monday</b>, being 2026-08-24, so the weekly ceiling slot is not among the
+    /// slots due and the figure below is the weekday count rather than the whole schedule.
+    /// </summary>
+    private IReadOnlyList<Measurement> NightFigures()
+    {
+        NightResponseOfSlots night = LabNight.Read(_connections, AsOf, _options.Value.SessionZone);
+
+        return
+        [
+            new Measurement("night.slotsDue", night.Slots.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("night.slotsInTheWholeSchedule",
+                NightlySchedule.Slots.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("night.observableStages",
+                NightlySchedule.ObservableStages.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("night.unobservable", night.Unobservable.ToString(CultureInfo.InvariantCulture)),
+
+            // The three verdicts have to cover the whole list exactly once with the unobservable
+            // one, which is what makes the fourth a reported state rather than a rounding.
+            new Measurement("night.accountedFor",
+                night.Ran + night.NeverRan + night.NotClean + night.Unobservable == night.Slots.Count
+                    ? "every slot" : "not every slot"),
+        ];
+    }
+
+    /// <summary>
     /// Which of the four reasons a register gives, as a name rather than as the sentence.
     ///
     /// The sentences are prose and would put a paragraph in the expectations file; what the fixture
@@ -2574,10 +2645,10 @@ public sealed class PhaseReplay : IDisposable
     /// </summary>
     private static string EmptyReason(string? because) =>
         because is null ? "none, a window is available"
-        : because == HoldoutRegistry.NoSessionRecorded ? "no session recorded"
-        : because == HoldoutRegistry.NoQuarterMaturedYet ? "no quarter matured yet"
-        : because == HoldoutRegistry.NotRecorded ? "matured and not recorded"
-        : because == HoldoutRegistry.EveryMaturedWindowSpent ? "every matured window spent"
+        : because == HoldoutRegister.NoSessionRecorded ? "no session recorded"
+        : because == HoldoutRegister.NoQuarterMaturedYet ? "no quarter matured yet"
+        : because == HoldoutRegister.NotRecorded ? "matured and not recorded"
+        : because == HoldoutRegister.EveryMaturedWindowSpent ? "every matured window spent"
         : "a reason this measurement does not name";
 
     private static IReadOnlyList<Measurement> RuleFigures() =>

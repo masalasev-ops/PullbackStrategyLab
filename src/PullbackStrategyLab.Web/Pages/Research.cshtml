@@ -2,17 +2,299 @@
 @using PullbackStrategyLab.Web.Shell
 @model ResearchModel
 @*
-    The empty state, which is the whole page until 5.5. It names what will fill it and
-    which checkpoint fills it, because an empty page that says so is honest and a page of
-    invented rows is not.
+    The research ledger. Four sections, in the order the loop runs: what has been registered,
+    what each version has accumulated, what the budget has left, and the twin-pair panel that
+    arrives with the finder that fills it.
+
+    Designed from ARCHITECTURE's description rather than from a drawing. SCREENS.html drew this
+    page and was retired at 4.12 once the other four screens existed, so what remains is the
+    specification rather than the picture, which is the right way round.
+
+    Two rules are visible in the shape. A version's sides are separate blocks and there is no
+    element on this page that could hold one number over both. And nothing here averages a
+    difference series: settling a version against its target is AcceptanceGate's at 6.7, and a
+    page that did it first would be answering that question with no gate in front of it.
 *@
 <h1>@Model.Item.Title</h1>
 <p class="lede">@Model.Item.What.</p>
 
-<div class="empty-state">
-    <p><b>Nothing here yet.</b> This screen is filled at checkpoint @Model.Item.ArrivesAt.</p>
-    <p>The shell, its navigation, the status band and the shared chart component are what
-       checkpoint 1.8 built. Nothing on this page is stubbed with sample rows: a page of
-       invented data reads as a working screen and is the one thing that cannot be told apart
-       from the real one later.</p>
-</div>
+<p class="muted">As of @Model.Research.AsOf.</p>
+
+<section class="ledger register">
+    <h2>The register of rule versions</h2>
+    <p class="muted">
+        Every version, live and closed alike. A version that misses its target closes as refuted
+        and stays here rather than quietly vanishing, which is the whole reason this is a register
+        and not a list of what is currently running.
+    </p>
+
+    @if (!Model.Research.HasVersions)
+    {
+        @* "Nothing registered yet" and "this page is not built" are different facts and the words
+           have to be different too. Every unbuilt screen in this shell says "Nothing here yet", so
+           a built page reusing that sentence would report itself as unbuilt on the one surface a
+           person reads. *@
+        <div class="empty-state">
+            <p><b>No version registered.</b> @Model.Research.Absent.</p>
+            <p>The screen is built and the register is empty. The lab flags, records and measures
+               setups with no version existing at all; what it cannot do until one is registered is
+               publish a plan or difference anything against a baseline.</p>
+        </div>
+    }
+    else
+    {
+        <p class="lede">Generation @Model.Research.Generation is in force.</p>
+
+        void Versions(string heading, string note, IReadOnlyList<VersionView> versions)
+        {
+            if (versions.Count == 0)
+            {
+                return;
+            }
+
+            <h3>@heading <span class="pill">@versions.Count</span></h3>
+            <p class="muted">@note</p>
+
+            <table class="ledger versions">
+                <tr>
+                    <th>Version</th><th>Family</th><th>What it changes</th>
+                    <th>Target</th><th>Minimum sample</th><th>Status</th><th>Registered</th>
+                </tr>
+                @foreach (VersionView version in versions)
+                {
+                    <tr class="@(version.Open ? null : "resolved")">
+                        <td>@version.VariantId</td>
+                        <td>@version.Family</td>
+                        <td>
+                            @version.Definition
+                            @if (version.Moved is string moved)
+                            {
+                                @* The five columns the store holds together, said as one line.
+                                   A version differs from the baseline by exactly one gate's
+                                   threshold, and this is that threshold. *@
+                                <span class="moved">@moved</span>
+                            }
+                        </td>
+                        <td>@version.Target</td>
+                        @* The unit travels with the figure, because 1802 effective observations
+                           and 200 rows are not comparable and one integer with no unit would
+                           make them look it. *@
+                        <td>@version.Sample</td>
+                        <td>@version.StatusReads</td>
+                        <td>@version.CreatedAt</td>
+                    </tr>
+                }
+            </table>
+        }
+
+        Versions("Live", "The generation in force, which is what tonight fans a plan out to.", Model.Research.Live);
+        Versions(
+            "Earlier generations",
+            "Still readable and no longer fanned out to. A version closed as unresolved was never "
+            + "measured, because the baseline it was being compared against was edited; a rejected "
+            + "one was measured and fell short. Both are history and only one of them is a finding.",
+            Model.Research.EarlierGenerations);
+    }
+</section>
+
+<section class="ledger differences">
+    <h2>What each version has accumulated</h2>
+    <p class="muted">
+        One block a side. <b>The two are never added:</b> a version that helps the long side while
+        hurting the short would read as no difference at all once they were, and short results carry
+        a borrow assumption long results do not.
+    </p>
+
+    @if (Model.Research.LastScoreRun is ScoreRunView run)
+    {
+        @* Which kind of nothing a version showing no difference is. A night that found no version to
+           difference and a night on which the scorer never ran read identically off the score rows
+           alone, which is the shape this corpus keeps finding one level up. *@
+        <p class="muted">
+            The scorer last ran for the session of @run.SessionDate and ended @run.Outcome:
+            @run.VersionsScored of @run.VersionsLive live version(s) carry a difference,
+            over @run.NightsScored night(s) scored with @run.NightsWaiting still inside their horizon.
+            @if (run.StoppedBecause is string stopped)
+            {
+                <span class="withheld-because">@stopped</span>
+            }
+        </p>
+    }
+    else
+    {
+        <p class="muted">
+            <b>The scorer has never run.</b> That is a different fact from a version having no
+            difference to show, and it is the one a green build cannot tell you: nothing in the
+            verification harness reads the running lab.
+        </p>
+    }
+
+    @foreach (VersionView version in Model.Research.Versions.Where(v => v.Sides.Count > 0))
+    {
+        <h3>@version.VariantId</h3>
+
+        @foreach (SideView side in version.Sides)
+        {
+            <div class="ledger side @side.Direction">
+                <h4>@side.Direction</h4>
+                <p class="count">@side.Count</p>
+                <p class="over">@side.Over</p>
+
+                @if (version.NoAccumulatedSample is string noSample)
+                {
+                    @* The minimum is in effective observations and the nights are rows. Saying so
+                       is better than printing the two under one heading as though they were a
+                       fraction of each other. *@
+                    <p class="withheld-because">@noSample</p>
+                }
+
+                @if (side.Unscoreable > 0)
+                {
+                    <p class="warns">
+                        @side.Unscoreable setup(s) whose moved gate the frozen signals could not
+                        judge, counted rather than dropped: a night scored over nine of eleven names
+                        is a different fact from a night scored over eleven.
+                    </p>
+                }
+
+                <table class="ledger nights">
+                    <tr>
+                        <th>Session</th><th>Flagged</th><th>Baseline</th><th>Version</th>
+                        <th>Both</th><th>Difference</th>
+                    </tr>
+                    @foreach (ScoredNightView night in side.Nights)
+                    {
+                        <tr class="@(night.Withheld ? "withheld" : null)">
+                            <td>@night.SessionDate</td>
+                            <td>@night.Flagged</td>
+                            <td>@night.BaselineSelected</td>
+                            <td>@night.VariantSelected</td>
+                            <td>@night.BothSelected</td>
+                            <td>
+                                @if (night.MeanDifference is string difference)
+                                {
+                                    <span class="figure">@difference</span>
+                                }
+                                else
+                                {
+                                    <span class="figure muted">withheld</span>
+                                    <span class="withheld-because">@night.WithheldBecause</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        }
+
+        <p class="muted">
+            <b>The series and not a mean of it.</b> Settling this version against its target is
+            AcceptanceGate's at <b>6.7</b>, against the minimum sample written at creation and never
+            since. A running average here would be that answer computed early, by a page, with no
+            pre-registration in front of it.
+        </p>
+    }
+</section>
+
+<section class="ledger holdout">
+    <h2>The holdout budget</h2>
+    <p class="muted">
+        Quarters of forward-collected evidence, non-overlapping, capped at eight. One is spent per
+        decision between context-pack versions and never reused for any purpose. The register is
+        created empty and a window becomes available the day its quarter completes, so it fills up
+        over two years rather than starting full.
+    </p>
+
+    <dl class="panels">
+        <div class="panel">
+            <dt>Budget</dt>
+            <dd>
+                <span class="count">@Model.Research.Holdout.Count</span>
+                <span class="over">@Model.Research.Holdout.Against</span>
+                @if (Model.Research.Holdout.FirstSession is string first)
+                {
+                    <span class="over">the schedule is computed from the earliest session the
+                          evidence store holds, which is @first</span>
+                }
+            </dd>
+        </div>
+    </dl>
+
+    @if (Model.Research.Holdout.EmptyBecause is string emptyBecause)
+    {
+        @* An empty register reports why it is empty. Four causes and they are four different
+           facts: no session recorded, no quarter matured, every matured window spent, and a
+           quarter matured that nothing wrote down. All four hold nought available, and for the
+           first months of a lab's life the second and the fourth hold the same noughts on every
+           other figure too. *@
+        <p class="@(Model.Research.Holdout.ShortOfAWindow ? "down" : "muted")">
+            <b>No window is available to spend.</b> @emptyBecause.
+        </p>
+
+        @if (Model.Research.Holdout.ShortOfAWindow)
+        {
+            <p class="down">
+                Missing from the register: @string.Join(", ", Model.Research.Holdout.Missing).
+                This is a defect rather than a state. The registry records a window the day its
+                quarter completes and nothing has recorded these.
+            </p>
+        }
+        else if (Model.Research.Holdout.Exhausted)
+        {
+            <p class="warns">
+                <b>This is a designed dead end rather than a fault.</b> No further pack-version
+                decision can be made by replay, and the remaining channel is the forward hit rate.
+            </p>
+        }
+    }
+
+    @if (Model.Research.Holdout.Windows.Count == 0)
+    {
+        <p class="muted">The register holds no window, which the sentence above accounts for.</p>
+    }
+    else
+    {
+        <table class="ledger windows">
+            <tr>
+                <th>#</th><th>Window</th><th>Quarter</th><th>Matures</th>
+                <th>Spent on</th><th>Outcome</th>
+            </tr>
+            @foreach (WindowView window in Model.Research.Holdout.Windows)
+            {
+                <tr class="@(window.Available ? null : "resolved")">
+                    <td>@window.Ordinal</td>
+                    <td>@window.WindowId</td>
+                    <td>@window.Start to @window.End</td>
+                    <td>@window.MaturesOn</td>
+                    <td>@(window.SpentOn ?? "available")</td>
+                    <td>@(window.Outcome ?? string.Empty)</td>
+                </tr>
+            }
+        </table>
+    }
+
+    <p class="muted">
+        <b>Replay is free, and free tests are how you overfit.</b> Sort the same cards forty ways
+        and pick the best and you have fitted to those cards. The budget makes the cost explicit and
+        finite, which is why a spent window is recorded here with what it was spent on and what came
+        of it rather than only that it was spent.
+    </p>
+</section>
+
+<section class="ledger twins">
+    <h2>Twin pairs</h2>
+    @*
+        The one panel on this page nothing fills yet, and it says which checkpoint fills it rather
+        than being drawn with invented rows. A page of sample pairs is the one thing that cannot be
+        told apart from a working screen later.
+    *@
+    <div class="empty-state">
+        <p><b>Arrives at checkpoint @Model.Research.TwinPairsArriveAt.</b> Setups that scored alike
+           on every recorded signal and did opposite things, which TwinPairFinder finds by z-scoring
+           each signal over the trailing 250 setups.</p>
+        <p>The question a pair is put to the model as is not "predict which one wins", which it
+           cannot do. It is: these look identical in everything I record and did opposite things,
+           what would you want to see? The model generates candidates to test and does not make
+           the call.</p>
+    </div>
+</section>

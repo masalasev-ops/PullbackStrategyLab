@@ -111,6 +111,22 @@ public static class Program
                 tradeId,
                 clock.SessionDate(clock.UtcNow, configured.Value.SessionZone), configured.Value.SessionZone)));
 
+        // The research ledger: the register of rule versions, each version's difference series and
+        // the holdout budget, as they stood at the end of the date asked for. The date is in the
+        // path on the terms the scoreboard's and the journal's are.
+        app.MapGet("/research/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabResearch.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
+
+        // Which of a session's slots ran, which never fired, and which nothing in the store can say
+        // anything about. Not a check: it is a read of the running lab, which is the one subject
+        // every check in this corpus is unable to take, and the morning screen is where it is read.
+        app.MapGet("/night/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabNight.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
+
         app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, IOptions<PullbackStrategyLabOptions> configured, string? failed) =>
             Results.Ok(setups.Read(
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),

@@ -52,6 +52,15 @@
                 <title>@average.Name</title>
             </polyline>
         }
+
+        @* The trade's prices, on the strip a held position is drawn on. Empty on every chart of a
+           stock, because a stock has no trigger. *@
+        foreach (LevelGeometry level in Model.Lines)
+        {
+            <line class="level @level.Name" x1="0" y1="@F(level.Y)" x2="@F(Model.PlotWidth)" y2="@F(level.Y)" />
+            @Label("level-label", Model.PlotWidth + 6, level.Y - 3,
+                   "start", level.Name + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture))
+        }
     }
 </svg>
 

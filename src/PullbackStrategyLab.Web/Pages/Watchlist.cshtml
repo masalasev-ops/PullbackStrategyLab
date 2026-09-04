@@ -21,6 +21,71 @@
     </p>
 }
 
+@*
+    What the night did, before the candidates it produced. It is first because a list of nothing
+    on a night that never ran and a list of nothing on a night that ran and kept nobody are the
+    same picture, and only one of them is something to act on.
+
+    It is the one panel in this interface whose subject is the running lab. Every check this
+    corpus has takes its subject from the source, the documents, the golden fixture, or a store
+    the check itself builds, and the lab is in none of those.
+*@
+@if (Model.Night.HasSlots)
+{
+    <section class="night @(Model.Night.NeedsAttention ? "ragged" : "clean")">
+        <h2>The night of @Model.Night.AsOf</h2>
+        <p class="count">@Model.Night.Count</p>
+
+        @if (!Model.Night.NeedsAttention)
+        {
+            <p class="muted">Every slot the schedule owed this session ran and ended cleanly.</p>
+        }
+
+        @foreach (SlotView slot in Model.Night.Missing)
+        {
+            <p class="down">
+                <b>@slot.At @slot.Slot never ran</b> (@slot.Runs).
+                @if (slot.Unrecoverable is string lost)
+                {
+                    <span class="warns">@lost</span>
+                }
+                Rerun the slot for this date; the stages after it read what it should have written.
+            </p>
+        }
+
+        @foreach (SlotView slot in Model.Night.Ragged)
+        {
+            <p class="warns">
+                <b>@slot.At @slot.Slot</b>
+                @string.Join("; ", slot.Stages.Select(s => s.Stage + ": " + s.Reads)).
+            </p>
+        }
+
+        @if (Model.Night.Unobservable > 0)
+        {
+            @* Reported rather than dropped. A count of thirty-one under a heading saying
+               thirty-two is the under-reporting shape, one level up from the store. *@
+            @foreach (SlotView slot in Model.Night.Slots.Where(s => s.IsUnobservable))
+            {
+                <p class="muted"><b>@slot.At @slot.Slot</b>: @slot.Unobservable.</p>
+            }
+        }
+
+        @if (Model.Night.Unscheduled.Count > 0)
+        {
+            <p class="muted">
+                Also ran, belonging to no slot of this session:
+                @string.Join(", ", Model.Night.Unscheduled). A stage run by hand is how a night gets
+                repaired, so it is shown rather than dropped.
+            </p>
+        }
+    </section>
+}
+else if (Model.Night.Absent is string noNight)
+{
+    <p class="muted">The night's slots could not be read: @noNight.</p>
+}
+
 @if (Model.Watchlist.Nothing is string nothing)
 {
     @* "No candidates tonight" and "this page is not built" are different facts and the words have

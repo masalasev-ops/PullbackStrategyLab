@@ -36,35 +36,79 @@
             }
         </p>
 
-        <svg class="chart minutes" viewBox="0 0 @Model.MinuteGeometry.Width @Model.MinuteGeometry.Height"
-             role="img" aria-label="@trade.Ticker minutes with the trade's levels">
-            @foreach (MinuteGeometry bar in Model.MinuteGeometry.Candles)
-            {
-                <line class="wick" x1="@bar.Centre" x2="@bar.Centre" y1="@bar.HighY" y2="@bar.LowY" />
-                <rect class="body @(bar.Up ? "up" : "down")"
-                      x="@(bar.Centre - (bar.BodyWidth / 2))" y="@bar.BodyTop"
-                      width="@bar.BodyWidth" height="@bar.BodyHeight" />
-            }
-            @foreach (LevelGeometry level in Model.MinuteGeometry.Levels)
-            {
-                <line class="level @level.Name" x1="0" x2="@Model.MinuteGeometry.PlotWidth"
-                      y1="@level.Y" y2="@level.Y" />
-                @*
-                    Razor reads a bare <text> tag as its own escape construct and refuses attributes
-                    on it, so the SVG element is written through Html.Raw. The label is built from
-                    the geometry rather than from anything a request carries, and both parts are
-                    encoded, so nothing from outside reaches the markup.
-                *@
-                @Html.Raw(
-                    "<text class=\"level-label\" x=\""
-                    + ((Model.MinuteGeometry.PlotWidth + 4).ToString("0.##", CultureInfo.InvariantCulture))
-                    + "\" y=\""
-                    + ((level.Y + 4).ToString("0.##", CultureInfo.InvariantCulture))
-                    + "\">"
-                    + System.Net.WebUtility.HtmlEncode(level.Name + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture))
-                    + "</text>")
-            }
-        </svg>
+        @if (trade.MinutesAbsentBecause is string noMinutes)
+        {
+            @* The half of the picture that is missing, said rather than left as a blank frame.
+               Until 5.5 this case returned nothing at all, so the whole page went blank for exactly
+               the trades the missing-middle obligation was about. *@
+            <p class="down"><b>No minute picture of this session.</b> @noMinutes.</p>
+        }
+        else
+        {
+            <svg class="chart minutes" viewBox="0 0 @Model.MinuteGeometry.Width @Model.MinuteGeometry.Height"
+                 role="img" aria-label="@trade.Ticker minutes with the trade's levels">
+                @foreach (MinuteGeometry bar in Model.MinuteGeometry.Candles)
+                {
+                    <line class="wick" x1="@bar.Centre" x2="@bar.Centre" y1="@bar.HighY" y2="@bar.LowY" />
+                    <rect class="body @(bar.Up ? "up" : "down")"
+                          x="@(bar.Centre - (bar.BodyWidth / 2))" y="@bar.BodyTop"
+                          width="@bar.BodyWidth" height="@bar.BodyHeight" />
+                }
+                @foreach (LevelGeometry level in Model.MinuteGeometry.Levels)
+                {
+                    <line class="level @level.Name" x1="0" x2="@Model.MinuteGeometry.PlotWidth"
+                          y1="@level.Y" y2="@level.Y" />
+                    @*
+                        Razor reads a bare <text> tag as its own escape construct and refuses attributes
+                        on it, so the SVG element is written through Html.Raw. The label is built from
+                        the geometry rather than from anything a request carries, and both parts are
+                        encoded, so nothing from outside reaches the markup.
+                    *@
+                    @Html.Raw(
+                        "<text class=\"level-label\" x=\""
+                        + ((Model.MinuteGeometry.PlotWidth + 4).ToString("0.##", CultureInfo.InvariantCulture))
+                        + "\" y=\""
+                        + ((level.Y + 4).ToString("0.##", CultureInfo.InvariantCulture))
+                        + "\">"
+                        + System.Net.WebUtility.HtmlEncode(level.Name + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture))
+                        + "</text>")
+                }
+            </svg>
+        }
+
+        @*
+            The missing middle, from 5.5. A position held past its own session has sessions of
+            minutes nothing draws, and there is nothing to draw them from: minutes are bought for the
+            session a plan is live in and for a later session of the same name only where the
+            detector flagged it again. So the middle is a daily strip rather than a multi-session
+            minute strip, and that is settled by what the store holds rather than by taste.
+
+            The count beside it is read from the store rather than taken from the hold length. A
+            trade held four sessions does not have three sessions of missing minutes as a matter of
+            arithmetic, and a figure derived that way would be right about the ordinary case and
+            wrong about the one a person is looking at.
+        *@
+        @if (trade.HasDaily)
+        {
+            <h2>The sessions it was held over</h2>
+            <p class="lede">
+                @if (trade.HeldPastItsOwnSession)
+                {
+                    <span><b>Held @trade.HeldSessions sessions</b>, of which
+                          @trade.SessionsWithNoMinutes have no minutes in the store at all. Those are
+                          the sessions the picture above cannot show, and a trail exit is decided on
+                          a daily close that appears on this strip and nowhere else.</span>
+                }
+                else
+                {
+                    <span>Opened and closed in one session, so this strip is context rather than a
+                          middle: there is no middle to draw. The four levels are the same four the
+                          minute picture carries.</span>
+                }
+            </p>
+
+            @await Html.PartialAsync("_Candlestick", Model.TradeDailyGeometry)
+        }
 
         <ul class="legend levels">
             @foreach (TradeLevelLine level in trade.Levels)

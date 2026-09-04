@@ -5,6 +5,7 @@ using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Core.Research;
+using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -483,6 +484,121 @@ public sealed class TradeJournalTests : IDisposable
     {
         (IOptions<PullbackStrategyLabOptions> options, FixedClock clock) = At(on ?? Session, new TimeOnly(21, 26));
         return new PlanAudit(_connections, new RunLogger(clock, options), clock, options);
+    }
+
+    // ---- what a picture of a held trade can draw ------------------------------------------------
+
+    /// <summary>
+    /// A trade held past its own session is drawn on a daily strip running from the session it
+    /// opened in to the session it closed in, with the four prices across it.
+    ///
+    /// <b>This is the obligation 4.11 raised, and the population is the same authored one this whole
+    /// class uses.</b> The lab has never held a position past its own session, so no captured night
+    /// can answer it; the position below is opened and held by the two stages that own those
+    /// operations rather than inserted.
+    ///
+    /// <b>What the strip is for is the middle.</b> The minute picture is the closing session, and
+    /// three of this trade's four sessions are not in it. The armed exit waited a session the store
+    /// holds no minute of, and that session is on this picture and on no other.
+    /// </summary>
+    [Fact]
+    public void A_trade_held_past_its_own_session_is_drawn_on_a_daily_strip_of_the_sessions_it_spanned()
+    {
+        HoldAcrossASessionTheStoreIsBlindOn();
+
+        StoredTrade trade = Trades(ThirdSession).Single();
+        Assert.Equal(3, trade.HeldSessions);
+
+        TradeChartResponse chart = LabTradeChart.Read(
+            _connections, trade.TradeId, ThirdSession, SessionBoundaries.UsEquities);
+
+        Assert.Null(chart.Nothing);
+
+        // The strip spans the trade's own sessions and both ends are marked, so a reader is not
+        // counting along the axis to find them.
+        Assert.Contains(chart.Daily, d => d.Opened && d.Date == "2026-08-26");
+        Assert.Contains(chart.Daily, d => d.Closed && d.Date == "2026-08-28");
+        Assert.Contains(chart.Daily, d => d.Date == "2026-08-27");
+
+        // The middle session is the one the minute picture cannot have, and it is counted from the
+        // store rather than taken from the hold length.
+        Assert.Equal(1, chart.SessionsWithNoMinutes);
+        Assert.True(chart.HeldPastItsOwnSession);
+
+        // The same four levels the minute picture carries, so the daily close that decided the exit
+        // is readable against the price the plan named.
+        Assert.Equal(
+            ["trigger", "give-up", "fill", "exit"],
+            chart.Levels.Select(l => l.Name));
+    }
+
+    /// <summary>
+    /// How much of a hold has no minutes is counted from the store and not taken from the hold
+    /// length, so a name flagged again in the middle of its own hold reports one fewer.
+    ///
+    /// <b>This is the population rule applied to a number beside a picture.</b> Three held sessions
+    /// do not mean two missing ones as a matter of arithmetic: minutes are bought for the session a
+    /// plan is live in and for a later session of the same name only where the detector flagged it
+    /// again, so the figure is a fact about the store. Derived instead, it would be right about the
+    /// ordinary case and wrong about the one a person happens to be looking at, and nothing on the
+    /// page would say which.
+    ///
+    /// Population: the same authored hold, read once with the middle session blind and once after
+    /// minutes for that session arrive. The hold does not change and the figure does.
+    /// </summary>
+    [Fact]
+    public void The_sessions_with_no_minutes_are_counted_from_the_store_and_not_derived_from_the_hold()
+    {
+        HoldAcrossASessionTheStoreIsBlindOn();
+
+        StoredTrade trade = Trades(ThirdSession).Single();
+
+        Assert.Equal(
+            1,
+            LabTradeChart.Read(_connections, trade.TradeId, ThirdSession, SessionBoundaries.UsEquities)
+                .SessionsWithNoMinutes);
+
+        // The name is flagged again on the evening between, so the fetch buys that session's minutes
+        // after the fact. Nothing about the trade changes and the figure does, which is what a
+        // derived one could not do.
+        Minute("AAPL", NextSession, new TimeOnly(9, 30), 98m, 98.5m, 97.5m, 98m);
+
+        TradeChartResponse again = LabTradeChart.Read(
+            _connections, trade.TradeId, ThirdSession, SessionBoundaries.UsEquities);
+
+        Assert.Equal(0, again.SessionsWithNoMinutes);
+        Assert.Equal(3, again.HeldSessions);
+        Assert.True(again.HeldPastItsOwnSession);
+    }
+
+    /// <summary>
+    /// A long entered on one session, armed for a trail exit, and filled two sessions later because
+    /// the session between them has a daily bar and no minutes.
+    ///
+    /// The middle session is the whole point: it is a session of the hold that nothing can draw a
+    /// minute of, which is what the 4.11 obligation is about.
+    /// </summary>
+    private void HoldAcrossASessionTheStoreIsBlindOn()
+    {
+        Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
+        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
+        Quotes("AAPL", Session);
+        DailyBar("AAPL", Session, close: 99m);
+        Indicators("AAPL", Session, ema9: 102m, ema50: 90m);
+        Broker().Fill(Session);
+        Manager().Manage(Session);
+
+        // The session in the middle: a daily bar and no minutes, so the armed exit waits and the
+        // picture has a session nothing can draw.
+        DailyBar("AAPL", NextSession, close: 98m);
+
+        Minute("AAPL", ThirdSession, new TimeOnly(9, 30), 97m, 98m, 96m, 97m);
+        Quotes("AAPL", ThirdSession);
+        DailyBar("AAPL", ThirdSession, close: 97m);
+        Manager(ThirdSession).Manage(ThirdSession);
+
+        Journal(ThirdSession).Close(ThirdSession);
     }
 
     private (IOptions<PullbackStrategyLabOptions>, FixedClock) At(DateOnly session, TimeOnly time) =>

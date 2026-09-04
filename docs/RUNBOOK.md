@@ -132,6 +132,16 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 22:00 | `snapshot-db`, the night's copy, which is the recovery path | 0 |
 | **total** | | **~2,723 against a 5,000 ceiling** |
 
+**One slot is weekly rather than nightly, and it was in no table until 5.5.** The paragraph under
+"The schedule as installed" said Saturday 08:00 for `ceiling` and the table above did not have a row
+for it, so the operator's own table of what the lab runs was short by one slot that is registered as
+a task like the other thirty-one. Found by `slot-roster` when the morning report's declaration was
+reconciled against this document.
+
+| Day and time (ET) | Stage | Calls |
+|---|---|---|
+| Saturday 08:00 | `ceiling`, which recomputes the win-rate bound per direction over every setup whose tenth session has closed. It spends no vendor call. Weekly rather than nightly because the bound moves with the accumulated population rather than with one night, and a night's worth of new rows cannot move it enough to be worth a run | 0 |
+
 **`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
 **`universe-build` cost `~5` in this table until 3.10 and it costs `~2,005`.** The row named the symbol list and stopped there, and the stage does the symbol list and then the screening window: `BulkEndOfDayCost` is 100 and `LiquidityWindowSessions` is 20, which `UniverseBuilderTests` has asserted as `Assert.Equal(2005, result.CallsUsed)` since it was written. A holiday inside the forty-five day search costs a further 100 each, so the real range for the stage is 2,005 to 3,205 and the night is 2,803 to 4,003. **The headroom is under twice expected usage, not the seven times the configuration comment claimed.** A holiday week plus a large `backfill --rebuild` reaches the ceiling, and `daily-bars` runs after `universe`, so the stage that stops short is the one that stores the night's bars.

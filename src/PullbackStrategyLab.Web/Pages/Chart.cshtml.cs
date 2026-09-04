@@ -61,6 +61,32 @@ public sealed class ChartModel : ScreenModel
     public MinuteChartGeometry MinuteGeometry { get; private set; } =
         CandlestickChart.LayMinutes([], [], Width, Height);
 
+    /// <summary>
+    /// The daily strip a trade is drawn on, from the session it opened in to the session it closed
+    /// in, with the four levels across it.
+    ///
+    /// <b>This is the missing middle, and the obligation that asked for it is 4.11's.</b> A position
+    /// held four sessions has three sessions the minute picture cannot show, and the trail exit in
+    /// particular is decided on a daily close. The row named two possible answers and said the
+    /// choice was a question about what a person reads; it turned out to be a question about what
+    /// the store holds, because minutes are bought only for the session a plan is live in, so the
+    /// multi-session minute strip has nothing to draw.
+    ///
+    /// <b>It is the same component and not a second one.</b> The daily geometry gained the levels
+    /// the minute geometry already had, so the two pictures scale a price into a box by one
+    /// implementation and cannot disagree about where a stop sits.
+    /// </summary>
+    public CandlestickGeometry TradeDailyGeometry { get; private set; } =
+        CandlestickChart.Lay([], [], Width, DailyStripHeight);
+
+    /// <summary>
+    /// How tall the strip beside a trade is.
+    ///
+    /// Shorter than the minute picture, because it is a companion to it rather than a second chart:
+    /// a strip as tall as the session would read as the main picture and put the minutes second.
+    /// </summary>
+    public const int DailyStripHeight = 240;
+
     public override async Task OnGetAsync(CancellationToken cancellationToken)
     {
         await base.OnGetAsync(cancellationToken).ConfigureAwait(false);
@@ -70,11 +96,15 @@ public sealed class ChartModel : ScreenModel
             TradeChart = await _api.ReadTradeChartAsync(Trade, cancellationToken).ConfigureAwait(false);
             ViewData["Title"] = string.IsNullOrWhiteSpace(TradeChart.Ticker) ? "Trade" : TradeChart.Ticker;
 
-            MinuteGeometry = CandlestickChart.LayMinutes(
-                TradeChart.Candles,
-                [.. TradeChart.Levels.Select(l => new PriceLevel(l.Name, Price(l.Price)))],
-                Width,
-                Height);
+            IReadOnlyList<PriceLevel> levels =
+                [.. TradeChart.Levels.Select(l => new PriceLevel(l.Name, Price(l.Price)))];
+
+            MinuteGeometry = CandlestickChart.LayMinutes(TradeChart.Candles, levels, Width, Height);
+
+            // The same four levels on the strip. A trade whose exit was decided on a daily close has
+            // that close on this picture and on no other.
+            TradeDailyGeometry = CandlestickChart.Lay(
+                TradeChart.Daily, [], Width, DailyStripHeight, levels);
 
             return;
         }

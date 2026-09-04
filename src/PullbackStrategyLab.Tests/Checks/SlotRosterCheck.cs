@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
 using Xunit;
@@ -36,6 +37,13 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// <c>ComponentReachabilityTests</c> asked that every advertised stage has a dispatch arm and never
 /// the reverse, and the missing half is where the fault was. So each pair below is compared both
 /// ways and a shortfall in either names the list that is short.
+///
+/// <b>A fifth list joined at 5.5 and it is here for a reason none of the four can serve.</b>
+/// <c>NightlySchedule</c> in Core declares the same slots so the read surface can say which of them
+/// ran on a session: the other four are in tools and in the Worker, and the read surface may
+/// reference neither. It is reconciled here in both directions like the rest, so it is one fact
+/// written in a fifth place rather than a fifth fact. What it makes possible is the thing this
+/// check by construction cannot do, which is look at the running lab.
 /// </summary>
 public sealed partial class SlotRosterCheck
 {
@@ -96,6 +104,7 @@ public sealed partial class SlotRosterCheck
             .Examined("distinct worker verbs the slots run", verbs.Length)
             .Examined("stages the worker advertises", Program.StageNames.Count)
             .Examined("slots whose verbs RUNBOOK's schedule names", documented.Length)
+            .Examined("slots the Core declaration the morning report reads holds", NightlySchedule.Slots.Count)
             .Scan(
                 "the slot table, the parameter set, the worker's roster and RUNBOOK's schedule name the same things",
                 CheckCoverage.Backing.Runner(
@@ -156,6 +165,63 @@ public sealed partial class SlotRosterCheck
             $"{undocumented.Count} slot(s) run a verb RUNBOOK's schedule never names, so the operator's own "
             + "table of what the night does is short by that many and the task that runs them was written "
             + "from somewhere else:\n  " + string.Join("\n  ", undocumented));
+
+        // 4. The Core declaration against the slot table, both ways, and its verbs against the same
+        //    hashtable. It is what the morning report reads, so a slot missing from it is a slot the
+        //    report would never say anything about, which is the exact shape of the fault the report
+        //    exists for: a list that has quietly narrowed and goes on reading as complete.
+        string[] declared = [.. NightlySchedule.Slots.Select(s => s.Slot).Order(StringComparer.Ordinal)];
+
+        string[] undeclared = [.. slots.Except(declared, StringComparer.Ordinal)];
+        string[] invented = [.. declared.Except(slots, StringComparer.Ordinal)];
+
+        Assert.True(undeclared.Length == 0,
+            $"{undeclared.Length} slot(s) the night dispatches are absent from NightlySchedule, so the "
+            + "morning report would never say whether they ran and its own count would be short by that "
+            + "many without saying so:\n  " + string.Join("\n  ", undeclared));
+
+        Assert.True(invented.Length == 0,
+            $"{invented.Length} slot(s) NightlySchedule declares are dispatched by nothing, so the report "
+            + "would name a slot as never having run on every session for ever:\n  "
+            + string.Join("\n  ", invented));
+
+        string[] misdeclared =
+            [.. NightlySchedule.Slots
+                // Distinct on both sides. `sectors` runs its stage twice in one slot, because the
+                // second pass retries the names the first could not read, and what the report looks
+                // for in run_log is the stage rather than the number of passes. The switch on
+                // `backfill --rebuild` is dropped for the same reason: it is an argument and not a
+                // stage.
+                .Where(slot => !SlotVerbsOf(script, slot.Slot)
+                    .Where(v => !v.StartsWith("--", StringComparison.Ordinal))
+                    .Distinct(StringComparer.Ordinal)
+                    .SequenceEqual(slot.Stages.Distinct(StringComparer.Ordinal), StringComparer.Ordinal))
+                .Select(slot => $"{slot.Slot}: declares [{string.Join(", ", slot.Stages)}] and the "
+                    + $"dispatcher runs [{string.Join(", ", SlotVerbsOf(script, slot.Slot))}]")];
+
+        Assert.True(misdeclared.Length == 0,
+            $"{misdeclared.Length} slot(s) name different stages in NightlySchedule and in the dispatcher, "
+            + "so the morning report is looking in run_log for a stage the night never runs, or missing one "
+            + "it does:\n  " + string.Join("\n  ", misdeclared));
+
+        // 5. The declared times against RUNBOOK's schedule, which is what the registered tasks were
+        //    written from. A time in the report that disagrees with the one on the machine sends an
+        //    operator to the wrong hour of a log.
+        string[] rows = [.. runbook.Split('\n').Where(l => l.StartsWith("|", StringComparison.Ordinal))];
+
+        string[] wrongTime =
+            [.. NightlySchedule.Slots
+                // The time is looked for inside a table row's first cell rather than as the whole
+                // of one, because the weekly row's first cell is a day and a time and the nightly
+                // rows' is a time alone. Rows only, so a time appearing in prose does not satisfy it.
+                .Where(slot => !rows.Any(row =>
+                    row.Split('|').Skip(1).FirstOrDefault()?.Contains(slot.At, StringComparison.Ordinal) == true))
+                .Select(slot => $"{slot.Slot} at {slot.At}")];
+
+        Assert.True(wrongTime.Length == 0,
+            $"{wrongTime.Length} slot(s) declare a time RUNBOOK's schedule does not have a row for, so the "
+            + "morning report and the operator's own table disagree about when the night runs:\n  "
+            + string.Join("\n  ", wrongTime));
     }
 
     /// <summary>The verbs of one slot, read out of that slot's own line of the hashtable.</summary>

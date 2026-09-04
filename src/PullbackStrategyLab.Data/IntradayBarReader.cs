@@ -161,6 +161,55 @@ public sealed class IntradayBarReader
     /// ran and asked for nothing, and the two are distinguishable only because the stage writes a
     /// row either way.
     /// </summary>
+    /// <summary>
+    /// The sessions in a window for which the store holds a minute of one name, oldest first.
+    ///
+    /// <b>The sessions and not the bars, because the question is which sessions are missing.</b> A
+    /// trade's picture has to say how much of a held position nothing can draw, and deriving that
+    /// from the hold length would be an estimate: minutes are bought for the session a plan is live
+    /// in and for a later session only where the name was flagged again that evening, so how many
+    /// of the middle sessions have minutes is a fact about the store rather than about the trade.
+    ///
+    /// Bounded on the observation instant on the same terms as every other read here.
+    /// </summary>
+    public static IReadOnlyList<DateOnly> SessionsHeld(
+        SqliteConnection connection,
+        string ticker,
+        DateOnly from,
+        DateOnly to,
+        DateOnly asOf,
+        string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT session_date
+              FROM intraday_bar
+             WHERE ticker = @ticker
+               AND session_date >= @from
+               AND session_date <= @to
+               AND observed_at <= @observed_before
+             ORDER BY session_date;
+            """;
+
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
+        command.Parameters.AddWithValue("@to", StoreText.DateToStorageText(to));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
+
+        var sessions = new List<DateOnly>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            sessions.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+        }
+
+        return sessions;
+    }
+
     public static StoredIntradayFetch? LatestFetch(
         SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {

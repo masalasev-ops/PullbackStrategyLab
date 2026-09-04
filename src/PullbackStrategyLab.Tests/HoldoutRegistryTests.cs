@@ -141,7 +141,7 @@ public sealed class HoldoutRegistryTests : IDisposable
         Assert.Equal(0, state.Matured);
         Assert.Equal(0, state.Recorded);
         Assert.Equal(0, state.Available);
-        Assert.Equal(HoldoutRegistry.NoSessionRecorded, state.EmptyBecause);
+        Assert.Equal(HoldoutRegister.NoSessionRecorded, state.EmptyBecause);
         Assert.False(state.IsExhausted);
         Assert.Equal(RunOutcome.Clean, state.Outcome);
     }
@@ -165,7 +165,7 @@ public sealed class HoldoutRegistryTests : IDisposable
         Assert.Equal(0, state.Matured);
         Assert.Equal(0, state.Recorded);
         Assert.Equal(0, state.Available);
-        Assert.Equal(HoldoutRegistry.NoQuarterMaturedYet, state.EmptyBecause);
+        Assert.Equal(HoldoutRegister.NoQuarterMaturedYet, state.EmptyBecause);
         Assert.Empty(state.Missing);
         Assert.False(state.IsExhausted);
         Assert.Equal(RunOutcome.Clean, state.Outcome);
@@ -199,13 +199,13 @@ public sealed class HoldoutRegistryTests : IDisposable
 
         // The whole point, and it is the assertion the corpus's rule asks for: the two empty states
         // are distinguishable. Same nought available, different reason and different outcome.
-        Assert.Equal(HoldoutRegistry.NotRecorded, state.EmptyBecause);
-        Assert.NotEqual(HoldoutRegistry.NoQuarterMaturedYet, state.EmptyBecause);
+        Assert.Equal(HoldoutRegister.NotRecorded, state.EmptyBecause);
+        Assert.NotEqual(HoldoutRegister.NoQuarterMaturedYet, state.EmptyBecause);
 
         HoldoutRegisterState ordinary = Registry(FirstSession).Read(FirstSession);
 
         Assert.Equal(0, ordinary.Available);
-        Assert.Equal(HoldoutRegistry.NoQuarterMaturedYet, ordinary.EmptyBecause);
+        Assert.Equal(HoldoutRegister.NoQuarterMaturedYet, ordinary.EmptyBecause);
         Assert.Equal(RunOutcome.Clean, ordinary.Outcome);
         Assert.Empty(ordinary.Missing);
     }
@@ -352,7 +352,7 @@ public sealed class HoldoutRegistryTests : IDisposable
 
         Assert.Equal(HoldoutWindows.Capacity, state.Spent);
         Assert.Equal(0, state.Available);
-        Assert.Equal(HoldoutRegistry.EveryMaturedWindowSpent, state.EmptyBecause);
+        Assert.Equal(HoldoutRegister.EveryMaturedWindowSpent, state.EmptyBecause);
         Assert.True(state.IsExhausted);
 
         // A designed dead end and not a failure: the run is clean and the refusal is a sentence.
@@ -432,7 +432,7 @@ public sealed class HoldoutRegistryTests : IDisposable
 
         Assert.Equal(1, state.Matured);
         Assert.Equal(0, state.Recorded);
-        Assert.Equal(HoldoutRegistry.NotRecorded, state.EmptyBecause);
+        Assert.Equal(HoldoutRegister.NotRecorded, state.EmptyBecause);
     }
 
     // ---- seeding -----------------------------------------------------------------------------
