@@ -274,6 +274,78 @@
       "mustCarry": "Screen distance",
       "producedBy": "WatchlistRowView.ScreenDistanceHeading",
       "why": "The third part of the 4.13 row: a planned row printed 119.10 and 116.35, a distance of 2.75, beside 0.31 ADR, which is the screening pair's 6.25. The figure is right and belongs to the other pair, so it is named for the pair it belongs to rather than made to agree with prices it is not a distance between."
+    },
+    {
+      "name": "a-version-reports-two-numbers-and-never-an-average",
+      "sentence": "reports a variant's long and short scores separately",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/research",
+      "mustCarry": "ledger side long",
+      "producedBy": "the page",
+      "why": "The pooling rule's hardest case, because it is the one page where a single version has two figures that could be averaged into one. The ledger renders a block a side and there is no element on it that could hold a figure over the pair; a body with one side in it would let the page satisfy this by never rendering the second."
+    },
+    {
+      "name": "a-refuted-version-stays-on-the-ledger",
+      "sentence": "closes as refuted and stays visible in the record rather than quietly vanishing",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/research",
+      "mustCarry": "rejected, measured and short of its target",
+      "producedBy": "the page",
+      "why": "The whole reason the ledger is a register rather than a list of what is running. A page showing only open versions would satisfy every other claim here and would make a refuted version invisible, which is the thing pre-registration exists to prevent."
+    },
+    {
+      "name": "the-holdout-register-shows-what-each-window-was-spent-on",
+      "sentence": "the register records its date range, what it was spent on, and the outcome",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/research",
+      "mustCarry": "Spent on",
+      "producedBy": "the page",
+      "why": "A budget that recorded only that something was spent cannot say whether spending it was worth it, and the record is on the store already. This asserts it reaches the page a person reads it on."
+    },
+    {
+      "name": "an-empty-holdout-register-says-why-on-the-page",
+      "sentence": "present exactly when none is",
+      "statedIn": "docs/SCHEMA.md",
+      "surface": "/research",
+      "mustCarry": "This is a designed dead end",
+      "producedBy": "HoldoutRegister.EveryMaturedWindowSpent",
+      "why": "The sixth defect shape applied to 5.4's own answer. The store distinguishes four reasons a register holds nothing, and for the first three months of this lab two of them hold the same noughts on every other column, so a page dropping the reason would leave a correct answer with nowhere to be read."
+    },
+    {
+      "name": "the-twin-pair-panel-names-the-checkpoint-that-fills-it",
+      "sentence": "the holdout register and the twin-pair panel beside it",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/research",
+      "mustCarry": "Arrives at checkpoint 6.3",
+      "producedBy": "the page",
+      "why": "The one panel of this page nothing fills yet. It names the checkpoint rather than being drawn with sample pairs, because a page of invented rows is the one thing that cannot be told apart from a working screen later."
+    },
+    {
+      "name": "the-morning-screen-names-a-slot-that-never-fired",
+      "sentence": "It belongs beside the morning queue",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/watchlist",
+      "mustCarry": "never ran",
+      "producedBy": "the page",
+      "why": "The seventh defect shape, and the only claim in this file whose subject is the running lab. Four lists declared the slots and agreed while fifteen had never fired once, because whether a scheduled task exists is a property of the machine. This asserts the report reaches the screen somebody opens the morning after."
+    },
+    {
+      "name": "the-morning-screen-says-which-slot-it-cannot-see",
+      "sentence": "run_log records which stages ran for a session, the slot map declares which were meant to",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/watchlist",
+      "mustCarry": "takes no run logger",
+      "producedBy": "the page",
+      "why": "snapshot-db writes no run entry, so the report has no answer about one of the thirty-two slots. Reporting thirty-one under a heading meaning thirty-two is the under-reporting shape one level up from a check, so the slot is named rather than dropped."
+    },
+    {
+      "name": "the-trade-chart-draws-the-sessions-a-position-was-held-over",
+      "sentence": "a position held four sessions has three sessions of minutes nothing draws",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/chart?trade=t-held",
+      "mustCarry": "The sessions it was held over",
+      "producedBy": "the page",
+      "why": "The 4.11 obligation. The minute picture is one session and the trail exit is decided on a daily close the picture never showed, so a daily strip runs beside it. The row named two possible answers and called the choice a question about what a person reads; the store settled it, because minutes are bought for the session a plan is live in and for no session after it."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

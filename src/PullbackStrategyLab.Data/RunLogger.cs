@@ -217,6 +217,68 @@ public sealed class RunLogger
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
     }
 
+    /// <summary>
+    /// Every stage that started inside one session's own day, with how each ended.
+    ///
+    /// <b>Every stage rather than one asked for by name, and that is the point of it.</b>
+    /// <see cref="StageRanOn"/> answers about a stage somebody already suspected. The morning report
+    /// this feeds compares the whole night against the schedule, so what it needs is the set that
+    /// ran: a stage nobody thought to ask about is exactly the one that has never run, and fifteen
+    /// of them went unrun for a week because nothing held the two lists together.
+    ///
+    /// <b>Started rather than ended, and a run still open is one of the rows.</b> A stage that began
+    /// and never finished is a different fact from one that never began, and a predicate on
+    /// <c>ended_at</c> would fold the two into "did not run" on the one morning that distinction
+    /// decides what to rerun.
+    ///
+    /// One row per stage, being the last run of it that session, because a stage rerun by hand after
+    /// a failure is a stage that ran.
+    /// </summary>
+    public static IReadOnlyList<StageRun> StagesOn(
+        SqliteConnection connection, DateOnly session, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionZone);
+
+        using SqliteCommand command = connection.CreateCommand();
+        // Every run of the day, ordered, and reduced to one a stage below rather than in the
+        // statement. A correlated subquery on the latest start returns two rows where a stage ran
+        // twice at the same instant, which is what a slot running its stage twice does under a fixed
+        // clock, and it took the whole read down rather than answering about that stage.
+        command.CommandText = """
+            SELECT r.stage, r.started_at, r.ended_at, r.outcome, r.calls_used, r.rows_written, r.skipped
+              FROM run_log r
+             WHERE r.started_at >= @start_of_day
+               AND r.started_at <= @end_of_day
+             ORDER BY r.started_at, r.run_id;
+            """;
+
+        command.Parameters.AddWithValue(
+            "@start_of_day",
+            StoreText.TimestampToStorageText(SessionBoundaries.At(session, TimeOnly.MinValue, sessionZone)));
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(session, sessionZone));
+
+        // One row a stage, being the last run of it that session, because a stage rerun by hand
+        // after a failure is a stage that ran and the runbook's answer to a failed stage is to
+        // rerun it.
+        var runs = new Dictionary<string, StageRun>(StringComparer.Ordinal);
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            runs[reader.GetString(0)] = new StageRun(
+                reader.GetString(0),
+                StoreText.StorageTextToTimestamp(reader.GetString(1)),
+                reader.IsDBNull(2) ? null : StoreText.StorageTextToTimestamp(reader.GetString(2)),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.GetInt32(4),
+                reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                reader.IsDBNull(6) ? null : reader.GetInt32(6));
+        }
+
+        return [.. runs.Values.OrderBy(r => r.StartedAt).ThenBy(r => r.Stage, StringComparer.Ordinal)];
+    }
+
     public static IReadOnlyList<string> IncompleteStagesOf(
         SqliteConnection connection, DateOnly session, string sessionZone)
     {
@@ -305,4 +367,23 @@ public static class RunOutcomeText
         RunOutcome.Failed => "failed",
         _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
     };
+}
+
+/// <summary>
+/// What one stage did on one session.
+///
+/// <paramref name="Outcome"/> is null on a run that started and has not ended, which is a state
+/// rather than a missing value: the row exists and the stage has not finished.
+/// </summary>
+public sealed record StageRun(
+    string Stage,
+    DateTimeOffset StartedAt,
+    DateTimeOffset? EndedAt,
+    string? Outcome,
+    int CallsUsed,
+    int? RowsWritten,
+    int? Skipped)
+{
+    /// <summary>Whether the stage finished, however it finished.</summary>
+    public bool Ended => EndedAt is not null;
 }

@@ -31,11 +31,22 @@ public static class CandlestickChart
     /// silently loses. A flat series, where every price is the same, gets a scale of its own
     /// rather than a division by zero.
     /// </summary>
+    /// <param name="levels">
+    /// Prices to draw a horizontal line across the window at, which is empty on every chart of a
+    /// stock and carries the trade's four on the strip beside a trade's minutes.
+    ///
+    /// <b>Added at 5.5 rather than a second component being written.</b> The daily strip a held
+    /// position is drawn on needs the same four lines the minute picture has, and the alternative
+    /// was passing them as flat averages, which would have made the legend call a stop an average.
+    /// They widen the scale on exactly the terms an average does: a stop drawn outside the box is a
+    /// line the reader silently loses.
+    /// </param>
     public static CandlestickGeometry Lay(
         IReadOnlyList<Candle> candles,
         IReadOnlyList<AverageLine> averages,
         int width,
-        int height)
+        int height,
+        IReadOnlyList<PriceLevel>? levels = null)
     {
         ArgumentNullException.ThrowIfNull(candles);
         ArgumentNullException.ThrowIfNull(averages);
@@ -57,6 +68,12 @@ public static class CandlestickChart
                 low = Math.Min(low, value!.Value);
                 high = Math.Max(high, value.Value);
             }
+        }
+
+        foreach (PriceLevel level in levels ?? [])
+        {
+            low = Math.Min(low, level.Price);
+            high = Math.Max(high, level.Price);
         }
 
         // A flat series has no range to scale against. Half a unit either side gives the box
@@ -130,7 +147,8 @@ public static class CandlestickChart
             bars,
             lines,
             [.. PriceTicks(low, high, plotHeight)],
-            IsEmpty: false);
+            IsEmpty: false,
+            [.. (levels ?? []).Select(l => new LevelGeometry(l.Name, l.Price, Y(l.Price, low, high, plotHeight)))]);
     }
 
     /// <summary>
@@ -289,8 +307,12 @@ public sealed record CandlestickGeometry(
     IReadOnlyList<CandleGeometry> Candles,
     IReadOnlyList<AverageGeometry> Averages,
     IReadOnlyList<PriceTick> PriceTicks,
-    bool IsEmpty)
+    bool IsEmpty,
+    IReadOnlyList<LevelGeometry>? Levels = null)
 {
+    /// <summary>The lines drawn across the window, which is empty on every chart that named none.</summary>
+    public IReadOnlyList<LevelGeometry> Lines => Levels ?? [];
+
     /// <summary>
     /// A chart with nothing in it, which draws a message rather than an empty box. There is no
     /// store behind this component until 1.10, and a blank rectangle would read as a stock that

@@ -11618,6 +11618,105 @@
       "checkpoint": "5.4",
       "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
       "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "night.slotsDue",
+      "tier": "DERIVED",
+      "value": "31",
+      "checkpoint": "5.5",
+      "producedBy": "counted by hand off RUNBOOK's own schedule, then run. The nightly table holds thirty-two rows and `actions` occupies two of them, being splits bulk and dividends bulk in one invocation, so it declares thirty-one slots. The fixture's as-of is 2026-08-24, which is a Monday, so the weekly ceiling slot in the table beside it is not among them. Derived from the operator's document rather than from NightlySchedule, which is the list the figure is measured over."
+    },
+    {
+      "id": "night.slotsInTheWholeSchedule",
+      "tier": "DERIVED",
+      "value": "32",
+      "checkpoint": "5.5",
+      "producedBy": "read by hand off RUNBOOK's \"The schedule as installed\", which states thirty-two tasks named PullbackStrategyLab-<slot>, registered in two acts of seventeen and fifteen. The same number arrives at the nightly table's thirty-one slots plus the one weekly row, which is a second reading of the same document rather than a second source."
+    },
+    {
+      "id": "night.observableStages",
+      "tier": "DERIVED",
+      "value": "34",
+      "checkpoint": "5.5",
+      "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry."
+    },
+    {
+      "id": "night.unobservable",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "5.5",
+      "producedBy": "derived by hand and then run. Every slot of the night is dispatched to a worker stage and every worker stage opens a RunScope except the two that run against a store at any version, being migrate and snapshot-db, and of those two only snapshot-db is a slot. So exactly one slot of the thirty-two leaves nothing in run_log for a report to read."
+    },
+    {
+      "id": "night.accountedFor",
+      "tier": "FROZEN",
+      "value": "every slot",
+      "checkpoint": "5.5",
+      "producedBy": "the morning report over the golden fixture through LabNight.Read",
+      "note": "The four verdicts cover the slots due exactly once: ran, never ran, not clean, and the store cannot say. It is frozen rather than derived because it is a property of how the read partitions its own list rather than a figure about the night, and what it is here to catch is the fourth state being folded into one of the others, which would leave the sum short without any count changing."
+    },
+    {
+      "id": "ledger.versions",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "One, being the baseline the replay seeds so that a plan has a version to belong to. Predicted as nought before the run and wrong: the prediction read the register as something only VariantAdmitter writes, and the fixture writes it directly because a plan's key requires one. What the figure is here to catch is a second version appearing, which would mean the replay had started an experiment nobody chose to start."
+    },
+    {
+      "id": "ledger.generation",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "The generation in force, which is the highest any registered version belongs to. It is nought here rather than absent, because the seeded baseline is a real version of a real generation; none is what an empty register reports, and the two are different values on purpose."
+    },
+    {
+      "id": "ledger.absent",
+      "tier": "FROZEN",
+      "value": "none",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "Nothing is absent, because the register holds the baseline. The figure exists for the other case: a register holding no version and a register whose versions have never been scored are two states, the ledger shows both at once, and the sentence is stated apart from the count so a page reporting one of them cannot be read as reporting the other."
+    },
+    {
+      "id": "ledger.scoreRun",
+      "tier": "FROZEN",
+      "value": "never ran",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "A night that found no version to difference and a night on which the scorer never ran read identically off the score rows alone. The fixture replay runs no scorer, so this is the second of those, and it is the state the ledger has to be able to name."
+    },
+    {
+      "id": "ledger.twinPairsArriveAt",
+      "tier": "DERIVED",
+      "value": "6.3",
+      "checkpoint": "5.5",
+      "producedBy": "read by hand off BUILD_PLAN's phase 6 checkpoint table, whose 6.3 row is TwinPairFinder, z-scored over the trailing 250 setups. The ledger's twin-pair panel names the checkpoint that fills it rather than being drawn with sample pairs, and a panel naming a checkpoint that builds something else is the shape a deferral takes when it goes stale."
+    },
+    {
+      "id": "ledger.holdout.available",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "The same figure holdout.available carries, read through the page rather than through the stage. The two share the comparison in the Data assembly and nothing else, so a read surface that stopped calling it would disagree with the stage here."
+    },
+    {
+      "id": "ledger.holdout.emptyBecause",
+      "tier": "FROZEN",
+      "value": "no quarter matured yet",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "The reason reaches the page rather than stopping at the store, which is the sixth defect shape applied to 5.4's own answer: a correct reason with nowhere to be read is a reason nobody has. Named apart from the count because a nought available is compatible with all four reasons."
+    },
+    {
+      "id": "ledger.holdout.firstSession",
+      "tier": "FROZEN",
+      "value": "2026-08-24",
+      "checkpoint": "5.5",
+      "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
+      "note": "The earliest session the evidence store holds, which is what the whole holdout schedule is computed from. It is the fixture's one market day, and the same figure holdout.firstSession carries from the stage."
     }
   ],
   "frozenOnly": [

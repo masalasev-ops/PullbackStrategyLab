@@ -45,12 +45,21 @@ public sealed record TradeChartView(
     string ExitReason,
     IReadOnlyList<MinuteCandle> Candles,
     IReadOnlyList<TradeLevelLine> Levels,
-    string? Nothing)
+    string? Nothing,
+    IReadOnlyList<Candle> Daily,
+    int HeldSessions,
+    int SessionsWithNoMinutes,
+    bool HeldPastItsOwnSession,
+    string? MinutesAbsentBecause)
 {
     public static TradeChartView Empty(string tradeId, string why) =>
-        new(tradeId, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], [], why);
+        new(tradeId, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], [], why,
+            [], 0, 0, false, null);
 
     public bool HasBars => Candles.Count > 0;
+
+    /// <summary>Whether the daily strip has anything on it, which is the picture of the middle.</summary>
+    public bool HasDaily => Daily.Count > 0;
 
     /// <summary>Whether the trade opened in a session other than the one drawn, which the page says.</summary>
     public bool OpenedEarlier =>

@@ -15400,3 +15400,168 @@ Carried:    Nothing raised and nothing moved.
 
             **The register's first session will read 2026-08-27** when it is first run, that being
             the earliest session `setup` holds, which is what the whole schedule is computed from.
+
+## 5.5 — 2026-09-04 — phase-5-5-research-ledger — the fifth screen, and two pictures that were missing
+
+**A checkpoint entry.** The research ledger, the morning report on what the night actually ran, and
+the daily strip beside a held trade. Population: **an authored store seeded with the rows each case
+is about, and the golden fixture's single market day of 2026-08-24**. **No version has ever been
+scored, no holdout window can exist before 2027-01-01, and no position has ever been held past its
+own session**, so every figure here is over rows a test wrote (see: Gate boundaries are exercised by
+authored cases and the captured fixture is not asked to do it).
+
+Built:      **The research ledger, designed from `ARCHITECTURE.html` rather than from a drawing.**
+            Four sections in the order the loop runs: the register of rule versions with what each
+            pre-registered, the difference series a block a side, the holdout budget, and the
+            twin-pair panel that names the checkpoint filling it. `ARCHITECTURE.html` now holds the
+            description under the heading The research ledger, which is what the retired mockup used
+            to be the only statement of (see: The corpus is eight documents and a ninth requires
+            retiring one).
+
+            **A version's two sides are two blocks and no type on the page has a field that could
+            hold a figure over the pair.** The store forbids a two-sided version today, a threshold
+            belonging to one side's gate list, and the shape does not rest on that: a test authors
+            one and reads two figures back, and asserts by reflection that no property on the
+            response is a mean or a difference over both. The average of a helped side and a hurt
+            side is 0.0015 against 0.0210 and -0.0180, which reads as a version that changed nothing
+            (see: Long and short are never pooled into one figure).
+
+            **Nothing on the page averages a difference series, and that is a refusal rather than an
+            omission.** Settling a version against its target is AcceptanceGate's at 6.7. A running
+            mean here would be that answer computed early, by a read surface, with no
+            pre-registration in front of it, and the two would eventually disagree. The nights are
+            listed instead, which is what the build order calls the difference series being visible.
+
+            **The minimum sample is shown with its unit and never as a fraction of anything.**
+            Nothing converts a version's scored nights into effective observations, so the page says
+            so and names 6.7 as the checkpoint that closes it, rather than putting two numbers in
+            different units under one heading.
+
+            **The holdout register's own comparison moved from the stage into the Data assembly**,
+            because the read surface may not reference the Worker and `api-isolation` asserts that
+            against the compiled dependency file. It is one implementation with two callers rather
+            than a copy: the alternative was a page reading the last run row, and nothing schedules
+            the registry, so that page would have reported the register through whether anything had
+            run it. **The 5.4 entry said in its own words that this is the read the ledger would
+            make.**
+
+Answered:   **The morning report on the night that produced the queue**, which is the 5.2 obligation
+            and is the first thing in this interface whose subject is the running lab. It names each
+            of the session's slots, whether it ran and what it ended as, read from `run_log` against
+            the schedule the night was meant to run, with the two slots whose input cannot be bought
+            back named as such. **It is not a check and nothing in the harness calls it**, on the
+            terms `CLAUDE.md` sets for a property about the running system.
+
+            **A fifth declaration of the slots was needed and it is reconciled like the other four.**
+            The read surface may reference neither `tools/nightly.ps1` nor the Worker, so the list it
+            reads is `NightlySchedule` in Core, and `slot-roster` now holds five lists together in
+            every direction rather than four: the slot names both ways, the stages of each slot, and
+            the declared times against RUNBOOK's own table. The row warned that a fifth place would
+            agree with the other four for the same reason, and that is right and is not what this is
+            for: what it makes possible is the read of the store that none of the four can be.
+
+            **RUNBOOK's schedule was short by one slot and nothing had noticed.** `ceiling` runs
+            Saturday at 08:00, the paragraph under "The schedule as installed" said so, and the
+            schedule table had no row for it, so the operator's own table of what the lab runs
+            omitted a registered task. Found by the new reconciliation on its first run. It is a
+            table of its own rather than a row in the nightly one, because it is weekly, and the
+            report knows that: a weekday report that took the whole list would name a missing slot
+            every night of the lab's life, which is a false alarm nightly and a suppressed guard by
+            the second week.
+
+            **And the report says which slot it has no answer about.** `snapshot-db` takes no run
+            logger and leaves no run entry, so it is counted as unobservable and apart from the slots
+            that ran and the slots that did not. The four counts cover the list exactly once, which
+            is asserted rather than described. A report of thirty-one under a heading meaning
+            thirty-two is the under-reporting shape one level up from a check.
+
+            **The journal's missing middle, which is the 4.11 obligation, and the choice it left
+            open was settled by the store rather than by taste.** The row named two possible answers,
+            a multi-session minute strip with the breaks marked or a daily chart beside the minute
+            one, and said the choice was a question about what a person reads. It is not: minutes are
+            bought for the session a plan is live in and for a later session of the same name only
+            where the detector flagged it again that evening, so the multi-session strip has nothing
+            to draw across the middle of a hold. The daily strip is the only picture of the middle
+            there is, and the trail exit is decided on a daily close that appears on it and on no
+            other picture in the interface.
+
+            **How much of a hold has no minutes is counted from the store and never derived from its
+            length.** Three held sessions do not mean two missing ones as a matter of arithmetic, and
+            a name flagged again during its own hold has one fewer. A test proves it by producing a
+            hold with one blind session, reading one, adding that session's minutes and reading
+            nought, with the hold unchanged at three: a derived figure could not have moved.
+
+            **The read answered with nothing at all where the closing session held no minute**, so
+            the whole page went blank for exactly the trades the obligation was about. The minute
+            picture is now absent with its reason while the strip and the four levels are still
+            drawn. It is the defensive half rather than the ordinary case, which is worth saying
+            plainly: an exit fill is priced from the session's minutes, so a closed trade usually has
+            them for its closing session and a session the lab is blind on postpones the fill rather
+            than closing the position.
+
+Repaired:   **The minute picture had no CSS at all and drew an empty white box.** The element carries
+            `chart minutes` and every rule for the shared chart is written against `candles`, so no
+            candle, no wick and none of the four level lines had a stroke: an SVG line with no stroke
+            declared draws nothing. It has been that way since 4.11 built it. Found while adding the
+            strip beside it, which would otherwise have shipped next to a picture nobody could see.
+            **Nothing in the corpus would have found it**: `surface-claims` reads a rendered page for
+            the text on it, and this is a fault in what the page draws rather than in what it says.
+
+            **`RunLogger.StagesOn` threw on a slot that runs its stage twice at one instant.** The
+            read took the latest run of each stage through a correlated subquery on the start, which
+            returns two rows where both passes carry the same timestamp, and the `sectors` slot runs
+            its stage twice by design. Found by the fixture replay on its first run of the new
+            figures, and it took the whole report down rather than answering wrongly about one slot.
+            A test authors the tie.
+
+Verified:   Twenty new tests, 1,058 from 1,038. `tools/ci.ps1` green on Windows, **31 steps, 1,058
+            tests**. `tools/verify-phase.ps1` **GREEN** on phase 5.
+
+            **The ceiling was read against a figure stated in advance, and half of it was wrong.**
+            Before the run: total claims unchanged at **141**, because what this adds to
+            `ARCHITECTURE.html` is prose and figure blocks and no table, and claims come from tables.
+            The run read 141. Out of scope was predicted **unchanged at 15**, on the reading that no
+            claim is deferred to 5.5, and the run read **14**: the component catalogue's own row for
+            the research ledger page was deferred to this checkpoint and this checkpoint builds it.
+            **The prediction was made by searching the deferred set for the string 5.5 and finding
+            only a build-order clause**, which missed the row whose deferral is derived from the
+            checkpoint the page arrives at rather than written as a date. It is the deliverable
+            retiring its own deferral, which is the ordinary way that count falls, and predicting
+            otherwise was a reading of the wrong list.
+
+            **Thirteen expectations, five of them independently produced, and ten of the thirteen
+            values were predicted correctly before the run.** The five derived are read by hand off
+            the documents rather than off the code they measure: the slots due on the fixture's
+            Monday and the whole schedule's thirty-two, both counted off RUNBOOK's two schedule
+            tables; the thirty-four distinct stages a run report can observe, counted off the same
+            tables less `snapshot-db`; the one slot that leaves no run entry; and the checkpoint the
+            twin-pair panel names, read off BUILD_PLAN's 6.3 row.
+
+            **Three predictions were wrong and they were wrong the same way.** `ledger.versions`,
+            `ledger.generation` and `ledger.absent` were predicted as nought, none and "no version
+            registered", on the reading that the register is written by VariantAdmitter and the
+            fixture replay admits none. The replay seeds the baseline directly, because a plan's key
+            requires a version to belong to, so the fixture's ledger holds one version of generation
+            nought and nothing is absent. The figures are corrected and so is the sentence beside
+            them, which had said no version can exist there.
+
+            **Eight surface claims added, and one of the eight is about a page state no store the lab
+            has could produce.** A trade held past its own session has never existed, so the body the
+            page is rendered against is authored; the same is true of the two-sided version and of the
+            spent-out holdout budget. That is the whole reason those bodies are authored rather than
+            drawn from a store: a body drawn from anything the lab holds would exercise the case the
+            claims are not about.
+
+Carried:    **Nothing raised and nothing repointed.** The obligations table reads twenty-two after
+            the three discharged here, and the next falls due at 5.8.
+
+            **Nothing to run against the live store.** Both new reads are reads; neither writes a row
+            and neither spends a vendor call. Opened against the live store tonight, the ledger reads
+            one version registered and no night scored, and the morning report reads the first night
+            on which all thirty-two tasks were installed.
+
+            **`holdout` is still not a slot**, which is the same sentence 5.4's entry carried and is
+            not this checkpoint's to change. The ledger now computes the register from the calendar
+            and the store's earliest session rather than from a run row, so an unrun registry no
+            longer makes the page silent; what it still means is that no window will be recorded on
+            the day it matures unless somebody runs the stage.

@@ -39,32 +39,10 @@ public sealed class HoldoutRegistry
 {
     public const string Name = "holdout";
 
-    /// <summary>The evidence store holds no session at all, so no quarter of evidence has begun.</summary>
-    public const string NoSessionRecorded =
-        "the evidence store holds no session, so no quarter of forward-collected evidence has begun and "
-        + "the first window has no start date yet";
-
-    /// <summary>
-    /// Sessions exist and no quarter has completed. The ordinary state for the first months, and
-    /// not a fault.
-    /// </summary>
-    public const string NoQuarterMaturedYet =
-        "no calendar quarter of forward-collected evidence has completed yet, which is the ordinary state "
-        + "until the first one does and is not a failure to record anything";
-
-    /// <summary>
-    /// The calendar says a window should be here and the register does not hold it, which is a
-    /// defect rather than a state and is why it is not one of the reasons above.
-    /// </summary>
-    public const string NotRecorded =
-        "the calendar says a window has matured and the register does not hold it, so this register is "
-        + "empty because nothing recorded one rather than because there is nothing to record";
-
-    /// <summary>Every window that has matured has been spent, which is the designed dead end.</summary>
-    public const string EveryMaturedWindowSpent =
-        "every window that has matured has been spent, so no further pack-version decision can be made "
-        + "by replay and the remaining channel is the forward hit rate. This is a designed dead end "
-        + "rather than a bug";
+    // The four reasons a register holds nothing moved to `HoldoutRegister` in the Data assembly at
+    // 5.5, with the comparison that produces them. The research ledger reads the same register and
+    // the read surface may not reference this assembly, so leaving them here would have meant either
+    // a second copy of four sentences or a page that could not say why the register was empty.
 
     /// <summary>What a spend is refused with where the register holds no window to spend.</summary>
     public const string NothingToSpend =
@@ -189,54 +167,17 @@ public sealed class HoldoutRegistry
     }
 
     /// <summary>
-    /// The register against the calendar, from a connection the caller holds. One implementation, so
-    /// the read and the run cannot disagree about what the register holds.
+    /// The register against the calendar, which is one implementation in the Data assembly rather
+    /// than a method here.
+    ///
+    /// It was private to this stage at 5.4 and moved at 5.5, when the research ledger needed the
+    /// same answer and could not reach it: the read surface has no reference to the Worker and
+    /// <c>api-isolation</c> asserts that against the compiled dependency file. The alternative was a
+    /// page that reported the register from the last run row, and nothing schedules this stage, so
+    /// that page would have said the register was empty for a reason about the scheduler.
     /// </summary>
-    private HoldoutRegisterState Describe(SqliteConnection connection, DateOnly asOf, int written)
-    {
-        string zone = _options.SessionZone;
-
-        DateOnly? firstSession = HoldoutWindowReader.FirstSession(connection, asOf);
-
-        IReadOnlyList<HoldoutWindow> matured = firstSession is DateOnly first
-            ? HoldoutWindows.MaturedBy(first, asOf)
-            : [];
-
-        IReadOnlyList<StoredHoldoutWindow> register = HoldoutWindowReader.Read(connection, asOf, zone);
-
-        // What the calendar says should be there against what is. Nought is the ordinary answer and
-        // a non-nought one is a defect rather than a state, which is why it is counted apart from
-        // the empty reasons below.
-        IReadOnlyList<string> missing =
-            [.. matured.Select(w => w.WindowId)
-                .Except(register.Select(w => w.Window.WindowId), StringComparer.Ordinal)
-                .Order(StringComparer.Ordinal)];
-
-        int spent = register.Count(w => !w.IsAvailable);
-        int available = register.Count(w => w.IsAvailable);
-
-        // Three ordinary readings and one that is not ordinary at all, and the order is what keeps
-        // them apart. A register empty because nothing has matured is not the same fact as one empty
-        // because everything has been spent, and neither is the same as a lab that has recorded no
-        // session.
-        //
-        // <b>A register missing a window it should hold gets its own reason rather than one of
-        // those.</b> Without this clause, a lab whose registry never ran would report "no quarter has
-        // completed yet" on a date when several had, which is the empty-and-correct sentence
-        // covering for a defect.
-        string? emptyBecause =
-            available > 0 ? null
-            : missing.Count > 0 ? NotRecorded
-            : firstSession is null ? NoSessionRecorded
-            : register.Count == 0 ? NoQuarterMaturedYet
-            : EveryMaturedWindowSpent;
-
-        RunOutcome outcome = missing.Count == 0 ? RunOutcome.Clean : RunOutcome.Partial;
-
-        return new HoldoutRegisterState(
-            asOf, firstSession, matured.Count, register.Count, written, spent, available,
-            emptyBecause, missing, register, outcome);
-    }
+    private HoldoutRegisterState Describe(SqliteConnection connection, DateOnly asOf, int written) =>
+        HoldoutRegister.Describe(connection, asOf, _options.SessionZone, written);
 
     /// <summary>
     /// Spends the oldest available window on one decision, or refuses and says why.
@@ -364,43 +305,6 @@ public sealed class HoldoutRegistry
         command.Parameters.AddWithValue("@stopped_because", (object?)stoppedBecause ?? DBNull.Value);
         command.ExecuteNonQuery();
     }
-}
-
-/// <summary>
-/// What the register holds as of one date, and why it holds nothing where it holds nothing.
-/// </summary>
-/// <param name="Matured">How many of the eight the calendar says should exist by now.</param>
-/// <param name="Recorded">How many the register actually holds.</param>
-/// <param name="Missing">
-/// The matured windows the register does not hold. Nought is the ordinary answer; anything else is
-/// a failure to record and is a different state from a register that is empty because nothing has
-/// matured.
-/// </param>
-/// <param name="EmptyBecause">
-/// Why no window is available to spend, present exactly when none is. Three readings and they are
-/// different facts.
-/// </param>
-public sealed record HoldoutRegisterState(
-    DateOnly AsOf,
-    DateOnly? FirstSession,
-    int Matured,
-    int Recorded,
-    int Written,
-    int Spent,
-    int Available,
-    string? EmptyBecause,
-    IReadOnlyList<string> Missing,
-    IReadOnlyList<StoredHoldoutWindow> Register,
-    RunOutcome Outcome)
-{
-    /// <summary>
-    /// Whether the budget is exhausted, which is the designed dead end rather than a fault.
-    ///
-    /// <b>Distinct from having nothing yet</b>, which is why it reads the reason rather than the
-    /// count: both states have nought available and only one of them is permanent.
-    /// </summary>
-    public bool IsExhausted =>
-        string.Equals(EmptyBecause, HoldoutRegistry.EveryMaturedWindowSpent, StringComparison.Ordinal);
 }
 
 /// <summary>What a spend did, or why it was refused.</summary>

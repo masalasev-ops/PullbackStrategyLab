@@ -37,6 +37,19 @@ public sealed class WatchlistModel : ScreenModel
     public WatchlistView Watchlist { get; private set; } =
         WatchlistView.Empty(string.Empty, "nothing has been read yet");
 
+    /// <summary>
+    /// Which of the night's slots ran, which is the one figure on any screen that is about the
+    /// running lab rather than about the market.
+    ///
+    /// <b>It is on this page because this is the screen somebody opens the morning after.</b>
+    /// Every check in this corpus takes its subject from the source, the documents, the fixture or
+    /// a store it builds itself, so a green build says nothing about whether the night fired.
+    /// Fifteen slots had never run once while four lists declaring them all agreed, and what that
+    /// cost was four flagged nights of minute bars nobody can buy back.
+    /// </summary>
+    public NightView Night { get; private set; } =
+        NightView.Empty(string.Empty, "nothing has been read yet");
+
     public override async Task OnGetAsync(CancellationToken cancellationToken)
     {
         await base.OnGetAsync(cancellationToken).ConfigureAwait(false);
@@ -55,5 +68,6 @@ public sealed class WatchlistModel : ScreenModel
             .ConfigureAwait(false);
 
         Watchlist = WatchlistView.Of(night);
+        Night = await _api.ReadNightAsync(asOf, cancellationToken).ConfigureAwait(false);
     }
 }

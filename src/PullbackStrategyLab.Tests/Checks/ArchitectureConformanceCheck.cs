@@ -2219,20 +2219,20 @@ public sealed partial class ArchitectureConformanceCheck
     {
         string[] reasons =
         [
-            HoldoutRegistry.NoSessionRecorded,
-            HoldoutRegistry.NoQuarterMaturedYet,
-            HoldoutRegistry.NotRecorded,
-            HoldoutRegistry.EveryMaturedWindowSpent,
+            HoldoutRegister.NoSessionRecorded,
+            HoldoutRegister.NoQuarterMaturedYet,
+            HoldoutRegister.NotRecorded,
+            HoldoutRegister.EveryMaturedWindowSpent,
         ];
 
         return reasons.Distinct(StringComparer.Ordinal).Count() == reasons.Length
-            && HoldoutRegistry.EveryMaturedWindowSpent.Contains("designed dead end", StringComparison.Ordinal)
+            && HoldoutRegister.EveryMaturedWindowSpent.Contains("designed dead end", StringComparison.Ordinal)
             && new HoldoutRegisterState(
                 default, null, 0, 0, 0, 0, 0,
-                HoldoutRegistry.EveryMaturedWindowSpent, [], [], RunOutcome.Clean).IsExhausted
+                HoldoutRegister.EveryMaturedWindowSpent, [], [], RunOutcome.Clean).IsExhausted
             && !new HoldoutRegisterState(
                 default, null, 0, 0, 0, 0, 0,
-                HoldoutRegistry.NoQuarterMaturedYet, [], [], RunOutcome.Clean).IsExhausted;
+                HoldoutRegister.NoQuarterMaturedYet, [], [], RunOutcome.Clean).IsExhausted;
     }
 
     private static bool TheCeilingRuleHoldsAllThreeOfItsClauses()

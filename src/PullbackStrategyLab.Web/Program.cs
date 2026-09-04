@@ -340,13 +340,161 @@ public sealed class LabApiClient
                 payload.Levels is null
                     ? []
                     : [.. payload.Levels.Select(l => new TradeLevelLine(l.Name, l.Price, l.What))],
-                null);
+                null,
+
+                // The daily strip beside the minutes, which is the only picture a position held past
+                // its own session has: nothing fetches minutes for a session after the one a plan
+                // was live in.
+                payload.Daily is null
+                    ? []
+                    : [.. payload.Daily.Select(d => new Candle(
+                        DateOnly.ParseExact(d.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        d.Open, d.High, d.Low, d.Close))],
+                payload.HeldSessions,
+                payload.SessionsWithNoMinutes,
+                payload.HeldPastItsOwnSession,
+                payload.MinutesAbsentBecause);
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
         {
             return TradeChartView.Empty(tradeId, "the read surface did not answer");
         }
     }
+
+    /// <summary>
+    /// The research ledger, on the terms every other read here stands on: it never throws, and an
+    /// answer it could not get is a sentence rather than an exception.
+    /// </summary>
+    public async Task<ResearchView> ReadResearchAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/research/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ResearchView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            ResearchPayload? payload = await JsonSerializer
+                .DeserializeAsync<ResearchPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return ResearchView.Empty(session, "the read surface answered with nothing");
+            }
+
+            return new ResearchView(
+                payload.AsOf ?? session,
+                payload.Absent,
+                payload.Generation,
+                [.. (payload.Versions ?? []).Select(Version)],
+                Holdout(payload.Holdout),
+                payload.LastScoreRun is null
+                    ? null
+                    : new ScoreRunView(
+                        payload.LastScoreRun.SessionDate,
+                        payload.LastScoreRun.VersionsLive,
+                        payload.LastScoreRun.VersionsScored,
+                        payload.LastScoreRun.NightsScored,
+                        payload.LastScoreRun.NightsWaiting,
+                        payload.LastScoreRun.Longs,
+                        payload.LastScoreRun.Shorts,
+                        payload.LastScoreRun.Unscoreable,
+                        payload.LastScoreRun.Outcome,
+                        payload.LastScoreRun.StoppedBecause),
+                payload.TwinPairsArriveAt ?? TwinPairsArriveAt);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return ResearchView.Empty(session, "the read surface did not answer");
+        }
+    }
+
+    /// <summary>
+    /// Which of a session's slots ran. It never throws, on the same terms as every other read here,
+    /// and a morning screen that would not render without it would be a screen nobody could use to
+    /// find out the read surface was down.
+    /// </summary>
+    public async Task<NightView> ReadNightAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/night/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return NightView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            NightPayload? payload = await JsonSerializer
+                .DeserializeAsync<NightPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return NightView.Empty(session, "the read surface answered with nothing");
+            }
+
+            if (payload.Absent is not null)
+            {
+                return NightView.Empty(payload.AsOf ?? session, payload.Absent);
+            }
+
+            return new NightView(
+                payload.AsOf ?? session,
+                null,
+                [.. (payload.Slots ?? []).Select(s => new SlotView(
+                    s.Slot, s.At, s.InsideTheSession, s.Unobservable,
+                    [.. (s.Stages ?? []).Select(t => new StageView(
+                        t.Stage, t.StartedAt, t.EndedAt, t.Outcome, t.CallsUsed, t.Unobservable))]))],
+                payload.Ran,
+                payload.NeverRan,
+                payload.NotClean,
+                payload.Unobservable,
+                payload.Unscheduled ?? []);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return NightView.Empty(session, "the read surface did not answer");
+        }
+    }
+
+    /// <summary>The checkpoint that fills the ledger's twin-pair panel, where the wire named none.</summary>
+    public const string TwinPairsArriveAt = "6.3";
+
+    private static VersionView Version(VersionPayload v) => new(
+        v.VariantId, v.Generation, v.Family, v.Definition, v.Target, v.MinimumSample,
+        v.MinimumSampleUnit, v.Status, v.ResolvedAt, v.CreatedAt, v.IsBaseline, v.Live,
+        v.Direction, v.Gate, v.ThresholdName, v.ThresholdFrom, v.ThresholdTo, v.Moved,
+        [.. (v.Sides ?? []).Select(s => new SideView(
+            s.Direction, s.NightsScored, s.NightsCarryingADifference, s.Unscoreable,
+            s.BaselineOutsideCap, s.VariantOutsideCap,
+            [.. (s.Nights ?? []).Select(n => new ScoredNightView(
+                n.SessionDate, n.HorizonDays, n.Flagged, n.BaselineSelected, n.VariantSelected,
+                n.BothSelected, n.BaselineOnly, n.VariantOnly, n.BaselineMeanReturn,
+                n.VariantMeanReturn, n.MeanDifference, n.Unscoreable, n.WithheldBecause))]))]);
+
+    private static HoldoutView Holdout(HoldoutPayload? h) =>
+        h is null
+            ? HoldoutView.Unknown("the read surface answered no holdout register at all")
+            : new HoldoutView(
+                h.Capacity, h.Matured, h.Recorded, h.Spent, h.Available, h.FirstSession,
+                h.EmptyBecause, h.Exhausted, h.Missing ?? [],
+                [.. (h.Windows ?? []).Select(w => new WindowView(
+                    w.WindowId, w.Ordinal, w.Start, w.End, w.MaturesOn,
+                    w.SpentOn, w.Outcome, w.SpentAt))]);
 
     private static IReadOnlyList<TradeRow> Trades(IReadOnlyList<TradePayload>? trades) =>
         trades is null
@@ -476,6 +624,57 @@ public sealed class LabApiClient
             DateOnly.ParseExact(c.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
             c.Open, c.High, c.Low, c.Close))]);
 
+    private sealed record ResearchPayload(
+        string? AsOf,
+        string? Absent,
+        int? Generation,
+        IReadOnlyList<VersionPayload>? Versions,
+        HoldoutPayload? Holdout,
+        ScoreRunPayload? LastScoreRun,
+        string? TwinPairsArriveAt);
+
+    private sealed record VersionPayload(
+        string VariantId, int Generation, string Family, string Definition, string Target,
+        int MinimumSample, string MinimumSampleUnit, string Status, string? ResolvedAt,
+        string CreatedAt, bool IsBaseline, bool Live, string? Direction, string? Gate,
+        string? ThresholdName, string? ThresholdFrom, string? ThresholdTo, string? Moved,
+        IReadOnlyList<SidePayload>? Sides);
+
+    private sealed record SidePayload(
+        string Direction, int NightsScored, int NightsCarryingADifference, int Unscoreable,
+        int BaselineOutsideCap, int VariantOutsideCap, IReadOnlyList<ScoredNightPayload>? Nights);
+
+    private sealed record ScoredNightPayload(
+        string SessionDate, int HorizonDays, int Flagged, int BaselineSelected, int VariantSelected,
+        int BothSelected, int BaselineOnly, int VariantOnly, string? BaselineMeanReturn,
+        string? VariantMeanReturn, string? MeanDifference, int Unscoreable, string? WithheldBecause);
+
+    private sealed record HoldoutPayload(
+        int Capacity, int Matured, int Recorded, int Spent, int Available, string? FirstSession,
+        string? EmptyBecause, bool Exhausted, IReadOnlyList<string>? Missing,
+        IReadOnlyList<WindowPayload>? Windows);
+
+    private sealed record WindowPayload(
+        string WindowId, int Ordinal, string Start, string End, string MaturesOn,
+        string? SpentOn, string? Outcome, string? SpentAt);
+
+    private sealed record ScoreRunPayload(
+        string SessionDate, int VersionsLive, int VersionsScored, int NightsScored,
+        int NightsWaiting, int Longs, int Shorts, int Unscoreable, string Outcome,
+        string? StoppedBecause);
+
+    private sealed record NightPayload(
+        string? AsOf, string? Absent, IReadOnlyList<SlotPayload>? Slots,
+        int Ran, int NeverRan, int NotClean, int Unobservable, IReadOnlyList<string>? Unscheduled);
+
+    private sealed record SlotPayload(
+        string Slot, string At, bool InsideTheSession, string? Unobservable,
+        IReadOnlyList<StagePayload>? Stages);
+
+    private sealed record StagePayload(
+        string Stage, string? StartedAt, string? EndedAt, string? Outcome, int CallsUsed,
+        string? Unobservable);
+
     private sealed record ScoreboardPayload(
         string AsOf,
         string? Absent,
@@ -497,7 +696,15 @@ public sealed class LabApiClient
         string ExitReason,
         IReadOnlyList<TradeChartBarPayload>? Bars,
         IReadOnlyList<TradeLevelPayload>? Levels,
-        string? Nothing);
+        string? Nothing,
+        IReadOnlyList<TradeChartDayPayload>? Daily,
+        int HeldSessions,
+        int SessionsWithNoMinutes,
+        bool HeldPastItsOwnSession,
+        string? MinutesAbsentBecause);
+
+    private sealed record TradeChartDayPayload(
+        string Date, decimal Open, decimal High, decimal Low, decimal Close, bool Opened, bool Closed);
 
     private sealed record TradeChartBarPayload(
         string At, decimal Open, decimal High, decimal Low, decimal Close, long Volume);

@@ -134,14 +134,17 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// <summary>
     /// The screens that are filled rather than empty states.
     ///
-    /// <b>The watchlist joined at 4.1 and the journal at 4.11</b>, which is what each one's own empty
-    /// state had said since 1.8. A
+    /// <b>The watchlist joined at 4.1, the journal at 4.11 and the research ledger at 5.5</b>, which
+    /// is what each one's own empty state had said since 1.8. With the ledger every screen the
+    /// navigation names is built, so the test below now runs over an empty set and says so rather
+    /// than passing quietly: every empty list holds, and a filter that has narrowed to nothing reads
+    /// exactly like one that found nothing wrong. A
     /// page that arrived and kept its "nothing here yet" would pass the test below by claiming to be
     /// unbuilt, which is the same shape as a status-band field waiting on a landed checkpoint: an
     /// honest placeholder outliving the thing it was standing in for.
     /// </summary>
     private static IReadOnlyList<string> Landed { get; } =
-        ["/setups", "/scoreboard", "/watchlist", "/journal"];
+        ["/setups", "/scoreboard", "/watchlist", "/journal", "/research"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -180,12 +183,33 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         Assert.DoesNotContain("checkpoint 4.10", html, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A screen that has not landed says so, and names the checkpoint that fills it.
+    ///
+    /// <b>Every screen the navigation names is built as of 5.5, so this runs over an empty set.</b>
+    /// It is kept rather than deleted because a sixth screen is a thing a later phase adds, and the
+    /// assertion below is what would catch it arriving without an empty state. What is not kept is
+    /// the silence: an empty loop passes exactly as it does when it found nothing wrong, which is
+    /// the shape this corpus keeps finding, so the set is asserted to be empty rather than iterated
+    /// and left to be nothing. The day a screen is added with no page, this fails on the count and
+    /// then on its own body.
+    /// </summary>
     [Fact]
     public async Task Every_screen_says_which_checkpoint_fills_it()
     {
         using HttpClient client = Reading();
 
-        foreach (NavigationItem item in Navigation.Items.Where(i => !Landed.Contains(i.Path, StringComparer.Ordinal)))
+        NavigationItem[] unbuilt =
+            [.. Navigation.Items.Where(i => !Landed.Contains(i.Path, StringComparer.Ordinal))];
+
+        Assert.True(unbuilt.Length == 0,
+            $"{unbuilt.Length} screen(s) are declared unbuilt: "
+            + string.Join(", ", unbuilt.Select(i => i.Path))
+            + ". Every screen the navigation names has been built since 5.5, so a screen here is "
+            + "either a new one that needs an empty state naming its checkpoint, or a built one "
+            + "missing from Landed.");
+
+        foreach (NavigationItem item in unbuilt)
         {
             string html = await client.GetStringAsync(item.Path);
 

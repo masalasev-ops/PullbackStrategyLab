@@ -2354,3 +2354,15 @@ Why:  `writer-ownership` defers a declared writer to the checkpoint that builds 
 Was:  The research section declared one store for the holdout budget: "`holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once)", with no column table.
 Now:  Three stores. `holdout_window` is insert-only with no update path at all; `holdout_spend` is keyed on the window, so a second spend of one window is a primary-key collision; `holdout_run` records what a run of the register did and why it held nothing. All three gain their column tables.
 Why:  "Update (spend, once)" states the rule and leaves the mechanism to whichever `UPDATE` statement carries the right `WHERE` clause, and the next statement can be written without it. Held as a row keyed on the window, the second spend is refused by the store before any code sees it, which is what "a spent window cannot be re-spent" has to mean if it is to survive a component nobody has written yet. The third store exists because a register holding nothing has four causes and one count could not tell them apart.
+
+### 2026-09-04 — BUILD_PLAN.md — cites The corpus is eight documents and a ninth requires retiring one
+Was:  The carried-obligations table's three rows due at 5.5, being 4.12's "The research ledger's only drawing
+      is gone and the page it was for is not built", 4.11's "The journal draws one session of a trade and
+      calls it the trade's chart" and 5.2's "A slot can be declared, accepted, documented and reconciled in
+      four places and still be called by nothing"; and, in the 4.17 record, "None of the twenty-five rows
+      above fall due at 4.17".
+Now:  A new section, "What the three due at 5.5 were", recording each row and what happened to it, on the
+      terms the 4.1, 4.6 and 4.17 sections already are; and "None of the twenty-two rows above fall due at
+      4.17".
+Why:  All three are discharged at 5.5. A discharged row left in the live table is the table asking for work
+      nobody will ever come for, which is the direction `carried-obligations` fails in.
