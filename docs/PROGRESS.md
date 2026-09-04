@@ -15670,3 +15670,249 @@ Carried:    **One raised, at 6.8, and nothing repointed and nothing discharged.*
 
             **Nothing to run against the live store.** Two documents, no migration, no stage and no
             vendor call.
+
+## 5.7 — 2026-09-04 — phase-5-sign-off — the phase signs off on seven checkpoints, with one row raised about a derivation route that empties
+
+Phase 5 signs off. Fresh session, no commit to this repository before this one, and no code in this
+one: two documents, a record and one fixture permit. Both instruments were reproduced before the
+record was read, and every figure below is quoted from the run rather than from an entry.
+
+Reproduced: `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests, exit 0**.
+            `tools/verify-phase.ps1` **GREEN on phase 5**, **141 claims, 127 passed, 0 failed, 14 out
+            of scope, 0 unexamined**, coverage examined 9,596 with 0 unexamined, 1,539 expectations
+            of which 959 independent and 1 void, inputs CAPTURED 70 and AUTHORED 134, and 0
+            expectations changed since the last commit. **The report carries
+            `2d6599f746dc53dcdae89483374b84fe839c0dae`, working tree clean, generated 2026-09-04
+            18:13:54Z**, and the sha is quoted beside the figures because a figure taken from a report
+            that does not name its commit is the fault the 3.12 sign-off was found committing.
+
+            **The figures match what 5.5's second entry recorded, exactly, and the comparison was made
+            rather than assumed.** That entry states 31 steps and 1,058 tests, and 141 claims, 127
+            passed, 14 out of scope, 0 unexamined. All six agree. Nothing was taken from disk on
+            trust: the report present at the start of this session carried `a2e1411` with `treeClean`
+            false, being a run from the middle of 5.5's work, and it was regenerated rather than read.
+
+            **Two things about running them are worth the lines.** `pwsh` is not on this machine, so
+            `tools/ci.ps1` invoked through a bash shell exits 0 having run nothing, which is the same
+            shape as the `verify-phase` fault 3.14 repaired and is a property of the invocation rather
+            than of the script. Both were run through PowerShell itself. And `tools/verify-phase.ps1`
+            printed **"using C:\Program Files\Git\bin\bash.exe"**, so the 3.14 repair is doing its job
+            on the machine it was written for: it rejected the System32 WSL launcher by name and said
+            which bash it used.
+
+Answered:   **Every done-when line from 5.0 to 5.5, met or not met.** Seven checkpoints, the build
+            order being 5.0(a), 5.0(b) and 5.0(c), then 5.8, then 5.1 to 5.5.
+
+            **5.0(a), met.** The funnel over the calibration sessions, per gate and per side, before
+            and after, with the delta reported per gate and the prediction written before the run. The
+            prediction is commit `2ed1c02` at 19:52:56 on 2026-09-02, the four runs started at 19:53
+            and the last finished at 20:16, so the order is in the history rather than in the prose.
+            Both funnels carry a `delta passed` column per gate. The population is stated as **602 long
+            and 601 short sessions, 31,844 rows flagged long and 16,893 flagged short**, over a
+            read-only copy of `data/live`, and the entry says the short funnel is measured on the same
+            narrowed gate the measurement of 2026-08-30 was, which is the comparability the row asks
+            for. No threshold was proposed and the once stays unspent. **The row says "the 602
+            calibration sessions" and the entry says 602 and 601**, which is the entry naming its
+            population per side rather than the row being wrong: the pooling rule is what forbids one
+            figure over both, and the entry obeys it.
+
+            **5.0(b), met.** The done-when is that every decision resolves and no phase 5 statement in
+            `ARCHITECTURE.html` disagrees with `SCHEMA.md` or `BUILD_PLAN.md`. `decision-resolves` and
+            `no-superseded-citation` are green as CI steps 5 and 6, `architecture-conformance` is green
+            with 0 unexamined, and the six phase 5 decisions all resolve above "Previously decided":
+            the rule representation, the one-clause difference, the version's account, the minimum
+            sample at 1802, the execution family's non-admission and the spread capture. **The three
+            obligation rows the part names are each accounted for**: two discharged, being the rows
+            raised at 3.5 and 3.11, and one moved with its reason, being the execution minimum's
+            conversion raised at 3.0(f), which the entry moved to 5.2 and edited `BUILD_PLAN.md` to say
+            so. `MeasurementParameters.MinimumEffectiveObservations` is 1802 in Core and
+            `pinned-constants` holds it.
+
+            **5.0(c), met.** The second aftermath figure over an authored position, verified over two
+            of them because none has ever been held past its own session, with the spread half recorded
+            as not owed rather than quietly dropped.
+
+            **5.8, met.** The pile and nothing else, fourteen parts, each landing with the check or
+            the test that would have caught it, and the entry closing it states nothing is due before
+            the freeze. Five `DERIVED` expectations carry the checkpoint.
+
+            **5.1, met.** `variant` exists, VariantAdmitter and VariantResolver exist, V0 is
+            registered and frozen, and the immutability is the store's rather than a convention:
+            `A_second_registration_of_one_identifier_is_refused_by_the_key` and
+            `A_second_baseline_in_one_generation_is_refused_by_the_index` are the two refusals, and
+            `A_version_registered_after_a_session_is_invisible_to_it` is the point-in-time half. The
+            nought obligations due before the freeze were discharged first, at 5.8, which is the row's
+            stated precondition. The live store carries `variant` at one row.
+
+            **5.2, met.** VariantScorer scores selection on forward return, long and short apart. The
+            21:40 slot is in `tools/nightly.ps1`, `RUNBOOK.md`, `NightlySchedule` and the worker's
+            advertised stages, and `slot-roster` reconciles the five declarations in every direction. The
+            execution family is named unreachable with its reason rather than built, which is what
+            question 8's answer licenses. A version selecting outside the capped sixty is refused a fill
+            and the score says so. The loss-horizon correction landed as a dated correction. **The
+            execution minimum's conversion was not discharged and was repointed to the first trade**,
+            which is the row's own anticipation: the row says the conversion and the execution scoring
+            "wait together", and a due point that is a date would fall again at every later checkpoint
+            and be moved again at each. The table now reads `3.0(f) | the first trade`, so the record
+            and the register agree.
+
+            **5.3, met.** The acceptance test is
+            `The_baseline_replayed_reproduces_the_stored_selections_exactly`, and its own comment
+            records that it is built over four rows across two nights of which the baseline took two
+            and refused two, so it is not the self-validating empty-against-empty case the corpus's
+            sweep rule forbids. The market-cap clause obligation due here was answered, its replay half
+            discharged and its purchase half returned to the operator, which is the 3.3 row's present
+            due point.
+
+            **5.4, met.** HoldoutRegistry, eight quarterly windows, spent windows recorded with date
+            range, purpose and outcome. A re-spend is refused twice over and both directions are named
+            tests: `A_second_spend_of_one_window_is_refused_by_the_store_itself` and
+            `The_stage_refuses_a_re_spend_with_the_reason`. Verified over an authored population, the
+            register being empty because no quarter has matured, which is a fact about the calendar
+            rather than a convenience.
+
+            **5.5, met. Openable.** The research ledger exists as `Research.cshtml`, designed from
+            `ARCHITECTURE.html`'s "The research ledger" section rather than from a drawing, the mockup
+            having been retired at 4.12. `fixtures/surface-claims.json` carries five claims on
+            `/research` and one on `/chart?trade=t-held`, and `surface-claims` renders and reads them
+            as CI step 24. A version touching both sides reports two numbers and never an average, and
+            the page states there is no element on it that could hold one figure over both. The
+            journal's missing middle, due here, was drawn.
+
+            **Done conditions 2 to 7, across all seven.** `checkpoint-test-count` is green, so every
+            checkpoint the record marks built states a test count. `writer-ownership` is green and
+            `SCHEMA.md` declares `variant_score` and `holdout_window` with their writers.
+            `pinned-constants` and `decision-resolves` are green. Both runners pass: the run on
+            `2d6599f` is green on `windows-latest` and `macos-latest`, with the two slot jobs and the
+            case-sensitive rehearsal beside them. Every checkpoint has its PROGRESS entry. And **every
+            one of the seven contributes at least one `DERIVED` expectation** rather than only frozen
+            ones: 5.0 two, 5.8 five, 5.1 one, 5.2 two, 5.3 twenty-nine, 5.4 ten and 5.5 five. None of
+            the seven appears under `frozenOnly`.
+
+Classified: **One finding, and it is a row rather than a reopening.** It fails no done condition and
+            breaks no check, which is the test the row set rather than a judgement about how real it
+            is. The phase 5 section of `BUILD_PLAN.md` says each register row carries the phrase
+            "Question N of the phase 5 sitting" and that the count of nine is derived from the table by
+            it. No row carries it. The last one left on 2026-09-02 when question 6 was answered, and
+            that entry recorded in terms that no row in either table was a phase 5 question any more.
+
+            **What makes it a row and not a defect in an instrument** is that nothing is unheld.
+            `stated-counts` reconciles the marked rows at nought against nought and is right to: the
+            reading beside the operator's table says "none of the nine rows is a phase 5 question" in
+            those words, and the check derives the total in that sentence from the operator's table's
+            own row count. The nine is derived twice over today, once as the rows due at the operator
+            and once as the operator's table, and both read nine. What is stale is one sentence naming
+            a third route that now yields nought. **What it costs is a reader**, who greps the phrase
+            the section names, finds nothing, and concludes either that the questions are gone or that
+            the register is broken.
+
+            **Due at the phase 6 plan, which is a named event rather than a checkpoint**, on the shape
+            "the move" and "the first trade" already have. `carried-obligations` asserts that a
+            checkpoint-shaped due point is one `BUILD_PLAN.md` has, and there is no 6.0 row to point at
+            until the pass that writes one.
+
+            **Nothing else was raised, and that is the rule rather than an empty sweep.** The question
+            this pass answers is whether the seven met their stated done conditions, not whether the
+            lab holds further defects, and no other reading of any done-when line came out differently.
+
+Listed:     **The nine, read off the carried obligations table rather than rediscovered.** Nine were
+            asked across two moments: **eight at the sitting of 2026-09-02**, before the phase's first
+            commit, and **question 6 when 5.0(a) reported** on the same day, it being the one question
+            the sitting could not ask because its answer was a measurement that had not yet run. **All
+            nine were answered**, six of the sitting's eight closing with a named decision and two
+            repointed to 5.0 as derivations, and question 6 answered the day it was put. None remains
+            open as a question: the obligations table holds no row marked as a phase 5 question, and
+            the reading beside the operator's table says so in terms.
+
+            **What remains is nine obligation rows at the operator, which is a different thing from
+            nine open questions**, and the two were read as one until 5.5's correction. Eight of the
+            nine hold nothing in the build order and the ninth holds one count on one side, and they
+            are named separately here because that separation is the whole point of listing them.
+
+            **The eight holding nothing.** 1.1, the vendor's quota reset boundary. 1.6, three
+            `CONFIRMED` indicator values. 2.9, the `CONFIRMED` gallery expectations. 3.6, the tasks
+            running only while the user is logged on, which costs a night every time it fires and which
+            one elevated command closes. 3.8, whether a lazily-resolved attribute carries a validity
+            date separate from its lookup instant. 3.14, the two live rows carrying a superseded
+            `cluster` value. 3.3, the shares-outstanding purchase for the short side, whose replay half
+            5.3 discharged. And 4.5, which nights the four rejected slots did not run, which is backward
+            and already lost.
+
+            **The one holding a count.** **4.4**, which fetch window `IntradayFetcher` buys. It holds
+            short's twenty-session count and through it band 1 on the short side, and it is the only
+            one of the nine sitting in front of scheduled work.
+
+            **The count reconciles**: nine rows due at the operator in the obligations table, nine rows
+            in the operator's own table, the same nine raised points in both, and `stated-counts`
+            holding the second against the sentence beside it.
+
+Not covered: **5.6 is parked, sits outside the build order, and this sign-off does not cover it**,
+            stated here rather than left to be inferred from its absence. Its own row says it is not a
+            sign-off condition and gates nothing that is built, and 5.7's row says it does not wait on
+            it, on 3.7's reasoning: a checkpoint that cannot be reached for months, left as a sign-off
+            condition, makes the sign-off permanently pending while every part of it that could be
+            checked already passes. **What it waits on is 3.6, per direction**, and 3.6 fires when band
+            1 reports both conditions for the direction concerned, which the panel says every night. The
+            execution family waits on a second thing and both of its routes are closed rather than
+            pending. **Nothing is disabled by the parking**: every stage this phase built runs from the
+            night it landed, and what is held back is admitting a version, changing a rule and spending
+            a holdout window (see: 3.6 gates what may be admitted, not what may be built).
+
+Noted:      **The phase report's `lastLanded` reads 5.8 where the build order's tip is 5.5**, and it is
+            not a defect. Phase 5's numbers do not ascend with its order by design, 5.8 has landed, and
+            `CLAUDE.md` points at the furthest checkpoint the record holds. It is noted because a reader
+            meeting 5.8 in the report could infer the build is past 5.5, and the plan's own sentence
+            that the number is an identifier while the table's order is the build order sits in a
+            different document.
+
+Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**,
+            unchanged, nothing under test having moved. `tools/verify-phase.ps1` **GREEN on phase 5**,
+            141 claims, 127 passed, 0 failed, 14 out of scope, 0 unexamined, also unchanged: claims come
+            from `ARCHITECTURE.html`'s tables and this pass edits neither that document nor a table in
+            it. **The fourteen out of scope are all phase 6 and every one names a checkpoint that
+            exists and has not landed**: two at 6.1, one at 6.2, one at 6.3, three at 6.4, three at 6.5,
+            one at 6.6, two at 6.7 and one at 6.8. Nothing rests at a phase 5 checkpoint, which is the
+            assertion a phase sign-off owes and the one that would show a checkpoint having shipped
+            without coming back to a claim.
+
+            **Both were run again after this pass's edits, on the tree that carries them**, because a
+            figure quoted from the tree before the edit is a figure about a different tree. `ci.ps1`
+            green at 31 steps and 1,058 tests, and the report **GREEN** with the same 141 claims, 127
+            passed, 0 failed, 14 out of scope and 0 unexamined. **Coverage examined moves from 9,596
+            to 9,599 and the three are named**: the obligation row added to the table and the permit
+            added to the fixture are read by `carried-obligations`, `stated-counts` and
+            `fixture-replay`, and the claim figures do not move because this pass edits no table in
+            `ARCHITECTURE.html`. The report reads the tree as dirty, which is what an uncommitted
+            working tree is; the clean-tree figures quoted above are the run at `2d6599f`.
+
+Permitted:  **5.7 names its own `frozenOnly` permit, and `fixture-replay` refused the commit until it
+            did.** Done condition seven wants an expectation carrying the checkpoint, and a sign-off
+            adds no stage to the replayed pipeline and no behaviour to freeze, so the permit is the
+            shape 2.12, 3.7, 3.15 and 4.13 already stand in. **It is recorded here because the check
+            found it rather than a reader**: the first run of `tools/ci.ps1` over this pass went red at
+            step 20 with the entry written and the permit absent, and it went green when the permit
+            landed. That is the eighth failure shape's repair doing the work it was built for. Until
+            5.8 the clause failing a permit lived in the loop over checkpoints the fixture holds
+            expectations for, and every live permit took the other loop, so a sign-off contributing
+            nothing would have passed unremarked.
+
+            **And the permit's own count is derived, which the next run proved.** Adding it turned
+            `stated-counts` red at step 8 naming the sentence in `BUILD_PLAN.md` that says how many
+            frozen-only checkpoints the fixture holds: it stated nine against a derived ten. That is
+            the outcome 3.15's permit predicted in its own words, that the count and the sentence
+            naming it cannot part again, and it is the second time in one pass a check refused the
+            commit rather than a reader noticing. The sentence now reads ten and the nought beside it
+            is unchanged, this permit resting on no open obligation.
+
+Carried:    **One raised, due at the phase 6 plan, and nothing repointed and nothing discharged.** The
+            obligations table reads twenty-four, and the one sentence stating that total is edited with
+            its prior text in `CHANGELOG.md`, as is the permit count. **The nine at the operator are
+            unchanged.**
+
+            **Nothing to run against the live store.** Two documents, a record and a fixture permit,
+            no migration, no stage and no vendor call.
+
+Next:       **Phase 6's plan**, which is phase 6's own first work and takes the identifier 6.0 on the
+            precedent 2.1, 3.0 and 5.0 set, filed under `Phase 6 / 6.0` and opening "Not a checkpoint
+            entry" so that filing it does not mark 6.0 landed. **There is no 5.9.** The row raised above
+            falls due in that pass.

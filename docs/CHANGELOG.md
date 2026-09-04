@@ -2390,3 +2390,24 @@ Why:  "Answered together or not at all" is a claim about who answers them and wa
       behind one, and a summary drawn from this sentence repeated it. The decision cited is the one
       CLAUDE.md's separate-counting rule rests on: nine rows reported as one wait let the eight that
       block nothing hide the one that does, which is the same fault as one number covering both.
+
+### 2026-09-04 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "None of the twenty-three rows above fall due at 4.17"
+Now:  "None of the twenty-four rows above fall due at 4.17"
+Why:  The 5.7 sign-off raised one row, being the phase 5 section's derivation route for the nine which
+      yields nought now the mark it names has left the register. The sentence is the one place the
+      obligations table's total is stated, `stated-counts` derives it from the table's own rows, and a
+      row added without it turns the check red. The decision cited is the one that puts a count under a
+      derivation rather than under a writer's memory.
+
+### 2026-09-04 — BUILD_PLAN.md — cites Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+Was:  "`fixtures/expectations.json` names nine frozen-only checkpoints under `frozenOnly`, of which
+      nought still rest on an open obligation."
+Now:  "`fixtures/expectations.json` names ten frozen-only checkpoints under `frozenOnly`, of which
+      nought still rest on an open obligation."
+Why:  The 5.7 sign-off added its own permit, on the footing 2.12, 3.7, 3.15 and 4.13 stand on: a
+      sign-off adds no stage to the replayed pipeline and no behaviour to freeze, so done condition
+      seven is met by a named permit rather than by an expectation. The nought is unchanged, the new
+      permit resting on nothing. `stated-counts` derives this figure from the fixture and failed
+      naming the sentence, which is the same registry catching the same class of drift 3.15's permit
+      predicted it would.
