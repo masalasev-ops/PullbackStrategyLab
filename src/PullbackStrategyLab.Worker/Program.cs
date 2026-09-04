@@ -44,6 +44,7 @@ public static class Program
         builder.Services.AddSingleton<WatchlistPublisher>();
         builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<VariantAdmitter>();
+        builder.Services.AddSingleton<ReplayHarness>();
         builder.Services.AddSingleton<VariantResolver>();
         builder.Services.AddSingleton<VariantScorer>();
         builder.Services.AddSingleton<TriggerResolver>();
@@ -229,6 +230,7 @@ public static class Program
         [WatchlistPublisher.Name] = (services, rest) => services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
         [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
         [VariantAdmitter.Name] = (services, rest) => services.GetRequiredService<VariantAdmitter>().Run(rest),
+        [ReplayHarness.Name] = (services, rest) => services.GetRequiredService<ReplayHarness>().Run(rest),
         [VariantResolver.Name] = (services, rest) => services.GetRequiredService<VariantResolver>().Run(rest),
         [VariantScorer.Name] = (services, rest) => services.GetRequiredService<VariantScorer>().Run(rest),
         [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
@@ -298,6 +300,7 @@ public static class Program
         // rather than as a roster to reconcile. It now reconciles in both directions.
         PlanBuilder.Name,
         VariantAdmitter.Name,
+        ReplayHarness.Name,
         VariantResolver.Name,
         VariantScorer.Name,
         TriggerResolver.Name,

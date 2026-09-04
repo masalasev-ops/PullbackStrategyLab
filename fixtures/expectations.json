@@ -8423,7 +8423,7 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "30",
+      "value": "31",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
       "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35."
@@ -8431,7 +8431,7 @@
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "35",
+      "value": "37",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
       "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry."
@@ -11106,6 +11106,382 @@
       "checkpoint": "4.12",
       "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is eight. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
       "note": "the artefacts among them, which is the nought that is the subject. SCREENS.html was the ninth and this figure read 1 until 4.12 retired it, once the pages it drew existed. A figure that could only ever be nought would be worth nothing (see: The corpus is eight documents and a ninth requires retiring one)"
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.cluster",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.contraction",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.dip-shape",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.exit-tight",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.held-floor",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.thrust",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-HOOD-long.trigger-near",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.cluster",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.contraction",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.dip-shape",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.exit-tight",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "what the harness rebuilt from the row's own frozen signals, which disagrees with the hand-derived verdict beside it because this row's prices were authored and its verdicts were not",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.held-floor",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.thrust",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.IESC-long.trigger-near",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "what the harness rebuilt from the row's own frozen signals, which disagrees with the hand-derived verdict beside it because this row's prices were authored and its verdicts were not",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.bounce-shape",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.cluster",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.exit-tight",
+      "tier": "DERIVED",
+      "value": "not measured by the night",
+      "checkpoint": "5.3",
+      "producedBy": "the note the night recorded beside the verdict, being an absent quantity rather than a comparison",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.no-reclaim",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.thrust",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.tradable-shortable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "5.3",
+      "producedBy": "the hand-derived gate verdict recorded in this file at 2.6 and 2.7 for the same row and gate",
+      "note": "What the harness rebuilt for one judgeable gate of one stored row, out of the frozen signals alone. The expected value is the same gate's verdict on the same row derived by hand at 2.6 and 2.7 and recorded in this file as setup.<row>.<gate>, so the two are one verdict reached by two routes sharing no line of code: the detector's, off the bars, and the harness's, off the signal row. Populations are named apart by the row id: the two dated rows are the captured day's and IESC-long is the authored row the vectorizer needs, whose frozen prices were authored and whose verdicts come from the detector's own geometry, so two of its gates disagree by construction and are the subject of an obligation rather than a value to be adjusted here."
+    },
+    {
+      "id": "replay.long.gatesRebuilt",
+      "tier": "DERIVED",
+      "value": "9",
+      "checkpoint": "5.3",
+      "producedBy": "counted by hand from the long gate list and the threshold table: ten gates less uptrend, which compares a ladder grade and carries no threshold",
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+    },
+    {
+      "id": "replay.long.gatesReadBack",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the long gates a replay cannot rebuild, counted by hand: uptrend alone",
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+    },
+    {
+      "id": "replay.short.gatesRebuilt",
+      "tier": "DERIVED",
+      "value": "7",
+      "checkpoint": "5.3",
+      "producedBy": "counted by hand from the short gate list and the threshold table: ten gates less downtrend, which compares a grade, and less averages-squeezing and reached-ceiling, whose quantities are arithmetic over several frozen signals",
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+    },
+    {
+      "id": "replay.short.gatesReadBack",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "5.3",
+      "producedBy": "the short gates a replay cannot rebuild, counted by hand: downtrend, averages-squeezing and reached-ceiling",
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+    },
+    {
+      "id": "replay.long.sessions",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.rows",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.baselineSelected",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.replaySelected",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.unjudgeable",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.unmeasuredGateVerdicts",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.frozenYetUnmeasured",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.disagreements",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.long.selectionsReproduced",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.sessions",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.rows",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.baselineSelected",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.replaySelected",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.unjudgeable",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.unmeasuredGateVerdicts",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.frozenYetUnmeasured",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.disagreements",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "replay.short.selectionsReproduced",
+      "tier": "FROZEN",
+      "value": "yes",
+      "checkpoint": "5.3",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
     }
   ],
   "frozenOnly": [

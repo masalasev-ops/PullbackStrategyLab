@@ -38,6 +38,49 @@ public sealed class SetupReader
     public static IReadOnlyList<StoredSetup> ReadCalibration(SqliteConnection connection, DateOnly asOf) =>
         Read(connection, CalibrationTable, asOf);
 
+    /// <summary>
+    /// The sessions the evidence store holds a setup of one direction on, from
+    /// <paramref name="from"/> up to and including the as-of.
+    ///
+    /// <b>This is what makes a replay one read per session rather than one per row.</b> The harness
+    /// walks the history session by session, and a stage that asked the store for a row at a time
+    /// would be the reason a screen took minutes instead of seconds.
+    ///
+    /// Bounded on the as-of like every read here. `setup` carries no observation stamp because
+    /// `as_of` <i>is</i> the session it belongs to, so bounding the session is the whole of the
+    /// point-in-time question for this table.
+    /// </summary>
+    public static IReadOnlyList<DateOnly> Sessions(
+        SqliteConnection connection, string direction, DateOnly from, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(direction);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT as_of
+              FROM setup
+             WHERE direction = @direction
+               AND as_of >= @from
+               AND as_of <= @as_of
+             ORDER BY as_of
+            """;
+
+        command.Parameters.AddWithValue("@direction", direction);
+        command.Parameters.AddWithValue("@from", StoreText.DateToStorageText(from));
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        var sessions = new List<DateOnly>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            sessions.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+        }
+
+        return sessions;
+    }
+
     /// <summary>The evidence store. Written forward, one session at a time.</summary>
     public const string SetupTable = "setup";
 

@@ -58,7 +58,8 @@ public static partial class SchemaDeclarations
             stores.Add(new StoreDeclaration(
                 headings[i].Groups["store"].Value,
                 declarations.SelectMany(ParseWriters).ToArray(),
-                declarations.Any(StatesDisjointness)));
+                declarations.Any(StatesDisjointness),
+                declarations.Select(StoreBuiltAt).FirstOrDefault(at => at is not null)));
         }
 
         // The phases declared at store level, one row each. Bounded to the two sections that
@@ -76,7 +77,8 @@ public static partial class SchemaDeclarations
         foreach (Match row in StoreRow().Matches(schema[storeLevelStart..storeLevelEnd]))
         {
             string writer = row.Groups["writer"].Value.Trim();
-            stores.Add(new StoreDeclaration(row.Groups["store"].Value, ParseWriters(writer), StatesDisjointness(writer)));
+            stores.Add(new StoreDeclaration(
+                row.Groups["store"].Value, ParseWriters(writer), StatesDisjointness(writer), StoreBuiltAt(writer)));
         }
 
         return stores;
@@ -92,6 +94,32 @@ public static partial class SchemaDeclarations
         ArgumentNullException.ThrowIfNull(declaration);
         return declaration.Contains("disjoint", StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// The checkpoint a declared-but-uncreated store arrives at, where the declaration names one.
+    ///
+    /// <b>It exists because a component can land before the store it writes.</b> `writer-ownership`
+    /// defers a declared writer to the checkpoint that builds the component, which is right whenever
+    /// the component is the missing half. ReplayHarness is the case where it is not: the harness is
+    /// built at 5.3 and screens a candidate rule, while `replay_result` is keyed on a proposal and a
+    /// holdout window and cannot exist until a proposal store does. Left to the component's own
+    /// checkpoint, the deferral would come due the day the harness landed and could never be ended.
+    ///
+    /// <b>Declared rather than held in the checker</b>, on the same grounds the disjointness rule
+    /// above is: a hardcoded exception is a fact about the checker, and a reader of SCHEMA would
+    /// find only one of the two. The checkpoint named is still asserted, being one BUILD_PLAN has
+    /// and PROGRESS does not yet record.
+    /// </summary>
+    public static string? StoreBuiltAt(string declaration)
+    {
+        ArgumentNullException.ThrowIfNull(declaration);
+
+        Match match = BuiltAt().Match(declaration);
+        return match.Success ? match.Groups["at"].Value : null;
+    }
+
+    [GeneratedRegex(@"[Ss]tore built at \*{0,2}(?<at>\d+\.\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex BuiltAt();
 
     /// <summary>
     /// A declaration reads as prose, so it is split on the separator and each part is matched
@@ -162,4 +190,8 @@ public sealed record Writer(StoreOperation Operation, string Component, bool Res
 /// to forgive. A hardcoded exception is a fact about the checker; a declaration is a fact about
 /// the design, and only one of the two is somewhere a reader of SCHEMA will find it.
 /// </summary>
-public sealed record StoreDeclaration(string Store, IReadOnlyList<Writer> Writers, bool StatesDisjointness);
+public sealed record StoreDeclaration(
+    string Store,
+    IReadOnlyList<Writer> Writers,
+    bool StatesDisjointness,
+    string? BuiltAt = null);
