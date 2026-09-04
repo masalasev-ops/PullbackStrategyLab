@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Time;
@@ -43,6 +44,26 @@ public sealed class VariantAdmitter
     public const string FamilyFlag = "--family";
     public const string DefinitionFlag = "--definition";
     public const string TargetFlag = "--target";
+
+    /// <summary>The side a selection version applies to. A version is one side's, because the two are never pooled.</summary>
+    public const string DirectionFlag = "--direction";
+
+    /// <summary>Which named threshold moves. One, and the assertion is what says so.</summary>
+    public const string ThresholdFlag = "--threshold";
+
+    /// <summary>What it moves to. Where it moves from is the baseline's and is never given.</summary>
+    public const string ValueFlag = "--value";
+
+    /// <summary>
+    /// Why a definition may not be typed for a selection version.
+    ///
+    /// It is derived from the admission assertion, on the same grounds the minimum sample is derived
+    /// from the family: a sentence somebody types can disagree with the columns beside it, and the
+    /// day it does there is nothing to say which of the two the version is.
+    /// </summary>
+    public const string DefinitionIsDerived =
+        "a selection version's definition is derived from the threshold it moves and is not typed. "
+        + "Give " + DirectionFlag + ", " + ThresholdFlag + " and " + ValueFlag;
 
     /// <summary>
     /// Why an execution version is refused outright in this generation.
@@ -91,7 +112,9 @@ public sealed class VariantAdmitter
         {
             Console.Error.WriteLine(
                 $"{Name}: name the version. usage: {Name} <variant-id> {FamilyFlag} <{string.Join('|', VariantFamily.All)}> "
-                + $"{DefinitionFlag} \"<what it changes>\" {TargetFlag} \"<what would settle it>\" [{DryRunFlag}]");
+                + $"{TargetFlag} \"<what would settle it>\" and then, for a selection version, "
+                + $"{DirectionFlag} <long|short> {ThresholdFlag} <name> {ValueFlag} <number>, or for the baseline "
+                + $"{DefinitionFlag} \"<what it is>\". [{DryRunFlag}]");
             return 2;
         }
 
@@ -101,21 +124,59 @@ public sealed class VariantAdmitter
             return 2;
         }
 
-        if (string.IsNullOrWhiteSpace(definition) || string.IsNullOrWhiteSpace(target))
-        {
-            Console.Error.WriteLine(
-                $"{Name}: a version with no definition or no target is a row nothing can settle. "
-                + $"Give both {DefinitionFlag} and {TargetFlag}.");
-            return 2;
-        }
-
         if (family == VariantFamily.Execution)
         {
             Console.Error.WriteLine($"{Name}: {ExecutionRefused}.");
             return 1;
         }
 
-        VariantAdmission admission = Admit(variantId, family, definition, target, dryRun);
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            Console.Error.WriteLine(
+                $"{Name}: a version with no target is a row nothing can settle. Give {TargetFlag}.");
+            return 2;
+        }
+
+        MovedThreshold? moved = null;
+
+        if (family == VariantFamily.Selection)
+        {
+            if (!string.IsNullOrWhiteSpace(definition))
+            {
+                Console.Error.WriteLine($"{Name}: {DefinitionIsDerived}.");
+                return 2;
+            }
+
+            AdmissionVerdict verdict = Assert(
+                Flag(args, DirectionFlag), Flag(args, ThresholdFlag), Flag(args, ValueFlag), out string? malformed);
+
+            if (malformed is not null)
+            {
+                Console.Error.WriteLine($"{Name}: {malformed}");
+                return 2;
+            }
+
+            if (!verdict.IsAdmitted)
+            {
+                Console.Error.WriteLine($"{Name}: refused. {verdict.Reason}.");
+                return 1;
+            }
+
+            moved = new MovedThreshold(
+                Flag(args, DirectionFlag)!, verdict.Gate!, verdict.Threshold!, verdict.From!.Value, verdict.To!.Value);
+
+            // Derived from the assertion rather than typed, so the sentence on the ledger and the
+            // columns the scorer reads are one fact.
+            definition = verdict.Reason;
+        }
+        else if (string.IsNullOrWhiteSpace(definition))
+        {
+            Console.Error.WriteLine(
+                $"{Name}: a version with no definition is a row nothing can settle. Give {DefinitionFlag}.");
+            return 2;
+        }
+
+        VariantAdmission admission = Admit(variantId, family, definition!, target, dryRun, moved);
 
         Console.WriteLine(
             $"{Name}: {admission.Variant.Describe()}");
@@ -123,6 +184,11 @@ public sealed class VariantAdmitter
             $"{Name}: definition {admission.Variant.Definition}");
         Console.WriteLine(
             $"{Name}: target {admission.Variant.Target}");
+
+        if (admission.Variant.Moved is MovedThreshold move)
+        {
+            Console.WriteLine($"{Name}: moves {move.Describe()}");
+        }
         Console.WriteLine(
             admission.Written
                 ? $"{Name}: {admission.Outcome.ToStorageText()}, registered and immutable from now on"
@@ -140,7 +206,12 @@ public sealed class VariantAdmitter
     /// one whose baseline it was never compared against.
     /// </summary>
     public VariantAdmission Admit(
-        string variantId, string family, string definition, string target, bool dryRun = false)
+        string variantId,
+        string family,
+        string definition,
+        string target,
+        bool dryRun = false,
+        MovedThreshold? moved = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(variantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(family);
@@ -171,7 +242,10 @@ public sealed class VariantAdmitter
             MinimumSampleUnit.For(family),
             VariantStatus.Open,
             null,
-            now);
+            now)
+        {
+            Moved = moved,
+        };
 
         if (dryRun)
         {
@@ -195,10 +269,12 @@ public sealed class VariantAdmitter
         command.CommandText = """
             INSERT INTO variant (
                 variant_id, generation, family, definition, target,
-                minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
+                minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                direction, gate, threshold_name, threshold_from, threshold_to)
             VALUES (
                 @variant_id, @generation, @family, @definition, @target,
-                @minimum_sample, @minimum_sample_unit, @status, NULL, @created_at);
+                @minimum_sample, @minimum_sample_unit, @status, NULL, @created_at,
+                @direction, @gate, @threshold_name, @threshold_from, @threshold_to);
             """;
 
         command.Parameters.AddWithValue("@variant_id", variant.VariantId);
@@ -212,9 +288,67 @@ public sealed class VariantAdmitter
         command.Parameters.AddWithValue(
             "@created_at", StoreText.TimestampToStorageText(variant.CreatedAt));
 
+        // Null together on the baseline and on anything that moves no threshold, which is what the
+        // store's own five clauses require.
+        MovedThreshold? moved = variant.Moved;
+        command.Parameters.AddWithValue("@direction", (object?)moved?.Direction ?? DBNull.Value);
+        command.Parameters.AddWithValue("@gate", (object?)moved?.Gate ?? DBNull.Value);
+        command.Parameters.AddWithValue("@threshold_name", (object?)moved?.ThresholdName ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@threshold_from",
+            moved is null ? DBNull.Value : StoreText.ThresholdToStorageText(moved.From));
+        command.Parameters.AddWithValue(
+            "@threshold_to",
+            moved is null ? DBNull.Value : StoreText.ThresholdToStorageText(moved.To));
+
         // Rows written are measured from the store by the run scope rather than reported here,
         // which is why nothing counts the result of this call.
         command.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// What the admission assertion says about the move the operator named, with a message where
+    /// what they named is not a move at all.
+    ///
+    /// <b>Malformed and refused are two answers, not one.</b> A direction that is not a side, or a
+    /// value that is not a number, is an operator mistake and exits 2; a well-formed candidate the
+    /// rule refuses is an answer about the version and exits 1. Collapsing them would make a typo
+    /// read as a rejected experiment.
+    /// </summary>
+    private static AdmissionVerdict Assert(
+        string? direction, string? threshold, string? value, out string? malformed)
+    {
+        malformed = null;
+
+        if (direction != SetupDirection.Long && direction != SetupDirection.Short)
+        {
+            malformed = $"'{direction}' is not a side. {DirectionFlag} takes {SetupDirection.Long} or {SetupDirection.Short}.";
+            return AdmissionVerdict.Refused(malformed);
+        }
+
+        if (string.IsNullOrWhiteSpace(threshold) || string.IsNullOrWhiteSpace(value))
+        {
+            malformed = $"give {ThresholdFlag} and {ValueFlag}: a selection version is one named threshold at one value.";
+            return AdmissionVerdict.Refused(malformed);
+        }
+
+        if (!decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal moved))
+        {
+            malformed = $"'{value}' is not a number.";
+            return AdmissionVerdict.Refused(malformed);
+        }
+
+        SelectionRule baseline = SelectionRule.For(direction);
+
+        if (baseline.Find(threshold) is null)
+        {
+            malformed =
+                $"the {direction} rule has no threshold named '{threshold}'. Its movable ones are "
+                + string.Join(", ", SelectionReplay.Movable(baseline).Select(t => t.Name)) + ".";
+            return AdmissionVerdict.Refused(malformed);
+        }
+
+        return SelectionReplay.AssertAdmissible(baseline.With(threshold, moved), baseline);
     }
 
     private static string? Flag(string[] args, string flag)

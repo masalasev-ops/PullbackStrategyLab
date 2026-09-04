@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Api;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Data;
@@ -2157,6 +2158,21 @@ public sealed class PhaseReplay : IDisposable
     /// would have changed if it had been.
     /// see: Every line of code runs unmodified on Windows and on Apple Silicon macOS
     /// </summary>
+    /// <summary>How many of the store's own tables declare a column of one name.</summary>
+    private static int TablesCarrying(SqliteConnection connection, string column)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM sqlite_master m
+             WHERE m.type = 'table'
+               AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) c WHERE c.name = @column)
+            """;
+
+        command.Parameters.AddWithValue("@column", column);
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
+
     private IReadOnlyList<Measurement> StoreIntegrityFigures()
     {
         using SqliteConnection read = _connections.OpenReadOnly();
@@ -2180,6 +2196,13 @@ public sealed class PhaseReplay : IDisposable
                 MigrationRunner.ForeignKeyViolations(read).Length.ToString(CultureInfo.InvariantCulture)),
             new Measurement("store.observationsAfterTheAsOf",
                 ObservationsLaterThan(read, _clock.UtcNow).ToString(CultureInfo.InvariantCulture)),
+
+            // How many tables key on the plan rather than on the setup, which is the whole of what
+            // the fan-out at 5.1 changed. Read from the built store rather than from the migration
+            // text, so a later rebuild that dropped the column from one of them would move the
+            // figure whatever the file that created it said.
+            new Measurement("store.tablesKeyedOnThePlan",
+                TablesCarrying(read, "plan_id").ToString(CultureInfo.InvariantCulture)),
         ];
     }
 
@@ -2370,6 +2393,16 @@ public sealed class PhaseReplay : IDisposable
             SelectionRule.Long.Thresholds.Count.ToString(CultureInfo.InvariantCulture)),
         new Measurement("rule.shortThresholds",
             SelectionRule.Short.Thresholds.Count.ToString(CultureInfo.InvariantCulture)),
+
+        // How many of each side's thresholds a version may actually move, which is a smaller number
+        // than the one above for two reasons that are counted together here and named apart in the
+        // corpus: a threshold belonging to the execution or recorded family, and a threshold whose
+        // gate cannot be judged from the frozen signals. The two sides are separate figures and are
+        // never added (see: Long and short are never pooled into one figure).
+        new Measurement("rule.longMovableThresholds",
+            SelectionReplay.Movable(SelectionRule.Long).Count.ToString(CultureInfo.InvariantCulture)),
+        new Measurement("rule.shortMovableThresholds",
+            SelectionReplay.Movable(SelectionRule.Short).Count.ToString(CultureInfo.InvariantCulture)),
     ];
 
     /// <summary>

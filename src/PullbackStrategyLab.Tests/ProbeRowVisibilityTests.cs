@@ -34,7 +34,7 @@ public sealed class ProbeRowVisibilityTests
 
         // Stated in advance rather than derived from the run. An empty set passes every assertion
         // below it, and a renamed prefix would hand this one.
-        Assert.Equal(4, integrity.Length);
+        Assert.Equal(5, integrity.Length);
 
         // The figure that carries the property. Nought means the probe had not been written when
         // these were taken, which is the ordering the comment above the call claims and could not
@@ -54,6 +54,14 @@ public sealed class ProbeRowVisibilityTests
             Single(integrity, "store.schemaVersion"));
         Assert.Equal("124", Single(integrity, "store.rowsPointingAtSetup"));
         Assert.Equal("0", Single(integrity, "store.foreignKeyViolations"));
+
+        // The fifth, from 5.2. Asserted as a positive count rather than as its value, on the same
+        // grounds the schema version above is read from the build: the number itself is derived by
+        // hand in the fixture expectation, and a literal here would be a second place it lives.
+        // What this assertion holds is that the figure is produced at all, so the count above means
+        // five figures rather than four and a name.
+        Assert.True(
+            int.Parse(Single(integrity, "store.tablesKeyedOnThePlan"), CultureInfo.InvariantCulture) > 0);
 
         // The probe does exist by the end of the run, so the nought above is the ordering holding
         // rather than the row never having been written at all. Without this the whole file would

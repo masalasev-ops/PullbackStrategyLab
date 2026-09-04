@@ -524,9 +524,11 @@ public sealed class PlanBuilderTests : IDisposable
             second.CommandText = """
                 INSERT INTO variant (
                     variant_id, generation, family, definition, target,
-                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
+                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                    direction, gate, threshold_name, threshold_from, threshold_to)
                 VALUES ('F1a', 0, 'selection', 'a widened gate', 'two points of forward return', 1802,
-                        'effective_paired_setup_observations', 'open', NULL, '2000-01-01T00:00:00.000Z');
+                        'effective_paired_setup_observations', 'open', NULL, '2000-01-01T00:00:00.000Z',
+                        'long', 'dip-shape', 'maximum-retrace', '0.40', '0.50');
                 """;
             second.ExecuteNonQuery();
         }

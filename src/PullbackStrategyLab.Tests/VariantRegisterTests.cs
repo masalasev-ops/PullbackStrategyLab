@@ -1,3 +1,4 @@
+using PullbackStrategyLab.Core.Detection;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
@@ -128,7 +129,9 @@ public sealed class VariantRegisterTests : IDisposable
     {
         Admitter().Admit("V0", VariantFamily.Baseline, "the rule", "the reference");
         VariantAdmission selection = Admitter().Admit(
-            "F1a", VariantFamily.Selection, "widens exit-tight by a tenth of a range", "two points of forward return");
+            "F1a", VariantFamily.Selection, "loosens the dip's retrace ceiling", "two points of forward return",
+            moved: new MovedThreshold(
+                SetupDirection.Long, "dip-shape", SelectionRule.MaximumRetrace, 0.40m, 0.50m));
 
         Assert.Equal(MinimumSampleUnit.EffectivePairedSetupObservations, selection.Variant.MinimumSampleUnit);
 
@@ -137,8 +140,10 @@ public sealed class VariantRegisterTests : IDisposable
         wrong.CommandText = """
             INSERT INTO variant (
                 variant_id, generation, family, definition, target,
-                minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
-            VALUES ('F1b', 0, 'selection', 'a rule', 'a target', 200, 'paired_trades', 'open', NULL, '2026-09-03T22:28:00.000Z');
+                minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                direction, gate, threshold_name, threshold_from, threshold_to)
+            VALUES ('F1b', 0, 'selection', 'a rule', 'a target', 200, 'paired_trades', 'open', NULL, '2026-09-03T22:28:00.000Z',
+                    'long', 'dip-shape', 'maximum-retrace', '0.40', '0.50');
             """;
 
         SqliteException thrown = Assert.Throws<SqliteException>(() => wrong.ExecuteNonQuery());
@@ -175,9 +180,11 @@ public sealed class VariantRegisterTests : IDisposable
             only.CommandText = """
                 INSERT INTO variant (
                     variant_id, generation, family, definition, target,
-                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
+                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                    direction, gate, threshold_name, threshold_from, threshold_to)
                 VALUES ('F1a', 0, 'selection', 'a rule', 'a target', 1802,
-                        'effective_paired_setup_observations', 'open', NULL, '2026-09-01T22:28:00.000Z');
+                        'effective_paired_setup_observations', 'open', NULL, '2026-09-01T22:28:00.000Z',
+                        'long', 'dip-shape', 'maximum-retrace', '0.40', '0.50');
                 """;
             only.ExecuteNonQuery();
         }
@@ -266,5 +273,145 @@ public sealed class VariantRegisterTests : IDisposable
 
         Assert.Throws<ArgumentException>(() => PlanIdentity.For("a@b", "V0"));
         Assert.Throws<ArgumentException>(() => PlanIdentity.For("2026-09-03-AAPL-long", "V0@1"));
+    }
+
+    // ---- the moved threshold, from 5.2 ---------------------------------------------------
+
+    /// <summary>
+    /// A selection version records the one threshold it moves, in a form a stage can read, and its
+    /// definition is derived from that rather than typed beside it.
+    /// </summary>
+    [Fact]
+    public void A_selection_version_records_the_threshold_it_moved_and_derives_its_definition()
+    {
+        int code = Admitter().Run([
+            "V1",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.50",
+            VariantAdmitter.TargetFlag, "a two-point gain in ten-day forward return",
+        ]);
+
+        Assert.Equal(0, code);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        StoredVariant stored = Assert.Single(
+            VariantReader.RegisteredBy(connection, Evening, SessionBoundaries.UsEquities));
+
+        MovedThreshold moved = Assert.IsType<MovedThreshold>(stored.Moved);
+        Assert.Equal(SetupDirection.Long, moved.Direction);
+        Assert.Equal("dip-shape", moved.Gate);
+        Assert.Equal(SelectionRule.MaximumRetrace, moved.ThresholdName);
+        Assert.Equal(0.40m, moved.From);
+        Assert.Equal(0.50m, moved.To);
+
+        // Derived from the assertion, so the sentence and the columns cannot disagree.
+        Assert.Contains("dip-shape", stored.Definition, StringComparison.Ordinal);
+        Assert.Contains("0.40", stored.Definition, StringComparison.Ordinal);
+        Assert.Contains("0.50", stored.Definition, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A definition typed for a selection version is refused rather than stored beside the columns
+    /// it could contradict.
+    /// </summary>
+    [Fact]
+    public void A_typed_definition_is_refused_for_a_selection_version()
+    {
+        int code = Admitter().Run([
+            "V1",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.50",
+            VariantAdmitter.TargetFlag, "a two-point gain",
+            VariantAdmitter.DefinitionFlag, "loosens the dip a bit",
+        ]);
+
+        Assert.Equal(2, code);
+        Assert.Empty(Registered());
+    }
+
+    /// <summary>
+    /// A candidate the admission rule refuses exits 1 and an operator mistake exits 2, because a
+    /// typo read as a rejected experiment is a different fact from a rejected experiment.
+    /// </summary>
+    [Fact]
+    public void A_refused_candidate_and_a_malformed_command_exit_differently()
+    {
+        Assert.Equal(1, Admitter().Run([
+            "V1",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Short,
+            VariantAdmitter.ThresholdFlag, SelectionRule.CeilingReachRanges,
+            VariantAdmitter.ValueFlag, "0.75",
+            VariantAdmitter.TargetFlag, "a two-point gain",
+        ]));
+
+        Assert.Equal(2, Admitter().Run([
+            "V2",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, "sideways",
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.50",
+            VariantAdmitter.TargetFlag, "a two-point gain",
+        ]));
+
+        Assert.Equal(2, Admitter().Run([
+            "V3",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, "a-threshold-nobody-named",
+            VariantAdmitter.ValueFlag, "0.50",
+            VariantAdmitter.TargetFlag, "a two-point gain",
+        ]));
+
+        Assert.Empty(Registered());
+    }
+
+    /// <summary>
+    /// A version that moved a threshold to the value it already had is the baseline under another
+    /// name, and it is refused before the store is asked.
+    /// </summary>
+    [Fact]
+    public void A_version_that_moved_nothing_is_refused()
+    {
+        Assert.Equal(1, Admitter().Run([
+            "V1",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.40",
+            VariantAdmitter.TargetFlag, "a two-point gain",
+        ]));
+
+        Assert.Empty(Registered());
+    }
+
+    /// <summary>
+    /// The five columns are present exactly on a selection version, and the store is what says so:
+    /// a baseline carrying a move and a selection version carrying none are both refused.
+    /// </summary>
+    [Fact]
+    public void The_store_refuses_a_move_on_a_baseline_and_a_selection_version_with_none()
+    {
+        SqliteException onTheBaseline = Assert.Throws<SqliteException>(() => Admitter().Admit(
+            "V0", VariantFamily.Baseline, "the rule", "the reference",
+            moved: new MovedThreshold(SetupDirection.Long, "dip-shape", SelectionRule.MaximumRetrace, 0.40m, 0.50m)));
+
+        Assert.Contains("CHECK constraint failed", onTheBaseline.Message, StringComparison.Ordinal);
+
+        SqliteException withNone = Assert.Throws<SqliteException>(() => Admitter().Admit(
+            "V1", VariantFamily.Selection, "loosens the dip", "a two-point gain"));
+
+        Assert.Contains("CHECK constraint failed", withNone.Message, StringComparison.Ordinal);
+        Assert.Empty(Registered());
+    }
+
+    private IReadOnlyList<StoredVariant> Registered()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        return VariantReader.RegisteredBy(connection, Evening, SessionBoundaries.UsEquities);
     }
 }

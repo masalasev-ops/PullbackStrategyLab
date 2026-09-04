@@ -161,6 +161,11 @@ public sealed class PointInTimeCheck
             // null was not needed. Where a null does occur, a read of a session other than the
             // row's own refuses it.
             ["scan_hit"] = "observed_at",
+
+            // Added at 5.2. A score is a figure computed about the market from stored rows, so a
+            // reader of one has to be able to take the generation of scores that stood at its own
+            // date rather than the latest, on the same terms `scoreboard` is bounded.
+            ["variant_score"] = "computed_at",
         };
 
     /// <summary>
@@ -197,6 +202,11 @@ public sealed class PointInTimeCheck
                 "what one evening's fill stage priced and what it could not, on the same terms as "
                 + "order_run below. The positions it counts are in position, which carries three stamps "
                 + "and is bounded on all three.",
+            ["score_run"] =
+                "observed_at is when one evening's scoring stage ran and what it settled, which is "
+                + "operational on the same terms as plan_run above. Nothing computes a figure about the "
+                + "market from it: the differences it counts are in variant_score, which is stamped and "
+                + "bounded.",
             ["loss_run"] =
                 "what each of the classifier's two passes wrote, on the same terms as trade_run below. "
                 + "The classifications it counts are in loss_class, which is stamped twice and bounded "

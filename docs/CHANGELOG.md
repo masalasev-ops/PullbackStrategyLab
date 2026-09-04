@@ -2299,3 +2299,28 @@ Why:  5.1 built the fan-out, so the row states what the stage does rather than w
 Was:  `trade_plan` was keyed on `setup_id` with a paragraph saying there is no variant column because there is one baseline and no versions; the six tables below it carried no plan or version column; the research section declared `variant` at store level with no column table; `plan_run` counted `planned` alone.
 Now:  `trade_plan` is keyed on `plan_id`, one per setup per live version, with `setup_id` carried; the six tables below it carry `plan_id` and `variant_id`; `variant` gains its column table; `plan_run` gains `candidates_planned` beside `planned`.
 Why:  Columns are owed at the checkpoint that builds them, and 5.1 is that checkpoint.
+
+### 2026-09-03 — ARCHITECTURE.html — cites A version whose moved gate cannot be judged from the frozen signals is refused at admission
+Was:  The F1 selection entry read "Scored on the forward return of what it selected against what the baseline selected, on the same nights. Fully replayable, because the answer is already sitting in the stored rows".
+Now:  The same, one side at a time and never the two added, replayable for every gate whose threshold compares one frozen signal, with the short side's two exceptions named and what would lift them stated.
+Why:  "Fully replayable" was a sentence more general than the truth. `averages-squeezing` and `reached-ceiling` compare quantities that are arithmetic over several frozen signals, and rebuilding either in a replay would be a second implementation of the rule.
+
+### 2026-09-03 — SCHEMA.md — cites Long and short are never pooled into one figure
+Was:  `variant_score`'s grain read "variant + date", and the store had no run row declared.
+Now:  "variant + date + direction", with `score_run` declared beside it.
+Why:  A version is one side's, because a threshold belongs to one side's gate list. A row keyed without direction would have to hold one figure over both sides or refuse the second side's row, and the first is the pooling the rule forbids.
+
+### 2026-09-03 — SCHEMA.md — cites A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+Was:  `variant`'s column table ended at `created_at`, and the register held a version's difference only as prose in `definition`.
+Now:  `direction`, `gate`, `threshold_name`, `threshold_from` and `threshold_to`, present exactly on a selection version, with the column tables for `variant_score` and `score_run` beside them.
+Why:  A version nothing can act on is a version nothing can score. The whole of a selection version's difference fits in five columns, so the columns are the admission rule as much as they are the score's input, and `definition` is derived from them rather than typed.
+
+### 2026-09-03 — RUNBOOK.md — cites Long and short are never pooled into one figure
+Was:  The 21:40 row read "variant scoring", with no stage named.
+Now:  `score-variants`, with what it writes, what it waits for, what it counts apart and what it reports partial on.
+Why:  The slot was reserved in prose and dispatched by nothing, which is the damage found at 4.5 arriving a second time. A row naming no stage cannot be reconciled by `slot-roster`.
+
+### 2026-09-03 — BUILD_PLAN.md — cites A figure a seeded algorithm produces is not independently derived, and the tier says so
+Was:  The obligations table held twenty-five rows, three of them due at 5.2: the loss horizon's anchor, the outside-cap refusal, and the `interval.*` tier. Its 4.17 line read "None of the twenty-five rows above".
+Now:  Twenty-three rows and "None of the twenty-three". The three are discharged at 5.2, the execution minimum's conversion is repointed from 5.2 to the first trade, and one row is raised: the two short-side gates a replay cannot judge, due at 6.1.
+Why:  Each of the three was answered by this checkpoint's own work. The fourth could not be: its conversion is a measurement over trades and none exists, so it is filed under the condition it waits on rather than under a date that would move at every later checkpoint.

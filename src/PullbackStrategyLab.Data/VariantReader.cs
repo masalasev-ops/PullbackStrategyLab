@@ -29,7 +29,7 @@ public sealed class VariantReader
 
     private const string Columns =
         "variant_id, generation, family, definition, target, minimum_sample, minimum_sample_unit, "
-        + "status, resolved_at, created_at";
+        + "status, resolved_at, created_at, direction, gate, threshold_name, threshold_from, threshold_to";
 
     /// <summary>Every version the lab had registered by the end of <paramref name="asOf"/>.</summary>
     public IReadOnlyList<StoredVariant> RegisteredBy(DateOnly asOf, string sessionZone)
@@ -102,7 +102,19 @@ public sealed class VariantReader
                 reader.GetString(6),
                 reader.GetString(7),
                 reader.IsDBNull(8) ? null : StoreText.StorageTextToTimestamp(reader.GetString(8)),
-                StoreText.StorageTextToTimestamp(reader.GetString(9))));
+                StoreText.StorageTextToTimestamp(reader.GetString(9)))
+            {
+                // The five move together and the store says so, so reading one of them is enough to
+                // decide whether the version carries a moved threshold at all.
+                Moved = reader.IsDBNull(10)
+                    ? null
+                    : new MovedThreshold(
+                        reader.GetString(10),
+                        reader.GetString(11),
+                        reader.GetString(12),
+                        StoreText.StorageTextToThreshold(reader.GetString(13)),
+                        StoreText.StorageTextToThreshold(reader.GetString(14))),
+            });
         }
 
         return variants;
@@ -116,6 +128,23 @@ public sealed class VariantReader
 /// because a selection version's minimum is in effective observations and an execution version's is
 /// in rows, and the two are not comparable.
 /// </summary>
+/// <summary>
+/// The one threshold a selection version moves, which is the whole of what it is.
+///
+/// <b>Present exactly on a selection version.</b> The baseline moves nothing and no execution
+/// version is admitted in this generation, so on both this is null; the store carries the same
+/// condition as five CHECK clauses, because a row holding three of the five would read as a version
+/// and could not be scored as one.
+/// see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+/// </summary>
+public sealed record MovedThreshold(
+    string Direction, string Gate, string ThresholdName, decimal From, decimal To)
+{
+    /// <summary>How the move reads in a run line and on the ledger.</summary>
+    public string Describe() =>
+        $"{Direction} {Gate} {ThresholdName} from {From} to {To}";
+}
+
 public sealed record StoredVariant(
     string VariantId,
     int Generation,
@@ -128,6 +157,14 @@ public sealed record StoredVariant(
     DateTimeOffset? ResolvedAt,
     DateTimeOffset CreatedAt)
 {
+    /// <summary>
+    /// The one threshold this version moves, or null where it moves none.
+    ///
+    /// Null on the baseline and on any version of a family that moves no selection threshold, which
+    /// the store holds as five CHECK clauses rather than as a convention the admitter keeps.
+    /// </summary>
+    public MovedThreshold? Moved { get; init; }
+
     public bool IsBaseline => Family == VariantFamily.Baseline;
 
     /// <summary>How the register reads on a screen and in a run line, unit included.</summary>
