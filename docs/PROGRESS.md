@@ -15360,3 +15360,43 @@ Carried:    **Nothing raised and nothing repointed.** The obligations table read
             registry spends no vendor call. Run against the live store tonight it would read the
             first session as 2026-08-27, find no quarter matured, record nothing and report why,
             which is the same answer it will give every night until the first of January.
+
+## 5.4 — 2026-09-04 — phase-5-4-live-store-migrated — the live store migrated to 53
+
+Not a checkpoint entry. It records an act on the running lab, taken by this session at the operator's
+instruction of 2026-09-04, on the terms the migrations of 2026-09-02 and 2026-09-03 were. Nothing in
+the build changes.
+
+Done:       **`data/live` migrated from schema 53's predecessor to 53 at 09:35 Eastern on
+            2026-09-04**, through `tools/migrate` from `main` at `9e4a999` on a clean tree, with
+            `PullbackStrategyLab__DataRoot` set to the live root. The tool took its own snapshot
+            first, `pullbackstrategylab-20260904-133556.db`, and then applied 053.
+
+            **The order the runbook requires was the order this took.** The merge landed first, the
+            tree was returned to `main` and confirmed clean, and the migration ran before the next
+            slot: `spread-open` at 10:15, forty minutes later. The write-ahead log was empty at nought
+            bytes and no stage was running.
+
+Verified:   **`user_version` reads 53, `integrity_check` reads ok, and `foreign_key_check` reports no
+            violation.** The three tables 053 creates exist, `ux_holdout_window_ordinal` with them,
+            and no `%_before_053%` rebuild table is left behind, 053 creating tables rather than
+            rebuilding any.
+
+            **Every count a migration must not touch is unchanged**, read before and after:
+            `calibration_setup` 49,450, `setup` 292, `daily_bar` 2,345,956, `setup_signal` 9,296,
+            `variant` 1, `forward_return` 4,822, `run_log` 153. The three new tables hold nought
+            rows each, which is what a register created empty means.
+
+            **The build and the store now agree at 53**, so tonight's slots run rather than refusing
+            on the version gap.
+
+Carried:    Nothing raised and nothing moved.
+
+            **What this does not do is run the registry.** `holdout` is not a slot and is not in the
+            nightly map, being a stage run on a replay rather than on a schedule, so nothing will
+            record a window on its own. Nothing is lost by that: the first window is 2026-Q4 and it
+            matures on 2027-01-01, so there is nothing to record before then and the register's
+            first entry is four months away.
+
+            **The register's first session will read 2026-08-27** when it is first run, that being
+            the earliest session `setup` holds, which is what the whole schedule is computed from.
