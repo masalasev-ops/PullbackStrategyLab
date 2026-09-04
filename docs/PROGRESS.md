@@ -14946,3 +14946,70 @@ Carried:    **One raised, due at 6.1.** The two short-side gates a replay cannot
             no proposal, so `score-variants` reports the night partial with the no-versions reason and
             writes one run row. The slot may be scheduled whenever the operator moves the tasks;
             nothing here touches a schedule.
+
+## 5.2 — 2026-09-03 — phase-5-2-execution-population — the population the execution refusal actually has, and the slot nothing calls
+
+**Not a checkpoint entry.** It belongs to 5.2, which has landed. Two documents, no code, and no
+ruling changes. Found while reading the live store after 5.2 merged, because the checkpoint's own
+deliverable names the execution family's scoring unreachable and the reason it gives is a claim about
+the running lab.
+
+Measured:   **Against `data/live` on 2026-09-03, at schema 52.** `intraday_bar` holds **nought
+            rows**, `intraday_fetch` nought, and `intraday-bars` appears nowhere in `run_log`, so the
+            stage has never run once. `spread_snapshot` and `spread_pass` are empty on the same terms
+            and `spreads` has never run either. `anchored_vwap` is empty and so is `trade_plan` and
+            everything below it, and of the thirteen stages the trading half of the map calls, none
+            appears in `run_log` at all.
+
+            **The flagged population those minutes were owed for**: four nights, 2026-08-27,
+            2026-08-28, 2026-08-31 and 2026-09-03, being **292 setup rows over 127 distinct names**.
+            The population is the evidence store's `setup` table in full, which is all four nights the
+            lab has flagged on; 2026-09-01 and 2026-09-02 flagged nothing and are the two lost nights
+            already recorded.
+
+            **The cause is the scheduler and not the code.** `tools/nightly.ps1` declares
+            **thirty-two** slots; **seventeen** scheduled tasks exist; **fifteen** slots have never
+            been registered: `spread-open`, `spread-close`, `versions`, `plans`, `watchlist`,
+            `intraday`, `vwap`, `resolve`, `orders`, `fills`, `manage`, `trades`, `audit`, `losses`
+            and `scores`. Tonight's log stops dead after the 18:28 `cap` slot with no refusal line,
+            because a slot with no task writes nothing at all rather than refusing.
+
+Recorded:   **A dated correction on the execution decision, naming the measured population.** The
+            entry rested on minute bars accumulating forward from 4.2 so that the screenable
+            population grows at one night a night, and nothing has accumulated. **The refusal does not
+            move and is strengthened**: the screening route is closed harder than the entry claimed,
+            it being not that the history is short but that there is none. **What changes is the
+            reopening condition, from a continuation to a start**: it now names capture beginning,
+            after which the population starts at nought on that night and grows from there. A later
+            session reading the paragraph as it stood would have gone looking for a population that
+            does not exist (see: No execution variant is admitted in this generation, and the
+            condition that would reopen it is named).
+
+            **One obligation raised, due at 5.5, and it names the mechanism rather than the
+            incident.** A slot can be declared in the slot table, accepted by the parameter set,
+            advertised by the worker and documented in the runbook, reconciled in every direction by
+            `slot-roster`, and still be called by nothing. All four declarations agreed throughout.
+            Whether a scheduled task exists is a property of the machine, and every check in this
+            corpus takes its subject from the source, the documents, the golden fixture or a store it
+            builds itself. A fifth declaration would agree with the other four for the same reason.
+
+            **The instrument is named and not built**, and it is the cheap one: `run_log` already
+            records which stages ran for a session and the slot map already declares which were meant
+            to, so a report comparing the two for a night is a read of a store the lab writes rather
+            than anything new to capture. Due at 5.5 because that is the next checkpoint building a
+            surface a person reads in the morning, which is where `CLAUDE.md` puts a property about
+            the running system.
+
+Carried:    **The obligations table reads twenty-four.** One raised here; none falls due before 5.3.
+
+            **What the operator holds.** Fifteen scheduled tasks, produced and not registered, on the
+            standing instruction that registering one is an act on the running lab. `intraday` at
+            20:30 is the row that costs a night every night it waits; the two spread passes are the
+            other unrecoverable input and cost nothing yet, the cap having kept nought candidates on
+            every night the lab has run.
+
+            **What this entry does not claim.** Nothing here was caught by a check and nothing here
+            could have been. `tools/ci.*` was green at 31 steps and the phase report GREEN with zero
+            unexamined on the tree that produced every one of these nights, and both were right about
+            their own subject. This is the seventh failure shape arriving a second time, and the row
+            above is the first instrument the corpus has aimed at it.
