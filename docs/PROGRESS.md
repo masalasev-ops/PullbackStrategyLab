@@ -15916,3 +15916,95 @@ Next:       **Phase 6's plan**, which is phase 6's own first work and takes the 
             precedent 2.1, 3.0 and 5.0 set, filed under `Phase 6 / 6.0` and opening "Not a checkpoint
             entry" so that filing it does not mark 6.0 landed. **There is no 5.9.** The row raised above
             falls due in that pass.
+
+## 5.7 — 2026-09-04 — phase-5-silent-green — the sign-off's own "nothing else was raised" corrected, and the argument that made it wrong
+
+**Not a checkpoint entry.** It belongs to 5.7, which has landed. Two documents, no code, no test
+count and no ruling changes. A record is corrected by a new dated entry naming what it corrects, so
+the 5.7 entry above stands exactly as it was merged.
+
+Corrects:   **The 5.7 entry's `Classified` block reads "Nothing else was raised", and something else
+            should have been.** The same entry's `Reproduced` block describes `tools/ci.ps1` invoked
+            through a bash shell exiting 0 having run nothing, calls it "the same shape as the
+            `verify-phase` fault 3.14 repaired", and then declines to raise it. **The reason given was
+            that it is a property of the invocation rather than of the script.** That is the argument
+            which kept the slot-versus-task gap unrowed, and it was wrong then for the reason it is
+            wrong here: an invocation the corpus documents is the corpus's. `CLAUDE.md` names the
+            command, `RUNBOOK.md` names it twice more, and a session follows what they say.
+
+            **A second thing in that block was imprecise and is corrected with it.** It said the bash
+            invocation "exits 0 having run nothing" as though that were the whole mechanism. Measured
+            on 2026-09-04: bare, `pwsh -NoProfile -File tools/ci.ps1` exits **127** and prints
+            `pwsh: command not found`, which is loud and correct. **The 0 came from the pipe**, the
+            exit code belonging to the last stage, and the pipe was there because a session reading
+            output writes one. So that direction is loud and thinly so, rather than silent.
+
+Raised:     **A gate can return success without executing, and nothing downstream can tell that from a
+            pass.** One row, due at the phase 6 plan, and it is raised by mechanism rather than by the
+            instance that prompted it.
+
+            **The silent direction is the other one, and it is worse than the entry knew.** An
+            extensionless bash script called by name from PowerShell writes nothing, leaves
+            `$LASTEXITCODE` unset and leaves `$?` **true**. Measured against a probe script that would
+            have printed a line and exited 7 had it run: no line, no code, and success. `CLAUDE.md`
+            had described this as returning 0; it does not return 0, it returns nothing at all, and
+            the caller's success flag is left standing from whatever came before.
+
+            **3.14 repaired exactly this and repaired it for one script.** `verify-phase.ps1` exists
+            because `tools/verify-phase` is an extensionless bash script that PowerShell will not run,
+            and it now finds a bash, refuses the WSL launcher by name, proves the bash can read the
+            script, and says which one it used. **`tools/migrate` and `tools/snapshot-db` are the same
+            shape with no such wrapper**, their cells read "same" across both platforms, and "same" is
+            true of the file and false of the shell. RUNBOOK step 6 tells the operator to run
+            `tools/migrate` by name, and the stale-store recovery row tells them to run it again after
+            a version mismatch.
+
+            **The closing move, named and deliberately not built.** Each script reports the shell and
+            the host it ran under into its own output, so a green states what produced it. That is the
+            discipline the phase report already carries with its commit sha, and it is the half that
+            makes every existing green readable rather than the half that prevents the next one. **The
+            second half is a wrapper that fails loudly when no interpreter is present**, being for the
+            bash cells on Windows what `verify-phase.ps1` is for the phase gate. Both are in the row so
+            that whichever is built is chosen rather than inherited.
+
+            **What it has cost is nothing, and that is ordering luck rather than a guard.** The 5.7
+            session piped `ci.ps1` through `tail`, read a green, and happened to read the output beside
+            it. Had it piped and not looked, the sign-off would have quoted a run that never happened,
+            which is what the 3.12 sign-off did with a stale report and is why the report now carries
+            its sha. **No lost night is attributed to this mechanism and none is claimed.** The store
+            unmigrated on 2026-08-28 is recorded as never having been migrated in time, with no cause
+            of that kind on the record, and a mechanism capable of producing a fault is not evidence
+            that it produced one. **The same luck is what the git-index scan turned on, twice**, which
+            is the third time this corpus has been saved by the order a session happened to do things
+            in.
+
+Documented: **The Commands table gains a Shell column**, saying which shell runs each cell: either for
+            the three `dotnet` rows, PowerShell on Windows and bash on macOS for the two verification
+            rows, and **bash on both** for `tools/migrate` and `tools/snapshot-db`. A paragraph before
+            the `verify-phase` one states the mechanism and both directions of it, and says the rule it
+            rests on, that a green states what produced it. Prior text of both edits in
+            `CHANGELOG.md`.
+
+            **Nothing is built.** No wrapper, no reporting line, no check. The row names the closing
+            move and the phase 6 plan places it.
+
+Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**,
+            unchanged, nothing under test having moved. `tools/verify-phase.ps1` **GREEN** on phase 5,
+            141 claims, 127 passed, 0 failed, 14 out of scope, 0 unexamined. **Both were run in
+            PowerShell, which this pass is the reason for saying.**
+
+            **The measurements this entry rests on, and how each was taken.** The PowerShell direction:
+            a probe script `#!/usr/bin/env bash` printing a line and exiting 7, written to the
+            scratchpad, marked executable, called by absolute path from PowerShell; no output,
+            `$LASTEXITCODE` empty, `$?` true. The bash direction: `pwsh -NoProfile -File tools/ci.ps1`
+            bare gives 127 with the message, and the same through `| tail -3` gives 0. Neither was run
+            against the live store and neither `tools/migrate` nor `tools/snapshot-db` was invoked at
+            all, because both write.
+
+Carried:    **One raised, at the phase 6 plan, and nothing repointed and nothing discharged.** The
+            obligations table reads twenty-five, and the two rows now due at the phase 6 plan are this
+            one and the derivation route raised at the sign-off. **The nine at the operator are
+            unchanged.**
+
+            **Nothing to run against the live store.** Two documents, no migration, no stage and no
+            vendor call.

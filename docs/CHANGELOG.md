@@ -2411,3 +2411,24 @@ Why:  The 5.7 sign-off added its own permit, on the footing 2.12, 3.7, 3.15 and 
       permit resting on nothing. `stated-counts` derives this figure from the fixture and failed
       naming the sentence, which is the same registry catching the same class of drift 3.15's permit
       predicted it would.
+
+### 2026-09-04 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Commands table had three columns, Purpose, Windows and macOS, and no paragraph between it
+      and "The two cells differ for `verify-phase` alone".
+Now:  A fourth column, Shell, saying which shell runs each cell: either for the three `dotnet` rows,
+      PowerShell on Windows and bash on macOS for the two verification rows, and bash on both for
+      `tools/migrate` and `tools/snapshot-db`. A paragraph before the `verify-phase` one states the
+      mechanism: an extensionless bash script called from PowerShell writes nothing, leaves
+      `$LASTEXITCODE` unset and leaves `$?` true, so a gate that never ran reads as one that passed.
+Why:  A cell naming a script does not say what can run it, and the wrong shell fails quietly in one
+      direction. 3.14 repaired this for `verify-phase` and for `verify-phase` alone, while two cells
+      reading "same" are bash scripts with no PowerShell sibling and RUNBOOK instructs the operator to
+      run one of them by name. The decision cited is the one that says a green must state what
+      produced it, which is what the report's sha does and what these scripts do not yet do.
+
+### 2026-09-04 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "None of the twenty-four rows above fall due at 4.17"
+Now:  "None of the twenty-five rows above fall due at 4.17"
+Why:  One row raised, being the silent green a gate returns when the shell cannot run it. The sentence
+      is the one place the obligations table's total is stated and `stated-counts` derives it from the
+      table's own rows.

@@ -69,15 +69,17 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
 
 ## Commands
 
-| Purpose | Windows | macOS |
-|---|---|---|
-| Build | `dotnet build PullbackStrategyLab.sln` | same |
-| Run the suite | `dotnet test src/PullbackStrategyLab.Tests` | same |
-| Run one test | `dotnet test --filter FullyQualifiedName~<name>` | same |
-| **Verify a checkpoint** | `tools/ci.ps1` | `tools/ci.sh` |
-| **Verify a phase** | `tools/verify-phase.ps1` | `tools/verify-phase` |
-| Apply migrations | `tools/migrate` | same |
-| Snapshot the store | `tools/snapshot-db` | same |
+| Purpose | Windows | macOS | Shell |
+|---|---|---|---|
+| Build | `dotnet build PullbackStrategyLab.sln` | same | either |
+| Run the suite | `dotnet test src/PullbackStrategyLab.Tests` | same | either |
+| Run one test | `dotnet test --filter FullyQualifiedName~<name>` | same | either |
+| **Verify a checkpoint** | `tools/ci.ps1` | `tools/ci.sh` | PowerShell on Windows, bash on macOS |
+| **Verify a phase** | `tools/verify-phase.ps1` | `tools/verify-phase` | PowerShell on Windows, bash on macOS |
+| Apply migrations | `tools/migrate` | same | **bash on both** |
+| Snapshot the store | `tools/snapshot-db` | same | **bash on both** |
+
+**The Shell column is there because a cell naming a script does not say what can run it, and the wrong shell fails quietly in one direction.** Calling an extensionless bash script by name from PowerShell produces no output, leaves `$LASTEXITCODE` unset and leaves `$?` true, so a gate that never executed is indistinguishable from one that passed. That is the mechanism 3.14 repaired for `verify-phase` and it was repaired for `verify-phase` alone: `tools/migrate` and `tools/snapshot-db` are bash scripts with no extension whose cells read "same", and "same" is true of the file and false of the shell. The other direction is loud but only just: `pwsh` absent, `tools/ci.ps1` exits 127 and says so, and the same command through a pipe exits 0 because the exit code belongs to the last stage. **So the rule is that a green states what produced it**, and until the scripts say so themselves the column is where a session looks. (see: Every phase ends in a generated phase report, not in a page somebody looks at)
 
 **The two cells differ for `verify-phase` alone, and that is the point.** `tools/verify-phase` is a bash script with no extension, so PowerShell will not execute it: called by name from a PowerShell session it returns 0 having done nothing, and the previous run's `artifacts/phase-report.*` stay on disk reading as current. The script clears those files at its own top, which is the right guard in the wrong place, because it is inside the thing that did not run. `tools/verify-phase.ps1` finds a bash and hands the work to the one script rather than reimplementing it, and exits 3 with a named message when the machine has none. **It took whatever `Get-Command bash` returned until 3.14, and on a stock Windows 11 that is the Windows Subsystem for Linux launcher in System32, ahead of Git for Windows on the path.** With no distribution installed the operator's documented command printed a WSL message and exited 1, which is the code a red report exits with, so the gate read as failing and nothing ran; with one installed it would have run the gate inside Linux against a different filesystem, which is a different answer rather than an error. It now rejects the launcher by name, asks the bash it chose to prove it can read the script before handing the gate over, and says which one it used. The other half is that the report now carries the commit that produced it and refuses to be written without one, so a stale artifact is identifiable as well as harder to produce. Found at the 3.12 sign-off, by a session that did exactly this and quoted an earlier run's figures.
 
