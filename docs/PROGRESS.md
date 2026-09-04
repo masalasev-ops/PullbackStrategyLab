@@ -15105,3 +15105,153 @@ Carried:    **Nothing raised and nothing discharged.** The obligations table sti
             **Still the operator's**, and unchanged by this: the tasks run under an interactive logon
             and a logged-out evening is a permanent hole in the evidence, which is due at the
             operator; and the production checkout, its secrets copy and the 17:00 update task.
+
+## 5.3 — 2026-09-04 — phase-5-3-replay-harness — the screen, and the history it turns out not to have
+
+**A checkpoint entry.** ReplayHarness, re-filtering the stored setups with a candidate selection
+rule and reproducing the baseline's own selections exactly. Population: **the golden fixture's three
+stored setups, the two captured and the authored one reported apart, and an authored population of
+four rows over two nights in `ReplayHarnessTests` where the baseline selects two and refuses two**.
+The captured day passed no row on either side, so a set comparison over it is empty against empty and
+the acceptance claim does not rest on it.
+
+Built:      **The harness re-judges every gate a replay can rebuild and reads the rest back.** A
+            version differs by one threshold, but the acceptance test is only worth running if the
+            rebuild reaches every gate a threshold could move, so the walk rebuilds nine of the long
+            side's ten gates and seven of the short side's ten and takes the night's own verdict for
+            the others. Every verdict comes out of `LongPullbackRules.Evaluate` and its short twin,
+            which is the one implementation the detector runs (see: A selection rule is the gate list
+            plus a named threshold per gate, and one implementation reads it for the detector and the
+            harness alike).
+
+            **The acceptance run is not a mode.** `Reproduce` is the same walk `Screen` makes with
+            the candidate equal to the baseline, so a green acceptance run is evidence about the code
+            a screen runs rather than about a rehearsal of it. Admission refuses a candidate that
+            moves nothing, which is why the acceptance run has its own entry point and nothing else
+            of its own.
+
+            **A row the rebuild cannot stand behind is neither selected nor rejected.** Where a
+            judgeable gate's verdict under the baseline disagrees with what the night recorded, or a
+            signal the gate reads is absent, the row is unjudgeable. Folding either into a rejection
+            would let a screen count its own blind spots as evidence for the rule that narrows.
+
+            **A gate the night recorded with no value is read back rather than rebuilt, and that is a
+            rule rather than a special case.** Such a gate made no comparison: the quantity was
+            absent and the verdict is a refusal. A threshold cannot move a quantity that was never
+            measured, so the night's verdict stands under every version of the rule, and rebuilding
+            it from whatever the row happens to have frozen would replay a comparison the night never
+            made and disagree by construction (see: A gate handed an absent or degenerate quantity
+            fails rather than passing).
+
+            **The walk is one read of the setups and one of the signals per session**, so the cost is
+            a function of how many nights the store holds rather than of how many rows they hold
+            between them, which is what "in seconds" actually rests on. `SetupReader.Sessions` is the
+            read that makes it so.
+
+            **It writes nothing but its run entry**, asserted by counting every table's rows either
+            side of a screen. A replay kills a proposal and never admits one, so a `replay_result`
+            row would be a third statement about a version with nothing reconciling the three
+            (see: Replay screens proposals and the forward paired test admits them). `replay_result`
+            stays declared in SCHEMA and unbuilt: its grain is proposal plus window, and neither a
+            proposal store nor a holdout window exists yet.
+
+Found:      **The reconstructed history cannot be screened at all, on either side, and this is
+            larger than the obligation that was due here.** The row raised at 3.3 said a short rule
+            replayed over calibration rows would be screened against a funnel missing the
+            market-capitalisation clause of `tradable-shortable`, and scoped a shares-outstanding
+            purchase to close it. **The purchase would not have closed it.** A replay reads the
+            quantity a gate compared, which is a frozen signal; `setup_signal` carries a foreign key
+            into `setup` and the calibration run computes its averages in memory and discards them,
+            so not one of the **602 reconstructed sessions** holds a signal to replay against. The
+            long side is as unscreenable as the short. Asserted rather than described: a test stands
+            a calibration row up and watches the store refuse a signal against it, and asserts that
+            no `calibration_setup_signal` table exists to read instead.
+
+            **So the screenable set is the evidence store and it grows at one night a night**,
+            exactly as the execution family's does. ARCHITECTURE's tier table said "Full replay.
+            Seconds." for the selection family, which named no population; it now names one, on the
+            same terms the execution row was corrected on two days earlier and for the same reason.
+
+            **The golden fixture's authored row records verdicts from one geometry and freezes
+            signals from another.** `IESC-long`'s check results come from the shipped rules over the
+            detector's own evidence; its `trigger_price`, `stop_price` and `stop_distance_ranges`
+            were authored as 355.00, 348.50 and 0.2700, and the vectorizer freezes the signals off
+            the stored prices. So its `trigger-near` and `exit-tight` verdicts are failures measured
+            against the detector's trigger while the distances frozen beside them clear both
+            thresholds. **The acceptance test is the first thing that ever read the two halves of
+            that row together**, and it reports two disagreements, which is correct behaviour.
+            **Not repaired here, because both repairs are worse than the report.** Writing the
+            geometry back makes the row coherent and its data absurd, `IESC` being the fixture's
+            split-crossing case whose real trigger is 800.999 against a close of 324.12; moving the
+            verdicts instead changes two hand-derived values recorded at 2.6, made by the checkpoint
+            that built the instrument that found them. Raised as an obligation with both options
+            priced.
+
+Answered:   **The market-cap clause obligation raised at 3.3 and due here.** Its replay half is
+            discharged by the finding above, which closes the harm the due point was written for and
+            closes it harder: no screen can be run over a reconstructed session whatever its clause
+            list was. **What is left is not about replay** and is repointed to the operator, where
+            the row began: the short side's own calibration distributions were measured through a
+            gate with one clause missing, and closing that is a fundamentals call a name against the
+            same ceiling the delisted purchase spends. The operator's table reads nine.
+
+Held:       **Two checks had to be corrected before this checkpoint could land, and both were the
+            same shape.** `writer-ownership` defers a declared writer to the checkpoint that builds
+            the component, which is right whenever the component is the missing half. ReplayHarness
+            is the case where it is not: the harness lands here and `replay_result` is keyed on a
+            proposal that does not exist until 6.6, so the deferral came due the day the component
+            landed and nothing could ever have ended it. SCHEMA now says **Store built at 6.6** on
+            that row and the check reads it, which keeps the fact where a reader of SCHEMA finds it
+            rather than inside the checker.
+
+            **And `architecture-conformance` had the tier table deferred to this checkpoint**, which
+            was right while the screen did not exist and is not right now. It is read for claims from
+            here: three of its four rows are asserted against code that runs, being the gates a
+            replay rebuilds on each side, admission refusing a candidate that moves an execution
+            threshold, and admission refusing a different gate list; the fourth is the new-signal row
+            and is out of scope at 6.1. `fixtures/checks-baseline.json` gains a floor for the new
+            scope.
+
+Verified:   Fourteen tests added, twelve over the harness and two over the judgeable gate lists.
+            `tools/ci.ps1` green on Windows, **31 steps, 1,022 tests**, from 1,008.
+            `tools/verify-phase.ps1` **GREEN** on phase 5: **141 claims, 124 passed, 0 failed, 17 out
+            of scope, 0 unexamined**, coverage examined 9,332 with nothing unexamined.
+
+            **Forty-seven expectations, twenty-nine of them independently produced.** Twenty-five are
+            `replay.verdict.<row>.<gate>`, being what the harness rebuilt for one judgeable gate of
+            one stored row out of the frozen signals alone; the expected value of each is the same
+            gate's verdict on the same row derived by hand at 2.6 and 2.7 and already in the fixture
+            as `setup.<row>.<gate>`, so the two are one verdict reached by two routes sharing no line
+            of code. Four more are the per-side gate counts, **9 rebuilt and 1 read back on the long
+            side, 7 and 3 on the short**, derived by hand from the gate lists and the threshold
+            table's frozen-signal column and never added: the long side loses one gate for one reason
+            and the short side loses three for two.
+
+            **Every one of the four counts was predicted before the run and all four were right.
+            Five of the run figures were predicted wrong, and each wrong prediction was a finding.**
+            `replay.long.disagreements` was predicted 0 and is 2, both the authored row's;
+            `replay.short.unjudgeable` was predicted 0 and reached 1 before the read-back rule
+            existed, which is what produced the rule. The first run of `ReplayHarnessTests` was red
+            on five cases for a sixth reason: the seed recorded `cluster` as passed while freezing a
+            cluster count of nought, so the harness disagreed and every row went unjudgeable. The
+            seed now takes that value from the rule.
+
+Carried:    **One raised, due at 6.1.** The authored fixture row's two halves, joining the row
+            already due there for the two short gates a replay cannot judge. Both are the same
+            question one level apart: the frozen signal row and the recorded verdict have to describe
+            one row, and 6.1 is the checkpoint that writes signals onto setups already stored.
+
+            **The obligations table reads twenty-five**, one raised and one repointed to the
+            operator. **Three rows fall due at 5.5 and nothing stands between here and them.**
+            Written that way round on purpose. `carried-obligations` reads a Carried block saying
+            "none falls due before N" as that block naming N, and it is right to: the same wording
+            without the "none" is a positive form the check had to be taught to find, and missing it
+            once lost a real obligation, which 3.11's entry records. So the negative sentence says
+            the opposite of what the check reads, and the two entries carrying it before this one
+            passed only because a row happened to exist at the number they named.
+
+            **Nothing to run against the live store.** The harness spends no vendor call and writes
+            nothing, the register holds V0 and no proposal, and the evidence store holds four flagged
+            nights whose horizons have not closed. A screen run tonight would read four sessions and
+            report that the baseline selected nobody, which is the funnel's own state rather than
+            anything about the harness.

@@ -899,6 +899,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ReadSurfaceFigures());
         measurements.AddRange(GalleryFigures());
 
+        measurements.AddRange(ReplayFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -2387,6 +2388,131 @@ public sealed class PhaseReplay : IDisposable
     /// structural change this generation names out of scope.
     /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
     /// </summary>
+    /// <summary>
+    /// The harness run over the fixture's own stored setups, which is 5.3's whole deliverable.
+    ///
+    /// <b>The acceptance run is the same walk a screen makes.</b> Nothing here is a rehearsal: the
+    /// figures below come out of <c>ReplayHarness.Reproduce</c>, which is <c>Walk</c> with the
+    /// candidate equal to the baseline, and every screen afterwards goes down the same path with
+    /// the same per-row guard live.
+    ///
+    /// <b>The verdicts are the figures that carry the property, and they are checkable against a
+    /// hand derivation.</b> Each <c>replay.verdict.*</c> is what the harness rebuilt for one
+    /// judgeable gate of one stored row out of the frozen signals alone. The fixture already holds
+    /// a <c>setup.*</c> expectation for that same gate on that same row, derived by hand at 2.6 and
+    /// 2.7, so the two are the same verdict reached by two routes that share no line of code.
+    ///
+    /// <b>The set comparison here is empty against empty and is not what the acceptance claim rests
+    /// on.</b> The captured day flagged one row a side and passed neither. A population where the
+    /// baseline selects some rows and rejects others is authored in <c>ReplayHarnessTests</c>, and
+    /// that is where exact reproduction of a non-empty selection is asserted
+    /// (see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it).
+    ///
+    /// <b>The two sides are counted apart and the populations are named apart by the row id</b>
+    /// (see: Long and short are never pooled into one figure).
+    /// </summary>
+    private IReadOnlyList<Measurement> ReplayFigures()
+    {
+        var figures = new List<Measurement>();
+        var harness = new ReplayHarness(_connections, Logger(), _clock, _options);
+
+        foreach (string direction in new[] { SetupDirection.Long, SetupDirection.Short })
+        {
+            ReplayScreening run = harness.Reproduce(direction, AsOf);
+
+            figures.Add(new Measurement($"replay.{direction}.gatesRebuilt",
+                run.GatesJudged.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.gatesReadBack",
+                run.GatesReadBack.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.sessions",
+                run.SessionsRead.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.rows",
+                run.RowsExamined.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.baselineSelected",
+                run.BaselineSelected.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.replaySelected",
+                run.CandidateSelected.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.unjudgeable",
+                run.Unjudgeable.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.unmeasuredGateVerdicts",
+                run.UnmeasuredGateVerdicts.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.frozenYetUnmeasured",
+                run.FrozenYetUnmeasured.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"replay.{direction}.disagreements",
+                run.Disagreements.Count.ToString(CultureInfo.InvariantCulture)));
+
+            // The done condition's own claim, which is about the selected set. Stated apart from the
+            // disagreement count above rather than folded into it, because the two answer different
+            // questions and this one is empty against empty over the captured day.
+            figures.Add(new Measurement($"replay.{direction}.selectionsReproduced",
+                run.SelectionsReproduced ? "yes" : "no"));
+        }
+
+        // One verdict per judgeable gate per stored row, which is what the acceptance claim is made
+        // of. The row id carries its own population: the two dated ones are the captured day's and
+        // `IESC-long` is the authored row.
+        using SqliteConnection read = _connections.OpenReadOnly();
+
+        foreach (StoredSetup setup in SetupReader.Read(read, AsOf)
+                     .OrderBy(s => s.SetupId, StringComparer.Ordinal))
+        {
+            SelectionRule baseline = SelectionRule.For(setup.Direction);
+            IReadOnlyDictionary<string, decimal> signals = FrozenSignalRow(read, setup);
+            IReadOnlyList<CheckResult> recorded = RecordedChecks(setup);
+
+            foreach (string gate in SelectionReplay.JudgeableGates(baseline))
+            {
+                CheckResult? night = recorded.FirstOrDefault(
+                    r => string.Equals(r.Name, gate, StringComparison.Ordinal));
+
+                // A gate the night recorded with no value made no comparison, so the harness reads
+                // its verdict back rather than rebuilding it, and the figure says so. Reporting a
+                // rebuilt pass or fail here would state a comparison the night never made.
+                if (night is null || night.Value is null)
+                {
+                    figures.Add(new Measurement(
+                        $"replay.verdict.{setup.SetupId}.{gate}", "not measured by the night"));
+                    continue;
+                }
+
+                CheckResult? rebuilt = SelectionReplay.Judge(baseline, gate, signals);
+
+                figures.Add(new Measurement(
+                    $"replay.verdict.{setup.SetupId}.{gate}",
+                    rebuilt is null ? "not judged" : rebuilt.Passed ? "pass" : "fail"));
+            }
+        }
+
+        return figures;
+    }
+
+    /// <summary>The verdicts one stored row recorded, read back the way the harness reads them.</summary>
+    private static IReadOnlyList<CheckResult> RecordedChecks(StoredSetup setup) =>
+        JsonSerializer.Deserialize<List<CheckResult>>(
+            setup.CheckResults, new JsonSerializerOptions(JsonSerializerDefaults.Web)) ?? [];
+
+    /// <summary>The direct signals one stored setup froze, read the way the harness reads them.</summary>
+    private IReadOnlyDictionary<string, decimal> FrozenSignalRow(SqliteConnection read, StoredSetup setup)
+    {
+        var row = new Dictionary<string, decimal>(StringComparer.Ordinal);
+
+        foreach (StoredSetupSignal signal in
+                 SetupSignalReader.Read(read, setup.AsOf, _options.Value.SessionZone))
+        {
+            if (signal.SetupId != setup.SetupId
+                || !SelectionReplay.DirectSignals.Contains(signal.SignalName)
+                || !decimal.TryParse(
+                    signal.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal value))
+            {
+                continue;
+            }
+
+            row[signal.SignalName] = value;
+        }
+
+        return row;
+    }
+
     private static IReadOnlyList<Measurement> RuleFigures() =>
     [
         new Measurement("rule.longThresholds",

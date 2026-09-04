@@ -1159,7 +1159,7 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `twin_pair` | pair id | Insert TwinPairFinder |
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
-| `replay_result` | proposal + window | Insert ReplayHarness |
+| `replay_result` | proposal + window | Insert ReplayHarness. **Store built at 6.6**, which is where a proposal first exists to key a result on. ReplayHarness itself is built at 5.3 and writes nothing: a screen kills a proposal and never admits one, so until there is a proposal store there is nothing for a result row to belong to, and a screen run before then would be a third statement about a version with nothing reconciling the three (see: Replay screens proposals and the forward paired test admits them) |
 | `holdout_window` | window id | Insert HoldoutRegistry · Update HoldoutRegistry (spend, once) |
 
 ### The register of rule versions

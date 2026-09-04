@@ -74,7 +74,10 @@ public sealed partial class WriterOwnershipCheck
         // The components whose write cannot be asserted yet, kept by name rather than counted.
         // A count cannot be grouped by the checkpoint that ends it, and grouping is the whole of
         // what the naming rule buys: the number falls as checkpoints land instead of resting.
-        var deferredWriters = new List<string>();
+        // Each carries the checkpoint that would end it where SCHEMA names one, which is how a
+        // component that lands before the store it writes is deferred to the store's checkpoint
+        // rather than to its own.
+        var deferredWriters = new List<(string Component, string? BuiltAt)>();
 
         foreach (StoreDeclaration store in declared)
         {
@@ -90,7 +93,11 @@ public sealed partial class WriterOwnershipCheck
 
                 if (!live.Contains(store.Store))
                 {
-                    deferredWriters.Add(writer.Component);
+                    // The store is the missing half. Where SCHEMA says which checkpoint creates it,
+                    // that is the due point: ReplayHarness is built at 5.3 and `replay_result` is
+                    // keyed on a proposal that does not exist until 6.6, so deferring to the
+                    // component's own checkpoint would come due the day the component landed.
+                    deferredWriters.Add((writer.Component, store.BuiltAt));
                     continue;
                 }
 
@@ -100,7 +107,7 @@ public sealed partial class WriterOwnershipCheck
                     // one checkpoint creates a store and a later one builds a component that
                     // updates it. Separated from the case below rather than folded into it,
                     // because that one is a defect and this one is a schedule.
-                    deferredWriters.Add(writer.Component);
+                    deferredWriters.Add((writer.Component, null));
                     continue;
                 }
 
@@ -170,11 +177,13 @@ public sealed partial class WriterOwnershipCheck
         // three of its four declared writers still unbuilt.
         var schedule = ArchitectureConformanceCheck.Schedule.Read();
 
-        foreach (IGrouping<string, string> group in deferredWriters
-                     .GroupBy(component => schedule.CheckpointFor(component) ?? "unplaced", StringComparer.Ordinal)
+        foreach (IGrouping<string, (string Component, string? BuiltAt)> group in deferredWriters
+                     .GroupBy(
+                         w => w.BuiltAt ?? schedule.CheckpointFor(w.Component) ?? "unplaced",
+                         StringComparer.Ordinal)
                      .OrderBy(g => g.Key, StringComparer.Ordinal))
         {
-            string[] names = [.. group.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            string[] names = [.. group.Select(w => w.Component).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
             if (string.Equals(group.Key, "unplaced", StringComparison.Ordinal))
             {

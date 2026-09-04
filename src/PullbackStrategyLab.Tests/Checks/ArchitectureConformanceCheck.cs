@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
@@ -676,6 +677,7 @@ public sealed partial class ArchitectureConformanceCheck
         claims.AddRange(MoveProcedureClaims(architecture));
         claims.AddRange(ManagementClaims(architecture));
         claims.AddRange(LossCauseClaims(architecture));
+        claims.AddRange(ReplayTierClaims(architecture));
 
         // 7. And every table in the document placed, which is what stops the five above from
         //    being the document as far as this check is concerned. A table nobody reads produces
@@ -910,7 +912,7 @@ public sealed partial class ArchitectureConformanceCheck
     public static IReadOnlyList<string> ClaimTables { get; } =
         ["Component catalogue", "Build order", "The limits", "Failure behaviour", "The phase report",
          "Running on Windows and macOS", "The procedure", "What differs in management",
-         "Why each loss happened"];
+         "Why each loss happened", "What each tier of change can be replayed against"];
 
     /// <summary>
     /// Every other table in the document, and why it yields no claim.
@@ -930,7 +932,6 @@ public sealed partial class ArchitectureConformanceCheck
         ["Vocabulary"] = "definitions of terms, not a statement about the code",
         ["Which kinds of measurement are missing"] =
             "what the design deliberately does not measure, which no code can be checked against",
-        ["What each tier of change can be replayed against"] = "5.3",
         ["What the pack contains"] = "6.4",
         ["Model budget"] = "6.5",
         ["What each vendor endpoint carries"] =
@@ -1108,6 +1109,83 @@ public sealed partial class ArchitectureConformanceCheck
     /// see it because the component that would have made the cell assertable did not exist.
     /// see: A gap loss is detected from the exit fill's basis, not from the size of the loss
     /// </summary>
+    /// <summary>
+    /// "What each tier of change can be replayed against", one claim a row.
+    ///
+    /// <b>Read for claims from 5.3, and it was a deferred table until then.</b> The screen the table
+    /// describes did not exist, so every row of it was a statement about work nobody had done. Now
+    /// three of the four rows are about code that runs and are asserted against it; the fourth is
+    /// about a component 6.1 builds and says so.
+    ///
+    /// <b>Each verdict asserts the row's own mechanism rather than its wording.</b> The selection
+    /// row's claim is that a rule can be replayed over the frozen signals, which is the gate lists
+    /// the harness can rebuild; the execution row's is that no such screen exists for it, which is
+    /// admission refusing a candidate that moves an execution threshold; the structural row's is
+    /// that the rows do not exist, which is admission refusing a different gate list.
+    /// </summary>
+    private static IReadOnlyList<Claim> ReplayTierClaims(string architecture)
+    {
+        const string Table = "What each tier of change can be replayed against";
+        var claims = new List<Claim>();
+
+        SelectionRule longRule = SelectionRule.Long;
+        SelectionRule shortRule = SelectionRule.Short;
+
+        foreach (IReadOnlyList<string> row in HtmlTable.BodyRowsUnder(architecture, Table))
+        {
+            string tier = HtmlTable.Text(row[0]);
+
+            claims.Add(tier switch
+            {
+                "Selection" =>
+                    SelectionReplay.JudgeableGates(longRule).Count == 9
+                    && SelectionReplay.JudgeableGates(shortRule).Count == 7
+                    && SelectionReplay.Movable(longRule).Count > 0
+                    && SelectionReplay.Movable(shortRule).Count > 0
+                        ? Claim.Passed(Table, tier,
+                            "a threshold change is replayed over the signals the night froze: nine of the long "
+                            + "side's ten gates and seven of the short side's ten are rebuilt from them and the "
+                            + "rest are read back, and both sides have thresholds a version may move. The two "
+                            + "counts are stated apart and never added")
+                        : Claim.Failed(Table, tier,
+                            "the gates a replay can rebuild are no longer nine of the long side's ten and seven "
+                            + "of the short side's ten, or one of the sides has no movable threshold left, so the "
+                            + "row's claim that a selection change is replayable no longer holds"),
+
+                "Execution" =>
+                    !RuleAdmission.Assert(
+                        longRule.With(SelectionRule.GiveUpRanges, 1.0m), longRule).IsAdmitted
+                    && !RuleAdmission.Assert(
+                        shortRule.With(SelectionRule.GiveUpRanges, 1.0m), shortRule).IsAdmitted
+                        ? Claim.Passed(Table, tier,
+                            "there is no execution screen to run and admission is where that is enforced: a "
+                            + "candidate moving the give-up distance is refused on both sides, so no execution "
+                            + "version is registered and none reaches a replay")
+                        : Claim.Failed(Table, tier,
+                            "a candidate moving an execution threshold is now admitted, so the row's claim that "
+                            + "the execution tier is forward-only is not what the code does"),
+
+                "New signal" => Claim.OutOfScope(Table, tier, "6.1"),
+
+                "Structural" =>
+                    !RuleAdmission.Assert(
+                        longRule with { Gates = [.. longRule.Gates.Take(longRule.Gates.Count - 1)] },
+                        longRule).IsAdmitted
+                        ? Claim.Passed(Table, tier,
+                            "a structural change has no rows to be replayed over and cannot be registered either: "
+                            + "a candidate whose gate list is not the baseline's is refused at admission")
+                        : Claim.Failed(Table, tier,
+                            "a candidate carrying a different gate list is now admitted, so the row's claim that "
+                            + "a structural change is forward-only is not what the code does"),
+
+                _ => Claim.NotExamined(Table, tier,
+                    $"the tier table has a row this check does not know: \"{tier}\""),
+            });
+        }
+
+        return claims;
+    }
+
     private static IReadOnlyList<Claim> LossCauseClaims(string architecture)
     {
         const string Table = "Why each loss happened";

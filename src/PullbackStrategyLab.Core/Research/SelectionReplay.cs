@@ -105,6 +105,132 @@ public static class SelectionReplay
         ];
     }
 
+    /// <summary>
+    /// The gates of a rule the record can judge, in the rule's own gate order.
+    ///
+    /// <b>Stated per side and never added.</b> The long side loses one gate of ten, `uptrend`,
+    /// which compares a ladder grade and carries no threshold. The short side loses three of ten:
+    /// `downtrend` for the same reason, and `averages-squeezing` and `reached-ceiling` because
+    /// their quantities are arithmetic over several frozen signals. The two counts are arrived at
+    /// differently and a sum of them would describe no rule
+    /// (see: Long and short are never pooled into one figure).
+    /// </summary>
+    public static IReadOnlyList<string> JudgeableGates(SelectionRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+
+        return [.. rule.Gates.Where(g => IsReplayable(rule, g))];
+    }
+
+    /// <summary>
+    /// One stored row replayed under <paramref name="rule"/>, with the baseline's own rebuild run
+    /// beside it as the check that the harness and the detector agree.
+    ///
+    /// <b>Every judgeable gate is rebuilt and every other gate is read back.</b> The rebuilt ones
+    /// are what a moved threshold can change; the rest have no threshold this generation can move,
+    /// so the night's own verdict is the verdict and re-deriving it would be a second implementation
+    /// of the rule. That is the split, and it is the whole of it.
+    ///
+    /// <b>The baseline rebuild is not a second code path.</b> It is this same method with
+    /// <paramref name="rule"/> equal to <paramref name="baseline"/>, which is what makes the
+    /// acceptance test at 5.3 a test of the thing that runs rather than of a copy of it: if the
+    /// harness reproduces the baseline's recorded selections, the per-row guard below is what did
+    /// it, and the guard is live on every screen afterwards.
+    /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
+    /// </summary>
+    public static ReplayRow Replay(
+        SelectionRule rule,
+        SelectionRule baseline,
+        IReadOnlyList<CheckResult> recorded,
+        IReadOnlyDictionary<string, decimal> signals)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        ArgumentNullException.ThrowIfNull(baseline);
+        ArgumentNullException.ThrowIfNull(recorded);
+        ArgumentNullException.ThrowIfNull(signals);
+
+        var disagreed = new List<string>();
+        var unjudged = new List<string>();
+        var unmeasured = new List<string>();
+        var frozenYetUnmeasured = new List<string>();
+        var rebuilt = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+        foreach (string gate in JudgeableGates(baseline))
+        {
+            CheckResult? night = recorded.FirstOrDefault(
+                r => string.Equals(r.Name, gate, StringComparison.Ordinal));
+
+            if (night is null)
+            {
+                unjudged.Add(gate);
+                continue;
+            }
+
+            // A gate the night recorded with no value did not make its comparison: the quantity was
+            // absent, and the verdict is a refusal rather than a measurement. Moving a threshold
+            // cannot change that, so the night's verdict stands under every version of the rule and
+            // this reads it back rather than rebuilding it.
+            //
+            // <b>The alternative would be a false alarm and then a suppressed guard.</b> Rebuilding
+            // such a gate from whatever the row happens to have frozen replays a comparison the
+            // night never made, disagrees with the record by construction, and voids a screen for a
+            // reason that says nothing about the rule being screened.
+            // see: A gate handed an absent or degenerate quantity fails rather than passing
+            if (night.Value is null)
+            {
+                unmeasured.Add(gate);
+
+                // Reported rather than absorbed. A row that froze the quantity and still recorded no
+                // comparison is a row whose verdicts and signals describe two different things, and
+                // the read-back above is exactly the kind of correct rule that would hide it.
+                if (Judge(baseline, gate, signals) is not null)
+                {
+                    frozenYetUnmeasured.Add(gate);
+                }
+
+                continue;
+            }
+
+            CheckResult? asBaseline = Judge(baseline, gate, signals);
+            CheckResult? asRule = Judge(rule, gate, signals);
+
+            if (asBaseline is null || asRule is null)
+            {
+                unjudged.Add(gate);
+                continue;
+            }
+
+            if (asBaseline.Passed != night.Passed)
+            {
+                disagreed.Add(gate);
+                continue;
+            }
+
+            rebuilt[gate] = asRule.Passed;
+        }
+
+        // A row the rebuild could not stand behind on every judgeable gate is not selected and not
+        // rejected. Either half of this is a fact about the record: a missing signal, or a rebuild
+        // that does not reproduce the night.
+        bool? selected =
+            unjudged.Count > 0 || disagreed.Count > 0
+                ? null
+                : Gating(baseline).All(g => rebuilt.TryGetValue(g, out bool passed)
+                    ? passed
+                    : recorded.FirstOrDefault(r => string.Equals(r.Name, g, StringComparison.Ordinal))?.Passed == true);
+
+        return new ReplayRow(
+            selected, disagreed, unjudged, unmeasured, frozenYetUnmeasured, rebuilt.Count);
+    }
+
+    /// <summary>
+    /// The gates that decide selection: every gate of the rule but the ones recorded and never
+    /// required, which is what `passed_all` means.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    private static IEnumerable<string> Gating(SelectionRule rule) =>
+        rule.Gates.Where(g => !SetupChecks.RecordedNotRequired.Contains(g));
+
     /// <summary>What admission says about a version whose gate the record cannot judge.</summary>
     public const string NotReplayable =
         "the gate the moved threshold belongs to cannot be judged from the frozen signals, because its "

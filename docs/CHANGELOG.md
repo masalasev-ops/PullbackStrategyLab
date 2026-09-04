@@ -2339,3 +2339,13 @@ Why:  A section describing an arrangement nothing has built reads as a descripti
 Was:  "Registered on 2026-08-27 on the Windows machine. Seventeen tasks named `PullbackStrategyLab-<slot>`, each running `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday 08:00 for `ceiling`."
 Now:  Thirty-two tasks registered in two acts, seventeen on 2026-08-27 and fifteen on 2026-09-03, with the configuration the fifteen were given and why the count is written in two parts.
 Why:  Fifteen slots were declared in four places and called by nothing until 2026-09-03. A paragraph reading thirty-two from the start would say nothing about the four nights that ran seventeen of them, which is the whole of what the obligation raised at 5.2 is about.
+
+### 2026-09-04 — ARCHITECTURE.html — cites Replay screens proposals and the forward paired test admits them
+Was:  The selection row of "What each tier of change can be replayed against" read "Full replay. Seconds."
+Now:  Full replay over the evidence store, in seconds, with the reconstructed sessions named as unscreenable and the reason given, the per-side counts of gates rebuilt and gates read back, and the note that the screenable set grows at one night a night.
+Why:  "Full replay" named no population and reads as the whole stored history. A replay reads the quantity a gate compared, `setup_signal` keys into `setup` by foreign key, and the calibration run computes its averages in memory, so not one of the 602 reconstructed sessions carries a signal to replay against. The sentence was broader than the store on exactly the terms the execution row was corrected on two days earlier.
+
+### 2026-09-04 — SCHEMA.md — cites Replay screens proposals and the forward paired test admits them
+Was:  `replay_result` was declared as "proposal + window | Insert ReplayHarness", with nothing saying when the store arrives.
+Now:  The same, with "Store built at 6.6" and the reason ReplayHarness writes nothing before then.
+Why:  `writer-ownership` defers a declared writer to the checkpoint that builds the component, which is right whenever the component is the missing half. ReplayHarness is the case where it is not: the harness lands at 5.3 and the store is keyed on a proposal that does not exist until 6.6, so the deferral came due the day the component landed and could never have been ended. The checkpoint is declared where a reader of SCHEMA finds it rather than held inside the checker.

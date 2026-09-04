@@ -88,6 +88,39 @@ public sealed class SelectionReplayTests
         Assert.False(SelectionReplay.IsReplayable(SelectionRule.Short, "downtrend"));
     }
 
+    /// <summary>
+    /// Nine of the long side's ten gates can be judged from the frozen signals, and the one that
+    /// cannot is named: `uptrend` compares a ladder grade and carries no threshold at all.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    [Fact]
+    public void Nine_of_the_long_sides_ten_gates_are_judgeable_and_the_one_that_is_not_is_named()
+    {
+        IReadOnlyList<string> judgeable = SelectionReplay.JudgeableGates(SelectionRule.Long);
+
+        Assert.Equal(10, SelectionRule.Long.Gates.Count);
+        Assert.Equal(9, judgeable.Count);
+        Assert.DoesNotContain("uptrend", judgeable, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Seven of the short side's ten, and the three that are not are named. Arrived at differently
+    /// from the long side's nine: one gate compares a grade and two compare quantities that are
+    /// arithmetic over several frozen signals, so the two counts are never added.
+    /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
+    /// </summary>
+    [Fact]
+    public void Seven_of_the_short_sides_ten_gates_are_judgeable_and_the_three_that_are_not_are_named()
+    {
+        IReadOnlyList<string> judgeable = SelectionReplay.JudgeableGates(SelectionRule.Short);
+
+        Assert.Equal(10, SelectionRule.Short.Gates.Count);
+        Assert.Equal(7, judgeable.Count);
+        Assert.DoesNotContain("downtrend", judgeable, StringComparer.Ordinal);
+        Assert.DoesNotContain("averages-squeezing", judgeable, StringComparer.Ordinal);
+        Assert.DoesNotContain("reached-ceiling", judgeable, StringComparer.Ordinal);
+    }
+
     // ---- what a rebuilt row judges -------------------------------------------------------
 
     /// <summary>
