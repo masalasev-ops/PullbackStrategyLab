@@ -45,6 +45,7 @@ public static class Program
         builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<VariantAdmitter>();
         builder.Services.AddSingleton<VariantResolver>();
+        builder.Services.AddSingleton<VariantScorer>();
         builder.Services.AddSingleton<TriggerResolver>();
         builder.Services.AddSingleton<RiskGate>();
         builder.Services.AddSingleton<PaperBroker>();
@@ -229,6 +230,7 @@ public static class Program
         [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
         [VariantAdmitter.Name] = (services, rest) => services.GetRequiredService<VariantAdmitter>().Run(rest),
         [VariantResolver.Name] = (services, rest) => services.GetRequiredService<VariantResolver>().Run(rest),
+        [VariantScorer.Name] = (services, rest) => services.GetRequiredService<VariantScorer>().Run(rest),
         [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
         [RiskGate.Name] = (services, rest) => services.GetRequiredService<RiskGate>().Run(rest),
         [PaperBroker.Name] = (services, rest) => services.GetRequiredService<PaperBroker>().Run(rest),
@@ -297,6 +299,7 @@ public static class Program
         PlanBuilder.Name,
         VariantAdmitter.Name,
         VariantResolver.Name,
+        VariantScorer.Name,
         TriggerResolver.Name,
         RiskGate.Name,
         PaperBroker.Name,

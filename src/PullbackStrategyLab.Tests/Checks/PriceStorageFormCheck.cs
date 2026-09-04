@@ -143,6 +143,25 @@ public sealed partial class PriceStorageFormCheck
         ["forward_return_signed"] = "loss_class: the ten-session return from the trigger, a fraction of it",
         ["one_r_in_return"] = "loss_class: one unit of risk as a fraction of the trigger",
         ["exit_return_signed"] = "loss_class: the return to the exit, a fraction of the trigger",
+        ["baseline_mean_return"] = "variant_score: the baseline's mean forward return over its own selections, a fraction",
+        ["variant_mean_return"] = "variant_score: the version's, over its own selections, a fraction",
+        ["mean_difference"] = "variant_score: the second less the first, a fraction",
+    };
+
+    /// <summary>
+    /// The stored columns that hold a rule threshold, which is neither a price nor a ratio.
+    ///
+    /// <b>Named apart because both of the other two crossings would be wrong about half of them.</b>
+    /// `liquidity-floor` is twenty million dollars and `maximum-retrace` is the fraction 0.40, and
+    /// both live in `variant.threshold_from` and `variant.threshold_to`. Reading either through the
+    /// price crossing says a retrace is money; reading it through the ratio crossing says a turnover
+    /// floor is a fraction. What every threshold shares is that it is compared, so the crossing is
+    /// named for that.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> ThresholdColumns { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["threshold_from"] = "variant: the baseline's value for the threshold this version moves",
+        ["threshold_to"] = "variant: the version's value for it",
     };
 
     /// <summary>
@@ -178,9 +197,17 @@ public sealed partial class PriceStorageFormCheck
 
         foreach (string file in files)
         {
-            (int found, IReadOnlyList<string> wrong) = RatioReadsThroughThePriceCrossing(File.ReadAllText(file), RatioColumns.Keys);
+            string source = File.ReadAllText(file);
+
+            (int found, IReadOnlyList<string> wrong) = RatioReadsThroughThePriceCrossing(source, RatioColumns.Keys);
             reads += found;
             offences.AddRange(wrong.Select(w => $"{RepositoryLayout.Relative(file)}: {w}"));
+
+            // A threshold column read through the price crossing is the same offence one column
+            // along: neither of the two general crossings is named for what a threshold carries.
+            (_, IReadOnlyList<string> asPrices) =
+                RatioReadsThroughThePriceCrossing(source, ThresholdColumns.Keys);
+            offences.AddRange(asPrices.Select(w => $"{RepositoryLayout.Relative(file)}: {w}"));
         }
 
         // Stated in advance: the shipped source reads well over fifty columns through the price

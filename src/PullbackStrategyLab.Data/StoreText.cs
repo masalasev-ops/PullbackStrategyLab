@@ -41,6 +41,27 @@ public static class StoreText
     public static decimal StorageTextToRatio(string text) =>
         decimal.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
 
+    /// <summary>
+    /// A rule threshold, whose unit is the gate's rather than this crossing's.
+    ///
+    /// <b>A third name because neither of the two above is true of it.</b> `liquidity-floor` is
+    /// twenty million dollars and `maximum-retrace` is the fraction 0.40, and both live in
+    /// `variant.threshold_from` and `variant.threshold_to`. Reading one through the price crossing
+    /// would say a retrace is money and reading the other through the ratio crossing would say a
+    /// turnover floor is a fraction, and a crossing named for what it carries is the whole of what
+    /// the decimal rule buys. What every threshold does have in common is that it is compared, never
+    /// added to a price and never multiplied by one, so this crossing is named for the comparison.
+    ///
+    /// Decimal and TEXT on the same terms as the other two: the value a gate compares must be the
+    /// value the baseline's constant holds, to the last place, or a version reads as having moved a
+    /// threshold nobody moved.
+    /// </summary>
+    public static string ThresholdToStorageText(decimal threshold) =>
+        threshold.ToString(CultureInfo.InvariantCulture);
+
+    public static decimal StorageTextToThreshold(string text) =>
+        decimal.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
+
     public static string StatisticToStorageText(double statistic) =>
         statistic.ToString("R", CultureInfo.InvariantCulture);
 

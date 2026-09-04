@@ -14814,3 +14814,135 @@ Carried:    **Nothing raised.** The obligations table reads twenty-five and noug
             night, and it means the freeze is a precondition for the trading half of the pipeline
             rather than a step after it. Registering it is the operator's, against a live store
             migrated to 51, and it is the one act in this phase that cannot be undone.
+
+## 5.2 — 2026-09-03 — phase-5-2-variant-scorer — the version a machine can read, and the night it is scored on
+
+**A checkpoint entry.** VariantScorer at 21:40, differencing each live version against the baseline
+night by night; the register carrying the one threshold a version moves; and the four obligations due
+here answered. Population: **the golden fixture's single captured market day and the authored rows
+the suite writes**, because the live store holds one version, that version is the baseline, and the
+baseline is what everything else is differenced against rather than a version carrying a difference
+of its own. No score row exists in any store and none can until a proposal is admitted.
+
+Built:      **The register now holds a version a stage can act on.** At 5.1 a version's difference was
+            `definition`, which is prose. A selection version differs from the baseline by exactly one
+            gate's threshold, so the whole of it fits in five columns: the side, the gate, the
+            threshold's name and the two values. Migration 052 adds them with five CHECK clauses
+            making them present exactly on a selection version, so a row carrying three of the five is
+            refused rather than read as a version nothing can score (see: A version changes one
+            threshold over the existing gate list, and structural change is out of scope for this
+            generation).
+
+            **The definition is derived from the move and a typed one is refused.** An operator who
+            could type a sentence could type one that disagrees with the columns beside it, and the
+            day it does there is nothing to say which of the two the version is. The same reasoning as
+            the minimum sample at 5.1, applied one column along.
+
+            **The scorer replays one gate and reads back the other nine.** A version differs by one
+            threshold, so every other gate's verdict is the one the night recorded; re-deriving those
+            would be a second implementation of the rule, which is what the acceptance test at 5.3
+            exists to refuse. The moved gate is judged through `LongPullbackRules.Evaluate` and its
+            short twin, over evidence rebuilt from the frozen signals, and **the baseline's own
+            verdict is replayed alongside as a per-row check**: where the rebuild disagrees with what
+            the night recorded, the setup is unscoreable rather than counted on a guess.
+
+            **Two short-side gates cannot be judged that way, and a version moving either is refused
+            at admission.** `averages-squeezing` compares a ratio of two frozen signals and
+            `reached-ceiling` the nearer of two distances over a range, so rebuilding either quantity
+            would be that second implementation again. Refused on exactly the grounds that close the
+            execution family: a version nothing can score stays open with its age on the ledger for
+            ever. **The long side loses nothing**, all ten of its movable thresholds comparing one
+            signal each; the short side's twelve become ten (see: A version whose moved gate cannot be
+            judged from the frozen signals is refused at admission).
+
+            **`variant_score` is keyed on the direction as well as the version and the night.** SCHEMA
+            declared the grain as variant and date, which would have held one figure over both sides
+            or refused the second side's row, and the first is the pooling the rule forbids. A version
+            is one side's, because a threshold belongs to one side's gate list (see: Long and short
+            are never pooled into one figure).
+
+            **A night is scored once, when its horizon has closed, and never rewritten.** Counted from
+            the store's own bars rather than from a calendar. A night still inside its horizon is
+            counted as waiting rather than scored over whatever had arrived, because a figure
+            recomputed as returns dribble in is a figure over a population that changed after somebody
+            read it.
+
+            **The 21:40 slot exists.** `RUNBOOK.md` reserved it in prose from the first schedule and
+            nothing dispatched it, which is the damage found at 4.5 arriving a second time. It is now
+            a slot, a member of the parameter set, an advertised stage and a named runbook row, which
+            `slot-roster` reconciles in every direction.
+
+            **A third named crossing, `StoreText.ThresholdToStorageText`.** `liquidity-floor` is twenty
+            million dollars and `maximum-retrace` is the fraction 0.40, and both live in
+            `variant.threshold_from`. Reading either through the price crossing says a retrace is
+            money and reading it through the ratio crossing says a turnover floor is a fraction, so
+            neither existing name is true of the column. `price-storage-form` now holds the two
+            threshold columns against both.
+
+Answered:   **The loss horizon's anchor**, raised at 4.13. A dated correction on the decision naming
+            the trigger's session, the anchor having moved at 4.18 while the sentence went on naming
+            the setup's. The two differ by exactly one session, so a later session verifying against
+            the paragraph would have anchored the window a session early.
+
+            **The outside-cap refusal**, raised at 4.7 and repointed here by the sitting of 2026-09-02.
+            `variant_score` carries `baseline_outside_cap` and `variant_outside_cap`, so a version
+            scoring poorly because it selected outside the capped sixty is told apart from one scoring
+            poorly on its merits. **On both sides rather than on the version alone**, because the
+            baseline's own selections past the sixtieth rank are refused on identical terms and a
+            column existing only on the version would read as a penalty the version alone pays
+            (see: The spread capture stays at the capped sixty, and a version selecting outside it is
+            scored as refused).
+
+            **The `interval.*` tier**, raised at 3.5 and repointed here on 2026-08-31 because this is
+            where an interval starts deciding whether a version is accepted. Answered as a decision: a
+            restatement of a seeded resampling scheme shares the generator, the seed, the block order
+            and the tail convention, so agreement establishes that neither side was mistyped and
+            nothing more. **21 of the 50 `interval.*` expectations are retiered `FROZEN`**, being the
+            two bounds and the clears-zero verdict of each scenario; the point estimate, the row
+            count, the session count and the effective count stay `DERIVED`, their route through the
+            restatement being arithmetic that does not touch the scheme. **No fourth tier**, which
+            would be a second word for what `FROZEN` already means (see: A figure a seeded algorithm
+            produces is not independently derived, and the tier says so).
+
+            **The execution minimum's conversion**, raised at 3.0(f), is **not** discharged and is
+            repointed from 5.2 to the first trade. It is a measurement over trades, the funnel has
+            produced none, and this checkpoint's own deliverable names the execution family's scoring
+            unreachable for the same reason. A due point that is a date would fall again at every
+            later checkpoint and be moved again at each.
+
+Verified:   Twenty-eight tests added, over the scorer, the replay and the admitter's selection path:
+            thirteen on the scoring, ten on the replay and five on the register. `tools/ci.ps1`
+            green on Windows, **31 steps, 1,008 tests**, from 980. `tools/verify-phase.ps1`
+            **GREEN** on phase 5.
+
+            **Four expectations, all four predicted before the run and all four right.**
+            `store.schemaVersion` 51 to 52. `rule.longMovableThresholds` 10, derived by hand from the
+            long check list: twelve named thresholds less `exit-tight`'s execution cap and `cluster`'s
+            recorded one, with the replayability rule removing none. `rule.shortMovableThresholds` 10,
+            arrived at differently: fourteen less the same two, less the two gates a replay cannot
+            judge. **The two figures are equal by coincidence and are never added.**
+            `store.tablesKeyedOnThePlan` 7, which is 5.1's own, and the reason it is written here is
+            below.
+
+            **A correction this checkpoint owed 5.1 and nearly did not notice.** `store.schemaVersion`
+            was 5.1's only contribution to the fixture, and moving it to 5.2 with the migration left
+            5.1 having contributed nothing at all. `fixture-replay` caught it, which is that check
+            asking done condition seven per checkpoint rather than over the fixture as a whole. 5.1
+            now carries a figure of its own: how many tables key on the plan rather than on the setup,
+            read from the built store's catalogue, which is the whole of what the fan-out changed and
+            what makes two versions two books.
+
+Carried:    **One raised, due at 6.1.** The two short-side gates a replay cannot judge. What closes it
+            costs no vendor call: freezing each compared quantity as a signal of its own, which widens
+            the library rather than the rule shape. Due at the checkpoint that computes a new signal
+            across the whole stored setup history, because the two quantities are wanted on every
+            setup already recorded and not only on the nights after.
+
+            **The obligations table reads twenty-three**, three discharged here and one raised, with
+            the execution minimum's conversion repointed to a condition rather than a date. None falls
+            due before 5.3.
+
+            **Nothing to run against the live store beyond the migration.** The register holds V0 and
+            no proposal, so `score-variants` reports the night partial with the no-versions reason and
+            writes one run row. The slot may be scheduled whenever the operator moves the tasks;
+            nothing here touches a schedule.

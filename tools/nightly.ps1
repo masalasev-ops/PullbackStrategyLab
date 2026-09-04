@@ -32,7 +32,7 @@ param(
                  'versions',
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
-                 'scoreboard',
+                 'scores', 'scoreboard',
                  'ceiling', 'snapshot')]
     [string]$Slot,
 
@@ -145,6 +145,14 @@ $slots = @{
     # aftermath of every earlier loss whose ten-session horizon has since closed. A row waiting on a
     # horizon is not an unclassified one, and the two are counted apart.
     'losses'     = @(, @('losses'))
+    # 21:40, after the losses and before the scoreboard. It differences each live version against
+    # the baseline over the nights whose scoring horizon has closed, one row per version per
+    # night per side. It spends no vendor call. Its own slot rather than a verb inside
+    # 'scoreboard': the scoreboard is the lab's own record and this is the research loop's, and
+    # a night that scores nothing because the register holds only the baseline is a state worth
+    # seeing on its own line. Reserved in prose by RUNBOOK from the first schedule and dispatched
+    # by nothing until 5.2, which is the damage found at 4.5 arriving a second time.
+    'scores'     = @(, @('score-variants'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
     'snapshot'   = @(, @('snapshot-db'))

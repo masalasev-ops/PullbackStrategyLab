@@ -1154,7 +1154,8 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | Store | Grain | Writer |
 |---|---|---|
 | `variant` | variant id | Insert VariantAdmitter (definition, target, min sample, **once**) · Update AcceptanceGate (status and resolution date **only**) (see: Targets and minimum samples are written at creation and are immutable) |
-| `variant_score` | variant + date | Insert VariantScorer |
+| `variant_score` | variant + date + direction | Insert VariantScorer |
+| `score_run` | session + observation | Insert VariantScorer |
 | `twin_pair` | pair id | Insert TwinPairFinder |
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
@@ -1178,7 +1179,59 @@ whole eventual shape.
 | `status` | TEXT | `open`, `accepted`, `rejected` or `unresolved`. The fourth is closed without an answer, which is what editing the baseline does, and it is not a rejection: a rejected version was measured and fell short, an unresolved one was never measured because what it was compared against stopped existing |
 | `resolved_at` | TEXT NULL | When it was settled, present exactly when the status is not `open`. AcceptanceGate writes this and `status` and has no path to any column above |
 | `created_at` | TEXT | When the version was registered, which is what a point-in-time read of a night bounds on. A replay of an evening sees the versions that evening had and no others |
+| `direction` | TEXT NULL | Which side the moved threshold belongs to. A version is one side's, because a threshold belongs to one side's gate list, and a version spanning both would be two experiments in one row (see: Long and short are never pooled into one figure) |
+| `gate` | TEXT NULL | The gate the moved threshold sits under, as ARCHITECTURE's gate lists name it |
+| `threshold_name` | TEXT NULL | Which named threshold moved. One, and `RuleAdmission` is what asserts that rather than a convention (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation) |
+| `threshold_from`, `threshold_to` | TEXT NULL | The baseline's value and the version's. Read through `StoreText.StorageTextToThreshold` and not through the price or the ratio crossing: `liquidity-floor` is twenty million dollars and `maximum-retrace` is the fraction 0.40, both live in this column, and a crossing named for either would be wrong about the other |
 
+
+*The five columns above are present exactly on a selection version, and the store holds that as five CHECK clauses rather than the admitter holding it as care. The baseline moves nothing and no execution version is admitted in this generation, so on both they are null together. A row carrying three of the five reads as a version and cannot be scored as one, which is the state the clauses refuse.*
+
+*`definition` is derived from these columns for a selection version and typed only for the baseline. A sentence somebody types can disagree with the columns beside it, and the day it does there is nothing to say which of the two the version is (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation).*
+
+### What a night's difference came to
+
+Columns of `variant_score`. Built at 5.2, and the columns are the ones that checkpoint owes rather than the whole eventual shape.
+
+Grain: variant + date + direction. One night of one version against the baseline, on one side.
+
+| Column | Type | Note |
+|---|---|---|
+| `variant_id`, `session_date`, `direction` | TEXT | PK. Direction is in the key rather than in a note, because a pooled score would add a long side's forward return to a short side's and a version that helps one side while hurting the other would read as no difference at all (see: Long and short are never pooled into one figure) |
+| `generation`, `family` | INTEGER / TEXT | Carried rather than joined, because a score is read back as it stood and a generation that turned over afterwards would restate what the row meant |
+| `horizon_days` | INTEGER | 10, the scoring horizon the difference is taken at |
+| `flagged` | INTEGER | every setup of that side flagged on that night, which is the shared candidate list both rules saw |
+| `baseline_selected`, `variant_selected` | INTEGER | what each rule picked out of it. **Two populations, not one**, so the two means below are over different rows and the row says how many each was over |
+| `both_selected`, `variant_only`, `baseline_only` | INTEGER | how the two sets overlap. The last two are derived from the first three and the store checks the arithmetic, because a version that changed nothing and a version whose disagreements cancelled are different facts |
+| `baseline_mean_return`, `variant_mean_return` | TEXT NULL | the mean scoring-horizon forward return over each side's own selections, as a fraction |
+| `mean_difference` | TEXT NULL | the second less the first. **A difference of two means and not a mean of differences**: there is no per-name pairing to take, because the two sets are not the same set. What is paired is the night |
+| `baseline_outside_cap`, `variant_outside_cap` | INTEGER | how many of each side's selections the night's cap did not reach, and which are therefore refused a fill. **On both sides rather than on the version alone**, because the baseline's own selections past the sixtieth rank are refused on identical terms and a column existing only on the version would read as a penalty the version alone pays (see: The spread capture stays at the capped sixty, and a version selecting outside it is scored as refused) |
+| `unscoreable` | INTEGER | setups of that night whose moved gate the frozen signals could not judge. Counted rather than dropped: a night scored over nine of eleven names is a different fact from a night scored over eleven |
+| `withheld_because` | TEXT NULL | why the row carries no figure, on exactly the rows that carry none, which the table asserts in both directions. A scored night that could not produce a difference is a row rather than an absence |
+| `computed_at` | TEXT | when the difference was taken |
+
+*The writers are declared in the Research ownership table above and not repeated here, which is what every prose-headed section does: the store-level table is the one statement of ownership, and a second one under a heading is a second place the same fact lives.*
+
+*A night is scored once, when its scoring horizon has closed, and never rewritten. A figure recomputed as returns arrive would be a figure over a population that changed after somebody read it, which is the defect the population rule exists to name (see: The subject is the flagged setup population, not the trade log).*
+
+*Only a selection version has rows here, which the `family` check states rather than leaves to the writer. An execution version is scored on R and none is admitted in this generation, so the absence is a decision rather than an omission (see: No execution variant is admitted in this generation, and the condition that would reopen it is named).*
+
+### What one run of the scorer did
+
+Columns of `score_run`. Built at 5.2.
+
+Grain: session + observation. At 21:40, after the forward returns and before the scoreboard.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `versions_live`, `versions_scored` | INTEGER | how many versions the register held for the night, and how many of them carry a difference. **Two numbers because they answer different questions**: a night holding only the baseline scores none, and a single nought could not be told from a night that found nothing live at all |
+| `nights_scored`, `nights_waiting` | INTEGER | nights whose horizon had closed and were written, and nights a live version was running on whose horizon has not. The second is the ordinary state of every recent night and is not a fault |
+| `longs`, `shorts` | INTEGER | counted apart (see: Long and short are never pooled into one figure) |
+| `unscoreable` | INTEGER | setups across every night this run touched whose moved gate could not be judged from the frozen signals |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the register holds no version to difference, or no baseline to difference against, with which of the two named |
+
+*Declared in the Research ownership table above, on the same terms as the table before it.*
 
 ---
 
