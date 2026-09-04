@@ -2324,3 +2324,8 @@ Why:  The slot was reserved in prose and dispatched by nothing, which is the dam
 Was:  The obligations table held twenty-five rows, three of them due at 5.2: the loss horizon's anchor, the outside-cap refusal, and the `interval.*` tier. Its 4.17 line read "None of the twenty-five rows above".
 Now:  Twenty-three rows and "None of the twenty-three". The three are discharged at 5.2, the execution minimum's conversion is repointed from 5.2 to the first trade, and one row is raised: the two short-side gates a replay cannot judge, due at 6.1.
 Why:  Each of the three was answered by this checkpoint's own work. The fourth could not be: its conversion is a measurement over trades and none exists, so it is filed under the condition it waits on rather than under a date that would move at every later checkpoint.
+
+### 2026-09-03 — BUILD_PLAN.md — cites No execution variant is admitted in this generation, and the condition that would reopen it is named
+Was:  The carried obligations table held twenty-three rows, and its 4.17 line read "None of the twenty-three rows above".
+Now:  Twenty-four rows and "None of the twenty-four". The row raised is the mechanism by which a slot can be declared, accepted, documented and reconciled in four places and still be called by nothing.
+Why:  `slot-roster` reconciles four declarations of the slot set and all four agreed while fifteen of the thirty-two slots had never run once. Whether a scheduled task exists is a property of the machine, and no check in this corpus takes the machine as its subject.
