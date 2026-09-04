@@ -900,6 +900,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(GalleryFigures());
 
         measurements.AddRange(ReplayFigures());
+        measurements.AddRange(HoldoutFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -2512,6 +2513,72 @@ public sealed class PhaseReplay : IDisposable
 
         return row;
     }
+
+    /// <summary>
+    /// The holdout register over the fixture, which is 5.4's deliverable and holds nothing.
+    ///
+    /// <b>Nothing is the correct answer and the figures say why.</b> The fixture's one market day is
+    /// 2026-08-24, so no calendar quarter of forward-collected evidence has completed and no window
+    /// can exist. What is asserted here is that the register reports that reason rather than an
+    /// unexplained nought, and that the schedule it would fill with is the right eight quarters: the
+    /// first window is named and dated even though it does not exist yet, so a register that named
+    /// the wrong quarter would be visible on the day it filled rather than three months later.
+    ///
+    /// <b>The schedule figures are about the calendar and the register figures are about the
+    /// store</b>, and they are kept apart for the reason the corpus keeps finding: a count of nought
+    /// windows is compatible with any schedule at all.
+    /// </summary>
+    private IReadOnlyList<Measurement> HoldoutFigures()
+    {
+        var registry = new HoldoutRegistry(_connections, Logger(), _clock, _options);
+        HoldoutRegisterState state = registry.Mature(AsOf);
+
+        var figures = new List<Measurement>
+        {
+            new("holdout.capacity", HoldoutWindows.Capacity.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.monthsPerWindow", HoldoutWindows.MonthsPerWindow.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.firstSession", state.FirstSession is DateOnly first ? Session(first) : "none"),
+            new("holdout.matured", state.Matured.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.recorded", state.Recorded.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.written", state.Written.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.spent", state.Spent.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.available", state.Available.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.missing", state.Missing.Count.ToString(CultureInfo.InvariantCulture)),
+            new("holdout.exhausted", state.IsExhausted ? "yes" : "no"),
+            new("holdout.outcome", state.Outcome.ToStorageText()),
+            new("holdout.emptyBecause", EmptyReason(state.EmptyBecause)),
+        };
+
+        // The schedule the register would fill with, which exists whether or not any window does.
+        if (state.FirstSession is DateOnly session)
+        {
+            IReadOnlyList<HoldoutWindow> schedule = HoldoutWindows.Schedule(session);
+
+            figures.Add(new Measurement("holdout.schedule.windows",
+                schedule.Count.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement("holdout.schedule.first", schedule[0].WindowId));
+            figures.Add(new Measurement("holdout.schedule.firstMatures", Session(schedule[0].MaturesOn)));
+            figures.Add(new Measurement("holdout.schedule.last", schedule[^1].WindowId));
+            figures.Add(new Measurement("holdout.schedule.lastMatures", Session(schedule[^1].MaturesOn)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// Which of the four reasons a register gives, as a name rather than as the sentence.
+    ///
+    /// The sentences are prose and would put a paragraph in the expectations file; what the fixture
+    /// needs to hold is which state the register is in, and a reason the check does not know reads
+    /// as unnamed rather than as one of the four.
+    /// </summary>
+    private static string EmptyReason(string? because) =>
+        because is null ? "none, a window is available"
+        : because == HoldoutRegistry.NoSessionRecorded ? "no session recorded"
+        : because == HoldoutRegistry.NoQuarterMaturedYet ? "no quarter matured yet"
+        : because == HoldoutRegistry.NotRecorded ? "matured and not recorded"
+        : because == HoldoutRegistry.EveryMaturedWindowSpent ? "every matured window spent"
+        : "a reason this measurement does not name";
 
     private static IReadOnlyList<Measurement> RuleFigures() =>
     [

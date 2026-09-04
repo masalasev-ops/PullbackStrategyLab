@@ -87,6 +87,16 @@ public sealed class PointInTimeCheck
             // resolved version from the nights it actually ran on.
             ["variant"] = "created_at",
 
+            // A window is read to decide an answer, being whether a budget exists to spend, and the
+            // register fills up over two years. A read of an evening that saw a window recorded
+            // afterwards would report a budget the lab did not hold, and the gap between what has
+            // matured and what was recorded is exactly what says a registry never ran.
+            ["holdout_window"] = "recorded_at",
+
+            // And a spend is read to decide whether a window is still available, so a replay that
+            // saw a later spend would report a window as gone on an evening it was there.
+            ["holdout_spend"] = "spent_at",
+
             // A resolution is an observation about a session, and it is read to decide an answer:
             // 4.6 fills the earliest trigger of a session and blocks the later ones, so a replay
             // standing at an old date that saw a resolution written after it would fill an order the
@@ -180,6 +190,11 @@ public sealed class PointInTimeCheck
     public static IReadOnlyDictionary<string, string> NotAnObservation { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["holdout_run"] =
+                "observed_at is when the registry ran and what it found, which is operational rather than "
+                + "evidential. Nothing computes a figure about the market or about the budget from a run "
+                + "entry; the register itself is the two tables above.",
+
             ["run_log"] =
                 "started_at and ended_at are when a job ran, which is operational rather than evidential. "
                 + "Nothing computes a figure about the market from a run entry.",

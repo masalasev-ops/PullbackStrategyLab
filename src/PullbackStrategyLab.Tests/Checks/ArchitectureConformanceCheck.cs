@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Research;
+using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
@@ -1983,6 +1984,15 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "a detector no longer records the name it could not decide, so a lost name reads as a quiet night"),
 
+            "Holdout windows exhausted" => TheRegisterSaysExhaustedRatherThanEmpty()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the register reports exhaustion as its own reason rather than as a nought available, "
+                    + "so a budget spent to the end is told apart from one no quarter has matured into, and "
+                    + "the run stays clean because a designed dead end is not a failure")
+                : Claim.Failed("Failure behaviour", condition,
+                    "exhaustion no longer has a reason of its own, so a spent-out register is indistinguishable "
+                    + "from one that has nothing yet, which is the state this lab will be in for months"),
+
             "Daily API ceiling reached" => TheCeilingRuleHoldsAllThreeOfItsClauses()
                 ? Claim.Passed("Failure behaviour", condition,
                     "the run scope reports what is left, a stage stops rather than overrunning, and both detectors read the night's incomplete stages and write them onto every setup row of that session")
@@ -2195,6 +2205,36 @@ public sealed partial class ArchitectureConformanceCheck
     /// third clause added the column, the reader and the writers and left the claim asserting the
     /// sentence it had before. Deleting <c>RunLogger.DegradedBecause</c> would not have moved it.
     /// </summary>
+    /// <summary>
+    /// The exhausted register names its own reason and stays clean, which is what makes a designed
+    /// dead end legible as one.
+    ///
+    /// Read off the reasons the registry declares rather than by running it: the four are distinct
+    /// strings and the exhausted one is the one <c>IsExhausted</c> reads, so a fifth state folded
+    /// into an existing reason fails here. The behaviour itself is exercised by
+    /// <c>HoldoutRegistryTests.An_exhausted_register_says_so_and_is_not_the_same_state_as_an_empty_one</c>,
+    /// which spends all eight and reads the register back.
+    /// </summary>
+    private static bool TheRegisterSaysExhaustedRatherThanEmpty()
+    {
+        string[] reasons =
+        [
+            HoldoutRegistry.NoSessionRecorded,
+            HoldoutRegistry.NoQuarterMaturedYet,
+            HoldoutRegistry.NotRecorded,
+            HoldoutRegistry.EveryMaturedWindowSpent,
+        ];
+
+        return reasons.Distinct(StringComparer.Ordinal).Count() == reasons.Length
+            && HoldoutRegistry.EveryMaturedWindowSpent.Contains("designed dead end", StringComparison.Ordinal)
+            && new HoldoutRegisterState(
+                default, null, 0, 0, 0, 0, 0,
+                HoldoutRegistry.EveryMaturedWindowSpent, [], [], RunOutcome.Clean).IsExhausted
+            && !new HoldoutRegisterState(
+                default, null, 0, 0, 0, 0, 0,
+                HoldoutRegistry.NoQuarterMaturedYet, [], [], RunOutcome.Clean).IsExhausted;
+    }
+
     private static bool TheCeilingRuleHoldsAllThreeOfItsClauses()
     {
         string runScope = RepositoryLayout.Read(

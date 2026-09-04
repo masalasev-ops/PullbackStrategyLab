@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Data;
@@ -386,6 +387,15 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.ExecutionMinimumPairedTrades == 200,
             "MeasurementParameters.ExecutionMinimumPairedTrades"));
 
+        // The holdout budget, pinned at 5.4 by HoldoutRegistry existing to allocate it. Both halves
+        // of the row are pinned: the count, and that a window is a calendar quarter, because a
+        // register of eight windows measured in something other than quarters would satisfy a pin
+        // on the number alone.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Holdout windows",
+            table.Cell("Holdout windows").Contains("8, one calendar quarter each, oldest first", StringComparison.Ordinal),
+            HoldoutWindows.Capacity == 8 && HoldoutWindows.MonthsPerWindow == 3,
+            "HoldoutWindows.Capacity and MonthsPerWindow"));
+
         // Accounts, which is a cap's scope rather than a cap. Every limit RiskGate applies is
         // counted within one book and a book belongs to a version, so two versions holding one name
         // are two positions neither of which can see the other. The document states it in words and
@@ -735,7 +745,6 @@ public sealed class PinnedConstantsCheck
     /// </summary>
     public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
     [
-        ("Holdout windows", "5.4", "HoldoutRegistry"),
         ("Twin-pair threshold", "6.3", "TwinPairFinder"),
         ("Signal correlation limit", "6.2", "SignalAdmissionTest"),
         ("Researcher model", "6.5", "ResearcherSeat"),

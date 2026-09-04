@@ -8423,7 +8423,7 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "31",
+      "value": "32",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
       "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35."
@@ -8431,7 +8431,7 @@
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "37",
+      "value": "38",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
       "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry."
@@ -9880,8 +9880,8 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "52",
-      "checkpoint": "5.2",
+      "value": "53",
+      "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
       "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run."
     },
@@ -11482,6 +11482,142 @@
       "checkpoint": "5.3",
       "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
       "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+    },
+    {
+      "id": "holdout.capacity",
+      "tier": "DERIVED",
+      "value": "8",
+      "checkpoint": "5.4",
+      "producedBy": "the authored-parameters row, read by hand: 8, one calendar quarter each, oldest first",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.monthsPerWindow",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "5.4",
+      "producedBy": "the same row, read by hand: one calendar quarter is three months",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.matured",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand: the first window matures on 2027-01-01 and the fixture stands at 2026-08-24, so none has",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.emptyBecause",
+      "tier": "DERIVED",
+      "value": "no quarter matured yet",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand from the same two dates: sessions exist and no quarter has completed",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.schedule.windows",
+      "tier": "DERIVED",
+      "value": "8",
+      "checkpoint": "5.4",
+      "producedBy": "counted by hand from the authored-parameters row",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.schedule.first",
+      "tier": "DERIVED",
+      "value": "2026-Q4",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand: 2026-08-24 is inside 2026-Q3, which is therefore not fully forward-collected",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.schedule.firstMatures",
+      "tier": "DERIVED",
+      "value": "2027-01-01",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand: the day after 2026-Q4 ends",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.schedule.last",
+      "tier": "DERIVED",
+      "value": "2028-Q3",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand: the eighth quarter from 2026-Q4",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.schedule.lastMatures",
+      "tier": "DERIVED",
+      "value": "2028-10-01",
+      "checkpoint": "5.4",
+      "producedBy": "derived by hand: the day after 2028-Q3 ends",
+      "note": "Derived by hand from the calendar and the fixture's own first session. The fixture's one market day is 2026-08-24, which is inside the third quarter of 2026, so that quarter holds sessions nobody recorded and the first window of forward-collected evidence is the fourth. Eight quarters from there ends at 2028-Q3. A window matures the day after its quarter, not on its last day, so the first is available from 2027-01-01."
+    },
+    {
+      "id": "holdout.firstSession",
+      "tier": "FROZEN",
+      "value": "2026-08-24",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.recorded",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.written",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.spent",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.available",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.missing",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.exhausted",
+      "tier": "FROZEN",
+      "value": "no",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
+    },
+    {
+      "id": "holdout.outcome",
+      "tier": "FROZEN",
+      "value": "clean",
+      "checkpoint": "5.4",
+      "producedBy": "the registry run over the golden fixture through HoldoutRegistry.Mature",
+      "note": "What the register holds over the fixture, which is nothing, and the reason it holds nothing. <b>Nought is the correct answer here and the reason is what makes it readable as correct.</b> No calendar quarter has completed by the fixture's as-of, so there is nothing to record; a register that was empty because nothing recorded a matured window would report a different reason, a partial outcome and a non-nought missing count. The two states hold the same noughts and are told apart by nothing else."
     }
   ],
   "frozenOnly": [
