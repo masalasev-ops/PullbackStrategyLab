@@ -167,6 +167,76 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"put here[^*]{0,160}\*\*(?<n>[a-z-]+) of the (?<total>[a-z-]+) rows is a phase 5 question\*\*", RegexOptions.CultureInvariant)]
     private static partial Regex OperatorReading();
 
+    /// <summary>
+    /// The mark a carried obligation row carries when it is one of the phase 6 questions, and the
+    /// same mark at the head of the operator table's own cell.
+    ///
+    /// A pattern per phase rather than one taking the phase as a group, on the reason the two 4.17
+    /// and 4.1 patterns are separate: a pattern matching either would let one phase's register answer
+    /// for the other's, which is the eighth failure shape and is not introduced here.
+    /// </summary>
+    [GeneratedRegex(@"\*\*Question \d of the phase 6 sitting", RegexOptions.CultureInvariant)]
+    private static partial Regex PhaseSixQuestion();
+
+    [GeneratedRegex(@"^\*\*Question \d of the phase 6 sitting\.", RegexOptions.CultureInvariant)]
+    private static partial Regex PhaseSixMarkedQuestion();
+
+    /// <summary>
+    /// The mark on the operator table's blocks cell saying the row stops a checkpoint by name.
+    ///
+    /// A mark and not a pattern over the prose, for the reason the phase 5 mark exists: a blocks cell
+    /// naming the checkpoint a row is merely read by looks exactly like one naming the checkpoint it
+    /// stops, and no derivation over that sentence survives contact with the cells. The two values
+    /// are exhaustive, so a cell carrying neither fails rather than counting as not blocking.
+    /// </summary>
+    [GeneratedRegex(@"^\*\*Blocks a checkpoint", RegexOptions.CultureInvariant)]
+    private static partial Regex BlocksACheckpoint();
+
+    [GeneratedRegex(@"^\*\*Blocks nothing built", RegexOptions.CultureInvariant)]
+    private static partial Regex BlocksNothingBuilt();
+
+    /// <summary>How many questions the phase 6 section says were opened for that phase.</summary>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+questions\s+were\s+opened\s+for\s+this\s+phase", RegexOptions.CultureInvariant)]
+    private static partial Regex QuestionsOpenedForPhaseSix();
+
+    /// <summary>
+    /// The same count in the record, which is what the phase 6 register derives from.
+    ///
+    /// <b>This is the correction the phase 5 route owed.</b> That section said each register row
+    /// carries a mark, so the count was derived from the live table; the last marked row left on
+    /// 2026-09-02 when the last question closed, and the sentence went on naming a route that yields
+    /// nought. A route that empties as the work completes is not a route. `PROGRESS.md` is append
+    /// only and a dated entry is never edited, so the count of questions opened is a fact the record
+    /// keeps whatever the table later holds, and the marked rows are reconciled between the two
+    /// tables separately so a marked count of nought reads as answered rather than as broken.
+    /// </summary>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+questions\s+opened\s+at\s+the\s+phase\s+6\s+sitting\*\*", RegexOptions.CultureInvariant)]
+    private static partial Regex QuestionsOpenedInTheRecord();
+
+    /// <summary>The phase 6 reading of how many of its questions stop a checkpoint, and out of how
+    /// many.</summary>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+(?<total>[a-z-]+)\s+block\s+a\s+checkpoint\s+by\s+name\*\*", RegexOptions.CultureInvariant)]
+    private static partial Regex QuestionsThatBlock();
+
+    /// <summary>The sentence introducing the enumerated provisional claims, over the table below
+    /// it.</summary>
+    [GeneratedRegex(@"\*\*The\s+(?<n>[a-z-]+)\s+provisional\s+claims,\s+enumerated", RegexOptions.CultureInvariant)]
+    private static partial Regex ProvisionalClaims();
+
+    /// <summary>Each phase 6 row's statement of how many obligations fall due at it, anchored on what
+    /// follows the count so one row's sentence cannot answer for another's.</summary>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations fall due here and they are its parts", RegexOptions.CultureInvariant)]
+    private static partial Regex DueAtThePile();
+
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations fall due here and each is a question", RegexOptions.CultureInvariant)]
+    private static partial Regex DueAtTheBackfill();
+
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligation falls due here\*\*, raised at 1\.5", RegexOptions.CultureInvariant)]
+    private static partial Regex DueAtTheSeat();
+
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations fall due here and they are one pass", RegexOptions.CultureInvariant)]
+    private static partial Regex DueAtTheBand();
+
     [Fact]
     [Trait("check", "stated-counts")]
     public void Every_count_a_spec_states_about_itself_is_derived_and_matches()
@@ -176,6 +246,7 @@ public sealed partial class StatedCountsCheck
         string architecture = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "ARCHITECTURE.html"));
         string buildPlan = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "BUILD_PLAN.md"));
         string runbook = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "RUNBOOK.md"));
+        string progress = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "PROGRESS.md"));
 
         var claims = new List<Claim>();
 
@@ -517,6 +588,126 @@ public sealed partial class StatedCountsCheck
             FromWordsOrFail(split.Groups["n"].Value),
             SplitQuestionRow().Matches(buildPlan).Count,
             "obligation rows carrying the ruling half of a split question"));
+
+        // BUILD_PLAN.md, phase 6's own figures, registered by the planning pass that wrote them.
+        //
+        // Registered in the commit that states them, on the terms phase 5's above were, and read out
+        // of the phase 6 section rather than out of the whole file: phase 5's preamble opens with the
+        // same sentence shape, so a pattern over the document would answer for the wrong phase. That
+        // is the eighth failure shape, a clause applied to a population other than the one it
+        // governs, and slicing the section is what stops it.
+        string phaseSix = Between(buildPlan, "## Phase 6 — The loop", "## The lazily-resolved attribute");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, phase 6's row count",
+            InWords(phaseSix, "The phase is ", " rows"),
+            MarkdownTable.BodyRowsAfter(buildPlan, "## Phase 6 — The loop").Count,
+            "rows of the phase 6 table"));
+
+        // <b>The count of questions opened is derived from the record and not from the live table.</b>
+        // Phase 5's route was the mark on the rows, which emptied as the questions closed and left the
+        // section naming a derivation that yields nought; that row was raised at 5.7 and fell due at
+        // this pass. PROGRESS is append only and a dated entry is never edited, so this figure is a
+        // fact the record keeps whatever the table later holds.
+        Match openedInThePlan = QuestionsOpenedForPhaseSix().Match(phaseSix);
+        Assert.True(openedInThePlan.Success,
+            "BUILD_PLAN.md's phase 6 section has no \"**<count> questions were opened for this phase\" "
+            + "sentence, which is where that phase states how many questions it turns on.");
+
+        Match openedInTheRecord = QuestionsOpenedInTheRecord().Match(progress);
+        Assert.True(openedInTheRecord.Success,
+            "PROGRESS.md has no \"**<count> questions opened at the phase 6 sitting**\" sentence, which is "
+            + "the append-only record the phase 6 section derives its count from.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the questions opened for phase 6, against the record",
+            FromWordsOrFail(openedInThePlan.Groups["n"].Value),
+            FromWordsOrFail(openedInTheRecord.Groups["n"].Value),
+            "questions PROGRESS records as opened at the phase 6 sitting"));
+
+        // The reconciliation the claim above cannot make: a question that leaves one table has to
+        // leave the other. Both fall to nought together as the questions are answered, and nought
+        // against nought is the state phase 5's pair is in today rather than a broken register.
+        int phaseSixAtTheOperator = obligations.Count(
+            r => r.Count > 2
+                && r[2].Trim().Equals("the operator", StringComparison.Ordinal)
+                && PhaseSixQuestion().IsMatch(string.Join(" ", r)));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 6 questions against the operator's table",
+            phaseSixAtTheOperator,
+            operatorQuestions.Count(r => r.Count > 1 && PhaseSixMarkedQuestion().IsMatch(r[1])),
+            "rows of the operator's table marked as a phase 6 question"));
+
+        // Which of them stop a checkpoint, from a mark rather than from the prose. The two marks are
+        // exhaustive over the phase 6 rows, so a cell carrying neither fails here rather than being
+        // counted as not blocking, which is the direction a hand-named list goes wrong in.
+        IReadOnlyList<IReadOnlyList<string>> phaseSixOperatorRows =
+            [.. operatorQuestions.Where(r => r.Count > 1 && PhaseSixMarkedQuestion().IsMatch(r[1]))];
+
+        string[] unmarked =
+            [.. phaseSixOperatorRows
+                .Where(r => r.Count > 2 && !BlocksACheckpoint().IsMatch(r[2]) && !BlocksNothingBuilt().IsMatch(r[2]))
+                .Select(r => r[1][..Math.Min(60, r[1].Length)])];
+
+        Assert.True(unmarked.Length == 0,
+            $"{unmarked.Length} phase 6 question row(s) carry neither blocks-mark in the operator's table, so "
+            + "the count of what stops a checkpoint would be derived from prose:\n  " + string.Join("\n  ", unmarked));
+
+        Match blocking = QuestionsThatBlock().Match(phaseSix);
+        Assert.True(blocking.Success,
+            "BUILD_PLAN.md's phase 6 section has no \"**<count> of the <count> block a checkpoint by name**\" "
+            + "sentence, which is the reading that says the register is not one wait.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 6 questions that block a checkpoint",
+            FromWordsOrFail(blocking.Groups["n"].Value),
+            phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
+            "rows of the operator's table marked as a phase 6 question that stops a checkpoint"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 6 reading's total",
+            FromWordsOrFail(blocking.Groups["total"].Value),
+            phaseSixOperatorRows.Count,
+            "rows of the operator's table marked as a phase 6 question"));
+
+        // The obligations each phase 6 row says fall due at it. Four sentences, four patterns, each
+        // anchored on what follows its count, so one row's statement cannot answer for another's.
+        (Regex Sentence, string Checkpoint, string What)[] phaseSixDuePoints =
+        [
+            (DueAtThePile(), "6.10", "the repair pile"),
+            (DueAtTheBackfill(), "6.1", "the signal backfill"),
+            (DueAtTheSeat(), "6.5", "the researcher seat"),
+            (DueAtTheBand(), "6.8", "band 3"),
+        ];
+
+        foreach ((Regex sentence, string checkpoint, string what) in phaseSixDuePoints)
+        {
+            Match due = sentence.Match(phaseSix);
+            Assert.True(due.Success,
+                $"BUILD_PLAN.md's phase 6 row for {checkpoint} no longer states how many obligations fall due "
+                + "at it in the sentence this claim reads it from.");
+
+            claims.Add(new Claim(
+                $"BUILD_PLAN.md, the obligations {checkpoint} holds",
+                FromWordsOrFail(due.Groups["n"].Value),
+                obligations.Count(r => r.Count > 2 && r[2].Trim().Equals(checkpoint, StringComparison.Ordinal)),
+                $"rows of the carried obligations table falling due at {checkpoint}, {what}"));
+        }
+
+        // The provisional claims, whose length is the figure and whose rows are the list 6.9 reads
+        // rather than assembles. It is a count of admissions, on the terms the unexamined figure is:
+        // the number says how many verdicts rest on a population the loop will later fill, and the
+        // populations themselves stay in the table where they can be read.
+        Match provisional = ProvisionalClaims().Match(phaseSix);
+        Assert.True(provisional.Success,
+            "BUILD_PLAN.md's phase 6 section has no \"**The <count> provisional claims, enumerated\" sentence, "
+            + "which is the anchor its own list is read from.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, phase 6's provisional claims",
+            FromWordsOrFail(provisional.Groups["n"].Value),
+            MarkdownTable.BodyRowsAfter(phaseSix, "| # | The assertion | Held by |").Count,
+            "rows of the phase 6 section's list of provisional claims"));
 
         // BUILD_PLAN.md, the frozen-only permits, derived from the fixture rather than from the prose.
         //

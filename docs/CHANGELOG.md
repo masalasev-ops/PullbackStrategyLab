@@ -2481,3 +2481,76 @@ Now:  "None of the twenty-eight rows above fall due at 4.17"
 Why:  Two rows raised from the night of 2026-09-04: a stage that bought nothing reporting clean, and the
       repair window expiring at local midnight for the trade chain. `stated-counts` derives this total
       from the table's own rows.
+### 2026-09-05 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The Phase 6 section was a heading, a nine-row table and two paragraphs. It had no preamble, it was
+      the only phase whose table followed its heading directly, and each row was a one-line deliverable
+      against a one-line done condition. There was no 6.0, no 6.10 and no 6.11, no stated build order,
+      no statement of the population any done condition is verified over, no register of the questions
+      the phase turns on, and no projection of the out-of-scope count.
+Now:  Twelve rows, in build order, with a five-paragraph preamble stating the row count, the build
+      order, the rule that a row names a component only where it builds it, the population every figure
+      is over, and the register. Each done condition names its own population. The section carries the
+      out-of-scope projection as a per-checkpoint path with its arithmetic and its basis, and the twelve
+      provisional claims enumerated with what each is re-read over when the loop turns.
+Why:  The pass that plans a phase belongs to the phase it plans, at that phase's opening checkpoint, and
+      phase 5 signed off on 2026-09-04. Five obligations were due at this pass and four of them are
+      buildable work that had no home; 6.10 is the checkpoint written to hold them, on the shape 4.17
+      and 5.8 took.
+
+### 2026-09-05 — BUILD_PLAN.md — cites Nothing in the corpus is struck through
+Was:  The phase 5 preamble read "The nine questions this phase turns on are rows in the carried
+      obligations table, due at the operator, opened before they were asked" and ended "Each register
+      row carries the phrase "Question N of the phase 5 sitting", so the count is derived from the table
+      rather than stated here twice."
+Now:  The paragraph is in the past tense, says the mark was carried while a question was open and that
+      the last row carrying it left the table on 2026-09-02, states that the nine is a fact about the
+      record rather than a count of anything the table holds today, and names the date the sentence was
+      corrected and why: a derivation route that empties as the work completes is not a route.
+Why:  The row raised at 5.7 and due at the phase 6 plan. No row carried the phrase, so a reader greping
+      it would find nothing and conclude either that the questions were gone or that the register was
+      broken. Phase 6's register derives its count from the sitting's own PROGRESS entry, which is
+      append only and cannot empty, and reconciles the marked rows between the two tables separately.
+
+### 2026-09-05 — BUILD_PLAN.md — cites The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
+Was:  The section was headed "The lazily-resolved attribute, scoped and not started", its opening said
+      "Written up at 3.9(h) and not started. What follows is the scope, the counts and the decision the
+      work waits on", and its last subsection was headed "The decision, which is the operator's" and
+      asked "Before or after phase 4", with the two branches priced and the conservative answer in force
+      until it was answered. The obligations table carried a row raised at 3.8 due at the operator, and
+      the operator's table carried the question "Does a lazily-resolved attribute carry a validity date
+      separate from its lookup instant".
+Now:  The section is headed "The lazily-resolved attribute, corrected with the signal backfill", its
+      opening records that it was decided at the phase 6 plan with the act placed at 6.1, and the last
+      subsection is headed "The decision, taken at the phase 6 plan": the framing expired when phase 4
+      landed, the "after" cost was never incurred because `trade_plan` holds nought rows, the basis is
+      the first session the scan surfaced the name, and the other two candidates are refused by name
+      with their prices kept. The two table rows are removed, so the obligations table falls by one
+      before the four new rows and the operator's by one.
+Why:  The question could no longer be answered as posed. Re-asking it would have opened a register row
+      against a judgement whose price this pass had already established, and the branch it named is
+      still available at the price it was quoted at.
+
+### 2026-09-05 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "None of the twenty-eight rows above fall due at 4.17". The operator's heading read "The eight
+      that are the operator's", the reading beside it read "none of the eight rows is a phase 5
+      question", the history sentence ended at the fetch-window ruling of 2026-09-04, and the paragraph
+      after it read "So this list is what it held before the plan, and the eight that were here
+      throughout are unchanged in every respect including their reasons."
+Now:  "None of the thirty rows above fall due at 4.17". The heading reads eleven, the reading reads
+      "none of the eleven rows", the history sentence gains the fall to seven when the lazily-resolved
+      attribute was decided and the rise to eleven when the phase 6 register opened, and the paragraph
+      says seven of the eight are unchanged and names the eighth and the date it left.
+Why:  Four rows raised as the phase 6 register, one discharged by this pass writing the section, and one
+      taken as a decision. Every count derived from those two tables moves with them, and
+      `stated-counts` derives each from the table it describes.
+
+### 2026-09-05 — ARCHITECTURE.html — cites The twin-pair threshold is reviewed at the first full window rather than at a phase
+Was:  The authored-parameters row for the twin-pair threshold carried "Phase 6" as its review point and
+      the basis cell read "Z-scored over the trailing 250 setups, across the signals shown in the pack".
+Now:  The review point reads "The first full window", and the basis cell says the review point read
+      "Phase 6" until 2026-09-05, that 6.3 cannot meet it because the store cannot fill a 250-setup
+      window, and that 6.3 reports how many setups the window actually held so the condition can be
+      seen approaching.
+Why:  Every other row in that table carries a condition, a never or a named owner. A review point naming
+      a phase is an estimate wearing a schedule's clothes, which is the same fault as an estimate used
+      as a trigger, and this one could not have been met by the checkpoint it named.

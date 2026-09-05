@@ -298,7 +298,7 @@
         "distinct worker verbs the slots run": 27,
         "stages the worker advertises": 34,
         "slots whose verbs RUNBOOK's schedule names": 23,
-      "slots the Core declaration the morning report reads holds": 30
+        "slots the Core declaration the morning report reads holds": 30
       }
     },
     "stated-counts": {
@@ -342,7 +342,17 @@
         "RUNBOOK.md, the nightly call total": 1,
         "ShortSetupDetector, ten checks": 1,
         "The corpus is eight documents": 1,
-        "The move procedure, stated in two documents": 1
+        "The move procedure, stated in two documents": 1,
+        "BUILD_PLAN.md, phase 6's row count": 1,
+        "BUILD_PLAN.md, the questions opened for phase 6, against the record": 1,
+        "BUILD_PLAN.md, the phase 6 questions against the operator's table": 1,
+        "BUILD_PLAN.md, the phase 6 questions that block a checkpoint": 1,
+        "BUILD_PLAN.md, the phase 6 reading's total": 1,
+        "BUILD_PLAN.md, the obligations 6.10 holds": 1,
+        "BUILD_PLAN.md, the obligations 6.1 holds": 1,
+        "BUILD_PLAN.md, the obligations 6.5 holds": 1,
+        "BUILD_PLAN.md, the obligations 6.8 holds": 1,
+        "BUILD_PLAN.md, phase 6's provisional claims": 1
       }
     },
     "store-portability": {
