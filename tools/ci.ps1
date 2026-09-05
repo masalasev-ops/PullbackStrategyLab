@@ -30,6 +30,9 @@ $WorkerProject = Join-Path $RepositoryRoot 'src/PullbackStrategyLab.Worker'
 $env:PullbackStrategyLab__DataRoot = Join-Path $RepositoryRoot 'data/ci'
 $DataRoot = $env:PullbackStrategyLab__DataRoot
 
+. (Join-Path $PSScriptRoot 'shell-provenance.ps1')
+Write-ShellProvenance -Name 'ci'
+
 $script:StepNumber = 0
 
 function Invoke-Step {

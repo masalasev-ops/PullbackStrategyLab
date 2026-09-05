@@ -26,6 +26,8 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
+. (Join-Path $PSScriptRoot 'shell-provenance.ps1')
+
 $repository = Split-Path -Parent $PSScriptRoot
 $logDirectory = Join-Path $repository 'data\live\logs'
 if (-not (Test-Path $logDirectory)) { New-Item -ItemType Directory -Path $logDirectory | Out-Null }
@@ -50,6 +52,10 @@ function Invoke-Native {
 }
 
 Write-Line ("update starting, checkout {0}" -f $repository)
+
+# Which shell and which machine, into the night's own log, on the terms nightly.ps1 writes it: the
+# update and the slots read as one story and both halves of it say what produced them.
+Write-Line (Get-ShellProvenance -Name 'update-nightly')
 
 $before = (Invoke-Native @('git', '-C', $repository, 'rev-parse', '--short', 'HEAD') | Out-String).Trim()
 $branch = (Invoke-Native @('git', '-C', $repository, 'rev-parse', '--abbrev-ref', 'HEAD') | Out-String).Trim()

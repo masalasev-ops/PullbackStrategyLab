@@ -127,6 +127,23 @@ public sealed class TriggerResolver
 
         DateTimeOffset observedAt = run.StartedAt;
 
+        // Past local midnight of the session's own day the read below answers with nothing and
+        // every row this stage would write is one the gate can never see, so a run would record
+        // "no plan was live in this session" over a read it could not make. It refuses instead, and
+        // records the refusal rather than throwing so it reaches the night's log.
+        if (TradeChainWindow.Closed(observedAt, sessionDate, _options.SessionZone) is string closed)
+        {
+            RecordRun(
+                connection, sessionDate, null, 0, 0, 0, 0, 0, 0,
+                RunOutcome.Failed, closed, observedAt);
+
+            RunSummary refused = run.Complete(RunOutcome.Failed);
+
+            return new TriggerRunResult(
+                sessionDate, null, 0, 0, 0, 0, 0, 0,
+                refused.RowsWritten, RunOutcome.Failed, closed);
+        }
+
         // What was resting when this session opened, which is the question `live_session` was stored
         // to answer rather than one derived by stepping a calendar back over a weekend.
         IReadOnlyList<StoredTradePlan> plans =

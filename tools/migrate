@@ -9,4 +9,9 @@
 
 set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# shellcheck source=tools/shell-provenance.sh
+. "$repository_root/tools/shell-provenance.sh"
+shell_provenance migrate
+
 exec dotnet run --project "$repository_root/src/PullbackStrategyLab.Worker" -- migrate "$@"

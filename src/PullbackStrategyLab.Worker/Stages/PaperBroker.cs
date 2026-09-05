@@ -117,6 +117,14 @@ public sealed class PaperBroker
         DateTimeOffset observedAt = run.StartedAt;
         var tally = new Tally();
 
+        // Past local midnight of the session's own day the order read answers with nothing, so a
+        // run would record "no order was placed in this session" over a read it could not make. It
+        // refuses, recorded rather than thrown, on the terms the two stages above it do.
+        if (TradeChainWindow.Closed(observedAt, sessionDate, _options.SessionZone) is string closed)
+        {
+            return Complete(connection, run, sessionDate, tally, RunOutcome.Failed, closed, observedAt);
+        }
+
         // The book coming into the session, reported and not walked. It is what the caps saw at
         // 21:10 and it belongs on the night's row; nothing here can change it, because a position
         // opened before this session ends by a rule this stage does not run.

@@ -29,6 +29,10 @@ PullbackStrategyLab__DataRoot="$repository_root/data/ci"
 export PullbackStrategyLab__DataRoot
 data_root="$PullbackStrategyLab__DataRoot"
 
+# shellcheck source=tools/shell-provenance.sh
+. "$repository_root/tools/shell-provenance.sh"
+shell_provenance ci
+
 step_number=0
 
 step() {

@@ -29,6 +29,33 @@ public static class ScanSpans
     public const int MonthSessions = 20;
 
     /// <summary>
+    /// How many sessions back the furthest anchor any scan can produce sits, which is the width of
+    /// minutes the fetch has to buy for every anchor to be reachable.
+    ///
+    /// <b>Derived here rather than stated as twenty-seven, because it is a consequence of the two
+    /// numbers above it and the pullback's own length.</b> A swing sits the thrust span plus the
+    /// pullback back from the session that flagged it, so the day scans put it
+    /// <see cref="DaySessions"/> plus seven back and the month scans
+    /// <see cref="MonthSessions"/> plus seven, being 8 and 27. Twenty-seven reaches both families.
+    /// Writing the figure as a literal would let the pullback's maximum move and leave the fetch
+    /// buying a window that no longer covers the geometry, which is a shortfall nothing downstream
+    /// could see: the anchored level would simply be absent for the names it stopped reaching.
+    ///
+    /// <b>Eight was refused, and the reason is the pooling rule.</b> It reaches the day families
+    /// only, so a night would carry short rows running the full disjunction beside short rows that
+    /// cannot, which is a population split inside one count and a seam in the middle of the twenty
+    /// sessions rather than before them.
+    /// see: The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
+    /// see: Long and short are never pooled into one figure
+    ///
+    /// It lives in Core beside the spans it is computed from, and not on the stage that buys the
+    /// window, because the read surface reports the width a night ran at against it and
+    /// <c>api-isolation</c> forbids the read surface a path to the Worker.
+    /// </summary>
+    public static int AnchorWindowSessions =>
+        Math.Max(DaySessions, MonthSessions) + Detection.LongPullbackRules.MaximumPullbackBars;
+
+    /// <summary>
     /// The span a scan's thrust covers, in sessions.
     ///
     /// Throws on a name it does not know rather than defaulting to one session. A scan added later

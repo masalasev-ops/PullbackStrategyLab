@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 
@@ -66,7 +67,8 @@ public static class LabNight
                 slot.At,
                 slot.InsideTheSession,
                 slot.LeavesNoRunEntry,
-                stages));
+                stages,
+                Bought(connection, slot, asOf, sessionZone)));
         }
 
         // Every stage that ran and belongs to no slot of this session. Counted rather than dropped:
@@ -87,6 +89,50 @@ public static class LabNight
             slots.Count(s => s.IsUnobservable),
             unscheduled);
     }
+
+    /// <summary>
+    /// What the one unrecoverable buy of the night actually bought, or null for every other slot.
+    ///
+    /// <b>The row existed and nothing read it.</b> `intraday_fetch` recorded 92 names asked, 92
+    /// answered with nothing and 0 bars written on the night of 2026-09-04, and
+    /// <c>IntradayBarReader.LatestFetch</c> was the only reader of that table and had no caller
+    /// outside the suite. So the honest counts were written down every night and reached nobody,
+    /// which is the sixth failure shape from the other end: not an answer a surface dropped, but an
+    /// answer no surface ever asked for.
+    ///
+    /// It is the intraday slot alone rather than a figure per slot. Every other stage's outcome
+    /// says what it did; this is the one whose "clean" was compatible with having bought nothing,
+    /// and it is the one whose miss cannot be bought back at any price.
+    /// </summary>
+    private static FetchResponse? Bought(
+        SqliteConnection connection, NightSlot slot, DateOnly asOf, string sessionZone)
+    {
+        if (!string.Equals(slot.Slot, IntradaySlot, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        StoredIntradayFetch? fetch = IntradayBarReader.LatestFetch(connection, asOf, asOf, sessionZone);
+
+        return fetch is null
+            ? null
+            : new FetchResponse(
+                fetch.Requested,
+                fetch.Fetched,
+                fetch.Empty,
+                fetch.BarsWritten,
+                fetch.Stored,
+                fetch.WindowSessions,
+                ScanSpans.AnchorWindowSessions);
+    }
+
+    /// <summary>
+    /// The slot whose buy is unrecoverable, named once here rather than spelled at each use.
+    ///
+    /// It matches <c>NightlySchedule</c>'s own slot name, which <c>slot-roster</c> reconciles
+    /// against the dispatcher, the worker's advertised stages and RUNBOOK in every direction.
+    /// </summary>
+    public const string IntradaySlot = "intraday";
 
     private static StageResponse Stage(
         string stage, NightSlot slot, IReadOnlyDictionary<string, StageRun> ran)
@@ -142,7 +188,8 @@ public sealed record SlotResponse(
     string At,
     bool InsideTheSession,
     string? Unobservable,
-    IReadOnlyList<StageResponse> Stages)
+    IReadOnlyList<StageResponse> Stages,
+    FetchResponse? Bought = null)
 {
     /// <summary>Whether every stage of the slot ran and ended cleanly.</summary>
     public bool Ran =>
@@ -174,3 +221,24 @@ public sealed record StageResponse(
     string? Outcome,
     int CallsUsed,
     string? Unobservable);
+
+/// <summary>
+/// What the night's unrecoverable buy actually bought, read from the row the fetch wrote.
+///
+/// <b>Five numbers rather than a verdict, because the verdict is the thing that was wrong.</b> The
+/// stage's outcome now turns on <paramref name="Stored"/>, and this reports the counts it turned on
+/// so a reader can see the arithmetic rather than take the word for it.
+///
+/// <paramref name="WindowSessions"/> against <paramref name="WindowAsks"/> is the second half, and
+/// it is on the screen for a reason no other slot has: short's twenty-session count starts on the
+/// first night the fetch runs at the full anchor window, so a night at a narrower one is a permanent
+/// forfeit rather than a delay, and the morning it happens is the only time anyone can act on it.
+/// </summary>
+public sealed record FetchResponse(
+    int Requested,
+    int Fetched,
+    int Empty,
+    int BarsWritten,
+    int Stored,
+    int WindowSessions,
+    int WindowAsks);

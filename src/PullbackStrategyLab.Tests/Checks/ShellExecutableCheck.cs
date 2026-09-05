@@ -27,6 +27,62 @@ public sealed class ShellExecutableCheck
         ["tools/ci.sh", "tools/migrate", "tools/snapshot-db", "tools/verify-phase"];
 
     /// <summary>
+    /// Every entry point in `tools/`, with the name it reports itself under, and whether it is a
+    /// bash script or a PowerShell one.
+    ///
+    /// <b>A green states what produced it, and until 6.10 no script said it of itself.</b> The
+    /// mechanism is that a gate can return success without executing: an extensionless bash script
+    /// called by name from PowerShell writes nothing, leaves <c>$LASTEXITCODE</c> unset and leaves
+    /// <c>$?</c> true, so a gate that never ran is indistinguishable from one that passed. A line
+    /// naming the shell and the host is what turns a transcript from "it was green" into "it was
+    /// green under this interpreter, on this machine", and it is what a session reading an old log
+    /// has instead of a column in CLAUDE.md.
+    ///
+    /// The list is here rather than derived, because the property is that each of these announces
+    /// itself and a derived list would go quiet exactly when one stopped being an entry point.
+    /// Both directions are reconciled below against the files on disk, so a new one cannot be
+    /// forgotten and a removed one cannot linger.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> Announcing { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["tools/ci.sh"] = "ci",
+            ["tools/ci.ps1"] = "ci",
+            ["tools/verify-phase"] = "verify-phase",
+            ["tools/verify-phase.ps1"] = "verify-phase",
+            ["tools/migrate"] = "migrate",
+            ["tools/migrate.ps1"] = "migrate",
+            ["tools/snapshot-db"] = "snapshot-db",
+            ["tools/snapshot-db.ps1"] = "snapshot-db",
+            ["tools/nightly.ps1"] = "nightly",
+            ["tools/update-nightly.ps1"] = "update-nightly",
+        };
+
+    /// <summary>
+    /// Entry-point-shaped files that deliberately announce nothing, with the reason each does not.
+    ///
+    /// <c>slot-log-verdict.ps1</c> is a predicate whose standard output the two runner jobs parse,
+    /// not a command an operator runs, and a provenance line in its output would be read as a
+    /// verdict. It is named here rather than left off the list, because a file that is silent for
+    /// a reason and a file nobody got to are the same silence otherwise.
+    ///
+    /// <c>shell-provenance.ps1</c> and <c>shell-provenance.sh</c> are what the others announce
+    /// through. Neither is executed; both are sourced.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> NotAnnouncing { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["tools/slot-log-verdict.ps1"] =
+                "a predicate whose standard output the two runner jobs parse, rather than a command "
+                + "an operator runs. A provenance line in its output would be read as a verdict",
+            ["tools/shell-provenance.ps1"] = "the thing the PowerShell entry points announce through, sourced and never run",
+            ["tools/shell-provenance.sh"] = "the thing the bash entry points announce through, sourced and never run",
+            ["tools/derive-indicators.py"] = "a hand-run verification aid that nothing invokes",
+            ["tools/derive-authored-parameters.py"] = "a hand-run verification aid that nothing invokes",
+            ["tools/derive-minimum-sample.py"] = "a hand-run verification aid that nothing invokes",
+        };
+
+    /// <summary>
     /// Files under `tools/` that carry a shebang and are deliberately not entry points, with the
     /// reason each is not one.
     ///
@@ -104,7 +160,70 @@ public sealed class ShellExecutableCheck
                 .Where(f => !NotEntryPoints.ContainsKey(f)),
         ];
 
+        // Every entry point announces its shell and its host, and the list of which do is
+        // reconciled in both directions against the files on disk. One direction alone is the
+        // shape this check already learned once: reading a hand-named list and never asking the
+        // directory reports nothing when it is the list that is short.
+        var silent = new List<string>();
+
+        foreach ((string file, string announces) in Announcing)
+        {
+            string path = Path.Combine(RepositoryLayout.Root, file.Replace('/', Path.DirectorySeparatorChar));
+
+            if (!File.Exists(path))
+            {
+                silent.Add($"{file} is on the announcing list and does not exist.");
+                continue;
+            }
+
+            string text = File.ReadAllText(path);
+            bool bash = !file.EndsWith(".ps1", StringComparison.Ordinal);
+
+            bool sources = bash
+                ? text.Contains("shell-provenance.sh", StringComparison.Ordinal)
+                : text.Contains("shell-provenance.ps1", StringComparison.Ordinal);
+
+            bool announcesItself = bash
+                ? text.Contains($"shell_provenance {announces}", StringComparison.Ordinal)
+                : text.Contains($"-Name '{announces}'", StringComparison.Ordinal);
+
+            if (!sources || !announcesItself)
+            {
+                silent.Add(
+                    $"{file} does not announce itself as '{announces}': "
+                    + (sources ? "it takes the provenance helper" : "it does not take the provenance helper")
+                    + ", and "
+                    + (announcesItself ? "it makes the call" : "it makes no call naming itself")
+                    + ".");
+            }
+        }
+
+        // The other direction. Anything under tools/ that is a script and is on neither list is a
+        // file nothing says anything about, which is how the four bash cells stayed unrepaired
+        // through the whole of 3.14: the repair named one of them and nothing asked about the rest.
+        string[] unannounced =
+        [
+            .. Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Root, "tools"))
+                .Select(f => "tools/" + Path.GetFileName(f))
+                .Where(f => !Announcing.ContainsKey(f))
+                .Where(f => !NotAnnouncing.ContainsKey(f))
+                .Order(StringComparer.Ordinal),
+        ];
+
         coverage.Examined("shell entry points checked against their recorded mode", EntryPoints.Length);
+        coverage.Examined("entry points asserted to announce their shell and host", Announcing.Count);
+        // Context and not a floor: how many files sit under tools/ is a fact about the corpus that
+        // grows with it, and summing it with the scope above would let a new helper pay for an
+        // entry point that stopped announcing. The property is the line above; this is the size of
+        // the thing it was reconciled against.
+        coverage.Context("files under tools reconciled against the two lists",
+            unannounced.Length + Announcing.Count + NotAnnouncing.Count);
+        coverage.OutOfScope(
+            "of those, the ones that deliberately announce nothing",
+            NotAnnouncing.Count,
+            CheckCoverage.OutOfScopeReason.ByDesign(
+                "each is a predicate, a sourced helper or a hand-run aid, named with the reason: "
+                + string.Join("; ", NotAnnouncing.Select(e => $"{e.Key}, {e.Value}"))));
         coverage.Examined("files under tools that carry a shebang", claiming.Length);
         coverage.OutOfScope(
             "of those, the ones that are deliberately not entry points",
@@ -122,6 +241,19 @@ public sealed class ShellExecutableCheck
             + "they are entry points and nothing asserts their recorded mode: "
             + string.Join(", ", unplaced)
             + ". Add each to EntryPoints, or to NotEntryPoints with why it is not one.");
+
+        Assert.True(unannounced.Length == 0,
+            "These files under tools/ are on neither announcing list, so nothing says whether they "
+            + "report the shell and host they ran under: "
+            + string.Join(", ", unannounced)
+            + ". Add each to Announcing with the name it reports itself under, or to NotAnnouncing "
+            + "with why it announces nothing.");
+
+        Assert.True(silent.Count == 0,
+            $"{silent.Count} entry point(s) do not state what produced their output:\n  "
+            + string.Join("\n  ", silent)
+            + "\n  A gate can return success without executing, and a run that does not name its "
+            + "interpreter cannot be told from one that did.");
 
         Assert.True(wrong.Count == 0,
             $"{wrong.Count} shell entry point(s) are not recorded executable:\n  "

@@ -159,6 +159,9 @@
     },
     "pinned-constants": {
       "scopes": {
+        "DECISIONS.md, the intraday fetch's anchor window": 1,
+        "ARCHITECTURE.html, the anchor window at the clause that reads it": 1,
+        "BUILD_PLAN.md, the anchor window at the checkpoint that buys it": 1,
         "ARCHITECTURE.html, authored parameters, Assumed borrow cost": 1,
         "ARCHITECTURE.html, authored parameters, Cluster threshold": 1,
         "ARCHITECTURE.html, authored parameters, Concurrent positions": 1,
@@ -282,8 +285,12 @@
     "shell-executable": {
       "scopes": {
         "shell entry points checked against their recorded mode": 4,
+        "entry points asserted to announce their shell and host": 10,
         "files under tools that carry a shebang": 6
-      }
+      },
+      "context": [
+        "files under tools reconciled against the two lists"
+      ]
     },
     "slot-diagnostics": {
       "scopes": {

@@ -111,6 +111,18 @@ public sealed class RiskGate
 
         DateTimeOffset observedAt = run.StartedAt;
 
+        // Past local midnight of the session's own day every read below answers with nothing, so a
+        // run here would record "no plan resting in this session was touched" over a read it could
+        // not make. It refuses instead, and the refusal is a failed run rather than an exception so
+        // it reaches the night's log and the morning screen.
+        if (TradeChainWindow.Closed(observedAt, sessionDate, _options.SessionZone) is string closed)
+        {
+            RecordRun(connection, sessionDate, new Tally(), RunOutcome.Failed, closed, observedAt);
+            RunSummary refused = run.Complete(RunOutcome.Failed);
+
+            return new OrderRunResult(sessionDate, 0, new Tally(), refused.RowsWritten, RunOutcome.Failed, closed);
+        }
+
         // Earliest trigger first, ticker breaking a tie, which is the reader's own order and is the
         // order the caps have to be applied in.
         IReadOnlyList<StoredTriggerResolution> resolutions =
