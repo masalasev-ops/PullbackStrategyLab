@@ -866,6 +866,23 @@ Adding a signal makes every other signal marginally harder to claim. Statistical
 **Every line of code runs unmodified on Windows and on Apple Silicon macOS**
 Development happens on Windows today and moves to macOS. Both are case-insensitive filesystems and both name timezones differently from Linux, so the two machines agree with each other and are capable of being wrong in the same way at the same time. The CI matrix catches it only after the code is written, so the constraint is stated in the hard rules where a session reads before writing. Anything platform-specific lives behind an abstraction or outside the application entirely: scheduling is the operating system's job, not the application's.
 
+**The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width**
+Ruled by the operator on 2026-09-04, closing the question raised at 4.4 and repointed to them at 4.5. `IntradayFetcher` buys one session as built; it buys the twenty-seven sessions ending at the flagged session instead.
+
+**Twenty-seven is the width at which every anchor is reachable, and the boundary is derived rather than chosen.** A swing sits the thrust span plus the two-to-seven-bar pullback back, so `gainer` and `gapper` put it 3 to 8 sessions back and `leader` and `laggard` 22 to 27. Twenty-seven reaches both scan families, so a name whose window is filled is anchorable whichever scan flagged it.
+
+**Eight was refused for the reason the tight-set reach was refused, reversed.** It reaches the `gainer` and `gapper` families only, so nights would carry short rows running the full disjunction beside short rows that cannot, which is a population split inside one count. That puts a seam in the middle of the twenty sessions rather than before them, and a count whose population changes partway is not a count (see: Long and short are never pooled into one figure).
+
+**The vendor's 120-day maximum was refused as history behind the anchor that nothing reads.** No component looks further back than the swing, so the extra 2.3 to 4.4 million rows buy nothing the twenty-seven does not already give.
+
+**The cost is measured rather than estimated, and how it was measured is part of the decision.** 1.14 to 2.15 million rows on the first fill across 44 to 83 flagged names, at **272 bytes a row**, being **310 to 585 MB**. The window is a one-off per name, because `IntradayBarReader.IsStoredUnchanged` writes nothing for a bar the store already holds unchanged, so after a name's window is filled that name costs one session a night. The byte figure was measured on 2026-09-04 against the shipped `intraday_bar` schema with its three indexes, VACUUMed, at the 959 bars per name per session the probe of 2026-09-01 established, rather than over a populated table, because `intraday_bar` held nought rows on the day it was taken. The method was validated by rebuilding 300,000 real `daily_bar` rows the same way at 152.3 bytes a row, which predicts 363 MB of a 451 MB live store consistently.
+
+**No option costs a vendor call more than another**, the vendor charging per request rather than per session, which is why this was a question about the operator's disk and not about the daily call ceiling that CLAUDE.md's hard rules bound.
+
+**Short's twenty-session count starts on the first night the fetch runs at twenty-seven sessions, not on the night the code lands.** The two are different dates and reading the second as the first would start the count on a commit.
+
+**What the delay costs is a forfeit and not a wait, and it is the lab's own rule that charges it.** A minute bar is admitted by when it was observed and not by which session it covers: every read is bounded at `observed_at <= EndOfSession(asOf)` and `VwapEngine` passes the setup's own session. Minutes bought on the night a name is flagged are admissible for that night's setups; the same minutes bought a week later are invisible to them for ever. The vendor sells 120 days and would sell them, and the corpus will not accept them late. That is the point-in-time hard rule costing the evidence, and it is worth stating in those terms rather than leaving it to read as a vendor limit.
+
 **Averages are computed locally, never through the vendor's technical endpoint**
 About 45,000 calls a day for arithmetic that is one recursive loop over data already stored.
 

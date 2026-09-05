@@ -2432,3 +2432,18 @@ Now:  "None of the twenty-five rows above fall due at 4.17"
 Why:  One row raised, being the silent green a gate returns when the shell cannot run it. The sentence
       is the one place the obligations table's total is stated and `stated-counts` derives it from the
       table's own rows.
+
+### 2026-09-04 — BUILD_PLAN.md — cites The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
+Was:  The 4.4 obligation row read "The anchored clause is built and has nothing to read", ended
+      "Listed with the others below rather than discharged, because the count that has not started
+      still has not started", and fell due at the operator. The operator's section was headed "### The
+      nine that are the operator's", its reading read "none of the nine rows is a phase 5 question",
+      its table carried a 4.4 row for the fetch window, and its history sentence ended "and eight by
+      the end of that day, when question 6 was answered."
+Now:  The row records the ruling, the width and its two refusals, the measured cost, and the work half
+      due at the phase 6 plan. The heading reads eight, the reading reads "none of the eight rows",
+      the fetch-window row is gone from the operator's table, and the history sentence gains the two
+      movements of 2026-09-04, being 3.3's fourth return and this ruling.
+Why:  The operator ruled the fetch window on 2026-09-04 with the measured figures in front of them, so
+      the judgement half closes and leaves a build half. A question answered is a row that leaves the
+      operator's table, and every count derived from that table moves with it.
