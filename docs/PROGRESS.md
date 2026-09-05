@@ -16113,3 +16113,85 @@ Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 s
             the tail of `run_log`. **No write, no migration, no stage, no vendor call**, and the
             300,000 `daily_bar` rows used for the validation were copied out to a scratch file rather
             than measured in place.
+
+## 5.7 — 2026-09-05 — phase-5-7-holiday — Monday is Labor Day, and the first cost of authoring no calendar lands on a reader
+
+**Not a checkpoint entry.** It belongs to 5.7, which has landed. Two documents, no code, no test
+count and no ruling changes. A record is corrected by a new dated entry naming what it corrects, so
+the fetch-window entry above stands exactly as it was merged.
+
+Corrects:   **The fetch-window entry names Monday 2026-09-07 twice with no note that Monday is
+            closed.** It opens "`IntradayFetcher` is not changed by this entry, on the operator's
+            instruction that it is written on Monday", and its `Carried` block says the work half is
+            "scheduled by the operator for **Monday 2026-09-07**". Monday is Labor Day. The American
+            exchanges do not open, no session exists, and nothing is flagged that night.
+
+            **The write is still Monday and that part is unchanged.** Code is written on a holiday
+            like any other day. What was wrong is everything a reader would infer about the night
+            attached to it. **The next session-bearing night is Tuesday 2026-09-08**, so the width has
+            a day of margin rather than landing on the deadline, and **Saturday, Sunday and Monday
+            forfeit nothing**, because a forfeit needs a flagged name and those three nights flag
+            none. The 75 forfeited on 2026-09-04 stand; the next night that can add to them is
+            Tuesday.
+
+            **The sentence about the count survives untouched, and the reason it survives is the
+            reason it was written that way.** "Short's twenty-session count starts on the first night
+            the fetch runs at twenty-seven sessions, not on the night the code lands" names a night
+            and not a date, so a holiday cannot falsify it. What this entry adds is that the earliest
+            such night is Tuesday 2026-09-08. `DECISIONS.md` needed no edit for the same reason: the
+            decision names nights throughout and never a date.
+
+            **Where the date came from, which is the part worth naming.** The operator's prompt said
+            Monday, and it was written into a `BUILD_PLAN.md` row, a named decision and a merged
+            record without being checked against a calendar once. It was not inferred, derived or
+            computed; it was copied. **The corpus refuses to author a holiday list on purpose** (see:
+            A session is a date the store holds minutes for, and no calendar is authored here), on the
+            grounds that thirty hand-written lines would be wrong silently in some future year, and
+            that refusal is right and is not reopened here. **What it does is move the cost of knowing
+            the calendar off the stages and onto whoever writes a date**, and this is the first
+            occasion that cost has landed. Every previous instance landed on a stage, where the
+            decision put it deliberately: a plan resting in a session with no minutes resolves
+            `unresolvable` and the run reports partial, which needs no calendar at all. A sentence in
+            a record has no such fallback, and nothing in this corpus reads a date and asks what day
+            it is.
+
+Raised:     **The lab has never run through a market holiday and Monday is the first**, due at
+            2026-09-08. Every session `daily_bar` holds is a normal trading day, 2026-08-26 through
+            2026-09-04, and the thirty-two tasks are registered Monday to Friday, so every slot fires
+            on Labor Day against a weekday the market did not open.
+
+            **What is covered is a plan and what is not covered is everything before one.** 4.5's
+            decision answers a plan resting in a session the store holds no minute for. `universe-build`,
+            `daily-bars`, `indicators` and the two detectors have no observed behaviour on a
+            non-session weekday, because none has occurred in this lab's life. **`universe-build` is
+            the one the row names first**: it reads the vendor's symbol list at run time, writes the
+            snapshot, and is never rerun for a past date, so whatever it writes on Monday is what the
+            record will permanently say was listed on a day that did not trade.
+
+            **The action is to read.** Monday's slot logs and `run_log` are read on Tuesday and what
+            each stage did is recorded per stage, before anything is proposed. **Nothing is changed on
+            Monday and no stage is altered in anticipation**, because a guard written against a night
+            nobody has watched is a guess with a commit behind it, and the corpus has a name for
+            asserting over a subject nobody looked at.
+
+            **It is the seventh failure shape by construction.** The subject is the running lab, no
+            check in this corpus reaches it, and the one place it will be written down is a night's
+            own log, which is exactly what was true of the two nights lost on 2026-09-01 and
+            2026-09-02.
+
+Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5, 141 claims, 127 passed, 0 failed, 14 out of
+            scope, 0 unexamined. Both run in PowerShell.
+
+            **The holiday itself is verified by nothing in this repository, which is the row's point.**
+            That Monday 2026-09-07 is Labor Day is a fact about the American calendar, and this corpus
+            deliberately holds no calendar to check it against. It is stated here on the operator's
+            word and on the arithmetic that Labor Day is the first Monday in September.
+
+Carried:    **One raised, at 2026-09-08, and nothing repointed and nothing discharged.** The
+            obligations table reads twenty-six, and the sentence stating that total is edited with its
+            prior text in `CHANGELOG.md`, as is the 4.4 row's work half. **The eight at the operator are
+            unchanged**, this row being due at a reading rather than at a judgement.
+
+            **Nothing to run against the live store**, and nothing is to be run on Monday. The reading
+            due on Tuesday is of logs and `run_log`, which is a read.
