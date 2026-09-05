@@ -2447,3 +2447,16 @@ Now:  The row records the ruling, the width and its two refusals, the measured c
 Why:  The operator ruled the fetch window on 2026-09-04 with the measured figures in front of them, so
       the judgement half closes and leaves a build half. A question answered is a row that leaves the
       operator's table, and every count derived from that table moves with it.
+
+### 2026-09-05 — BUILD_PLAN.md — cites A session is a date the store holds minutes for, and no calendar is authored here
+Was:  The 4.4 row's work half read "which the operator scheduled for Monday 2026-09-07 and which no
+      checkpoint owns because none exists for it yet", and said nothing about what Monday is. The
+      obligations section's 4.17 line read "None of the twenty-five rows above".
+Now:  The work half adds that Monday is Labor Day and carries no session, that the first night the
+      width can matter is Tuesday 2026-09-08, and that the weekend and Monday forfeit nothing because
+      nothing is flagged on them. One row is raised, being that the lab has never run through a market
+      holiday and Monday is the first, so the line reads twenty-six.
+Why:  The date was taken from the operator's prompt and written into a row and a decision without
+      being checked against the calendar. The cited decision is the one that refuses to author a
+      holiday list, which is right and is why no stage could catch this: the refusal moves the cost
+      onto whoever reads a date, and this is the first time it landed on a person rather than a stage.
