@@ -14,7 +14,10 @@ public sealed class SystemClock : IClock
         TimeZoneInfo.ConvertTime(instant, SessionBoundaries.Zone(ianaZoneId));
 
     public DateOnly SessionDate(DateTimeOffset instant, string ianaZoneId) =>
-        DateOnly.FromDateTime(ToZone(instant, ianaZoneId).DateTime);
+        // Delegated for the reason SessionBoundary below is: the arithmetic is a pure function of
+        // its arguments, a stage converting an instant it was handed needs it without holding a
+        // clock, and one spelling of a session's calendar day is the whole point of the abstraction.
+        SessionBoundaries.SessionDateOf(instant, ianaZoneId);
 
     public DateTimeOffset SessionBoundary(DateOnly sessionDate, TimeOnly localTime, string ianaZoneId) =>
         // Delegated rather than implemented here. The arithmetic is a pure function of its

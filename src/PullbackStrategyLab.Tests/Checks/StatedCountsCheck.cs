@@ -687,11 +687,26 @@ public sealed partial class StatedCountsCheck
                 $"BUILD_PLAN.md's phase 6 row for {checkpoint} no longer states how many obligations fall due "
                 + "at it in the sentence this claim reads it from.");
 
+            // Open rows plus discharged ones, and the sum is the claim rather than either half.
+            //
+            // <b>Counting the live table alone is a route that empties as the work completes</b>,
+            // which is the exact defect the phase 6 planning pass was written to correct one level
+            // up: phase 5's register derived its count from a phrase on live rows, the last row
+            // carrying it left the table when the last question closed, and the count read nought
+            // against a sentence saying nine. This claim had the same shape and 6.10 was the first
+            // checkpoint to reach it. A discharged obligation still fell due where it fell due, so
+            // the honest denominator is every row that ever did, and a discharge moves a row from
+            // one table to the other without moving the figure.
+            int stillOpen = obligations.Count(
+                r => r.Count > 2 && r[2].Trim().Equals(checkpoint, StringComparison.Ordinal));
+            int discharged = DischargedAt(buildPlan, checkpoint);
+
             claims.Add(new Claim(
                 $"BUILD_PLAN.md, the obligations {checkpoint} holds",
                 FromWordsOrFail(due.Groups["n"].Value),
-                obligations.Count(r => r.Count > 2 && r[2].Trim().Equals(checkpoint, StringComparison.Ordinal)),
-                $"rows of the carried obligations table falling due at {checkpoint}, {what}"));
+                stillOpen + discharged,
+                $"rows of the carried obligations table falling due at {checkpoint}, {what}, "
+                + $"being {stillOpen} still open and {discharged} recorded as discharged"));
         }
 
         // The provisional claims, whose length is the figure and whose rows are the list 6.9 reads
@@ -877,6 +892,37 @@ public sealed partial class StatedCountsCheck
 
     private static int KindCount(IReadOnlyList<IReadOnlyList<string>> rows, string kind) =>
         rows.Count(r => r.Count > 1 && string.Equals(r[1], kind, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// How many obligations a checkpoint discharged, read from its own "What the N due at X were"
+    /// section, or nought where it has none.
+    ///
+    /// The heading is matched on its due point rather than on its count, because the count is the
+    /// thing being derived and reading it out of the heading would compare a number against itself.
+    /// </summary>
+    private static int DischargedAt(string buildPlan, string checkpoint)
+    {
+        Match heading = Regex.Match(
+            buildPlan,
+            @"^### What the [a-z-]+ due at " + Regex.Escape(checkpoint) + @" (?:were|was)\s*$",
+            RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+        if (!heading.Success)
+        {
+            return 0;
+        }
+
+        int start = heading.Index;
+        Match next = Regex.Match(
+            buildPlan[(start + heading.Length)..], @"^#{2,3} ",
+            RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+        string section = next.Success
+            ? buildPlan[start..(start + heading.Length + next.Index)]
+            : buildPlan[start..];
+
+        return MarkdownTable.BodyRowsAfter(section, "| Raised |").Count;
+    }
 
     private static string Between(string text, string from, string to)
     {

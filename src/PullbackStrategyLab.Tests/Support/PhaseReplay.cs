@@ -567,6 +567,16 @@ public sealed class PhaseReplay : IDisposable
         Record("intraday.barsWritten", minutes.BarsWritten);
         Record("intraday.pairedWithPriorSession", minutes.SetupAsOf is null ? 0 : 1);
 
+        // 6.10's two, and over this fixture they are the figures that separate the two shapes of
+        // nothing. A night that asked for nothing bought no window at all and is clean; a night
+        // that asked and was answered with no minutes spent its calls and is partial. This fixture
+        // is the first shape, so the width is nought and the outcome is clean, and both are the
+        // right answer rather than an absence. A fixture that grows a second session moves the
+        // width to what the store then holds and moves nothing else here.
+        Record("intraday.windowSessions", minutes.WindowSessions);
+        Record("intraday.stored", minutes.Stored);
+        Record("intraday.clean", minutes.Outcome == RunOutcome.Clean ? 1 : 0);
+
         // 15c. The spreads, which run inside the session rather than after it and carry the same
         //      offset as the minute bars. Over this fixture the pass asks for nothing for exactly
         //      the reason the fetch above does: one market day, setups flagged on it, no earlier

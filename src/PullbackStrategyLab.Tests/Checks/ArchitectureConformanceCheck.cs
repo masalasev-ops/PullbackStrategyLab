@@ -742,6 +742,18 @@ public sealed partial class ArchitectureConformanceCheck
                     + "RunLoggerTests.A_stage_stops_at_the_ceiling_and_completes_partial_rather_than_overrunning, "
                     + "and the scan asks only that the run scope still exposes what is left and that both "
                     + "detectors still call the reader"))
+            .Scan("Failure behaviour: Intraday prices unavailable for a day",
+                CheckCoverage.Backing.Test(
+                    "IntradayFetcherTests.A_night_that_spends_calls_and_is_answered_with_no_minutes_is_partial_and_says_so",
+                    "the night of 2026-09-04 as an authored case: every name answers with nothing, the calls "
+                    + "are spent, and the row is read back partial with the reason on it. Added when the scan "
+                    + "alone was found to have passed on the night its own condition occurred, all three of its "
+                    + "substrings being present while the outcome was computed from the call ceiling and "
+                    + "ignored every count they stood for. Beside it "
+                    + "A_rerun_that_writes_nothing_because_the_store_already_holds_it_is_clean is the case that "
+                    + "rules out the obvious implementation, and "
+                    + "A_night_that_asked_for_nothing_stays_clean_and_records_a_window_of_nought is the other "
+                    + "shape of nothing the rule deliberately does not reach"))
             .Scan("Failure behaviour: A spread snapshot is missed",
                 CheckCoverage.Backing.Test(
                     "SpreadSnapshotterTests.A_session_nobody_sampled_refuses_rather_than_answering_with_nothing",
@@ -1818,14 +1830,44 @@ public sealed partial class ArchitectureConformanceCheck
             && Core.Trading.BorrowAssumption.AnnualisedRate == 0.010m;
     }
 
+    /// <summary>
+    /// The intraday failure row, and the reason it is no longer three substrings.
+    ///
+    /// <b>The old form passed on the night its own condition occurred.</b> It asked whether the
+    /// stage counted an empty name, wrote a fetch row and recorded the asked count beside the
+    /// answered one, and all three were true on 2026-09-04 when the stage asked 92 names, was
+    /// answered by all 92 with nothing, spent 460 calls and recorded the night clean with no
+    /// reason. Every count on that row was correct. What was missing is that nothing depended on
+    /// them: the outcome was computed from the call ceiling alone, so a claim about counting was
+    /// satisfied by a stage that counted and then ignored what it counted. That is a claim about
+    /// the instrument rather than about the behaviour.
+    ///
+    /// So the decision itself is exercised rather than scanned. <c>NothingBought</c> is the whole
+    /// of the rule and it is called here over the three populations that separate the two shapes of
+    /// nothing, which is a claim no rewriting of the stage's text can satisfy without the rule
+    /// still being there. The scan keeps only what a scan can hold, being that the stage still
+    /// counts an empty name and still writes a row on every path, and the behavioural half is
+    /// named in this check's coverage against the tests that run the stage.
+    /// </summary>
     private static bool TheFetchCountsWhatItCouldNotGet()
     {
         string fetcher = RepositoryLayout.Read(
             Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "IntradayFetcher.cs"));
 
-        return fetcher.Contains("empties++", StringComparison.Ordinal)
+        bool stillCountsAndRecords =
+            fetcher.Contains("empties++", StringComparison.Ordinal)
             && fetcher.Contains("RecordFetch(", StringComparison.Ordinal)
             && fetcher.Contains("names.Count, fetched, empties", StringComparison.Ordinal);
+
+        // A night that asked and was answered with nothing is a shortfall and says so; a night that
+        // asked for nothing is not; and a night that stored something is not. Run rather than read.
+        bool theOutcomeTurnsOnIt =
+            PullbackStrategyLab.Worker.Stages.IntradayFetcher.NothingBought(fetched: 92, stored: 0)
+                == PullbackStrategyLab.Worker.Stages.IntradayFetcher.BoughtNothing
+            && PullbackStrategyLab.Worker.Stages.IntradayFetcher.NothingBought(fetched: 0, stored: 0) is null
+            && PullbackStrategyLab.Worker.Stages.IntradayFetcher.NothingBought(fetched: 92, stored: 1) is null;
+
+        return stillCountsAndRecords && theOutcomeTurnsOnIt;
     }
 
     /// <summary>

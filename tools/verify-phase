@@ -24,6 +24,10 @@ worker_project="$repository_root/src/PullbackStrategyLab.Worker"
 : "${PullbackStrategyLab__DataRoot:=$repository_root/data/verify}"
 export PullbackStrategyLab__DataRoot
 
+# shellcheck source=tools/shell-provenance.sh
+. "$repository_root/tools/shell-provenance.sh"
+shell_provenance verify-phase
+
 printf '\n== 1 build\n'
 if ! dotnet build "$solution" --nologo; then
     printf 'verify-phase: the build failed, so there is nothing to report on.\n' >&2

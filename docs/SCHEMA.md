@@ -170,13 +170,21 @@ Grain: session + observation. Phase 4. What one night's fetch did, written whate
 | `session_date` | TEXT. The session the bars are for, not the evening the fetch ran on |
 | `setup_as_of` | TEXT. The session whose setups those bars resolve, always strictly earlier |
 | `requested`, `fetched`, `empty`, `bars_written` | INTEGER |
-| `outcome` | TEXT. `clean`, `partial` or `failed` |
-| `stopped_because` | TEXT NULL. Why a partial stopped where it did |
+| `stored` | INTEGER. What the night's asking left the store holding for the window it bought, being the bars written plus the bars already there unchanged |
+| `window_sessions` | INTEGER. How many sessions the window covered, nought where the night asked for nothing |
+| `outcome` | TEXT. `clean`, `partial` or `failed`. A `partial` carries a reason and the CHECK refuses one that does not |
+| `stopped_because` | TEXT NULL. What shape the night was, where it was not an ordinary full buy |
 | `observed_at` | TEXT |
 
 Insert IntradayFetcher · PK (`session_date`, `observed_at`)
 
 **A night with no row here is a night nobody ran**, which is a different fact from a night that ran and asked for nothing, and the two are only distinguishable because the stage writes a row either way. **The shortfall is recorded here rather than on the setup rows**: `setup.degraded_because` is written once by the detector that inserts the row, `setup` has one declared writer per operation, and an update from this stage would be a second writer on rows the corpus forbids rewriting. Which names went unfetched is `requested` against `fetched`, which is a join rather than an edit.
+
+**`stored` exists because the outcome had nothing honest to turn on, and `bars_written` is not it.** The stage computed `clean` from the call ceiling alone, so the night of 2026-09-04 asked 92 names, was answered by all 92 with nothing, spent 460 calls, wrote 0 bars and recorded `clean` with no reason. `bars_written` was already nought on that row. It cannot be the quantity the outcome turns on either, because a rerun over minutes the store already holds writes nought bars and has lost nothing: `IntradayBarReader.IsStoredUnchanged` skips every bar already held. `stored` is the third of the three quantities a fetch has, being asked, returned and stored, and it is the one that separates a night that bought nothing from a night that needed to buy nothing (see: A gate handed an absent or degenerate quantity fails rather than passing).
+
+**`window_sessions` is what says whether short's twenty-session count was running.** The count starts on the first night the fetch buys the full anchor window and not on the night the code landed, and those are different dates; without the column the only way to tell them apart is to date a run against a commit. It is the sessions the window actually covered rather than the width it asks for, because the window is read from the sessions `daily_bar` holds and the store held fewer than the full width for the whole of the lab's first year. A night at a narrower width is a permanent forfeit of that window's anchors rather than a delay (see: The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width).
+
+**The bars a wide night stores are labelled with the session they traded in, not the session the fetch was for.** The two were one figure while the stage bought a single session a night, and a twenty-seven session window returns bars from twenty-seven sessions in one answer; stamping all of them with the night the fetch ran would put every anchor's minutes under the wrong day, and the reader bounds on `session_date`.
 
 ### `anchored_vwap`
 Grain: ticker + anchor + through-session + observation. Phase 4. The declining average price the short side's `reached-ceiling` clause reads.

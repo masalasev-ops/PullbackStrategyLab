@@ -458,7 +458,12 @@ public sealed class LabApiClient
                 [.. (payload.Slots ?? []).Select(s => new SlotView(
                     s.Slot, s.At, s.InsideTheSession, s.Unobservable,
                     [.. (s.Stages ?? []).Select(t => new StageView(
-                        t.Stage, t.StartedAt, t.EndedAt, t.Outcome, t.CallsUsed, t.Unobservable))]))],
+                        t.Stage, t.StartedAt, t.EndedAt, t.Outcome, t.CallsUsed, t.Unobservable))],
+                    s.Bought is FetchPayload b
+                        ? new FetchView(
+                            b.Requested, b.Fetched, b.Empty, b.BarsWritten, b.Stored,
+                            b.WindowSessions, b.WindowAsks)
+                        : null))],
                 payload.Ran,
                 payload.NeverRan,
                 payload.NotClean,
@@ -669,7 +674,11 @@ public sealed class LabApiClient
 
     private sealed record SlotPayload(
         string Slot, string At, bool InsideTheSession, string? Unobservable,
-        IReadOnlyList<StagePayload>? Stages);
+        IReadOnlyList<StagePayload>? Stages, FetchPayload? Bought);
+
+    private sealed record FetchPayload(
+        int Requested, int Fetched, int Empty, int BarsWritten, int Stored,
+        int WindowSessions, int WindowAsks);
 
     private sealed record StagePayload(
         string Stage, string? StartedAt, string? EndedAt, string? Outcome, int CallsUsed,

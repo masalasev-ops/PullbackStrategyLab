@@ -29,114 +29,24 @@
 # can run before the gate is handed to it. The exit codes are kept apart from the gate's own: 3 is
 # no usable bash, and the script's 0, 1 and 2 are passed through untouched.
 #
+# **The search, the probe and the refusal moved to shell-provenance.ps1 at 6.10**, unchanged in
+# behaviour, because the two cells this repair had left alone needed the same three and copying
+# them would have made three of each. The reasoning above is why they exist and stays here; the
+# code is one implementation beside the two other wrappers that now use it.
+#
 # see: Every phase ends in a generated phase report, not in a page somebody looks at
 
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'shell-provenance.ps1')
 
-# The WSL launchers. Both are shims that start a Linux distribution; neither is a bash that can
-# run this repository's script against a Windows path. Matched on the file name and its directory
-# rather than on the full string, so a different Windows install or a different user profile is
-# still recognised.
-function Test-IsWindowsSubsystemLauncher {
-    param([Parameter(Mandatory = $true)][string] $Path)
+Write-ShellProvenance -Name 'verify-phase'
 
-    $directory = Split-Path -Parent $Path
-    $leaf = Split-Path -Leaf $directory
+Invoke-BashEntryPoint `
+    -Name 'verify-phase' `
+    -RepositoryRoot $repositoryRoot `
+    -Script 'tools/verify-phase' `
+    -Arguments $args
 
-    return ($leaf -eq 'System32') -or ($leaf -eq 'Sysnative') -or ($leaf -eq 'WindowsApps')
-}
-
-# It runs a bash script and reports what the script said. A shim that starts a distribution fails
-# here when there is none, and answers about the wrong filesystem when there is one, so the probe
-# asks for something only the right bash can answer: the repository root, seen as a real directory.
-function Test-CanRunTheScript {
-    param([Parameter(Mandatory = $true)][string] $Path)
-
-    try {
-        $probe = & $Path -c 'test -f tools/verify-phase && printf ok' 2>$null
-        return ($LASTEXITCODE -eq 0) -and ($probe -eq 'ok')
-    }
-    catch {
-        return $false
-    }
-}
-
-# Every bash on the path, then the places Git for Windows puts itself when it is not on one.
-#
-# `PullbackStrategyLab__Bash` names one instead of searching, for a machine that keeps its bash
-# somewhere this list does not know. It is also what makes the refusal below reachable from a
-# test: pointing it at a path that is not a bash exercises the branch, where nobbling the search
-# environment does not, because a child PowerShell recovers `ProgramFiles` whatever the parent
-# sets. A branch that cannot be run is a branch asserted by reading it, which is what the
-# previous test did and what let its `exit 3` sit unreachable.
-$candidates = @()
-
-if ($env:PullbackStrategyLab__Bash) {
-    $candidates += $env:PullbackStrategyLab__Bash
-}
-else {
-    $candidates += @(
-        Get-Command bash -CommandType Application -All -ErrorAction SilentlyContinue |
-            ForEach-Object { $_.Source })
-    $candidates += @(
-        (Join-Path $env:ProgramFiles 'Git\bin\bash.exe'),
-        (Join-Path ${env:ProgramFiles(x86)} 'Git\bin\bash.exe'),
-        (Join-Path $env:LOCALAPPDATA 'Programs\Git\bin\bash.exe'))
-}
-$rejected = @()
-$bash = $null
-
-Push-Location $repositoryRoot
-try {
-    foreach ($candidate in $candidates) {
-        if (-not $candidate) { continue }
-        if (-not (Test-Path $candidate)) {
-            $rejected += "$candidate (no such file)"
-            continue
-        }
-
-        if (Test-IsWindowsSubsystemLauncher $candidate) {
-            $rejected += "$candidate (the Windows Subsystem for Linux launcher, not a bash for this tree)"
-            continue
-        }
-
-        if (-not (Test-CanRunTheScript $candidate)) {
-            $rejected += "$candidate (could not read tools/verify-phase from the repository root)"
-            continue
-        }
-
-        $bash = $candidate
-        break
-    }
-
-    if (-not $bash) {
-        # Written to the error stream directly rather than through Write-Error, which under this
-        # file's Stop preference is terminating and would unwind before the exit below. The exit
-        # code was unreachable and the test asserting it read the string in a line that never ran.
-        [Console]::Error.WriteLine(
-            'verify-phase: no bash found that can run tools/verify-phase, so nothing was run. ' +
-            'It is a bash script and PowerShell will not execute it, which is the silent no-op ' +
-            'this wrapper exists to stop. Install Git for Windows, or run "bash tools/verify-phase" ' +
-            'from a shell that has one. Any artifacts/phase-report.* on disk are from an earlier run.')
-
-        foreach ($reject in $rejected) {
-            [Console]::Error.WriteLine("verify-phase:   rejected $reject")
-        }
-
-        exit 3
-    }
-
-    # Which bash ran it, because "it ran" and "it ran under the one you meant" are different
-    # facts and nothing but this line can tell the operator the second.
-    Write-Host "verify-phase: using $bash"
-
-    & $bash 'tools/verify-phase' @args
-    $verdict = $LASTEXITCODE
-}
-finally {
-    Pop-Location
-}
-
-exit $verdict
+exit $script:BashEntryExitCode

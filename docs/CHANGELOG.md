@@ -2554,3 +2554,35 @@ Now:  The review point reads "The first full window", and the basis cell says th
 Why:  Every other row in that table carries a condition, a never or a named owner. A review point naming
       a phase is an estimate wearing a schedule's clothes, which is the same fault as an estimate used
       as a trigger, and this one could not have been met by the checkpoint it named.
+
+---
+
+### 2026-09-05 — ARCHITECTURE.html — cites The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
+Was:  `<b>It runs where the store can reach the anchor and not otherwise</b>, which is the ordinary case for as long as the store holds fewer sessions of minutes than a swing sits back: the fetch buys one session a night per flagged name and a swing sits three to twenty-seven sessions back.`
+Now:  the same opening clause, followed by `<b>The fetch bought one session a night per flagged name until 6.10 and buys the twenty-seven session anchor window from it</b>`, the derivation of twenty-seven, the citation, and a sentence saying the window is the sessions the store knows about rather than a calendar width, with `intraday_fetch.window_sessions` recording what each night covered.
+Why:  6.10(a) built the width the ruling of 2026-09-04 settled. The old sentence described the fetch as buying one session, which is what made the anchored clause unreadable, and it stopped being true when the stage changed.
+
+### 2026-09-05 — SCHEMA.md — cites The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
+Was:  `| `outcome` | TEXT. `clean`, `partial` or `failed` |` and `| `stopped_because` | TEXT NULL. Why a partial stopped where it did |`, with no `stored` and no `window_sessions` row in the `intraday_fetch` column table.
+Now:  both rows added, the outcome row extended to say a `partial` carries a reason and the CHECK refuses one that does not, and the `stopped_because` row rewritten to "What shape the night was, where it was not an ordinary full buy". Three paragraphs added below the table: why `stored` exists and why `bars_written` could not be the quantity the outcome turns on, what `window_sessions` says about short's twenty-session count, and that a wide night's bars are labelled with the session they traded in.
+Why:  migration 054 adds both columns. The `stopped_because` line said the column was for partials alone, which the first-night row has contradicted since 037; the new wording is what the column actually holds and what the CHECK now permits.
+
+### 2026-09-05 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  `| Apply migrations | `tools/migrate` | same | **bash on both** |` and `| Snapshot the store | `tools/snapshot-db` | same | **bash on both** |`, followed by a paragraph ending "**So the rule is that a green states what produced it**, and until the scripts say so themselves the column is where a session looks", and a paragraph opening "**The two cells differ for `verify-phase` alone, and that is the point.**"
+Now:  both cells name `tools/migrate.ps1` and `tools/snapshot-db.ps1` on Windows with the bash script on macOS, and the Shell column reads "PowerShell on Windows, bash on macOS" for both. The first paragraph now says 6.10 gave both the same wrapper, that the scripts say what produced them from 6.10, and that the column stays because the shell a command needs is a fact a reader wants before running it. The second opens "**Every bash cell now has a wrapper, and `verify-phase` is where the shape was worked out**" and adds where the shared search lives and what the wrapper's own first version got wrong.
+Why:  6.10(c). The two cells reading "same" were the mechanism the 5.7 sign-off rowed: "same" is true of the file and false of the shell, and RUNBOOK told the operator to run `tools/migrate` by name.
+
+### 2026-09-05 — CLAUDE.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  the `/tools` block of the repository layout listing `slot-log-verdict.ps1` as its last entry before `derive-indicators.py`.
+Now:  `migrate.ps1`, `snapshot-db.ps1`, `shell-provenance.ps1` and `shell-provenance.sh` added with what each is, and the two provenance files marked as sourced rather than executed and carrying no shebang for that reason.
+Why:  four files were added to `tools/` at 6.10 and the layout block is where the corpus says what is in that directory.
+
+### 2026-09-05 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  step 6, "`tools/migrate` to create the schema. It calls `tools/snapshot-db` first and refuses to run without a successful snapshot."; and in the recovery table, "If it is behind, run `tools/migrate`, which snapshots first"; and in the merge procedure, "**Run `tools/migrate` against the live store, the same day, before the next nightly slot.**"
+Now:  all three name `tools/migrate.ps1` on Windows and `tools/migrate` on macOS, and step 6 says why the two are named apart: the bash script will not run on Windows and does not say so.
+Why:  6.10(c). These are the three places the corpus tells an operator to run the command, and the operator's machine is the one where running it by name is a silent no-op.
+
+### 2026-09-05 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  four rows in the carried obligations table with `6.10` in their Due at cell, raised at 4.4 and three times at 5.7; and "None of the thirty rows above fall due at 4.17".
+Now:  the four rows moved into a new section, "What the four due at 6.10 were", each with what happened to it, on the shape the 5.5, 4.1, 4.6 and 4.17 sections already have; and the count reads twenty-six.
+Why:  6.10 discharged all four. A row falling due at a checkpoint `PROGRESS.md` records fails `carried-obligations`, which is the mechanism that makes a discharge a move rather than a note.

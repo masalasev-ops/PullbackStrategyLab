@@ -140,6 +140,24 @@ public static class SessionBoundaries
     public static DateTimeOffset EndOfSession(DateOnly sessionDate, string ianaZoneId) =>
         At(sessionDate, LastInstantOfDay, ianaZoneId);
 
+    /// <summary>
+    /// Which session's calendar day <paramref name="instant"/> falls on in
+    /// <paramref name="ianaZoneId"/>, which is the inverse of <see cref="At"/>.
+    ///
+    /// <b>It reads no clock and is the reason it lives here rather than only on the clock.</b>
+    /// <see cref="IClock.SessionDate"/> answers the same question and delegates to this, on the
+    /// grounds <see cref="IClock.SessionBoundary"/> already delegates to <see cref="At"/>: a caller
+    /// converting an instant it was handed does not need a clock to do it, and two implementations
+    /// of a session boundary is the thing that must not exist. The <c>clock-usage</c> check bans
+    /// reading the machine's own time outside the clock, and nothing here reads it.
+    ///
+    /// Wanted by the minute fetch, which asks for a window of sessions in one call and has to label
+    /// each returned bar with the session it actually traded in rather than with the session the
+    /// fetch was for.
+    /// </summary>
+    public static DateOnly SessionDateOf(DateTimeOffset instant, string ianaZoneId) =>
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(instant, Zone(ianaZoneId)).DateTime);
+
     internal static TimeZoneInfo Zone(string ianaZoneId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ianaZoneId);

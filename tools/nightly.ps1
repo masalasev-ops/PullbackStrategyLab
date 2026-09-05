@@ -49,6 +49,8 @@ $repository = Split-Path -Parent $PSScriptRoot
 $worker = Join-Path $repository 'src\PullbackStrategyLab.Worker'
 $dataRoot = Join-Path $repository 'data\live'
 
+. (Join-Path $PSScriptRoot 'shell-provenance.ps1')
+
 # The slots, and the verbs each runs in order. Two verbs in one slot means the second reads what
 # the first writes, which is why they are a slot rather than two entries a minute apart.
 $slots = @{
@@ -207,6 +209,12 @@ try {
 } catch { }
 
 Write-Line ("slot {0} starting, {1} at {2}, store {3}" -f $Slot, $branch, $commit, $dataRoot)
+
+# Which shell and which machine, beside the branch and the commit the line above already carries.
+# Routed through Write-Line rather than to the host, because this script's own output is the
+# night's log and that is the thing anybody reads a night from. The four together are what makes a
+# night's log say what produced it, which is the discipline the phase report carries with its sha.
+Write-Line (Get-ShellProvenance -Name 'nightly')
 
 # The tree is this repository's production checkout, and the ref is a property of the tree that
 # nothing else in this corpus can see. `tools/ci.*` reads the source, the documents and a store it

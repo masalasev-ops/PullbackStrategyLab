@@ -67,7 +67,8 @@ public sealed record SlotView(
     string At,
     bool InsideTheSession,
     string? Unobservable,
-    IReadOnlyList<StageView> Stages)
+    IReadOnlyList<StageView> Stages,
+    FetchView? Bought = null)
 {
     public bool IsUnobservable => Unobservable is not null;
 
@@ -100,6 +101,52 @@ public sealed record SlotView(
 
     /// <summary>The stages, as a phrase, so a slot running two says which.</summary>
     public string Runs => string.Join(", ", Stages.Select(s => s.Stage));
+}
+
+/// <summary>
+/// What the night's unrecoverable buy bought, as the morning screen renders it.
+///
+/// <b>It says nothing about whether the night was clean, because that is the stage's answer and the
+/// point of showing this is to let a person read the counts it was reached from.</b>
+/// </summary>
+public sealed record FetchView(
+    int Requested,
+    int Fetched,
+    int Empty,
+    int BarsWritten,
+    int Stored,
+    int WindowSessions,
+    int WindowAsks)
+{
+    /// <summary>Whether the night spent calls and the store holds nothing for the window it bought.</summary>
+    public bool BoughtNothing => Fetched > 0 && Stored == 0;
+
+    /// <summary>
+    /// Whether the window this night bought was narrower than the anchor window asks for.
+    ///
+    /// True for every night before the width landed and for every night the store holds fewer
+    /// sessions than the window wants, and the two read the same on the screen because they cost the
+    /// same thing: the sessions not bought are anchors nothing will ever price.
+    /// </summary>
+    public bool Narrow => WindowSessions < WindowAsks;
+
+    /// <summary>
+    /// The counts, as one sentence, in the order 4.2's row names them: asked, returned, stored.
+    ///
+    /// Written out on every night rather than only on a bad one. A figure shown only when something
+    /// is wrong is a figure nobody has a reading of when it appears.
+    /// </summary>
+    public string Reads =>
+        $"{Requested.ToString("N0", CultureInfo.InvariantCulture)} asked, "
+        + $"{Fetched.ToString("N0", CultureInfo.InvariantCulture)} answered, "
+        + $"{Empty.ToString("N0", CultureInfo.InvariantCulture)} with no minutes, "
+        + $"{BarsWritten.ToString("N0", CultureInfo.InvariantCulture)} bar(s) written, "
+        + $"{Stored.ToString("N0", CultureInfo.InvariantCulture)} held for the window";
+
+    /// <summary>The width, against the width the anchor window asks for.</summary>
+    public string Window =>
+        $"{WindowSessions.ToString("N0", CultureInfo.InvariantCulture)} of "
+        + $"{WindowAsks.ToString("N0", CultureInfo.InvariantCulture)} session(s)";
 }
 
 /// <summary>One stage of one slot on one session.</summary>

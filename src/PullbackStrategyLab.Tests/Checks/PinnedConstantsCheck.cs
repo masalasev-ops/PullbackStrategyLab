@@ -89,6 +89,30 @@ public sealed class PinnedConstantsCheck
             NightlyCounts.BandLow == 5 && NightlyCounts.BandHigh == 60,
             "NightlyCounts.BandLow and NightlyCounts.BandHigh"));
 
+        // The anchor window, stated as a word in three documents and derived in one place. Written
+        // as "twenty-seven" rather than as a figure everywhere it appears, which is why these are
+        // text pins: nothing else in this check would see the word move while the code stayed.
+        //
+        // The code side is a derivation rather than a literal, being the widest scan span plus the
+        // pullback's maximum length, so the pin holds the document against the geometry and not
+        // against a second copy of the number. A change to either input moves the constant and
+        // fails these three, which is the outcome wanted: the width exists to reach the furthest
+        // anchor and a width that stopped reaching it would leave the anchored level quietly absent
+        // for the names it no longer covered.
+        pins.Add(Pin.Text("DECISIONS.md, the intraday fetch's anchor window",
+            RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "DECISIONS.md"))
+                .Contains("buys the twenty-seven session anchor window", StringComparison.Ordinal),
+            ScanSpans.AnchorWindowSessions == 27,
+            "ScanSpans.AnchorWindowSessions, derived from the scan spans and the pullback's maximum"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, the anchor window at the clause that reads it",
+            architecture.Contains("buys the twenty-seven session anchor window", StringComparison.Ordinal),
+            ScanSpans.AnchorWindowSessions == 27,
+            "ScanSpans.AnchorWindowSessions"));
+        pins.Add(Pin.Text("BUILD_PLAN.md, the anchor window at the checkpoint that buys it",
+            buildPlan.Contains("twenty-seven session anchor window", StringComparison.Ordinal),
+            ScanSpans.AnchorWindowSessions == 27,
+            "ScanSpans.AnchorWindowSessions"));
+
         // The four store pragmas, stated in SCHEMA and set at open in one place.
         string factory = RepositoryLayout.Read(
             Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "StoreConnectionFactory.cs"));

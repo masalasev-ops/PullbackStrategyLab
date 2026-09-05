@@ -16513,3 +16513,122 @@ Next:       **6.10**, and its first part has a date on it. The write is owed by 
             Monday is Labor Day and carries no session, and Tuesday 2026-09-08 is the first night the
             anchor window can matter. The row due at 2026-09-08 is a read of Monday's slot logs and is
             the operator's, not this pass's and not 6.10's.
+
+## 6.10 — 2026-09-05 — phase-6-repair-pile — the pile phase 4 left homeless, and the wrapper that reproduced the fault it removes
+
+Built:      **The repair pile, four parts, in the order the harm runs.** Its deliverable is the pile
+            and nothing else, on 4.17's and 5.8's terms. Every part landed and none was declined.
+
+            **(a) The minute fetch buys the twenty-seven session anchor window.** `IntradayFetcher`
+            bought one session a night while a swing sits three to twenty-seven sessions back, so
+            `VwapEngine` had nothing to read. The width is `ScanSpans.AnchorWindowSessions`, which
+            derives 27 from the widest scan span plus the pullback's maximum length rather than
+            holding a literal, so a change to either input moves the fetch instead of leaving it
+            buying a window that no longer covers the geometry (see: The intraday fetch buys the
+            twenty-seven session anchor window, and the count starts on the first night it runs at
+            that width). **The window is read from the sessions `daily_bar` holds, not counted off a
+            calendar**, because the lab authors no trading calendar and twenty-seven sessions back
+            is not thirty-nine days back in any month you please. It costs no extra vendor call: the
+            vendor charges per request and the window is a query parameter.
+
+            **And every bar is now labelled with the session it traded in.** The fetch's session was
+            a correct label by accident while the stage bought one session a night. A wide window
+            returns bars from twenty-seven sessions in one answer, and stamping them all with the
+            night the fetch ran would have put every anchor's minutes under the wrong date, where
+            the reader bounds on `session_date`. The anchored average would have found nothing under
+            the session it was anchored to while the store held the minutes all along.
+
+            **(b) A night that spends calls and buys nothing is partial and says which nothing.**
+            The outcome was `stoppedBecause is null ? Clean : Partial` and `stoppedBecause` was set
+            only from the call ceiling, so it was unconditional on what the night stored. It now
+            turns on `stored`, which is bars written plus bars already held unchanged. **Not on
+            `bars_written`**, and that is the case that rules out the obvious implementation: a
+            rerun over minutes the store already has writes nought bars and has lost nothing, and a
+            guard that fired on the repair is a guard that gets turned off. All four halves of the
+            row landed: the stage, the reader, the view and the check.
+
+            **(c) Every entry point says what produced it.** `tools/migrate.ps1` and
+            `tools/snapshot-db.ps1` give the two remaining bash cells of the Commands table the
+            wrapper `verify-phase` got at 3.14 and got alone. The search, the WSL-launcher
+            rejection, the behaviour probe and the exit-3 refusal live in `tools/shell-provenance.ps1`
+            so the three wrappers share one of each. Ten entry points open by naming their shell and
+            their host; `slot-log-verdict.ps1` announces nothing on purpose, being a predicate whose
+            standard output two runner jobs parse.
+
+            **(d) The trade chain refuses past its window.** All three stages, not the one the row
+            named, since the bound is the same bound in all three and repairing the loudest alone is
+            the shape 3.14 already took once. The fork was taken rather than left open: the chain
+            refuses rather than gaining a lateness stamp, because its rows are the session's own
+            decisions and a decision taken a day late is one taken with hindsight about where the
+            price went, which is the improvement-after-the-fact the lateness decision exists to
+            forbid (see: The trade chain refuses past its window rather than carrying a lateness
+            stamp). The refusal is a failed run rather than an exception, so it reaches the night's
+            row and the morning screen instead of a console nobody keeps.
+
+Measured:   **The window over a store holding fewer sessions than it asks for**, which is every
+            night of the lab's life so far and is the ordinary case rather than an edge one. The
+            golden fixture holds one market day, flags its setups on it, and so takes the
+            no-prior-session path: it records a window of nought, stored of nought and an outcome of
+            clean, and those three are the right answers rather than absences. **Nothing in the
+            fixture reaches the width, the labelling or the partial**, which is why every one of
+            those is exercised over authored rows (see: Gate boundaries are exercised by authored
+            cases and the captured fixture is not asked to do it).
+
+            **The count has not started.** Short's twenty-session count starts on the first night the
+            fetch runs at the full width, which is Tuesday 2026-09-08 at the earliest. The code
+            landed on 2026-09-05. Those are different dates and `intraday_fetch.window_sessions` is
+            what keeps them apart without dating a run against a commit.
+
+Decided:    **The trade chain refuses past its window rather than carrying a lateness stamp**, which
+            is the fork part (d) had to take and which the 5.7 row left open in those words.
+
+Corrected:  **The failure-table claim for intraday prices was decided by three substrings and passed
+            on the night its own condition occurred.** It asked whether the stage counted an empty
+            name, wrote a fetch row and recorded the asked count beside the answered one. All three
+            were true on 2026-09-04 while 460 calls bought nothing and the night recorded clean.
+            Every count on that row was correct; nothing depended on them. The claim now runs the
+            rule over the three populations that separate the two shapes of nothing, and names a
+            behavioural test that runs the stage.
+
+            **The `stated-counts` claim for a checkpoint's own obligations emptied as the work
+            completed**, which is the defect the phase 6 plan was written to correct one level up and
+            6.10 was the first checkpoint to reach it. It counted live rows falling due at a
+            checkpoint, and discharging all four moved the derived figure to nought against a
+            sentence saying four. It now counts the open rows plus the discharged ones, so a
+            discharge moves a row between tables without moving the figure.
+
+            **`SCHEMA.md` said `stopped_because` was why a partial stopped where it did**, which the
+            first-night row has contradicted since migration 037: that row is clean and carries a
+            phrase. The column is what the row has to say about the shape of its night, and the
+            CHECK is one-directional for that reason.
+
+Caught:     **The wrapper written to remove a silent no-op reproduced one, and it was caught by
+            running it.** `Invoke-BashEntryPoint` returned `$LASTEXITCODE`; a PowerShell function's
+            return value is its output stream; the callers wrote `exit (Invoke-BashEntryPoint ...)`.
+            The whole of the bash script's output was consumed into that expression. The wrapper
+            printed its own two lines, showed nothing of the script's, and exited 0. A probe script
+            now runs through the real function and asserts both the output and the code come back.
+
+            **And the provenance line took `tools/ci.ps1` down on its first statement.** It read
+            `$PSVersionTable.OS`, which PowerShell 7 has and Windows PowerShell 5.1 does not, and
+            `ci.ps1` sets `Set-StrictMode -Version Latest`, where reading an absent property throws.
+            The loudest possible form of the fault the file exists to make less quiet.
+
+Verified:   `tools/ci.ps1` green at 31 steps, 1,078 tests. `tools/verify-phase.ps1` GREEN, and it reads
+            **phase 6** for the first time, 6.10 being the furthest checkpoint the record holds. 141
+            claims, 127 passed, 0 failed, **14 out of scope and 0 unexamined**, which is exactly what
+            the plan's projection said this checkpoint would leave: it adds no component, no table
+            and no row, so it moves the count by nought. Four expectations changed, being the schema
+            version and 6.10's own three.
+
+Carried:    Nothing new. **The four obligations due at 6.10 are discharged and recorded** in
+            BUILD_PLAN's "What the four due at 6.10 were", on the shape the 5.5, 4.1, 4.6 and 4.17
+            sections already have, and the live table reads twenty-six.
+
+Next:       **6.0**, being the population reading and then the spec pass, in that order because a
+            measurement that can change a spec precedes the spec. 6.0(a) reads the live store from a
+            copy; 6.0(b) settles what a pack version is, what makes one byte-stable, the proposal
+            document's form, the corrected threshold's derivation, how the signal library becomes
+            data, and where the pack comparison surface lives. **The four register questions are
+            still due at the operator** and two of them block a checkpoint by name, neither of which
+            is 6.0.

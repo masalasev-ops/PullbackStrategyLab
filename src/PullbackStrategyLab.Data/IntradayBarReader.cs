@@ -154,14 +154,6 @@ public sealed class IntradayBarReader
     }
 
     /// <summary>
-    /// What the night's fetch recorded for one session, as last observed by the end of
-    /// <paramref name="asOf"/>, or null where no fetch ran.
-    ///
-    /// A night with no row here is a night nobody ran, which is a different fact from a night that
-    /// ran and asked for nothing, and the two are distinguishable only because the stage writes a
-    /// row either way.
-    /// </summary>
-    /// <summary>
     /// The sessions in a window for which the store holds a minute of one name, oldest first.
     ///
     /// <b>The sessions and not the bars, because the question is which sessions are missing.</b> A
@@ -210,6 +202,20 @@ public sealed class IntradayBarReader
         return sessions;
     }
 
+    /// <summary>
+    /// What the night's fetch recorded for one session, as last observed by the end of
+    /// <paramref name="asOf"/>, or null where no fetch ran.
+    ///
+    /// A night with no row here is a night nobody ran, which is a different fact from a night that
+    /// ran and asked for nothing, and the two are distinguishable only because the stage writes a
+    /// row either way.
+    ///
+    /// <b>It had no caller outside the suite until 6.10, and that is most of why the night of
+    /// 2026-09-04 was invisible.</b> The row held the honest counts that evening, 92 asked, 92
+    /// answered with nothing and 0 bars written, and nothing read them, so the one place the fault
+    /// was written down was a table nobody opened. <c>LabNight</c> now reads it onto the morning
+    /// screen beside the slot that wrote it.
+    /// </summary>
     public static StoredIntradayFetch? LatestFetch(
         SqliteConnection connection, DateOnly sessionDate, DateOnly asOf, string sessionZone)
     {
@@ -217,8 +223,8 @@ public sealed class IntradayBarReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT session_date, setup_as_of, requested, fetched, empty, bars_written,
-                   outcome, stopped_because, observed_at
+            SELECT session_date, setup_as_of, requested, fetched, empty, bars_written, stored,
+                   window_sessions, outcome, stopped_because, observed_at
               FROM intraday_fetch
              WHERE session_date = @session_date
                AND observed_at <= @observed_before
@@ -239,9 +245,11 @@ public sealed class IntradayBarReader
                 reader.GetInt32(3),
                 reader.GetInt32(4),
                 reader.GetInt32(5),
-                reader.GetString(6),
-                reader.IsDBNull(7) ? null : reader.GetString(7),
-                StoreText.StorageTextToTimestamp(reader.GetString(8)))
+                reader.GetInt32(6),
+                reader.GetInt32(7),
+                reader.GetString(8),
+                reader.IsDBNull(9) ? null : reader.GetString(9),
+                StoreText.StorageTextToTimestamp(reader.GetString(10)))
             : null;
     }
 
@@ -345,7 +353,14 @@ public sealed record StoredIntradayBar(
     long Volume,
     DateTimeOffset ObservedAt);
 
-/// <summary>What one night's fetch recorded about itself.</summary>
+/// <summary>
+/// What one night's fetch recorded about itself.
+///
+/// <paramref name="Stored"/> is what the night's asking left the store holding for the window it
+/// bought, being the bars written plus the bars already there unchanged, and it is the quantity the
+/// outcome turns on. <paramref name="WindowSessions"/> is how many sessions that window covered,
+/// which says whether short's twenty-session count was running that night.
+/// </summary>
 public sealed record StoredIntradayFetch(
     DateOnly SessionDate,
     DateOnly SetupAsOf,
@@ -353,6 +368,8 @@ public sealed record StoredIntradayFetch(
     int Fetched,
     int Empty,
     int BarsWritten,
+    int Stored,
+    int WindowSessions,
     string Outcome,
     string? StoppedBecause,
     DateTimeOffset ObservedAt);

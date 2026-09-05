@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Worker.Vendor;
@@ -27,6 +28,31 @@ namespace PullbackStrategyLab.Worker.Stages;
 public sealed class IntradayFetcher
 {
     public const string Name = "intraday-bars";
+
+    /// <summary>
+    /// How many sessions the fetch buys, ending at the session whose bars it is for.
+    ///
+    /// <b>Twenty-seven is derived rather than chosen.</b> A swing sits the thrust span plus the two
+    /// to seven bar pullback back, so <c>gainer</c> and <c>gapper</c> put it 3 to 8 sessions back
+    /// and <c>leader</c> and <c>laggard</c> 22 to 27. Twenty-seven reaches both scan families, so a
+    /// name whose window is filled is anchorable whichever scan flagged it. Eight was refused for
+    /// reaching the first family only, which would put nights carrying short rows that run the full
+    /// disjunction beside short rows that cannot, and a count whose population changes partway is
+    /// not a count. The vendor's 120 days were refused as history behind the anchor that nothing
+    /// reads.
+    /// see: The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
+    ///
+    /// <b>It costs no extra vendor call.</b> The vendor charges per request and the window is a
+    /// query parameter, so a wide night and a narrow night cost the same against the daily ceiling.
+    /// What it costs is disk, once per name: 1.14 to 2.15 million rows on the first fill at 272
+    /// bytes a row, being 310 to 585 MB, after which that name costs one session a night because
+    /// <see cref="IntradayBarReader.IsStoredUnchanged"/> writes nothing for a bar already held.
+    ///
+    /// The figure itself is <see cref="ScanSpans.AnchorWindowSessions"/>, which derives it from the
+    /// scan spans and the pullback's maximum length rather than holding a literal, and it lives in
+    /// Core because the read surface reports a night's width against it and cannot see the Worker.
+    /// </summary>
+    public static int AnchorWindowSessions => ScanSpans.AnchorWindowSessions;
 
     /// <summary>
     /// What one row of this table spans, and the two facts about the series beside it.
@@ -88,6 +114,15 @@ public sealed class IntradayFetcher
         Console.WriteLine(
             $"{Name}: {result.Requested} name(s) asked, {result.Fetched} answered, {result.Empty} returned nothing, "
             + $"{result.BarsWritten} bar(s) written, {result.Unchanged} already stored unchanged");
+
+        // The width, on its own line and on every night. Short's twenty-session count starts on the
+        // first night this reads the full window, so a reader of the night's log can see which
+        // nights counted without dating the run against a commit.
+        Console.WriteLine(
+            $"{Name}: window {result.WindowSessions} session(s) of {AnchorWindowSessions}"
+            + (result.WindowSessions < AnchorWindowSessions
+                ? ", which is what the store holds rather than what the window asks for"
+                : ", the full anchor window"));
         Console.WriteLine(
             $"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows"
             + (result.StoppedBecause is null ? string.Empty : $", stopped because {result.StoppedBecause}"));
@@ -116,18 +151,19 @@ public sealed class IntradayFetcher
         // indistinguishable from a night the scheduler never fired.
         if (setupAsOf is null)
         {
-            RecordFetch(connection, sessionDate, null, 0, 0, 0, 0, RunOutcome.Clean, NoPriorSession, observedAt);
+            RecordFetch(connection, sessionDate, null, 0, 0, 0, 0, 0, 0, RunOutcome.Clean, NoPriorSession, observedAt);
             RunSummary empty = run.Complete(RunOutcome.Clean);
 
             return new IntradayFetchResult(
-                sessionDate, null, 0, 0, 0, 0, 0, empty.RowsWritten, empty.CallsUsed,
+                sessionDate, null, 0, 0, 0, 0, 0, 0, empty.RowsWritten, empty.CallsUsed,
                 RunOutcome.Clean, NoPriorSession);
         }
 
         Pairing pairing = Pairing.Of(sessionDate, setupAsOf.Value);
 
         IReadOnlyList<string> names = FlaggedNames(connection, pairing.SetupAsOf);
-        (DateTimeOffset from, DateTimeOffset to) = WindowOf(sessionDate, _options.SessionZone);
+        IReadOnlyList<DateOnly> window = AnchorWindow(connection, sessionDate, observedAt);
+        (DateTimeOffset from, DateTimeOffset to) = WindowOf(window, sessionDate, _options.SessionZone);
 
         int fetched = 0;
         int empties = 0;
@@ -172,24 +208,54 @@ public sealed class IntradayFetcher
                     continue;
                 }
 
-                Insert(connection, transaction, sessionDate, bar, _options.SessionZone, observedAt);
+                Insert(connection, transaction, bar, _options.SessionZone, observedAt);
                 written++;
             }
 
             transaction.Commit();
         }
 
-        RunOutcome outcome = stoppedBecause is null ? RunOutcome.Clean : RunOutcome.Partial;
+        // What the night's asking left the store holding for this window, which is the quantity the
+        // outcome turns on. Written plus unchanged rather than written alone: a rerun over minutes
+        // the store already has writes nought bars and has lost nothing, so `written == 0` is not
+        // by itself a shortfall. Nought here with names answered is, because it says every name the
+        // vendor was asked about came back with no minutes at all.
+        int stored = written + unchanged;
+        string? shortfall = stoppedBecause ?? NothingBought(fetched, stored);
+        RunOutcome outcome = shortfall is null ? RunOutcome.Clean : RunOutcome.Partial;
+
         RecordFetch(
             connection, sessionDate, pairing.SetupAsOf, names.Count, fetched, empties, written,
-            outcome, stoppedBecause, observedAt);
+            stored, window.Count, outcome, shortfall, observedAt);
 
         RunSummary summary = run.Complete(outcome);
 
         return new IntradayFetchResult(
             sessionDate, pairing.SetupAsOf, names.Count, fetched, empties, written, unchanged,
-            summary.RowsWritten, summary.CallsUsed, outcome, stoppedBecause);
+            window.Count, summary.RowsWritten, summary.CallsUsed, outcome, shortfall);
     }
+
+    /// <summary>
+    /// Why a night that spent calls has nothing to show for them, or null where it has.
+    ///
+    /// <b>The stage that could end a night having bought nothing and call it clean.</b> On
+    /// 2026-09-04 it asked 92 names, all 92 answered with nothing, 460 calls were spent, 0 bars
+    /// were written and the run recorded `clean` with no reason. The outcome was
+    /// <c>stoppedBecause is null ? Clean : Partial</c>, which is the identical idiom
+    /// <c>TriggerResolver</c> uses; the difference is that <c>TriggerResolver</c> sets its reason
+    /// when a session held no minutes, while this stage set one only from the call ceiling, so its
+    /// outcome was unconditional on what it stored. Every other stage in the lab reports partial on
+    /// this shape.
+    ///
+    /// <b>Two shapes of nothing and they are not the same night.</b> A night that asked nothing is
+    /// the first night or a night with no prior flagged session, and it is clean because there was
+    /// nothing to lose. A night that asked and was answered with no minutes at all has spent calls
+    /// on names the vendor holds nothing for, which is either a halt, a horizon that has moved past
+    /// the session, or a fault, and the row says which shape it was rather than which cause. The
+    /// cause is not knowable from here and is not claimed.
+    /// </summary>
+    public static string? NothingBought(int fetched, int stored) =>
+        fetched > 0 && stored == 0 ? BoughtNothing : null;
 
     /// <summary>Recorded on the first night, when nothing had been flagged before the session.</summary>
     public const string NoPriorSession = "no prior session has flagged setups";
@@ -198,16 +264,92 @@ public sealed class IntradayFetcher
     public const string CeilingReached = "the daily call ceiling was reached";
 
     /// <summary>
-    /// The whole of a session date in the trading zone, local midnight to local midnight.
+    /// Recorded when every name the vendor was asked about answered with no minutes at all, so the
+    /// night spent calls and the store holds nothing for the window it bought.
+    /// </summary>
+    public const string BoughtNothing =
+        "every name answered with no minutes, so the calls were spent and nothing was bought";
+
+    /// <summary>
+    /// The sessions this night buys, oldest first: the anchor window's width, ending at
+    /// <paramref name="sessionDate"/>.
+    ///
+    /// <b>Read from the store rather than counted off the calendar, because the lab authors no
+    /// trading calendar.</b> Twenty-seven sessions back is not thirty-nine days back: weekends and
+    /// holidays move it, and a fixed calendar width would buy a different number of sessions in
+    /// every month of the year. <c>daily_bar</c> is the record of which days actually traded, on the
+    /// same terms both detectors and <c>SessionFigures</c> already walk it, so the window is the
+    /// sessions the lab knows about and the count it records is a fact rather than an aim.
+    ///
+    /// <b>Bounded on the run's own instant, like every other read this stage makes.</b> A session
+    /// the store learned about after the run began is not one this run buys.
+    ///
+    /// It returns fewer than <see cref="AnchorWindowSessions"/> where the store holds fewer, which
+    /// it did for the whole of the lab's first year, and it returns the session itself where the
+    /// store holds no daily bar for it at all. The width is written onto the fetch row either way,
+    /// so a short window is legible as short instead of being inferred from a date.
+    /// </summary>
+    public static IReadOnlyList<DateOnly> AnchorWindow(
+        SqliteConnection connection, DateOnly sessionDate, DateTimeOffset observedBefore)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT bar_date FROM daily_bar
+             WHERE bar_date <= @through
+               AND observed_at <= @observed_before
+             ORDER BY bar_date DESC
+             LIMIT @width;
+            """;
+        command.Parameters.AddWithValue("@through", StoreText.DateToStorageText(sessionDate));
+        command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(observedBefore));
+        command.Parameters.AddWithValue("@width", AnchorWindowSessions);
+
+        var sessions = new List<DateOnly>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            sessions.Add(StoreText.StorageTextToDate(reader.GetString(0)));
+        }
+
+        // The session itself, where the store holds no daily bar at or before it. The fetch still
+        // has a night to buy and the alternative is an empty range, which would ask the vendor for
+        // nothing and record it as a night that bought nothing.
+        if (sessions.Count == 0)
+        {
+            return [sessionDate];
+        }
+
+        sessions.Reverse();
+        return sessions;
+    }
+
+    /// <summary>
+    /// The instants bounding <paramref name="window"/>, local midnight to local midnight.
     ///
     /// Wider than the regular session on purpose. An extended-hours minute is exactly as
     /// unrecoverable as a regular one, so the fetch takes whatever the vendor holds and every bar is
     /// labelled with the session window it fell in. Narrowing here would throw away data that cannot
     /// be re-bought in order to avoid storing rows nothing currently reads.
+    ///
+    /// <paramref name="sessionDate"/> closes the range rather than the window's own last session,
+    /// so a window whose newest stored session is older than the night being bought still reaches
+    /// the night being bought. The two differ on exactly the evening this stage runs, because the
+    /// daily bars for the session that has just closed land at 18:00 and this runs at 20:30 against
+    /// whatever the store has.
     /// </summary>
-    public static (DateTimeOffset From, DateTimeOffset To) WindowOf(DateOnly sessionDate, string zone) =>
-        (SessionBoundaries.At(sessionDate, TimeOnly.MinValue, zone),
-         SessionBoundaries.At(sessionDate.AddDays(1), TimeOnly.MinValue, zone));
+    public static (DateTimeOffset From, DateTimeOffset To) WindowOf(
+        IReadOnlyList<DateOnly> window, DateOnly sessionDate, string zone)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        DateOnly from = window.Count > 0 && window[0] < sessionDate ? window[0] : sessionDate;
+
+        return (SessionBoundaries.At(from, TimeOnly.MinValue, zone),
+                SessionBoundaries.At(sessionDate.AddDays(1), TimeOnly.MinValue, zone));
+    }
 
     /// <summary>
     /// The most recent session strictly before <paramref name="sessionDate"/> that flagged anything,
@@ -260,14 +402,31 @@ public sealed class IntradayFetcher
         return names;
     }
 
+    /// <summary>
+    /// One minute bar, labelled with the session it traded in rather than with the session the
+    /// fetch was for.
+    ///
+    /// <b>The two were the same figure until the window widened and they are not now.</b> The stage
+    /// bought one session a night, so every bar it stored belonged to the night it was buying and
+    /// the fetch's session was a correct label by accident. A twenty-seven session window returns
+    /// bars from twenty-seven different sessions in one answer, and stamping all of them with the
+    /// night the fetch ran would put every anchor's minutes under the wrong day: the reader bounds
+    /// on <c>session_date</c>, so the anchored average would find the whole window under one date
+    /// and no minutes at all under the session it was anchored to.
+    ///
+    /// The session is the bar's own local calendar day, which is also what decides whether it fell
+    /// inside the regular session, so both come from the one conversion rather than from a
+    /// parameter that could disagree with it.
+    /// </summary>
     private static void Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        DateOnly sessionDate,
         VendorIntradayBar bar,
         string zone,
         DateTimeOffset observedAt)
     {
+        DateOnly sessionDate = SessionBoundaries.SessionDateOf(bar.OpenedAt, zone);
+
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
@@ -317,6 +476,8 @@ public sealed class IntradayFetcher
         int fetched,
         int empty,
         int barsWritten,
+        int stored,
+        int windowSessions,
         RunOutcome outcome,
         string? stoppedBecause,
         DateTimeOffset observedAt)
@@ -324,13 +485,15 @@ public sealed class IntradayFetcher
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO intraday_fetch (
-                session_date, setup_as_of, requested, fetched, empty, bars_written,
-                outcome, stopped_because, observed_at)
+                session_date, setup_as_of, requested, fetched, empty, bars_written, stored,
+                window_sessions, outcome, stopped_because, observed_at)
             VALUES (
-                @session_date, @setup_as_of, @requested, @fetched, @empty, @bars_written,
-                @outcome, @stopped_because, @observed_at)
+                @session_date, @setup_as_of, @requested, @fetched, @empty, @bars_written, @stored,
+                @window_sessions, @outcome, @stopped_because, @observed_at)
             ON CONFLICT (session_date, observed_at) DO NOTHING;
             """;
+        command.Parameters.AddWithValue("@stored", stored);
+        command.Parameters.AddWithValue("@window_sessions", windowSessions);
         command.Parameters.AddWithValue("@session_date", StoreText.DateToStorageText(sessionDate));
         command.Parameters.AddWithValue(
             "@setup_as_of",
@@ -390,7 +553,12 @@ public sealed record IntradayFetchResult(
     int Empty,
     int BarsWritten,
     int Unchanged,
+    int WindowSessions,
     int RowsWritten,
     int CallsUsed,
     RunOutcome Outcome,
-    string? StoppedBecause);
+    string? StoppedBecause)
+{
+    /// <summary>What the night's asking left the store holding, which is what its outcome turns on.</summary>
+    public int Stored => BarsWritten + Unchanged;
+}

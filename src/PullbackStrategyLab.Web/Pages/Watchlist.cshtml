@@ -53,11 +53,46 @@
             </p>
         }
 
+        @*
+            A slot that fired and did not end cleanly carries the same unrecoverable warning as one
+            that never fired, and until 6.10 it did not: the warning sat inside the Missing loop
+            alone, so it was structurally unreachable for a slot that ran, spent its calls and
+            bought nothing. That is the shape the night of 2026-09-04 took, and the slot whose miss
+            cannot be bought back at any price is exactly the one it took it in.
+        *@
         @foreach (SlotView slot in Model.Night.Ragged)
         {
             <p class="warns">
                 <b>@slot.At @slot.Slot</b>
                 @string.Join("; ", slot.Stages.Select(s => s.Stage + ": " + s.Reads)).
+                @if (slot.Unrecoverable is string alsoLost)
+                {
+                    <span class="down">@alsoLost</span>
+                }
+            </p>
+        }
+
+        @*
+            What the one unrecoverable buy of the night actually bought, on every night and not only
+            on a bad one. The row held these counts on the night it bought nothing, and nothing read
+            them: LatestFetch was the only reader of the table and had no caller outside the suite.
+        *@
+        @foreach (SlotView slot in Model.Night.Slots.Where(s => s.Bought is not null))
+        {
+            <p class="@(slot.Bought!.BoughtNothing ? "down" : "muted")">
+                <b>@slot.At @slot.Slot bought</b> @slot.Bought.Reads, over @slot.Bought.Window.
+                @if (slot.Bought.BoughtNothing)
+                {
+                    <span>Every name the vendor was asked about answered with no minutes, so the
+                    calls were spent and nothing was bought. @slot.Unrecoverable.</span>
+                }
+                @if (slot.Bought.Narrow)
+                {
+                    <span>The window was narrower than the anchor window asks for, so the sessions
+                    it did not reach are anchors nothing will ever price for the names flagged this
+                    night. Short's twenty-session count runs only on nights bought at the full
+                    width.</span>
+                }
             </p>
         }
 
