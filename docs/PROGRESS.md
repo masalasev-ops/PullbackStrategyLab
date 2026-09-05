@@ -16195,3 +16195,148 @@ Carried:    **One raised, at 2026-09-08, and nothing repointed and nothing disch
 
             **Nothing to run against the live store**, and nothing is to be run on Monday. The reading
             due on Tuesday is of logs and `run_log`, which is a read.
+
+## 5.7 — 2026-09-05 — phase-5-7-empty-night — the night of 2026-09-04 read: a stage that bought nothing and called it clean, and a repair window two documents got wrong
+
+**Not a checkpoint entry.** It belongs to 5.7, which has landed. Two rows raised, two false sentences
+corrected, and no mechanism built. **The subject is the running lab**, so nothing here was found by a
+check and nothing here could have been.
+
+Read:       **The night of 2026-09-04, from `run_log`, `intraday_fetch`, the store and the night's own
+            log**, all through read-only connections. Twenty-two slots ran and were clean, one was
+            `partial` for a documented reason, three were refused, and one was clean and should not
+            have been.
+
+            **The 20:30 fetch.** `intraday-bars` ran on `main` at `72f4a17`, asked **92 names**, all
+            **92 answered with nothing**, **460 vendor calls** were spent, **0 bars** were written and
+            the run recorded **`clean`** with `stopped_because` NULL. `intraday_bar` holds nought rows
+            and has never held one. The names were the 92 flagged on 2026-09-03, the session requested
+            was 2026-09-04.
+
+            **Why they were empty is not settled and this entry does not settle it.** What is settled
+            is that the request was not rejected: `EodhdClient` throws on any non-2xx and
+            `IntradayFetcher` has no catch in its per-name loop, so a rejected token or a bad symbol
+            would have left a failed run and no row at all. A `clean` row exists, so all 92 were 2xx
+            bodies that parsed. **The cause needs one probe against the vendor and that is a live call
+            and the operator's**, being same-session minutes at 20:30 against a session a day old.
+            Two candidates are named without being chosen: the captured probe that worked was seven
+            days old where this session was nought days old, and `IntradayFetcher.WindowOf` sends a
+            `to` bound at the next local midnight, which on a same-evening run is in the future, where
+            every recorded successful call had both bounds in the past.
+
+            **And the corpus's own reason for the 20:30 slot predicts the opposite of what happened.**
+            `DECISIONS.md` says minute bars publish two to three hours after the close, which puts
+            them there by 19:00; the slot ran at 20:30 and got nothing. That sentence is asserted in
+            seven places and derived in none. **There is no branch on which nothing is owed**: if the
+            vendor does serve at 20:30 the fault is in the request, and if it does not the figure is
+            wrong and the slot asks too early every night for the lab's only unrecoverable input.
+            Both halves are the operator's probe to settle, and neither is claimed here.
+
+Raised:     **A stage that bought nothing does not report clean**, due at the phase 6 plan. The row
+            names four parts of one blindness rather than the single part that is wrong, and each was
+            verified in the source by this session rather than taken from a report.
+
+            **The stage.** `IntradayFetcher` computes `stoppedBecause is null ? Clean : Partial`. That
+            is the identical idiom `TriggerResolver` uses, and the whole difference is which
+            conditions set `stoppedBecause`: `TriggerResolver` sets it when a session held no minutes
+            or a name did, and `IntradayFetcher` sets it only from the call ceiling. So its outcome is
+            unconditional on `empties` and on `written`. **It is one clause missing from a shape the
+            lab already has right elsewhere**, which is a better description than a stage that differs.
+            `TriggerResolver`, `PaperBroker`, both detectors and `VariantScorer` all report partial on
+            this shape, and `VariantScorer` did so on the same night.
+
+            **The reader.** `IntradayBarReader.LatestFetch` is the only reader of `intraday_fetch`, and
+            its only callers are two assertions in `IntradayFetcherTests`. The row's honest counts,
+            92 requested and 92 empty and 0 written, reach nothing that anybody opens.
+
+            **The view.** `NightView.Ran` is `Stages.All(outcome == "clean")`, so the slot lands in the
+            clean bucket, and the unrecoverable warning the page carries for `intraday` sits inside the
+            `Missing` loop, which a slot that fired cannot enter. **The one warning written for exactly
+            this stage is structurally unreachable on the night the stage buys nothing.**
+
+            **The check.** `architecture-conformance` decides the intraday failure claim with three
+            substring tests over the source, `empties++` and `RecordFetch(` and
+            `names.Count, fetched, empties`. All three were present on 2026-09-04. **The claim passed
+            on the night the condition it describes occurred**, which is the fourth failure shape this
+            corpus has a name for, and it is why this is a row about the instrument and not only about
+            the stage.
+
+            **What a correct empty night looks like**, on the terms 4.2's row already set of asked,
+            returned and stored: stored being nought with calls spent is **partial**, and
+            `stopped_because` names which shape of nothing the night was, which is what `SCHEMA.md`
+            says that column is for.
+
+Raised:     **The repair window expires at local midnight for the trade chain**, due at the phase 6
+            plan. Every reader in the chain is pinned at `observed_at <= EndOfSession(sessionDate)`,
+            being `TriggerResolutionReader.ForLiveSession` for `RiskGate`, `TradeOrderReader.ForLiveSession`
+            for `PaperBroker` and the same shape in `TriggerResolver`. A rerun after 23:59:59.999
+            Eastern of the session's own day writes rows the next stage can never see, and **`RiskGate`
+            then records `clean`** with "no plan resting in this session was touched", which is a clean
+            run over a read it could not make rather than a refusal.
+
+            **What is left after this commit is the absence of a lateness path.** The 24-hour second
+            edge `RUNBOOK.md`'s repair-window section describes is `recheck`'s and the sector walk's,
+            being a stamp that records how late an answer arrived. The trade chain has no such stamp,
+            so past the first edge it is silence and not a marked late answer.
+
+            **It cost nothing on 2026-09-04 and no instance is claimed.** `trade_plan` holds nought
+            rows and has on every night the lab has run, so the three slots refused that evening had
+            nothing to do and the window that closed at midnight closed over an empty set. A mechanism
+            capable of producing a fault is not evidence that it produced one. It is armed for the
+            first night that has a plan.
+
+Corrected:  **Two sentences that were false past that instant.** `RUNBOOK.md`'s recovery row said
+            "Every stage is idempotent for its date" without exception, and the watchlist page told the
+            operator to "Rerun the slot for this date" without one. Both now name the local-midnight
+            edge for the trade chain, and the repair-window section gains a paragraph saying its
+            24-hour second edge does not exist for that chain. Prior text of the `RUNBOOK.md` edit is
+            in `CHANGELOG.md`.
+
+            **The watchlist correction is an edit to `Watchlist.cshtml` and so is a source file rather
+            than a document**, which is said plainly rather than filed quietly: its prior text is here
+            rather than in `CHANGELOG.md`, because that file holds the prior text of the five spec
+            documents and a page is not one of them. It read "Rerun the slot for this date; the stages
+            after it read what it should have written." The sentence is not a declared surface claim,
+            so `surface-claims` neither covered it before nor covers it now, which is the drawn-surfaces
+            row's territory and not this one's.
+
+Noted:      **Three slots were refused on 2026-09-04 because a branch was left checked out**, being
+            `vwap` at 21:00, `resolve` at 21:05 and `orders` at 21:10, each printing "the tree is on
+            'phase-5-7-holiday' and not on main". **The branch was this session's** and it was held
+            across three slot boundaries while the holiday correction was written. A fourth refusal at
+            10:15 names `phase-5-5-research-ledger`, so it happened twice on one day to two sessions.
+
+            **The guard behaved correctly and is not the finding.** What the night shows is that
+            merging promptly is not sufficient, because slots fire every five minutes from 18:20 to
+            22:00 and any branch held across one of those instants skips that slot. **The refusal
+            reaches the morning screen**, `LabNight` reading which slots ran from `run_log` against
+            `NightlySchedule.Due`, so a refused slot writes no row and shows as never run. **What does
+            not reach it is the reason**, which is in the night's log alone. No row is raised for this
+            because nothing was lost, and because it is a working practice rather than a defect in the
+            lab; it is recorded so a third instance is a pattern with two written down before it.
+
+Verified:   **No mechanism built.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5, 141 claims, 127 passed, 0 failed, 14 out of
+            scope, 0 unexamined. Both run in PowerShell.
+
+            **Every claim in the two rows was verified against the source by this session**, rather
+            than accepted from the reading that produced them: the `RunOutcome.Clean` docstring, the
+            two test-only callers of `LatestFetch`, `NightView.Ran`'s predicate, the three substrings
+            in `ArchitectureConformanceCheck`, `IntradayFetcher`'s outcome expression against
+            `TriggerResolver`'s, and the `observed_at` bound in `TriggerResolutionReader`. Two claims
+            in that reading were checked and not carried: that the fetch's emptiness is a vendor fact,
+            which is unproven either way, and that the three refusals cost something recoverable,
+            which `trade_plan` at nought rows settles as nothing.
+
+            **What was run against the live store.** Read-only queries through `mode=ro` connections
+            for `run_log`, `intraday_fetch`, `intraday_bar` and the six trade-chain table counts, and
+            one read of the night's log file. **No write, no migration, no stage, no vendor call**, and
+            nothing was rerun.
+
+Carried:    **Two raised, both at the phase 6 plan, and nothing repointed and nothing discharged.** The
+            obligations table reads twenty-eight, and the sentence stating that total is edited with
+            its prior text in `CHANGELOG.md`. Five rows now wait on that pass. **The eight at the
+            operator are unchanged**, and the probe that would settle why 92 names answered empty is a
+            live vendor call that belongs with them rather than with a build session.
+
+            **Nothing to run against the live store.** Two documents, one page sentence and a record.

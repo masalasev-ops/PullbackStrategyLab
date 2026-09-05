@@ -2460,3 +2460,24 @@ Why:  The date was taken from the operator's prompt and written into a row and a
       being checked against the calendar. The cited decision is the one that refuses to author a
       holiday list, which is right and is why no stage could catch this: the refusal moves the cost
       onto whoever reads a date, and this is the first time it landed on a person rather than a stage.
+
+### 2026-09-05 — RUNBOOK.md — cites Trades are resolved by replaying minute bars after the close, not by watching live
+Was:  "| A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date |", and
+      the repair-window section described one 24-hour second edge with no exception named.
+Now:  The recovery row adds that a stage in the trade chain must be rerun before local midnight Eastern
+      of the session's own day, names the three readers and their bound, and says the chain has no
+      lateness path so past the edge it is silence rather than a marked late answer. The repair-window
+      section gains a paragraph saying the 24-hour second edge is `recheck`'s and the sector walk's and
+      does not exist for the trade chain, with no instance claimed.
+Why:  Both sentences were false past that instant. Every reader in the chain bounds on
+      `observed_at <= EndOfSession(sessionDate)`, so a later rerun writes rows the next stage cannot
+      see and RiskGate then records clean over a read it could not make. Found on 2026-09-04, when
+      three trade-chain slots were refused for an unrelated reason and the repair the two documents
+      promised would have expired at midnight. It cost nothing, `trade_plan` being empty.
+
+### 2026-09-05 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "None of the twenty-six rows above fall due at 4.17"
+Now:  "None of the twenty-eight rows above fall due at 4.17"
+Why:  Two rows raised from the night of 2026-09-04: a stage that bought nothing reporting clean, and the
+      repair window expiring at local midnight for the trade chain. `stated-counts` derives this total
+      from the table's own rows.
