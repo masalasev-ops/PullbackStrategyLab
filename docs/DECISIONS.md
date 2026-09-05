@@ -75,6 +75,21 @@ An answer the lab asks for on behalf of one session and receives after it may be
 
 **And the mark has a reader, which the superseded form promised and did not have.** It said a correction is recorded "so a later reader can exclude corrected rows" while the guard it shipped with made corrected rows impossible, so the mark had neither producer nor consumer. That is CLAUDE.md's sixth failure shape written into a decision: correct upstream, discarded downstream. The scoreboard now reports how many rows in the population it measures were corrected and by how much lateness, so the exclusion is available to the reader the sentence describes (see: Every phase ends in a generated phase report, not in a page somebody looks at).
 
+**The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill**
+Taken by the phase 6 plan on 2026-09-05, over the plan in `BUILD_PLAN.md` under "The lazily-resolved attribute, corrected with the signal backfill", which carries the counts and the prices this entry does not restate.
+
+An observation stamp records when the lab asked, and every reader treats it as when the fact became true. For a bar the two are the same, because the observation is dated by the market. For an attribute looked up lazily they are not: a sector was true for years before anyone asked, so `sector`, `industry` and `market_cap` resolved on the 28th are invisible to the session of the 27th although each was as true on the 27th as it is now. `security` is the only table with the shape, and it has no session-date column at all, which is the conflation rather than a consequence of it.
+
+**The question was framed as "before or after phase 4" and that framing expired**, phase 4 having signed off on 2026-09-02. Re-asking it would have opened a register row against a judgement whose price was already established, so it is taken here.
+
+**The branch is still the "before" one, because its cost was never incurred.** The plan priced landing after phase 4 as orders resting on the old basis and a record carrying two bases with a date between them, every figure over the boundary having to say which side its rows came from. `trade_plan` holds nought rows and has on every night the lab has run, so no order rests on anything and no boundary exists. The correction is as cheap now as it was quoted at then: 29 frozen signal values recomputed once while nothing is trading.
+
+**The basis is the first session the scan surfaced the name**, being `security.first_seen`, which all 233 resolvable rows carry. It is the cheapest of the three the plan priced and the one that claims the least: the attribute is asserted from the first session the lab had any reason to hold it, and no vendor response is re-captured. The vendor's own validity date is truer and costs a re-capture plus a re-derivation of the fundamentals expectations; asserting the attribute from the beginning of the record is cheapest and least honest, because it would make a name resolved next year visible to a session two years ago. Both are refused by name rather than left unmentioned.
+
+**The act belongs to the checkpoint that writes signals onto setups already stored**, which is 6.1. It is the checkpoint that would otherwise put a second basis beside the first on the same rows, and it is where the 121 `DERIVED` `fundamentals.*` expectations are re-derived with the reason recorded. The recompute is a correction that records prior state like any other, which is what the lateness rule above already provides for (see: A fixture expectation changes only with a recorded reason, and the report counts what changed).
+
+Until 6.1 lands the stamp is the basis and a late resolution is invisible except through the lateness bound, which is the conservative reading that was in force while the question was open and is unchanged by taking it.
+
 **Failed checks are recorded rather than discarded**
 The research loop exists to find which checks carry the strategy, which is unanswerable if the store only remembers the setups that passed.
 
@@ -860,6 +875,15 @@ A signal can be judged on rows already stored, with no version and no forward pe
 
 **The correction threshold scales with signals screened, not signals shown**
 Adding a signal makes every other signal marginally harder to claim. Statistically correct, and it creates natural resistance to adding things casually.
+
+**The twin-pair threshold is reviewed at the first full window rather than at a phase**
+Taken by the phase 6 plan on 2026-09-05. The authored-parameters row carried "Phase 6" as its review point, and every other row in that table carries a condition, a never, or a named owner.
+
+A phase is not a condition, and this one cannot be met by the checkpoint it names. The metric z-scores every signal against its own distribution over the trailing 250 setups and takes a distance across them, so the two values, a distance under 0.5 and outcomes differing by more than 15 points, were set for a window of that width. 6.3 builds the finder against a store that holds a small fraction of 250, so a review taken there would compare the values against a window shorter than the one they describe, and a z-score over forty rows and a z-score over 250 are not the same quantity.
+
+So the values do not move at 6.3, which is a decision rather than a deferral: nothing is left open, and what is stated is when the question becomes answerable. 6.3 reports how many setups the window actually held on every run, so the condition can be seen approaching rather than looked up.
+
+The general form is the one the elapsed-time figures already carry: an estimate is not a trigger, and a review point naming a phase is an estimate wearing a schedule's clothes.
 
 ## Data and platform
 

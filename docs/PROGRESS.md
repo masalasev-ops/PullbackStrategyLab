@@ -16340,3 +16340,176 @@ Carried:    **Two raised, both at the phase 6 plan, and nothing repointed and no
             live vendor call that belongs with them rather than with a build session.
 
             **Nothing to run against the live store.** Two documents, one page sentence and a record.
+## 6.0 — 2026-09-05 — phase-6-plan — the phase 6 build plan, four questions given a register before they were asked, and two taken instead
+
+Not a checkpoint entry. It records the phase 6 build plan, the four questions that phase turns on, two
+decisions taken rather than filed, three corpus corrections and the counts every one of those moves.
+No component, no store and no migration. Nothing here is evidence and none of it moves 3.6. Written on
+the terms `4.13 — 2026-09-02 — phase-5-plan-and-questions` was, which is the pass that planned phase 5,
+and filed under 6.0 rather than under 5.7 because the pass that plans a phase belongs to the phase it
+plans, at that phase's opening checkpoint.
+
+Built:      **The Phase 6 section of `BUILD_PLAN.md`, rewritten.** Twelve rows against nine, the three
+            added being the opening pass at 6.0, the repair pile at 6.10 and the parked row at 6.11.
+            Existing identifiers are not renumbered, because 6.1 to 6.8 are cited by number in
+            `architecture-conformance`'s deferred claims and its failure-table and table-placement
+            maps, in `pinned-constants`'s deferral table, in the four places the research ledger
+            declares when its twin-pair panel arrives, in `fixtures/surface-claims.json` and in nine
+            due points of the obligations table, so 6.10 and 6.11 ascend where the build order does
+            not, exactly as 4.14 to 4.18 and 5.8 do. Phase 6 had no preamble at all before this pass
+            and was the only phase whose table followed its heading directly; each row now states the
+            population its done condition is verified over, where before they were one-line
+            deliverables.
+
+            **6.10 is 4.17's and 5.8's shape**, a checkpoint whose deliverable is the pile and nothing
+            else, and it takes all four of the buildable rows that were due at this pass. It is first
+            in the build order and last in the numbering, and the row says why in its own words: it
+            repairs phase 4's capture and it is not this phase's subject, so opening the phase on it
+            would make the first row a row about something the phase is not for. It leads because one
+            of its four parts is an unrecoverable capture with a date on it, being the twenty-seven
+            session anchor window, owed Monday 2026-09-07 with Tuesday 2026-09-08 the first night the
+            width can matter.
+
+            **6.0 is two parts and the order inside it is the argument**, on the shape 5.0 took. (a)
+            is the population reading and it runs first, because a measurement that can change a spec
+            cannot sit behind the spec; (b) is the spec pass, and what it settles is what a pack
+            version is, what makes one byte-stable, the machine-readable form of a proposal, the
+            corrected threshold's derivation, how the signal library becomes data, and where the
+            surface comparing pack versions lives.
+
+            **6.11 is parked and 6.9 signs off without it**, on 3.7's reasoning two phases along and
+            5.7's one. What waits is asking the model, admitting a version and spending a holdout
+            window; nothing is disabled, and every stage the phase builds runs from the night it
+            lands. **No new decision was written for the parking**, because it follows from ones that
+            exist (see: 3.6 gates what may be admitted, not what may be built).
+
+            **The out-of-scope count is projected as a path rather than as a target**, which is the
+            shape 4.14 used and the shape a list of retirements is not. The basis is stated first, the
+            running figure second, and a raise would have to argue against the basis.
+
+Asked:      **Four questions opened at the phase 6 sitting**, and they were given rows in the carried
+            obligations table before any of them was asked, on the terms phase 5's nine were. They are
+            the transport and the model the researcher is pinned to, which blocks 6.5 outright; which
+            error rate the pack's corrected threshold controls, which blocks 6.4 and is read by 6.8;
+            whether an earnings calendar is bought, which blocks nothing that is built; and whether
+            the first pack version is cut before any outcome has closed, which blocks only 6.11.
+
+            **Two of the four block a checkpoint by name and two do not, and the record says which**,
+            because reading them as answered together or not at all turns four rows into one wait.
+            That is the last column of the operator's table and it is the column that matters.
+
+            **The derivation route is the record and not a mark on the live rows**, which is the one
+            thing this register does differently from phase 5's. Phase 5's section said each register
+            row carries the phrase "Question N of the phase 5 sitting", the last row carrying it left
+            the table on 2026-09-02 when the last question closed, and the sentence went on naming a
+            route that yields nought. The count of questions opened is now read from this entry, which
+            is append only and cannot empty, and the marked rows are reconciled between the two tables
+            separately, so a marked count falling to nought reads as questions answered rather than as
+            a register that has broken.
+
+Decided:    **Two were candidates for the register and neither left a judgement for anyone**, so
+            filing them would have been opening a row against a question already answered.
+
+            **The twin-pair threshold is reviewed at the first full window rather than at a phase.**
+            Its review point read "Phase 6" where every other row in that table carries a condition, a
+            never or a named owner, and 6.3 cannot meet it: the metric z-scores over the trailing 250
+            setups and the store holds a small fraction of that, so a review taken there would compare
+            0.5 and 15 points against a window shorter than the one they were set for. The values do
+            not move at 6.3, and 6.3 reports how many setups the window actually held so the condition
+            can be seen approaching.
+
+            **The lazily-resolved attribute is asserted from the first session the lab had reason to
+            hold it, and the correction runs with the signal backfill.** The question was framed as
+            "before or after phase 4" and phase 4 landed on 2026-09-02, so it could no longer be
+            answered as posed. **The "after" cost was never incurred**: `trade_plan` holds nought rows
+            and has on every night the lab has run, so no order rests on the current basis, no
+            boundary exists, and the branch the section priced as "before" is available at the price
+            it was quoted at. The basis is `security.first_seen`, which all 233 resolvable rows carry,
+            and the other two candidates are refused by name with their prices kept. The act is 6.1's.
+
+Corrected:  **Three, all clean edits with prior text in `CHANGELOG.md`.** The phase 5 section's
+            derivation route, which is the row raised at 5.7 and due at this pass, corrected to say
+            what the mark was while the questions were open and what the nine is a count of now. The
+            lazily-resolved attribute's section, from a scoped-and-not-started plan with an expired
+            question at the end of it into a decision with an act pointing at 6.1. And the
+            authored-parameters cell in `ARCHITECTURE.html` carrying the twin-pair review point.
+
+Read:       **No setup's ten-day horizon had closed on the day this section was written**, which is
+            arithmetic rather than a store read: the first forward night was 2026-08-27, and with
+            Labor Day inside the window the tenth session after it falls on 2026-09-11. 6.0(a) is the
+            part that confirms or corrects it against a copy of the store, and it is a part rather
+            than a sentence here because a figure this phase's every done condition rests on should be
+            read rather than derived from a calendar.
+
+            **The fourteen out-of-scope claims reconcile exactly rather than being assumed**: eight
+            catalogue rows, being the seven components this phase builds and the surface that compares
+            pack versions; three failure-behaviour rows at 6.4, 6.5 and 6.7; two table placements at
+            6.4 and 6.5; and one replay-tier row at 6.1. Eight and three and two and one. **The
+            projected peak is sixteen at 6.0(b)** against a ceiling of 52, so no raise is scheduled,
+            and the assumption most likely to be wrong is named on the record: that the spec pass adds
+            two failure rows and no new table.
+
+            **Twelve claims are enumerated as provisional**, being the ones whose verdict rests on an
+            authored or empty population, and none of them is a claim that cannot be asserted at all
+            before the loop turns. So nought at 6.9 is reachable, and what the endpoint meets is the
+            fifth failure shape arriving by the passage of time: a verdict reached over a population
+            other than the one the sentence beside it names. 6.11's row carries the re-read and
+            nothing is scheduled or deferred by it.
+
+Verified:   **No test added, and the reason is worth a line**: this pass registers ten new claims inside
+            `stated-counts`, which is one test method, so the figure holds where a checkpoint's would
+            move. `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests, exit 0**, unchanged from the
+            phase 5 sign-off. `tools/verify-phase.ps1` **GREEN**, printing "using
+            C:\Program Files\Git\bin\bash.exe", at **141 claims, 127 passed, 0 failed, 14 out of scope,
+            0 unexamined**, coverage examined 9,711 with 0 unexamined, 1,539 expectations of which 1
+            void, inputs CAPTURED 70 and AUTHORED 134, and 1 expectation changed since the last commit.
+
+            **The report says phase 5 and that is correct rather than a defect.** The phase it reports
+            on is the major number of the furthest checkpoint the record holds, this entry declares
+            itself not a checkpoint entry, and 5.8 is still the furthest. The first phase 6 report is
+            6.10's.
+
+            **The four claim figures are the ones the projection predicted**, being 141, 127, 14 and
+            nought, and the projection's first row says this pass moves the out-of-scope count by
+            nought. **It did not on the first run, and what the run caught is worth more than the
+            prediction.** The count read 13 out of scope and 1 unexamined, and the claim that moved was
+            the catalogue's Pack comparison page: 6.8's deliverable had been rewritten to "the surface
+            comparing pack versions", `Schedule.CheckpointFor` reads component names out of a
+            deliverable cell, no cell named the page any more, and the report said "no checkpoint in
+            BUILD_PLAN.md names this component, so nothing says when it is owed". That is the preamble's
+            own rule met from the other side: it warns against naming a component in a row that does not
+            build it, and this was renaming one out of the row that does. The deliverable names the page
+            as the catalogue names it, the surrounding prose was aligned with it, and 6.0(b)'s question
+            about where that surface lives stays in the done-when cell, which `CheckpointFor` does not
+            read.
+
+            **The prediction was right and it was right for a reason that had not been tested**, which
+            is why it was written down before the run: a raise or a fall now has to explain itself
+            against a stated basis rather than be absorbed as noise.
+
+            **Ten scopes added to `stated-counts` and one floor raised with them**, so the claims
+            cannot narrow to nothing: phase 6's row count, the questions opened against the record,
+            the two-way reconciliation of the marked rows, the two figures in the blocking reading,
+            the obligations due at 6.10, 6.1, 6.5 and 6.8, and the provisional claims read from their
+            own list's length. Every one of them held on its first run, which is the shape this corpus
+            distrusts, so each was also read by hand against the table it derives from.
+
+            **One fixture expectation moved with its reason recorded**, being
+            `authored.citingADecision` from 13 to 14: the twin-pair row gained a citation when its
+            review point was rewritten. Re-derived independently through
+            `tools/derive-authored-parameters.py`, which read 14 and named the row, so the `DERIVED`
+            tier still rests on two implementations sharing no code.
+
+Carried:    **Four raised, two discharged, four repointed, and nothing left waiting on this pass.**
+            The four raised are the register above, all due at the operator. The two discharged are
+            the phase 5 derivation route, which this pass met by writing the section, and the
+            lazily-resolved attribute, taken as a decision rather than answered. The four repointed
+            are the fetch window raised at 4.4 and the three raised at 5.7, all from the phase 6 plan
+            to 6.10. **The obligations table reads thirty and the operator's reads eleven.** Four fall
+            due at 6.10, three at 6.1, one at 6.5, five at 6.8, one at 3.6, one at 2026-09-08, three
+            at the move, one at the first trade and eleven at the operator.
+
+Next:       **6.10**, and its first part has a date on it. The write is owed by Monday 2026-09-07,
+            Monday is Labor Day and carries no session, and Tuesday 2026-09-08 is the first night the
+            anchor window can matter. The row due at 2026-09-08 is a read of Monday's slot logs and is
+            the operator's, not this pass's and not 6.10's.
