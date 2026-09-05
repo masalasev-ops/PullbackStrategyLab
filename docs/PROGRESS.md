@@ -16008,3 +16008,108 @@ Carried:    **One raised, at the phase 6 plan, and nothing repointed and nothing
 
             **Nothing to run against the live store.** Two documents, no migration, no stage and no
             vendor call.
+
+## 5.7 — 2026-09-04 — phase-5-7-fetch-window — the fetch window ruled at twenty-seven sessions, and the seventy-five names tonight forfeits
+
+**Not a checkpoint entry.** It belongs to 5.7, which has landed. Two documents and a decision, no
+code, no test count, and nothing run against the live store beyond three read-only queries.
+**`IntradayFetcher` is not changed by this entry**, on the operator's instruction that it is written
+on Monday and that nothing is touched tonight.
+
+Ruled:      **The intraday fetch buys the twenty-seven session anchor window**, by the operator on
+            2026-09-04 with the measured figures in front of them, closing the question raised at 4.4
+            and repointed to them at 4.5 (see: The intraday fetch buys the twenty-seven session anchor
+            window, and the count starts on the first night it runs at that width).
+
+            **Twenty-seven because the boundary is derived rather than chosen.** A swing sits the
+            thrust span plus the two-to-seven-bar pullback back, so `gainer` and `gapper` put it 3 to
+            8 sessions back and `leader` and `laggard` 22 to 27. Twenty-seven reaches both families,
+            so a name whose window is filled is anchorable whichever scan flagged it.
+
+            **Eight was refused for the reason the tight-set reach was refused, reversed.** It reaches
+            `gainer` and `gapper` only, so nights would carry short rows running the full disjunction
+            beside short rows that cannot. That is a population split inside one count, and it puts
+            the seam in the middle of the twenty sessions rather than before them, which is the same
+            fault the reach across sessions was reversed for on 2026-08-31 and arrived at from the
+            other side (see: Long and short are never pooled into one figure).
+
+            **The vendor's 120-day maximum was refused as history behind the anchor that nothing
+            reads.** No component looks further back than the swing, so the extra 2.3 to 4.4 million
+            rows buy nothing twenty-seven does not already give.
+
+Measured:   **272 bytes a row, and how it was taken is part of the figure.** 4.5 priced the four
+            windows in rows and declined to state bytes, saying none had been measured over a
+            populated `intraday_bar`. That is still true: **`intraday_bar` held nought rows** when
+            this was taken, read from `data/live` read-only at 19:5x Eastern on 2026-09-04. So the
+            figure is measured against the **shipped schema with its three indexes**, being
+            `sqlite_autoindex_intraday_bar_1`, `ix_intraday_bar_session` and `ix_intraday_bar_replay`,
+            VACUUMed, over 57,540 rows at the **959 bars per name per session** the probe of
+            2026-09-01 established, with the text formats taken from real `daily_bar` values rather
+            than invented.
+
+            **The method was validated against real rows rather than asserted.** 300,000 real
+            `daily_bar` rows rebuilt the same way measure **152.3 bytes a row**, which predicts
+            2,381,945 rows at 363 MB of a live store that is 451 MB, the remainder being every other
+            table. A method that predicts the one table big enough to check is a method that can be
+            used on the one that is empty.
+
+            **The window in bytes**, being 4.5's row counts at that rate: **1,139,292 to 2,149,119
+            rows, 310 to 585 MB**, over the 44 to 83 distinct flagged names the three nights of
+            2026-08-27 to 2026-08-31 hold. **One-off per name**, because
+            `IntradayBarReader.IsStoredUnchanged` writes nothing for a bar the store already holds
+            unchanged, so after a name's window is filled that name costs one session a night. **No
+            option costs a vendor call more than another**, the vendor charging per request.
+
+Forfeited:  **Seventy-five names tonight, joining 292, permanently unanchorable.** `setup` holds 75
+            rows for 2026-09-04, and 44, 73, 83 and 92 for the four nights before it. The `intraday`
+            slot runs at 20:30 and buys one session as built, tonight is the first night
+            `intraday_bar` can hold a row, and one session never contains an anchor.
+
+            **It is a forfeit and not a delay, and the mechanism is the lab's own rule.**
+            `IntradayBarReader` bounds every read at `observed_at <= EndOfSession(asOf)` and
+            `VwapEngine` passes the setup's own session as the as-of. Minutes bought on the night a
+            name is flagged carry that night's `observed_at` and are admissible for that night's
+            setups; the same minutes bought a week later are invisible to them for ever. **A minute
+            bar is admitted by when it was observed and not by which session it covers.**
+
+            **The vendor would sell them.** The probe of 2026-09-01 returned 78,662 minute bars across
+            82 sessions in one request and the vendor's own 422 states the per-request window as 120
+            calendar days, so every session these 75 names need is inside what is purchasable today.
+            **It is the point-in-time hard rule that will not have them**, and that is worth stating
+            in those terms: the operator's "the only slot whose input cannot be bought back", recorded
+            on 2026-09-03, is right, and the reason is the corpus rather than the vendor. Reading it
+            as a vendor limit would put the cost in the wrong place and would make it look like
+            something a purchase could fix.
+
+            **Tonight was not touched, on the operator's instruction and for a reason beyond it.**
+            `tools/update-nightly.ps1` moved the production checkout at 17:00, so tonight's slots run
+            a build from before this evening's merges; reaching tonight would have meant updating that
+            checkout by hand, which is an act on the running lab. The choice was between 75 rows and a
+            width set under 38 minutes of time pressure that fixes the store's size for the life of
+            the lab, and the 75 were the cheaper of the two.
+
+Carried:    **The 4.4 row is repointed from the operator to the phase 6 plan, not discharged**, because
+            the ruling half is what closed and the work half is `IntradayFetcher` written to
+            twenty-seven sessions, scheduled by the operator for **Monday 2026-09-07**. No checkpoint
+            owns it because none exists for it yet, which is the third row now waiting on that pass.
+
+            **The obligations table still reads twenty-five**, a repoint being neither a discharge nor
+            a raise. **The operator's table falls from nine to eight**, and every count derived from it
+            moves with it: the heading, the reading beside it and the history sentence, which gains
+            both movements of 2026-09-04, being 3.3's fourth return and this ruling.
+
+            **Short's twenty-session count starts on the first night the fetch runs at twenty-seven
+            sessions, not on the night the code lands.** The two are different dates and reading the
+            second as the first would start the count on a commit. Nothing about band 1 on the short
+            side moves until that night.
+
+Verified:   **No code, so no new test.** `tools/ci.ps1` green on Windows, **31 steps, 1,058 tests**.
+            `tools/verify-phase.ps1` **GREEN** on phase 5, 141 claims, 127 passed, 0 failed, 14 out of
+            scope, 0 unexamined. Both run in PowerShell.
+
+            **What was run against the live store, named because a build session may not open it
+            lightly.** Three read-only queries through a `mode=ro` connection: the row counts of four
+            tables, the `intraday_bar` and `daily_bar` schemas, and `setup` grouped by `as_of` with
+            the tail of `run_log`. **No write, no migration, no stage, no vendor call**, and the
+            300,000 `daily_bar` rows used for the validation were copied out to a scratch file rather
+            than measured in place.
