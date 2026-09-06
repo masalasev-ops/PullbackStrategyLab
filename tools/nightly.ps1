@@ -33,7 +33,7 @@ param(
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scores', 'scoreboard',
-                 'ceiling', 'snapshot')]
+                 'ceiling', 'twins', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -157,6 +157,12 @@ $slots = @{
     'scores'     = @(, @('score-variants'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
+
+    # The second weekly slot, Saturday 08:10, after the bound. It finds the setups that looked the
+    # same on every recorded signal and ended somewhere else, which is what the signal-request
+    # channel is fed from. It spends no vendor call. Weekly rather than nightly because the metric
+    # standardises over a trailing window of setups rather than over a night.
+    'twins'      = @(, @('twin-pairs'))
     'snapshot'   = @(, @('snapshot-db'))
 }
 

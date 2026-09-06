@@ -65,6 +65,11 @@ public static class SignalAdmission
     /// library is for. At one the space says nothing about outcomes. Above one it says something
     /// backwards.
     ///
+    /// <b>The space and the distance come from <see cref="SignalSpace"/>.</b> TwinPairFinder takes
+    /// the same distance over the same standardised axes, and two copies of it would put the
+    /// admission test and the twin finder on subtly different geometries with nothing able to say
+    /// which was right.
+    ///
     /// <b>Outcome-similar is the median split and carries no parameter.</b> A pair is
     /// outcome-similar when its outcomes differ by less than the median pairwise outcome
     /// difference over the same population, so the threshold is derived from the population rather
@@ -89,7 +94,7 @@ public static class SignalAdmission
             return null;
         }
 
-        IReadOnlyList<IReadOnlyList<double>> z = ZScore(rows);
+        IReadOnlyList<IReadOnlyList<double>> z = SignalSpace.ZScore(rows);
 
         var distances = new List<double>();
         var differences = new List<double>();
@@ -98,7 +103,7 @@ public static class SignalAdmission
         {
             for (int j = i + 1; j < z.Count; j++)
             {
-                distances.Add(Distance(z[i], z[j]));
+                distances.Add(SignalSpace.Distance(z[i], z[j]));
                 differences.Add(Math.Abs(outcomes[i] - outcomes[j]));
             }
         }
@@ -271,65 +276,6 @@ public static class SignalAdmission
         }
 
         return rows;
-    }
-
-    /// <summary>
-    /// Each column centred on its own mean and divided by its own standard deviation.
-    ///
-    /// Raw units are not comparable between a percentage and a bar count, so a distance taken over
-    /// them would be whichever column happened to be measured in the largest numbers. A column that
-    /// does not vary is left at nought rather than divided by nought, which contributes nothing to
-    /// any distance, which is what a constant column carries.
-    /// </summary>
-    private static IReadOnlyList<IReadOnlyList<double>> ZScore(IReadOnlyList<IReadOnlyList<double>> rows)
-    {
-        int width = rows[0].Count;
-        var scaled = new List<double>[rows.Count];
-
-        for (int r = 0; r < rows.Count; r++)
-        {
-            scaled[r] = new List<double>(width);
-        }
-
-        for (int c = 0; c < width; c++)
-        {
-            double mean = 0;
-            for (int r = 0; r < rows.Count; r++)
-            {
-                mean += rows[r][c];
-            }
-
-            mean /= rows.Count;
-
-            double variance = 0;
-            for (int r = 0; r < rows.Count; r++)
-            {
-                double d = rows[r][c] - mean;
-                variance += d * d;
-            }
-
-            double deviation = Math.Sqrt(variance / rows.Count);
-
-            for (int r = 0; r < rows.Count; r++)
-            {
-                scaled[r].Add(deviation == 0 ? 0 : (rows[r][c] - mean) / deviation);
-            }
-        }
-
-        return scaled;
-    }
-
-    private static double Distance(IReadOnlyList<double> left, IReadOnlyList<double> right)
-    {
-        double sum = 0;
-
-        for (int i = 0; i < left.Count; i++)
-        {
-            double d = left[i] - right[i];
-            sum += d * d;
-        }
-
-        return Math.Sqrt(sum);
     }
 
     /// <summary>The middle value, taking the lower of the two middles on an even count so the split is a value the population holds.</summary>

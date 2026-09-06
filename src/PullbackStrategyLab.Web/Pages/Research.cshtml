@@ -284,17 +284,84 @@
 <section class="ledger twins">
     <h2>Twin pairs</h2>
     @*
-        The one panel on this page nothing fills yet, and it says which checkpoint fills it rather
-        than being drawn with invented rows. A page of sample pairs is the one thing that cannot be
-        told apart from a working screen later.
+        Setups that looked the same on every recorded signal and ended somewhere else, which is
+        what the signal-request channel is fed from.
+
+        The panel showed an arrival note until 6.3 and now shows a reading. What it must never
+        show is a bare nought: the metric standardises each signal over the trailing 250 setups
+        and the store holds a fraction of that, so "no twins" and "no window to look in" are two
+        different states and the count of setups the window actually held is what tells them
+        apart. Every side reports that count whether or not it found a pair.
     *@
-    <div class="empty-state">
-        <p><b>Arrives at checkpoint @Model.Research.TwinPairsArriveAt.</b> Setups that scored alike
-           on every recorded signal and did opposite things, which TwinPairFinder finds by z-scoring
-           each signal over the trailing 250 setups.</p>
-        <p>The question a pair is put to the model as is not "predict which one wins", which it
-           cannot do. It is: these look identical in everything I record and did opposite things,
-           what would you want to see? The model generates candidates to test and does not make
-           the call.</p>
-    </div>
+    <p class="panel-note">
+        A pair qualifies where the two setups sit closer than
+        <b>@(Model.Research.Twins.MaximumDistance ?? "-")</b> after standardising and their ten-day
+        outcomes differ by more than <b>@(Model.Research.Twins.MinimumGapPoints ?? "-")</b> points.
+        Standardised over the trailing <b>@Model.Research.Twins.WindowWanted</b> setups of that side.
+        The two sides are read apart and never added.
+    </p>
+
+    @if (!Model.Research.Twins.HasReading)
+    {
+        <div class="empty-state">
+            <p><b>No reading.</b> @(Model.Research.Twins.Absent ?? "the finder has not run.")</p>
+        </div>
+    }
+    else
+    {
+        foreach (var side in Model.Research.Twins.Sides)
+        {
+            <h3>@side.Direction</h3>
+            <p class="population">
+                Window held <b>@side.WindowSetups</b> of @side.WindowWanted setups
+                @if (side.WindowShortBy > 0)
+                {
+                    <text>, short by @side.WindowShortBy</text>
+                }
+                &nbsp;·&nbsp; @side.SignalsCompared signal(s) compared
+                &nbsp;·&nbsp; @side.CandidatePairs candidate pair(s)
+                &nbsp;·&nbsp; read for @side.AsOf
+            </p>
+
+            @if (side.PairsFound == 0)
+            {
+                <div class="empty-state">
+                    <p><b>@side.PairsFound twin pairs</b> over a window of @side.WindowSetups.
+                       @side.EmptyBecause</p>
+                </div>
+            }
+            else
+            {
+                <table class="pairs">
+                    <thead>
+                        <tr>
+                            <th>Pair</th><th>Distance</th><th>Gap, points</th>
+                            <th>Left outcome</th><th>Right outcome</th><th>Computed over</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var pair in side.Pairs)
+                    {
+                        <tr>
+                            <td><a href="/setup/@pair.LeftSetupId">@pair.LeftSetupId</a>
+                                and <a href="/setup/@pair.RightSetupId">@pair.RightSetupId</a></td>
+                            <td>@pair.Distance</td>
+                            <td>@pair.GapPoints</td>
+                            <td>@pair.LeftOutcome</td>
+                            <td>@pair.RightOutcome</td>
+                            <td>@pair.SignalsCompared signal(s), @pair.WindowSetups setup(s)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        }
+    }
+
+    <p class="panel-note">
+        The question a pair is put to the model as is not "predict which one wins", which it
+        cannot do. It is: these look identical in everything I record and did opposite things,
+        what would you want to see? The model generates candidates to test and does not make
+        the call.
+    </p>
 </section>

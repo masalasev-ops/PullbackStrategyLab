@@ -58,6 +58,7 @@ public static class Program
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<SignalBackfiller>();
         builder.Services.AddSingleton<SignalAdmissionTest>();
+        builder.Services.AddSingleton<TwinPairFinder>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -250,6 +251,7 @@ public static class Program
         [SignalVectorizer.Name] = (services, rest) => services.GetRequiredService<SignalVectorizer>().Run(rest),
         [SignalBackfiller.Name] = (services, rest) => services.GetRequiredService<SignalBackfiller>().Run(rest),
         [SignalAdmissionTest.Name] = (services, rest) => services.GetRequiredService<SignalAdmissionTest>().Run(rest),
+        [TwinPairFinder.Name] = (services, rest) => services.GetRequiredService<TwinPairFinder>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -337,6 +339,7 @@ public static class Program
         // schedule says "on admission". A nightly slot would rewrite thirty-five specification rows
         // to reach the same verdict on the same empty population every night.
         SignalAdmissionTest.Name,
+        TwinPairFinder.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

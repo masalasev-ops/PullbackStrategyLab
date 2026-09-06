@@ -33,10 +33,10 @@ public sealed record ResearchView(
     IReadOnlyList<VersionView> Versions,
     HoldoutView Holdout,
     ScoreRunView? LastScoreRun,
-    string TwinPairsArriveAt)
+    TwinsView Twins)
 {
     public static ResearchView Empty(string asOf, string why) =>
-        new(asOf, why, null, [], HoldoutView.Unknown(why), null, "6.3");
+        new(asOf, why, null, [], HoldoutView.Unknown(why), null, TwinsView.Unknown(why));
 
     public bool HasVersions => Versions.Count > 0;
 
@@ -250,3 +250,52 @@ public sealed record ScoreRunView(
     int Unscoreable,
     string Outcome,
     string? StoppedBecause);
+
+/// <summary>
+/// The twin-pair panel as the page shows it: what a pair had to clear, and one reading per side.
+///
+/// <b>The withheld state carries a count rather than a nought.</b> A side that found no twin still
+/// says how many setups its window held against the number the metric wants, because those two
+/// figures are what separate "the thresholds refused everything" from "there was nothing to look
+/// at", and the lab is in the second state today (see: The twin-pair threshold is reviewed at the
+/// first full window rather than at a phase).
+/// </summary>
+public sealed record TwinsView(
+    string? Absent,
+    int WindowWanted,
+    string? MaximumDistance,
+    string? MinimumGapPoints,
+    IReadOnlyList<TwinSideView> Sides)
+{
+    public static TwinsView Unknown(string why) => new(why, 0, null, null, []);
+
+    public bool HasReading => Absent is null && Sides.Count > 0;
+}
+
+/// <summary>One side's reading, never added to the other's.</summary>
+public sealed record TwinSideView(
+    string Direction,
+    string AsOf,
+    int WindowSetups,
+    int WindowWanted,
+    int SignalsCompared,
+    long CandidatePairs,
+    int PairsFound,
+    string? EmptyBecause,
+    IReadOnlyList<TwinPairView> Pairs)
+{
+    /// <summary>How far the window is from the one the thresholds were set for, which is what the condition is watched on.</summary>
+    public int WindowShortBy => Math.Max(0, WindowWanted - WindowSetups);
+}
+
+/// <summary>One pair, with what its two figures were computed over.</summary>
+public sealed record TwinPairView(
+    string PairId,
+    string LeftSetupId,
+    string RightSetupId,
+    string Distance,
+    string GapPoints,
+    string LeftOutcome,
+    string RightOutcome,
+    int SignalsCompared,
+    int WindowSetups);

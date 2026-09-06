@@ -1209,13 +1209,55 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `variant` | variant id | Insert VariantAdmitter (definition, target, min sample, **once**) · Update AcceptanceGate (status and resolution date **only**) (see: Targets and minimum samples are written at creation and are immutable) |
 | `variant_score` | variant + date + direction | Insert VariantScorer |
 | `score_run` | session + observation | Insert VariantScorer |
-| `twin_pair` | pair id | Insert TwinPairFinder |
+| `twin_pair` | pair id + date | Insert TwinPairFinder · Delete TwinPairFinder, **for the date it is rebuilding and inside one transaction**. The pairs of a date are a derived reading of the window that date could see rather than evidence, so a rerun rebuilds them; that is the whole difference between this and `setup_signal`, which is written once and never touched |
+| `twin_run` | date + direction + observation | Insert TwinPairFinder. What one run's window actually held against what the metric wants, and why it found nothing where it found nothing |
 | `pack_version` | version | Insert ContextPacker |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness. **Store built at 6.6**, which is where a proposal first exists to key a result on. ReplayHarness itself is built at 5.3 and writes nothing: a screen kills a proposal and never admits one, so until there is a proposal store there is nothing for a result row to belong to, and a screen run before then would be a third statement about a version with nothing reconciling the three (see: Replay screens proposals and the forward paired test admits them) |
 | `holdout_window` | window id | Insert HoldoutRegistry. **No update path at all**: a window is a fact about the calendar and does not become untrue |
 | `holdout_spend` | window id | Insert HoldoutRegistry. **The key is the rule.** One row per window, so a second spend of the same window is refused by the store rather than by a stage remembering to look (see: Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight) |
 | `holdout_run` | observation | Insert HoldoutRegistry. What one run of the register did, and why it held nothing where it held nothing |
+
+### The twin pairs
+
+Columns of `twin_pair`. Built at 6.3, and the columns are the ones that checkpoint owes rather than
+the whole eventual shape.
+
+| Column | Form | Why |
+|---|---|---|
+| `pair_id`, `as_of`, `observed_at` | TEXT, the key | The two members in settled order, and the date the reading was taken. A pair is a reading of a window, and the window grows, so the same two setups are a separate row on a later date |
+| `direction` | TEXT | `long` or `short`. In the row rather than in a note, because the outcome is signed by direction and a pair drawn across the two sides could differ by twenty points with both names having done the same thing (see: Long and short are never pooled into one figure) |
+| `left_setup_id`, `right_setup_id` | TEXT | The two members, lower id first. The order is the identity rather than a convention the stage remembers, and the store holds it: a row whose left is not below its right is refused |
+| `distance` | TEXT | In standard deviations across `signals_compared` axes, standardised over the window this run held |
+| `gap_points` | TEXT | In percentage points of the ten-day return. Points rather than a fraction, because that is how the authored-parameters row states it and how a person reads it |
+| `left_outcome`, `right_outcome` | TEXT | Each member's own outcome, so the pair reads without a join and the gap can be checked against the two figures it came from |
+| `signals_compared`, `window_setups` | INTEGER | **What the two figures above were computed over, on the pair's own row.** Neither is a fact about the pair alone: a pair found today at 0.42 over 38 setups is not the same measurement as the same two at 0.42 over 250, and a row carrying only the ids would invite the second reading of the first answer |
+| `observed_at` | TEXT | In the key, so a rerun of a date writes a new generation beside the old and a reader takes the latest at or before its bound. The window grows as outcomes fill, so a second run of one date can honestly produce a different answer, and the stale generation is what a person saw (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood) |
+
+### What one twin run looked at
+
+Columns of `twin_run`. Built at 6.3 alongside the table above.
+
+| Column | Form | Why |
+|---|---|---|
+| `as_of`, `direction`, `observed_at` | TEXT, the key | One row per side per run |
+| `window_setups`, `window_wanted` | INTEGER | What the run could form against what the metric is defined over, side by side. **This is the figure 6.3 owes and it is a property of the run rather than of any pair**, so it survives a run that qualifies nothing, which is every run for months (see: The twin-pair threshold is reviewed at the first full window rather than at a phase) |
+| `signals_compared` | INTEGER | The width of the space the distance was taken in, being the signals every setup in the window carried as a number. Nought where the window was too thin to form a space |
+| `candidate_pairs`, `pairs_found` | INTEGER | What was looked at against what was found. Nought twins over four setups and nought over two hundred are different statements and only the second says anything about the thresholds |
+| `empty_because` | TEXT NULL | Why a run held nothing, on exactly the runs that held nothing and never beside a run that found something, which the store asserts in both directions. A window under two forms no pair, a window with no numeric signal common to every row forms no space, and a full window whose pairs were all refused by the thresholds is a finding rather than a gap; the three are different and the column says which |
+| `outcome` | TEXT | |
+
+*`twin_run` exists because the figure this checkpoint owes could not otherwise be recorded.* The
+row's done condition is that the run reports how many setups the window actually held rather than
+treating a short window as a full one, and with pairs alone a run that qualified nothing would write
+nothing at all. The window figure would then be missing on exactly the runs where it is the only
+thing there is to say.
+
+*The window is not stored as a session range and that is deliberate.* It is the trailing 250 setups
+of one side, taken in session order with the setup id as the tiebreak, so it is a count of rows
+rather than a span of dates and two sides of one date hold different windows. Storing a date range
+beside it would be a second statement of the same population, and the two would disagree the first
+time a session carried setups on one side only.
 
 ### The register of rule versions
 

@@ -73,6 +73,13 @@ public static class NightlySchedule
         // how a guard gets suppressed, and a suppressed guard is a dead one.
         new("ceiling", "08:00", ["ceiling"], WeeklyOn: DayOfWeek.Saturday),
 
+        // The second weekly slot, and it is Saturday morning for the same reason the first is: the
+        // metric standardises every signal over a trailing window of setups rather than over a
+        // night, so a night's worth of new rows cannot move it enough to be worth a run. It runs
+        // after `ceiling` because both read the same closed-outcome population and the bound is the
+        // cheaper of the two to look at first.
+        new("twins", "08:10", ["twin-pairs"], WeeklyOn: DayOfWeek.Saturday),
+
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
         // omitted it would be reporting thirty-one slots under a heading saying thirty-two. That is

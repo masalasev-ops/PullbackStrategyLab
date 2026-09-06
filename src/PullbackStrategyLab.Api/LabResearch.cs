@@ -29,9 +29,6 @@ namespace PullbackStrategyLab.Api;
 /// </summary>
 public static class LabResearch
 {
-    /// <summary>The checkpoint that builds the twin-pair panel, which is the one part of this page nothing fills yet.</summary>
-    public const string TwinPairsArriveAt = "6.3";
-
     /// <summary>What the ledger says where the register holds no version at all.</summary>
     public const string NoVersionRegistered =
         "no rule version has been registered, so there is nothing to difference against and nothing to "
@@ -54,6 +51,7 @@ public static class LabResearch
         IReadOnlyList<StoredVariantScore> scores = VariantScoreReader.ScoredBy(connection, asOf, sessionZone);
         HoldoutRegisterState register = HoldoutRegister.Describe(connection, asOf, sessionZone, written: 0);
         StoredScoreRun? lastRun = VariantScoreReader.LastRunBy(connection, asOf, sessionZone);
+        IReadOnlyList<TwinSideReading> twins = TwinPairReader.Read(connection, asOf, sessionZone);
 
         // The generation in force, which is what "live" means on this page. Editing the baseline
         // closes every open version as unresolved and starts a new one, so a version is only ever
@@ -116,7 +114,7 @@ public static class LabResearch
                     lastRun.Unscoreable,
                     lastRun.Outcome,
                     lastRun.StoppedBecause),
-            TwinPairsArriveAt);
+            Twins(twins));
     }
 
     /// <summary>
@@ -150,6 +148,51 @@ public static class LabResearch
                 n.MeanDifference,
                 n.Unscoreable,
                 n.WithheldBecause))]);
+
+    /// <summary>
+    /// The twin pairs as the ledger shows them, one reading per side and never a figure over both.
+    ///
+    /// <b>Every side carries its window even where it carries no pair.</b> A panel showing nought
+    /// twins and nothing else cannot say whether the thresholds refused everything or whether there
+    /// was no window to look in, and those are the two states this lab will be in for months. The
+    /// count of setups the window actually held is what tells them apart, and it is on the wire for
+    /// each side rather than computed on the page.
+    /// see: The twin-pair threshold is reviewed at the first full window rather than at a phase
+    ///
+    /// <b>An empty list is a state and it says so.</b> Where the finder has never run, there is no
+    /// reading at all, which is different from a reading of nought and is the sentence the page
+    /// shows instead of a number.
+    /// </summary>
+    private static TwinsResponse Twins(IReadOnlyList<TwinSideReading> readings) =>
+        new(
+            readings.Count == 0 ? NoTwinRun : null,
+            TwinPairs.WindowSetups,
+            StoreText.StatisticToStorageText(TwinPairs.MaximumDistance),
+            StoreText.StatisticToStorageText(TwinPairs.MinimumOutcomeGapPoints),
+            [.. readings.Select(r => new TwinSideResponse(
+                r.Direction,
+                r.AsOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                r.WindowSetups,
+                r.WindowWanted,
+                r.SignalsCompared,
+                r.CandidatePairs,
+                r.PairsFound,
+                r.EmptyBecause,
+                [.. r.Pairs.Select(p => new TwinPairResponse(
+                    p.PairId,
+                    p.LeftSetupId,
+                    p.RightSetupId,
+                    StoreText.StatisticToStorageText(p.Distance),
+                    StoreText.StatisticToStorageText(p.GapPoints),
+                    StoreText.StatisticToStorageText(p.LeftOutcome),
+                    StoreText.StatisticToStorageText(p.RightOutcome),
+                    p.SignalsCompared,
+                    p.WindowSetups))]))]);
+
+    /// <summary>What the ledger says where the finder has never run for a session at or before the one asked for.</summary>
+    public const string NoTwinRun =
+        "the twin finder has not run at or before this session, so there is no reading to show. It runs "
+        + "weekly, on Saturday morning after the win-rate bound";
 
     /// <summary>
     /// The holdout budget as the ledger shows it: the eight windows, what each was spent on, and
@@ -191,13 +234,61 @@ public sealed record ResearchResponse(
     IReadOnlyList<VersionResponse> Versions,
     HoldoutResponse Holdout,
     ScoreRunResponse? LastScoreRun,
-    string TwinPairsArriveAt)
+    TwinsResponse Twins)
 {
     public static ResearchResponse Empty(string asOf, string why) =>
         new(asOf, why, null, [],
             new HoldoutResponse(HoldoutWindows.Capacity, 0, 0, 0, 0, null, why, false, [], []),
-            null, LabResearch.TwinPairsArriveAt);
+            null,
+            new TwinsResponse(
+                why,
+                TwinPairs.WindowSetups,
+                StoreText.StatisticToStorageText(TwinPairs.MaximumDistance),
+                StoreText.StatisticToStorageText(TwinPairs.MinimumOutcomeGapPoints),
+                []));
 }
+
+/// <summary>
+/// The twin-pair panel on the wire: the thresholds it was found under, and one reading per side.
+///
+/// <c>Absent</c> is why there is no reading at all, which is a different statement from a reading of
+/// nought pairs. The thresholds are on the response because the page states what a pair had to clear
+/// beside the count that cleared it, and a page holding its own copy of two numbers would be a
+/// second statement of an authored parameter.
+/// </summary>
+public sealed record TwinsResponse(
+    string? Absent,
+    int WindowWanted,
+    string MaximumDistance,
+    string MinimumGapPoints,
+    IReadOnlyList<TwinSideResponse> Sides);
+
+/// <summary>
+/// One side's reading. The window figures are beside the count rather than derived from it, because
+/// the count cannot be read without them (see: Long and short are never pooled into one figure).
+/// </summary>
+public sealed record TwinSideResponse(
+    string Direction,
+    string AsOf,
+    int WindowSetups,
+    int WindowWanted,
+    int SignalsCompared,
+    long CandidatePairs,
+    int PairsFound,
+    string? EmptyBecause,
+    IReadOnlyList<TwinPairResponse> Pairs);
+
+/// <summary>One pair, with what its distance and its gap were computed over.</summary>
+public sealed record TwinPairResponse(
+    string PairId,
+    string LeftSetupId,
+    string RightSetupId,
+    string Distance,
+    string GapPoints,
+    string LeftOutcome,
+    string RightOutcome,
+    int SignalsCompared,
+    int WindowSetups);
 
 /// <summary>
 /// One registered version, with its pre-registration and its per-side series.

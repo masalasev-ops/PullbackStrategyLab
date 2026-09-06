@@ -8423,18 +8423,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "33",
+      "value": "34",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35. Moved from 32 to 33 at 6.2: SignalAdmissionTest joins the replayed pipeline. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35. Moved from 32 to 33 at 6.2: SignalAdmissionTest joins the replayed pipeline. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself.Moved from 33 to 34 at 6.3: TwinPairFinder joins the replayed pipeline."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "40",
+      "value": "41",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry. Moved from 38 to 40 at 6.2 by SignalAdmissionTest joining the replay, and by two rather than one: the library figures run the stage twice on purpose, because a second run over an unchanged store writing nothing is the property that keeps observed_at meaning when a row last changed, and it is invisible from a single run. The gap between this figure and the distinct-stage count beside it is the point of having both."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry. Moved from 38 to 40 at 6.2 by SignalAdmissionTest joining the replay, and by two rather than one: the library figures run the stage twice on purpose, because a second run over an unchanged store writing nothing is the property that keeps observed_at meaning when a row last changed, and it is invisible from a single run. The gap between this figure and the distinct-stage count beside it is the point of having both.Moved from 40 to 41 at 6.3 by TwinPairFinder joining the replay, and by one rather than two because the finder is run once where the library figures run their stage twice."
     },
     {
       "id": "scan.decliner.hits",
@@ -9883,10 +9883,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "55",
+      "value": "56",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
@@ -11656,16 +11656,18 @@
     {
       "id": "night.slotsInTheWholeSchedule",
       "tier": "DERIVED",
-      "value": "32",
+      "value": "33",
       "checkpoint": "5.5",
-      "producedBy": "read by hand off RUNBOOK's \"The schedule as installed\", which states thirty-two tasks named PullbackStrategyLab-<slot>, registered in two acts of seventeen and fifteen. The same number arrives at the nightly table's thirty-one slots plus the one weekly row, which is a second reading of the same document rather than a second source."
+      "producedBy": "read by hand off RUNBOOK's \"The schedule as installed\", which states thirty-two tasks named PullbackStrategyLab-<slot>, registered in two acts of seventeen and fifteen. The same number arrives at the nightly table's thirty-one slots plus the one weekly row, which is a second reading of the same document rather than a second source.",
+      "note": "Moved from 32 to 33 at 6.3: the twins slot joins the schedule, Saturday 08:10 after the win-rate bound. It is the second weekly slot and the first since ceiling."
     },
     {
       "id": "night.observableStages",
       "tier": "DERIVED",
-      "value": "34",
+      "value": "35",
       "checkpoint": "5.5",
-      "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry."
+      "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry.",
+      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran."
     },
     {
       "id": "night.unobservable",
@@ -11713,13 +11715,6 @@
       "checkpoint": "5.5",
       "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
       "note": "A night that found no version to difference and a night on which the scorer never ran read identically off the score rows alone. The fixture replay runs no scorer, so this is the second of those, and it is the state the ledger has to be able to name."
-    },
-    {
-      "id": "ledger.twinPairsArriveAt",
-      "tier": "DERIVED",
-      "value": "6.3",
-      "checkpoint": "5.5",
-      "producedBy": "read by hand off BUILD_PLAN's phase 6 checkpoint table, whose 6.3 row is TwinPairFinder, z-scored over the trailing 250 setups. The ledger's twin-pair panel names the checkpoint that fills it rather than being drawn with sample pairs, and a panel naming a checkpoint that builds something else is the shape a deferral takes when it goes stale."
     },
     {
       "id": "ledger.holdout.available",
@@ -11944,6 +11939,246 @@
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
       "note": "The flag on the one row that carries it, which is the row 6.4 looks for."
+    },
+    {
+      "id": "twins.windowWanted",
+      "tier": "DERIVED",
+      "value": "250",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "The trailing window the metric standardises each signal over. It is what every window figure below is read against, and the review of the two thresholds waits on it being full."
+    },
+    {
+      "id": "twins.maximumDistance",
+      "tier": "DERIVED",
+      "value": "0.5",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "How close two setups must sit after standardising. It does not move at 6.3, and that is a decision rather than a deferral: a review taken against a window shorter than the one the value was set for is a review in name (see: The twin-pair threshold is reviewed at the first full window rather than at a phase)."
+    },
+    {
+      "id": "twins.minimumGapPoints",
+      "tier": "DERIVED",
+      "value": "15",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "How far apart the two outcomes must end, in percentage points of the ten-day return. It does not move here either, and for the same reason."
+    },
+    {
+      "id": "twins.sides",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the store's own two directions: the finder runs once a side and never over both",
+      "note": "One reading per side. There is no figure over both and there is nowhere for one to go, which is the pooling rule made structural rather than remembered (see: Long and short are never pooled into one figure)."
+    },
+    {
+      "id": "twins.outcome",
+      "tier": "FROZEN",
+      "value": "clean",
+      "checkpoint": "6.3",
+      "producedBy": "the stage run over the golden fixture through TwinPairFinder.Find",
+      "note": "A run that forms no window is clean rather than partial: it lost nothing and asked for nothing it could not have. What says the run found nothing is the window figure beside it, not the outcome."
+    },
+    {
+      "id": "twins.long.windowSetups",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "tools/derive-signal-library.py --population over the replay store kept by PullbackStrategyLab__ReplayStoreCopy, counting each side's scoring-horizon outcomes outside the solution",
+      "note": "No long setup in the fixture carries a closed scoring-horizon outcome, so the long side's window is empty. Stated apart from the short side and never added to it."
+    },
+    {
+      "id": "twins.short.windowSetups",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "tools/derive-signal-library.py --population over the replay store kept by PullbackStrategyLab__ReplayStoreCopy, counting each side's scoring-horizon outcomes outside the solution",
+      "note": "The short side's, separately measured and separately stated."
+    },
+    {
+      "id": "twins.long.signalsCompared",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: a window of nought rows has no signal common to every row, so there are no axes",
+      "note": "The width of the space the distance would have been taken in. Nought here because there is no window rather than because the library is empty, which is the distinction the run row carries."
+    },
+    {
+      "id": "twins.short.signalsCompared",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "twins.long.candidatePairs",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: a window under two setups forms no pair at all",
+      "note": "What the run looked at. Nought twins over nought candidates and nought twins over eight hundred are different statements, and this figure is what tells them apart."
+    },
+    {
+      "id": "twins.short.candidatePairs",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "twins.long.pairsFound",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: with no candidate pair there is nothing to qualify",
+      "note": "Nought twins, and the reason is the calendar rather than the thresholds: the two values were never asked, because there was no pair to ask them of."
+    },
+    {
+      "id": "twins.short.pairsFound",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "twins.long.emptyBecause",
+      "tier": "FROZEN",
+      "value": "a reason this measurement does not name",
+      "checkpoint": "6.3",
+      "producedBy": "the stage run over the golden fixture through TwinPairFinder.Find",
+      "note": "That a reason is present at all, which is the property: a run that found nothing says which of the three shapes of nothing it was. The sentence itself is masked here because it names counts that already have expectations of their own."
+    },
+    {
+      "id": "twins.short.emptyBecause",
+      "tier": "FROZEN",
+      "value": "a reason this measurement does not name",
+      "checkpoint": "6.3",
+      "producedBy": "the stage run over the golden fixture through TwinPairFinder.Find",
+      "note": "The short side's, on the same terms."
+    },
+    {
+      "id": "ledger.twins.absent",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the run figures above: the finder ran for this session on both sides, so the panel has a reading to show and the absent state does not apply",
+      "note": "The panel carried an arrival note naming checkpoint 6.3 until this checkpoint and now carries a reading. Absent reading none is the reading existing, which is a different state from a reading of nought pairs."
+    },
+    {
+      "id": "ledger.twins.sides",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the store's own two directions, which is the same figure the run reports",
+      "note": "Two readings on the page, one a side."
+    },
+    {
+      "id": "ledger.twins.windowWanted",
+      "tier": "DERIVED",
+      "value": "250",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "The window the page states beside every count, so a reader can see how far the condition the threshold review waits on still is."
+    },
+    {
+      "id": "ledger.twins.maximumDistance",
+      "tier": "DERIVED",
+      "value": "0.5",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "What a pair had to clear, stated on the page rather than left to be looked up."
+    },
+    {
+      "id": "ledger.twins.minimumGapPoints",
+      "tier": "DERIVED",
+      "value": "15",
+      "checkpoint": "6.3",
+      "producedBy": "read by hand from ARCHITECTURE.html's authored-parameters row for the twin-pair threshold and its note, which is the document the value is authored in and is independent of the constant the run reports",
+      "note": "The other half of the same statement."
+    },
+    {
+      "id": "ledger.twins.long.windowSetups",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "tools/derive-signal-library.py --population over the replay store kept by PullbackStrategyLab__ReplayStoreCopy, counting each side's scoring-horizon outcomes outside the solution",
+      "note": "This is the figure the panel exists to carry. A count of nought twins with no window beside it cannot say whether the thresholds refused everything or whether there was nothing to look at, and the lab is in the second state."
+    },
+    {
+      "id": "ledger.twins.short.windowSetups",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "tools/derive-signal-library.py --population over the replay store kept by PullbackStrategyLab__ReplayStoreCopy, counting each side's scoring-horizon outcomes outside the solution",
+      "note": "The short side's, never added to the long side's."
+    },
+    {
+      "id": "ledger.twins.long.signalsCompared",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: a window of nought rows has no common signal",
+      "note": "Read off the run row rather than recomputed on the page."
+    },
+    {
+      "id": "ledger.twins.short.signalsCompared",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "ledger.twins.long.candidatePairs",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: a window under two setups forms no pair",
+      "note": "What the reading was taken over, on the page beside the count."
+    },
+    {
+      "id": "ledger.twins.short.candidatePairs",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "ledger.twins.long.pairsFound",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: with no candidate pair there is nothing to qualify",
+      "note": "The count, which is only readable because of the window figure beside it."
+    },
+    {
+      "id": "ledger.twins.short.pairsFound",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.3",
+      "producedBy": "derived from the window figure above rather than measured a second time: the same, on the short side's own window",
+      "note": "The short side's."
+    },
+    {
+      "id": "ledger.twins.long.emptyBecause",
+      "tier": "FROZEN",
+      "value": "a reason this measurement does not name",
+      "checkpoint": "6.3",
+      "producedBy": "the read surface over the golden fixture through LabResearch.Read",
+      "note": "The reason reaching the page rather than stopping at the store, which is the sixth failure shape this corpus records: a correct answer dropped by the surface that was supposed to show it."
+    },
+    {
+      "id": "ledger.twins.short.emptyBecause",
+      "tier": "FROZEN",
+      "value": "a reason this measurement does not name",
+      "checkpoint": "6.3",
+      "producedBy": "the read surface over the golden fixture through LabResearch.Read",
+      "note": "The short side's."
     }
   ],
   "frozenOnly": [

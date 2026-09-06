@@ -655,6 +655,13 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     /// misses its target closes as refuted and stays visible rather than quietly vanishing, and a
     /// body holding only open versions would never exercise the sentence that says so.
     ///
+    /// <b>The twin panel carries both of its states at once, which no one store could.</b> One side
+    /// found a pair and one found none, because the claim is that a side with no pair still states
+    /// the window it held: a body holding only the found case would let the page satisfy that claim
+    /// by never rendering the withheld branch, and a body holding only the withheld case would never
+    /// render a pair. Both windows are far short of the 250 the metric wants, which is the state the
+    /// lab is actually in and will be in for months.
+    ///
     /// <b>The budget is exhausted rather than empty.</b> Spent out and empty-because-nothing-has-
     /// matured render through the same line, and the spent state is the one that also exercises what
     /// a window was spent on and what came of it.
@@ -662,7 +669,24 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     private const string Register = """
         {
           "asOf": "2026-08-24", "absent": null, "generation": 0,
-          "twinPairsArriveAt": "6.3",
+          "twins": {
+            "absent": null, "windowWanted": 250,
+            "maximumDistance": "0.5", "minimumGapPoints": "15",
+            "sides": [
+              { "direction": "long", "asOf": "2026-08-24", "windowSetups": 41,
+                "windowWanted": 250, "signalsCompared": 12, "candidatePairs": 820,
+                "pairsFound": 1, "emptyBecause": null,
+                "pairs": [
+                  { "pairId": "2026-08-20-long-00--2026-08-20-long-01",
+                    "leftSetupId": "2026-08-20-long-00", "rightSetupId": "2026-08-20-long-01",
+                    "distance": "0.31", "gapPoints": "22.4",
+                    "leftOutcome": "0.14", "rightOutcome": "-0.084",
+                    "signalsCompared": 12, "windowSetups": 41 } ] },
+              { "direction": "short", "asOf": "2026-08-24", "windowSetups": 18,
+                "windowWanted": 250, "signalsCompared": 12, "candidatePairs": 153,
+                "pairsFound": 0,
+                "emptyBecause": "no pair among 153 candidate(s) over a window of 18 was both closer than 0.5 across 12 signal(s) and further apart than 15 points",
+                "pairs": [] } ] },
           "lastScoreRun": {
             "sessionDate": "2026-08-24", "versionsLive": 2, "versionsScored": 1,
             "nightsScored": 2, "nightsWaiting": 1, "longs": 1, "shorts": 1,

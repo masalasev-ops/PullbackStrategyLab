@@ -17070,3 +17070,109 @@ Next:       **6.3**, TwinPairFinder, `twin_pair` and the panel the research ledg
             the trailing window actually held, the window not being fillable and the two values not
             moving there (see: The twin-pair threshold is reviewed at the first full window rather
             than at a phase).
+
+## 6.3 — 2026-09-06 — phase-6-3-twin-pairs — TwinPairFinder, and the run row that exists so a run finding nothing can say what it looked at
+
+Built:      **TwinPairFinder**, a stage that finds the setups which looked the same on every recorded
+            signal and ended somewhere else. Two setups near-identical in the standardised signal
+            space whose ten-day outcomes differ by more than fifteen points are a statement that
+            something the lab does not measure decided the result, which is what the loop's
+            signal-request channel is fed from.
+
+            **Migration 056 creates `twin_pair` and `twin_run`, and the second is the one this
+            checkpoint could not do without.** The figure the row owes is how many setups the window
+            actually held, and that is a property of the run rather than of any pair: with pairs
+            alone, a run qualifying nothing would write nothing, and the window figure would be
+            missing on exactly the runs where it is the only thing there is to say. That is every run
+            for months (see: The twin-pair threshold is reviewed at the first full window rather than at a phase).
+
+            **Three shapes of nothing, kept apart on the row.** A window under two setups forms no
+            pair, a window with no numeric signal common to every row forms no space, and a real
+            window whose pairs the thresholds all refused is a finding rather than a gap. The store
+            asserts in both directions that a run finding nothing says which it was and a run finding
+            something does not carry a reason it found nothing.
+
+            **The panel the research ledger has carried an arrival note for since 5.5 now carries a
+            reading**, and the four declarations of when it arrives are retired: the two constants in
+            the read surface and the web shell, the view's own field, and the fixture expectation
+            that read the checkpoint number back. Every side states the window it held against the
+            window the metric wants, whether or not it found a pair, because a count of nought with
+            no window beside it cannot say whether the thresholds refused everything or whether there
+            was nothing to look at.
+
+            **A slot, through all five declarations `slot-roster` reconciles**: `twins` at Saturday
+            08:10, after the win-rate bound. The second weekly slot and the first since `ceiling`,
+            weekly for the same reason that one is, which is that the metric standardises over a
+            trailing window of setups rather than over a night.
+
+Decided:    **Neither threshold moves here and the row said so before the build started**, so what
+            this checkpoint adds is the instrument that lets the condition be seen approaching rather
+            than a review. The window is 250 setups, the store holds nought with a closed outcome,
+            and every run reports the gap.
+
+            **A rerun of a date is a new generation beside the old rather than a rewrite.** The first
+            shape written was a delete of the date followed by a re-insert, which `writer-ownership`
+            refused because no store in SCHEMA declares a delete. The refusal was right for a better
+            reason than the one it gave: the window grows as outcomes fill, so a second run of one
+            date can honestly produce a different answer, and the stale generation is what a person
+            saw. `observed_at` is in the key and the reader takes the latest at or before its bound,
+            which is the shape `scoreboard` took at 049 (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood).
+
+            **Two implementations became one, twice, and both were about to be two.** The z-scoring
+            and the distance moved into `SignalSpace`, because SignalAdmissionTest and TwinPairFinder
+            take the same distance over the same standardised axes and two copies would have put the
+            admission test and the twin finder on subtly different geometries with nothing able to
+            say which was right. The population walk moved into `ScoredSetupReader` for the same
+            reason one level out: both stages need the setups of one side with a closed outcome and
+            their numeric signals, and two copies of that assembly could have differed by a bounding
+            clause nobody compared. The second refactor also removed a duplicated scoring-horizon
+            constant that the first draft of the reader had written out in full with a comment
+            excusing it.
+
+Amended:    **This checkpoint amended its own done condition and says so in those words.** The 6.3
+            row said the run reports how many setups the window held and said nothing about the
+            panel, so there was no corpus sentence about this panel for `surface-claims` to read a
+            claim from other than the arrival note being retired. A sentence was added saying the
+            panel states the window beside the count, on the terms band 3's panels are held to. It
+            states what the page must show rather than widening what the checkpoint builds, and it is
+            on the record so the sign-off rules on it rather than diffing the plan against itself.
+
+Measured:   **The out-of-scope count is 11, down one, which is the path the plan projected and the
+            step it projected here.** The one retired is the twin-pair finder's catalogue row, and
+            nothing was added.
+
+            **Both windows are nought over the golden fixture, stated per side and never added.** No
+            setup's ten-day horizon has closed, so neither side forms a window, neither forms a
+            space, and neither can form a candidate pair. That is the same population reading 6.2
+            took the day before, from the same derivation, and it is why every figure this checkpoint
+            verifies is over an authored population.
+
+            **The window is 250 and the store holds nought of it.** The condition the threshold
+            review waits on is therefore visible as a number on every run and on the page, which is
+            the whole of what 6.3 was asked to leave behind.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,108 tests. `tools/verify-phase.ps1` GREEN: 143 claims, 132
+            passed, 0 failed, 11 out of scope, 0 unexamined, coverage examined 10476. **The claim
+            total did not move**, which is what says this checkpoint retired one row and authored
+            none: 131 passed and 12 out of scope became 132 and 11 over the same 143.
+
+            **The report reads 36 expectations changed since the last commit against 29 new**, so
+            six of the thirty-six are moves, one is a retirement and the rest are additions. Each of
+            the six carries the reason that moved it, and none was regenerated to make a diff pass.
+
+            **Thirty expectations added, twenty-five of them `DERIVED`, five moved with their
+            reasons and one retired**, which is twenty-nine more than the fixture held. The retired one is `ledger.twinPairsArriveAt`, which read a checkpoint
+            number off a panel that now carries a reading; it is retired rather than moved because
+            there is no longer a figure of that shape to hold. The window figures are derived by the
+            population script outside the solution and the three threshold figures by hand from
+            ARCHITECTURE's authored-parameters row, which is the document they are authored in and is
+            independent of the constants the run reports.
+
+Carried:    **Nothing new, and nothing falls due at 6.3.** The minimum population raised at 6.2 stays
+            due at the first closed outcomes, which is the same event the twin window waits on and is
+            not this checkpoint's to discharge.
+
+Next:       **6.4**, ContextPacker and the versioned evidence pack, with the planted null signal
+            carried as the tripwire it is. It is byte-stable across runs over the golden fixture,
+            which is the claim the phase report makes of this phase, and five of its nine sections
+            rest on outcomes that have not closed.

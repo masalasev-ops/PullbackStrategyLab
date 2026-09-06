@@ -82,6 +82,16 @@ public sealed class PointInTimeCheck
             // being a second stamp to bound on.
             ["signal_definition"] = "observed_at",
 
+            // The twin pairs and their run rows, both stamped and both read to decide an answer. The
+            // ledger's panel is what a person reads a night's twins off, and a rerun of a date writes
+            // a new generation beside the old, so an unbounded read would show one date's pairs twice
+            // and count them twice. Bounding is also what makes an old session's page show what the
+            // lab held then rather than what it holds now: the window grows, and a pair found over
+            // thirty-eight setups is not the same measurement as the same pair over two hundred.
+            // see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+            ["twin_pair"] = "observed_at",
+            ["twin_run"] = "observed_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the

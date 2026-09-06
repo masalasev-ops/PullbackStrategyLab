@@ -2642,3 +2642,19 @@ Why:  the obligation is discharged, and a discharge moves a row from the live ta
 Was:  the `/tools` listing ending at `derive-minimum-sample.py`, and the checks roster ending at `shell-executable`.
 Now:  `derive-signal-library.py` added to the listing, and a `signal-library` row added to the roster.
 Why:  6.2's figures are derived rather than frozen, which needs a derivation outside the solution, and the table lists every check that runs. A check that runs as a CI step and is not declared in the roster is a property nobody wrote down.
+
+
+### 2026-09-06 — SCHEMA.md — cites The twin-pair threshold is reviewed at the first full window rather than at a phase
+Was:  the research stores table row "| `twin_pair` | pair id | Insert TwinPairFinder |", and no column table for it anywhere.
+Now:  the grain reading pair id plus date, the writer line naming the insert alone, a `twin_run` row beside it, and two column sections authoring both tables.
+Why:  6.3 builds the finder and owes its columns. `twin_run` is the addition the row could not do without: the figure this checkpoint owes is how many setups the window actually held, that is a property of the run rather than of any pair, and with pairs alone a run qualifying nothing would write nothing at all.
+
+### 2026-09-06 — BUILD_PLAN.md — cites The twin-pair threshold is reviewed at the first full window rather than at a phase
+Was:  6.3's done condition ending "Retires the four declarations of when the panel arrives. Pins the twin-pair threshold deferred here".
+Now:  the same, preceded by a sentence saying the panel states the window beside the count, on the terms band 3's panels are held to.
+Why:  **This checkpoint amended its own done condition and says so.** The row said the run reports how many setups the window held and said nothing about the panel, so the sentence the surface claim is read from did not exist: `surface-claims` asserts a claim against the rendered page and the corpus had no sentence about this panel other than the arrival note being retired. The amendment states what the page must show rather than widening what the checkpoint builds, and it is on the record here so the sign-off rules on it rather than diffing the plan against itself.
+
+### 2026-09-06 — RUNBOOK.md — cites The twin-pair threshold is reviewed at the first full window rather than at a phase
+Was:  the weekly schedule table holding one row, Saturday 08:00 for `ceiling`.
+Now:  a second row, Saturday 08:10 for `twin-pairs`, with the window it wants and what it records where the window is short.
+Why:  the finder is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch, and it caught `ceiling` missing from here at 5.5.

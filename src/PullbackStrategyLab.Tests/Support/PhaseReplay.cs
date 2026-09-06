@@ -912,6 +912,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ReplayFigures());
         measurements.AddRange(HoldoutFigures());
         measurements.AddRange(LibraryFigures());
+        measurements.AddRange(TwinFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
@@ -2667,6 +2668,54 @@ public sealed class PhaseReplay : IDisposable
     /// windows is compatible with any schedule at all.
     /// </summary>
     /// <summary>
+    /// The twin pairs over the fixture, which is 6.3's deliverable.
+    ///
+    /// <b>The window figures are the point and the pair count is not.</b> The metric standardises
+    /// each signal over the trailing 250 setups and this fixture holds no setup whose ten-day
+    /// horizon has closed, so both windows are nought and neither side can form a pair. What the
+    /// figures have to distinguish is that from a full window whose pairs were all refused by the
+    /// thresholds, which is why every side reports its window, its axes and its candidate count
+    /// beside the number it found.
+    ///
+    /// It runs the stage rather than computing over the store, because the ledger figures below
+    /// read the panel and a panel with no run behind it would report the absent state on a store
+    /// where the finder had simply not been called.
+    /// </summary>
+    private IReadOnlyList<Measurement> TwinFigures()
+    {
+        TwinPairResult result = new TwinPairFinder(_connections, Logger(), _clock, _options).Find(AsOf);
+
+        var figures = new List<Measurement>
+        {
+            new("twins.windowWanted", TwinPairs.WindowSetups.ToString(CultureInfo.InvariantCulture)),
+            new("twins.maximumDistance",
+                TwinPairs.MaximumDistance.ToString("0.##", CultureInfo.InvariantCulture)),
+            new("twins.minimumGapPoints",
+                TwinPairs.MinimumOutcomeGapPoints.ToString("0.#", CultureInfo.InvariantCulture)),
+            new("twins.sides", result.Sides.Count.ToString(CultureInfo.InvariantCulture)),
+            new("twins.outcome", result.Outcome.ToStorageText()),
+        };
+
+        // Per side and never added, because a twin pair is a comparison inside one side's
+        // population (see: Long and short are never pooled into one figure).
+        foreach (TwinPairSide side in result.Sides)
+        {
+            figures.Add(new Measurement($"twins.{side.Direction}.windowSetups",
+                side.WindowSetups.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"twins.{side.Direction}.signalsCompared",
+                side.SignalsCompared.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"twins.{side.Direction}.candidatePairs",
+                side.CandidatePairs.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"twins.{side.Direction}.pairsFound",
+                side.PairsFound.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new Measurement($"twins.{side.Direction}.emptyBecause",
+                EmptyReason(side.EmptyBecause)));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
     /// The signal library as data, and what the admission test made of it over the fixture, which is
     /// 6.2's deliverable.
     ///
@@ -2794,7 +2843,30 @@ public sealed class PhaseReplay : IDisposable
                 ledger.Generation?.ToString(CultureInfo.InvariantCulture) ?? "none"),
             new Measurement("ledger.absent", ledger.Absent is null ? "none" : "no version registered"),
             new Measurement("ledger.scoreRun", ledger.LastScoreRun is null ? "never ran" : "ran"),
-            new Measurement("ledger.twinPairsArriveAt", ledger.TwinPairsArriveAt),
+            // The panel that carried an arrival note until 6.3 and now carries a reading. The
+            // window figures are here rather than only the pair count, because a count of nought
+            // with no window beside it cannot say whether the thresholds refused everything or
+            // whether there was nothing to look at.
+            new Measurement("ledger.twins.absent", ledger.Twins.Absent is null ? "none" : "no reading"),
+            new Measurement("ledger.twins.sides",
+                ledger.Twins.Sides.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("ledger.twins.windowWanted",
+                ledger.Twins.WindowWanted.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("ledger.twins.maximumDistance", ledger.Twins.MaximumDistance),
+            new Measurement("ledger.twins.minimumGapPoints", ledger.Twins.MinimumGapPoints),
+            .. ledger.Twins.Sides.SelectMany(side => new[]
+            {
+                new Measurement($"ledger.twins.{side.Direction}.windowSetups",
+                    side.WindowSetups.ToString(CultureInfo.InvariantCulture)),
+                new Measurement($"ledger.twins.{side.Direction}.signalsCompared",
+                    side.SignalsCompared.ToString(CultureInfo.InvariantCulture)),
+                new Measurement($"ledger.twins.{side.Direction}.candidatePairs",
+                    side.CandidatePairs.ToString(CultureInfo.InvariantCulture)),
+                new Measurement($"ledger.twins.{side.Direction}.pairsFound",
+                    side.PairsFound.ToString(CultureInfo.InvariantCulture)),
+                new Measurement($"ledger.twins.{side.Direction}.emptyBecause",
+                    EmptyReason(side.EmptyBecause)),
+            }),
             new Measurement("ledger.holdout.available",
                 ledger.Holdout.Available.ToString(CultureInfo.InvariantCulture)),
             new Measurement("ledger.holdout.emptyBecause", EmptyReason(ledger.Holdout.EmptyBecause)),

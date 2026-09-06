@@ -402,6 +402,23 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
+        // The twin-pair threshold, pinned at 6.3 by TwinPairFinder existing to apply it. Both halves
+        // of the row, because a pair has to clear both and a pin on one would pass over a finder
+        // that had stopped asking the other. The review point is not pinned here and cannot be: it
+        // is a condition rather than a value, and what asserts it is the run reporting how many
+        // setups its window actually held (see: The twin-pair threshold is reviewed at the first
+        // full window rather than at a phase).
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Twin-pair threshold",
+            table.Cell("Twin-pair threshold")
+                .Contains("Distance under 0.5 after z-scoring; outcomes differing by over 15 points", StringComparison.Ordinal),
+            TwinPairs.MaximumDistance == 0.5 && TwinPairs.MinimumOutcomeGapPoints == 15.0,
+            "TwinPairs.MaximumDistance and TwinPairs.MinimumOutcomeGapPoints"));
+
+        pins.Add(Pin.Text("ARCHITECTURE.html, TwinPairFinder, the trailing window",
+            architecture.Contains("z-scored against its own distribution over the trailing 250 setups", StringComparison.Ordinal),
+            TwinPairs.WindowSetups == 250,
+            "TwinPairs.WindowSetups"));
+
         // The correlation limit, pinned at 6.2 by SignalAdmissionTest existing to apply it. Both
         // halves of the row are pinned, because the table's fourth column states what happens above
         // the limit and a pin on the number alone would pass over a limit nothing acted on. The
@@ -790,7 +807,6 @@ public sealed class PinnedConstantsCheck
     /// </summary>
     public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
     [
-        ("Twin-pair threshold", "6.3", "TwinPairFinder"),
         ("Researcher model", "6.5", "ResearcherSeat"),
         ("Researcher cadence", "6.5", "ResearcherSeat"),
     ];

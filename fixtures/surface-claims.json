@@ -312,13 +312,13 @@
       "why": "The sixth defect shape applied to 5.4's own answer. The store distinguishes four reasons a register holds nothing, and for the first three months of this lab two of them hold the same noughts on every other column, so a page dropping the reason would leave a correct answer with nowhere to be read."
     },
     {
-      "name": "the-twin-pair-panel-names-the-checkpoint-that-fills-it",
-      "sentence": "the holdout register and the twin-pair panel beside it",
+      "name": "the-twin-pair-panel-states-the-window-it-held",
+      "sentence": "a side that found no pair still shows how many setups its window held against the number the metric wants",
       "statedIn": "docs/BUILD_PLAN.md",
       "surface": "/research",
-      "mustCarry": "Arrives at checkpoint 6.3",
+      "mustCarry": "of 250 setups",
       "producedBy": "the page",
-      "why": "The one panel of this page nothing fills yet. It names the checkpoint rather than being drawn with sample pairs, because a page of invented rows is the one thing that cannot be told apart from a working screen later."
+      "why": "The panel named the checkpoint that would fill it until 6.3 and now carries a reading. What it must never carry is a bare nought: the metric standardises each signal over the trailing 250 setups and the store holds a fraction of that, so a count of no twins is unreadable without the window beside it. A side that found nothing still states how many setups its window held against the number the metric wants, which is what separates the thresholds having refused everything from there having been nothing to look at."
     },
     {
       "name": "the-morning-screen-names-a-slot-that-never-fired",

@@ -409,7 +409,7 @@ public sealed class LabApiClient
                         payload.LastScoreRun.Unscoreable,
                         payload.LastScoreRun.Outcome,
                         payload.LastScoreRun.StoppedBecause),
-                payload.TwinPairsArriveAt ?? TwinPairsArriveAt);
+                Twins(payload.Twins));
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException)
         {
@@ -476,8 +476,33 @@ public sealed class LabApiClient
         }
     }
 
-    /// <summary>The checkpoint that fills the ledger's twin-pair panel, where the wire named none.</summary>
-    public const string TwinPairsArriveAt = "6.3";
+    /// <summary>
+    /// The twin-pair panel, with the withheld case carried rather than collapsed.
+    ///
+    /// A wire that answered with no twin section at all is a read surface too old to know about the
+    /// panel, which is a different state from a lab whose finder has not run. Both are shown as a
+    /// sentence and neither as a nought.
+    /// </summary>
+    private static TwinsView Twins(TwinsPayload? payload) =>
+        payload is null
+            ? new TwinsView("the read surface did not answer with a twin-pair reading", 0, null, null, [])
+            : new TwinsView(
+                payload.Absent,
+                payload.WindowWanted,
+                payload.MaximumDistance,
+                payload.MinimumGapPoints,
+                [.. (payload.Sides ?? []).Select(side => new TwinSideView(
+                    side.Direction,
+                    side.AsOf,
+                    side.WindowSetups,
+                    side.WindowWanted,
+                    side.SignalsCompared,
+                    side.CandidatePairs,
+                    side.PairsFound,
+                    side.EmptyBecause,
+                    [.. (side.Pairs ?? []).Select(p => new TwinPairView(
+                        p.PairId, p.LeftSetupId, p.RightSetupId, p.Distance, p.GapPoints,
+                        p.LeftOutcome, p.RightOutcome, p.SignalsCompared, p.WindowSetups))]))]);
 
     private static VersionView Version(VersionPayload v) => new(
         v.VariantId, v.Generation, v.Family, v.Definition, v.Target, v.MinimumSample,
@@ -636,7 +661,20 @@ public sealed class LabApiClient
         IReadOnlyList<VersionPayload>? Versions,
         HoldoutPayload? Holdout,
         ScoreRunPayload? LastScoreRun,
-        string? TwinPairsArriveAt);
+        TwinsPayload? Twins);
+
+    private sealed record TwinsPayload(
+        string? Absent, int WindowWanted, string? MaximumDistance, string? MinimumGapPoints,
+        IReadOnlyList<TwinSidePayload>? Sides);
+
+    private sealed record TwinSidePayload(
+        string Direction, string AsOf, int WindowSetups, int WindowWanted, int SignalsCompared,
+        long CandidatePairs, int PairsFound, string? EmptyBecause,
+        IReadOnlyList<TwinPairPayload>? Pairs);
+
+    private sealed record TwinPairPayload(
+        string PairId, string LeftSetupId, string RightSetupId, string Distance, string GapPoints,
+        string LeftOutcome, string RightOutcome, int SignalsCompared, int WindowSetups);
 
     private sealed record VersionPayload(
         string VariantId, int Generation, string Family, string Definition, string Target,

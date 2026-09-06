@@ -190,22 +190,20 @@ public sealed class SignalAdmissionTest
     }
 
     /// <summary>
-    /// One side's judgeable population: the setups of that direction whose scoring-horizon outcome
-    /// the lab could have had by <paramref name="asOf"/>, and the numeric signal values they carry.
+    /// One side's judgeable population, assembled by the reader both research stages share.
     ///
-    /// <b>A signal is in the space only where every row of the population carries it as a number.</b>
-    /// The library holds words as well as numbers, and `regime_label`, `industry`, `thrust_scan` and
-    /// `ladder_grade` are categories rather than quantities: a distance taken over them would be a
-    /// distance over whatever their text happened to parse as. A signal missing on some rows is
-    /// excluded for the same reason, because filling a gap with nought would put every row that has
-    /// no value at the middle of the distribution and call that a measurement.
-    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// <b>The assembly moved out of this stage at 6.3.</b> TwinPairFinder needs the same rows and
+    /// the same columns, and two copies of the walk would put the admission test and the twin finder
+    /// on populations that could differ by a bounding clause nobody compared. What is left here is
+    /// the part that is this stage's own: which columns count as the admitted space, and which
+    /// column is the candidate being judged.
     /// </summary>
     private Population PopulationFor(SqliteConnection connection, string direction, DateOnly asOf)
     {
-        IReadOnlyDictionary<string, decimal> outcomes = Outcomes(connection, direction, asOf);
+        IReadOnlyList<ScoredSetup> scored =
+            ScoredSetupReader.Read(connection, direction, asOf, _options.SessionZone);
 
-        if (outcomes.Count == 0)
+        if (scored.Count == 0)
         {
             return new Population(
                 [],
@@ -213,47 +211,14 @@ public sealed class SignalAdmissionTest
                 new Dictionary<string, IReadOnlyList<double>>(StringComparer.Ordinal));
         }
 
-        // Read through the backfill-aware reader, which is what a research read of stored history
-        // uses: a value computed later from the night's own inputs is admissible evidence about
-        // that night, and bounding on the instant the arithmetic ran would make every backfilled
-        // signal invisible to the library that asked for it.
-        // see: A backfilled signal is read by a replay and not by a surface, because point-in-time is a property of the inputs
-        var byName = new Dictionary<string, Dictionary<string, double>>(StringComparer.Ordinal);
-
-        foreach (DateOnly session in SetupReader.Sessions(connection, direction, DateOnly.MinValue, asOf))
-        {
-            foreach (StoredSetupSignal signal in SetupSignalReader.ReadIncludingBackfilled(connection, session))
-            {
-                if (!outcomes.ContainsKey(signal.SetupId)
-                    || !double.TryParse(signal.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
-                {
-                    continue;
-                }
-
-                if (!byName.TryGetValue(signal.SignalName, out Dictionary<string, double>? column))
-                {
-                    column = new Dictionary<string, double>(StringComparer.Ordinal);
-                    byName[signal.SignalName] = column;
-                }
-
-                column[signal.SetupId] = value;
-            }
-        }
-
-        // A fixed row order, so every column is over the same rows in the same order and the space
-        // is the same space from one signal to the next.
-        IReadOnlyList<string> rows = [.. outcomes.Keys.OrderBy(k => k, StringComparer.Ordinal)];
+        IReadOnlyList<string> common = ScoredSetupReader.CommonSignals(
+            scored, [.. SignalLibrary.Declared.Select(d => d.Name)]);
 
         var values = new Dictionary<string, IReadOnlyList<double>>(StringComparer.Ordinal);
 
-        foreach ((string name, Dictionary<string, double> column) in byName)
+        foreach (string name in common)
         {
-            if (rows.Any(r => !column.ContainsKey(r)))
-            {
-                continue;
-            }
-
-            values[name] = [.. rows.Select(r => column[r])];
+            values[name] = [.. scored.Select(s => s.Values[name])];
         }
 
         var active = new Dictionary<string, IReadOnlyList<double>>(StringComparer.Ordinal);
@@ -266,48 +231,7 @@ public sealed class SignalAdmissionTest
             }
         }
 
-        return new Population(
-            [.. rows.Select(r => (double)outcomes[r])],
-            active,
-            values);
-    }
-
-    /// <summary>
-    /// The scoring-horizon outcome of one direction's setups, bounded on `filled_at`.
-    ///
-    /// Bounded because a return filled tomorrow is not evidence this run could have had, and the
-    /// whole point of judging a signal on stored rows is that the judgement is one a replay can
-    /// reproduce.
-    /// </summary>
-    private IReadOnlyDictionary<string, decimal> Outcomes(
-        SqliteConnection connection, string direction, DateOnly asOf)
-    {
-        using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT f.subject_id, f.return_signed
-              FROM forward_return f
-              JOIN setup s ON s.setup_id = f.subject_id
-             WHERE f.subject_kind = 'setup'
-               AND f.horizon_days = @horizon
-               AND f.filled_at <= @filled_before
-               AND s.direction = @direction
-               AND s.as_of <= @as_of
-            """;
-
-        command.Parameters.AddWithValue("@horizon", MeasurementParameters.ScoringHorizonSessions);
-        command.Parameters.AddWithValue("@filled_before", StoreText.EndOfSession(asOf, _options.SessionZone));
-        command.Parameters.AddWithValue("@direction", direction);
-        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
-
-        var outcomes = new Dictionary<string, decimal>(StringComparer.Ordinal);
-        using SqliteDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            outcomes[reader.GetString(0)] = StoreText.StorageTextToRatio(reader.GetString(1));
-        }
-
-        return outcomes;
+        return new Population([.. scored.Select(s => s.Outcome)], active, values);
     }
 
     /// <summary>
