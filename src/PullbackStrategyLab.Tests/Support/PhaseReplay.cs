@@ -911,6 +911,7 @@ public sealed class PhaseReplay : IDisposable
 
         measurements.AddRange(ReplayFigures());
         measurements.AddRange(HoldoutFigures());
+        measurements.AddRange(LibraryFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
@@ -2665,6 +2666,71 @@ public sealed class PhaseReplay : IDisposable
     /// store</b>, and they are kept apart for the reason the corpus keeps finding: a count of nought
     /// windows is compatible with any schedule at all.
     /// </summary>
+    /// <summary>
+    /// The signal library as data, and what the admission test made of it over the fixture, which is
+    /// 6.2's deliverable.
+    ///
+    /// <b>Every candidate is undecided over this fixture and that is the figure worth having.</b>
+    /// The fixture holds no setup whose ten-day horizon has closed, so both populations are nought
+    /// and no verdict can be reached; a run recording admissions here would be a run measuring
+    /// something other than what it says. The counts are stated per side and never added
+    /// (see: Long and short are never pooled into one figure).
+    ///
+    /// The rerun figure is here because it is the property that keeps `observed_at` meaning "when
+    /// this row last changed" rather than "when the stage last ran", and it is invisible from a
+    /// single run.
+    /// </summary>
+    private IReadOnlyList<Measurement> LibraryFigures()
+    {
+        var stage = new SignalAdmissionTest(_connections, Logger(), _clock, _options);
+
+        AdmissionResult first = stage.Admit(AsOf);
+        AdmissionResult again = stage.Admit(AsOf);
+
+        var figures = new List<Measurement>
+        {
+            new("library.declared", first.Declared.ToString(CultureInfo.InvariantCulture)),
+            new("library.active", SignalLibrary.Active.Count.ToString(CultureInfo.InvariantCulture)),
+            new("library.candidates", first.Candidates.ToString(CultureInfo.InvariantCulture)),
+            new("library.nullControls",
+                SignalLibrary.Declared.Count(s => s.IsNullControl).ToString(CultureInfo.InvariantCulture)),
+            new("library.seeded", first.Seeded.ToString(CultureInfo.InvariantCulture)),
+            new("library.seededOnRerun", again.Seeded.ToString(CultureInfo.InvariantCulture)),
+            new("admission.longPopulation", first.LongPopulation.ToString(CultureInfo.InvariantCulture)),
+            new("admission.shortPopulation", first.ShortPopulation.ToString(CultureInfo.InvariantCulture)),
+            new("admission.admitted", first.Admitted.ToString(CultureInfo.InvariantCulture)),
+            new("admission.rejected", first.Rejected.ToString(CultureInfo.InvariantCulture)),
+            new("admission.undecided", first.Undecided.ToString(CultureInfo.InvariantCulture)),
+            new("admission.outcome", first.Outcome.ToStorageText()),
+        };
+
+        // One candidate's row read back, so the figures above are not the only evidence that the
+        // reason reached the store. The null control is the one chosen because it is the row 6.4
+        // looks for and the one whose absence would be least likely to be noticed.
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT status, long_outcome, long_because, short_outcome, is_null_control
+              FROM signal_definition
+             WHERE signal_name = @signal_name
+            """;
+        command.Parameters.AddWithValue("@signal_name", SignalLibrary.NullControl);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        if (reader.Read())
+        {
+            figures.Add(new Measurement($"library.{SignalLibrary.NullControl}.status", reader.GetString(0)));
+            figures.Add(new Measurement($"library.{SignalLibrary.NullControl}.longOutcome", reader.GetString(1)));
+            figures.Add(new Measurement($"library.{SignalLibrary.NullControl}.longBecause", reader.GetString(2)));
+            figures.Add(new Measurement($"library.{SignalLibrary.NullControl}.shortOutcome", reader.GetString(3)));
+            figures.Add(new Measurement($"library.{SignalLibrary.NullControl}.isNullControl",
+                reader.GetInt32(4) == 1 ? "yes" : "no"));
+        }
+
+        return figures;
+    }
+
     private IReadOnlyList<Measurement> HoldoutFigures()
     {
         var registry = new HoldoutRegistry(_connections, Logger(), _clock, _options);

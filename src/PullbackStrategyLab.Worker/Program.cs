@@ -57,6 +57,7 @@ public static class Program
         builder.Services.AddSingleton<LossClassifier>();
         builder.Services.AddSingleton<SignalVectorizer>();
         builder.Services.AddSingleton<SignalBackfiller>();
+        builder.Services.AddSingleton<SignalAdmissionTest>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -248,6 +249,7 @@ public static class Program
         [IndicatorEngine.Name] = (services, rest) => services.GetRequiredService<IndicatorEngine>().Run(rest),
         [SignalVectorizer.Name] = (services, rest) => services.GetRequiredService<SignalVectorizer>().Run(rest),
         [SignalBackfiller.Name] = (services, rest) => services.GetRequiredService<SignalBackfiller>().Run(rest),
+        [SignalAdmissionTest.Name] = (services, rest) => services.GetRequiredService<SignalAdmissionTest>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -330,6 +332,11 @@ public static class Program
         // event and not an hour, and the schedule table says "on admission" for exactly that
         // reason. `slot-roster` reconciles slots and this is advertised without being one.
         SignalBackfiller.Name,
+        // Not a slot either, and for the same reason one level up: the library is ruled on when it
+        // gains a candidate or when the evidence behind a verdict moves, and the catalogue's
+        // schedule says "on admission". A nightly slot would rewrite thirty-five specification rows
+        // to reach the same verdict on the same empty population every night.
+        SignalAdmissionTest.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

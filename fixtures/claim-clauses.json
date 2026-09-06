@@ -1713,15 +1713,17 @@
       "clauses": [
         {
           "clause": "Recorded as rejected with the correlation it was measured at and against which admitted signal, not discarded.",
-          "disposition": "deferred"
+          "disposition": "reaches"
         },
         {
           "clause": "A rejection is the admission test working",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the reason a rejection is recorded rather than discarded, which is a statement about what the mechanism is for and not a property a verdict could assert"
         },
         {
           "clause": "and a library that keeps only its acceptances cannot say how many times it refused nor what it refused against .",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the second half of the same reason, being what a library loses by keeping only its acceptances"
         }
       ]
     }

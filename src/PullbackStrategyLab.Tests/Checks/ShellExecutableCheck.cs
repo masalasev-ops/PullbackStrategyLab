@@ -80,6 +80,7 @@ public sealed class ShellExecutableCheck
             ["tools/derive-indicators.py"] = "a hand-run verification aid that nothing invokes",
             ["tools/derive-authored-parameters.py"] = "a hand-run verification aid that nothing invokes",
             ["tools/derive-minimum-sample.py"] = "a hand-run verification aid that nothing invokes",
+            ["tools/derive-signal-library.py"] = "a hand-run verification aid that nothing invokes",
         };
 
     /// <summary>
@@ -104,6 +105,10 @@ public sealed class ShellExecutableCheck
             ["tools/derive-minimum-sample.py"] =
                 "the minimum sample's derivation, run once at 5.0(b) and by hand only to re-pin, "
                 + "which after the freeze closes every open version. Nothing invokes it either",
+            ["tools/derive-signal-library.py"] =
+                "the library's own counts read off SCHEMA's Signals section and the admission "
+                + "population read off a store copy, run by hand at 6.2 to derive that checkpoint's "
+                + "expectations. Nothing invokes it either",
         };
 
     private const string ExecutableMode = "100755";

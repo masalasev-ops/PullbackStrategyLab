@@ -402,6 +402,27 @@ public sealed class PinnedConstantsCheck
             MeasurementParameters.MinimumEffectiveObservations == 1802,
             "MeasurementParameters.MinimumEffectiveObservations"));
 
+        // The correlation limit, pinned at 6.2 by SignalAdmissionTest existing to apply it. Both
+        // halves of the row are pinned, because the table's fourth column states what happens above
+        // the limit and a pin on the number alone would pass over a limit nothing acted on. The
+        // residual is the route out and it is a signal declared in the library rather than a
+        // substitution the stage makes, which is why what is asserted is the refusal and not a
+        // residual column nothing writes.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Signal correlation limit",
+            table.Cell("Signal correlation limit").Contains("0.70", StringComparison.Ordinal),
+            SignalAdmission.CorrelationLimit == 0.70,
+            "SignalAdmission.CorrelationLimit"));
+
+        pins.Add(Pin.Text("DECISIONS.md, admission, the correlation limit",
+            decisions.Contains("Rejected above 0.70 correlation", StringComparison.Ordinal),
+            SignalAdmission.CorrelationLimit == 0.70,
+            "SignalAdmission.CorrelationLimit"));
+
+        pins.Add(Pin.Text("DECISIONS.md, admission, the minimum population",
+            decisions.Contains("fewer than 20 setups", StringComparison.Ordinal),
+            SignalAdmission.MinimumPopulation == 20,
+            "SignalAdmission.MinimumPopulation"));
+
         // The execution family's minimum, pinned at 5.1 by VariantAdmitter existing to write it.
         // A row count rather than an effective figure, and the store carries the unit beside it so
         // the two minima cannot be read as comparable.
@@ -770,7 +791,6 @@ public sealed class PinnedConstantsCheck
     public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
     [
         ("Twin-pair threshold", "6.3", "TwinPairFinder"),
-        ("Signal correlation limit", "6.2", "SignalAdmissionTest"),
         ("Researcher model", "6.5", "ResearcherSeat"),
         ("Researcher cadence", "6.5", "ResearcherSeat"),
     ];

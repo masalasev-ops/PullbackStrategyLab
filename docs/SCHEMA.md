@@ -465,18 +465,31 @@ Grain: setup + signal. The frozen point-in-time evidence.
 Insert SignalVectorizer · Insert SignalBackfiller, **disjoint by date and signal**: the vectorizer writes new rows nightly and the backfiller adds signals to old setups, and may never touch a signal the vectorizer owns for that date
 
 ### `signal_definition`
-Grain: signal name. The library.
+Grain: signal name. The library as data, seeded from the Signals section below and never authored beside it.
 
 | Column | Type | Note |
 |---|---|---|
 | `signal_name` | TEXT PK | |
-| `formula` | TEXT | traces to named stored columns |
+| `formula` | TEXT | traces to named stored columns, as the Signals section writes it with the markup normalised away |
 | `source_columns` | TEXT | for the point-in-time test |
-| `admitted_on` | TEXT NULL | |
-| `status` | TEXT | `active`, `rejected_correlation`, `candidate` |
+| `status` | TEXT | `active`, `candidate`, `rejected_correlation`. The section may state the first two and never the third, because a rejection is measured rather than declared |
 | `is_null_control` | INTEGER | the planted tripwire |
+| `decided_at` | TEXT NULL | when the last verdict was taken, whatever the verdict was. Null on a signal nothing has ruled on |
+| `long_outcome` | TEXT NULL | `admitted`, `rejected_correlation`, `not_tightened` or `undecided`, over the long side's population |
+| `long_because` | TEXT NULL | why, on every outcome that is not a plain admission |
+| `long_tightness_before`, `long_tightness_after` | TEXT NULL | the outcome-similar ratio without the candidate and with it. **Null together**, because one of them alone is a number with no comparison in it |
+| `long_correlation` | TEXT NULL | the highest absolute correlation measured against an admitted signal |
+| `long_correlated_with` | TEXT NULL | which one |
+| `short_outcome`, `short_because`, `short_tightness_before`, `short_tightness_after`, `short_correlation`, `short_correlated_with` | as above | the short side's, on exactly the same terms and **never added to the long side's** (see: Long and short are never pooled into one figure) |
+| `observed_at` | TEXT NOT NULL | when the row last changed, which is what a read of the library bounds on |
 
-Insert SignalAdmissionTest · Read SignalVectorizer, ContextPacker, SignalBackfiller
+Insert SignalAdmissionTest · Update SignalAdmissionTest · **Read by nobody yet**, ContextPacker reading it at 6.4 for the signals a pack screens and the scoreboard's signal-library panel at 6.8. One writer per operation and the same one: the seed and the verdict are one question asked twice, and splitting them would put the library's only writer in one component and the verdicts that change it in another
+
+***`decided_at` replaced `admitted_on`, which was declared at 6.0(b) and is the one column the built table renames.*** A date only an admission can carry cannot date a rejection, and the failure table requires a rejection to be recorded with the correlation it was measured at and the signal it was measured against. The two could have sat side by side, and then every admitted row would carry the same instant twice: two columns that must agree are two columns that will not. So one column holds the date of the last verdict and `status` says which verdict it dates.
+
+*Every figure is per side, and the alternative was direction in the grain.* `ceiling_bound` keys on direction because every column of that row is a per-direction figure. Here half the row is the specification, being the formula, the source columns and the null-control flag, and those are facts about the signal rather than about a side; a grain of signal plus direction would write each of them twice per signal and leave two copies that have to agree. The tightness ratio itself has to be per side whatever the grain: it is a mean over pairs of setups whose outcomes sit near each other, and a long outcome and a short outcome are signed in opposite senses, so a pooled population would measure the gap between the two books and report it as discrimination.
+
+*Four outcomes reach three statuses, and the missing one is deliberate.* A candidate measured and found not to tighten stays a candidate, because nothing about it was refused and it can be asked again over a wider population; a fourth status would say the question was closed. What separates it from a candidate nobody has measured is `decided_at`, null on the second and set on the first. **The status is one value over two sides**: a signal earns its place if it tightens on either, because the library is one library and a signal admitted for shorts is computed on every setup, and it is refused only where both sides refuse it.
 
 ### `control_setup`
 Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cost. Still one row per ticker per set per setup after the tight set was allowed to reach across sessions: where a name qualifies on several sessions the nearest is drawn and the others are not, so a set is five distinct names rather than one name seen five times.
@@ -580,8 +593,13 @@ Insert ScoreboardBuilder · PK (`as_of`, `panel`, `direction`, `computed_at`) ·
 ## Signals
 
 The library. Every quantity the frozen row can carry, its formula, and the stored columns it reads.
-`signal_definition` holds this as data from 6.2, when SignalAdmissionTest exists to write it; until
-then this section is the library, and it is a section here rather than a document of its own (see: The corpus is eight documents and a ninth requires retiring one).
+**This section is the specification and `signal_definition` is the runtime form of it**, seeded from
+here by SignalAdmissionTest since 6.2 and reconciled against it in both directions by
+`signal-library`, so a signal in one and not the other fails rather than reading as new. It stays a
+section rather than becoming a document of its own (see: The corpus is eight documents and a ninth requires retiring one),
+and it is not retired into the store, because a formula and its source columns are what the
+point-in-time test is asserted against and what makes a signal proposable at all, and a
+specification nobody can diff is not one (see: The signal library stays a spec section and gains a runtime table, reconciled in both directions).
 
 **Every signal traces to named stored columns, and one does not.** That is the point of writing the
 library down: the source columns are what the point-in-time test is asserted against, and a signal
@@ -589,7 +607,11 @@ whose formula reads something nothing stores cannot be computed, cannot be repla
 proposed against. The one that does not trace is named at the bottom, as a finding rather than as an
 assumption.
 
-**Status is `active` or `candidate`.** Active means SignalVectorizer freezes it on every setup, and
+**Status here is `active` or `candidate`, and never the third value the table can hold.** A
+rejection at the correlation limit is something SignalAdmissionTest measured rather than something
+this section declares, which is why the reconciliation admits exactly one difference between the two
+sides: a stored row may read `rejected_correlation` where this section reads `candidate`, and no
+other disagreement passes. Active means SignalVectorizer freezes it on every setup, and
 the set of active signals is what "copies every number the decision depended on" resolves to.
 Candidate means the formula and the source columns are settled and nothing computes it yet: the raw
 material is stored and append-only, so SignalBackfiller at 6.1 computes a specified formula across
@@ -726,12 +748,20 @@ these across the whole stored history whenever they are admitted.*
 | Signal | Formula | Source columns | Status |
 |---|---|---|---|
 | `prior_thrust_outcome` | this security's adjusted move over the ten sessions after each earlier scan hit, averaged | `daily_bar.adj_close`, `scan_hit.as_of` | candidate |
-| `intraday_pullback_shape` | the fraction of each pullback session's range travelled after midday | `intraday_bar` | candidate, owed at 4.2 |
-| `day_of_month` | the calendar day of `as_of`, meaning nothing | `setup.as_of` | candidate, planted at 6.4 |
+| `intraday_pullback_shape` | the fraction of each pullback session's range travelled after midday | `intraday_bar` | candidate |
+| `day_of_month` | the calendar day of `as_of`, meaning nothing | `setup.as_of` | candidate |
 
-*`day_of_month` is the planted null control and carries `is_null_control` when the table exists. It
+*`day_of_month` is the planted null control and carries `is_null_control` on its stored row. It
 is declared here rather than at 6.4 so the column it reads is on the record; planting it is
 ContextPacker's job (see: One meaningless signal is planted in the conditional tables).*
+
+***The status cells carry a status and nothing else, from 6.2.*** Two of them read "candidate, owed
+at 4.2" and "candidate, planted at 6.4", which is a status and a deferral in one cell. The first had
+gone stale without anything being able to say so: 4.2 landed on 2026-08-24 and `intraday_bar` has
+existed since, so what the cell deferred had arrived and the cell still read as pending. What each
+of the two is actually waiting for is a producer rather than a checkpoint, which is the sentence
+above about a candidate costing nothing until something computes it, and it is said there once
+instead of in two cells that drift separately.
 
 ### The one that does not trace, recorded as a finding
 

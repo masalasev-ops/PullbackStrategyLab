@@ -729,6 +729,13 @@ public sealed partial class ArchitectureConformanceCheck
                     + "backfilled names, so the scan is left holding only which of the two the harness calls. Both "
                     + "return the same shape over the same table, which is why a caller pointed at the wrong one "
                     + "produces plausible rows and says nothing"))
+            .Scan("Failure behaviour: A signal is rejected at the correlation limit",
+                CheckCoverage.Backing.Test(
+                    "SignalAdmissionTestTests.A_candidate_that_restates_an_admitted_signal_is_rejected_with_what_it_was_measured_against",
+                    "a candidate authored as a near-copy of an admitted signal is run through the shipped stage "
+                    + "and the rejection is read back off the row with the correlation and the signal it was "
+                    + "measured against, so the scan is left holding only that the store still refuses a "
+                    + "rejection carrying neither"))
             .Scan("Failure behaviour: Detector errors on one stock",
                 CheckCoverage.Backing.Test(
                     "DetectorErrorTests.A_name_the_detector_cannot_read_gets_an_error_row_and_the_run_goes_partial",
@@ -1817,6 +1824,27 @@ public sealed partial class ArchitectureConformanceCheck
             && reader.Contains("registered.Max(v => v.Generation)", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The rejection row's own constraints, per side, read from the migration that declares them.
+    ///
+    /// Both sides are asserted rather than one, because the two clauses are separate statements and
+    /// a check that read only the long one would pass over a short rejection nobody could account
+    /// for. Read from the migration on the same grounds the blocked order is: what the stage decides
+    /// can be changed by an edit to the stage, and what the store refuses cannot.
+    /// </summary>
+    private static bool ARejectionCarriesWhatItWasMeasuredAt()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("signal-definition", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains(
+                   "long_outcome  <> 'rejected_correlation' OR (long_correlation  IS NOT NULL AND long_correlated_with  IS NOT NULL)",
+                   StringComparison.Ordinal)
+            && migration.Contains(
+                   "short_outcome <> 'rejected_correlation' OR (short_correlation IS NOT NULL AND short_correlated_with IS NOT NULL)",
+                   StringComparison.Ordinal);
+    }
+
     private static bool TheGateWritesABlockedRowWithItsReason()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
@@ -2019,6 +2047,20 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "the register can no longer express a closed generation, so editing the baseline would "
                     + "either lose the versions it invalidates or leave them reading as rejected"),
+
+            // The rejection, read from the migration that constrains it rather than from the stage
+            // that writes it, on exactly the terms the blocked order below is. The row says a
+            // refused signal is recorded with the correlation it was measured at and against which
+            // admitted signal, and the store is what refuses a rejection carrying neither. The
+            // behavioural half is the test that authors a duplicate of an admitted signal and reads
+            // the rejection back with both figures on it.
+            "A signal is rejected at the correlation limit" => ARejectionCarriesWhatItWasMeasuredAt()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a signal refused at the limit is a row carrying the correlation and the admitted signal it "
+                    + "was measured against, per side, and the store refuses a rejection carrying neither")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 055 no longer constrains a rejected signal to carry the correlation and what it "
+                    + "was measured against, so a refusal can be written that nobody can read back"),
 
             "Risk gate blocks an order" => TheGateWritesABlockedRowWithItsReason()
                 ? Claim.Passed("Failure behaviour", condition,

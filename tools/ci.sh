@@ -101,6 +101,7 @@ step 'check-point-in-time'         run_check 'point-in-time'
 step 'check-architecture-conformance' run_check 'architecture-conformance'
 step 'check-store-portability'      run_check 'store-portability'
 step 'check-price-storage-form'     run_check 'price-storage-form'
+step 'check-signal-library'         run_check 'signal-library'
 
 step 'check-shell-executable'       run_check 'shell-executable'
 

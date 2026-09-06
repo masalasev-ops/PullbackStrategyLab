@@ -99,6 +99,7 @@ Invoke-Step 'check-point-in-time'         { Invoke-Check 'point-in-time' }
 Invoke-Step 'check-architecture-conformance' { Invoke-Check 'architecture-conformance' }
 Invoke-Step 'check-store-portability'      { Invoke-Check 'store-portability' }
 Invoke-Step 'check-price-storage-form'     { Invoke-Check 'price-storage-form' }
+Invoke-Step 'check-signal-library'         { Invoke-Check 'signal-library' }
 
 Invoke-Step 'check-shell-executable'       { Invoke-Check 'shell-executable' }
 

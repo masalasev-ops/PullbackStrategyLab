@@ -59,6 +59,9 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
                   derive-authored-parameters.py  the same, for the authored-parameters figures
                   derive-minimum-sample.py  the minimum sample's derivation, run once at 5.0(b)
                   and re-run only to re-pin, which after the freeze closes every open version
+                  derive-signal-library.py  the library's own counts read off SCHEMA's Signals
+                  section, and the admission population read off a store copy, both outside the
+                  solution so 6.2's figures are derived rather than frozen
 /fixtures         captured  the golden fixture's inputs, verbatim vendor responses
                   with a manifest naming the endpoint, query and instant of each
                   expectations.json  what the pipeline should produce over them,
@@ -167,6 +170,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `slot-roster` | every CI run | The night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction |
 | `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |
 | `shell-executable` | every CI run | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
+| `signal-library` | every CI run | The signal library says one thing in SCHEMA's Signals section, in the list the Worker ships and in the `signal_definition` the admission stage seeds, reconciled in every direction. One disagreement is admitted and named: a stored row may record a rejection where the section says candidate, because a rejection is measured rather than declared |
 
 **The table lists every check that runs, not only the properties this file argues for.** A check that runs as a CI step and is not declared here is a property nobody wrote down, and the phase report enumerates checks by name, so the two would disagree with nothing to reconcile them.
 

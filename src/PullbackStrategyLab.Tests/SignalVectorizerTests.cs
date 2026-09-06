@@ -122,7 +122,7 @@ public sealed class SignalVectorizerTests : IDisposable
         // The partition that stops a signal being declared in SCHEMA and quietly produced by
         // nothing. A signal in neither list is one nobody noticed had no producer, which is the
         // library's own version of a check that examines less than it claims.
-        IReadOnlyList<string> active = SignalLibrary.ActiveNames;
+        IReadOnlyList<string> active = SchemaSignals.ActiveNames;
         var frozen = new HashSet<string>(SignalVectorizer.Frozen, StringComparer.Ordinal);
         var awaiting = new HashSet<string>(SignalVectorizer.AwaitingCheckpoint.Keys, StringComparer.Ordinal);
 
