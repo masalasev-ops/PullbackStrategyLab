@@ -16632,3 +16632,216 @@ Next:       **6.0**, being the population reading and then the spec pass, in tha
             data, and where the pack comparison surface lives. **The four register questions are
             still due at the operator** and two of them block a checkpoint by name, neither of which
             is 6.0.
+
+## 6.0(a) — 2026-09-05 — phase-6-population — what the phase is built against, read off the store
+
+Population:  **the 367 setup rows the live evidence store holds, flagged on the five sessions
+            2026-08-27, 08-28, 08-31, 09-03 and 09-04**, read from a copy taken with the SQLite
+            backup API and migrated to 54, never from the store itself. 245 long and 122 short,
+            across 137 distinct names. Every figure below is over that population unless it names
+            another, and no figure adds the two sides together (see: Long and short are never pooled
+            into one figure).
+
+Read:       **Setups flagged**, by session and side: 40 long and 4 short on 08-27, 47 and 26 on
+            08-28, 55 and 28 on 08-31, 53 and 39 on 09-03, 50 and 25 on 09-04. As distinct names,
+            which is the population the minute fetch asks for, 44, 73, 83, 92 and 75. **The 92 is
+            the same 92 the fetch asked about on the evening of 09-04**, which ties the 5.7 record
+            to the store rather than leaving it as a coincidence of size.
+
+            **Two sessions are absent and they are the two 5.8 recorded as lost.** `daily_bar` holds
+            seven market sessions from 08-27 to 09-04 and the evidence store holds five. 09-01 and
+            09-02 traded and the lab flagged nothing, so the gap is the lab's rather than the
+            market's. **It does not delay the horizon**, because the forward walk counts sessions
+            the market held and not nights the lab ran.
+
+            **Setups whose ten-day horizon has closed: none, and no ten-day row exists at all.**
+            `forward_return` reaches horizon 5 at most, holding 292 setup rows at h=1, 199 at h=3
+            and 115 at h=5. The paragraph this reading was owed to confirms said no ten-day horizon
+            had closed; the store says something stronger, which is that the horizon has not been
+            reached by any subject of any kind.
+
+            **Signals frozen per setup: 11,707 rows over 33 distinct names, on all 367 setups.**
+            **The count per setup is not uniform and that is the finding**: 188 setups carry all 33,
+            98 carry 32, 63 carry 29, 15 carry 30, 2 carry 31 and one carries 28. A signal admitted
+            at 6.2 on whether it tightens outcome-similar neighbourhoods is judged over whichever
+            subset carries it, so "the signals" is not one population and 6.1 and 6.2 name which.
+
+            **Controls drawn: 1,835 loose and 1,835 tight, five of each per setup, over all 367 and
+            all five sessions.** No setup is without either set.
+
+            **The version register holds one row.** V0, generation 0, family `baseline`, status
+            `open`, created 2026-09-03T21:27:22Z, against a minimum of 1802
+            `effective_paired_setup_observations`, with the four moved-threshold columns null
+            because a baseline moves nothing. Nothing has been admitted and nothing resolved.
+
+Measured:   **Nought of the 367 passed every gate.** Not a median of nought a night: nought
+            outright, on every session, on both sides. And the reason is one gate. **`exit-tight`
+            fails 242 of the 245 long rows and 117 of the 122 short**, so nothing else has to be
+            true for the funnel to pass nothing.
+
+            **How near the rest come, per side.** Long: 23 rows fail exactly one check, 53 fail two,
+            78 three, 75 four and 16 five. **Twenty of the 23 single failures are `exit-tight`
+            alone** and the other three are `dip-shape`. Short: no row fails fewer than two, the
+            distribution being 14, 35, 58 and 15 across two to five. **The short side is never one
+            check away** over these five sessions, and the long side is twenty-three times.
+
+            **Fail rates by check, long side, over 245 rows**: `exit-tight` 242, `dip-shape` 201,
+            `trigger-near` 125, `contraction` 113, `cluster` 59, `held-floor` 3. **Short side, over
+            122 rows**: `exit-tight` 117, `reached-ceiling` 115, `bounce-shape` 107,
+            `averages-squeezing` 76, `cluster` 22, `no-reclaim` 3.
+
+Caution:    **One of those rates is not yet a fact about the rule, and it is named now rather than
+            discovered at 6.9.** `reached-ceiling` fails 115 of 122 short rows while its anchored
+            disjunct has never been evaluable: `intraday_bar` holds **nought rows**, `anchored_vwap`
+            and `vwap_run` hold nought, `intraday-bars` has completed **once** in the lab's life and
+            stored nothing on that run, and the 21:00 engine refused on 09-04 because the tree was
+            left on a branch. So the figure is correct and the population it describes changes the
+            moment the window 6.10(a) buys is filled. That is the fifth failure shape held off
+            rather than met later.
+
+Found:      **Two facts about the running lab, neither of them a build defect, both the operator's.**
+
+            **The minute fetch has run once and bought nothing.** On 2026-09-04 it asked 92 names,
+            all 92 answered with no minutes, 460 calls were spent and 0 bars were written. The
+            captured fixture proves the endpoint answers: one live call on 2026-09-01 for
+            `intraday/AAPL.US` over 2026-08-25 returned 959 bars. So the empty answers are a fact
+            about the vendor, the account or the request rather than about the code, and nothing in
+            the store settles which. **6.10(a) widens a window that has never been filled at any
+            width**, so the width is necessary and is not sufficient, and 6.10(b) is what makes the
+            next occurrence say so instead of recording clean.
+
+            **The 21:00 engine has never run.** `vwap` fired on 09-04 and refused, naming the branch
+            the tree was on, which is the guard working and is also why `anchored_vwap` is empty.
+            A branch left checked out is the hazard the 3.12 row carries and the Merge section names.
+
+Carried:    Nothing new. **What 6.0(b) may not settle without a ruling** is the corrected threshold's
+            derivation, which waits on question 2 of the phase 6 sitting, already a row due at the
+            operator.
+
+Next:       **6.0(b)**, the spec pass, whose five items are what a pack version is and what makes one
+            byte-stable, the machine-readable form of a proposal, the corrected threshold's
+            derivation, how the signal library becomes data, and where the pack comparison surface
+            lives. Four of the five are unblocked.
+
+## 6.0(b) — 2026-09-06 — phase-6-population — the spec pass, and the ruling that unblocked its fifth item
+
+Built:      **Five named decisions, over authored cases, because nothing the loop produces exists
+            yet.** No component, no store, no migration. The four research stores' column tables are
+            not authored here; they are owed at the checkpoints that build them.
+
+            **What a pack version is, and what byte-stability means.** A version is the tuple of what
+            the model was shown and judged under: the section list, the signals screened, the
+            correction form with its computed thresholds, and the model identifier. Byte-stable means
+            two runs of the packer at one commit, over one store state, for one as-of, produce
+            byte-identical output, which is what makes "this proposal was made against this pack" a
+            statement anybody can verify. **The store's contents are deliberately not in the tuple**:
+            a pack cut on two nights is one version over different evidence, which is the point of
+            holding the version fixed while the evidence accumulates.
+
+            **What a proposal is, machine-readably.** The one thing that changes is the direction,
+            the gate, the threshold name and the two values, which are **the five columns `variant`
+            already holds**. That is the tie to 5.0(b) rather than a coincidence: a proposal accepted
+            becomes a version, and two shapes would put a translation step between them and a place
+            for the meaning to move. **Abstention is a value of the change field and not an absent
+            one**, because a document with nothing there and a document saying there is nothing to
+            propose are different answers and only one is a result.
+
+            **How the signal library becomes data.** `SCHEMA.md`'s Signals section stays the
+            specification and `signal_definition` is the runtime form, seeded from it and reconciled
+            in both directions. The section is not retired: it is where a formula and its source
+            columns are written down, which is what the point-in-time test is asserted against and
+            what a document review reads. What the table adds is status, admission date and the
+            correlation admitted against, which are results rather than specification.
+
+            **Where the pack comparison surface lives.** It is the sixth screen and the catalogue is
+            right where `Navigation` is short. A panel was refused because the surface's subject is
+            the set of pack versions, and every existing screen is keyed on one night, one setup or
+            one trade. The entry arrives with the page at 6.8, because a nav entry without a page is
+            a link that 404s.
+
+Decided:    **Admission is on the false-discovery rate and the family-wise threshold is recorded
+            beside it.** Ruled by the operator on 2026-09-06, closing question 2 of the phase 6
+            sitting, which is the one item of this part that was blocked.
+
+Derived:    **The corrected threshold, written before anything is screened and stating the library it
+            was computed over.** Admission is Benjamini-Hochberg over the screened set at an alpha of
+            0.05. The family-wise threshold is alpha divided by the number screened, computed on the
+            same set and recorded beside the verdict with whether the claim would have cleared it.
+            **Over the library as 6.0(a) measured it**, being 39 declared signals of which 33 are
+            active, family-wise is 0.05/33 = 0.0015 over the active set and 0.05/39 = 0.0013 over the
+            whole declared library. A pack screening fewer carries the threshold for what it
+            screened, which is what scaling with signals screened means arithmetically.
+
+            **It is expected to be re-derived and that is part of the decision.** Every threshold this
+            lab has measured has moved, and the minimum sample went from 262 to 1,802 on its first
+            derivation. This one also moves with the library, so the derivation states the size it was
+            computed over rather than leaving a reader to date it.
+
+            **And a claim admitted under false-discovery control is provisional against the
+            family-wise figure recorded beside it.** That is the same re-read the phase's
+            population-thin claims carry, and it is a different list from the twelve: those are
+            verification claims over populations the loop will fill, and this is a property of an
+            admitted proposal. The two are kept apart rather than summed.
+
+Corrected:  **The register's blocking sentence read over live rows and would have emptied as the
+            questions were answered**, which is the third instance of that shape in this corpus and
+            the second in this registry: phase 5's route derived its count from a mark on live rows,
+            the phase 6 plan corrected that for the count of questions opened, and left it standing in
+            the sentence beside it. **The two readings are now stated apart, each naming its
+            population**: the sitting opened four and two of them blocked a checkpoint, derived
+            against the answered section plus the live rows so it never moves; three remain open and
+            one of the three blocks a checkpoint, derived against the live tables alone, which is what
+            6.9 reads when it says which were asked, which were answered and which remain.
+
+Measured:   **The out-of-scope count rose by two, to 16, which is the peak the plan projected and the
+            checkpoint it projected it at.** The two are the failure-behaviour rows this pass
+            authored, being a pack that cannot be built, closing at 6.4, and a signal rejected at the
+            correlation limit, closing at 6.2. **No new table was authored**, which is the assumption
+            the projection named as most likely to be wrong and which held. 16 against a ceiling of
+            52 leaves 36 of headroom, so no raise is scheduled and none was taken.
+
+Verified:   `tools/ci.ps1` green at 31 steps, 1,078 tests. `tools/verify-phase.ps1` GREEN, 143 claims,
+            127 passed, 0 failed, **16 out of scope and 0 unexamined**. The count is the peak the
+            plan projected and this is the checkpoint it projected it at, reached by adding the two
+            rows it named and no third.
+
+Carried:    Nothing new. **Three of the four register questions remain open** and one of the three
+            blocks a checkpoint, that being question 1, the transport and the model identifier, which
+            blocks 6.5 outright.
+
+Next:       **6.1**, SignalBackfiller, which carries three obligations and the lazily-resolved
+            attribute's correction.
+
+
+## 6.0 — 2026-09-06 — phase-6-population — the checkpoint closes, with one question answered and three still open
+
+Built:      Both parts, in the order the row states, because a measurement that can change a spec
+            precedes the spec. **(a)** the population reading, from a copy of the live store taken
+            with the backup API and migrated to 54, never from the store itself. **(b)** the spec
+            pass, five decisions, one of which was blocked and was unblocked by a ruling on the day.
+            No component, no store and no migration, which is what the row said it would be.
+
+            **What (a) changed about (b) is worth naming, because that is the reason for the order.**
+            The corrected threshold's derivation states the library size it is computed over, and the
+            library size is a figure (a) measured rather than one (b) assumed: 39 declared signals of
+            which 33 are active, which is also the number the family-wise threshold divides by. A
+            spec pass run first would have written a derivation over a library it had not counted.
+
+Done:       **All seven, and the two the checkpoint has to argue for are these.** Condition 4, that
+            any new numeric constant stated in a doc is pinned: the alpha and both derived thresholds
+            are stated in ARCHITECTURE and read against the library the document itself declares, so
+            the figure and its basis move together. Condition 7, the fixture: **6.0 contributes no
+            expectation and the permit says why**, being a measurement whose subject is the running
+            lab, which the corpus deliberately keeps out of the verification harness, and a set of
+            decisions each already held by an existing check rather than by a new expectation.
+
+Measured:   **The out-of-scope count is 16, the peak, at the checkpoint the plan projected it at.**
+            The projection said this pass adds two and retires nothing, and it added exactly the two
+            it named. Nothing about the ceiling is owed: 16 against 52 leaves 36.
+
+Carried:    Nothing new. **Three register questions remain open**, one of which blocks a checkpoint.
+            Nothing else in the obligations table falls due at 6.0.
+
+Next:       **6.1**, SignalBackfiller, in the numbered order from here. It carries three obligations
+            due at it and performs the lazily-resolved attribute's correction, and it is the first
+            checkpoint of this phase whose deliverable is a component.

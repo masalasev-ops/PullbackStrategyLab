@@ -2586,3 +2586,18 @@ Why:  6.10(c). These are the three places the corpus tells an operator to run th
 Was:  four rows in the carried obligations table with `6.10` in their Due at cell, raised at 4.4 and three times at 5.7; and "None of the thirty rows above fall due at 4.17".
 Now:  the four rows moved into a new section, "What the four due at 6.10 were", each with what happened to it, on the shape the 5.5, 4.1, 4.6 and 4.17 sections already have; and the count reads twenty-six.
 Why:  6.10 discharged all four. A row falling due at a checkpoint `PROGRESS.md` records fails `carried-obligations`, which is the mechanism that makes a discharge a move rather than a note.
+
+### 2026-09-06 — ARCHITECTURE.html — cites Admission is on the false-discovery rate and the family-wise threshold is recorded beside it
+Was:  the pack's multiple-comparison row, `<tr><td>Multiple comparison</td><td>How many signals were screened and the corrected threshold</td><td>Thirty signals guarantee a spurious winner. The pack has to say so</td></tr>`
+Now:  the same row naming both thresholds, being the false-discovery one admission is decided on and the family-wise one recorded beside it, with the reason extended to say the pack says it twice because a claim admitted under one threshold is not a claim under the other.
+Why:  6.0(b) settled the form, which the decision this cites had left open by settling only the scaling. A row naming "the corrected threshold" in the singular describes a pack that carries one number where it now carries two.
+
+### 2026-09-06 — BUILD_PLAN.md — cites Admission is on the false-discovery rate and the family-wise threshold is recorded beside it
+Was:  `**Two of the four block a checkpoint by name** and two do not, and the last column of the operator's table is what says which; reading them as answered together or not at all turns four rows into one wait.`
+Now:  the same sentence in the past tense, followed by a paragraph stating the second reading apart from the first: three of the four remain open and one of the three blocks a checkpoint, with the sitting's figures derived against the record and the remaining figures against the live tables.
+Why:  the sentence read over live rows, so answering a question would have emptied it. That is the same route-empties-as-the-work-completes fault the phase 6 plan was written to correct for the count of questions opened, left standing in the sentence beside it. The two are two populations and each now names its own.
+
+### 2026-09-06 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  two rows for question 2 of the phase 6 sitting, one in the carried obligations table due at the operator and one in the operator's table; `None of the twenty-six rows above fall due at 4.17`; `### The eleven that are the operator's, and what each one blocks`; `**none of the eleven rows is a phase 5 question**`; and a history sentence ending `and eleven the same day when that pass opened phase 6's register.**`
+Now:  both rows moved into a new section, "The phase 6 questions that have been answered", carrying what was ruled; the two counts read twenty-five and ten; and the history sentence gains its next clause, ten on 2026-09-06 when the operator ruled question 2.
+Why:  the question was answered on 2026-09-06. The section is kept rather than the rows deleted, because the sitting's total is derived against it and a row that vanishes leaves a total nobody can reconstruct.

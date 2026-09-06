@@ -1684,6 +1684,46 @@
           "disposition": "reaches"
         }
       ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A pack cannot be built",
+      "clauses": [
+        {
+          "clause": "No pack is written and no ask is made",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "and the night records why rather than cutting a short one.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "A pack missing a section is not a smaller pack: the correction is computed over the signals screened",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "so a pack that dropped a section would carry a threshold for a set it did not screen and every claim against it would be judged against the wrong number.",
+          "disposition": "deferred"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
+      "subject": "A signal is rejected at the correlation limit",
+      "clauses": [
+        {
+          "clause": "Recorded as rejected with the correlation it was measured at and against which admitted signal, not discarded.",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "A rejection is the admission test working",
+          "disposition": "deferred"
+        },
+        {
+          "clause": "and a library that keeps only its acceptances cannot say how many times it refused nor what it refused against .",
+          "disposition": "deferred"
+        }
+      ]
     }
   ]
 }
