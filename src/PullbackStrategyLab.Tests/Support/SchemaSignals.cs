@@ -13,7 +13,7 @@ namespace PullbackStrategyLab.Tests.Support;
 /// have the same row shape, and reading the whole file would count every column of every store as
 /// a signal.
 /// </summary>
-public static partial class SignalLibrary
+public static partial class SchemaSignals
 {
     /// <summary>Where the library is declared. Cited by heading text, never by position.</summary>
     public const string Heading = "## Signals";

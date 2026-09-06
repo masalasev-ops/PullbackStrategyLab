@@ -2611,3 +2611,34 @@ Why:  all three were discharged at 6.1. The rows are moved rather than deleted, 
 Was:  the Trend and position table's seven signals, ending `ema_gap_21_50_avg_20` and `ladder_grade`, with the note about `ema_50_distance` under it and nothing after.
 Now:  the same table with `ema_gap_21_50_over_avg` and `ceiling_distance_ranges` added, and a paragraph under it saying what the two are and why they arrive here rather than through the admission route.
 Why:  6.1 froze the quantity each of two gates compares, where the row carried what each was computed from. They widen the library and not its reach, and the library is the specification `signal_definition` is seeded from, so a signal the vectorizer freezes and this section does not name is a signal in one place and not the other.
+
+
+### 2026-09-06 — SCHEMA.md — cites The signal library stays a spec section and gains a runtime table, reconciled in both directions
+Was:  `signal_definition`'s declaration, reading "Grain: signal name. The library." over a six-row column table of `signal_name`, `formula`, `source_columns`, `admitted_on`, `status` and `is_null_control`, with the writer line "Insert SignalAdmissionTest / Read SignalVectorizer, ContextPacker, SignalBackfiller" and no prose under it.
+Now:  the built table's columns, being the four specification fields plus `decided_at`, `observed_at` and six verdict columns a side; the writer line as one component inserting and updating; and three paragraphs saying why `decided_at` replaced `admitted_on`, why every figure is per side, and why four outcomes reach three statuses.
+Why:  6.2 builds the table and owes its columns. `admitted_on` is a date only an admission can carry, and the failure table requires a rejection to be recorded with the correlation it was measured at and against which admitted signal; carrying both would put the same instant twice on every admitted row.
+
+### 2026-09-06 — SCHEMA.md — cites The signal library stays a spec section and gains a runtime table, reconciled in both directions
+Was:  the Signals section opening "`signal_definition` holds this as data from 6.2, when SignalAdmissionTest exists to write it; until then this section is the library, and it is a section here rather than a document of its own".
+Now:  the same opening rewritten in the present tense, saying the section is the specification and the table is the runtime form seeded from it, reconciled in both directions by `signal-library`, and stating why the section is not retired into the store.
+Why:  the sentence was written before the table existed and read as a schedule. The table exists as of this checkpoint, and what a reader needs from the sentence is which of the two is the specification.
+
+### 2026-09-06 — SCHEMA.md — cites The signal library stays a spec section and gains a runtime table, reconciled in both directions
+Was:  "**Status is `active` or `candidate`.** Active means SignalVectorizer freezes it on every setup," opening the paragraph that explains the two.
+Now:  the same paragraph opened by a sentence saying the section may state those two and never the third the table can hold, and naming the one disagreement the reconciliation admits.
+Why:  the table's status column carries `rejected_correlation` and the section cannot, so a reconciliation demanding equality would go red the first time the admission test did its job. The asymmetry is the load-bearing half and it was nowhere.
+
+### 2026-09-06 — SCHEMA.md — cites The signal library stays a spec section and gains a runtime table, reconciled in both directions
+Was:  the status cells "candidate, owed at 4.2" on `intraday_pullback_shape` and "candidate, planted at 6.4" on `day_of_month`, and the note under the table reading "carries `is_null_control` when the table exists".
+Now:  both cells read `candidate`, the note reads "carries `is_null_control` on its stored row", and a paragraph under the table says what the two cells used to carry and why neither is a status.
+Why:  the cells stated a status and a deferral together, and the section is now parsed as data. The first had gone stale with nothing able to see it: 4.2 landed on 2026-08-24 and `intraday_bar` has existed since, so what the cell deferred had arrived and the cell still read as pending. What each is waiting for is a producer rather than a checkpoint, which the section already says once.
+
+### 2026-09-06 — BUILD_PLAN.md — cites A fixture expectation changes only with a recorded reason, and the report counts what changed
+Was:  the carried obligations table holding the 6.1 row for the mojibake in `fixtures/expectations.json`, due at 6.2, and the sentence "None of the twenty-three rows above fall due at 4.17".
+Now:  that row moved into a new "What the one due at 6.2 was" section with what happened to it, and the sentence reading twenty-two.
+Why:  the obligation is discharged, and a discharge moves a row from the live table into the record of what it was rather than deleting it, so the total a checkpoint's due-point claim derives can still be reconstructed. What the section adds is that the row's own figure was wrong by nearly half: it said thirty-five lines, which is what a grep for the mangled run finds, and thirty-three more lines carried the same fault collapsed to a single replacement character.
+
+### 2026-09-06 — CLAUDE.md — cites Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+Was:  the `/tools` listing ending at `derive-minimum-sample.py`, and the checks roster ending at `shell-executable`.
+Now:  `derive-signal-library.py` added to the listing, and a `signal-library` row added to the roster.
+Why:  6.2's figures are derived rather than frozen, which needs a derivation outside the solution, and the table lists every check that runs. A check that runs as a CI step and is not declared in the roster is a property nobody wrote down.

@@ -70,6 +70,18 @@ public sealed class PointInTimeCheck
             // from the night itself. `intraday_fetch` is exempt because nothing reads it that way.
             ["spread_pass"] = "observed_at",
 
+            // The library is stamped rather than exempt, and the reason is a read that does not
+            // exist yet. Nothing reads `signal_definition` today; ContextPacker reads it at 6.4 to
+            // say which signals a pack screened, and the correction threshold is computed over that
+            // set, so "which signals the library held, as far as the lab could know by this date" is
+            // a point-in-time question in the strictest sense: a pack cut for an old date that saw a
+            // signal admitted afterwards would carry a threshold for a set that night did not screen.
+            // Putting it beside `intraday_fetch` on the grounds that nothing reads it would be true
+            // today and wrong at the checkpoint that starts, which is the shape this list exists to
+            // refuse. `decided_at` is the verdict's own date and travels with the row rather than
+            // being a second stamp to bound on.
+            ["signal_definition"] = "observed_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the
@@ -366,6 +378,13 @@ public sealed class PointInTimeCheck
             + "identity and an instant and no price, so nothing can compute a figure about the market from it. "
             + "The read in the same file that answers for a session is ForLiveSession, which takes an as-of and "
             + "bounds observed_at against it."),
+        new("SignalAdmissionTest.cs", "WHERE signal_name = @signal_name",
+            "Read asks what the row currently says, so a run that changes nothing writes nothing and the "
+            + "stamp goes on meaning when the row last changed rather than when the stage last ran. That is "
+            + "a question about the store's contents rather than about a night, on exactly the terms "
+            + "SetupSignalReader.NamesFor is exempt: bounding it would let a rerun rewrite thirty-five "
+            + "specification rows nightly and lose the date every verdict was taken. It reads the library "
+            + "the stage itself owns, and nothing computes a figure about the market from it."),
         new("HistoryBackfill.cs", "SELECT DISTINCT ticker FROM history_refetch;",
             "ReadRefetchedTickers asks which names a backfill of any mode has already taken, which is what lets "
             + "a purchase spread across nights ask for each name once. Bounding it on the as-of would hide every "

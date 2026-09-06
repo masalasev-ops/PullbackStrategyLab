@@ -16931,3 +16931,142 @@ Carried:    One new, being the mojibake above, due at 6.2. **Nothing else falls 
 Next:       **6.2**, SignalAdmissionTest and the signal library moving from a spec section into
             `signal_definition`. It pins the correlation limit deferred there and is verified over an
             authored population, no setup's ten-day horizon having closed.
+
+## 6.2 — 2026-09-06 — phase-6-2-signal-admission — SignalAdmissionTest, and a claim about the statistic that its own test disproved
+
+Built:      **SignalAdmissionTest**, a stage that seeds the signal library into the store and rules
+            on every candidate in it. Two jobs in one component because they are one question asked
+            twice, and because `signal_definition` declares one writer: the seed answers what the
+            specification declares, and the judgement answers what the evidence has said about the
+            part of it nothing computes yet.
+
+            **The library is three statements now and a check holds them together.**
+            `SCHEMA.md`'s Signals section is the specification, `SignalLibrary` in Core is the
+            runnable copy the Worker ships with, because the application has no access to `docs/` at
+            runtime and a store has to stay a directory that can be copied, and
+            `signal_definition` is what the stage writes from that copy. `signal-library`
+            reconciles all three in every direction rather than a chain of two, because two of the
+            three can agree while the third drifts (see: The signal library stays a spec section and
+            gains a runtime table, reconciled in both directions). **One disagreement is admitted and
+            it is named**: a stored row may read `rejected_correlation` where the section reads
+            `candidate`, because a rejection is measured rather than declared, and a reconciliation
+            demanding equality would have gone red the first time the test did its job.
+
+            **The criterion is a ratio and it is now written down.** The decision said admission
+            turns on whether a signal tightens outcome-similar neighbourhoods and nothing said what
+            that computes, which is a criterion every implementation would read differently. It is
+            the mean distance among outcome-similar pairs over the mean distance among all pairs, in
+            the z-scored space of the signals being compared, measured once without the candidate and
+            once with it; outcome-similar is the median split, so the threshold is derived from the
+            population rather than chosen for it (see: Admission compares outcome-similar pairs
+            against all pairs, and a population too small for the comparison is undecided rather than
+            rejected). **Correlation is asked first and in absolute value**, against each admitted
+            signal rather than an average of them, since an average would hide a perfect duplicate
+            behind thirty unrelated columns.
+
+            **Migration 055 creates `signal_definition`**, with the four specification fields, a
+            status, six verdict columns a side and two stamps. **Every figure is per side and the
+            pooling rule is the reason**: the tightness ratio is a mean over pairs of setups whose
+            outcomes sit near each other, and a long outcome and a short outcome are signed in
+            opposite senses, so one population would measure the gap between the two books and report
+            it as discrimination (see: Long and short are never pooled into one figure). Direction is
+            not in the grain, and the alternative is named in the migration: half the row is the
+            formula, the source columns and the null-control flag, which are facts about the signal
+            rather than about a side, so a grain of signal plus direction would write each of them
+            twice and leave two copies that have to agree.
+
+Decided:    **`decided_at` replaced `admitted_on`, which is the one column the built table renames
+            out of the shape 6.0(b) declared.** A date only an admission can carry cannot date a
+            rejection, and the failure table requires a rejection to be recorded with the correlation
+            it was measured at and against which admitted signal. The two could have sat side by
+            side, and then every admitted row would carry the same instant twice.
+
+            **Four outcomes reach three statuses and the missing one is deliberate.** A candidate
+            measured and found not to tighten stays a candidate, because nothing about it was refused
+            and it can be asked again over a wider population; what separates it from a candidate
+            nobody has measured is `decided_at`. **A signal earns its place if it tightens on either
+            side and is refused only where both refuse it**, because the library is one library and a
+            signal admitted for shorts is computed on every setup.
+
+Corrected:  **A claim this checkpoint wrote about its own statistic was wrong, and the test written
+            to prove it is what said so.** The code comment and the decision both said that dividing
+            by the all-pairs mean makes the figure independent of the width of the space, so the
+            dimension count cancels. It does not. An independent column adds the same variance to a
+            near pair as to a far one, so it lifts the near pair proportionally more and the ratio
+            moves toward one: over an authored population the ratio went from 0.418 to 0.629 on a
+            column of pure noise. **That is the criterion working rather than failing**, because a
+            column carrying nothing about the outcome genuinely makes the space worse at separating
+            outcomes. What the ratio actually buys is the separation between a column that grows the
+            distance and earns it and one that grows the distance and does not, and raw distance
+            grows on both. Both prose statements are rewritten to say that, and the test now asserts
+            the separation over three spaces rather than asserting the cancellation over two.
+
+            **Two status cells in SCHEMA's Signals section stated a status and a deferral together,
+            and one had gone stale with nothing able to see it.** `intraday_pullback_shape` read
+            "candidate, owed at 4.2"; 4.2 landed on 2026-08-24 and `intraday_bar` has existed since,
+            so what the cell deferred had arrived and the cell still read as pending. Both cells now
+            state a status only, which is what the section is parsed as data for.
+
+Measured:   **The out-of-scope count is 12, down two, which is the path the plan projected and the
+            step it projected here.** The two retired are the admission test's catalogue row and the
+            failure row for a signal refused at the correlation limit, and nothing was added. The
+            failure row is asserted rather than deferred: the store refuses a rejection carrying
+            neither the correlation nor what it was measured against, per side, and a behavioural
+            test authors a duplicate of an admitted signal and reads the rejection back off the row.
+
+            **The library is 41 signals, 35 active and 6 candidates**, derived from the section by
+            `tools/derive-signal-library.py --library` rather than from the list in code, because the
+            list is a transcription and the transcription is what could be wrong. **Both admission
+            populations are nought over the golden fixture**, stated per side and never added, so all
+            six candidates are undecided, and none of them for the reason the population floor names:
+            nothing computes any of them, which is a build task rather than an accumulation.
+
+            **The mojibake obligation's own figure was wrong by nearly half, and that is the finding
+            rather than the repair.** The row said thirty-five lines, which is what a grep for the
+            mangled run finds. The sweep found 101 mangled runs across 68 lines: 66 runs on 33 more
+            lines carried the same fault collapsed to a single replacement character with no such run
+            in them. A sweep that states its scope from the pattern it searched with states the
+            pattern's reach rather than the fault's. The repair took the maximal non-ASCII run as its
+            subject instead, and the file now holds no non-ASCII character at all, which is a figure
+            a later session can check in one command. No value, id, tier or checkpoint moved,
+            asserted by parsing the file before and after and comparing those four fields on all
+            1,550 expectations.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,099 tests. `tools/verify-phase.ps1` GREEN: 143 claims, 131
+            passed, 0 failed, 12 out of scope, 0 unexamined, coverage examined 10277. **The claim
+            total did not move**, which is what says this checkpoint retired two rows and authored
+            none: 129 passed and 14 out of scope became 131 and 12 over the same 143.
+
+            **The report reads 20 expectations changed since the last commit against 17 new**, so
+            three of the twenty are moves and the rest are additions. A phase whose report shows more
+            changed than new has re-baselined rather than built; this is the other shape, and the
+            three that moved are the schema version and the two run-log counts, each of which moves
+            whenever the night gains a stage and each carrying the stage as its reason.
+
+            **Seventeen expectations added, fifteen of them `DERIVED`, and three moved with their
+            reasons.** The library counts come from a derivation over `SCHEMA.md` outside the
+            solution, with a parser that splits on unescaped pipes where the suite's reads a regex
+            over the whole row, so the two fail differently. The populations come from a count over
+            the replay store copy through the same script. The three moved are the schema version,
+            the distinct-stage count and the run-log entry count, and the third moved by two rather
+            than one because the library figures run the stage twice on purpose: a second run over an
+            unchanged store writing nothing is the property that keeps `observed_at` meaning when a
+            row last changed, and it is invisible from a single run.
+
+Found:      **The minimum population of 20 is authored rather than derived**, where every other
+            threshold this lab holds is either measured or on the record as owing a derivation. It is
+            the floor below which a mean over pairs moves further on one row than any discrimination
+            would move it, and twenty is a judgement about that rather than a figure taken from a
+            dispersion. Nothing rests on it today, because both populations are nought and every
+            candidate is undecided for a different reason. Carried rather than derived here: there is
+            no closed outcome to derive it against, which is the same fact that makes the whole
+            checkpoint's verification authored.
+
+Carried:    One new, being the minimum population above, due at the first closed outcomes. **Nothing
+            else falls due at 6.2**: the one that did is discharged and moved into its own section.
+
+Next:       **6.3**, TwinPairFinder, `twin_pair` and the panel the research ledger has carried an
+            arrival note for since 5.5. It pins the twin-pair threshold and reports how many setups
+            the trailing window actually held, the window not being fillable and the two values not
+            moving there (see: The twin-pair threshold is reviewed at the first full window rather
+            than at a phase).
