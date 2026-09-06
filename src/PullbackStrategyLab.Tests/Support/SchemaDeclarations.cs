@@ -16,14 +16,25 @@ public static partial class SchemaDeclarations
     private static partial Regex StoreHeading();
 
     /// <summary>A declaration line: the one that starts with an operation.</summary>
-    [GeneratedRegex(@"^(?<line>(?:Insert|Update)\s+.+)$", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?<line>(?:Insert|Update|Delete)\s+.+)$", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex DeclarationLine();
 
     /// <summary>A store-level row in the phase 4 to 6 tables: name, grain, writer.</summary>
     [GeneratedRegex(@"^\|\s*`(?<store>[a-z_]+)`\s*\|(?<grain>[^|]*)\|(?<writer>[^|]*)\|", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex StoreRow();
 
-    [GeneratedRegex(@"^(?<op>Insert|Update)\s+(?<rest>.+)$", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// The operation a declaration part opens with.
+    ///
+    /// <b><c>Delete</c> is here because the corpus forbids it, not despite that.</b> The pattern read
+    /// <c>Insert|Update</c> until 2026-09-06, so a declared delete matched nothing, was dropped
+    /// before any writer was built from it, and sat outside both directions of a check whose own
+    /// comment says it verifies both. `twin_pair` carried one from the phase 5 planning pass through
+    /// 6.3 landing, and the run stayed green the whole time: a match that never happens is not a
+    /// match that broke. Parsing the word is what lets `writer-ownership` refuse it by name, which
+    /// is the same answer it already gives a delete found in the shipped source.
+    /// </summary>
+    [GeneratedRegex(@"^(?<op>Insert|Update|Delete)\s+(?<rest>.+)$", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex OperationPart();
 
     /// <summary>The component names ARCHITECTURE.html's catalogue defines, which is the vocabulary a writer is named from.</summary>
@@ -174,10 +185,20 @@ public static partial class SchemaDeclarations
     private static partial Regex CreateTable();
 }
 
+/// <summary>
+/// The operations a store declaration can name.
+///
+/// <b><c>Delete</c> is representable and is not permitted.</b> No store in this corpus declares one
+/// and none may: `writer-ownership` refuses a delete found in the shipped source and refuses a
+/// delete declared in SCHEMA, which are the two halves of one rule. The value exists so the second
+/// half has something to refuse; leaving it out is what made a declared delete invisible rather
+/// than illegal.
+/// </summary>
 public enum StoreOperation
 {
     Insert,
     Update,
+    Delete,
 }
 
 public sealed record Writer(StoreOperation Operation, string Component, bool Resolved);

@@ -17176,3 +17176,61 @@ Next:       **6.4**, ContextPacker and the versioned evidence pack, with the pla
             carried as the tripwire it is. It is byte-stable across runs over the golden fixture,
             which is the claim the phase report makes of this phase, and five of its nine sections
             rest on outcomes that have not closed.
+
+## Not a checkpoint entry — 2026-09-06 — phase-6-3-declared-delete — belongs to 6.3: the delete SCHEMA still declared, and the direction the parser never read
+
+Corrects:   **The 6.3 entry above says a rerun writes a new generation beside the old, and SCHEMA's
+            `twin_pair` row went on declaring `Delete TwinPairFinder` after it.** The column section
+            two rows below the declaration already described `observed_at` in the key, so the
+            document disagreed with itself from the moment 6.3 landed. The declaration was authored
+            by the phase 5 planning pass, before the table existed for it to be wrong about.
+
+Found:      **The stale line is the small half. `writer-ownership` could not have seen it, and the
+            reason is the fourth failure shape rather than an oversight.** `SchemaDeclarations`
+            matched `Insert|Update`, so `Delete` matched nothing, was dropped before a `Writer` was
+            built from it, and never reached either direction of a check whose own comment says it
+            verifies both. Direction one refuses a delete found in the shipped source. Nothing
+            refused one written into the document, so SCHEMA could declare an operation the check
+            would reject if any code satisfied it, and the run stayed green because a match that
+            never happens is not a match that broke.
+
+            **No floor could have caught it either, and that is the part worth keeping.** The check
+            reported writers as one total. A whole operation going to nought moves a total by however
+            many of that operation there were, which here was one, and no baseline is set finely
+            enough to see one. The scopes are now reported per operation, on exactly the reasoning
+            that split scopes from sums at 2.1: the number that mattered was the one nobody had
+            separated out.
+
+Built:      **The parser reads `Delete`, and `writer-ownership` refuses it by name.** The two
+            directions now say the same thing rather than one of them saying nothing: a delete in the
+            shipped source fails, and a delete declared in SCHEMA fails. Asserted over every declared
+            store rather than over the live ones, because a declaration is wrong on the day it is
+            written and not on the day its migration lands.
+
+            **Two permanent proofs rather than one.** One holds that a declared delete parses, which
+            is what makes it refusable; the other holds that SCHEMA declares none. A single test
+            asking only whether the document is clean would pass again the day the parser silently
+            stopped matching, which is the failure being closed.
+
+Measured:   **One declaration, and it is the one 6.3 left.** A sweep of every store row in SCHEMA for
+            an operation verb found exactly one `Delete`, on `twin_pair`, so the blast radius is a
+            single row and no other declaration was hidden by the same gap. The count was stated
+            before the sweep ran.
+
+            **Sixty-two Insert and thirteen Update declarations parse today**, floored at 55 and 11
+            because both grow with the corpus; deletes are context at nought, since a floor demanding
+            one would be a floor under a defect.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,110 tests. `tools/verify-phase.ps1` GREEN: 143 claims,
+            132 passed, 0 failed, 11 out of scope, 0 unexamined.
+
+            **The refusal was run red before it was believed.** Restoring the deleted declaration
+            turned both the check and the document proof red with the message naming the store and
+            the component; it was restored again afterwards. That is a one-off confirmation that the
+            assertion is live, and it is not the proof: the proof is the two tests, which are
+            permanent.
+
+Carried:    **Nothing new.** No expectation is owed: this changes no figure the fixture holds and adds
+            no behaviour, being a correction to a declaration and a widening of the parser that reads it.
+
+Next:       **6.4**, ContextPacker and the versioned evidence pack.

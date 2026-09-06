@@ -62,6 +62,28 @@ public sealed partial class WriterOwnershipCheck
             }
         }
 
+        // The rule against deletes reads both ways, and until 2026-09-06 it read one. Direction one
+        // refuses a delete found in the shipped source; nothing refused one written into SCHEMA, and
+        // the parser dropped the word before a writer was built from it, so the declaration was
+        // invisible rather than illegal. `twin_pair` carried one from the phase 5 planning pass
+        // until 6.3 built the table without it, and every run in between was green.
+        //
+        // Asserted over every declared store rather than over the live ones, because a declaration
+        // is wrong on the day it is written and not on the day its migration lands.
+        int declaredDeletes = 0;
+
+        foreach (StoreDeclaration store in declared)
+        {
+            foreach (Writer writer in store.Writers.Where(w => w.Operation == StoreOperation.Delete))
+            {
+                declaredDeletes++;
+                failures.Add(
+                    $"SCHEMA declares Delete {writer.Component} on {store.Store} — no store in SCHEMA may declare a "
+                    + "delete, and a delete in the shipped source is refused above, so a declaration of one is a "
+                    + "statement the code is forbidden to satisfy.");
+            }
+        }
+
         // Direction two: every declared writer of a store that exists today, whose component has
         // been built, issues the statement it is declared for.
         var issued = new HashSet<string>(
@@ -83,6 +105,14 @@ public sealed partial class WriterOwnershipCheck
         {
             foreach (Writer writer in store.Writers)
             {
+                if (writer.Operation == StoreOperation.Delete)
+                {
+                    // Already refused above, by name. Asking here as well would report one defect
+                    // twice and word the second report as a missing statement, which is the
+                    // opposite of what is wrong with it.
+                    continue;
+                }
+
                 if (!writer.Resolved)
                 {
                     // SCHEMA names a writer the component catalogue does not contain. Counted and
@@ -168,6 +198,17 @@ public sealed partial class WriterOwnershipCheck
                     + "attributed to nobody there, and the check would report a smaller set rather than fail"))
             .Examined("declared writers whose store and component both exist", declaredWritersExamined)
             .Examined("operations with more than one writer, where SCHEMA states the disjointness", declaredDisjoint)
+            // Reported per operation rather than as one total, because the defect this closes was a
+            // whole operation matching nothing: a single figure for "writers parsed" would have sat
+            // at its usual value with every delete in the document dropped, and no floor under it
+            // could have seen the difference. Deletes are expected to read nought and the line is
+            // kept at nought on purpose, since a scope that stops being reported has narrowed to
+            // nothing and the baseline is what says the parse still looks for them.
+            .Examined("declared writers parsed as Insert",
+                declared.Sum(s => s.Writers.Count(w => w.Operation == StoreOperation.Insert)))
+            .Examined("declared writers parsed as Update",
+                declared.Sum(s => s.Writers.Count(w => w.Operation == StoreOperation.Update)))
+            .Context("declared writers parsed as Delete, which the corpus permits none of", declaredDeletes)
             ;
 
         // Grouped by the checkpoint that builds the component, resolved from BUILD_PLAN rather
