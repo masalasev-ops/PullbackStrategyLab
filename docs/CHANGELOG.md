@@ -2658,3 +2658,8 @@ Why:  **This checkpoint amended its own done condition and says so.** The row sa
 Was:  the weekly schedule table holding one row, Saturday 08:00 for `ceiling`.
 Now:  a second row, Saturday 08:10 for `twin-pairs`, with the window it wants and what it records where the window is short.
 Why:  the finder is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch, and it caught `ceiling` missing from here at 5.5.
+
+### 2026-09-06 — SCHEMA.md — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  the `twin_pair` row reading "| `twin_pair` | pair id + date | Insert TwinPairFinder · Delete TwinPairFinder, **for the date it is rebuilding and inside one transaction**. The pairs of a date are a derived reading of the window that date could see rather than evidence, so a rerun rebuilds them; that is the whole difference between this and `setup_signal`, which is written once and never touched |".
+Now:  the grain reading pair id plus date plus observation, the writer line naming the insert alone, and the note saying a rerun writes a new generation beside the old with the reason the window grows.
+Why:  6.3 built the table on generations and left this declaration standing, so SCHEMA declared a delete the code does not issue and `writer-ownership` would refuse if it did. The column section two rows below already described the generation key, so the document disagreed with itself. The declaration was authored by the phase 5 planning pass, before the store existed to make it wrong.

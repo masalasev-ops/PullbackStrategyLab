@@ -195,6 +195,46 @@ public sealed class CheckProofTests
         Assert.Equal("SignalAdmissionTest", only.Component);
     }
 
+    /// <summary>
+    /// A declared delete parses, which is what makes it refusable.
+    ///
+    /// The parser read `Insert|Update` until 2026-09-06, so `Delete TwinPairFinder` on `twin_pair`
+    /// matched nothing and was dropped before a writer was built from it. Nothing failed, because
+    /// there was nothing to fail on: the declaration sat outside both directions of a check whose
+    /// comment says it verifies both, from the phase 5 planning pass until 6.3 built the table on
+    /// generations instead. This test holds the parse rather than the refusal, because the refusal
+    /// is one line reading a `Writer` the parser has to produce first.
+    /// </summary>
+    [Fact]
+    public void A_declared_delete_parses_rather_than_being_dropped_before_anything_can_refuse_it()
+    {
+        IReadOnlyList<Writer> writers = SchemaDeclarations.ParseWriters(
+            "Insert TwinPairFinder · Delete TwinPairFinder, **for the date it is rebuilding**");
+
+        Assert.Equal(2, writers.Count);
+        Assert.Contains(writers, w => w.Operation == StoreOperation.Insert && w.Component == "TwinPairFinder");
+        Assert.Contains(writers, w => w.Operation == StoreOperation.Delete && w.Component == "TwinPairFinder");
+    }
+
+    /// <summary>
+    /// And SCHEMA declares none, asserted against the document rather than against the parse above.
+    ///
+    /// The test above proves a delete can be seen; this one proves there is nothing to see. Two
+    /// tests rather than one, because a parser that silently stopped matching would pass a check
+    /// asking only whether the document is clean.
+    /// </summary>
+    [Fact]
+    public void No_store_in_the_schema_declares_a_delete()
+    {
+        (string Store, string Component)[] deletes = SchemaDeclarations.Stores
+            .SelectMany(s => s.Writers
+                .Where(w => w.Operation == StoreOperation.Delete)
+                .Select(w => (s.Store, w.Component)))
+            .ToArray();
+
+        Assert.Empty(deletes);
+    }
+
     [Fact]
     public void A_writer_the_component_catalogue_does_not_name_is_reported_unresolved_rather_than_guessed_at()
     {
