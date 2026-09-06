@@ -5,9 +5,17 @@ namespace PullbackStrategyLab.Web.Shell;
 /// copy of it, so a page added without a nav entry is a page nobody can reach and a nav entry
 /// without a page is a link that 404s, and a test can assert both against one list.
 ///
-/// Five, matching the screens the architecture describes. The chart is not among them: it is
-/// reached for a ticker rather than browsed to, and a sixth tab leading to a page that asks
-/// "which stock?" is a tab nobody uses.
+/// The chart is not among them: it is reached for a ticker rather than browsed to, and a tab
+/// leading to a page that asks "which stock?" is a tab nobody uses.
+///
+/// <b>Five today and six from 6.8, and this comment said "matching the screens the architecture
+/// describes" while the component catalogue held a sixth.</b> The pack comparison surface is a
+/// screen: its subject is the set of pack versions, and every screen here is keyed on one night,
+/// one setup or one trade, so hanging the comparison off any of them would key a comparison across
+/// versions to one of those three. 6.0(b) settled that the catalogue is right and this list is
+/// short; the entry arrives with the page, because a nav entry without a page is a link that 404s
+/// and the test below asserts both against this one list.
+/// see: The pack comparison surface is the sixth screen and the navigation says six
 /// </summary>
 public static class Navigation
 {

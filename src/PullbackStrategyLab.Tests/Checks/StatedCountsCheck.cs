@@ -215,8 +215,24 @@ public sealed partial class StatedCountsCheck
 
     /// <summary>The phase 6 reading of how many of its questions stop a checkpoint, and out of how
     /// many.</summary>
-    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+(?<total>[a-z-]+)\s+block\s+a\s+checkpoint\s+by\s+name\*\*", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+(?<total>[a-z-]+)\s+blocked\s+a\s+checkpoint\s+by\s+name\*\*", RegexOptions.CultureInvariant)]
     private static partial Regex QuestionsThatBlock();
+
+    /// <summary>
+    /// The second reading, which is what remains open rather than what the sitting opened.
+    ///
+    /// <b>The section carried one number for both until 2026-09-06 and they are two populations.</b>
+    /// The sitting's figures are a fact about a day and never move; the remaining figures move every
+    /// time a question is answered, and a sentence meaning "the sitting opened four" reads afterwards
+    /// as "four are outstanding". That is the same route-empties-as-the-work-completes fault the
+    /// phase 6 plan was written to correct, one level down from the count it corrected.
+    /// </summary>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+four\s+remain\s+open\s+and\s+(?<blocking>[a-z-]+)\s+of\s+the\s+three\s+blocks\s+a\s+checkpoint\*\*", RegexOptions.CultureInvariant)]
+    private static partial Regex QuestionsRemaining();
+
+    /// <summary>A row of the section recording a phase 6 question that has been answered.</summary>
+    [GeneratedRegex(@"^\|\s*(?<n>\d)\s*\|", RegexOptions.CultureInvariant)]
+    private static partial Regex AnsweredQuestionRow();
 
     /// <summary>The sentence introducing the enumerated provisional claims, over the table below
     /// it.</summary>
@@ -659,16 +675,47 @@ public sealed partial class StatedCountsCheck
             "BUILD_PLAN.md's phase 6 section has no \"**<count> of the <count> block a checkpoint by name**\" "
             + "sentence, which is the reading that says the register is not one wait.");
 
+        // The sitting's figures, over the rows still open plus the rows recorded as answered.
+        //
+        // <b>Live rows alone is the route that empties as the work completes</b>, which this
+        // registry has now been bitten by twice: phase 5's register derived its count from a mark on
+        // live rows and read nought against a sentence saying nine, and the phase 6 plan corrected
+        // that for the count of questions opened and left it standing in the sentence beside it. A
+        // question that is answered stops being an open row and does not stop having been one of the
+        // four, so the denominator is every row that ever carried the mark.
+        int answered = AnsweredPhaseSixQuestions(buildPlan);
+        int answeredThatBlocked = AnsweredPhaseSixQuestionsThatBlocked(buildPlan);
+
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the phase 6 questions that block a checkpoint",
+            "BUILD_PLAN.md, the phase 6 questions that blocked a checkpoint",
             FromWordsOrFail(blocking.Groups["n"].Value),
-            phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
-            "rows of the operator's table marked as a phase 6 question that stops a checkpoint"));
+            phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])) + answeredThatBlocked,
+            "rows of the operator's table marked as a phase 6 question that stops a checkpoint, "
+            + "open plus answered"));
         claims.Add(new Claim(
-            "BUILD_PLAN.md, the phase 6 reading's total",
+            "BUILD_PLAN.md, the phase 6 sitting's total",
             FromWordsOrFail(blocking.Groups["total"].Value),
+            phaseSixOperatorRows.Count + answered,
+            "rows of the operator's table marked as a phase 6 question, open plus answered"));
+
+        // The second reading, and it is the one that moves. Stated apart from the pair above
+        // because they are two populations and a figure states the one it was computed over.
+        Match remaining = QuestionsRemaining().Match(phaseSix);
+        Assert.True(remaining.Success,
+            "BUILD_PLAN.md's phase 6 section no longer states how many of its questions remain open "
+            + "and how many of those block a checkpoint, which is the reading 6.9 is asked for and "
+            + "the one that is not the sitting's.");
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 6 questions still open",
+            FromWordsOrFail(remaining.Groups["n"].Value),
             phaseSixOperatorRows.Count,
-            "rows of the operator's table marked as a phase 6 question"));
+            "rows of the operator's table still marked as a phase 6 question"));
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the open phase 6 questions that block a checkpoint",
+            FromWordsOrFail(remaining.Groups["blocking"].Value),
+            phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
+            "open rows of the operator's table that stop a checkpoint"));
 
         // The obligations each phase 6 row says fall due at it. Four sentences, four patterns, each
         // anchored on what follows its count, so one row's statement cannot answer for another's.
@@ -922,6 +969,44 @@ public sealed partial class StatedCountsCheck
             : buildPlan[start..];
 
         return MarkdownTable.BodyRowsAfter(section, "| Raised |").Count;
+    }
+
+    /// <summary>
+    /// The phase 6 questions the record says have been answered, read from the section that holds
+    /// them rather than from a count anybody states.
+    ///
+    /// The section is kept for exactly this: a question that leaves the live table has to leave a
+    /// trace the sitting's total can still be derived against, or the total becomes a number nobody
+    /// can reconstruct.
+    /// </summary>
+    private static int AnsweredPhaseSixQuestions(string buildPlan) =>
+        AnsweredPhaseSixSection(buildPlan).Count(l => AnsweredQuestionRow().IsMatch(l));
+
+    /// <summary>
+    /// Of those, the ones whose row says it blocked a checkpoint.
+    ///
+    /// Read from the row's own words rather than from a list here, on the grounds the open rows are:
+    /// a hand-named list beside the thing it counts is a count somebody has to remember.
+    /// </summary>
+    private static int AnsweredPhaseSixQuestionsThatBlocked(string buildPlan) =>
+        AnsweredPhaseSixSection(buildPlan)
+            .Count(l => AnsweredQuestionRow().IsMatch(l)
+                && l.Contains("the split filed the act", StringComparison.Ordinal));
+
+    private static IReadOnlyList<string> AnsweredPhaseSixSection(string buildPlan)
+    {
+        const string heading = "### The phase 6 questions that have been answered";
+        int start = buildPlan.IndexOf(heading, StringComparison.Ordinal);
+
+        if (start < 0)
+        {
+            return [];
+        }
+
+        int end = buildPlan.IndexOf("\n### ", start + heading.Length, StringComparison.Ordinal);
+        string section = end < 0 ? buildPlan[start..] : buildPlan[start..end];
+
+        return [.. section.Split('\n')];
     }
 
     private static string Between(string text, string from, string to)

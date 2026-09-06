@@ -432,6 +432,12 @@ public sealed partial class ArchitectureConformanceCheck
         ["AI usage allowance exhausted"] = "6.5",
         ["Holdout windows exhausted"] = "5.4",
         ["Proposal cites the planted null signal"] = "6.4",
+
+        // The two rows 6.0(b)'s spec pass authored, each closing at the checkpoint that builds the
+        // component whose failure it describes. They are the whole of the rise the phase 6
+        // projection predicts for that pass, which said two and named these two.
+        ["A pack cannot be built"] = "6.4",
+        ["A signal is rejected at the correlation limit"] = "6.2",
         ["Variant sample never accumulates"] = "6.7",
         ["Follow-up date is a holiday"] = "3.2",
         ["A comparison has no control outcomes"] = "3.2",

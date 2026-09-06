@@ -887,6 +887,49 @@ A signal can be judged on rows already stored, with no version and no forward pe
 **The correction threshold scales with signals screened, not signals shown**
 Adding a signal makes every other signal marginally harder to claim. Statistically correct, and it creates natural resistance to adding things casually.
 
+**Admission is on the false-discovery rate and the family-wise threshold is recorded beside it**
+Ruled by the operator on 2026-09-06, closing question 2 of the phase 6 sitting. The decision above settles that the correction scales with signals screened; this settles the form. **A claim is admitted on false-discovery control**, holding the expected share of admitted claims that are wrong, by the Benjamini-Hochberg step-up over the screened set. **The family-wise threshold is computed on the same screened set and recorded on every proposal**, together with whether the claim would have cleared it.
+
+**Why not family-wise alone, priced against the store rather than in the abstract.** The library is 39 declared signals, 33 of them active, measured at 6.0(a). Bonferroni at the conventional level puts the family-wise threshold at 0.05/33, being 0.0015, and at 0.0013 over the whole declared library. Against a lab that has flagged 367 setups over five sessions, passed nought of them, holds no closed ten-day outcome and needs 1,802 effective paired observations to resolve one version, that admits nothing for a long time. **The cost of admitting nothing is that the record cannot say why.** "No edge exists" and "the threshold refused everything" leave the same trace, which is a silence the loop was built to break.
+
+**Why not false-discovery alone.** It discards the strict reading. A claim admitted at a false-discovery threshold is a different claim from one that also cleared family-wise control, and a record that keeps only the looser answer cannot be re-read under the stricter one later. **Carrying both costs one column on the proposal row and one line in the pack's multiple-comparison section**, and it makes a later switch readable backwards over everything already admitted rather than starting the count again.
+
+**A claim admitted under false-discovery control is provisional against the family-wise figure recorded beside it.** That is the same re-read the phase's population-thin claims carry and it is stated here for the same reason: a verdict reached under one threshold is not a verdict under the other, and the difference is invisible unless both are on the row.
+
+**It is expected to be re-derived and the expectation is part of the decision.** Every threshold this lab has measured has moved, and the minimum sample went from 262 to 1,802 on its first derivation. The threshold also moves with the library: it is computed over the signals a pack screened, so it changes whenever the library does, and **the derivation states the library size it was computed over** rather than leaving a reader to infer it from the date.
+
+**A pack version pins what the model saw, and byte-stability is what makes that claim checkable**
+Settled at 6.0(b), because the phase report claims byte-stability of this phase and nothing defined it. **A pack version is the tuple of what the model was shown and judged under**: the section list, the set of signals screened, the correction form and its computed thresholds, and the model identifier the seat is pinned to (see: The model is a frozen parameter of the pack version, and changing it forks the record). A change to any of those is a new version, because each of them changes what a proposal against that pack means.
+
+**Byte-stable means two runs of the packer at one commit, over one store state, for one as-of, produce byte-identical output.** It is a property of the packer rather than of the store, and it is what makes "this proposal was made against this pack" a statement anybody can verify rather than take on trust. Without it a pack version names a document nobody can reproduce, and the success criterion, being proposal hit rate by pack version, is a comparison between two things that were never fixed.
+
+**Four things break it and each is closed by construction rather than by care.** Every ordering is total and explicit, so no section rests on the order a set or a dictionary happened to enumerate, and every sort names a tiebreak. No instant of generation appears in the pack body; the as-of does, being an input. Every number is rendered through the store's own text form under the invariant culture, so a decimal is the same string on both machines. Line endings are LF, which the repository already normalises.
+
+**What is deliberately not in the tuple is the store's contents.** A pack cut on two different nights is the same version over different evidence, which is the whole point of holding the version fixed while the evidence accumulates.
+
+**A proposal is a document whose one change is the five fields the version register already stores**
+Settled at 6.0(b). The architecture says a proposal carries the one thing that changes in the same rule language the system already evaluates, so there is no interpretation step between the suggestion and the test. **That rule language is `SelectionRule`**, settled at 5.0(b), and the one thing that changes is expressed as the direction, the gate, the threshold name, the value it moves from and the value it moves to (see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike).
+
+**Those are the five columns `variant` already holds**, which is the tie rather than a coincidence: a proposal accepted becomes a version, and if the two carried different shapes there would be a translation step between them and a place for the meaning to move. The proposal document is machine-readable so that step is a copy rather than a reading.
+
+**The document also carries what it is not allowed to leave out**: which family it belongs to, selection or execution, with a proposal spanning both rejected; the mechanism in one sentence, committed before any result exists; the evidence as setup ids and figures already in the store; and what would refute it with how many observations settle the question. **Abstention is a value of the change field and not an absent one** (see: Abstention is a valid recorded proposal outcome), because a document with nothing in that field and a document that says there is nothing to propose are different answers and only one of them is a result.
+
+**A structural proposal has no representation and that is stated rather than discovered.** `SelectionRule` expresses a moved threshold over a fixed gate list, so a proposal that changes what a gate computes cannot be written down, cannot be replayed and is refused at the registry (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation).
+
+**The signal library stays a spec section and gains a runtime table, reconciled in both directions**
+Settled at 6.0(b), because 6.2 moves the library into `signal_definition` and two statements of one library is how they start disagreeing. **`SCHEMA.md`'s Signals section is the specification and `signal_definition` is the runtime form of it.** The table is seeded from the section rather than authored beside it, and a check reconciles the two in both directions: a signal in the section and not the table fails, and a signal in the table and not the section fails.
+
+**The section is not retired, and the reason is the corpus rule rather than sentiment.** The library is where a signal's formula and its source columns are written down, which is what the point-in-time test is asserted against and what makes a signal proposable at all. Moving that into a store would put the specification somewhere no document review reads and somewhere a build session cannot diff (see: The corpus is eight documents and a ninth requires retiring one).
+
+**What the table adds is what a section cannot carry**: a status the admission test writes, the date a signal was admitted, and the correlation it was admitted against. Those are results rather than specification, and they are the half that belongs in a store.
+
+**The pack comparison surface is the sixth screen and the navigation says six**
+Settled at 6.0(b). `Navigation` declares five screens matching the screens the architecture describes and the component catalogue holds a sixth, being the pack comparison page, so the two disagree today and one of them has to move. **The catalogue is right and the navigation is short.** The page is built at 6.8, it is openable, and a surface a person opens is a screen whatever the count beside it says.
+
+**A panel on an existing screen was refused, and the reason is what the page is for.** Proposal hit rate by pack version is a comparison between versions, so the surface's subject is the set of versions rather than one night, one setup or one trade, and every existing screen is keyed on one of those three. Hanging it off the scoreboard would key a comparison across versions to a single session's panel, which is the population fault this corpus names most often.
+
+**It carries the same withheld state the rest of the interface does.** With one pack version and nought proposals the page shows a count rather than a nought, because a number with no count is not shown at all and nought proposals is a fact about the record rather than a result (see: The evidence pack is versioned, and the success criterion is proposal hit rate by pack version).
+
 **The twin-pair threshold is reviewed at the first full window rather than at a phase**
 Taken by the phase 6 plan on 2026-09-05. The authored-parameters row carried "Phase 6" as its review point, and every other row in that table carries a condition, a never, or a named owner.
 
