@@ -365,9 +365,7 @@ public sealed class ShortSetupDetector
             ? source.AnchoredAveragePrice(ticker, asOf, anchor)
             : null;
 
-        decimal? dailyRange = figures is null || figures.AverageDailyRange == 0m
-            ? null
-            : figures.AverageDailyRange * last.Close;
+        decimal? dailyRange = RangeDistance.InPrice(figures?.AverageDailyRange, last.Close);
 
         return new ShortPullbackRules.ShortEvidence
         {
@@ -391,19 +389,20 @@ public sealed class ShortSetupDetector
             // vendor can send. Without the guard that bar threw DivideByZeroException on the short
             // side and recorded a normal setup on the long, which is a mirror break rather than a
             // stated asymmetry.
-            DistanceToNearestAverageRanges =
-                figures is null || dailyRange is not decimal ceilingRange || ceilingRange == 0m
+            //
+            // Through the shared arithmetic in Core as of 6.1, on the terms the squeeze ratio above
+            // it already used: SignalVectorizer freezes the fold of these two as
+            // `ceiling_distance_ranges`, so the number the gate compares and the number the row
+            // records have to come out of one method.
+            DistanceToNearestAverageRanges = figures is null
                 ? null
-                : Math.Min(
-                    Math.Abs(last.AdjustedClose - figures.EmaMedium),
-                    Math.Abs(last.AdjustedClose - figures.EmaLong)) / ceilingRange,
+                : CeilingDistance.ToAveragesInRanges(
+                    last.AdjustedClose, figures.EmaMedium, figures.EmaLong, dailyRange),
             // The third disjunct, in the same units as the two above it and guarded the same way.
             // Null where there is no anchor, no level for it, or no range to express the distance
             // in, and each of the three leaves the clause not run rather than run at nought.
             DistanceToAnchoredRanges =
-                anchored is not decimal level || dailyRange is not decimal anchorRange || anchorRange == 0m
-                ? null
-                : Math.Abs(last.AdjustedClose - level) / anchorRange,
+                CeilingDistance.ToAnchoredInRanges(last.AdjustedClose, anchored, dailyRange),
             // Which of the two absences this row has, where it has one. A reconstructed session can
             // never be anchored and a forward one becomes anchorable as the store accumulates, so
             // the verdict records the two under different clause sets.
@@ -412,9 +411,9 @@ public sealed class ShortSetupDetector
             // bars. With the extreme on the last session the trigger and the stop are the same price
             // and the give-up distance is zero, which clears every threshold written as a maximum.
             // see: A gate handed an absent or degenerate quantity fails rather than passing
-            StopDistanceRanges = NoBounceYet(bounce) || dailyRange is not decimal stopRange || stopRange == 0m
+            StopDistanceRanges = NoBounceYet(bounce)
                 ? null
-                : Math.Abs(bounce!.Trigger - bounce.Stop) / stopRange,
+                : RangeDistance.Between(bounce!.Trigger, bounce.Stop, dailyRange),
             ClusterCount = thrust?.ClusterCount,
             ThrustScan = thrust?.Scan,
             ThrustSession = thrust?.AsOf,

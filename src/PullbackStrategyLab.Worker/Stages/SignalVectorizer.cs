@@ -64,6 +64,7 @@ public sealed class SignalVectorizer
         "ema_50_distance",
         "ema_gap_21_50",
         "ema_gap_21_50_avg_20",
+        "ema_gap_21_50_over_avg",
         "adr_20",
         "atr_14",
         "range_avg_20",
@@ -72,6 +73,7 @@ public sealed class SignalVectorizer
         "stop_price",
         "stop_distance_ranges",
         "trigger_distance_ranges",
+        "ceiling_distance_ranges",
         "dollar_volume_median_20",
         "listing_age_sessions",
         "ladder_grade",
@@ -202,8 +204,16 @@ public sealed class SignalVectorizer
     /// <summary>
     /// Every signal this stage can compute for one setup. A name absent from the result is one the
     /// stored history is too short for, which the caller records as absent rather than as zero.
+    ///
+    /// <b>Public from 6.1 because SignalBackfiller calls it, and that is the whole design of the
+    /// backfill.</b> A stage that recomputed a signal's formula over old setups would be a second
+    /// implementation of every formula in the library, and the night's row and the backfilled row
+    /// would eventually differ by an amount nobody could see. What the backfiller supplies instead is
+    /// the setup's own session as the as-of, so every read behind this method is bounded where the
+    /// night's read was bounded and the value is what that night could have computed.
+    /// see: A reader's signature does not establish point-in-time; the query does
     /// </summary>
-    private static IReadOnlyDictionary<string, string> Values(
+    public static IReadOnlyDictionary<string, string> Values(
         SqliteConnection connection,
         StoredSetup setup,
         DateOnly asOf, string sessionZone)
@@ -276,21 +286,20 @@ public sealed class SignalVectorizer
                 values["range_today_over_avg"] = StoreText.RatioToStorageText(today / indicators.RangeAverage);
             }
 
-            if (indicators.AverageDailyRange != 0m && last.Close != 0m)
+            // Derived from the trigger, so it is absent wherever the trigger is. Computing it
+            // against a trigger the detector never set produced |0 - close| / range, which for a
+            // $150 name with a 4% daily range is about 25 ranges and reads as a very distant
+            // trigger rather than as no trigger at all.
+            //
+            // Through the shared arithmetic from 6.1, which carries the range guard the two nested
+            // conditions here used to spell for themselves.
+            if (setup.TriggerPrice is decimal triggerPrice
+                && RangeDistance.Between(
+                    triggerPrice,
+                    last.Close,
+                    RangeDistance.InPrice(indicators.AverageDailyRange, last.Close)) is decimal reach)
             {
-                decimal range = indicators.AverageDailyRange * last.Close;
-                if (range != 0m)
-                {
-                    // Derived from the trigger, so it is absent wherever the trigger is. Computing
-                    // it against a trigger the detector never set produced |0 - close| / range,
-                    // which for a $150 name with a 4% daily range is about 25 ranges and reads as a
-                    // very distant trigger rather than as no trigger at all.
-                    if (setup.TriggerPrice is decimal triggerPrice)
-                    {
-                        values["trigger_distance_ranges"] =
-                            StoreText.RatioToStorageText(Math.Abs(triggerPrice - last.Close) / range);
-                    }
-                }
+                values["trigger_distance_ranges"] = StoreText.RatioToStorageText(reach);
             }
         }
 
@@ -304,6 +313,17 @@ public sealed class SignalVectorizer
             values["ema_gap_21_50_avg_20"] = gapAverage;
         }
 
+        // The ratio the squeeze gate actually compares, frozen as a quantity of its own from 6.1.
+        // Both of its inputs were already here and neither is the number the gate read: the gap is
+        // signed and the comparison is absolute, so a replay rebuilding the ratio from the two would
+        // be a second implementation of a step the detector already took, and that is what left
+        // `averages-squeezing` unjudgeable and a version moving its threshold refused at admission.
+        // see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
+        if (ShortSetupDetector.SqueezeRatio(bars) is decimal squeeze)
+        {
+            values["ema_gap_21_50_over_avg"] = StoreText.RatioToStorageText(squeeze);
+        }
+
         string? age = ListingAge(connection, setup.Ticker, asOf, sessionZone);
         if (age is not null)
         {
@@ -311,11 +331,74 @@ public sealed class SignalVectorizer
         }
 
         Thrust(connection, setup, asOf, bars, indicators, values, sessionZone);
+        Ceiling(connection, setup, asOf, bars, last, indicators, values, sessionZone);
         Regime(connection, asOf, values);
         Shape(connection, setup, asOf, bars, indicators, values);
         TheName(connection, setup.Ticker, asOf, values, sessionZone);
 
         return values;
+    }
+
+    /// <summary>
+    /// The distance to the ceiling the bounce is measured against, folded to the one number
+    /// `reached-ceiling` compares.
+    ///
+    /// <b>Frozen from 6.1 and the reason is the same as the squeeze ratio's.</b> The row carried
+    /// `ema_21_distance`, `ema_50_distance` and `adr_20`, which are the gate's inputs and not its
+    /// quantity: the gate takes the nearest of three levels and divides by a range, so rebuilding it
+    /// from three signals would put that arithmetic in a second place. Both gates are judgeable over
+    /// the record from the night this lands, and every setup recorded before it is reached by
+    /// SignalBackfiller rather than left behind.
+    /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
+    ///
+    /// <b>The anchored clause is read exactly as the detector reads it, through the same reader and
+    /// the same bound.</b> It is absent on every row the lab has written, `anchored_vwap` holding
+    /// nothing, so today the frozen number is the two-average fold and that is what the night's own
+    /// verdict was decided on. The clause set the verdict records is what says which happened, and
+    /// this signal deliberately does not repeat it: a number and a note about how it was reached are
+    /// two facts and the row already carries the second.
+    /// </summary>
+    private static void Ceiling(
+        SqliteConnection connection,
+        StoredSetup setup,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        StoredDailyBar last,
+        StoredIndicators? indicators,
+        Dictionary<string, string> values,
+        string sessionZone)
+    {
+        if (indicators is null)
+        {
+            return;
+        }
+
+        // The average daily range in price, which is the fraction times the session's raw close.
+        // Assembled the way ShortSetupDetector assembles it, so the units the distance is stated in
+        // are the units the gate compared against.
+        decimal? dailyRange = RangeDistance.InPrice(indicators.AverageDailyRange, last.Close);
+
+        decimal? toAverages = CeilingDistance.ToAveragesInRanges(
+            last.AdjustedClose, indicators.EmaMedium, indicators.EmaLong, dailyRange);
+
+        decimal? anchored = null;
+
+        if (values.TryGetValue("thrust_scan", out string? scan)
+            && values.TryGetValue("thrust_session", out string? session)
+            && ShortSetupDetector.AnchorSessionOf(bars, scan, StoreText.StorageTextToDate(session))
+                is DateOnly anchorSession)
+        {
+            anchored = AnchoredVwapReader.Latest(
+                connection, setup.Ticker, anchorSession, asOf, sessionZone)?.Value;
+        }
+
+        decimal? nearest = CeilingDistance.Nearest(
+            toAverages, CeilingDistance.ToAnchoredInRanges(last.AdjustedClose, anchored, dailyRange));
+
+        if (nearest is decimal distance)
+        {
+            values["ceiling_distance_ranges"] = StoreText.RatioToStorageText(distance);
+        }
     }
 
     /// <summary>
@@ -419,12 +502,12 @@ public sealed class SignalVectorizer
         // two would freeze an industry and a capitalisation resolved after the night they are
         // evidence about, which is the point-in-time rule broken in the one row written to survive
         // it: everything else the lab can recompute, and a frozen signal is what nobody recomputes.
-        if (SecurityReader.Industry(connection, ticker, asOf, sessionZone) is string industry)
+        if (SecurityReader.Industry(connection, ticker, asOf) is string industry)
         {
             values["industry"] = industry;
         }
 
-        if (SecurityReader.MarketCap(connection, ticker, asOf, sessionZone) is decimal cap)
+        if (SecurityReader.MarketCap(connection, ticker, asOf) is decimal cap)
         {
             values["market_cap"] = StoreText.PriceToStorageText(cap);
         }

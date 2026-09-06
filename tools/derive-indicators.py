@@ -68,6 +68,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
         python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker> [--short]
+        python tools/derive-indicators.py --checks  <store.db> <as-of> <ticker> <trigger> <stop>
         python tools/derive-indicators.py --gates   <gate-cases.json>
         python tools/derive-indicators.py --cap     <cap-cases.json>
         python tools/derive-indicators.py --point-in-time <store.db> <as-of> <ticker>
@@ -756,6 +757,22 @@ def derive_signals(bars, trigger):
     daily_range = figures["adr_20"] * raw_close
     out["trigger_distance_ranges"] = abs(Decimal(trigger) - raw_close) / daily_range
 
+    # The two the library gained at 6.1, restated here from what each gate compares rather than
+    # from the stage. Both were computable from these same bars all along, which is the argument
+    # for freezing them: the row carried their inputs and not the numbers themselves.
+    #
+    # The squeeze ratio reuses the series the short gates are derived through, so a session
+    # comparing the two derivations reads one implementation on this side as well.
+    squeeze = squeeze_ratio(closes, WARMUP)
+    if squeeze is not None:
+        out["ema_gap_21_50_over_avg"] = squeeze
+
+    # The ceiling distance without the anchored clause, which is the value the fixture's own store
+    # holds: `anchored_vwap` has no row for any of its names, so the fold is over the two averages
+    # and the night's verdict was decided on exactly that. A fixture that ever holds an anchored
+    # level makes this derivation short of a clause, and it will say so by disagreeing.
+    out["ceiling_distance_ranges"] = min(abs(close - medium), abs(close - longer)) / daily_range
+
     return out
 
 
@@ -1052,12 +1069,28 @@ def checks_main(argv):
         today_range = adj[-1]["high"] - adj[-1]["low"]
         verdicts["contraction"] = today_range < figures["range_avg_20"]
 
-        if pullback_bars == 0:
+        # The geometry, either the one the bars give or the one the caller states.
+        #
+        # <b>An authored row's geometry is the row's, and from 6.1 that is what the fixture's IESC
+        # row means.</b> The bars behind that name give a trigger of 800.999 against a close of
+        # 324.12, the name having split on the session itself, so the row was authored with
+        # plausible prices and its two geometry gates were derived here from the bars anyway.
+        # Verdicts from one geometry beside signals frozen from another is what the 5.3 finding
+        # was, and 6.1 settled it the other way: the authored half is authoritative. Passing the
+        # two prices in is what lets this restatement stay an independent one rather than becoming
+        # a reading of the row it is checking.
+        authored = argv[3:5] if len(argv) > 4 and argv[3] not in ("--short",) else None
+
+        if pullback_bars == 0 and authored is None:
             verdicts["trigger-near"] = False
             verdicts["exit-tight"] = False
         else:
-            trigger = max(bars[i]["high"] for i in range(extreme_index + 1, len(bars)))
-            stop = min(bars[i]["low"] for i in range(extreme_index + 1, len(bars)))
+            if authored is None:
+                trigger = max(bars[i]["high"] for i in range(extreme_index + 1, len(bars)))
+                stop = min(bars[i]["low"] for i in range(extreme_index + 1, len(bars)))
+            else:
+                trigger, stop = Decimal(authored[0]), Decimal(authored[1])
+
             daily_range = figures["adr_20"] * bars[-1]["close"]
             verdicts["trigger-near"] = abs(trigger - bars[-1]["close"]) / daily_range <= TRIGGER_REACH
             verdicts["exit-tight"] = abs(trigger - stop) / daily_range <= GIVE_UP
@@ -1085,21 +1118,26 @@ CEILING_REACH = Decimal("0.5")
 def ema_series(values, period, warmup):
     """The average at every session the warm-up can support, absent before it.
 
-    Seeded once and marched forward, which is what the engine does. Reseeding on each prefix
-    would give a different number for every session but the last, and the difference decays
-    slowly enough to be invisible.
+    Reseeded on each trailing window of `warmup` closes, which is what the engine does: its
+    ExponentialSeries slices the last `warmup` values ending at each session and runs a fresh
+    average over that slice. Every session therefore gets an average computed the same way the
+    single-session `ema()` above computes today's, which is the property that makes a series and
+    a spot value the same number.
+
+    This seeded once and marched forward until 6.1, and said in this docstring that that was what
+    the engine did. It was not, and the difference is exactly the trap the docstring described:
+    invisible on a signed mean to four places, and large enough on a ratio of one gap to the mean
+    of twenty to put two of the fixture's three names on the opposite side of the squeeze
+    threshold from the shipped code. Nothing went red, because the only short row in the fixture
+    falls the same side under either series, so the derivation and the thing it derives disagreed
+    for as long as the derivation existed and the one case that could have said so did not.
     """
     out = [None] * len(values)
     if len(values) < warmup:
         return out
 
-    seed = sum(values[:period]) / period
-    multiplier = Decimal(2) / (period + 1)
-    value = seed
-    for i in range(period, len(values)):
-        value = value + (values[i] - value) * multiplier
-        if i >= warmup - 1:
-            out[i] = value
+    for end in range(warmup, len(values) + 1):
+        out[end - 1] = ema(values[end - warmup:end], period)
     return out
 
 

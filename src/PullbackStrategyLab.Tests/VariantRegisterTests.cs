@@ -336,6 +336,14 @@ public sealed class VariantRegisterTests : IDisposable
     /// <summary>
     /// A candidate the admission rule refuses exits 1 and an operator mistake exits 2, because a
     /// typo read as a rejected experiment is a different fact from a rejected experiment.
+    ///
+    /// <b>The refusal it exercises moved at 6.1 and the reason is worth stating.</b> It was a
+    /// version moving `reached-ceiling`, refused because the gate could not be judged from the
+    /// frozen signals; freezing that quantity as a signal of its own made the same command
+    /// admissible. What refuses here now is a version moving the give-up distance, which is an
+    /// execution threshold and no execution version is admitted in this generation. The exit code is
+    /// what this test is about and it is the same code for either refusal.
+    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
     /// </summary>
     [Fact]
     public void A_refused_candidate_and_a_malformed_command_exit_differently()
@@ -344,7 +352,7 @@ public sealed class VariantRegisterTests : IDisposable
             "V1",
             VariantAdmitter.FamilyFlag, VariantFamily.Selection,
             VariantAdmitter.DirectionFlag, SetupDirection.Short,
-            VariantAdmitter.ThresholdFlag, SelectionRule.CeilingReachRanges,
+            VariantAdmitter.ThresholdFlag, SelectionRule.GiveUpRanges,
             VariantAdmitter.ValueFlag, "0.75",
             VariantAdmitter.TargetFlag, "a two-point gain",
         ]));

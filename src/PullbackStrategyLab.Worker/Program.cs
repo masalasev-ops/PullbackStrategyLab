@@ -56,6 +56,7 @@ public static class Program
         builder.Services.AddSingleton<PlanAudit>();
         builder.Services.AddSingleton<LossClassifier>();
         builder.Services.AddSingleton<SignalVectorizer>();
+        builder.Services.AddSingleton<SignalBackfiller>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -246,6 +247,7 @@ public static class Program
         [FixtureCapture.CaptureResponseName] = (services, rest) => services.GetRequiredService<FixtureCapture>().CaptureResponseAsync(rest).GetAwaiter().GetResult(),
         [IndicatorEngine.Name] = (services, rest) => services.GetRequiredService<IndicatorEngine>().Run(rest),
         [SignalVectorizer.Name] = (services, rest) => services.GetRequiredService<SignalVectorizer>().Run(rest),
+        [SignalBackfiller.Name] = (services, rest) => services.GetRequiredService<SignalBackfiller>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -324,6 +326,10 @@ public static class Program
         LongSetupDetector.Name,
         ShortSetupDetector.Name,
         SignalVectorizer.Name,
+        // Not a slot and deliberately so: it runs when the library gains a signal, which is an
+        // event and not an hour, and the schedule table says "on admission" for exactly that
+        // reason. `slot-roster` reconciles slots and this is advertised without being one.
+        SignalBackfiller.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

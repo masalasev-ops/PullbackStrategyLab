@@ -289,6 +289,37 @@ public sealed class PointInTimeCheck
         };
 
     /// <summary>
+    /// Tables whose reads bound a column other than the stamp, and the column each bounds instead.
+    ///
+    /// <b>A third answer, added at 6.1, and it is not an exemption.</b> The two lists above say
+    /// "this table has a stamp and a read must bound it" and "this table has a stamp and no read
+    /// bounds it". This one says a read bounds something else, names what, and still fails a read
+    /// that bounds neither. The distinction matters because an entry in <see cref="NotBounded"/>
+    /// takes the guard off entirely, and what these reads need is a different guard rather than none.
+    ///
+    /// <b>One today, and it is the whole of the lazily-resolved attribute.</b> `security` carries
+    /// `sector_resolved_at`, the instant the lookup was made, and every reader treated that as the
+    /// instant the fact became true. For a bar the two coincide, the observation being dated by the
+    /// market; for an attribute looked up on demand they do not, so a sector resolved on the 28th
+    /// was invisible to the session of the 27th although it was as true then as it is now. The
+    /// attribute is asserted from `first_seen` instead, being the first session the lab had any
+    /// reason to hold it, and a read of this table bounds that.
+    ///
+    /// <b>The stamp stays in <see cref="Stamped"/> and that is deliberate.</b> The table does carry
+    /// an observation stamp, the reconciliation against the migrations reads it in both directions,
+    /// and a read that bounds the stamp is still accepted: what changed is which column a read may
+    /// bound, not whether the column exists. `first_seen` is not stamp-shaped and could not be named
+    /// there without teaching that reconciliation to accept a column the migrations do not declare
+    /// as a stamp, which would weaken the one assertion that catches a renamed stamp.
+    /// see: The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> AssertedFrom { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["security"] = "first_seen",
+        };
+
+    /// <summary>
     /// One statement that legitimately does not bound its stamp, named by a fragment of itself
     /// rather than by the file it sits in.
     ///
@@ -309,6 +340,14 @@ public sealed class PointInTimeCheck
             + "about the store's contents rather than about a night, and bounding it would make a rebuild blind "
             + "to its own prior row and write a duplicate. The evidence read in the same file takes an as-of and "
             + "bounds computed_at against it."),
+        new("SetupSignalReader.cs", "WHERE u.as_of = @session",
+            "ReadIncludingBackfilled asks what the lab may now compute about a session rather than what that "
+            + "session's decision rested on, so it deliberately does not bound the instant the arithmetic ran. A "
+            + "backfilled signal is a function of the night's own inputs, SignalBackfiller passing each setup's "
+            + "own session as the as-of, so every read behind it is bounded where the night's was and only the "
+            + "computation is late. Bounding this would make a backfilled signal visible to nothing and the "
+            + "backfill would enrich a store nobody could read. The read in the same file that answers for the "
+            + "night is Read, which bounds computed_at against the end of the session and is what a surface uses."),
         new("SetupSignalReader.cs", "SELECT signal_name FROM setup_signal WHERE setup_id = @setup_id",
             "NamesFor asks which signals are already frozen for one setup, which is what makes a rerun write "
             + "nothing. It is a question about what is in the store, it takes no date because it is not answering "
@@ -476,6 +515,7 @@ public sealed class PointInTimeCheck
         int stampedStatements = 0;
         int interpolatedTables = 0;
         var exemptionsMatched = new HashSet<StatementExemption>();
+        var assertedFromMatched = new HashSet<string>(StringComparer.Ordinal);
         var interpolatedMatched = new HashSet<StatementExemption>();
         var interpolationsSeen = new HashSet<string>(StringComparer.Ordinal);
         var unplacedInterpolations = new List<string>();
@@ -537,7 +577,19 @@ public sealed class PointInTimeCheck
                         continue;
                     }
 
+                    // The column a read of this table may bound instead of the stamp, where there is
+                    // one. Counted so an entry covering nothing is visible as stale rather than
+                    // reading as a live allowance.
+                    bool assertedFrom =
+                        AssertedFrom.TryGetValue(table, out string? instead) && Bounds(statement, instead);
+
+                    if (assertedFrom)
+                    {
+                        assertedFromMatched.Add(table);
+                    }
+
                     if (Bounds(statement, stamp)
+                        || assertedFrom
                         || Exempt.ContainsKey(name)
                         || NotBounded.ContainsKey(table))
                     {
@@ -545,14 +597,27 @@ public sealed class PointInTimeCheck
                     }
 
                     failures.Add(
-                        $"{name} selects from {table} without bounding {stamp}, so it can see an observation made "
-                        + "after the date it is answering for.");
+                        AssertedFrom.TryGetValue(table, out string? column)
+                            ? $"{name} selects from {table} without bounding {stamp} or {column}, so it can see an "
+                              + "attribute the date it is answering for could not assert."
+                            : $"{name} selects from {table} without bounding {stamp}, so it can see an observation "
+                              + "made after the date it is answering for.");
                 }
             }
         }
 
         // An exemption that matched nothing has gone stale, and a stale exemption reads as a guard
         // while covering a statement that is no longer there.
+        // And the same for the table whose reads bound something other than its stamp. An entry no
+        // read uses is one whose reads have moved back onto the stamp, and it would sit here reading
+        // as a live allowance while allowing nothing.
+        foreach (string unused in AssertedFrom.Keys.Where(t => !assertedFromMatched.Contains(t)))
+        {
+            failures.Add(
+                $"no statement bounds {unused} on {AssertedFrom[unused]}, so the entry saying its reads assert "
+                + "the attribute from that column covers nothing. Remove it, or point the reads at it.");
+        }
+
         foreach (StatementExemption stale in ExemptStatements.Where(e => !exemptionsMatched.Contains(e)))
         {
             failures.Add(

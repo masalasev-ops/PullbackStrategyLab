@@ -362,9 +362,7 @@ public sealed class LongSetupDetector
             }
         }
 
-        decimal? dailyRange = figures is null || figures.AverageDailyRange == 0m
-            ? null
-            : figures.AverageDailyRange * last.Close;
+        decimal? dailyRange = RangeDistance.InPrice(figures?.AverageDailyRange, last.Close);
 
         return new LongPullbackRules.LongEvidence
         {
@@ -384,12 +382,12 @@ public sealed class LongSetupDetector
             // stop, on a trade that does not exist. A vacuous pass is worse than a fail, because the
             // research loop reads these results to find which checks carry the strategy and a check
             // that passes on nothing looks like a check that is easy to clear.
-            TriggerDistanceRanges = NoPullbackYet(pullback) || dailyRange is not decimal range || range == 0m
+            TriggerDistanceRanges = NoPullbackYet(pullback)
                 ? null
-                : Math.Abs(pullback!.Trigger - last.Close) / range,
-            StopDistanceRanges = NoPullbackYet(pullback) || dailyRange is not decimal stopRange || stopRange == 0m
+                : RangeDistance.Between(pullback!.Trigger, last.Close, dailyRange),
+            StopDistanceRanges = NoPullbackYet(pullback)
                 ? null
-                : Math.Abs(pullback!.Trigger - pullback.Stop) / stopRange,
+                : RangeDistance.Between(pullback!.Trigger, pullback.Stop, dailyRange),
             ClusterCount = thrust?.ClusterCount,
             ThrustScan = thrust?.Scan,
             ThrustSession = thrust?.AsOf,

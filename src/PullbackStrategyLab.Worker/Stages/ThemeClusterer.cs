@@ -71,15 +71,17 @@ public sealed class ThemeClusterer
         // too, so the stage can say how many it could not group rather than reporting a smaller
         // total as though it had grouped everything.
         //
-        // The industry is bounded on when it was resolved, not merely read. `security` carries the
-        // attributes as they stand today with one instant saying when the lookup was made, so a
-        // rerun of an old night would otherwise group it by industries nobody knew at the time and
-        // produce a different cluster count for the same evening.
+        // The industry is bounded, not merely read, and from 6.1 the bound is the date from which
+        // the lab may assert the attribute rather than the instant it happened to ask. A sector was
+        // true before anyone looked it up, so binding the group to the lookup made a rerun of an
+        // old night group by industries the lab now holds and the night did not; binding it to
+        // `first_seen` asserts it from the first session the lab had any reason to hold it, which
+        // is a fact about the name rather than about the schedule.
+        // see: The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
         using SqliteCommand read = connection.CreateCommand();
         read.CommandText = """
             SELECT h.ticker, h.scan,
-                   CASE WHEN s.sector_resolved_at IS NOT NULL AND s.sector_resolved_at <= @resolved_before
-                        THEN s.industry END
+                   CASE WHEN s.first_seen <= @asserted_from THEN s.industry END
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
              WHERE h.as_of = @as_of
@@ -87,7 +89,7 @@ public sealed class ThemeClusterer
             """;
         read.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         read.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, _options.SessionZone));
-        read.Parameters.AddWithValue("@resolved_before", StoreText.EndOfSession(asOf, _options.SessionZone));
+        read.Parameters.AddWithValue("@asserted_from", StoreText.DateToStorageText(asOf));
 
         var hits = new List<(string Ticker, string Scan, string? Industry)>();
         using (SqliteDataReader reader = read.ExecuteReader())

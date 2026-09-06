@@ -612,11 +612,26 @@ the trade geometry, because that is what trades tomorrow.
 | `ema_50_distance` | (adjusted close − `ema_50`) / `ema_50` | `daily_bar.adj_close`, `indicator_daily.ema_50` | active |
 | `ema_gap_21_50` | (`ema_21` − `ema_50`) / `ema_50` | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
 | `ema_gap_21_50_avg_20` | mean of `ema_gap_21_50` over the last 20 sessions | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ema_gap_21_50_over_avg` | \|`ema_gap_21_50`\| over the mean of \|`ema_gap_21_50`\| across the last 20 sessions. Below one is a squeeze | `indicator_daily.ema_21`, `indicator_daily.ema_50` | active |
+| `ceiling_distance_ranges` | the nearest of the 21-day average, the 50-day average and the anchored average price, over `adr_20` × close. The anchored level is included only where one was computed | `daily_bar.adj_close`, `daily_bar.close`, `indicator_daily.ema_21`, `indicator_daily.ema_50`, `indicator_daily.adr_20`, `anchored_vwap.value` | active |
 | `ladder_grade` | the grade TierClassifier wrote for that session | `indicator_daily.ladder_grade` | active |
 
 *`ema_50_distance` is the extension-from-the-long-average measurement the architecture lists as
 missing. It costs nothing beyond a subtraction over two columns already stored, so it is active
 rather than a candidate.*
+
+***The two added at 6.1 are quantities two gates already compared, not new evidence about a name.***
+`averages-squeezing` compares the ratio and `reached-ceiling` compares the folded distance, and until
+6.1 the row froze what each was computed from rather than what each was compared. The gap is signed
+and the ratio is absolute, and the ceiling is a disjunction over three levels, so a replay rebuilding
+either quantity from its inputs would have been a second implementation of a step the detector had
+already taken; both gates were therefore unjudgeable and a version moving either threshold was
+refused at admission (see: A version whose moved gate cannot be judged from the frozen signals is refused at admission).
+**They widen the library and not its reach**, which is why they arrive here rather than through the
+admission route a genuinely new axis takes, and why they cost nothing against the corrected threshold:
+nothing new is screened (see: The correction threshold scales with signals screened, not signals shown).
+SignalBackfiller put both onto every setup recorded before the change, which is what a signal added to
+the library is supposed to cost.
 
 ### Volatility
 

@@ -17,17 +17,24 @@ namespace PullbackStrategyLab.Core.Research;
 /// <b>A signal fills a field or it fills nothing, and that is what decides which gates are
 /// replayable.</b> <see cref="RuleThreshold.FrozenSignals"/> names the frozen signals a threshold's
 /// quantity comes from. Where it names one, the value goes straight into the evidence field the
-/// gate reads, and the rebuild is a lookup. Where it names two or three, the quantity is arithmetic
-/// over them, and doing that arithmetic here would be a second copy of a step the detector already
-/// takes: the short side's `averages-squeezing` is a ratio of two frozen gaps, and its
-/// `reached-ceiling` is the nearer of two distances over a range. Those two gates are not
-/// replayable, so a version moving one of their thresholds cannot be scored and is refused at
-/// admission rather than admitted and left open for ever
-/// (see: No execution variant is admitted in this generation, and the condition that would reopen it is named).
+/// gate reads, and the rebuild is a lookup. Where it named two or three, the quantity was arithmetic
+/// over them, and doing that arithmetic here would have been a second copy of a step the detector
+/// already takes.
 ///
-/// <b>What would make them replayable is naming the derived quantity as a signal of its own</b>, so
-/// the night freezes the number the gate compared rather than the numbers it computed that from.
-/// That is a signal-library change and it is not this checkpoint's.
+/// <b>Two gates were in that state until 6.1 and neither is now.</b> The short side's
+/// `averages-squeezing` compared a ratio of two frozen gaps and its `reached-ceiling` the nearest of
+/// three levels over a range, so a version moving either threshold could not be scored and was
+/// refused at admission. What lifted it is what this class already said would:
+/// `ema_gap_21_50_over_avg` and `ceiling_distance_ranges` name the derived quantity as a signal of
+/// its own, so the night freezes the number the gate compared rather than the numbers it computed
+/// that from, and SignalBackfiller put both on every setup recorded before the change
+/// (see: A version whose moved gate cannot be judged from the frozen signals is refused at admission).
+///
+/// <b>The refusal stays and is now about nothing.</b> <see cref="AssertAdmissible"/> still asks
+/// whether the gate that moved can be judged, because the property it guards is about the stored
+/// signals rather than about today's library: a signal added later with a derived quantity nobody
+/// froze would put a gate back into that state, and a guard removed the day it stops firing is a
+/// guard that was never permanent.
 /// </summary>
 public static class SelectionReplay
 {
@@ -53,6 +60,12 @@ public static class SelectionReplay
         "trigger_distance_ranges",
         "stop_distance_ranges",
         "cluster_count",
+
+        // The two derived quantities, frozen from 6.1. Each is what its gate compared rather than
+        // what the gate compared it from, which is the whole of what made those two gates
+        // unjudgeable: the rebuild is now a lookup like every other name on this list.
+        "ema_gap_21_50_over_avg",
+        "ceiling_distance_ranges",
     };
 
     /// <summary>
@@ -89,8 +102,9 @@ public static class SelectionReplay
     /// judged over the record.
     ///
     /// <b>Stated as a list rather than a count, because the two sides are different lists.</b> The
-    /// long side has ten and the short side ten of its twelve, and the two are never added
-    /// (see: Long and short are never pooled into one figure).
+    /// long side has ten of its ten and the short side twelve of its twelve as of 6.1, where the
+    /// short side had ten of twelve while its two derived quantities went unfrozen. The two are
+    /// never added (see: Long and short are never pooled into one figure).
     /// </summary>
     public static IReadOnlyList<RuleThreshold> Movable(SelectionRule rule)
     {
@@ -109,11 +123,11 @@ public static class SelectionReplay
     /// The gates of a rule the record can judge, in the rule's own gate order.
     ///
     /// <b>Stated per side and never added.</b> The long side loses one gate of ten, `uptrend`,
-    /// which compares a ladder grade and carries no threshold. The short side loses three of ten:
-    /// `downtrend` for the same reason, and `averages-squeezing` and `reached-ceiling` because
-    /// their quantities are arithmetic over several frozen signals. The two counts are arrived at
-    /// differently and a sum of them would describe no rule
-    /// (see: Long and short are never pooled into one figure).
+    /// which compares a ladder grade and carries no threshold. The short side loses one of ten from
+    /// 6.1, `downtrend`, for the same reason; it lost three until then, `averages-squeezing` and
+    /// `reached-ceiling` having quantities that were arithmetic over several frozen signals until
+    /// each was frozen as a signal of its own. The two counts are arrived at differently and a sum
+    /// of them would describe no rule (see: Long and short are never pooled into one figure).
     /// </summary>
     public static IReadOnlyList<string> JudgeableGates(SelectionRule rule)
     {
@@ -346,9 +360,21 @@ public static class SelectionReplay
             StopDistanceRanges = Read(signals, "stop_distance_ranges"),
             ClusterCount = Whole(signals, "cluster_count"),
 
+            // The ratio as the night computed it, from 6.1.
+            GapOverAverageGap = Read(signals, "ema_gap_21_50_over_avg"),
+
+            // <b>The fold, put in the field the gate reads first, with the anchored field left
+            // null.</b> `ceiling_distance_ranges` already <i>is</i> the nearest of the clauses that
+            // ran on the night, anchored one included where there was one, so filling both fields
+            // would be taking a minimum of a number against itself. The rule's own fold then
+            // reduces to the frozen value, which is the point: the gate compares what the night
+            // compared and nothing here re-derives it.
+            DistanceToNearestAverageRanges = Read(signals, "ceiling_distance_ranges"),
+            DistanceToAnchoredRanges = null,
+
             // False for the same reason: this replays nights the lab ran, so an absent anchored
-            // level is the recoverable absence rather than the permanent one. Neither reaches a
-            // verdict here, `reached-ceiling` being one of the two gates this cannot judge.
+            // level is the recoverable absence rather than the permanent one. The flag reaches only
+            // the clause note a verdict carries, and a note is not something a replay judges.
             Reconstructed = false,
         };
 

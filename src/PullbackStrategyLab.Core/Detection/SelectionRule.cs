@@ -79,16 +79,23 @@ public sealed record SelectionRule(
             new(LiquidityFloor, "tradable-shortable", ShortPullbackRules.LiquidityFloor, ThresholdFamily.Selection, ["dollar_volume_median_20"]),
             new(MinimumSessionsListed, "tradable-shortable", ShortPullbackRules.MinimumSessionsListed, ThresholdFamily.Selection, ["listing_age_sessions"]),
             new(DailyRangeFloor, "moves-enough", ShortPullbackRules.DailyRangeFloor, ThresholdFamily.Selection, ["adr_20"]),
-            new(MaximumSqueezeRatio, "averages-squeezing", 1m, ThresholdFamily.Selection, ["ema_gap_21_50", "ema_gap_21_50_avg_20"]),
+            // The ratio itself from 6.1, where this named the two gaps it is computed from. The gap
+            // is signed and the comparison is absolute, so rebuilding the ratio from the pair was a
+            // second implementation of a step the detector had already taken, and naming it left the
+            // gate unjudgeable and a version moving this threshold refused at admission. The two
+            // inputs stay in the library as evidence; what moved is which of them a replay reads.
+            new(MaximumSqueezeRatio, "averages-squeezing", 1m, ThresholdFamily.Selection, ["ema_gap_21_50_over_avg"]),
             new(ThrustWindowSessions, "thrust", ShortPullbackRules.ThrustWindowSessions, ThresholdFamily.Selection, ["days_since_thrust"], AssemblyBound: true),
             new(MinimumPullbackBars, "bounce-shape", ShortPullbackRules.MinimumBounceBars, ThresholdFamily.Selection, ["pullback_bars"]),
             new(MaximumPullbackBars, "bounce-shape", ShortPullbackRules.MaximumBounceBars, ThresholdFamily.Selection, ["pullback_bars"]),
             new(MaximumRetrace, "bounce-shape", ShortPullbackRules.MaximumRecovery, ThresholdFamily.Selection, ["retrace_depth"]),
-            // The two average clauses replay from the frozen distances and the daily range; the
-            // anchored clause is a level over minute bars nothing froze, so a replay judges the
-            // gate on the two clauses and says so, which is the same narrowing a reconstructed
-            // session records.
-            new(CeilingReachRanges, "reached-ceiling", ShortPullbackRules.CeilingReachRanges, ThresholdFamily.Selection, ["ema_21_distance", "ema_50_distance", "adr_20"]),
+            // The folded distance from 6.1, where this named the three inputs a replay would have
+            // had to fold for itself. The gate is a disjunction over levels, so its quantity is the
+            // nearest of them over a range, and `ceiling_distance_ranges` is that number as the
+            // night computed it, anchored clause included wherever the night had one. Naming the
+            // inputs meant a replay judging the gate on a fold of its own, which is the arithmetic
+            // the acceptance test at 5.3 refuses a second copy of.
+            new(CeilingReachRanges, "reached-ceiling", ShortPullbackRules.CeilingReachRanges, ThresholdFamily.Selection, ["ceiling_distance_ranges"]),
             new(MaximumClosesBeyondFloor, "no-reclaim", 0m, ThresholdFamily.Selection, ["closes_beyond_floor"]),
             new(GiveUpRanges, "exit-tight", ShortPullbackRules.GiveUpRanges, ThresholdFamily.Execution, ["stop_distance_ranges"]),
             new(ClusterThreshold, "cluster", ShortPullbackRules.ClusterThreshold, ThresholdFamily.Recorded, ["cluster_count"]),

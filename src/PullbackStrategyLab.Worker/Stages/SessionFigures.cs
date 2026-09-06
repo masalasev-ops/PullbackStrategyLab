@@ -152,7 +152,7 @@ public sealed class StoredFigures : ISessionFigures
         DailyBarReader.SessionsStored(_connection, ticker, asOf, _sessionZone);
 
     public decimal? MarketCap(string ticker, DateOnly asOf) =>
-        SecurityReader.MarketCap(_connection, ticker, asOf, _sessionZone);
+        SecurityReader.MarketCap(_connection, ticker, asOf);
 
     public bool MarketCapExempt => false;
 

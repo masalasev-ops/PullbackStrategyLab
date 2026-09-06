@@ -926,6 +926,8 @@ public sealed class PhaseReplay : IDisposable
         // below this line turns it red rather than waiting to be noticed.
         measurements.AddRange(PointInTimeFigures());
 
+        KeepTheStoreIfAsked();
+
         return new PhaseReplayResult(
             AsOf,
             _handler.Tier,
@@ -1726,6 +1728,38 @@ public sealed class PhaseReplay : IDisposable
         return figures;
     }
 
+    /// <summary>
+    /// The environment variable that asks a run to leave its store behind, so a `DERIVED`
+    /// expectation can be produced against the store the pipeline actually built.
+    ///
+    /// <b>Added at 6.1 because the derivation had nowhere to point.</b> The replay store is a
+    /// temporary directory and is deleted with the harness, so `tools/derive-indicators.py` had to
+    /// be run against whatever store a session could find, and the record of how a value was
+    /// produced was correspondingly vague. Set this and the finished store is copied to the path
+    /// given, which is what "over the replay store" in an expectation's `producedBy` now means and
+    /// what a later session re-runs to check one.
+    ///
+    /// Opt-in and unset everywhere in CI, so a run that nobody asked writes nothing outside its own
+    /// temporary directory. A path that cannot be written is a failure rather than a silent skip:
+    /// a derivation aid that quietly produced no store would send a session to a stale copy.
+    /// </summary>
+    public const string KeepStoreVariable = "PullbackStrategyLab__ReplayStoreCopy";
+
+    private void KeepTheStoreIfAsked()
+    {
+        string? destination = Environment.GetEnvironmentVariable(KeepStoreVariable);
+
+        if (string.IsNullOrWhiteSpace(destination))
+        {
+            return;
+        }
+
+        using SqliteConnection source = _connections.OpenReadOnly();
+        using var copy = new SqliteConnection($"Data Source={destination}");
+        copy.Open();
+        source.BackupDatabase(copy);
+    }
+
     /// <summary>The fixture's authored setup: one name, one direction, one night.</summary>
     public const string AuthoredSetupTicker = "IESC";
 
@@ -1743,6 +1777,90 @@ public sealed class PhaseReplay : IDisposable
     /// <summary>Stated beside the trigger so the geometry signals have a subject.</summary>
     public const string AuthoredStop = "348.50";
 
+    /// <summary>
+    /// The same two as decimals, because from 6.1 the row's third geometry column is computed from
+    /// them rather than authored beside them.
+    /// </summary>
+    public const decimal AuthoredTriggerPrice = 355.00m;
+
+    public const decimal AuthoredStopPrice = 348.50m;
+
+    /// <summary>
+    /// The authored row's geometry, put into the evidence the shipped rules are then run over.
+    ///
+    /// <b>This is the 5.3 finding's repair and it decides which half of the row is authoritative:
+    /// the authored half.</b> The row records verdicts and freezes signals, and until 6.1 the two
+    /// described different geometry. `LongSetupDetector.Evidence` assembles IESC's real pullback,
+    /// whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's
+    /// own session and the raw highs behind it are on the pre-split basis; the trigger and the stop
+    /// were authored as plausible prices for exactly that reason. SignalVectorizer then froze the
+    /// signals off the authored prices while the verdicts stood on the assembled ones, so
+    /// `trigger-near` and `exit-tight` were recorded as failures beside frozen distances that clear
+    /// both thresholds, and the acceptance test at 5.3 reported the pair as its two disagreements.
+    ///
+    /// <b>The other repair was priced and refused.</b> Writing the assembled geometry back to the
+    /// row makes it coherent and makes its data absurd: a trade planned at 800.999 on a stock
+    /// closing at 324.12, rendered on the gallery, read by every later session and re-derived by
+    /// each of them. The row exists to give the vectorizer a subject on a night the detector flagged
+    /// nothing long, so it is authored on purpose, and judging an authored geometry by other
+    /// geometry is the incoherence rather than the authoring.
+    ///
+    /// <b>So the geometry is authored and everything else follows it, through the shipped
+    /// arithmetic.</b> Nothing here re-implements a rule: the two distances come from
+    /// <see cref="RangeDistance"/>, which is what the detectors and the vectorizer compute them
+    /// with, and the verdicts come from <c>LongPullbackRules.Evaluate</c> as before. The stored
+    /// `stop_distance_ranges` follows the same way, where it was a third authored literal of 0.2700
+    /// that agreed with neither the prices above it nor the name's own range.
+    /// see: An authored fixture row's geometry is authoritative and its verdicts are computed from it
+    /// </summary>
+    private LongPullbackRules.LongEvidence WithTheAuthoredGeometry(
+        SqliteConnection connection, LongPullbackRules.LongEvidence evidence)
+    {
+        decimal? range = AuthoredDailyRangeInPrice(connection, evidence);
+
+        return evidence with
+        {
+            TriggerDistanceRanges = RangeDistance.Between(AuthoredTriggerPrice, AuthoredClose(connection), range),
+            StopDistanceRanges = RangeDistance.Between(AuthoredTriggerPrice, AuthoredStopPrice, range),
+        };
+    }
+
+    /// <summary>
+    /// The average daily range in price on the authored setup's session, which is the unit both of
+    /// its geometry gates are expressed in.
+    /// </summary>
+    private decimal? AuthoredDailyRangeInPrice(
+        SqliteConnection connection, LongPullbackRules.LongEvidence evidence) =>
+        RangeDistance.InPrice(evidence.AverageDailyRange, AuthoredClose(connection));
+
+    /// <summary>
+    /// The session's raw close, which is the basis the average daily range was computed against and
+    /// the basis a trigger is placed on.
+    /// </summary>
+    private decimal AuthoredClose(SqliteConnection connection)
+    {
+        IReadOnlyList<StoredDailyBar> bars =
+            DailyBarReader.Read(connection, AuthoredSetupTicker, AsOf, 1, SessionBoundaries.UsEquities);
+
+        return bars.Count == 0 ? 0m : bars[^1].Close;
+    }
+
+    /// <summary>
+    /// The give-up distance the authored row stores, derived from its own trigger and stop.
+    ///
+    /// Absent where the session has no range to state it in, on the same terms every other
+    /// geometry signal is absent: a distance in a range that does not exist is not a distance
+    /// (see: A gate handed an absent or degenerate quantity fails rather than passing).
+    /// </summary>
+    private string? AuthoredStopDistance(SqliteConnection connection, LongPullbackRules.LongEvidence? evidence) =>
+        evidence is null
+            ? null
+            : RangeDistance.Between(
+                AuthoredTriggerPrice, AuthoredStopPrice, AuthoredDailyRangeInPrice(connection, evidence))
+                is decimal distance
+                ? StoreText.RatioToStorageText(distance)
+                : null;
+
     private VectorizeResult VectorizeAuthoredSetup()
     {
         using (SqliteConnection connection = _connections.OpenWrite())
@@ -1756,16 +1874,23 @@ public sealed class PhaseReplay : IDisposable
 
             IReadOnlyList<CheckResult> results = evidence is null
                 ? []
-                : LongPullbackRules.Evaluate(evidence);
+                : LongPullbackRules.Evaluate(WithTheAuthoredGeometry(connection, evidence));
 
             using SqliteCommand setup = connection.CreateCommand();
             setup.CommandText = """
                 INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all,
                                    trigger_price, stop_price, stop_distance_ranges,
                                    thrust_scan, thrust_session)
-                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop, '0.2700',
-                        @thrust_scan, @thrust_session)
+                VALUES (@setup_id, @as_of, @ticker, 'long', @check_results, @passed_all, @trigger, @stop,
+                        @stop_distance_ranges, @thrust_scan, @thrust_session)
                 """;
+
+            // Derived from the two prices above it from 6.1, where it was a third authored literal.
+            // A row whose give-up distance agrees with neither its own trigger and stop nor the
+            // name's own range is a row saying three things, and the frozen signal took the literal.
+            setup.Parameters.AddWithValue(
+                "@stop_distance_ranges",
+                (object?)AuthoredStopDistance(connection, evidence) ?? DBNull.Value);
 
             // From the same evidence the check results come from, for the same reason. Left unset,
             // this row would read `none` where the detector's own rule resolves a hit, and the one
