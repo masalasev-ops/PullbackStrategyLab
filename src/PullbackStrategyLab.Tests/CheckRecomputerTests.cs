@@ -102,6 +102,42 @@ public sealed class CheckRecomputerTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// The same night with nothing resolved on any of its names, which is the state in which a
+    /// whole-population count cannot be formed at all.
+    ///
+    /// <b>Its own helper from 6.1, because "resolved too late" stopped being that state.</b> An
+    /// attribute is asserted from the first session the lab had reason to hold it, so a name
+    /// resolved four days after the session still groups: what the lateness bound now decides is
+    /// whether a correction may be applied, not whether the count exists. A name nobody has ever
+    /// looked up is the case that survives, and it is the one a population reading has to be able
+    /// to say it could not form.
+    /// see: The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
+    /// </summary>
+    private void NightWithNothingResolved(params string[] tickers)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        foreach (string ticker in tickers)
+        {
+            using SqliteCommand security = connection.CreateCommand();
+            security.CommandText = """
+                INSERT INTO security (ticker, name, exchange, type, first_seen)
+                VALUES (@t, @t, 'US', 'Common Stock', @d)
+                """;
+            security.Parameters.AddWithValue("@t", ticker);
+            security.Parameters.AddWithValue("@d", StoreText.DateToStorageText(AsOf));
+            security.ExecuteNonQuery();
+
+            using SqliteCommand hit = connection.CreateCommand();
+            hit.CommandText =
+                "INSERT INTO scan_hit (as_of, ticker, scan, magnitude, rank) VALUES (@d, @t, 'gainer', '1.0', 1)";
+            hit.Parameters.AddWithValue("@d", StoreText.DateToStorageText(AsOf));
+            hit.Parameters.AddWithValue("@t", ticker);
+            hit.ExecuteNonQuery();
+        }
+    }
+
     /// <summary>A setup carrying the verdicts given, exactly as a detector writes them.</summary>
     private void Setup(string ticker, string direction, params CheckResult[] results) =>
         Setup(ticker, direction, "gainer", AsOf, results);
@@ -224,12 +260,20 @@ public sealed class CheckRecomputerTests : IDisposable
     }
 
     /// <summary>
-    /// The exception is one column wide, asserted against the stage's own source.
+    /// The exception is one column wide, asserted against the stage's own source, and at 6.1 it
+    /// stopped being a clause in the count and became a gate on the correction.
     ///
     /// The lateness bound admits exactly one stamped column, <c>security.sector_resolved_at</c>, and
     /// every other input stays bounded to the session's own date. A repair that admitted a second
     /// late input would be reconstructing the night rather than completing it, and the difference
     /// between those two is the whole rule.
+    ///
+    /// <b>What moved is which question the clause answered.</b> One clause carried both "could the
+    /// night have grouped by this industry" and "may an answer arriving afterwards be folded into
+    /// that night". The first is now the date the attribute may be asserted from, because a sector
+    /// was true before anyone looked it up; the second is still the lookup instant against the
+    /// bound. Folding them back together would supersede one decision with the other in silence.
+    /// see: The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
     ///
     /// <b>What this cannot say, stated rather than left to be assumed.</b> `scan_hit` carries no
     /// observation stamp at all, so a hit inserted for a past session after the fact is invisible to
@@ -243,14 +287,31 @@ public sealed class CheckRecomputerTests : IDisposable
         string source = RepositoryLayout.Read(Path.Combine(
             RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", "CheckRecomputer.cs"));
 
-        string[] lateBound =
+        // Every stamped column the stage's source names at all, stated in advance so a scan that
+        // stopped matching reads as red rather than as the property holding.
+        string[] stampsRead =
         [
             .. PointInTimeCheck.Stamped.Values
                 .Distinct(StringComparer.Ordinal)
-                .Where(stamp => source.Contains($"{stamp} <= @bound", StringComparison.Ordinal)),
+                .Where(stamp => source.Contains(stamp, StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal),
         ];
 
-        Assert.Equal(["sector_resolved_at"], lateBound);
+        Assert.Equal(["corrected_at", "observed_at", "sector_resolved_at"], stampsRead);
+
+        // And what each of the three is: `observed_at` bounded to the session's own end of day,
+        // `corrected_at` the mark this stage writes rather than an input it reads, and
+        // `sector_resolved_at` the one column an answer may arrive late on, gated against the
+        // recorded bound. The count beside it is on the basis the attribute is asserted from, which
+        // is the separation 6.1 made and the reason this test is not simply about one clause.
+        Assert.Contains("h.observed_at <= @observed_before", source, StringComparison.Ordinal);
+        Assert.Contains("ResolvedAfter(input.ResolvedAt, latestAdmissible)", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("@bound", source, StringComparison.Ordinal);
+
+        // And the count beside it is on the other basis, so this says the two questions were
+        // separated rather than that one of them went away.
+        Assert.Contains(
+            $"{PointInTimeCheck.AssertedFrom["security"]} <= @asserted_from", source, StringComparison.Ordinal);
     }
 
     /// <summary>The check results as they stood before the correction, or null.</summary>
@@ -726,11 +787,17 @@ public sealed class CheckRecomputerTests : IDisposable
     /// <summary>
     /// A row whose whole-population count cannot be formed is counted apart from both sides rather
     /// than read as agreeing or disagreeing with a number that does not exist.
+    ///
+    /// <b>The night it is exercised over moved at 6.1.</b> It was a night resolved past the lateness
+    /// bound, which no longer makes a count unformable: an attribute is asserted from the first
+    /// session the lab had reason to hold it, so those names group and the bound decides only
+    /// whether the correction may be written. A night with nothing resolved at all is the state that
+    /// survives, and it is the one this reading exists for.
     /// </summary>
     [Fact]
     public void A_row_whose_whole_population_count_cannot_be_formed_is_counted_apart()
     {
-        Night(BeyondTheBound, "AAA", "BBB");
+        NightWithNothingResolved("AAA", "BBB");
         Setup("AAA", "long", new CheckResult("cluster", true, 2m));
         Setup("BBB", "long", new CheckResult("cluster", false, null));
 

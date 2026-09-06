@@ -270,10 +270,14 @@ public sealed class ReplayHarnessTests : IDisposable
         Assert.Equal(SetupDirection.Long, longs.Direction);
         Assert.Equal(SetupDirection.Short, shorts.Direction);
 
-        // The gate counts differ because the two sides lose different gates for different reasons,
-        // and nothing here adds them.
+        // Nine each, and the two nines are not the same nine. The long side loses `uptrend` and the
+        // short side `downtrend`, both for comparing a ladder grade; the short side lost
+        // `averages-squeezing` and `reached-ceiling` as well until 6.1 froze each gate's quantity as
+        // a signal of its own. Two figures that happen to agree are still two figures, and nothing
+        // here adds them.
+        // see: Long and short are never pooled into one figure
         Assert.Equal(9, longs.GatesJudged);
-        Assert.Equal(7, shorts.GatesJudged);
+        Assert.Equal(9, shorts.GatesJudged);
     }
 
     /// <summary>

@@ -65,6 +65,64 @@ public sealed class SetupSignalReader
         return signals;
     }
 
+    /// <summary>
+    /// Every signal that describes one session's setups, including the ones a later backfill
+    /// computed from what that session held.
+    ///
+    /// <b>A second read rather than a relaxed one, and the difference is the whole point.</b>
+    /// <see cref="Read(SqliteConnection, DateOnly, string)"/> answers "what did the night's decision
+    /// rest on", and bounds the instant the value was frozen, because a signal computed months later
+    /// is not something the detector could have compared against. This answers "what may the lab now
+    /// compute about that night", and does not, because a backfilled value is a function of the
+    /// night's own inputs: SignalBackfiller passes each setup's own session as the as-of, so every
+    /// read behind it is bounded where the night's read was bounded, and only the moment of
+    /// computation is later.
+    ///
+    /// <b>Point-in-time is a property of the inputs, not of the clock the arithmetic ran on.</b>
+    /// That is what makes widening the library cheap: a signal admitted today can be computed for
+    /// every night the lab ever recorded, which is what the architecture means by the entire history
+    /// becoming replayable immediately. Bounding this read on the stamp would leave a backfilled
+    /// signal visible to nothing, and the backfill would enrich a store nobody could read.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    ///
+    /// <b>What may use it, stated because the wrong caller would be a real defect.</b> A research
+    /// read replaying stored history may, because it is asking what a rule would have selected given
+    /// the evidence. Anything reconstructing what the night itself saw may not, and that is the read
+    /// above: a screen that showed a backfilled value as the night's own evidence would claim the
+    /// detector compared against a number that did not exist yet.
+    /// see: A backfilled signal is read by a replay and not by a surface, because point-in-time is a property of the inputs
+    /// </summary>
+    public static IReadOnlyList<StoredSetupSignal> ReadIncludingBackfilled(
+        SqliteConnection connection, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT s.setup_id, s.signal_name, s.value, s.computed_at
+              FROM setup_signal s
+              JOIN setup u ON u.setup_id = s.setup_id
+             WHERE u.as_of = @session
+             ORDER BY s.setup_id, s.signal_name
+            """;
+
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(asOf));
+
+        var signals = new List<StoredSetupSignal>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            signals.Add(new StoredSetupSignal(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                StoreText.StorageTextToTimestamp(reader.GetString(3))));
+        }
+
+        return signals;
+    }
+
     /// <summary>The signal names already frozen for one setup, which is what makes a rerun write nothing.</summary>
     public static IReadOnlySet<string> NamesFor(SqliteConnection connection, string setupId)
     {

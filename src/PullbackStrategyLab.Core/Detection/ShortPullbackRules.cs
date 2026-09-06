@@ -263,9 +263,10 @@ public static class ShortPullbackRules
         // distances is. The anchored clause widens the gate when it runs and never narrows it, so a
         // row that could not be anchored is judged on strictly less than the document describes and
         // its note is what says so.
-        decimal nearest = e.DistanceToAnchoredRanges is decimal anchored
-            ? Math.Min(distance, anchored)
-            : distance;
+        //
+        // Folded through Core as of 6.1, because `ceiling_distance_ranges` freezes this same fold
+        // and the gate's quantity and the signal recording it may not be two implementations.
+        decimal nearest = CeilingDistance.Nearest(distance, e.DistanceToAnchoredRanges) ?? distance;
 
         return new CheckResult(
             "reached-ceiling",

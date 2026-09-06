@@ -722,6 +722,13 @@ public sealed partial class ArchitectureConformanceCheck
         // Every scan that remains names what exercises it, so a claim resting on text alone is
         // visible rather than counted.
         coverage
+            .Scan("What each tier of change can be replayed against: a new signal reaches a replay",
+                CheckCoverage.Backing.Test(
+                    "SignalBackfillerTests.The_stamped_read_and_the_replay_read_differ_on_exactly_the_backfilled_rows",
+                    "the two reads are taken over one store and their difference is required to be exactly the "
+                    + "backfilled names, so the scan is left holding only which of the two the harness calls. Both "
+                    + "return the same shape over the same table, which is why a caller pointed at the wrong one "
+                    + "produces plausible rows and says nothing"))
             .Scan("Failure behaviour: Detector errors on one stock",
                 CheckCoverage.Backing.Test(
                     "DetectorErrorTests.A_name_the_detector_cannot_read_gets_an_error_row_and_the_run_goes_partial",
@@ -1142,6 +1149,21 @@ public sealed partial class ArchitectureConformanceCheck
     /// admission refusing a candidate that moves an execution threshold; the structural row's is
     /// that the rows do not exist, which is admission refusing a different gate list.
     /// </summary>
+    /// <summary>
+    /// Whether one stage reads frozen signals through the read that includes backfilled values.
+    ///
+    /// A source scan, and it is one rather than a behavioural assertion because the property is
+    /// which of two reads a caller chose: both return the same shape over the same table, so a
+    /// harness pointed at the wrong one produces plausible rows and says nothing. What it is worth
+    /// is declared beside it, and the behavioural half is
+    /// SignalBackfillerTests.The_stamped_read_and_the_replay_read_differ_on_exactly_the_backfilled_rows.
+    /// see: A backfilled signal is read by a replay and not by a surface, because point-in-time is a property of the inputs
+    /// </summary>
+    private static bool ReadsBackfilledSignals(string file) =>
+        RepositoryLayout.Read(Path.Combine(
+            RepositoryLayout.Source, "PullbackStrategyLab.Worker", "Stages", file))
+            .Contains("SetupSignalReader.ReadIncludingBackfilled(", StringComparison.Ordinal);
+
     private static IReadOnlyList<Claim> ReplayTierClaims(string architecture)
     {
         const string Table = "What each tier of change can be replayed against";
@@ -1156,18 +1178,22 @@ public sealed partial class ArchitectureConformanceCheck
 
             claims.Add(tier switch
             {
+                // Nine and nine as of 6.1, where it was nine and seven. The short side's two
+                // derived quantities were frozen as signals of their own, so the only gate either
+                // side now loses is the one comparing a ladder grade. The two nines are arrived at
+                // over two different rules and are asserted apart rather than as one number.
                 "Selection" =>
                     SelectionReplay.JudgeableGates(longRule).Count == 9
-                    && SelectionReplay.JudgeableGates(shortRule).Count == 7
+                    && SelectionReplay.JudgeableGates(shortRule).Count == 9
                     && SelectionReplay.Movable(longRule).Count > 0
                     && SelectionReplay.Movable(shortRule).Count > 0
                         ? Claim.Passed(Table, tier,
                             "a threshold change is replayed over the signals the night froze: nine of the long "
-                            + "side's ten gates and seven of the short side's ten are rebuilt from them and the "
+                            + "side's ten gates and nine of the short side's ten are rebuilt from them and the "
                             + "rest are read back, and both sides have thresholds a version may move. The two "
                             + "counts are stated apart and never added")
                         : Claim.Failed(Table, tier,
-                            "the gates a replay can rebuild are no longer nine of the long side's ten and seven "
+                            "the gates a replay can rebuild are no longer nine of the long side's ten and nine "
                             + "of the short side's ten, or one of the sides has no movable threshold left, so the "
                             + "row's claim that a selection change is replayable no longer holds"),
 
@@ -1184,7 +1210,27 @@ public sealed partial class ArchitectureConformanceCheck
                             "a candidate moving an execution threshold is now admitted, so the row's claim that "
                             + "the execution tier is forward-only is not what the code does"),
 
-                "New signal" => Claim.OutOfScope(Table, tier, "6.1"),
+                // Two halves, because the row makes two claims: backfilled across all history, and
+                // then replayable. The first is the stage existing and filling names the nightly
+                // vectorizer also freezes, so a signal is never on old setups and absent from new
+                // ones. The second is the read the harness uses: a backfilled value is stamped when
+                // the arithmetic ran, so the read that answers for the night deliberately hides it
+                // and the read that answers for a replay deliberately does not. Reading the harness
+                // through the first would leave the backfill enriching a store nobody could read,
+                // which is the way this row could be false with every component present.
+                "New signal" =>
+                    SignalBackfiller.Fills.Count > 0
+                    && SignalBackfiller.Fills.All(f => SignalVectorizer.Frozen.Contains(f, StringComparer.Ordinal))
+                    && ReadsBackfilledSignals("ReplayHarness.cs")
+                        ? Claim.Passed(Table, tier,
+                            $"a new signal is backfilled across all history and then replayed: SignalBackfiller "
+                            + $"fills {SignalBackfiller.Fills.Count} name(s), every one of them a signal the nightly "
+                            + "vectorizer freezes as well, and the harness reads them through the read that includes "
+                            + "a value computed after the night rather than the read that answers for the night")
+                        : Claim.Failed(Table, tier,
+                            "either nothing is backfilled, or a backfilled name is one the nightly vectorizer does "
+                            + "not freeze, or the harness reads signals through the stamped read, in which case a "
+                            + "backfilled value reaches no replay and the row's second half is not what the code does"),
 
                 "Structural" =>
                     !RuleAdmission.Assert(

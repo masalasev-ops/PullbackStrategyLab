@@ -52,7 +52,15 @@ public sealed class ProbeRowVisibilityTests
         Assert.Equal(
             MigrationRunner.LatestVersion.ToString(CultureInfo.InvariantCulture),
             Single(integrity, "store.schemaVersion"));
-        Assert.Equal("124", Single(integrity, "store.rowsPointingAtSetup"));
+        // A positive count rather than its value, on exactly the grounds the schema version above
+        // is read from the build. A literal here was a second place a derived figure lived and it
+        // went stale the first time the library legitimately grew: 6.1 froze two more signals on
+        // three setups and this read 130 against a hard-coded 124, red for a reason that has nothing
+        // to do with the probe. That is the same fault the schema version had at 3.13, one column
+        // over, and it is fixed the same way. The fixture expectation derives the number by hand and
+        // that independence is where it belongs.
+        Assert.True(
+            int.Parse(Single(integrity, "store.rowsPointingAtSetup"), CultureInfo.InvariantCulture) > 0);
         Assert.Equal("0", Single(integrity, "store.foreignKeyViolations"));
 
         // The fifth, from 5.2. Asserted as a positive count rather than as its value, on the same

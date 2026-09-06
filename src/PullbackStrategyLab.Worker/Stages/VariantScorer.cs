@@ -213,7 +213,7 @@ public sealed class VariantScorer
             }
 
             IReadOnlyDictionary<string, IReadOnlyDictionary<string, decimal>> signals =
-                FrozenSignals(connection, night, zone);
+                FrozenSignals(connection, night);
             IReadOnlyDictionary<string, decimal> outcomes = Outcomes(connection, night, asOf, zone);
 
             var baselineSet = new List<string>();
@@ -427,13 +427,23 @@ public sealed class VariantScorer
         return true;
     }
 
-    /// <summary>Every setup of one night, with the signals a replay can read, by setup.</summary>
+    /// <summary>
+    /// Every setup of one night, with the signals a replay can read, by setup.
+    ///
+    /// <b>Including the ones a backfill computed, from 6.1.</b> The question a replay asks is what a
+    /// rule would have selected given the evidence, and a backfilled value is a function of that
+    /// night's own inputs: the backfill passes each setup's own session as the as-of, so only the
+    /// moment of computation is later. Bounding this on the stamp would leave the two derived
+    /// quantities the library gained visible on the nights after the change and nowhere before it,
+    /// which is the half of the 5.2 obligation that was about the rows already recorded.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
     private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, decimal>> FrozenSignals(
-        SqliteConnection connection, DateOnly night, string zone)
+        SqliteConnection connection, DateOnly night)
     {
         var rows = new Dictionary<string, Dictionary<string, decimal>>(StringComparer.Ordinal);
 
-        foreach (StoredSetupSignal signal in SetupSignalReader.Read(connection, night, zone))
+        foreach (StoredSetupSignal signal in SetupSignalReader.ReadIncludingBackfilled(connection, night))
         {
             if (!SelectionReplay.DirectSignals.Contains(signal.SignalName))
             {

@@ -16845,3 +16845,89 @@ Carried:    Nothing new. **Three register questions remain open**, one of which 
 Next:       **6.1**, SignalBackfiller, in the numbered order from here. It carries three obligations
             due at it and performs the lazily-resolved attribute's correction, and it is the first
             checkpoint of this phase whose deliverable is a component.
+
+## 6.1 — 2026-09-06 — phase-6-1-signal-backfiller — SignalBackfiller, and three obligations that were one question asked three ways
+
+Built:      **SignalBackfiller**, a stage that computes a signal the library has gained across every
+            setup already stored, in one run. It computes nothing of its own: every value comes out
+            of `SignalVectorizer.Values`, which is the one implementation of every formula in the
+            library, and what the backfill supplies is **the setup's own session as the as-of**, so
+            every read behind it is bounded where that night's read was bounded. A backfill run with
+            today's date would produce values no night could have held, on rows nothing ever revises,
+            which is the one way this stage could quietly void every replay in the system. It is
+            advertised and dispatched and is **not a slot**: it runs when the library gains a signal,
+            which is an event and not an hour, and the schedule table already said "on admission".
+
+            **The two signals it was built to carry are the 5.2 obligation's answer.**
+            `ema_gap_21_50_over_avg` is what `averages-squeezing` compares and
+            `ceiling_distance_ranges` is what `reached-ceiling` compares, and until now the row froze
+            what each was computed from rather than what each was compared. Both now come out of one
+            implementation in Core that the detector, the rule that judges the gate and the stage that
+            freezes the number all read, so the quantity a gate compares and the quantity a row
+            records cannot become two numbers. `RangeDistance` came out of the same pass: four call
+            sites spelled `|a - b| / (adr x close)` for themselves, each correct and each one edit
+            from not being, on a quantity where a wrong answer is a plausible small number.
+
+Decided:    **An authored fixture row's geometry is authoritative and its verdicts are computed from
+            it**, closing the row raised at 5.3 with both repairs priced. **A backfilled signal is
+            read by a replay and not by a surface, because point-in-time is a property of the
+            inputs**, taken when the backfill first wrote one.
+
+Corrected:  **`tools/derive-indicators.py`'s `ema_series` seeded once and marched forward while the
+            shipped `Averages.ExponentialSeries` reseeds on each trailing window, and its own
+            docstring said it did what the engine does.** Found by deriving the new squeeze ratio and
+            getting a different number from the store's. The signed gap average hid it at four
+            places; the ratio of one gap to the mean of twenty put **two of the three fixture names
+            on the opposite side of the squeeze threshold** from the shipped code, HOOD at 1.0039
+            against 0.9659 and IESC at 0.9979 against 1.0034. Nothing was ever red, because the only
+            short row in the fixture falls the same side under either series, so the derivation and
+            the thing it derives disagreed for as long as the derivation existed and the one case
+            that could have said so did not. Repaired, and **every short gate verdict already derived
+            through it re-derives unchanged**, which is what says the repair moved no expectation.
+
+Measured:   **The out-of-scope count is 14, down two from the peak, which is the path the plan
+            projected and the step it projected here.** The two retired are the backfiller's
+            catalogue row and the replay-tier row for a new signal, and nothing was added.
+            **The report reads 22 expectations changed since the last
+            commit against 8 new, and that ratio is stated rather than left to be read.** A phase
+            whose report shows more changed than new has re-baselined rather than built, which is
+            what the decision behind the figure says; this checkpoint is not that, and the reason is
+            that fourteen of the twenty-two are the one authored row being made to say one thing and
+            the four counts that follow from two signals being added. Each carries the reason that
+            moved it, and none was regenerated to make a diff pass.
+
+Verified:   `tools/ci.ps1` green at 31 steps, 1,087 tests. `tools/verify-phase.ps1` GREEN: 143 claims, 129
+            passed, 0 failed, 14 out of scope, 0 unexamined, coverage examined 9982.
+
+            **Eight expectations added, all `DERIVED`, and fourteen moved with their reasons.** The
+            six signal values were produced by `tools/derive-indicators.py --signals` over the replay
+            store, which is a store this checkpoint made keepable: `PhaseReplay` copies its finished
+            store to `PullbackStrategyLab__ReplayStoreCopy` when asked, because the derivation had
+            nowhere to point before and "over the replay store" in an expectation's `producedBy` was
+            a claim nobody could re-run. `ceiling_distance_ranges` agreed to four places on the first
+            run; `ema_gap_21_50_over_avg` did not, and that disagreement is the correction above.
+
+Found:      **The corpus carries 35 lines of mojibake in `fixtures/expectations.json`**, all in
+            `producedBy` and `note` prose on expectations from 1.6 and 1.8, being an apostrophe
+            round-tripped through a mangling encoding several times over. No value, id, tier or
+            checkpoint is affected and no check reads the text, so nothing is or was wrong; it is
+            unreadable rather than incorrect. Carried rather than swept here, priced at one
+            mechanical replacement of each mangled run with the apostrophe it was, checked by reading
+            the 35 lines afterwards, and recorded as a change to expectation prose with its reason.
+
+Carried:    One new, being the mojibake above, due at 6.2. **Nothing else falls due at 6.1**: the
+            three that did are discharged and moved into their own section, and the lazily-resolved
+            attribute's act is recorded under the section that planned it.
+
+            **And one sentence of that plan is corrected rather than performed.** It asked for the 29
+            frozen signal values to be recomputed as a correction recording prior state.
+            `setup_signal` is written once and never updated, there is no exception, and the store's
+            own key refuses the second write, so what the sentence describes would have meant
+            rewriting frozen evidence: the one thing the row exists to make impossible. What the
+            basis change actually reaches is the rows a signal is **absent** from, which the backfill
+            fills at each setup's own session, and a verdict recorded under the old basis, which
+            `CheckRecomputer` corrects while recording prior state.
+
+Next:       **6.2**, SignalAdmissionTest and the signal library moving from a spec section into
+            `signal_definition`. It pins the correlation limit deferred there and is verified over an
+            authored population, no setup's ten-day horizon having closed.

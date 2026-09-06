@@ -1164,18 +1164,18 @@
     {
       "id": "check.long.exit-tight.authoredRowFailed",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "0",
       "checkpoint": "3.0",
       "producedBy": "the replay's own counters, split by tier at 3.0(e)",
-      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it Was 1. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "check.long.exit-tight.authoredRowPassed",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "1",
       "checkpoint": "3.0",
       "producedBy": "the replay's own counters, split by tier at 3.0(e)",
-      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it Was 0. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "check.long.exit-tight.failed",
@@ -1328,18 +1328,18 @@
     {
       "id": "check.long.trigger-near.authoredRowFailed",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "0",
       "checkpoint": "3.0",
       "producedBy": "the replay's own counters, split by tier at 3.0(e)",
-      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it Was 1. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "check.long.trigger-near.authoredRowPassed",
       "tier": "FROZEN",
-      "value": "0",
+      "value": "1",
       "checkpoint": "3.0",
       "producedBy": "the replay's own counters, split by tier at 3.0(e)",
-      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it"
+      "note": "the authored setup row's own verdict for this gate, reported beside the detectors' counts and never added to them. The row bypasses the recording floor, which is why it carries `uptrend` failed on a grade of `mixed`. Kept visible rather than dropped, because it is a real row the replay inserts and a reader who could not see it would wonder where a third setup went. see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it Was 0. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "check.long.trigger-near.failed",
@@ -9108,9 +9108,10 @@
     {
       "id": "setup.IESC-long.exit-tight",
       "tier": "DERIVED",
-      "value": "fail",
+      "value": "pass",
       "checkpoint": "2.6",
-      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks over the geometry the row carries: --checks <replay store> 2026-08-24 IESC 355.00 348.50",
+      "note": "Was fail. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "setup.IESC-long.held-floor",
@@ -9160,9 +9161,10 @@
     {
       "id": "setup.IESC-long.trigger-near",
       "tier": "DERIVED",
-      "value": "fail",
+      "value": "pass",
       "checkpoint": "2.6",
-      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks"
+      "producedBy": "an independent evaluation of the ten gates from ARCHITECTURE's own wording, outside the solution, by tools/derive-indicators.py --checks over the geometry the row carries: --checks <replay store> 2026-08-24 IESC 355.00 348.50",
+      "note": "Was fail. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "setup.IESC-long.uptrend",
@@ -9768,9 +9770,10 @@
     {
       "id": "signal.IESC-long.stop_distance_ranges",
       "tier": "FROZEN",
-      "value": "0.2700",
+      "value": "0.2992",
       "checkpoint": "2.2",
-      "producedBy": "the authored setup's own input, read back to prove it survives the freeze"
+      "producedBy": "the authored setup's own input, read back to prove it survives the freeze",
+      "note": "Was 0.2700. Derived from the row's own trigger and stop at 6.1, where it was a third authored literal that agreed with neither the two prices above it nor the name's own range. |355.00 - 348.50| / (0.0670 x 324.12)."
     },
     {
       "id": "signal.IESC-long.stop_price",
@@ -9840,10 +9843,10 @@
     {
       "id": "signals.frozen",
       "tier": "DERIVED",
-      "value": "95",
+      "value": "101",
       "checkpoint": "3.11",
       "producedBy": "derived by hand at 3.11 and then run. Ninety-nine were frozen while every geometry signal was written whether or not the detector had one. One is now absent, by the derivation recorded on signals.absent, so ninety-eight are frozen.",
-      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure."
+      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 95. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values."
     },
     {
       "id": "signals.setups",
@@ -9872,10 +9875,10 @@
     {
       "id": "store.rowsPointingAtSetup",
       "tier": "DERIVED",
-      "value": "124",
+      "value": "130",
       "checkpoint": "3.12",
       "producedBy": "derived by hand from expectations this fixture already carries, and then run. setup_signal is signals.frozen at 98, being 33 signals for each of two setups and 32 for 2026-08-24-INTC-short, whose stop_distance_ranges is absent. control_setup is controls.loose at 15 plus controls.tight at 14, the tight side being one short of five on one setup, which controls.shortOfFive states. 98 + 29 = 127.",
-      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure."
+      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 124. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values."
     },
     {
       "id": "store.schemaVersion",
@@ -10510,10 +10513,10 @@
     {
       "id": "rule.shortMovableThresholds",
       "tier": "DERIVED",
-      "value": "10",
+      "value": "12",
       "checkpoint": "5.2",
       "producedBy": "derived by hand from ARCHITECTURE.html's short check list and the two rules that narrow it, before the replay was run, then run. Of the short side's fourteen named thresholds, `exit-tight` is execution and `cluster` is recorded, leaving twelve selection thresholds. Two of those twelve belong to gates a replay cannot judge: `averages-squeezing` compares the 21-to-50 gap against its own twenty-session average, which is a ratio of two frozen signals, and `reached-ceiling` compares the nearer of two average distances over the daily range, which is three. 14 - 1 - 1 - 2 = 10.",
-      "note": "The short side's own count, equal to the long side's by coincidence and arrived at differently: the long side loses two of twelve to family alone and this side loses four of fourteen, two to family and two to the replay. The two figures are stated apart and never added (see: Long and short are never pooled into one figure)"
+      "note": "The short side's own count, equal to the long side's by coincidence and arrived at differently: the long side loses two of twelve to family alone and this side loses four of fourteen, two to family and two to the replay. The two figures are stated apart and never added (see: Long and short are never pooled into one figure) Was 10. The short side's two derived quantities were frozen as signals of their own at 6.1, so averages-squeezing and reached-ceiling became judgeable from the record and stopped being read back from the night."
     },
     {
       "id": "clauses.gatesRecorded",
@@ -11350,18 +11353,18 @@
     {
       "id": "replay.short.gatesRebuilt",
       "tier": "DERIVED",
-      "value": "7",
+      "value": "9",
       "checkpoint": "5.3",
       "producedBy": "counted by hand from the short gate list and the threshold table: ten gates less downtrend, which compares a grade, and less averages-squeezing and reached-ceiling, whose quantities are arithmetic over several frozen signals",
-      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule. Was 7. The short side's two derived quantities were frozen as signals of their own at 6.1, so averages-squeezing and reached-ceiling became judgeable from the record and stopped being read back from the night."
     },
     {
       "id": "replay.short.gatesReadBack",
       "tier": "DERIVED",
-      "value": "3",
+      "value": "1",
       "checkpoint": "5.3",
       "producedBy": "the short gates a replay cannot rebuild, counted by hand: downtrend, averages-squeezing and reached-ceiling",
-      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule."
+      "note": "How many of one side's gates the harness rebuilds from the frozen signals and how many it reads back off the night's own record. Stated per side and never added: the long side loses one gate for one reason and the short side loses three for two reasons, so a sum would describe no rule. What is read back has no threshold this generation can move, so the night's verdict is the verdict and re-deriving it would be a second implementation of the rule. Was 3. The short side's two derived quantities were frozen as signals of their own at 6.1, so averages-squeezing and reached-ceiling became judgeable from the record and stopped being read back from the night."
     },
     {
       "id": "replay.long.sessions",
@@ -11398,10 +11401,10 @@
     {
       "id": "replay.long.unjudgeable",
       "tier": "FROZEN",
-      "value": "1",
+      "value": "0",
       "checkpoint": "5.3",
       "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
-      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt. Was 1. The authored IESC row's geometry became authoritative at 6.1. Was derived over the pullback the bars give, whose trigger is 800.999 against a close of 324.12 because the name split on the fixture's own session; the row's trigger and stop were authored as plausible prices for exactly that reason, and the signals were frozen from them, so the verdicts and the signals described two geometries. The row now says one thing and the derivation restates the two gates over the geometry the row carries."
     },
     {
       "id": "replay.long.unmeasuredGateVerdicts",
@@ -11422,10 +11425,10 @@
     {
       "id": "replay.long.disagreements",
       "tier": "FROZEN",
-      "value": "2",
+      "value": "0",
       "checkpoint": "5.3",
       "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce",
-      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt."
+      "note": "The acceptance run over the fixture's stored setups: the baseline's own rule replayed against the selections the nights recorded. Engine output, frozen once the DERIVED verdicts beside it passed. <b>The selection sets it compares are both empty and that is stated rather than leant on</b>: the captured day flagged one row a side and passed neither, so a set comparison here is self-validating and the acceptance claim rests on the per-gate verdicts above and on the authored population in ReplayHarnessTests, where the baseline selects some rows and rejects others. disagreements is 2 on the long side and both are the authored row's, which is a fact about how that row was written and is carried as an obligation rather than adjusted away here. unmeasuredGateVerdicts counts gates the night recorded no value for, which a threshold cannot move and which are therefore read back rather than rebuilt. Was 2. Nought from 6.1. Both disagreements were the authored IESC row's, the recorded verdicts having been measured against the detector's geometry while the signals beside them were frozen from the authored one. The row now describes one geometry, so the rebuild reproduces the night on every judgeable gate and the acceptance claim rests on a set with nothing unexplained in it."
     },
     {
       "id": "replay.long.selectionsReproduced",
@@ -11741,6 +11744,70 @@
       "checkpoint": "5.5",
       "producedBy": "the research ledger over the golden fixture through LabResearch.Read",
       "note": "The earliest session the evidence store holds, which is what the whole holdout schedule is computed from. It is the fixture's one market day, and the same figure holdout.firstSession carries from the stage."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_gap_21_50_over_avg",
+      "tier": "DERIVED",
+      "value": "1.0039",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The quantity its gate compares, frozen as a signal of its own at 6.1 so the gate can be judged from the record. The derivation found one thing on the way: tools ema_series seeded once and marched forward while the shipped Averages.ExponentialSeries reseeds on each trailing window, and its own docstring said it did what the engine does. The signed gap average hid the difference at four places; the ratio of one gap to the mean of twenty put two of the three names on the opposite side of the squeeze threshold. Repaired at 6.1, and every short gate verdict already derived through it re-derives unchanged."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ceiling_distance_ranges",
+      "tier": "DERIVED",
+      "value": "1.1540",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The nearest of the two average levels over the daily range. The anchored clause is not in it because anchored_vwap holds no row for any fixture name, which is what the night's own verdict was decided on, and the derivation says so rather than approximating a level from daily bars."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ema_gap_21_50_over_avg",
+      "tier": "DERIVED",
+      "value": "1.2261",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The quantity its gate compares, frozen as a signal of its own at 6.1 so the gate can be judged from the record. The derivation found one thing on the way: tools ema_series seeded once and marched forward while the shipped Averages.ExponentialSeries reseeds on each trailing window, and its own docstring said it did what the engine does. The signed gap average hid the difference at four places; the ratio of one gap to the mean of twenty put two of the three names on the opposite side of the squeeze threshold. Repaired at 6.1, and every short gate verdict already derived through it re-derives unchanged."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ceiling_distance_ranges",
+      "tier": "DERIVED",
+      "value": "2.0193",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The nearest of the two average levels over the daily range. The anchored clause is not in it because anchored_vwap holds no row for any fixture name, which is what the night's own verdict was decided on, and the derivation says so rather than approximating a level from daily bars."
+    },
+    {
+      "id": "signal.IESC-long.ema_gap_21_50_over_avg",
+      "tier": "DERIVED",
+      "value": "0.9979",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The quantity its gate compares, frozen as a signal of its own at 6.1 so the gate can be judged from the record. The derivation found one thing on the way: tools ema_series seeded once and marched forward while the shipped Averages.ExponentialSeries reseeds on each trailing window, and its own docstring said it did what the engine does. The signed gap average hid the difference at four places; the ratio of one gap to the mean of twenty put two of the three names on the opposite side of the squeeze threshold. Repaired at 6.1, and every short gate verdict already derived through it re-derives unchanged."
+    },
+    {
+      "id": "signal.IESC-long.ceiling_distance_ranges",
+      "tier": "DERIVED",
+      "value": "0.8863",
+      "checkpoint": "6.1",
+      "producedBy": "an independent computation over the fixture's own bars, outside the solution, by tools/derive-indicators.py --signals over the replay store kept by PullbackStrategyLab__ReplayStoreCopy",
+      "note": "The nearest of the two average levels over the daily range. The anchored clause is not in it because anchored_vwap holds no row for any fixture name, which is what the night's own verdict was decided on, and the derivation says so rather than approximating a level from daily bars."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.averages-squeezing",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "6.1",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce, with the verdict restated from the bars by tools/derive-indicators.py --checks --short",
+      "note": "The gate rebuilt from the frozen signal at 6.1, where it was read back from the night because its quantity was arithmetic over several signals. Independent in the sense the tier means: the harness judges the frozen value and tools/derive-indicators.py --checks --short reaches the same verdict from the bars."
+    },
+    {
+      "id": "replay.verdict.2026-08-24-INTC-short.reached-ceiling",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "6.1",
+      "producedBy": "the harness run over the golden fixture through ReplayHarness.Reproduce, with the verdict restated from the bars by tools/derive-indicators.py --checks --short",
+      "note": "The gate rebuilt from the frozen signal at 6.1, where it was read back from the night because its quantity was arithmetic over several signals. Independent in the sense the tier means: the harness judges the frozen value and tools/derive-indicators.py --checks --short reaches the same verdict from the bars."
     }
   ],
   "frozenOnly": [

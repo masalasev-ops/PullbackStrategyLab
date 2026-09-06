@@ -235,19 +235,38 @@ public sealed class CheckRecomputer
 
             if (input.Industry is null)
             {
-                // Three states, and they read differently to a person. Nothing has resolved the
-                // industry at all; it was resolved past the bound, and the message says how far
-                // past; or the row names no thrust, in which case its cluster verdict carried no
-                // value for a reason no sector lookup can repair and the row is left alone.
+                // Two states, and they read differently to a person. Nothing has resolved the
+                // industry at all, or the row names no thrust, in which case its cluster verdict
+                // carried no value for a reason no sector lookup can repair and the row is left
+                // alone. The third state, an answer that arrived past the bound, moved to the
+                // clause below at 6.1: the count is now over what the night could have asserted and
+                // the bound is over whether a correction may be applied, which are two questions
+                // that shared one clause until then.
                 refused++;
                 run?.CountSkipped();
                 Console.WriteLine(
                     candidate.ThrustScan is null || candidate.ThrustSession is null
                         ? $"{Name}: refused {candidate.Ticker}, its row names no thrust, so no hit decided its cluster verdict"
-                        : input.ResolvedAt is null
-                            ? $"{Name}: refused {candidate.Ticker}, still nothing resolved for it"
-                            : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt}, which is more than "
-                              + $"{MeasurementParameters.LatenessBoundHours} hour(s) after {bound}");
+                        : $"{Name}: refused {candidate.Ticker}, still nothing resolved for it");
+                continue;
+            }
+
+            // The lateness bound, asked of the answer rather than of the count. An industry resolved
+            // more than the bound after the session is one the night's record may not be completed
+            // from, however visible the attribute now is to a read: the basis change says when a
+            // fact may be asserted and this says how late an answer may still be folded into a
+            // night, and neither supersedes the other.
+            // see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+            if (input.ResolvedAt is null || ResolvedAfter(input.ResolvedAt, latestAdmissible))
+            {
+                refused++;
+                run?.CountSkipped();
+                Console.WriteLine(
+                    input.ResolvedAt is null
+                        ? $"{Name}: refused {candidate.Ticker}, its industry is asserted from before the session and "
+                          + "no lookup instant is recorded, so nothing says the answer arrived in time"
+                        : $"{Name}: refused {candidate.Ticker}, resolved at {input.ResolvedAt}, which is more than "
+                          + $"{MeasurementParameters.LatenessBoundHours} hour(s) after {bound}");
                 continue;
             }
 
@@ -465,11 +484,24 @@ public sealed class CheckRecomputer
         DateTimeOffset latestAdmissible,
         string endOfSession)
     {
+        // <b>The count is on the basis the attribute may be asserted from, and the lateness bound
+        // moved out of the statement rather than away.</b> This CASE carried both questions at once
+        // until 6.1: whether the night could have grouped by the industry, and whether an answer
+        // arriving afterwards may still be folded into that night. They are two questions and the
+        // basis change separates them. What the night could have had is now `first_seen`, because a
+        // sector was true before anyone looked it up. Whether a correction may be applied is still
+        // the recorded lateness bound, and the loop above asks it against `sector_resolved_at`,
+        // which is why that column is still selected here.
+        //
+        // Folding them into one clause again would silently supersede one decision with the other:
+        // a count on the old basis contradicts every other read of this table, and a correction with
+        // no bound at all admits an answer arriving a year later.
+        // see: The lazily-resolved attribute is asserted from the first session the lab had reason to hold it, and the correction runs with the signal backfill
+        // see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT h.ticker, h.scan, h.as_of,
-                   CASE WHEN s.sector_resolved_at IS NOT NULL AND s.sector_resolved_at <= @bound
-                        THEN s.industry END,
+                   CASE WHEN s.first_seen <= @asserted_from THEN s.industry END,
                    s.sector_resolved_at
               FROM scan_hit h
               JOIN security s ON s.ticker = h.ticker
@@ -478,7 +510,7 @@ public sealed class CheckRecomputer
             """;
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@observed_before", endOfSession);
-        command.Parameters.AddWithValue("@bound", StoreText.TimestampToStorageText(latestAdmissible));
+        command.Parameters.AddWithValue("@asserted_from", StoreText.DateToStorageText(asOf));
 
         var hits = new List<(string Ticker, string Scan, string Session, string? Industry, string? ResolvedAt)>();
         using (SqliteDataReader reader = command.ExecuteReader())
@@ -638,6 +670,20 @@ public sealed class CheckRecomputer
     /// produces and is the ordinary case. Minutes rather than hours, because a column in the same
     /// unit as its own threshold cannot show how close to it a row sat.
     /// </summary>
+    /// <summary>
+    /// Whether a lookup instant falls past the bound a correction may be made from.
+    ///
+    /// The same parse the lateness figure uses, so the gate and the number recorded beside a
+    /// corrected row can never read the instant differently. It was a clause inside the statement
+    /// that computed the count until 6.1, where the count moved onto the basis the attribute is
+    /// asserted from and this stayed on the instant the lookup was made.
+    /// see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound
+    /// </summary>
+    private static bool ResolvedAfter(string resolvedAt, DateTimeOffset latestAdmissible) =>
+        DateTimeOffset.Parse(
+            resolvedAt, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal)
+        > latestAdmissible;
+
     private static int Lateness(string? resolvedAt, DateTimeOffset endOfSession)
     {
         if (resolvedAt is null)

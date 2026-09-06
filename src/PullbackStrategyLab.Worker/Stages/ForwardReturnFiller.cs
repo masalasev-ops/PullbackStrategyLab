@@ -92,6 +92,12 @@ public sealed class ForwardReturnFiller
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Subjects} setup(s) considered");
         Console.WriteLine($"{Name}: {result.Written} setup outcome(s) written, {result.NotYetElapsed} horizon(s) not yet elapsed");
         Console.WriteLine($"{Name}: {result.ControlSubjects} control(s) considered");
+        // The population the two "considered" figures above are over, stated beside them rather
+        // than left to be inferred: from 6.1 they are the subjects still owed an outcome, and the
+        // subjects walked on no night again are these.
+        Console.WriteLine(
+            $"{Name}: {result.SetupsAlreadyComplete} setup and {result.ControlsAlreadyComplete} control "
+            + "subject(s) already carry every horizon and were not walked");
         Console.WriteLine($"{Name}: {result.ControlsWritten} control outcome(s) written, {result.ControlHorizonsNotYetElapsed} horizon(s) not yet elapsed");
         Console.WriteLine(
             $"{Name}: {result.SetupsLaterThanTheCalendarStep} setup and {result.ControlsLaterThanTheCalendarStep} control "
@@ -136,6 +142,7 @@ public sealed class ForwardReturnFiller
 
         IReadOnlyList<Subject> setups = Subjects(connection, asOf, filledAt, tables);
         IReadOnlyList<Subject> controls = ControlSubjects(connection, asOf, filledAt, tables);
+        (int totalSetups, int totalControls) = SubjectTotals(connection, asOf, filledAt, tables);
 
         int written = 0;
         int notYetElapsed = 0;
@@ -254,7 +261,49 @@ public sealed class ForwardReturnFiller
             withoutABarOnTheirOwnSession,
             summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean,
             excursionsUndefined, controlsLaterThanTheCalendarStep,
-            setupHorizonsCannotClose, controlHorizonsCannotClose);
+            setupHorizonsCannotClose, controlHorizonsCannotClose,
+            totalSetups - setups.Count, totalControls - controls.Count);
+    }
+
+    /// <summary>
+    /// Every subject of each kind the fill's own date reaches, complete or not, which is the
+    /// population the two readers above select from.
+    ///
+    /// <b>Read so that the walk's own shrinking is legible rather than silent.</b> From 6.1 those
+    /// readers return only the subjects still owed an outcome, so `Subjects` and `ControlSubjects`
+    /// stopped meaning "every subject ever recorded" and started meaning "the subjects this night
+    /// has work for". A count whose population changed under it and kept its name is the fifth
+    /// defect this corpus names, so the total is read beside it and the difference is reported as
+    /// what it is: subjects already complete, walked on no night again.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private static (int Setups, int Controls) SubjectTotals(
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt, SubjectTables tables)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+
+        // Two literal statements rather than one interpolated name, for the reason the readers
+        // above give: an interpolated table name is invisible to `point-in-time`, and a read that
+        // no check can see is a read nothing holds to its bound.
+        command.CommandText = tables.ExcursionsAvailable
+            ? """
+                SELECT (SELECT COUNT(*) FROM setup s WHERE s.as_of <= @as_of),
+                       (SELECT COUNT(*) FROM control_setup c
+                          JOIN setup s ON s.setup_id = c.setup_id
+                         WHERE s.as_of <= @as_of AND c.drawn_at <= @filled_at)
+              """
+            : """
+                SELECT (SELECT COUNT(*) FROM calibration_setup s WHERE s.as_of <= @as_of),
+                       (SELECT COUNT(*) FROM calibration_control_setup c
+                          JOIN calibration_setup s ON s.setup_id = c.setup_id
+                         WHERE s.as_of <= @as_of AND c.drawn_at <= @filled_at)
+              """;
+
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        return reader.Read() ? (reader.GetInt32(0), reader.GetInt32(1)) : (0, 0);
     }
 
     /// <summary>
@@ -292,11 +341,30 @@ public sealed class ForwardReturnFiller
     }
 
     /// <summary>
-    /// The subjects owed an outcome: every setup the lab has flagged, with the ATR it was flagged
-    /// against.
+    /// The subjects owed an outcome: every setup the lab has flagged and has not yet written all
+    /// four horizons for, with the ATR it was flagged against.
     ///
     /// Bounded on the fill instant rather than on any setup's own date, which is what makes the read
     /// point-in-time: the question is what the lab can measure today.
+    ///
+    /// <b>"Not yet written all four" is the 6.1 repair and it is the whole of it.</b> This read was
+    /// bounded only by `s.as_of &lt;= @as_of`, so every setup ever recorded was walked on every
+    /// night and one path query was issued per subject per night; every already-written row was
+    /// recomputed and thrown away by the conflict clause. Correctness was never affected, the
+    /// immutability resting on the key rather than on the query, but the cost grows with the square
+    /// of the accumulation: at about eighty-two setups a night with ten controls each, night 200
+    /// walked roughly 180,000 subjects to write the few thousand that had closed.
+    ///
+    /// <b>A subject short of four horizons stays in the walk, and that is deliberate.</b> A horizon
+    /// that can never close leaves its subject permanently incomplete, so the exclusion is on rows
+    /// written rather than on the subject's age: a lower bound on the as-of would have been cheaper
+    /// still and would have dropped exactly those subjects the night a later bar finally let one
+    /// close. The count of them is small and bounded; the count of complete subjects is what grows.
+    ///
+    /// <b>The subquery is bounded on the fill instant like everything else here.</b> An unbounded
+    /// count would let a row filled after the instant being answered for exclude a subject from a
+    /// replay of an earlier night, which is the point-in-time rule broken by an optimisation.
+    /// see: A reader's signature does not establish point-in-time; the query does
     /// </summary>
     private static IReadOnlyList<Subject> Subjects(
         SqliteConnection connection, DateOnly asOf, DateTimeOffset filledAt, SubjectTables tables)
@@ -319,6 +387,9 @@ public sealed class ForwardReturnFiller
                                          WHERE c.ticker = i.ticker AND c.as_of = i.as_of
                                            AND c.computed_at <= @filled_at)
                  WHERE s.as_of <= @as_of
+                   AND (SELECT COUNT(*) FROM forward_return f
+                         WHERE f.subject_id = s.setup_id AND f.subject_kind = 'setup'
+                           AND f.filled_at <= @filled_at) < @horizons
                  ORDER BY s.setup_id
               """
             : """
@@ -330,11 +401,15 @@ public sealed class ForwardReturnFiller
                                          WHERE c.ticker = i.ticker AND c.as_of = i.as_of
                                            AND c.computed_at <= @filled_at)
                  WHERE s.as_of <= @as_of
+                   AND (SELECT COUNT(*) FROM calibration_forward_return f
+                         WHERE f.subject_id = s.setup_id AND f.subject_kind = 'setup'
+                           AND f.filled_at <= @filled_at) < @horizons
                  ORDER BY s.setup_id
               """;
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
+        command.Parameters.AddWithValue("@horizons", ForwardOutcome.Horizons.Count);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -380,7 +455,8 @@ public sealed class ForwardReturnFiller
     /// migration backfills exactly that. The fallback is belt and braces for a row written between
     /// the two, and it is the setup's date, which is what such a row would have meant.
     ///
-    /// Bounded on the fill instant like its sibling above.
+    /// Bounded on the fill instant like its sibling above, and carrying the same 6.1 exclusion for
+    /// the same reason: a control already holding all four horizons is walked on no night again.
     ///
     /// <b>`control_setup` is stamped, so the read bounds `drawn_at` as well.</b> The sampler runs
     /// before this stage on the same night, so on a live run every draw is already older than the
@@ -409,6 +485,9 @@ public sealed class ForwardReturnFiller
                                            AND d.computed_at <= @filled_at)
                  WHERE s.as_of <= @as_of
                    AND c.drawn_at <= @filled_at
+                   AND (SELECT COUNT(*) FROM forward_return f
+                         WHERE f.subject_id = c.control_id AND f.subject_kind = 'control'
+                           AND f.filled_at <= @filled_at) < @horizons
                  ORDER BY c.control_id
               """
             : """
@@ -424,11 +503,15 @@ public sealed class ForwardReturnFiller
                                            AND d.computed_at <= @filled_at)
                  WHERE s.as_of <= @as_of
                    AND c.drawn_at <= @filled_at
+                   AND (SELECT COUNT(*) FROM calibration_forward_return f
+                         WHERE f.subject_id = c.control_id AND f.subject_kind = 'control'
+                           AND f.filled_at <= @filled_at) < @horizons
                  ORDER BY c.control_id
               """;
 
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@filled_at", StoreText.TimestampToStorageText(filledAt));
+        command.Parameters.AddWithValue("@horizons", ForwardOutcome.Horizons.Count);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -624,6 +707,12 @@ public sealed class ForwardReturnFiller
 /// every night of phase 3 while no control outcome was written at all, which is the shape of figure
 /// CLAUDE.md's fifth defect names.
 /// see: Long and short are never pooled into one figure
+///
+/// <b>`Subjects` and `ControlSubjects` are the subjects still owed an outcome, from 6.1.</b> They
+/// were every subject ever recorded until then, which is the same word over a different population,
+/// so `SetupsAlreadyComplete` and `ControlsAlreadyComplete` are reported beside them and never added
+/// to them. Reading a "considered" count that quietly shrank as the store filled would say the lab
+/// was doing less work rather than that it had stopped repeating work already done.
 /// </summary>
 public sealed record FillResult(
     DateOnly AsOf,
@@ -641,4 +730,6 @@ public sealed record FillResult(
     int ExcursionsUndefined = 0,
     int ControlsLaterThanTheCalendarStep = 0,
     int SetupHorizonsCannotClose = 0,
-    int ControlHorizonsCannotClose = 0);
+    int ControlHorizonsCannotClose = 0,
+    int SetupsAlreadyComplete = 0,
+    int ControlsAlreadyComplete = 0);

@@ -56,25 +56,40 @@ public sealed class SelectionReplayTests
     }
 
     /// <summary>
-    /// Ten of the short side's twelve selection thresholds are movable, and the two that are not are
-    /// named: their gates compare a quantity that is arithmetic over several frozen signals.
+    /// All twelve of the short side's selection thresholds are movable as of 6.1, and the two that
+    /// were not are named because they are the ones the change is about.
+    ///
+    /// Each of those two compared a quantity that was arithmetic over several frozen signals, so a
+    /// replay could not judge its gate and a version moving its threshold was refused at admission.
+    /// Freezing each quantity as a signal of its own is what lifted it, which is what the obligation
+    /// raised at 5.2 said would.
     /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
     /// </summary>
     [Fact]
-    public void Ten_of_the_short_sides_twelve_are_movable_and_the_two_that_are_not_are_named()
+    public void All_twelve_of_the_short_sides_selection_thresholds_are_movable()
     {
         IReadOnlyList<RuleThreshold> selection =
             [.. SelectionRule.Short.Thresholds.Where(t => t.Family == ThresholdFamily.Selection)];
         IReadOnlyList<RuleThreshold> movable = SelectionReplay.Movable(SelectionRule.Short);
 
         Assert.Equal(12, selection.Count);
-        Assert.Equal(10, movable.Count);
+        Assert.Equal(12, movable.Count);
 
-        Assert.DoesNotContain(movable, t => t.Name == SelectionRule.MaximumSqueezeRatio);
-        Assert.DoesNotContain(movable, t => t.Name == SelectionRule.CeilingReachRanges);
+        Assert.Contains(movable, t => t.Name == SelectionRule.MaximumSqueezeRatio);
+        Assert.Contains(movable, t => t.Name == SelectionRule.CeilingReachRanges);
 
-        Assert.False(SelectionReplay.IsReplayable(SelectionRule.Short, "averages-squeezing"));
-        Assert.False(SelectionReplay.IsReplayable(SelectionRule.Short, "reached-ceiling"));
+        Assert.True(SelectionReplay.IsReplayable(SelectionRule.Short, "averages-squeezing"));
+        Assert.True(SelectionReplay.IsReplayable(SelectionRule.Short, "reached-ceiling"));
+
+        // And each is judgeable because it now names one signal rather than several, which is the
+        // property rather than the count: a later threshold naming two would put its gate back where
+        // these two were, and this is what would say so.
+        Assert.Equal(
+            ["ema_gap_21_50_over_avg"],
+            SelectionRule.Short.Find(SelectionRule.MaximumSqueezeRatio)!.FrozenSignals);
+        Assert.Equal(
+            ["ceiling_distance_ranges"],
+            SelectionRule.Short.Find(SelectionRule.CeilingReachRanges)!.FrozenSignals);
     }
 
     /// <summary>
@@ -104,21 +119,27 @@ public sealed class SelectionReplayTests
     }
 
     /// <summary>
-    /// Seven of the short side's ten, and the three that are not are named. Arrived at differently
-    /// from the long side's nine: one gate compares a grade and two compare quantities that are
-    /// arithmetic over several frozen signals, so the two counts are never added.
+    /// Nine of the short side's ten as of 6.1, and the one that is not is named.
+    ///
+    /// <b>The two counts reach nine differently and are still never added.</b> The long side loses
+    /// `uptrend` and the short side loses `downtrend`, each for comparing a ladder grade and
+    /// carrying no threshold. The short side lost `averages-squeezing` and `reached-ceiling` as well
+    /// until their quantities were frozen as signals of their own, which is a fact about what the
+    /// row records rather than about what the gate compares, and it is why the two figures agreeing
+    /// today says nothing about the two rules being alike.
     /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
+    /// see: Long and short are never pooled into one figure
     /// </summary>
     [Fact]
-    public void Seven_of_the_short_sides_ten_gates_are_judgeable_and_the_three_that_are_not_are_named()
+    public void Nine_of_the_short_sides_ten_gates_are_judgeable_and_the_one_that_is_not_is_named()
     {
         IReadOnlyList<string> judgeable = SelectionReplay.JudgeableGates(SelectionRule.Short);
 
         Assert.Equal(10, SelectionRule.Short.Gates.Count);
-        Assert.Equal(7, judgeable.Count);
+        Assert.Equal(9, judgeable.Count);
         Assert.DoesNotContain("downtrend", judgeable, StringComparer.Ordinal);
-        Assert.DoesNotContain("averages-squeezing", judgeable, StringComparer.Ordinal);
-        Assert.DoesNotContain("reached-ceiling", judgeable, StringComparer.Ordinal);
+        Assert.Contains("averages-squeezing", judgeable, StringComparer.Ordinal);
+        Assert.Contains("reached-ceiling", judgeable, StringComparer.Ordinal);
     }
 
     // ---- what a rebuilt row judges -------------------------------------------------------
@@ -207,17 +228,54 @@ public sealed class SelectionReplayTests
     /// <summary>
     /// A version moving a threshold whose gate cannot be judged is refused, and the reason says why
     /// rather than reading as a rejection on the merits.
+    ///
+    /// <b>Proved over an authored rule from 6.1, because no shipped gate is in that state any
+    /// more.</b> It was `reached-ceiling` until its quantity was frozen as a signal of its own, and
+    /// a guard proved only against the instance that happened to exist is a guard that goes away
+    /// with the instance. What it holds is the property: a threshold whose quantity is arithmetic
+    /// over several frozen signals leaves its gate unjudgeable, and any signal added later with that
+    /// shape puts a gate back into it.
     /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
     /// </summary>
     [Fact]
     public void A_version_moving_an_unjudgeable_gate_is_refused_with_the_reason()
     {
+        // The short baseline as it stood before 6.1: `reached-ceiling` naming the three inputs its
+        // fold was computed from rather than the fold. Authored here rather than kept in the shipped
+        // rule, so the shipped rule says what is true and the guard is still exercised.
+        SelectionRule baseline = SelectionRule.Short with
+        {
+            Thresholds =
+            [
+                .. SelectionRule.Short.Thresholds.Select(t =>
+                    t.Name == SelectionRule.CeilingReachRanges
+                        ? t with { FrozenSignals = ["ema_21_distance", "ema_50_distance", "adr_20"] }
+                        : t),
+            ],
+        };
+
         AdmissionVerdict verdict = SelectionReplay.AssertAdmissible(
-            SelectionRule.Short.With(SelectionRule.CeilingReachRanges, 0.75m), SelectionRule.Short);
+            baseline.With(SelectionRule.CeilingReachRanges, 0.75m), baseline);
 
         Assert.False(verdict.IsAdmitted);
         Assert.Contains(SelectionReplay.NotReplayable, verdict.Reason, StringComparison.Ordinal);
         Assert.Contains("reached-ceiling", verdict.Reason, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And the same move against the shipped rule is admitted, which is the half that says the
+    /// refusal above is about the signals rather than about the gate.
+    /// see: A version whose moved gate cannot be judged from the frozen signals is refused at admission
+    /// </summary>
+    [Fact]
+    public void The_same_move_against_the_shipped_rule_is_admitted()
+    {
+        AdmissionVerdict verdict = SelectionReplay.AssertAdmissible(
+            SelectionRule.Short.With(SelectionRule.CeilingReachRanges, 0.75m), SelectionRule.Short);
+
+        Assert.True(verdict.IsAdmitted);
+        Assert.Equal("reached-ceiling", verdict.Gate);
+        Assert.Equal(SelectionRule.CeilingReachRanges, verdict.Threshold);
     }
 
     /// <summary>A version moving a judgeable threshold is admitted, and the gate that moved is named.</summary>
