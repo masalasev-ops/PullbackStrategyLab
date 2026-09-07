@@ -59,6 +59,7 @@ public static class Program
         builder.Services.AddSingleton<SignalBackfiller>();
         builder.Services.AddSingleton<SignalAdmissionTest>();
         builder.Services.AddSingleton<TwinPairFinder>();
+        builder.Services.AddSingleton<ContextPacker>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -252,6 +253,7 @@ public static class Program
         [SignalBackfiller.Name] = (services, rest) => services.GetRequiredService<SignalBackfiller>().Run(rest),
         [SignalAdmissionTest.Name] = (services, rest) => services.GetRequiredService<SignalAdmissionTest>().Run(rest),
         [TwinPairFinder.Name] = (services, rest) => services.GetRequiredService<TwinPairFinder>().Run(rest),
+        [ContextPacker.Name] = (services, rest) => services.GetRequiredService<ContextPacker>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -340,6 +342,7 @@ public static class Program
         // to reach the same verdict on the same empty population every night.
         SignalAdmissionTest.Name,
         TwinPairFinder.Name,
+        ContextPacker.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

@@ -1211,7 +1211,8 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `score_run` | session + observation | Insert VariantScorer |
 | `twin_pair` | pair id + date + observation | Insert TwinPairFinder. **A rerun of a date writes a new generation beside the old rather than rebuilding it**, so `observed_at` is in the key and a reader takes the latest at or before its bound. The pairs of a date are a derived reading rather than evidence, which is the difference between this and `setup_signal`; but the window grows as outcomes fill, so a second run of one date can honestly differ, and the stale generation is what a person saw (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood) |
 | `twin_run` | date + direction + observation | Insert TwinPairFinder. What one run's window actually held against what the metric wants, and why it found nothing where it found nothing |
-| `pack_version` | version | Insert ContextPacker |
+| `pack_version` | version | Insert ContextPacker. **No update path, and it is the one research store where a rerun does not write a generation**: the fingerprint is the identity, so a cut computing the same tuple finds the row it already has and a tuple differing in any component takes the next ordinal. A version is a definition rather than a reading, and the same definition twice is the same row (see: An approved proposal creates a new version from zero, and a running version is never edited) |
+| `pack_run` | date + observation | Insert ContextPacker. What one cut of the pack held, section by section, and the populations it was built over. It exists because a version is deliberately the same across every night it is cut on, so with the version alone a pack whose sections were all empty would be indistinguishable from a pack that was never cut |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window | Insert ReplayHarness. **Store built at 6.6**, which is where a proposal first exists to key a result on. ReplayHarness itself is built at 5.3 and writes nothing: a screen kills a proposal and never admits one, so until there is a proposal store there is nothing for a result row to belong to, and a screen run before then would be a third statement about a version with nothing reconciling the three (see: Replay screens proposals and the forward paired test admits them) |
 | `holdout_window` | window id | Insert HoldoutRegistry. **No update path at all**: a window is a fact about the calendar and does not become untrue |
@@ -1258,6 +1259,59 @@ of one side, taken in session order with the setup id as the tiebreak, so it is 
 rather than a span of dates and two sides of one date hold different windows. Storing a date range
 beside it would be a second statement of the same population, and the two would disagree the first
 time a session carried setups on one side only.
+
+### What the model was shown and judged under
+
+Columns of `pack_version`. Built at 6.4, and the columns are the ones that checkpoint owes rather
+than the whole eventual shape.
+
+| Column | Form | Why |
+|---|---|---|
+| `version` | INTEGER, the key | The ordinal a person says out loud, as in "proposals against version 4 beat those against version 2". Ascending in creation order and never reused |
+| `fingerprint` | TEXT, unique | SHA-256 of the canonical rendering of the tuple. This is the identity the ordinal is a label for: two cuts computing the same tuple find this row rather than writing a second one |
+| `sections` | TEXT | The sections the model was shown, in the order it was shown them. Order is part of the identity here, unlike the screened set below, because a reordered pack is a different pack |
+| `signals_screened`, `signals_screened_count` | TEXT / INTEGER | The signals screened, sorted ordinal, and how many. Sorted rather than in library order so that reordering SCHEMA's Signals section without changing a signal does not fork the version. The count sits beside the list rather than being derived on read, because it is what both thresholds were computed over and a figure's population belongs on its own row |
+| `correction_form`, `correction_level` | TEXT | What admission is decided under, and the level both corrections are taken at. One level rather than two, so the two thresholds cannot drift apart into answers to different questions |
+| `family_wise_threshold` | TEXT NULL | The level over the count screened. Null only where nothing was screened, which is a library with no signals in it rather than a night with no evidence, and the store holds that as a biconditional so a null cannot arrive from a packer that simply failed to compute it |
+| `model_identifier` | TEXT | The model the seat is pinned to. In the version because it is a confounder for the phase's own success criterion, so changing it forks the record rather than continuing it (see: The model is a frozen parameter of the pack version, and changing it forks the record) |
+| `created_at` | TEXT | |
+
+***The realised false-discovery bar is not a column here and that is the load-bearing absence.*** The
+family-wise threshold is the level divided by the number of signals screened, so it is determined
+entirely by the version's own inputs. The bar the Benjamini-Hochberg step-up yields is a function of
+the p-values, which are a reading of the store on one night. Storing it here would fork the version
+whenever the evidence moved, every version would hold one proposal, and the success criterion would
+be a comparison of populations of one. It is a column on `pack_run` instead, which is the row that
+is about one night (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure).
+
+*What is deliberately not in the tuple at all is the store's contents.* A pack cut on two different
+nights is the same version over different evidence, which is the whole point of holding the version
+fixed while the evidence accumulates.
+
+### What one cut of the pack held
+
+Columns of `pack_run`. Built at 6.4 alongside the table above.
+
+| Column | Form | Why |
+|---|---|---|
+| `as_of`, `observed_at` | TEXT, the key | The date packed and the instant the cut was taken. A date packed twice writes two rows, because the evidence underneath moved and the stale reading is what a person saw (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood) |
+| `version` | INTEGER NULL | Which version this cut was. The same across every night a version is in force, which is what makes proposal hit rate by pack version a comparison of anything at all. **Null on a refused run**, which is the whole of what "no pack is written" means |
+| `body_digest`, `body_bytes` | TEXT NULL / INTEGER NULL | The pack's own digest and size. Byte-stability is a property of the packer, and these are what make it checkable from the store rather than only from a test holding two strings (see: A pack version pins what the model saw, and byte-stability is what makes that claim checkable). Null on a refused run, which produced no body to measure |
+| `sections_rendered`, `sections_empty` | INTEGER | How many sections were rendered and how many had nothing to say. Every section is rendered in every pack, so the second figure is what makes an almost-empty pack legible as almost-empty rather than as a pack. **Five of the nine rest on outcomes that have not closed and the figure is not therefore five**: Twin pairs is one of them and states its window whether or not it found a pair, so a pack cut before the twin finder has ever run reads five and one cut after it reads four |
+| `refused_because` | TEXT NULL | Why no pack was written, on exactly the nights none was. **A pack missing a section is not a smaller pack**: the correction is computed over the signals screened, so a short pack would carry a threshold for a set it did not screen and every claim against it would be judged against the wrong number. So the night refuses, says which section it could not build, and writes no version at all |
+| `signals_screened` | INTEGER | What the correction was paid on, on the night it was paid. Screened and never shown (see: The correction threshold scales with signals screened, not signals shown) |
+| `false_discovery_bar` | TEXT NULL | What the step-up yielded against this night's p-values. Null where no claim was measured, which is a different statement from a bar of nought and is why the column is nullable rather than defaulted |
+| `long_setups`, `short_setups` | INTEGER | The populations the sections were built over, counted apart and never added (see: Long and short are never pooled into one figure) |
+| `null_control_planted` | INTEGER | Whether the null control reached the conditional tables. A pack that failed to plant it is a pack whose tripwire is not armed, and that has to be legible from the row rather than inferred from the body (see: One meaningless signal is planted in the conditional tables) |
+| `outcome` | TEXT | |
+
+*A refused run is held as a biconditional in both directions.* A run with outcome `failed` carries a reason, no version, no digest and no rendered section; a run with any other outcome carries none of those and does carry all of these. Stated in the store rather than left to the stage, so a half-written refusal is refused rather than recorded.
+
+*The body is not stored and the digest is.* A pack is aggregates over a store the lab still holds,
+so it can be rebuilt from the version and the as-of; what cannot be rebuilt is whether two runs at
+one commit agreed, and that is exactly what the digest records. Storing the body would put a
+copy of the evidence beside the evidence, and the two would disagree the first time a reader
+corrected one.
 
 ### The register of rule versions
 

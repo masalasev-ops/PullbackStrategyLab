@@ -2663,3 +2663,13 @@ Why:  the finder is weekly and the operator's own table is what the registered t
 Was:  the `twin_pair` row reading "| `twin_pair` | pair id + date | Insert TwinPairFinder · Delete TwinPairFinder, **for the date it is rebuilding and inside one transaction**. The pairs of a date are a derived reading of the window that date could see rather than evidence, so a rerun rebuilds them; that is the whole difference between this and `setup_signal`, which is written once and never touched |".
 Now:  the grain reading pair id plus date plus observation, the writer line naming the insert alone, and the note saying a rerun writes a new generation beside the old with the reason the window grows.
 Why:  6.3 built the table on generations and left this declaration standing, so SCHEMA declared a delete the code does not issue and `writer-ownership` would refuse if it did. The column section two rows below already described the generation key, so the document disagreed with itself. The declaration was authored by the phase 5 planning pass, before the store existed to make it wrong.
+
+### 2026-09-06 — SCHEMA.md — cites A pack version pins what the model saw, and byte-stability is what makes that claim checkable
+Was:  the research stores table row "| `pack_version` | version | Insert ContextPacker |", and no column table for it anywhere.
+Now:  the writer line saying there is no update path and why a re-cut finds the row it has, a `pack_run` row beside it, and two column sections authoring both tables.
+Why:  6.4 builds the packer and owes its columns. `pack_run` is the addition the row could not do without: a version is deliberately the same across every night it is cut on, so with the version alone a pack whose sections were all empty would be indistinguishable from a pack that was never cut. The load-bearing absence is in the column table: the realised false-discovery bar is not a column of `pack_version`, because it is a reading of one night's p-values and storing it there would fork the version whenever the evidence moved.
+
+### 2026-09-06 — RUNBOOK.md — cites A pack version pins what the model saw, and byte-stability is what makes that claim checkable
+Was:  the weekly schedule table holding two rows, Saturday 08:00 for `ceiling` and 08:10 for `twin-pairs`.
+Now:  a third row, Saturday 08:20 for `build-pack`, with why it runs last of the three and what it records in a week with nothing to say.
+Why:  the packer is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch.

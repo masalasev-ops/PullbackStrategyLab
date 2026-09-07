@@ -17234,3 +17234,108 @@ Carried:    **Nothing new.** No expectation is owed: this changes no figure the 
             no behaviour, being a correction to a declaration and a widening of the parser that reads it.
 
 Next:       **6.4**, ContextPacker and the versioned evidence pack.
+
+## 6.4 — 2026-09-06 — phase-6-4-context-packer — ContextPacker, and the bar that is a reading rather than a definition
+
+Built:      **ContextPacker**, which builds the versioned evidence pack the researcher is shown and
+            records what that cut held. Aggregates only, and the reason is not cost: at these rates
+            the raw version is affordable, but a model handed raw rows will find patterns by
+            rummaging, which is what pre-registration and the planted null exist to prevent.
+
+            **All nine sections are rendered in every pack, each carrying its own count**, and where
+            that count is nought the section says which shape of nothing it was. A section over an
+            empty population is legible as empty rather than as absent, which is the rule every
+            panel in this lab already holds.
+
+            **Migration 057 creates `pack_version` and `pack_run`, on the reasoning 056 arrived at
+            one checkpoint earlier.** A version is what the model was shown and judged under and is
+            deliberately the same across every night it is cut on, so with the version alone a pack
+            whose sections were all empty would be indistinguishable from a pack that was never cut.
+            The run row is what is about one night.
+
+            **A pack that cannot be built is refused whole rather than cut short.** A pack missing a
+            section is not a smaller pack: the correction is computed over the signals screened, so a
+            short pack would carry a threshold for a set it did not screen and every claim against it
+            would be judged against the wrong number. Nothing is written, no version is registered,
+            and the run row carries the section that failed. The store holds it as a biconditional in
+            both directions, so a refusal carrying a pack and a pack carrying a refusal are both
+            refused.
+
+            **The planted null is armed and the tripwire is one predicate.** "That pack version is
+            failed immediately" and "no proposal from it is admitted" are one question asked at two
+            moments, which is what makes both clauses assertable at a checkpoint where no proposal
+            store exists.
+
+Decided:    **The realised false-discovery bar is a reading of a pack and the version carries the
+            procedure.** Two sentences of the byte-stability decision are both right and cannot both
+            be read literally: the tuple is said to carry the correction form and its computed
+            thresholds, and the store's contents are said to be deliberately outside it. The
+            family-wise threshold satisfies both, being the level over the count screened. The
+            false-discovery bar does not, because the step-up reads p-values. **The wrong choice here
+            is invisible**: a packer that hashed the realised bar into the fingerprint would be
+            byte-stable, would pass every check this corpus has, and would quietly produce a new
+            version most nights, showing up months later as a hit-rate table with one row per version
+            and nothing to compare (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure).
+
+            **The model enters the tuple as explicitly unchosen rather than as blank.** Question 1 of
+            the phase 6 sitting is open, and a blank field would read as "no model matters here",
+            making version 1 and the first version cut under a real model look like a change of
+            evidence rather than a change of confounder. Choosing one forks the version, which is the
+            intended behaviour rather than a cost (see: The model is a frozen parameter of the pack version, and changing it forks the record).
+
+Corrected:  **Two of this checkpoint's own reads were wrong and its own tests found both.** The
+            population section read `SetupReader.Read`, which is one session, so it would have
+            reported a population of nought on every date the store held no setups while the store
+            held hundreds, in a sentence a reader would have believed. It reads `PopulationTo` now,
+            which is the accumulated population as counts. And `SignalDefinitionReader` bounded
+            `decided_at` on the reasoning that the specification half is not a measurement; the stamp
+            is `observed_at`, and the reason is the read this reader exists to serve: the packer
+            screens every signal the library holds and the correction is computed over that set, so a
+            pack cut for an old date that could see a signal seeded afterwards would state a
+            threshold for a set that night never screened.
+
+Measured:   **The out-of-scope count is 7, down four, which is the path the plan projected and the
+            step it projected here.** The four retired are the ContextPacker catalogue row, the
+            planted-null failure row, the pack-cannot-be-built failure row and the placement claim for
+            the document's own list of what a pack contains. **That last one stops being a placement
+            exemption and becomes a claim table**: a list of nine sections a pack must hold is a
+            statement about the code the moment there is a packer, and it is reconciled in both
+            directions, because a section in the packer and not in the document is a section nobody
+            specified and nothing else would notice.
+
+            **Four sections render empty over the golden fixture, not five, and the difference is the
+            point.** Five sections rest on outcomes that have not closed and Twin pairs is one of
+            them, but 6.3 made a run's window reading content in its own right, so a side that found
+            no pair still states what its window held. A pack cut before the twin finder has ever run
+            renders five empty and one cut after it renders four. Reading the five as a prediction of
+            this figure would have been a figure over a population other than the one beside it.
+
+            **41 signals screened, family-wise threshold 0.001219512, no realised false-discovery
+            bar.** The first is 0.05 over 41 to nine places, computed by hand from the level and the
+            count rather than read off the run. The third is absent rather than nought, because the
+            step-up has no p-values to step over and a nought would be indistinguishable from a
+            threshold so strict nothing could pass.
+
+            **Both populations are nought over the fixture, stated per side and never added.** No
+            setup's scoring horizon has closed, which is the same reading 6.2 and 6.3 took.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,127 tests. `tools/verify-phase.ps1` GREEN: 153 claims,
+            146 passed, 0 failed, 7 out of scope, 0 unexamined, coverage examined 10834.
+
+            **Byte-stability is asserted over a populated pack as well as an empty one**, because an
+            almost-empty pack is byte-identical almost for free: there is nothing to order. The
+            populated case authors twenty-four setups with closed outcomes so the decile sorts and
+            the number formatting are actually exercised. It is still the thinnest of the six
+            provisional claims and the expectation says so.
+
+            **The clock advances between the two cuts**, in the test and in the replay. Without it
+            the second cut collides on the run row's generation key and the comparison is one the
+            store never allowed to happen, so a stability figure taken with a stopped clock would
+            have been asserting nothing.
+
+Carried:    **Nothing new, and nothing falls due at 6.4.**
+
+Next:       **6.5**, ResearcherSeat, gated on question 1 of the phase 6 sitting, which is the
+            transport and the pinned model. The gate is real rather than nominal: the model is a
+            confounder for the phase's own success criterion, so a build session choosing it would be
+            choosing what the record is forked on.

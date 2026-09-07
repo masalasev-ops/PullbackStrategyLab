@@ -81,6 +81,59 @@ public sealed class SetupReader
         return sessions;
     }
 
+    /// <summary>
+    /// The whole flagged population up to and including <paramref name="asOf"/>, as counts.
+    ///
+    /// <b>Distinct from <see cref="Read(SqliteConnection, DateOnly)"/>, which is one session.</b>
+    /// The pack's population section is about what the lab has accumulated rather than what it
+    /// flagged last night, and reading the single-session method for that would have reported a
+    /// population of nought on every date the store held no setups, while the store held hundreds.
+    ///
+    /// <b>Counts rather than rows.</b> The section states figures, the population grows without
+    /// bound, and pulling every row into memory to count it would make the pack's cost scale with
+    /// the history for no gain. The two sides are separate columns of one row and there is no field
+    /// for a figure over both (see: Long and short are never pooled into one figure).
+    ///
+    /// Bounded on the as-of like every read here: `setup` carries no observation stamp because
+    /// `as_of` is the session it belongs to.
+    /// </summary>
+    public static SetupPopulation PopulationTo(SqliteConnection connection, DateOnly asOf)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*),
+                   SUM(CASE WHEN direction = 'long' THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN direction = 'short' THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN passed_all = 1 THEN 1 ELSE 0 END),
+                   COUNT(DISTINCT as_of),
+                   MIN(as_of),
+                   MAX(as_of)
+              FROM setup
+             WHERE as_of <= @as_of
+            """;
+
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        reader.Read();
+
+        // COUNT is never null and every SUM here is, on an empty table. Read as nought rather than
+        // through a coalesce in the statement, so the empty case is visible in the code that has to
+        // handle it.
+        int total = reader.GetInt32(0);
+
+        return new SetupPopulation(
+            total,
+            reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+            reader.IsDBNull(2) ? 0 : reader.GetInt32(2),
+            reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
+            reader.GetInt32(4),
+            reader.IsDBNull(5) ? null : StoreText.StorageTextToDate(reader.GetString(5)),
+            reader.IsDBNull(6) ? null : StoreText.StorageTextToDate(reader.GetString(6)));
+    }
+
     /// <summary>The evidence store. Written forward, one session at a time.</summary>
     public const string SetupTable = "setup";
 
@@ -154,3 +207,20 @@ public sealed record StoredSetup(
     string? Agreement,
     string? AgreementNote,
     string? DegradedBecause);
+
+/// <summary>
+/// The flagged population as counts: how many, per side, over how many sessions and what span.
+///
+/// <c>Longs</c> and <c>Shorts</c> are two fields with no total beside them, which is the pooling
+/// rule made structural rather than remembered. <c>Total</c> is the count of rows and is not a
+/// figure about either side.
+/// see: Long and short are never pooled into one figure
+/// </summary>
+public sealed record SetupPopulation(
+    int Total,
+    int Longs,
+    int Shorts,
+    int PassedEveryGate,
+    int Sessions,
+    DateOnly? FirstSession,
+    DateOnly? LastSession);
