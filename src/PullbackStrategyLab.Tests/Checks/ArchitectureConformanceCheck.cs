@@ -1961,7 +1961,7 @@ public sealed partial class ArchitectureConformanceCheck
     private static bool AnExhaustedAllowanceQueuesAndReturnsNothing()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
-            .Single(m => m.Name.Contains("proposal", StringComparison.Ordinal)).Sql;
+            .Single(m => m.Name.Contains("058-proposal", StringComparison.Ordinal)).Sql;
 
         return migration.Contains("unavailable_because", StringComparison.Ordinal)
             && migration.Contains(

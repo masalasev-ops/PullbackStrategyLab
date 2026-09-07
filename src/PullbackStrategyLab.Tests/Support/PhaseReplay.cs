@@ -916,6 +916,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(TwinFigures());
         measurements.AddRange(PackFigures());
         measurements.AddRange(SeatFigures());
+        measurements.AddRange(RegistryFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
@@ -2836,6 +2837,17 @@ public sealed class PhaseReplay : IDisposable
         SeatResult unreadable = AskTheSeat(
             StubbedSeat.Answering(SeatTransport.Subscription, "I think you should loosen the retrace gate."));
         SeatResult unavailable = AskTheSeat(StubbedSeat.Refusing("the subscription has lapsed"));
+
+        // The second kind, which had no shape in the store until 6.6.
+        SeatResult requested = AskTheSeat(StubbedSeat.Answering(SeatTransport.Subscription,
+            System.Text.Json.JsonSerializer.Serialize(new
+            {
+                outcome = "requested",
+                requested_signal = "pullback_volume_ratio",
+                requested_axis = "volume",
+                mechanism = "healthy pullbacks happen on drying volume and nothing here measures it",
+                evidence_setup_ids = new[] { "authored-long-1", "authored-long-2" },
+            })));
         SeatResult stopgap = AskTheSeat(StubbedSeat.Answering(SeatTransport.Local, proposal));
 
         return
@@ -2865,6 +2877,10 @@ public sealed class PhaseReplay : IDisposable
 
             new("seat.unavailable.outcome", unavailable.Outcome),
             new("seat.unavailable.change", unavailable.Document is null ? "none" : "carried"),
+
+            new("seat.requested.outcome", requested.Outcome),
+            new("seat.requested.signal", requested.Document?.RequestedSignal ?? "none"),
+            new("seat.requested.change", requested.Document?.Change is null ? "none" : "carried"),
 
             new("seat.stopgap.countsTowardHitRate", stopgap.CountsTowardHitRate ? "counted" : "excluded"),
             new("seat.stopgap.failsPackVersion", stopgap.FailsPackVersion ? "failed" : "untouched"),
@@ -2919,6 +2935,85 @@ public sealed class PhaseReplay : IDisposable
             _because is not null
                 ? SeatAnswer.Unavailable(Transport, ConfiguredModel, _because)
                 : SeatAnswer.Answer(Transport, ConfiguredModel, "claude-opus-5-20260101", _text!);
+    }
+
+    /// <summary>
+    /// The registry over what the seat filed, which is 6.6's deliverable.
+    ///
+    /// <b>It runs over the proposals the seat itself wrote rather than over authored rows.</b> The
+    /// block above files one of every kind through the shipped stage, so this one has a real queue
+    /// to work: two rule changes, a signal request, two abstentions and two weeks with no answer.
+    /// Nothing here is stubbed at all, the seat's stub having been consumed a step earlier.
+    ///
+    /// <b>The verdict every rule change reaches here is `inconclusive`, and that is the figure worth
+    /// having rather than an inconvenience.</b> The fixture holds a population the baseline selects
+    /// nothing out of, so a candidate selecting nothing too has said nothing rather than changed
+    /// nothing. A harness that reported `killed` would be reaching a verdict over a population of
+    /// none, which is the shape this corpus names as surviving every guard it has.
+    /// see: Replay screens proposals and the forward paired test admits them
+    /// </summary>
+    private IReadOnlyList<Measurement> RegistryFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        RegistryResult result = new ProposalRegistry(
+            _connections, Logger(), _clock, _options,
+            new ReplayHarness(_connections, Logger(), _clock, _options)).Register(AsOf);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // Every status the run left behind, sorted, which is what says the two kinds went to
+        // different places. A single count could not: three dispositions summing to the same total
+        // would read identically however the proposals were sorted between them.
+        string statuses = string.Join(",", ProposalReader
+            .Read(connection, AsOf, _options.Value.SessionZone)
+            .Select(p => p.Status)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(s => s, StringComparer.Ordinal));
+
+        return
+        [
+            new("registry.filed", result.Filed.ToString(CultureInfo.InvariantCulture)),
+            new("registry.screened", result.Screened.ToString(CultureInfo.InvariantCulture)),
+            new("registry.discarded", result.Discarded.ToString(CultureInfo.InvariantCulture)),
+            new("registry.inconclusive", result.Inconclusive.ToString(CultureInfo.InvariantCulture)),
+            new("registry.buildTasks", result.BuildTasks.ToString(CultureInfo.InvariantCulture)),
+            new("registry.abstentions", result.Abstentions.ToString(CultureInfo.InvariantCulture)),
+            new("registry.unactionable", result.Unactionable.ToString(CultureInfo.InvariantCulture)),
+
+            new("registry.ruleChanges.verdict", OnlyVerdict(connection)),
+            new("registry.replayResults", ScreensRecorded(connection).ToString(CultureInfo.InvariantCulture)),
+            new("registry.statusesAfter", statuses),
+        ];
+    }
+
+    /// <summary>
+    /// The one verdict every recorded screen reached, or the several it did not.
+    ///
+    /// Stated as the set rather than as a count, because "every screen was inconclusive" and "two of
+    /// three were" are different facts and a count of screens says neither.
+    /// </summary>
+    private static string OnlyVerdict(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT DISTINCT verdict FROM replay_result ORDER BY verdict";
+
+        var verdicts = new List<string>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            verdicts.Add(reader.GetString(0));
+        }
+
+        return verdicts.Count == 0 ? "none" : string.Join(",", verdicts);
+    }
+
+    private static int ScreensRecorded(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM replay_result";
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     /// <summary>

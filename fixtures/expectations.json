@@ -8423,18 +8423,18 @@
     {
       "id": "runlog.distinctStages",
       "tier": "FROZEN",
-      "value": "36",
+      "value": "37",
       "checkpoint": "1.1",
       "producedBy": "the replay itself, recorded to detect change. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35. Moved from 32 to 33 at 6.2: SignalAdmissionTest joins the replayed pipeline. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself.Moved from 33 to 34 at 6.3: TwinPairFinder joins the replayed pipeline. Moved from 34 to 35 at 6.4: ContextPacker joins the replayed pipeline. Was 35 until 6.5, which runs the researcher seat over the fixture six times, once for each of its four outcomes plus the abstention that names the planted null and one stopgap. Each ask cuts a pack and files a row, so the seat's stage joins the distinct stages and the run entries rise with the asks."
+      "note": "The stages beside the invocations, which differ because universe-build, backfill, both detectors and the scoreboard each run twice over this fixture. Frozen rather than derived: the derived figure beside it is the one carrying 1.1's done condition seven, and this one detects a stage disappearing from the pipeline entirely. Moved from 20 to 21 at 4.3 by SpreadSnapshotter joining the replay. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself. Moved from 21 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 22 to 23 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 23 to 24 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 24 to 25 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 25 to 26 at 4.7: PaperBroker joins the replayed night at 21:15. Moved from 26 to 27 at 4.8: PositionManager joins the replayed night at 21:20. Moved from 27 to 29 at 4.9: TradeJournal and PlanAudit join the replayed night at 21:25 and 21:26. Moved from 29 to 30 at 4.10: LossClassifier joins the replayed night at 21:35. Moved from 32 to 33 at 6.2: SignalAdmissionTest joins the replayed pipeline. It is a count of how many stages the pipeline runs, so it moves whenever one is added and the reason it moved is the stage itself.Moved from 33 to 34 at 6.3: TwinPairFinder joins the replayed pipeline. Moved from 34 to 35 at 6.4: ContextPacker joins the replayed pipeline. Was 35 until 6.5, which runs the researcher seat over the fixture six times, once for each of its four outcomes plus the abstention that names the planted null and one stopgap. Each ask cuts a pack and files a row, so the seat's stage joins the distinct stages and the run entries rise with the asks. Was 36 until 6.6, which adds `screen-proposals`."
     },
     {
       "id": "runlog.entries",
       "tier": "DERIVED",
-      "value": "55",
+      "value": "60",
       "checkpoint": "1.1",
       "producedBy": "derived by hand from the replay's own stage list and the three invocations that list does not tabulate, and then run. Moved at 4.2, which adds intraday-bars to the nightly pipeline: one more distinct stage and one more entry.",
-      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry. Moved from 38 to 40 at 6.2 by SignalAdmissionTest joining the replay, and by two rather than one: the library figures run the stage twice on purpose, because a second run over an unchanged store writing nothing is the property that keeps observed_at meaning when a row last changed, and it is invisible from a single run. The gap between this figure and the distinct-stage count beside it is the point of having both.Moved from 40 to 41 at 6.3 by TwinPairFinder joining the replay, and by one rather than two because the finder is run once where the library figures run their stage twice. Moved from 41 to 43 at 6.4, by two rather than one because the packer is run twice: the byte-stability figure is a comparison between two cuts and could not be taken from one. Was 43 until 6.5, which runs the researcher seat over the fixture six times, once for each of its four outcomes plus the abstention that names the planted null and one stopgap. Each ask cuts a pack and files a row, so the seat's stage joins the distinct stages and the run entries rise with the asks."
+      "note": "Checkpoint 1.1's figure, being RunLogger as the sole writer of run_log. The count is over stage invocations rather than over stages, and that is the half worth having. PhaseReplayResult.Stages tabulates twenty-one invocations; the logger wrote twenty-four. The difference is the two calibration detector runs and the withheld-scoreboard rerun, none of which the harness's own list records, so a run entry going missing on a path that list does not cover is exactly what this figure sees and the list cannot. 21 + 2 + 1 = 24. Moved from 25 to 26 at 4.3, by the same stage. Every stage the replay runs opens exactly one run entry, which is what makes the two figures move together and what would be worth reading if they ever did not. Moved from 26 at 4.4 by VwapEngine joining the replayed pipeline: one more stage runs, so one more distinct stage and one more run-log entry. The figure is a count of what the night does, so it moves whenever the night gains a stage and the reason it moved is the stage itself. Moved from 27 to 28 at 4.16: PlanBuilder joins the replayed night at 4.16. Moved from 28 to 29 at 4.5: TriggerResolver joins the replayed night at 21:05. Moved from 29 to 30 at 4.6: RiskGate joins the replayed night at 21:10. Moved from 30 to 31 at 4.7 by PaperBroker joining the replayed night: one more stage runs, so one more entry. Moved from 31 to 32 at 4.8 by PositionManager joining the replayed night: one more stage runs, so one more entry. Moved from 32 to 34 at 4.9 by those two stages joining the replayed night: two more stages run, so two more entries. Moved from 34 to 35 at 4.10 by that stage joining the replayed night: one more stage runs, so one more entry. Moved from 38 to 40 at 6.2 by SignalAdmissionTest joining the replay, and by two rather than one: the library figures run the stage twice on purpose, because a second run over an unchanged store writing nothing is the property that keeps observed_at meaning when a row last changed, and it is invisible from a single run. The gap between this figure and the distinct-stage count beside it is the point of having both.Moved from 40 to 41 at 6.3 by TwinPairFinder joining the replay, and by one rather than two because the finder is run once where the library figures run their stage twice. Moved from 41 to 43 at 6.4, by two rather than one because the packer is run twice: the byte-stability figure is a comparison between two cuts and could not be taken from one. Was 43 until 6.5, which runs the researcher seat over the fixture six times, once for each of its four outcomes plus the abstention that names the planted null and one stopgap. Each ask cuts a pack and files a row, so the seat's stage joins the distinct stages and the run entries rise with the asks. Was 55 until 6.6. The seat is asked a seventh time, for the signal request the store could not hold before, and the registry run plus the two screens it takes each write an entry of their own."
     },
     {
       "id": "scan.decliner.hits",
@@ -9883,10 +9883,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "58",
+      "value": "59",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
@@ -11656,18 +11656,18 @@
     {
       "id": "night.slotsInTheWholeSchedule",
       "tier": "DERIVED",
-      "value": "35",
+      "value": "36",
       "checkpoint": "5.5",
       "producedBy": "read by hand off RUNBOOK's \"The schedule as installed\", which states thirty-two tasks named PullbackStrategyLab-<slot>, registered in two acts of seventeen and fifteen. The same number arrives at the nightly table's thirty-one slots plus the one weekly row, which is a second reading of the same document rather than a second source.",
-      "note": "Moved from 32 to 33 at 6.3: the twins slot joins the schedule, Saturday 08:10 after the win-rate bound. It is the second weekly slot and the first since ceiling. Moved from 33 to 34 at 6.4: the pack slot joins the schedule, Saturday 08:20 after the twins. The third weekly slot, and it runs last of the three because it reads what the other two wrote. Was 34 until 6.5, which adds the `seat` slot at Saturday 08:30: the fourth weekly slot and the only one that leaves the machine."
+      "note": "Moved from 32 to 33 at 6.3: the twins slot joins the schedule, Saturday 08:10 after the win-rate bound. It is the second weekly slot and the first since ceiling. Moved from 33 to 34 at 6.4: the pack slot joins the schedule, Saturday 08:20 after the twins. The third weekly slot, and it runs last of the three because it reads what the other two wrote. Was 34 until 6.5, which adds the `seat` slot at Saturday 08:30: the fourth weekly slot and the only one that leaves the machine. Was 35 until 6.6, which adds the `registry` slot at Saturday 08:40: the fifth weekly slot, after the seat because it reads what the seat filed."
     },
     {
       "id": "night.observableStages",
       "tier": "DERIVED",
-      "value": "37",
+      "value": "38",
       "checkpoint": "5.5",
       "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry.",
-      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage."
+      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`."
     },
     {
       "id": "night.unobservable",
@@ -12400,6 +12400,107 @@
       "checkpoint": "6.5",
       "producedBy": "produced by running the shipped ResearcherSeat over the golden fixture against a stubbed transport, once for each outcome. Everything downstream of the answer is the shipped code: the pack is cut by the real packer, the document is parsed and validated by the real reader, the tripwire is the real predicate and the row is accepted or refused by the real store",
       "note": "A competent reader citing a meaningless signal indicts the pack and a weaker reader citing it indicts itself, and the rule cannot tell the two apart, so a stopgap fails no version whatever it cited."
+    },
+    {
+      "id": "registry.filed",
+      "tier": "DERIVED",
+      "value": "7",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update"
+    },
+    {
+      "id": "registry.ruleChanges.verdict",
+      "tier": "DERIVED",
+      "value": "inconclusive",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "**The commonest verdict this lab can produce, and the fixture is where that is legible.** The funnel passes a median of nought candidates a night, so over this population the baseline selects nothing and a candidate selecting nothing too has said nothing rather than changed nothing. Recording it as `killed` would be a verdict reached over a population of none."
+    },
+    {
+      "id": "registry.inconclusive",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "The proposal and the stopgap proposal, both of which are rule changes over a store that separates nothing. Both stay filed and are read again as the store grows."
+    },
+    {
+      "id": "registry.screened",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update"
+    },
+    {
+      "id": "registry.discarded",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update"
+    },
+    {
+      "id": "registry.buildTasks",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "The second kind, which had no shape in the store until 6.6: a request names the signal it wants and the setups it could not separate, and carries no change of any kind."
+    },
+    {
+      "id": "registry.abstentions",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "Two, being the plain abstention and the one that names the planted null. Both are results and reach a recorded state of their own rather than being folded in with a week that had no answer in it."
+    },
+    {
+      "id": "registry.unactionable",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "The week the seat could not be asked. Neither a result nor work, and moved off the queue so it is not read again for ever."
+    },
+    {
+      "id": "registry.replayResults",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "One row per rule change screened, written by ReplayHarness rather than by the registry, which is what the two declared writers of these two tables come to in a run."
+    },
+    {
+      "id": "registry.statusesAfter",
+      "tier": "DERIVED",
+      "value": "build-task,filed,recorded,unactionable",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ProposalRegistry over the golden fixture against proposals the seat itself filed, one of each kind. Everything is the shipped code: the proposals come from the real seat, the screen is the real harness over the real evidence store, the verdict is the real predicate and the status is moved by the real update",
+      "note": "Every status the run left behind, sorted, which is the figure that says the two kinds went to different places. `filed` is there because an inconclusive screen leaves its proposal filed."
+    },
+    {
+      "id": "seat.requested.outcome",
+      "tier": "DERIVED",
+      "value": "requested",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ResearcherSeat over the golden fixture against a stubbed transport returning a signal request. The seat labelled every non-abstention a rule change until 6.6, so a request would have been filed carrying none of the five change fields and the store would have refused it",
+      "note": "The second kind. A request says the opposite of a rule change: the model cannot separate two setups with what it has and can name what would (see: Proposals come in two kinds, rule changes over existing signals and requests for a new signal)."
+    },
+    {
+      "id": "seat.requested.signal",
+      "tier": "DERIVED",
+      "value": "pullback_volume_ratio",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ResearcherSeat over the golden fixture against a stubbed transport returning a signal request. The seat labelled every non-abstention a rule change until 6.6, so a request would have been filed carrying none of the five change fields and the store would have refused it",
+      "note": "Volume appears nowhere in the library except buried inside a scan definition, which is the gap the architecture's own list of candidate axes names first."
+    },
+    {
+      "id": "seat.requested.change",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "6.6",
+      "producedBy": "produced by running the shipped ResearcherSeat over the golden fixture against a stubbed transport returning a signal request. The seat labelled every non-abstention a rule change until 6.6, so a request would have been filed carrying none of the five change fields and the store would have refused it",
+      "note": "A request changes no threshold, held by the type and by the store's CHECK rather than by the stage that writes it."
     }
   ],
   "frozenOnly": [

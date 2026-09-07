@@ -32,6 +32,7 @@ public static class ProposalReader
             SELECT p.proposal_id, p.as_of, p.pack_version, p.pack_digest, p.transport,
                    p.configured_model, p.served_model, p.counts_toward_hit_rate, p.outcome,
                    p.direction, p.gate, p.threshold_name, p.from_value, p.to_value, p.family,
+                   p.requested_signal, p.requested_axis,
                    p.mechanism, p.evidence_setup_ids, p.evidence_signals, p.refutation,
                    p.observations_to_settle, p.abstained_because, p.unavailable_because,
                    p.answer_problems, p.answer_text, p.pins, p.cites_null_control,
@@ -65,20 +66,22 @@ public static class ProposalReader
                 From = reader.IsDBNull(12) ? null : StoreText.StorageTextToPrice(reader.GetString(12)),
                 To = reader.IsDBNull(13) ? null : StoreText.StorageTextToPrice(reader.GetString(13)),
                 Family = reader.IsDBNull(14) ? null : reader.GetString(14),
-                Mechanism = reader.IsDBNull(15) ? null : reader.GetString(15),
-                EvidenceSetupIds = reader.IsDBNull(16) ? null : reader.GetString(16),
-                EvidenceSignals = reader.IsDBNull(17) ? null : reader.GetString(17),
-                Refutation = reader.IsDBNull(18) ? null : reader.GetString(18),
-                ObservationsToSettle = reader.IsDBNull(19) ? null : reader.GetInt32(19),
-                AbstainedBecause = reader.IsDBNull(20) ? null : reader.GetString(20),
-                UnavailableBecause = reader.IsDBNull(21) ? null : reader.GetString(21),
-                AnswerProblems = reader.IsDBNull(22) ? null : reader.GetString(22),
-                AnswerText = reader.IsDBNull(23) ? null : reader.GetString(23),
-                Pins = reader.IsDBNull(24) ? null : reader.GetString(24),
-                CitesNullControl = reader.GetInt32(25) == 1,
-                FailsPackVersion = reader.GetInt32(26) == 1,
-                Status = reader.GetString(27),
-                ObservedAt = StoreText.StorageTextToTimestamp(reader.GetString(28)),
+                RequestedSignal = reader.IsDBNull(15) ? null : reader.GetString(15),
+                RequestedAxis = reader.IsDBNull(16) ? null : reader.GetString(16),
+                Mechanism = reader.IsDBNull(17) ? null : reader.GetString(17),
+                EvidenceSetupIds = reader.IsDBNull(18) ? null : reader.GetString(18),
+                EvidenceSignals = reader.IsDBNull(19) ? null : reader.GetString(19),
+                Refutation = reader.IsDBNull(20) ? null : reader.GetString(20),
+                ObservationsToSettle = reader.IsDBNull(21) ? null : reader.GetInt32(21),
+                AbstainedBecause = reader.IsDBNull(22) ? null : reader.GetString(22),
+                UnavailableBecause = reader.IsDBNull(23) ? null : reader.GetString(23),
+                AnswerProblems = reader.IsDBNull(24) ? null : reader.GetString(24),
+                AnswerText = reader.IsDBNull(25) ? null : reader.GetString(25),
+                Pins = reader.IsDBNull(26) ? null : reader.GetString(26),
+                CitesNullControl = reader.GetInt32(27) == 1,
+                FailsPackVersion = reader.GetInt32(28) == 1,
+                Status = reader.GetString(29),
+                ObservedAt = StoreText.StorageTextToTimestamp(reader.GetString(30)),
             });
         }
 
@@ -133,6 +136,13 @@ public sealed record StoredProposal(
     public decimal? From { get; init; }
     public decimal? To { get; init; }
     public string? Family { get; init; }
+
+    /// <summary>The signal a request wants computed, present exactly on a request.</summary>
+    public string? RequestedSignal { get; init; }
+
+    /// <summary>Which axis of measurement the request belongs to.</summary>
+    public string? RequestedAxis { get; init; }
+
     public string? Mechanism { get; init; }
     public string? EvidenceSetupIds { get; init; }
     public string? EvidenceSignals { get; init; }
@@ -152,6 +162,7 @@ public sealed record StoredProposal(
     public string Describe() => Outcome switch
     {
         "proposed" => $"{Direction} {ThresholdName} from {From} to {To}",
+        "requested" => $"asks for {RequestedSignal} on the {RequestedAxis} axis",
         "abstained" => $"abstained, {AbstainedBecause}",
         "unavailable" => $"not asked, {UnavailableBecause}",
         _ => $"unreadable, {AnswerProblems}",
