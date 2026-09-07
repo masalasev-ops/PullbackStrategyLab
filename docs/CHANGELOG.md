@@ -2673,3 +2673,13 @@ Why:  6.4 builds the packer and owes its columns. `pack_run` is the addition the
 Was:  the weekly schedule table holding two rows, Saturday 08:00 for `ceiling` and 08:10 for `twin-pairs`.
 Now:  a third row, Saturday 08:20 for `build-pack`, with why it runs last of the three and what it records in a week with nothing to say.
 Why:  the packer is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch.
+
+### 2026-09-07 — BUILD_PLAN.md — cites The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops
+Was:  question 1 of the phase 6 sitting as a live row of the carried obligations table and of the operator's table, the 6.5 row reading "**This row is gated on question 1**", the answered-questions section reading "**One of the four, ruled on 2026-09-06.**", the section reading "**Three of the four remain open and one of the three blocks a checkpoint**", the obligations total reading twenty-two, and the operator's heading and reading both reading ten.
+Now:  the row moved into the answered table with what was ruled, the 6.5 row saying the question is answered and gaining the third implementation and the status-band notice, two of the four ruled, two remaining and neither blocking, the obligations total twenty-three and the operator's figures nine.
+Why:  the operator ruled on 2026-09-07. The totals move because question 1's row left both live tables and two obligations were raised in the same pass, and every one of those figures is derived by `stated-counts` rather than stated twice.
+
+### 2026-09-07 — BUILD_PLAN.md — cites A local stopgap seat is recorded, and it is excluded from the pack-version hit rate
+Was:  the 6.5 row reading "**One obligation falls due here**, raised at 1.5, being that the empty tool set is a property of configuration".
+Now:  "**Three obligations fall due here**, the first raised at 1.5", with the second and third named in the row.
+Why:  asking a real model for a proposal against a real pack raised two: the pack states no rule in force, so nothing supplies the value a proposal moves a threshold from, and the planted-null tripwire fires on the control's name appearing anywhere rather than on a proposal resting on it. Neither is a property of a transport and both are settled at the checkpoint that builds the seat.

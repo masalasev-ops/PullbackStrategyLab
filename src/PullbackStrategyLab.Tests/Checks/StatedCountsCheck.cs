@@ -227,7 +227,16 @@ public sealed partial class StatedCountsCheck
     /// as "four are outstanding". That is the same route-empties-as-the-work-completes fault the
     /// phase 6 plan was written to correct, one level down from the count it corrected.
     /// </summary>
-    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+four\s+remain\s+open\s+and\s+(?<blocking>[a-z-]+)\s+of\s+the\s+three\s+blocks\s+a\s+checkpoint\*\*", RegexOptions.CultureInvariant)]
+    /// <remarks>
+    /// <b>The second denominator is a capture and was a literal until 2026-09-07.</b> The pattern
+    /// read "and one of <b>the three</b> blocks a checkpoint", so the number of questions still open
+    /// was frozen into the check itself: answering one made the sentence true and the pattern match
+    /// nothing, and the claim it feeds would have vanished rather than failed. That is the
+    /// route-empties-as-the-work-completes fault this very paragraph warns about, sitting inside the
+    /// check written to catch it. It is captured and reconciled against the open count now, so the
+    /// two halves of the sentence cannot disagree with each other or with the table.
+    /// </remarks>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+four\s+remain\s+open\s+and\s+(?<blocking>[a-z-]+)\s+of\s+the\s+(?<denominator>[a-z-]+)\s+blocks?\s+a\s+checkpoint\*\*", RegexOptions.CultureInvariant)]
     private static partial Regex QuestionsRemaining();
 
     /// <summary>A row of the section recording a phase 6 question that has been answered.</summary>
@@ -247,7 +256,15 @@ public sealed partial class StatedCountsCheck
     [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations fall due here and each is a question", RegexOptions.CultureInvariant)]
     private static partial Regex DueAtTheBackfill();
 
-    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligation falls due here\*\*, raised at 1\.5", RegexOptions.CultureInvariant)]
+    /// <remarks>
+    /// <b>Singular and plural, because the singular-only form could read exactly one count.</b> The
+    /// pattern was <c>"obligation falls due here**, raised at 1.5"</c> until 2026-09-07, so the
+    /// moment a second obligation fell due at 6.5 the sentence became true and the pattern matched
+    /// nothing: the claim would have vanished rather than failed. That is the second frozen count
+    /// found in this check on one day, after the remaining-questions denominator above, and both
+    /// are the same fault the check exists to catch, written into the check.
+    /// </remarks>
+    [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations? falls? due here\*\*, (?:raised|the first raised) at 1\.5", RegexOptions.CultureInvariant)]
     private static partial Regex DueAtTheSeat();
 
     [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+) obligations fall due here and they are one pass", RegexOptions.CultureInvariant)]
@@ -686,6 +703,15 @@ public sealed partial class StatedCountsCheck
         int answered = AnsweredPhaseSixQuestions(buildPlan);
         int answeredThatBlocked = AnsweredPhaseSixQuestionsThatBlocked(buildPlan);
 
+        // The same exhaustiveness the open rows are held to, on the answered ones. A row carrying
+        // neither mark fails here rather than being counted as never having blocked, which is the
+        // direction the phrase this replaced went wrong in.
+        IReadOnlyList<string> unmarkedAnswers = AnsweredPhaseSixQuestionsCarryABlocksMark(buildPlan);
+        Assert.True(unmarkedAnswers.Count == 0,
+            $"{unmarkedAnswers.Count} answered phase 6 question row(s) carry neither blocks-mark, so the count "
+            + "of what once stopped a checkpoint would be derived from prose:\n  "
+            + string.Join("\n  ", unmarkedAnswers));
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the phase 6 questions that blocked a checkpoint",
             FromWordsOrFail(blocking.Groups["n"].Value),
@@ -716,6 +742,16 @@ public sealed partial class StatedCountsCheck
             FromWordsOrFail(remaining.Groups["blocking"].Value),
             phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
             "open rows of the operator's table that stop a checkpoint"));
+
+        // The sentence's own second denominator, against its first. It reads "N of the four remain
+        // open and M of the <denominator> blocks a checkpoint", so the denominator is the same
+        // population N states and a sentence disagreeing with itself fails here rather than being
+        // read past.
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the phase 6 questions the blocking figure is taken over",
+            FromWordsOrFail(remaining.Groups["denominator"].Value),
+            phaseSixOperatorRows.Count,
+            "rows of the operator's table still marked as a phase 6 question"));
 
         // The obligations each phase 6 row says fall due at it. Four sentences, four patterns, each
         // anchored on what follows its count, so one row's statement cannot answer for another's.
@@ -988,10 +1024,36 @@ public sealed partial class StatedCountsCheck
     /// Read from the row's own words rather than from a list here, on the grounds the open rows are:
     /// a hand-named list beside the thing it counts is a count somebody has to remember.
     /// </summary>
+    /// <summary>
+    /// Answered questions that had blocked a checkpoint, from a mark rather than from prose.
+    ///
+    /// <b>It read the literal phrase "the split filed the act" until 2026-09-07</b>, which is
+    /// incidental wording from question 2's own row rather than a property of a blocking question.
+    /// Any second answered question would have had to reproduce one row's sentence to be counted,
+    /// and would otherwise have been silently counted as never having blocked. That is the third
+    /// count in this check found frozen against the one value it was written over, on one day.
+    ///
+    /// An answered row now carries the same mark an open one does, in the past tense, and
+    /// <see cref="AnsweredPhaseSixQuestionsCarryABlocksMark"/> requires every answered row to carry
+    /// one of the two, so a row carrying neither fails rather than counting as not having blocked.
+    /// </summary>
     private static int AnsweredPhaseSixQuestionsThatBlocked(string buildPlan) =>
         AnsweredPhaseSixSection(buildPlan)
-            .Count(l => AnsweredQuestionRow().IsMatch(l)
-                && l.Contains("the split filed the act", StringComparison.Ordinal));
+            .Count(l => AnsweredQuestionRow().IsMatch(l) && AnsweredBlockedACheckpoint().IsMatch(l));
+
+    /// <summary>The answered rows carrying neither mark, which is a defect rather than a nought.</summary>
+    private static IReadOnlyList<string> AnsweredPhaseSixQuestionsCarryABlocksMark(string buildPlan) =>
+        [.. AnsweredPhaseSixSection(buildPlan)
+            .Where(l => AnsweredQuestionRow().IsMatch(l)
+                && !AnsweredBlockedACheckpoint().IsMatch(l)
+                && !AnsweredBlockedNothingBuilt().IsMatch(l))
+            .Select(l => l[..Math.Min(70, l.Length)])];
+
+    [GeneratedRegex(@"\*\*Blocked a checkpoint", RegexOptions.CultureInvariant)]
+    private static partial Regex AnsweredBlockedACheckpoint();
+
+    [GeneratedRegex(@"\*\*Blocked nothing built", RegexOptions.CultureInvariant)]
+    private static partial Regex AnsweredBlockedNothingBuilt();
 
     private static IReadOnlyList<string> AnsweredPhaseSixSection(string buildPlan)
     {
