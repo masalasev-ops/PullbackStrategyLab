@@ -17339,3 +17339,82 @@ Next:       **6.5**, ResearcherSeat, gated on question 1 of the phase 6 sitting,
             transport and the pinned model. The gate is real rather than nominal: the model is a
             confounder for the phase's own success criterion, so a build session choosing it would be
             choosing what the record is forked on.
+
+## Not a checkpoint entry — 2026-09-07 — phase-6-0-question-one — belongs to 6.0: question 1 answered, and what asking a real model found
+
+Ruled:      **The transport is the subscription through the Agent SDK and the model is `claude-opus-5`**, with the
+            API implementation built beside it and one configuration value away for the day the
+            subscription stops (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops).
+            **The switch is neutral only where the served-model string is unchanged**, and every
+            proposal records the configured model, the transport and the served string, so a fork is
+            visible rather than inferred. Cost decided nothing: the API path at this model is $4.13 a
+            year and the published spread is about eight dollars.
+
+            **The price of the path chosen is the 1.5 obligation carried for as long as it is live.**
+            The empty tool set is a property of configuration on this path and structural on the API
+            path, so choosing the subscription keeps a permanent test as the whole of the guard on
+            the rule that the AI writes only to the proposal store. That asymmetry is recorded at the
+            ruling rather than rediscovered at the switch.
+
+            **A local model is permitted as a stopgap and never as the pinned seat**, its proposals
+            kept and excluded from the pack-version hit rate, failing no pack version by citing the
+            planted null and spending no holdout window. Mixing readers inside one version's record
+            is worse than forking it, because a fork is visible in the record and a mixture is not
+            (see: A local stopgap seat is recorded, and it is excluded from the pack-version hit rate).
+
+            **A seat that cannot ask is shown on the status band the morning it happens**, naming the
+            transport that was refused, because a queued job nobody is told about is learned of a
+            quarter later from a gap in the proposal record.
+
+Measured:   **The stopgap was tested before it was permitted, against `qwen/qwen3.5-9b` on the
+            operator's own machine.** The pack over a filled store is **23,545 tokens**, which is
+            2.8 times what the model budget assumes and 1.8 times the figure this session first
+            estimated from bytes. At an 8,192 context the endpoint refuses it outright; at 32,768 the
+            answer fits with 8 percent spare; at 50,176 with 40 percent. The pack costs about **570
+            tokens per declared signal**, so the context a stopgap is loaded with has to leave room
+            for the library to grow or it begins refusing the week it does.
+
+            **The seat is deterministic at temperature 0.** Three runs over one pack, at two context
+            sizes, produced identical output down to the completion token count. That is the
+            strongest thing on the record axis and it belongs to the local path alone: a local
+            proposal can be re-derived from the weights and the sampler, and no hosted call can.
+
+            **Every evidence line it cited was verbatim from the pack and no identifier was
+            fabricated**, which was the sharp risk this session named and did not find.
+
+Found:      **Two defects, neither about a transport, both raised as obligations due at 6.5.** The
+            pack states no rule in force, so nothing supplies the value a proposal moves a threshold
+            from; the model abstained twice for exactly that reason and it is right, because none of
+            the nine sections says what any threshold currently is and `Variant history` excludes the
+            baseline by design. And the planted-null tripwire fires on the control's name appearing
+            anywhere rather than on a proposal resting on it: shown the near-empty pack the model
+            abstained correctly and put `day_of_month` in a required gate field, which under the rule
+            as written fails pack version 1. Reproduced at a second context size.
+
+Corrected:  **Three counts in `stated-counts` were frozen against the one value each was written
+            over, and all three were found in one pass by answering a question.** The remaining-questions
+            sentence had "of the three" as a literal, so answering one would have made the sentence
+            true and the pattern match nothing. The 6.5 due-point pattern read "obligation falls due
+            here" in the singular, so a second obligation would have silently removed the claim. And
+            answered questions that had blocked a checkpoint were counted by the literal phrase "the
+            split filed the act", which is incidental wording from question 2's own row. **Each would
+            have dropped a claim rather than failing one**, which is the under-reporting shape this
+            corpus names as the only kind of broken check that survives. All three now derive, and
+            an answered row carries the same blocks-mark an open one does with a check that every
+            answered row has one.
+
+Measured:   **The obligations table reads 23, up one**, being two raised here and question 1's row
+            leaving it. **The operator's table reads 9**, down one. **Two of the four sitting questions
+            remain open and neither blocks a checkpoint**, which is a state this register has not been
+            in before: what remains is the earnings calendar, which blocks nothing built, and the
+            first pack version, which blocks only a row that is parked.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,127 tests. `tools/verify-phase.ps1` GREEN: 153 claims,
+            146 passed, 0 failed, 7 out of scope, 0 unexamined.
+
+Carried:    **Two new, both due at 6.5**, being the rule the pack does not state and the tripwire's
+            scope. Nothing falls due at this pass.
+
+Next:       **6.5**, ResearcherSeat, no longer gated: three implementations behind the narrow
+            interface, the empty tool set asserted, the key absent from the environment on every
+            path, and the two obligations above settled before a proposal is ever written.
