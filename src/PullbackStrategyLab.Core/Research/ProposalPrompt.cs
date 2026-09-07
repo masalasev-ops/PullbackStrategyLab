@@ -37,7 +37,8 @@ public static class ProposalPrompt
     public const string Instruction = """
         You are reading an evidence pack from a paper-trading laboratory that tests two mirror-image
         price patterns on US equities. Your task is to propose at most one change to the selection
-        rule, or to state that the evidence does not support one.
+        rule, or to ask for one measurement the lab does not yet compute, or to state that the
+        evidence supports neither.
 
         Abstaining is a result and not a failure. If the evidence is thin, if no signal separates
         outcomes, or if the population is too small to support a claim, abstain and say why. A
@@ -75,6 +76,24 @@ public static class ProposalPrompt
         the threshold is in force at and "to" is the value you propose; both are numbers, not
         quoted strings. The family is "selection" or "execution", and the rule in force says which
         family each threshold belongs to.
+
+        You may instead ask for a signal that does not exist. Do that when two setups in the twin
+        pairs section look the same in everything the pack records and ended somewhere different,
+        and you can name a measurement that would tell them apart. That is a build task rather than
+        a rule change, and it is the channel that widens what every future proposal can reach.
+
+        {
+          "outcome": "requested",
+          "requested_signal": "a short name for the measurement you want computed",
+          "requested_axis": "which axis it belongs to: price path, volume, time, position relative
+                             to the market, position relative to sector, this security's own
+                             history, the event calendar, or intraday shape",
+          "mechanism": "one sentence saying why this would separate the pair",
+          "evidence_setup_ids": ["at least two setup ids from the pack that you cannot separate"]
+        }
+
+        A request names no threshold, no direction, no family and no observation count. It is
+        answered by computing the signal and vetting it, not by waiting.
 
         To abstain, answer in this shape:
 

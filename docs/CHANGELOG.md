@@ -2713,3 +2713,18 @@ Why:  the seat is weekly and the operator's own table is what the registered tas
 Was:  three rows of the carried obligations table due at 6.5, being the 1.5 empty tool set and the two raised at 6.4; and question 1's cost figures reading "$0.15 and $8.27", "about eight dollars a year" and "$4.13 a year".
 Now:  none of the three rows, and the cost figures reading $0.32 to $16.14, about sixteen dollars, and $8.07, each saying what it read before.
 Why:  6.5 settles all three. The pack states the rule in force, the tripwire is scoped to what a proposal rests on with the change fields conditional on not abstaining, and the empty tool set is read back off the session rather than asserted of the arguments alone. The cost figures move because the model budget they were taken from assumed a pack 2.8 times smaller than the measured one.
+
+### 2026-09-07 — SCHEMA.md — cites Proposals come in two kinds, rule changes over existing signals and requests for a new signal
+Was:  `proposal`'s outcome column reading "One of `proposed`, `abstained`, `unavailable` and `unreadable`", its status column reading "`filed` when written here", and no column for a requested signal.
+Now:  five outcomes with `requested` among them, seven statuses with what each one says, and a `requested_signal` and `requested_axis` row.
+Why:  6.6 builds the registry and the registry accepts two kinds. The shape 058 wrote held a rule change and had nowhere for a signal request, so a seat that wanted a measurement had to write a rule change or nothing, and the second kind is the one that lifts the ceiling rather than rearranging what is under it.
+
+### 2026-09-07 — SCHEMA.md — cites A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+Was:  the research stores table row "| `replay_result` | proposal + window | Insert ReplayHarness. **Store built at 6.6** ...", and no column table for it anywhere.
+Now:  the grain reading "proposal + window + observation" with why, and a column section authoring the table.
+Why:  a screen is a reading rather than a definition. The same proposal screened twice over the same window is two readings, because the evidence underneath moved, and this writer has no update path at all: keyed on the proposal and the window alone the second reading would have been a primary-key collision and the first would have gone on reading as current. The declared grain was written before there was a proposal to key on and could not have been exercised until now.
+
+### 2026-09-07 — RUNBOOK.md — cites Proposals come in two kinds, rule changes over existing signals and requests for a new signal
+Was:  the weekly schedule table holding four rows, ending at Saturday 08:30 for `ask-researcher`.
+Now:  a fifth row, Saturday 08:40 for `screen-proposals`, with the two kinds and the verdict the funnel makes ordinary.
+Why:  the registry is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch.

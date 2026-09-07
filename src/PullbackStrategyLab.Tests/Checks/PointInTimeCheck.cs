@@ -112,6 +112,12 @@ public sealed class PointInTimeCheck
             // a proposal made later is a figure about a population that did not exist.
             ["proposal"] = "observed_at",
 
+            // What a screen made of a proposal, stamped and read to decide an answer: the research
+            // ledger shows what became of each proposal, and a proposal screened twice writes two
+            // rows. An unbounded read would show the newer screen against an older session, which
+            // for this table means a verdict the evening being looked at could not have had.
+            ["replay_result"] = "observed_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the

@@ -17523,3 +17523,72 @@ Carried:    **One raised, due at 6.8, and none falls due here.** The status band
 Next:       **6.6**, ProposalRegistry and `replay_result`, where abstention is a valid recorded
             outcome to screen rather than a failure, and where `ReplayHarness` gains the store a
             result row can be keyed on.
+
+## 6.6 — 2026-09-07 — phase-6-6-proposal-registry — ProposalRegistry, and the verdict the funnel makes ordinary
+
+Built:      **`ProposalRegistry`, the `screen-proposals` slot, and migration 059's `replay_result`.**
+            The registry reads what the seat filed and sends each kind where it goes: a rule change
+            to the replay screen, a signal request to a person, an abstention to a recorded state of
+            its own, and a week with no answer off the queue
+            (see: Proposals come in two kinds, rule changes over existing signals and requests for a new signal).
+            **`ReplayHarness` gains its store here and nowhere else**: it wrote nothing at all from
+            5.3 to 6.5 because there was no proposal for a result to belong to, and the one path
+            that writes now writes one table. The acceptance run still writes nothing, being evidence
+            about the harness rather than about any proposal.
+
+Found:      **The proposal store had no shape for the second kind, and 6.5 shipped without it.**
+            The registry accepts a rule change and a signal request, and 058 wrote the columns of a
+            rule change only, so a seat that wanted a measurement had to write a rule change or
+            nothing. **The seat made it worse than a missing column**: it labelled every answer that
+            was not an abstention a rule change, so a signal request would have been filed as one
+            carrying none of the five change fields, which the store refuses. The document, the
+            prompt, the store and the seat all carry the second kind now.
+
+            **The library is a hard ceiling on the proposal space and the model cannot lift it**, so
+            the request names the signal and the axis and never the formula: what to compute is
+            decided by a person reading it. Without the second kind the loop plateaus within months,
+            because there are only so many ways to rearrange ten checks.
+
+Found:      **`replay_result`'s declared grain could not hold a re-screen.** SCHEMA said the key was
+            the proposal and the window. A screen is a reading rather than a definition: the same
+            proposal screened twice over the same window is two readings, because the evidence
+            underneath moved, and every other reading in this store writes a generation. This writer
+            has no update path at all, so the second reading would have been a primary-key collision
+            and the first would have gone on reading as current. **The grain was written at 5.3, when
+            there was no proposal to key on**, so nothing could have exercised it until this
+            checkpoint. It is the proposal, the window and the instant, and a permanent test screens
+            one proposal twice.
+
+Found:      **A screen over a population that selects nothing would have read as killing the
+            proposal, and that is the commonest case this lab can produce.** The funnel passes a
+            median of nought candidates a night, so over the store as it stands the baseline selects
+            nothing; a candidate selecting nothing too has not changed nothing, it has said nothing.
+            The predicate that decides a verdict asks the two questions that kill a proposal, and
+            neither can be asked where nothing was selected at all. **`inconclusive` is a verdict of
+            its own**, and a proposal whose screen was inconclusive stays `filed` and is read again
+            as the store grows, the row written each time being the record that the evidence still
+            cannot separate anything. This is the fifth failure shape caught before it shipped rather
+            than after: every count would have been right and the sentence beside them false.
+
+Measured:   **Over the golden fixture the registry reads seven filed proposals and disposes of five
+            of them.** One signal request becomes a build task, two abstentions are recorded, two
+            weeks with no answer are marked unactionable, and the two rule changes are screened and
+            left filed, because every screen this fixture can produce is inconclusive. The statuses
+            the run leaves behind are `build-task`, `filed`, `recorded` and `unactionable`, stated as
+            the set rather than as a count: three dispositions summing to one total would read
+            identically however the proposals were sorted between them.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,166 tests. `tools/verify-phase.ps1` GREEN: 154 claims,
+            151 passed, 0 failed, 3 out of scope, 0 unexamined. **Out of scope falls from 4 to 3**,
+            the one retired being the registry's own catalogue row. **Eighteen expectations were
+            touched and thirteen of them are new**, so the phase added more than it re-based
+            (see: A fixture expectation changes only with a recorded reason, and the report counts what changed).
+            The five that moved are the schema version, two slot counts and two run-log counts, every
+            one of them a consequence of the slot this checkpoint adds.
+
+Carried:    **None raised and none falls due here.**
+
+Next:       **6.7**, AcceptanceGate and the 21:45 slot, which reads only status and resolution date
+            and cannot touch a target, asserted by the store and by the type having no path to
+            either column. Verified over an authored version, because no version can mature: V0 was
+            frozen on 2026-09-03 against a minimum of 1,802 effective observations.

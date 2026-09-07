@@ -33,7 +33,7 @@ param(
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scores', 'scoreboard',
-                 'ceiling', 'twins', 'pack', 'seat', 'snapshot')]
+                 'ceiling', 'twins', 'pack', 'seat', 'registry', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -175,6 +175,11 @@ $slots = @{
     # researcher once against the pack and files the answer, which may be a proposal, an abstention,
     # an unreadable answer or a week the seat could not be asked at all. It spends no vendor call.
     'seat'       = @(, @('ask-researcher'))
+
+    # The fifth weekly slot, Saturday 08:40, after the seat because it reads what the seat filed.
+    # A rule change goes to the replay screen and a signal request is a build task for a person.
+    # It spends no vendor call.
+    'registry'   = @(, @('screen-proposals'))
     'snapshot'   = @(, @('snapshot-db'))
 }
 

@@ -17,9 +17,16 @@ namespace PullbackStrategyLab.Worker.Stages;
 ///
 /// <b>It never admits one.</b> A replay says a proposal is not worth running forward; only the
 /// forward paired test says one is worth keeping (see: Replay screens proposals and the forward
-/// paired test admits them). So this stage writes nothing at all: the register is written by
-/// VariantAdmitter and the difference series by VariantScorer, and a screen that recorded a result
-/// beside them would be a third statement about a version with nothing reconciling the three.
+/// paired test admits them). The register is written by VariantAdmitter and the difference series by
+/// VariantScorer, and a screen that recorded a result beside them would be a third statement about a
+/// version with nothing reconciling the three.
+///
+/// <b>It wrote nothing at all until 6.6, and what changed is that a screen now has a subject.</b>
+/// From 5.3 to 6.5 there was no proposal for a result to belong to, so a result row would have been
+/// a reading of a candidate nobody had proposed. <see cref="ScreenProposal"/> is the one path that
+/// writes, and it writes exactly one table: <c>replay_result</c>, keyed on the proposal it screened.
+/// <see cref="Reproduce"/> and <see cref="Screen"/> still write nothing, because the acceptance run
+/// is evidence about the harness rather than about any proposal.
 ///
 /// <b>Replay is not backtesting.</b> Nothing here reconstructs a past. Every row it reads was
 /// written forward on the night, with the signals frozen on that night, and its outcome was filled
@@ -208,6 +215,105 @@ public sealed class ReplayHarness
             verdict.IsAdmitted ? null : $"{NotAdmissible}: {verdict.Reason}");
     }
 
+    /// <summary>
+    /// One filed proposal screened, with the result recorded against it.
+    ///
+    /// <b>This is the only path in this stage that writes, and it writes one table.</b> The rule is
+    /// rebuilt from the proposal's own five fields rather than passed in, because the five fields
+    /// are what a version register would hold and screening anything else would report on something
+    /// that could never run.
+    ///
+    /// <b>A screen kills or lets through and never admits.</b> `survived` means replay found no
+    /// reason to stop, which is a much weaker statement than that the proposal is any good: replay
+    /// is free, and free tests are how you overfit.
+    /// see: Replay screens proposals and the forward paired test admits them
+    ///
+    /// <b>The window is the caller's and is null today.</b> No holdout window has matured, so every
+    /// screen this lab can take is over the accumulated store, and a sentinel would make the two
+    /// indistinguishable in a count.
+    /// see: Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight
+    /// </summary>
+    public ReplayResult ScreenProposal(StoredProposal proposal, DateOnly asOf, string? windowId = null)
+    {
+        ArgumentNullException.ThrowIfNull(proposal);
+
+        if (proposal.Outcome != "proposed" || proposal.Direction is null || proposal.ThresholdName is null)
+        {
+            throw new InvalidOperationException(
+                $"proposal {proposal.ProposalId} is \"{proposal.Outcome}\" and only a rule change can be "
+                + "screened. A signal request is a build task and an abstention is a result.");
+        }
+
+        SelectionRule candidate =
+            SelectionRule.For(proposal.Direction).With(proposal.ThresholdName, proposal.To!.Value);
+
+        ReplayScreening screening = Screen(candidate, asOf);
+
+        DateTimeOffset observedAt = _clock.UtcNow;
+
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        using (SqliteTransaction transaction = connection.BeginTransaction())
+        {
+            Record(connection, transaction, proposal.ProposalId, windowId, screening, observedAt);
+            transaction.Commit();
+        }
+
+        return new ReplayResult(proposal.ProposalId, windowId, observedAt, screening);
+    }
+
+    /// <summary>
+    /// One result row.
+    ///
+    /// <b>A refused screen reads nothing and says why, which the store holds as a biconditional.</b>
+    /// So the counts written for a refusal are nought rather than whatever the walk happened to
+    /// leave in them, and a refusal carrying a population would be refused by the store.
+    /// </summary>
+    private static void Record(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string proposalId,
+        string? windowId,
+        ReplayScreening screening,
+        DateTimeOffset observedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO replay_result
+                (proposal_id, window_id, observed_at, as_of, direction, sessions_read, rows_examined,
+                 baseline_selected, candidate_selected, both_selected, candidate_only, baseline_only,
+                 unjudgeable, unmeasured_verdicts, disagreements, verdict, refused_because, elapsed_ms)
+            VALUES
+                (@proposal_id, @window_id, @observed_at, @as_of, @direction, @sessions_read, @rows_examined,
+                 @baseline_selected, @candidate_selected, @both_selected, @candidate_only, @baseline_only,
+                 @unjudgeable, @unmeasured_verdicts, @disagreements, @verdict, @refused_because, @elapsed_ms)
+            """;
+
+        bool refused = screening.Refused is not null;
+
+        command.Parameters.AddWithValue("@proposal_id", proposalId);
+        command.Parameters.AddWithValue("@window_id", (object?)windowId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(screening.AsOf));
+        command.Parameters.AddWithValue("@direction", screening.Direction);
+        command.Parameters.AddWithValue("@sessions_read", screening.SessionsRead);
+        command.Parameters.AddWithValue("@rows_examined", screening.RowsExamined);
+        command.Parameters.AddWithValue("@baseline_selected", screening.BaselineSelected);
+        command.Parameters.AddWithValue("@candidate_selected", screening.CandidateSelected);
+        command.Parameters.AddWithValue("@both_selected", screening.BothSelected);
+        command.Parameters.AddWithValue("@candidate_only", screening.CandidateOnly);
+        command.Parameters.AddWithValue("@baseline_only", screening.BaselineOnly);
+        command.Parameters.AddWithValue("@unjudgeable", screening.Unjudgeable);
+        command.Parameters.AddWithValue("@unmeasured_verdicts", screening.UnmeasuredGateVerdicts);
+        command.Parameters.AddWithValue("@disagreements", screening.Disagreements.Count);
+        command.Parameters.AddWithValue("@verdict", ReplayResult.VerdictOf(screening));
+        command.Parameters.AddWithValue("@refused_because", (object?)screening.Refused ?? DBNull.Value);
+        command.Parameters.AddWithValue("@elapsed_ms", (long)screening.Elapsed.TotalMilliseconds);
+
+        command.ExecuteNonQuery();
+    }
+
     private ReplayScreening Walk(
         SelectionRule rule, SelectionRule baseline, DateOnly asOf, string? refused)
     {
@@ -372,6 +478,83 @@ public sealed class ReplayHarness
 
     private static readonly JsonSerializerOptions CheckResultsJson =
         new(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true };
+}
+
+/// <summary>
+/// One recorded screen: which proposal, which window, when, and what the walk found.
+///
+/// <b>Three verdicts and none of them admits.</b> `killed` is a screen that found a reason to stop,
+/// `survived` a screen that found none, and `refused` a candidate the register would not take as a
+/// version at all. A screen that could admit would make replay the thing that decides, and replay is
+/// free (see: Replay screens proposals and the forward paired test admits them).
+/// </summary>
+public sealed record ReplayResult(
+    string ProposalId, string? WindowId, DateTimeOffset ObservedAt, ReplayScreening Screening)
+{
+    /// <summary>A candidate the register would not take, so screening it reports on nothing.</summary>
+    public const string Refused = "refused";
+
+    /// <summary>The screen found a reason to stop.</summary>
+    public const string Killed = "killed";
+
+    /// <summary>The screen found none, which is much weaker than saying the proposal is any good.</summary>
+    public const string Survived = "survived";
+
+    /// <summary>
+    /// The screen read rows and neither rule selected any of them, so it says nothing.
+    ///
+    /// <b>Ordinary rather than rare, which is why it is a verdict and not an edge case.</b> The
+    /// funnel passes a median of nought candidates a night, so over the store as it stands the
+    /// baseline selects nothing and a candidate selecting nothing too has not changed nothing: it
+    /// has said nothing. Reporting that as `killed` would be a verdict reached over a population of
+    /// none, which is the failure shape this corpus names as surviving every guard it has.
+    /// </summary>
+    public const string Inconclusive = "inconclusive";
+
+    /// <summary>
+    /// What a screening comes to, as a value rather than as a rule the caller applies.
+    ///
+    /// <b>Two things kill a proposal and they are different faults.</b> A candidate that selects
+    /// exactly what the baseline selects has changed nothing, so running it forward would spend a
+    /// paired test on a rule that cannot differ from the control. And a screen whose walk disagreed
+    /// with the night on a judgeable gate is a screen whose own reading is in doubt, so its verdict
+    /// is not evidence about the proposal at all.
+    ///
+    /// <b>What does not kill a proposal is selecting fewer setups.</b> A tighter rule selecting less
+    /// is the ordinary shape of a selection change, and a screen that killed it would be deciding
+    /// the question the forward paired test exists to answer.
+    ///
+    /// <b>And neither of those questions can be asked where nothing was selected at all</b>, so that
+    /// case is answered first and answered as <see cref="Inconclusive"/>.
+    /// </summary>
+    public static string VerdictOf(ReplayScreening screening)
+    {
+        ArgumentNullException.ThrowIfNull(screening);
+
+        if (screening.Refused is not null)
+        {
+            return Refused;
+        }
+
+        // Asked before the two that kill, because both of those rest on the selections meaning
+        // something and neither does over a population where nothing was selected at all.
+        if (screening.BaselineSelected == 0 && screening.CandidateSelected == 0)
+        {
+            return Inconclusive;
+        }
+
+        return screening.Disagreements.Count > 0 || screening.SelectionsReproduced ? Killed : Survived;
+    }
+
+    /// <summary>This screen's verdict.</summary>
+    public string Verdict => VerdictOf(Screening);
+
+    /// <summary>How the screen reads in a run line.</summary>
+    public string Describe() =>
+        Screening.Refused is string refused
+            ? $"{ProposalId}: refused, {refused}"
+            : $"{ProposalId}: {Verdict}, baseline {Screening.BaselineSelected} against candidate "
+              + $"{Screening.CandidateSelected} over {Screening.RowsExamined} row(s)";
 }
 
 /// <summary>One gate on which the harness and the night disagree, which voids the screen.</summary>

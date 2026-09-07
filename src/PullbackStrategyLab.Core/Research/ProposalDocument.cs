@@ -28,10 +28,22 @@ public sealed record ProposalDocument
     /// <summary>A proposal: a change, its family, its mechanism, its evidence and its refutation.</summary>
     public const string Proposed = "proposed";
 
+    /// <summary>
+    /// A signal request: the second kind, and the one that lifts the ceiling rather than
+    /// rearranging what is under it.
+    ///
+    /// <b>The library is a hard ceiling on the proposal space and the model cannot lift it.</b> A
+    /// request says the opposite of a rule change: I cannot separate these two setups with what I
+    /// have, compute this and I could. It is a build task rather than a variant, and without it the
+    /// loop plateaus within months because there are only so many ways to rearrange ten checks.
+    /// see: Proposals come in two kinds, rule changes over existing signals and requests for a new signal
+    /// </summary>
+    public const string Requested = "requested";
+
     /// <summary>An abstention: no change, and the reason there is none.</summary>
     public const string Abstained = "abstained";
 
-    public static IReadOnlyList<string> Outcomes { get; } = [Proposed, Abstained];
+    public static IReadOnlyList<string> Outcomes { get; } = [Proposed, Requested, Abstained];
 
     /// <summary>Which of the two this document is.</summary>
     public required string Outcome { get; init; }
@@ -83,9 +95,37 @@ public sealed record ProposalDocument
     /// <summary>Why there is nothing to propose, present exactly on an abstention.</summary>
     public string? AbstainedBecause { get; init; }
 
+    /// <summary>
+    /// The signal a request wants computed, present exactly on a request.
+    ///
+    /// A name rather than a formula. What to compute is decided by a person reading the request,
+    /// which is what keeps the library a ceiling the model cannot lift for itself: a seat that
+    /// supplied the formula would be widening its own proposal space.
+    /// </summary>
+    public string? RequestedSignal { get; init; }
+
+    /// <summary>
+    /// Which axis of measurement the request belongs to, present exactly on a request.
+    ///
+    /// The axes are the thing worth enumerating rather than the signals: the library today is almost
+    /// entirely price path, and a run of requests all naming price path is legible as the library's
+    /// actual shape rather than as eight separate ideas.
+    /// </summary>
+    public string? RequestedAxis { get; init; }
+
     /// <summary>Whether this document proposes a change at all.</summary>
     [JsonIgnore]
     public bool IsAbstention => string.Equals(Outcome, Abstained, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether this document asks for a signal rather than proposing a rule.
+    ///
+    /// The two kinds go to different places: a rule change goes to the screen and then to a paired
+    /// test, and a request is a build task. A registry that treated them as one would send a request
+    /// to a replay that has nothing to replay.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsRequest => string.Equals(Outcome, Requested, StringComparison.Ordinal);
 
     /// <summary>
     /// The signals this proposal rests on: the ones it cites, and the ones the threshold it moves is
@@ -106,7 +146,10 @@ public sealed record ProposalDocument
     {
         ArgumentNullException.ThrowIfNull(ruleInForce);
 
-        if (IsAbstention || Change is null)
+        // A request rests on nothing a tripwire can read either. It names a signal that does not
+        // exist yet, so it cannot be resting on one that does, and the evidence it cites is the pair
+        // it could not separate rather than a signal it reasoned from.
+        if (IsAbstention || IsRequest || Change is null)
         {
             return [];
         }
@@ -151,6 +194,12 @@ public sealed record ProposalDocument
             return problems;
         }
 
+        if (IsRequest)
+        {
+            RequestProblems(problems);
+            return problems;
+        }
+
         ProposalProblems(problems, longRule, shortRule);
         return problems;
     }
@@ -170,6 +219,11 @@ public sealed record ProposalDocument
             problems.Add("an abstention carries no change, and this one carries one");
         }
 
+        if (RequestedSignal is not null)
+        {
+            problems.Add("an abstention asks for no signal, and this one names one");
+        }
+
         if (Family is not null)
         {
             problems.Add("an abstention belongs to no family, and this one names one");
@@ -181,12 +235,80 @@ public sealed record ProposalDocument
         }
     }
 
+    /// <summary>
+    /// A request names the signal it wants, why it would separate the pair, and the pair.
+    ///
+    /// <b>The evidence has to be at least two setups, and that is the request's whole subject.</b>
+    /// A request says two setups look identical in everything recorded and did opposite things, so
+    /// one id names no pair and none names nothing at all. The twin-pair section of the pack is
+    /// where the pairs come from, which is what that section is for.
+    ///
+    /// <b>It states no observation count and that is not an omission.</b> Nothing is being settled
+    /// by waiting: the question a request asks is answered by computing the signal and vetting it on
+    /// whether it tightens outcome-similar neighbourhoods, which needs no variant and no forward
+    /// period.
+    /// see: Signals are admitted on whether they tighten outcome-similar neighbourhoods, independently of any rule using them
+    /// </summary>
+    private void RequestProblems(List<string> problems)
+    {
+        if (string.IsNullOrWhiteSpace(RequestedSignal))
+        {
+            problems.Add("a signal request names the signal it wants computed, and this one names none");
+        }
+
+        if (string.IsNullOrWhiteSpace(RequestedAxis))
+        {
+            problems.Add("a signal request names the axis of measurement it belongs to, and this one names none");
+        }
+
+        if (string.IsNullOrWhiteSpace(Mechanism))
+        {
+            problems.Add("a signal request states why the signal would separate the pair, and this one states none");
+        }
+
+        if (EvidenceSetupIds.Count < 2)
+        {
+            problems.Add(
+                "a signal request rests on setups it could not separate, which is at least two, and this one "
+                + $"names {EvidenceSetupIds.Count}");
+        }
+
+        // The same shape as an abstention carrying a change: a document that is two answers is
+        // reported as both rather than read as whichever one a caller happened to look at.
+        if (Change is not null)
+        {
+            problems.Add("a signal request changes no threshold, and this one carries a change");
+        }
+
+        if (Family is not null)
+        {
+            problems.Add("a signal request belongs to no family, and this one names one");
+        }
+
+        if (ObservationsToSettle is not null)
+        {
+            problems.Add("a signal request settles nothing by waiting, and this one states an observation count");
+        }
+
+        if (AbstainedBecause is not null)
+        {
+            problems.Add("a signal request is not an abstention, and this one states why it abstained");
+        }
+    }
+
     /// <summary>A proposal carries all five change fields, a family, a mechanism, evidence and a refutation.</summary>
     private void ProposalProblems(List<string> problems, SelectionRule longRule, SelectionRule shortRule)
     {
         if (AbstainedBecause is not null)
         {
             problems.Add("a proposal is not an abstention, and this one states why it abstained");
+        }
+
+        if (RequestedSignal is not null)
+        {
+            problems.Add(
+                "a rule change and a signal request are two kinds and this document is both: it moves a "
+                + "threshold and asks for a signal");
         }
 
         if (!VariantFamily.All.Contains(Family, StringComparer.Ordinal) || Family == VariantFamily.Baseline)

@@ -102,6 +102,15 @@ public static class NightlySchedule
         // seat declined is a result and a week it was never asked is not.
         new("seat", "08:30", ["ask-researcher"], WeeklyOn: DayOfWeek.Saturday),
 
+        // The fifth weekly slot, and it runs after the seat because it reads what the seat filed.
+        // A rule change goes to the screen and a signal request is a build task, so this is where
+        // the two kinds part; an abstention reaches a recorded state of its own, because a
+        // considered decline and a week the seat could not be asked are opposite facts.
+        //
+        // It runs whether or not the seat answered, because a week with no answer still has to
+        // leave the queue, and a screen that separated nothing is written down rather than skipped.
+        new("registry", "08:40", ["screen-proposals"], WeeklyOn: DayOfWeek.Saturday),
+
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
         // omitted it would be reporting thirty-one slots under a heading saying thirty-two. That is

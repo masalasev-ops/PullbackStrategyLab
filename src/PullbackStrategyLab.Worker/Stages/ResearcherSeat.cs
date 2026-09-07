@@ -24,9 +24,11 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// than asserted. It is byte-stable, so the cut is the same document the packer's own slot produced.
 /// see: A pack version pins what the model saw, and byte-stability is what makes that claim checkable
 ///
-/// <b>A week with no proposal has three causes and they are three outcomes.</b> A seat that could
+/// <b>A week with no rule change has three causes and they are three outcomes.</b> A seat that could
 /// not be asked, a seat whose answer is not the agreed document, and a seat that read the evidence
-/// and declined are different facts about the lab. One column reading "no proposal" for all three
+/// and declined are different facts about the lab. A fifth outcome from 6.6 is a signal request,
+/// which is not a week with no proposal at all: it is the second kind
+/// (see: Proposals come in two kinds, rule changes over existing signals and requests for a new signal). One column reading "no proposal" for all three
 /// would be the silence the loop exists to break, and the first of them is a fact about the running
 /// lab rather than about the build, so it is also shown on the morning it happens.
 /// see: Abstention is a valid recorded proposal outcome
@@ -259,7 +261,10 @@ public sealed class ResearcherSeat
 
         return seed with
         {
-            Outcome = document.IsAbstention ? "abstained" : "proposed",
+            // The document's own outcome rather than a two-way split on abstention. It was that
+            // split until 6.6 added the second kind, and a signal request would have been filed as
+            // a rule change carrying none of the five change fields, which the store refuses.
+            Outcome = document.Outcome,
             Document = document,
             CitesNullControl = cites,
 
@@ -293,14 +298,14 @@ public sealed class ResearcherSeat
                  from_value, to_value, family, mechanism, evidence_setup_ids, evidence_signals,
                  refutation, observations_to_settle, abstained_because, unavailable_because,
                  answer_problems, answer_text, pins, cites_null_control, fails_pack_version,
-                 status, observed_at)
+                 status, observed_at, requested_signal, requested_axis)
             VALUES
                 (@proposal_id, @as_of, @pack_version, @pack_digest, @transport, @configured_model,
                  @served_model, @counts_toward_hit_rate, @outcome, @direction, @gate, @threshold_name,
                  @from_value, @to_value, @family, @mechanism, @evidence_setup_ids, @evidence_signals,
                  @refutation, @observations_to_settle, @abstained_because, @unavailable_because,
                  @answer_problems, @answer_text, @pins, @cites_null_control, @fails_pack_version,
-                 @status, @observed_at)
+                 @status, @observed_at, @requested_signal, @requested_axis)
             """;
 
         ProposalDocument? document = result.Document;
@@ -350,6 +355,8 @@ public sealed class ResearcherSeat
         command.Parameters.AddWithValue("@fails_pack_version", result.FailsPackVersion ? 1 : 0);
         command.Parameters.AddWithValue("@status", Filed);
         command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(result.ObservedAt));
+        command.Parameters.AddWithValue("@requested_signal", (object?)document?.RequestedSignal ?? DBNull.Value);
+        command.Parameters.AddWithValue("@requested_axis", (object?)document?.RequestedAxis ?? DBNull.Value);
 
         command.ExecuteNonQuery();
     }
