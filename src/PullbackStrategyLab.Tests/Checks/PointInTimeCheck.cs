@@ -118,6 +118,12 @@ public sealed class PointInTimeCheck
             // for this table means a verdict the evening being looked at could not have had.
             ["replay_result"] = "observed_at",
 
+            // What the gate read of a version, stamped and read to decide an answer: the research
+            // ledger shows where each version stands, and a version read on two nights writes two
+            // rows. An unbounded read would show tonight's reading against an older session, which
+            // for this table means a version reading as settled on an evening it was still open.
+            ["acceptance_reading"] = "observed_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the
@@ -270,6 +276,10 @@ public sealed class PointInTimeCheck
                 + "operational on the same terms as plan_run above. Nothing computes a figure about the "
                 + "market from it: the differences it counts are in variant_score, which is stamped and "
                 + "bounded.",
+            ["acceptance_run"] =
+                "observed_at is when one evening's gate ran and what it settled, which is operational "
+                + "on the same terms as score_run above. Nothing computes a figure about the market from "
+                + "it: the readings it counts are in acceptance_reading, which is stamped and bounded.",
             ["loss_run"] =
                 "what each of the classifier's two passes wrote, on the same terms as trade_run below. "
                 + "The classifications it counts are in loss_class, which is stamped twice and bounded "

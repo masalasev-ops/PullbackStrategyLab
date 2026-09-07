@@ -43,6 +43,8 @@ public sealed class VariantAdmitter
 
     public const string FamilyFlag = "--family";
     public const string DefinitionFlag = "--definition";
+
+    /// <summary>What would settle it. Taken for the baseline and refused for a selection version.</summary>
     public const string TargetFlag = "--target";
 
     /// <summary>The side a selection version applies to. A version is one side's, because the two are never pooled.</summary>
@@ -64,6 +66,22 @@ public sealed class VariantAdmitter
     public const string DefinitionIsDerived =
         "a selection version's definition is derived from the threshold it moves and is not typed. "
         + "Give " + DirectionFlag + ", " + ThresholdFlag + " and " + ValueFlag;
+
+    /// <summary>
+    /// Why a target may not be typed for a selection version.
+    ///
+    /// The gate that settles against it cannot read prose, so a typed target would be a sentence the
+    /// settlement ignores, and no reading of the register afterwards could say which of the two was
+    /// in force. It is derived from the settling rule on exactly the terms the definition is derived
+    /// from the threshold, and it is the more important of the two: a definition that disagrees with
+    /// its columns describes the version wrongly, and a target that disagrees with the rule means the
+    /// version was settled against something nobody wrote down.
+    /// see: A selection version's target is derived from the settling rule and is not typed
+    /// </summary>
+    public const string TargetIsDerived =
+        "a selection version's target is derived from the settling rule and is not typed: the gate "
+        + "settles on the interval around the paired difference and cannot read a sentence. Omit "
+        + TargetFlag;
 
     /// <summary>
     /// Why an execution version is refused outright in this generation.
@@ -106,15 +124,16 @@ public sealed class VariantAdmitter
         string family = Flag(args, FamilyFlag) ?? VariantFamily.Selection;
         string? definition = Flag(args, DefinitionFlag);
         string? target = Flag(args, TargetFlag);
+
         bool dryRun = args.Contains(DryRunFlag, StringComparer.Ordinal);
 
         if (string.IsNullOrWhiteSpace(variantId))
         {
             Console.Error.WriteLine(
                 $"{Name}: name the version. usage: {Name} <variant-id> {FamilyFlag} <{string.Join('|', VariantFamily.All)}> "
-                + $"{TargetFlag} \"<what would settle it>\" and then, for a selection version, "
-                + $"{DirectionFlag} <long|short> {ThresholdFlag} <name> {ValueFlag} <number>, or for the baseline "
-                + $"{DefinitionFlag} \"<what it is>\". [{DryRunFlag}]");
+                + $"and then, for a selection version, {DirectionFlag} <long|short> {ThresholdFlag} <name> "
+                + $"{ValueFlag} <number>, whose definition and target are both derived, or for the baseline "
+                + $"{DefinitionFlag} \"<what it is>\" {TargetFlag} \"<what would settle it>\". [{DryRunFlag}]");
             return 2;
         }
 
@@ -130,13 +149,6 @@ public sealed class VariantAdmitter
             return 1;
         }
 
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            Console.Error.WriteLine(
-                $"{Name}: a version with no target is a row nothing can settle. Give {TargetFlag}.");
-            return 2;
-        }
-
         MovedThreshold? moved = null;
 
         if (family == VariantFamily.Selection)
@@ -144,6 +156,12 @@ public sealed class VariantAdmitter
             if (!string.IsNullOrWhiteSpace(definition))
             {
                 Console.Error.WriteLine($"{Name}: {DefinitionIsDerived}.");
+                return 2;
+            }
+
+            if (!string.IsNullOrWhiteSpace(target))
+            {
+                Console.Error.WriteLine($"{Name}: {TargetIsDerived}.");
                 return 2;
             }
 
@@ -169,11 +187,24 @@ public sealed class VariantAdmitter
             // columns the scorer reads are one fact.
             definition = verdict.Reason;
         }
-        else if (string.IsNullOrWhiteSpace(definition))
+        else
         {
-            Console.Error.WriteLine(
-                $"{Name}: a version with no definition is a row nothing can settle. Give {DefinitionFlag}.");
-            return 2;
+            if (string.IsNullOrWhiteSpace(definition))
+            {
+                Console.Error.WriteLine(
+                    $"{Name}: a version with no definition is a row nothing can settle. Give {DefinitionFlag}.");
+                return 2;
+            }
+
+            // The baseline keeps a typed target, and that is not an exception to the rule above. It
+            // is the arm every other version is differenced against, so the gate never reads it and a
+            // derived target there would describe a settlement that cannot happen.
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                Console.Error.WriteLine(
+                    $"{Name}: a version with no target is a row nothing can settle. Give {TargetFlag}.");
+                return 2;
+            }
         }
 
         VariantAdmission admission = Admit(variantId, family, definition!, target, dryRun, moved);
@@ -209,14 +240,13 @@ public sealed class VariantAdmitter
         string variantId,
         string family,
         string definition,
-        string target,
+        string? target,
         bool dryRun = false,
         MovedThreshold? moved = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(variantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(family);
         ArgumentException.ThrowIfNullOrWhiteSpace(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(target);
 
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, "variant");
@@ -232,14 +262,25 @@ public sealed class VariantAdmitter
             ? MeasurementParameters.ExecutionMinimumPairedTrades
             : MeasurementParameters.MinimumEffectiveObservations;
 
+        string unit = MinimumSampleUnit.For(family);
+
+        // Derived here rather than taken, because the settling rule and the minimum it may not be
+        // asked before are both known here and neither is known to whoever typed the command. The
+        // baseline's is typed, and is the arm rather than a thing that settles.
+        // see: A selection version's target is derived from the settling rule and is not typed
+        string settledBy = family == VariantFamily.Selection
+            ? AcceptanceTest.Describe(minimumSample, unit)
+            : target ?? throw new ArgumentException(
+                "a version of this family has no derived target and none was given", nameof(target));
+
         var variant = new StoredVariant(
             variantId,
             generation,
             family,
             definition,
-            target,
+            settledBy,
             minimumSample,
-            MinimumSampleUnit.For(family),
+            unit,
             VariantStatus.Open,
             null,
             now)

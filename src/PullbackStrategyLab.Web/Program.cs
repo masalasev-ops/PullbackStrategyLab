@@ -508,6 +508,17 @@ public sealed class LabApiClient
         v.VariantId, v.Generation, v.Family, v.Definition, v.Target, v.MinimumSample,
         v.MinimumSampleUnit, v.Status, v.ResolvedAt, v.CreatedAt, v.IsBaseline, v.Live,
         v.Direction, v.Gate, v.ThresholdName, v.ThresholdFrom, v.ThresholdTo, v.Moved,
+        v.AgeDays,
+        v.Acceptance is null
+            ? null
+            : new AcceptanceView(
+                v.Acceptance.ReadOn, v.Acceptance.AgeDays, v.Acceptance.NightsScored,
+                v.Acceptance.NightsIdentical, v.Acceptance.NightsInSeries, v.Acceptance.Disagreements,
+                v.Acceptance.EffectiveObservations, v.Acceptance.MinimumSample,
+                v.Acceptance.MinimumSampleUnit, v.Acceptance.Matured, v.Acceptance.MeanDifference,
+                v.Acceptance.IntervalLow, v.Acceptance.IntervalHigh, v.Acceptance.BaselineWinRate,
+                v.Acceptance.VariantWinRate, v.Acceptance.Verdict, v.Acceptance.SettledBecause,
+                v.Acceptance.WithheldBecause, v.Acceptance.Population),
         [.. (v.Sides ?? []).Select(s => new SideView(
             s.Direction, s.NightsScored, s.NightsCarryingADifference, s.Unscoreable,
             s.BaselineOutsideCap, s.VariantOutsideCap,
@@ -681,7 +692,15 @@ public sealed class LabApiClient
         int MinimumSample, string MinimumSampleUnit, string Status, string? ResolvedAt,
         string CreatedAt, bool IsBaseline, bool Live, string? Direction, string? Gate,
         string? ThresholdName, string? ThresholdFrom, string? ThresholdTo, string? Moved,
+        int AgeDays, AcceptancePayload? Acceptance,
         IReadOnlyList<SidePayload>? Sides);
+
+    private sealed record AcceptancePayload(
+        string ReadOn, int AgeDays, int NightsScored, int NightsIdentical, int NightsInSeries,
+        int Disagreements, int EffectiveObservations, int MinimumSample, string MinimumSampleUnit,
+        bool Matured, string? MeanDifference, string? IntervalLow, string? IntervalHigh,
+        string? BaselineWinRate, string? VariantWinRate, string Verdict, string? SettledBecause,
+        string? WithheldBecause, string Population);
 
     private sealed record SidePayload(
         string Direction, int NightsScored, int NightsCarryingADifference, int Unscoreable,

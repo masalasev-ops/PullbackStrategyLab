@@ -65,6 +65,7 @@ public static class Program
         builder.Services.AddSingleton<ContextPacker>();
         builder.Services.AddSingleton<ResearcherSeat>();
         builder.Services.AddSingleton<ProposalRegistry>();
+        builder.Services.AddSingleton<AcceptanceGate>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -305,6 +306,7 @@ public static class Program
         [ContextPacker.Name] = (services, rest) => services.GetRequiredService<ContextPacker>().Run(rest),
         [ResearcherSeat.Name] = (services, rest) => services.GetRequiredService<ResearcherSeat>().Run(rest),
         [ProposalRegistry.Name] = (services, rest) => services.GetRequiredService<ProposalRegistry>().Run(rest),
+        [AcceptanceGate.Name] = (services, rest) => services.GetRequiredService<AcceptanceGate>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -396,6 +398,7 @@ public static class Program
         ContextPacker.Name,
         ResearcherSeat.Name,
         ProposalRegistry.Name,
+        AcceptanceGate.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

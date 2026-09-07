@@ -59,6 +59,7 @@
                 <tr>
                     <th>Version</th><th>Family</th><th>What it changes</th>
                     <th>Target</th><th>Minimum sample</th><th>Status</th><th>Registered</th>
+                    <th>Age</th>
                 </tr>
                 @foreach (VersionView version in versions)
                 {
@@ -82,6 +83,10 @@
                         <td>@version.Sample</td>
                         <td>@version.StatusReads</td>
                         <td>@version.CreatedAt</td>
+                        @* The failure table's own clause: a version whose sample never accumulates
+                           stays open and the ledger shows its age. On every row rather than on the
+                           open ones, because a resolved version's age is how long it took. *@
+                        <td class="age">@version.Age</td>
                     </tr>
                 }
             </table>
@@ -129,9 +134,64 @@
         </p>
     }
 
-    @foreach (VersionView version in Model.Research.Versions.Where(v => v.Sides.Count > 0))
+    @* Every registered version and not only the ones carrying a scored night. **The reading is
+       what says a version has no scored night**, so a loop over versions with sides would drop it
+       on exactly the versions it is about: a version registered inside the scoring horizon, and a
+       baseline, which has no series at all and never will. That is the sixth failure shape, where
+       the store holds the right answer and the surface does not carry it. *@
+    @foreach (VersionView version in Model.Research.Versions)
     {
-        <h3>@version.VariantId</h3>
+        <h3>@version.VariantId <span class="pill">@version.Age</span></h3>
+
+        @if (version.NoAccumulatedSample is string noSample)
+        {
+            @* A version the gate has not read yet is a different fact from one whose
+               sample is not accumulating, and saying which is better than a blank. *@
+            <p class="withheld-because">@noSample</p>
+        }
+
+        @if (version.NotSettleable is string notSettleable)
+        {
+            <p class="withheld-because">@notSettleable</p>
+        }
+
+        @if (version.Acceptance is AcceptanceView acceptance)
+        {
+            @* What the gate last read, in the two units it is read in: the accumulated
+               figure against the pre-registered bar, and the age beside it. Nothing here
+               is computed by the page; the figures are the reading's own. *@
+            <div class="acceptance @acceptance.Verdict">
+                <p class="accumulated">@acceptance.Accumulated</p>
+                <p class="over">@acceptance.Population</p>
+                <p class="nights">@acceptance.Nights</p>
+
+                @if (acceptance.Interval is string interval)
+                {
+                    <p class="figure">@interval</p>
+                }
+
+                @if (acceptance.WinRates is string rates)
+                {
+                    @* Reported beside expectancy and never settled on. A version raising
+                       win rate while lowering expectancy is rejected under its own name. *@
+                    <p class="diagnostic">win rate, a diagnostic and never the settlement:
+                        @rates</p>
+                }
+
+                <p class="withheld-because">@acceptance.Because</p>
+                <p class="muted">read on @acceptance.ReadOn, @acceptance.AgeDays day(s) after
+                    registration</p>
+            </div>
+        }
+
+        @if (version.Sides.Count == 0)
+        {
+            <p class="muted">
+                No night has been scored for this version, so there is no difference series here.
+                A version is scored on the nights it was live on whose scoring horizon has closed,
+                and a version registered inside that horizon has none yet.
+            </p>
+        }
 
         @foreach (SideView side in version.Sides)
         {
@@ -140,13 +200,6 @@
                 <p class="count">@side.Count</p>
                 <p class="over">@side.Over</p>
 
-                @if (version.NoAccumulatedSample is string noSample)
-                {
-                    @* The minimum is in effective observations and the nights are rows. Saying so
-                       is better than printing the two under one heading as though they were a
-                       fraction of each other. *@
-                    <p class="withheld-because">@noSample</p>
-                }
 
                 @if (side.Unscoreable > 0)
                 {
@@ -188,10 +241,11 @@
         }
 
         <p class="muted">
-            <b>The series and not a mean of it.</b> Settling this version against its target is
-            AcceptanceGate's at <b>6.7</b>, against the minimum sample written at creation and never
-            since. A running average here would be that answer computed early, by a page, with no
-            pre-registration in front of it.
+            <b>The series and not a mean of it.</b> The mean, the interval and the verdict above are
+            AcceptanceGate's own reading, read back from the store rather than computed here, against
+            the minimum sample written at creation and never since. A running average computed by
+            this page would be that answer computed twice, with the page as the last place anybody
+            looked.
         </p>
     }
 </section>

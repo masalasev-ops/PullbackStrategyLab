@@ -2728,3 +2728,23 @@ Why:  a screen is a reading rather than a definition. The same proposal screened
 Was:  the weekly schedule table holding four rows, ending at Saturday 08:30 for `ask-researcher`.
 Now:  a fifth row, Saturday 08:40 for `screen-proposals`, with the two kinds and the verdict the funnel makes ordinary.
 Why:  the registry is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch.
+
+### 2026-09-07 — SCHEMA.md — cites A version's night is one paired observation, and the minimum it is read against was derived over a different population
+Was:  `variant_score`'s `baseline_selected`, `variant_selected` row reading "what each rule picked out of it. **Two populations, not one**, so the two means below are over different rows and the row says how many each was over", and no column for the rows either mean was taken over.
+Now:  the same row saying the two counts are not the denominators, with why, and a `baseline_scored`, `variant_scored` row and a `baseline_wins`, `variant_wins` row beside it.
+Why:  each mean is taken over the selections whose forward return has landed, so a selection still inside its horizon is counted in the selection and is in neither mean. The stated denominator was the larger of the two from 5.2, which is a figure named over one population and computed over another. Nothing could see it because nothing had ever read the two numbers together, and 6.7 is the first component that reads them.
+
+### 2026-09-07 — SCHEMA.md — cites Acceptance measures expectancy, never win rate
+Was:  the research ownership table holding `variant`, `variant_score`, `score_run`, the twin, pack, proposal, replay and holdout stores, with no row for anything AcceptanceGate writes beyond its update of `variant`.
+Now:  two further rows, `acceptance_reading` and `acceptance_run`, with two column sections authoring them.
+Why:  6.7 builds the gate, and a settlement is two columns of `variant` and may be no more: the target and the minimum sample are written at creation and never again, so everything the gate weighed has to live somewhere it can be read back. The reading is written on every run rather than on the run that settles, because a version whose sample never accumulates is a state the failure table names and the sequence of readings is what says so.
+
+### 2026-09-07 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the nightly schedule table ending at 21:40 for `score-variants` before 21:50; and "The schedule as installed" saying thirty-two tasks registered in two acts, with the paragraph about the count being written in two parts and nothing after it.
+Now:  a 21:45 row for `settle-variants`, and three paragraphs saying the count is short again by five, why no check can see it, that registering the task is part of building the slot, and which five are outstanding with their times.
+Why:  `twins`, `pack`, `seat` and `registry` were built at 6.3 through 6.6, declared in all five places, reconciled by `slot-roster` in every direction, and no scheduled task was registered for any of them; `acceptance` is the fifth. Read from the machine on 2026-09-07: thirty-two tasks exist against thirty-seven declared slots. Whether a scheduled task exists is a property of the machine, which is the one subject no check in this corpus takes, and the fault 5.2 raised arriving a second time.
+
+### 2026-09-07 — BUILD_PLAN.md — cites A selection version's target is derived from the settling rule and is not typed
+Was:  the carried obligations table holding twenty-one rows and the operator's heading reading "The nine that are the operator's", with the reading beside it saying none of the nine rows is a phase 5 question and the ninth arriving on 2026-09-04.
+Now:  twenty-three rows, "The eleven that are the operator's", and the reading naming the tenth and eleventh as arriving on 2026-09-07 with 6.7.
+Why:  6.7 raises two findings that block nothing built and that only the operator can settle: the minimum sample a selection version is read against, derived over band 1's population and meaning about seven years over a version's, and the five slots declared everywhere and registered with the scheduler nowhere.

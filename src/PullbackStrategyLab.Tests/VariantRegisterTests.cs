@@ -290,7 +290,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, SetupDirection.Long,
             VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
             VariantAdmitter.ValueFlag, "0.50",
-            VariantAdmitter.TargetFlag, "a two-point gain in ten-day forward return",
         ]);
 
         Assert.Equal(0, code);
@@ -310,6 +309,67 @@ public sealed class VariantRegisterTests : IDisposable
         Assert.Contains("dip-shape", stored.Definition, StringComparison.Ordinal);
         Assert.Contains("0.40", stored.Definition, StringComparison.Ordinal);
         Assert.Contains("0.50", stored.Definition, StringComparison.Ordinal);
+
+        // And the target likewise, from 6.7. It is the settling rule the gate will actually run
+        // rather than a sentence the gate cannot read, and the two would otherwise be free to
+        // disagree with nothing to say which of them the version was settled against.
+        // see: A selection version's target is derived from the settling rule and is not typed
+        Assert.Equal(
+            AcceptanceTest.Describe(
+                MeasurementParameters.MinimumEffectiveObservations,
+                MinimumSampleUnit.EffectivePairedSetupObservations),
+            stored.Target);
+    }
+
+    /// <summary>
+    /// A target typed for a selection version is refused, on the terms a typed definition is.
+    ///
+    /// <b>The permanent proof that the derivation is not decoration.</b> The gate settles on an
+    /// interval and cannot read prose, so a stored sentence nobody runs would be a pre-registration
+    /// that says one thing while the settlement does another, and no reading of the register
+    /// afterwards could say which was in force.
+    /// see: A selection version's target is derived from the settling rule and is not typed
+    /// </summary>
+    [Fact]
+    public void A_typed_target_is_refused_for_a_selection_version()
+    {
+        int code = Admitter().Run([
+            "V1",
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.50",
+            VariantAdmitter.TargetFlag, "whatever I decide later",
+        ]);
+
+        Assert.Equal(2, code);
+        Assert.Empty(Registered());
+    }
+
+    /// <summary>
+    /// The baseline keeps a typed target, and it is not an exception to the rule above.
+    ///
+    /// It is the arm every other version is differenced against, so the gate never reads it and a
+    /// derived target there would describe a settlement that cannot happen.
+    /// </summary>
+    [Fact]
+    public void The_baseline_keeps_a_typed_target_and_is_refused_without_one()
+    {
+        Assert.Equal(2, Admitter().Run([
+            "V0",
+            VariantAdmitter.FamilyFlag, VariantFamily.Baseline,
+            VariantAdmitter.DefinitionFlag, "the rule as it stands",
+        ]));
+
+        Assert.Equal(0, Admitter().Run([
+            "V0",
+            VariantAdmitter.FamilyFlag, VariantFamily.Baseline,
+            VariantAdmitter.DefinitionFlag, "the rule as it stands",
+            VariantAdmitter.TargetFlag, "the arm every version is differenced against",
+        ]));
+
+        StoredVariant baseline = Assert.Single(Registered());
+        Assert.Equal("the arm every version is differenced against", baseline.Target);
     }
 
     /// <summary>
@@ -325,7 +385,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, SetupDirection.Long,
             VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
             VariantAdmitter.ValueFlag, "0.50",
-            VariantAdmitter.TargetFlag, "a two-point gain",
             VariantAdmitter.DefinitionFlag, "loosens the dip a bit",
         ]);
 
@@ -354,7 +413,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, SetupDirection.Short,
             VariantAdmitter.ThresholdFlag, SelectionRule.GiveUpRanges,
             VariantAdmitter.ValueFlag, "0.75",
-            VariantAdmitter.TargetFlag, "a two-point gain",
         ]));
 
         Assert.Equal(2, Admitter().Run([
@@ -363,7 +421,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, "sideways",
             VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
             VariantAdmitter.ValueFlag, "0.50",
-            VariantAdmitter.TargetFlag, "a two-point gain",
         ]));
 
         Assert.Equal(2, Admitter().Run([
@@ -372,7 +429,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, SetupDirection.Long,
             VariantAdmitter.ThresholdFlag, "a-threshold-nobody-named",
             VariantAdmitter.ValueFlag, "0.50",
-            VariantAdmitter.TargetFlag, "a two-point gain",
         ]));
 
         Assert.Empty(Registered());
@@ -391,7 +447,6 @@ public sealed class VariantRegisterTests : IDisposable
             VariantAdmitter.DirectionFlag, SetupDirection.Long,
             VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
             VariantAdmitter.ValueFlag, "0.40",
-            VariantAdmitter.TargetFlag, "a two-point gain",
         ]));
 
         Assert.Empty(Registered());

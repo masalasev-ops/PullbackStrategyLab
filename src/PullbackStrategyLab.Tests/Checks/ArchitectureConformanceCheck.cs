@@ -1972,6 +1972,33 @@ public sealed partial class ArchitectureConformanceCheck
                    StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A version whose sample never accumulates stays open, its age is on the row, and nothing
+    /// settles it by the calendar.
+    ///
+    /// <b>Read from the store's own clauses rather than from the gate.</b> "No timeout that quietly
+    /// accepts or rejects" is a claim about every settlement that will ever be written, and a stage
+    /// holding no calendar input says it only about the stage there is today. The reading refuses a
+    /// verdict other than `open` unless it matured and produced an interval, and refuses an `open`
+    /// verdict that carries no shortfall, so a later stage deciding a version had waited long enough
+    /// is refused by the row.
+    /// </summary>
+    private static bool AVersionThatNeverAccumulatesStaysOpen()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("060-acceptance", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains(
+                   "CHECK (verdict = 'open' OR (matured = 1 AND mean_difference IS NOT NULL))",
+                   StringComparison.Ordinal)
+            && migration.Contains(
+                   "CHECK ((verdict = 'open') = (withheld_because IS NOT NULL))",
+                   StringComparison.Ordinal)
+            && migration.Contains(
+                   "age_days              INTEGER NOT NULL CHECK (age_days >= 0)",
+                   StringComparison.Ordinal);
+    }
+
     private static bool ARejectionCarriesWhatItWasMeasuredAt()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
@@ -2240,6 +2267,18 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "migration 058 no longer constrains a week with no answer to carry a reason and no "
                     + "change, so a partial proposal could be filed and would read as one the seat made"),
+
+            "Variant sample never accumulates" => AVersionThatNeverAccumulatesStaysOpen()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "the reading refuses any verdict but `open` unless the version reached the sample "
+                    + "written into it at creation and produced an interval, refuses an open verdict "
+                    + "carrying no shortfall, and records the version's age on every row, so a version "
+                    + "that never accumulates stays open with its age readable and nothing can settle it "
+                    + "by the calendar")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 060 no longer binds a settled reading to a matured sample and an interval, "
+                    + "so a stage deciding a version had waited long enough could write one and it would "
+                    + "read as a version measured against its target"),
 
             "Risk gate blocks an order" => TheGateWritesABlockedRowWithItsReason()
                 ? Claim.Passed("Failure behaviour", condition,

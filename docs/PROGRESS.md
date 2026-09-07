@@ -17592,3 +17592,104 @@ Next:       **6.7**, AcceptanceGate and the 21:45 slot, which reads only status 
             and cannot touch a target, asserted by the store and by the type having no path to
             either column. Verified over an authored version, because no version can mature: V0 was
             frozen on 2026-09-03 against a minimum of 1,802 effective observations.
+
+## 6.7 — 2026-09-07 — phase-6-7-acceptance-gate — AcceptanceGate, and a target the gate could not read
+
+Built:      **`AcceptanceGate`, the `acceptance` slot at 21:45, and migration 060.** It settles every
+            open selection version that has reached the sample written into it at creation, and
+            leaves every other one open with its shortfall in words. It writes `status` and
+            `resolved_at` and has no path to any other column of the register: one UPDATE naming two
+            columns, asserted over the shipped source and asserted behaviourally by reading the
+            target, the minimum sample, the definition, the moved threshold and the registration date
+            back across a real acceptance (see: Targets and minimum samples are written at creation
+            and are immutable). Everything it weighed goes to `acceptance_reading`, written on every
+            run rather than on the run that settles. **It settles on expectancy and never on win
+            rate**, the two rates being reported beside the interval over their own denominators, and
+            a version that raised the win rate while lowering expectancy being rejected under that
+            name rather than under a bound that failed to clear
+            (see: Acceptance measures expectancy, never win rate).
+
+Found:      **The target is prose and the gate that settles against it cannot read a word of it.**
+            `variant.target` is a sentence an operator types, and this is the first component that
+            has to act on one. 5.1 made exactly this repair for `definition` and stopped at the
+            column beside it, on the reasoning that a sentence somebody types can disagree with the
+            columns beside it and the day it does there is nothing to say which of the two the
+            version is. **It is worse for the target**: a definition that disagrees describes the
+            version wrongly, and a target that disagrees means the version was settled against
+            something nobody wrote down. The settling rule is now one method, the admitter derives a
+            selection version's target from it and refuses a typed one, and the baseline keeps a
+            typed target because the gate never reads it
+            (see: A selection version's target is derived from the settling rule and is not typed).
+
+Found:      **The minimum sample a selection version is read against was derived over a different
+            population, and applying it here means about seven years.** 1,802 effective paired setup
+            observations was derived at 5.0(b) over band 1's population, being series carrying 53.5
+            setup-versus-control pairs a night and reaching 90% power at 202 nights. A version's
+            series is not that: `variant_score` is a difference of two means over two overlapping
+            selections, so there is no per-name pairing and no within-night dispersion to record,
+            which migration 052 states in its own words as **what is paired is the night**.
+            `PairedInterval.Disperse` reads a series that cannot say how its own pairs dispersed as
+            one observation a night, which is the reading that cannot overstate, so the same figure
+            means 202 nights where it was derived and 1,802 nights here. **Nothing is blocked and
+            nothing was worked around**: the gate counts honestly, states the population on every
+            reading, and leaves the version open. What is owed is a second derivation rather than an
+            edit to the first, and it is a row at the operator
+            (see: A version's night is one paired observation, and the minimum it is read against was
+            derived over a different population).
+
+Found:      **A night the two rules selected identically would have advanced the version toward
+            maturity while pulling its mean toward nought.** Such a night carries a difference of
+            exactly nought by construction, so it is not an observation of the version at all. Left
+            in the series it would have done both harms at once, and every count would have been
+            right. Those nights are counted on the reading, apart from the nights the version was
+            actually exercised on, and kept out of the series. A permanent test seeds forty exercised
+            nights and thirty identical ones and reads all four counts back.
+
+Found:      **`variant_score` stated the denominator of its own means and had it wrong from 5.2.**
+            The row says each mean is over the count of what that rule selected. It is not: the
+            scorer takes each mean over the selections whose forward return has landed, so on any
+            night an outcome is still open the stated denominator is the larger of the two. That is
+            the fifth failure shape, and nothing could see it because nothing had ever read the two
+            numbers together. `baseline_scored` and `variant_scored` record the rows each mean was
+            taken over. **And the win rate had nowhere to come from**: nothing in the store held a
+            win count, so the gate would have had to recompute one from `forward_return`, which is a
+            second implementation of what the version selected sitting beside the scorer's own.
+
+Found:      **Five slots are declared everywhere and registered with the scheduler nowhere, and it is
+            the second instance of the fault 5.2 raised.** Read from the machine on 2026-09-07:
+            thirty-two scheduled tasks exist and the slot table declares thirty-seven. `twins`,
+            `pack`, `seat` and `registry` were built at 6.3, 6.4, 6.5 and 6.6, each declared in the
+            slot table, the parameter set, the worker's advertised stages, RUNBOOK's schedule and
+            `NightlySchedule`, reconciled by `slot-roster` in every direction, and called by nothing;
+            `acceptance` is built here and is the fifth. **Saturday 2026-09-05 was the first Saturday
+            after `twins` and `pack` landed and neither fired**, so the weekly research loop has
+            never run outside a test. **It is the seventh failure shape exactly** and no green report
+            is or was wrong by it: whether a scheduled task exists is a property of the machine.
+            RUNBOOK now says registering the task is part of building the slot and names the five
+            with their times, and the act is a row at the operator.
+
+Found:      **The ledger drew a version's reading only where the version had a scored night**, which
+            is the sixth failure shape in the one place it does most harm. The reading is what says a
+            version has no scored night, so the loop dropped it on exactly the versions it is about:
+            a version registered inside the scoring horizon, and the baseline, which has no series at
+            all and never will. The section now runs over every registered version, says why the
+            baseline carries no figure rather than leaving a blank, and carries each version's age.
+
+Measured:   **Over the golden fixture the gate reads one version and settles none.** One authored
+            selection version is registered through the shipped admitter and read; the baseline is
+            passed over and counted; the register is untouched and `resolved_at` stays null. The
+            effective count is nought rather than small, because no night of the fixture carries a
+            difference for that version, and the one verdict the run records is `open`. That is not a
+            thin exercise of the gate: it is the state the failure table names, and it is the state
+            every version in this lab will be in for years.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,179 tests. `tools/verify-phase.ps1` GREEN: 154 claims,
+            153 passed, 0 failed, 1 out of scope, 0 unexamined.
+
+Carried:    **Two raised, both due at the operator, and neither blocks anything built.** The minimum
+            sample a selection version is settled against, re-derived over the version's own
+            population. And the five scheduled tasks that do not exist, which cost one Saturday a
+            week and cannot be bought back.
+
+Next:       **6.8**, scoreboard band 3 and the pack comparison surface, both rendering their withheld
+            state with a count rather than a nought, and carrying the six obligations now due there.

@@ -270,6 +270,15 @@ public sealed class VariantScorer
             Insert(
                 connection, variant, night, moved.Direction, setups.Count,
                 baselineSet, variantSet, baselineMean, variantMean,
+                // The denominator each mean was taken over, and how many of those rows ended ahead.
+                // The returns are direction-signed, so ahead is above nought on either side. Both
+                // recorded from 6.7 rather than left to be inferred from the selection counts, which
+                // are the larger number on any night an outcome is still open.
+                // see: Acceptance measures expectancy, never win rate
+                withheld is null ? baselineReturns.Length : null,
+                withheld is null ? variantReturns.Length : null,
+                withheld is null ? baselineReturns.Count(r => r > 0m) : null,
+                withheld is null ? variantReturns.Count(r => r > 0m) : null,
                 baselineOutside, variantOutside, unscoreable, withheld, computedAt);
 
             tally.NightsScored++;
@@ -516,6 +525,10 @@ public sealed class VariantScorer
         IReadOnlyCollection<string> variantSet,
         decimal? baselineMean,
         decimal? variantMean,
+        int? baselineScored,
+        int? variantScored,
+        int? baselineWins,
+        int? variantWins,
         int baselineOutside,
         int variantOutside,
         int unscoreable,
@@ -530,11 +543,13 @@ public sealed class VariantScorer
                 variant_id, session_date, direction, generation, family, horizon_days,
                 flagged, baseline_selected, variant_selected, both_selected, variant_only, baseline_only,
                 baseline_mean_return, variant_mean_return, mean_difference,
+                baseline_scored, variant_scored, baseline_wins, variant_wins,
                 baseline_outside_cap, variant_outside_cap, unscoreable, withheld_because, computed_at)
             VALUES (
                 @variant_id, @session_date, @direction, @generation, @family, @horizon,
                 @flagged, @baseline_selected, @variant_selected, @both, @variant_only, @baseline_only,
                 @baseline_mean, @variant_mean, @difference,
+                @baseline_scored, @variant_scored, @baseline_wins, @variant_wins,
                 @baseline_outside, @variant_outside, @unscoreable, @withheld, @computed_at);
             """;
 
@@ -561,6 +576,10 @@ public sealed class VariantScorer
             baselineMean is decimal bm && variantMean is decimal vm
                 ? StoreText.RatioToStorageText(vm - bm)
                 : DBNull.Value);
+        command.Parameters.AddWithValue("@baseline_scored", (object?)baselineScored ?? DBNull.Value);
+        command.Parameters.AddWithValue("@variant_scored", (object?)variantScored ?? DBNull.Value);
+        command.Parameters.AddWithValue("@baseline_wins", (object?)baselineWins ?? DBNull.Value);
+        command.Parameters.AddWithValue("@variant_wins", (object?)variantWins ?? DBNull.Value);
         command.Parameters.AddWithValue("@baseline_outside", baselineOutside);
         command.Parameters.AddWithValue("@variant_outside", variantOutside);
         command.Parameters.AddWithValue("@unscoreable", unscoreable);

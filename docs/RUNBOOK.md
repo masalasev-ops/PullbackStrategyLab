@@ -128,6 +128,7 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | `losses`, after the forward returns because half of what it answers is one of them. It spends no vendor call. **Two passes, because the two answers arrive at different times.** The mechanism of every loss that closed tonight, read from the exit fill's basis: a gap is an exit that filled at an open already past the price it named, and everything else is ordinary. Then the aftermath of every earlier loss whose ten-session horizon has since closed, at +1R on the direction-signed return from the trigger: at or above it the stop-out was noise, below it the setup failed. **A row still waiting on a horizon carries no aftermath and is not `unclassified`**, which is what the horizon having closed with no figure looks like, and the two are counted apart on the night's row | 0 |
 | 21:40 | `score-variants`, which differences each live version against the baseline over the nights whose scoring horizon has closed. It spends no vendor call. **One row per version per night per side, and the two sides are never added**: a version is one side's, because a threshold belongs to one side's gate list. A night still inside its horizon waits and is counted as waiting rather than scored thin, and a night the frozen signals cannot judge the moved gate over records that count beside the figure. **A version selecting a name outside that night's capped sixty is refused a fill and the row says how many**, on both sides, so a version scoring poorly because it selected outside the cap is told apart from one scoring poorly on its merits. **A night whose register holds only the baseline is reported partial and says so**, which is the state after the freeze and before the first proposal | 0 |
+| 21:45 | `settle-variants`, which settles every open selection version that has reached the sample written into it at creation, and leaves every other one open with its shortfall stated. It spends no vendor call. **It writes `status` and `resolved_at` and can reach no other column of the register**, so a result cannot rewrite the target it was measured against (see: Targets and minimum samples are written at creation and are immutable). **It settles on expectancy and never on win rate**, the win rate being reported beside it as a diagnostic and a version that raised it while lowering expectancy being rejected under that name (see: Acceptance measures expectancy, never win rate). **The baseline is passed over rather than filtered out silently**: it is the arm every other version is differenced against, so there is no series to take an interval over, and the run counts the baselines it passed. **Nothing here settles on the calendar**, so a version whose sample never accumulates stays open for as long as that is true and the ledger shows its age | 0 |
 | 21:50 | `scoreboard`, the three bands, every panel with its own count | 0 |
 | 22:00 | `snapshot-db`, the night's copy, which is the recovery path | 0 |
 | **total** | | **~2,723 against a 5,000 ceiling** |
@@ -173,6 +174,27 @@ the two acts fifteen slots were declared in the slot table, the parameter set, t
 and the schedule above, reconciled in every direction by `slot-roster`, and called by nothing. A
 paragraph reading thirty-two from the start would say nothing about the four nights that ran
 seventeen of them.
+
+**And the count is short again, by five, which is the fault writing it in two parts was meant to make
+visible.** Read from the machine on 2026-09-07: thirty-two tasks are registered and the slot table
+declares **thirty-seven**. `twins`, `pack`, `seat` and `registry` were built at 6.3, 6.4, 6.5 and 6.6,
+each declared in all five places and reconciled by `slot-roster` in every direction, and no scheduled
+task was registered for any of them; `acceptance` is built at 6.7 and is the fifth. Saturday
+2026-09-05 was the first Saturday after `twins` and `pack` landed and neither fired, so the weekly
+research loop has never run outside a test.
+
+**`slot-roster` cannot see this and never could.** Whether a scheduled task exists is a property of
+the machine, and every check in this corpus takes its subject from the source, the documents, the
+golden fixture or a store the check builds itself. The morning report is what sees it, and it reports
+on a session that ran rather than announcing a slot that has never existed at all. **So registering
+the task is part of building the slot**, on the same terms migrating the store is part of merging a
+migration, and a checkpoint that adds a slot records the registration in its own entry or records
+that it is owed (see: Every phase ends in a generated phase report, not in a page somebody looks at).
+
+**Registering one is the same act the fifteen were registered by**, being an export of an existing
+task's XML with four lines changed: the description, the URI, the start boundary and the slot in the
+arguments. The five outstanding are `twins` at Saturday 08:10, `pack` at Saturday 08:20, `seat` at
+Saturday 08:30, `registry` at Saturday 08:40 and `acceptance` at 21:45 on weekdays.
 
 `tools/nightly.ps1` maps a slot to the verbs that slot runs and nothing else. It addresses the store
 by absolute path, because `DataRoot` resolves through the working directory and a scheduled task's
