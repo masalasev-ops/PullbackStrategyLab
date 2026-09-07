@@ -2,6 +2,9 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Research;
+using PullbackStrategyLab.Worker.Seats;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Worker.Vendor;
 
@@ -60,6 +63,7 @@ public static class Program
         builder.Services.AddSingleton<SignalAdmissionTest>();
         builder.Services.AddSingleton<TwinPairFinder>();
         builder.Services.AddSingleton<ContextPacker>();
+        builder.Services.AddSingleton<ResearcherSeat>();
         builder.Services.AddSingleton<ScanEngine>();
         builder.Services.AddSingleton<TierClassifier>();
         builder.Services.AddSingleton<RegimeLabeler>();
@@ -83,6 +87,17 @@ public static class Program
         // needs the client itself because it stores responses verbatim rather than parsed.
         builder.Services.AddHttpClient<EodhdClient>();
         builder.Services.AddSingleton<IMarketDataVendor>(sp => sp.GetRequiredService<EodhdClient>());
+
+        // All three researcher transports are constructed whether or not one is selected, which is
+        // the provision the operator ruled for rather than clutter: the day the subscription stops
+        // is a configuration value, and a path that only existed when chosen would be a path nobody
+        // could switch to in a hurry. The seat picks one by name and refuses if it holds none.
+        // see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops
+        builder.Services.AddSingleton<IResearchTransport, SubscriptionTransport>();
+        builder.Services.AddHttpClient<ApiTransport>();
+        builder.Services.AddHttpClient<LocalTransport>();
+        builder.Services.AddSingleton<IResearchTransport>(sp => sp.GetRequiredService<ApiTransport>());
+        builder.Services.AddSingleton<IResearchTransport>(sp => sp.GetRequiredService<LocalTransport>());
 
         using IHost host = builder.Build();
 
@@ -160,10 +175,43 @@ public static class Program
         ArgumentException.ThrowIfNullOrWhiteSpace(stage);
         ArgumentNullException.ThrowIfNull(connections);
 
+        if (WhyTheSeatCannotRun(stage, Environment.GetEnvironmentVariable(
+                ResearcherOptions.BannedEnvironmentVariable)) is string banned)
+        {
+            return banned;
+        }
+
         return RunsWhateverVersionTheStoreIsAt.Contains(stage, StringComparer.Ordinal)
             ? null
             : WhyTheStoreCannotBeRead(connections);
     }
+
+    /// <summary>
+    /// Why the researcher seat may not run, or null when it may.
+    ///
+    /// <b>The key is banned from the environment on every transport, for a different reason on
+    /// each.</b> On the subscription path its presence silently defeats plan authentication and
+    /// bills API rates, which is a failure that costs money and reads as success. On the API path
+    /// the key belongs in configuration like every other secret, so one in the environment means two
+    /// places supply the same credential and nothing on the surface says which won.
+    ///
+    /// <b>It refuses this stage rather than every stage, and that is a judgement rather than an
+    /// oversight.</b> The fault is about which credential answers an ask, so it can only happen on a
+    /// night the seat is asked; refusing the bar ingest over it would stop a night's evidence for a
+    /// variable that has nothing to do with the vendor. The value is never printed, only its name.
+    ///
+    /// Pure over its input, so the refusal is proved without setting a variable in the test process.
+    /// see: The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface
+    /// </summary>
+    public static string? WhyTheSeatCannotRun(string stage, string? bannedValue) =>
+        string.Equals(stage, ResearcherSeat.Name, StringComparison.Ordinal)
+        && !string.IsNullOrWhiteSpace(bannedValue)
+            ? $"{ResearcherOptions.BannedEnvironmentVariable} is set in the environment and the seat "
+              + "refuses to ask with it present. On the subscription transport it silently defeats "
+              + "plan authentication and bills API rates; on the API transport the key is read from "
+              + $"\"{ResearcherOptions.ResearcherKeyName}\" and two sources for one credential means "
+              + "nothing on the surface says which won. Unset it and run the slot again."
+            : null;
 
     /// <summary>
     /// Why the store cannot be read by this build, or null when it can.
@@ -254,6 +302,7 @@ public static class Program
         [SignalAdmissionTest.Name] = (services, rest) => services.GetRequiredService<SignalAdmissionTest>().Run(rest),
         [TwinPairFinder.Name] = (services, rest) => services.GetRequiredService<TwinPairFinder>().Run(rest),
         [ContextPacker.Name] = (services, rest) => services.GetRequiredService<ContextPacker>().Run(rest),
+        [ResearcherSeat.Name] = (services, rest) => services.GetRequiredService<ResearcherSeat>().Run(rest),
         [ScanEngine.Name] = (services, rest) => services.GetRequiredService<ScanEngine>().Run(rest),
         [TierClassifier.Name] = (services, rest) => services.GetRequiredService<TierClassifier>().Run(rest),
         [RegimeLabeler.Name] = (services, rest) => services.GetRequiredService<RegimeLabeler>().Run(rest),
@@ -343,6 +392,7 @@ public static class Program
         SignalAdmissionTest.Name,
         TwinPairFinder.Name,
         ContextPacker.Name,
+        ResearcherSeat.Name,
         SetupJournal.Name,
         ScoreboardBuilder.Name,
         CeilingCalculator.Name,

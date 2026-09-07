@@ -9,6 +9,7 @@ using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Indicators;
 using PullbackStrategyLab.Core.Measurement;
 using PullbackStrategyLab.Data;
+using PullbackStrategyLab.Worker.Seats;
 using PullbackStrategyLab.Worker.Stages;
 using PullbackStrategyLab.Web.Pages;
 using PullbackStrategyLab.Web.Shell;
@@ -914,6 +915,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(LibraryFigures());
         measurements.AddRange(TwinFigures());
         measurements.AddRange(PackFigures());
+        measurements.AddRange(SeatFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
@@ -2774,6 +2776,149 @@ public sealed class PhaseReplay : IDisposable
             new("pack.falseDiscoveryThreshold",
                 CorrectionReading.Render(MultipleComparison.FalseDiscoveryThreshold(first.SignalsScreened, []))),
         ];
+    }
+
+    /// <summary>
+    /// The researcher seat over the fixture, which is 6.5's deliverable.
+    ///
+    /// <b>Every one of the four outcomes is produced, because four outcomes are four populations.</b>
+    /// A guard over a set is applied to that set, and a replay that exercised the answering branch
+    /// while three others went unmeasured would be reporting a figure over a population other than
+    /// the one its name says. The seat is run four times against a stub that returns what each
+    /// branch needs, and a fifth time as a stopgap.
+    ///
+    /// <b>The stub is the transport and never the stage.</b> Everything downstream of the answer is
+    /// the shipped code: the pack is cut by the real packer, the document is parsed and validated by
+    /// the real reader, the tripwire is the real predicate and the row is refused or accepted by the
+    /// real store. What is authored is the answer text, which is the one thing no fixture can hold,
+    /// because it is what a model said.
+    /// see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it
+    ///
+    /// <b>The abstention that names the planted null is here as a regression and not as a curiosity.</b>
+    /// It is the answer a real model gave on 2026-09-07, and under the tripwire as written before
+    /// 6.5 it failed pack version 1. A figure that reported "no version failed" over a fixture that
+    /// never contained the case would have been the same green for a different reason.
+    /// see: The planted-null tripwire is scoped to what a proposal rests on, and an abstention rests on nothing
+    /// </summary>
+    private IReadOnlyList<Measurement> SeatFigures()
+    {
+        decimal inForce = SelectionRule.Long.Value(SelectionRule.MaximumRetrace);
+
+        string proposal = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            outcome = "proposed",
+            family = "selection",
+            change = new
+            {
+                direction = SetupDirection.Long,
+                gate = "dip-shape",
+                threshold_name = SelectionRule.MaximumRetrace,
+                from = inForce,
+                to = inForce - 0.05m,
+            },
+            mechanism = "a shallower dip keeps the thrust intact, so the entry is nearer the trend",
+            evidence_setup_ids = new[] { "authored-long-1" },
+            evidence_signals = new[] { "retrace_depth" },
+            refutation = "the shallower band does no better over a full quarter",
+            observations_to_settle = 400,
+        });
+
+        string abstention =
+            "{\"outcome\":\"abstained\",\"abstained_because\":\"no signal separates outcomes yet\"}";
+
+        string abstentionNamingTheNull =
+            "{\"outcome\":\"abstained\",\"abstained_because\":\"the only separation is in "
+            + SignalLibrary.NullControl + ", which is not a mechanism\"}";
+
+        SeatResult proposed = AskTheSeat(StubbedSeat.Answering(SeatTransport.Subscription, proposal));
+        SeatResult abstained = AskTheSeat(StubbedSeat.Answering(SeatTransport.Subscription, abstention));
+        SeatResult named = AskTheSeat(StubbedSeat.Answering(SeatTransport.Subscription, abstentionNamingTheNull));
+        SeatResult unreadable = AskTheSeat(
+            StubbedSeat.Answering(SeatTransport.Subscription, "I think you should loosen the retrace gate."));
+        SeatResult unavailable = AskTheSeat(StubbedSeat.Refusing("the subscription has lapsed"));
+        SeatResult stopgap = AskTheSeat(StubbedSeat.Answering(SeatTransport.Local, proposal));
+
+        return
+        [
+            // The empty tool set, as the subscription seat's own arguments state it. Not the tool
+            // list a session reports, which no fixture can hold: that half is a behavioural test.
+            new("seat.emptyToolSet",
+                new SubscriptionTransport(_options).Arguments()
+                    .Contains(SubscriptionTransport.EmptyToolSet, StringComparer.Ordinal)
+                    ? "every tool removed"
+                    : "tools present"),
+            new("seat.transports", SeatTransport.All.Count.ToString(CultureInfo.InvariantCulture)),
+
+            new("seat.proposed.outcome", proposed.Outcome),
+            new("seat.proposed.threshold", proposed.Document?.Change?.ThresholdName ?? "none"),
+            new("seat.proposed.countsTowardHitRate", proposed.CountsTowardHitRate ? "counted" : "excluded"),
+
+            new("seat.abstained.outcome", abstained.Outcome),
+            new("seat.abstained.change", abstained.Document?.Change is null ? "none" : "carried"),
+
+            // The 6.4 regression, over the answer that produced it.
+            new("seat.abstentionNamingTheNull.outcome", named.Outcome),
+            new("seat.abstentionNamingTheNull.failsPackVersion", named.FailsPackVersion ? "failed" : "untouched"),
+
+            new("seat.unreadable.outcome", unreadable.Outcome),
+            new("seat.unreadable.textKept", unreadable.AnswerText is null ? "discarded" : "kept"),
+
+            new("seat.unavailable.outcome", unavailable.Outcome),
+            new("seat.unavailable.change", unavailable.Document is null ? "none" : "carried"),
+
+            new("seat.stopgap.countsTowardHitRate", stopgap.CountsTowardHitRate ? "counted" : "excluded"),
+            new("seat.stopgap.failsPackVersion", stopgap.FailsPackVersion ? "failed" : "untouched"),
+        ];
+    }
+
+    /// <summary>
+    /// One ask through the shipped stage, with the clock moved on so each cut and each filed row
+    /// takes its own generation key rather than colliding with the last.
+    /// </summary>
+    private SeatResult AskTheSeat(IResearchTransport transport)
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        // Configured to the transport being asked, because the seat picks by name and refuses where
+        // it holds none. The stopgap run is the reason: it is a different reader and the whole point
+        // of measuring it is that the record says so.
+        IOptions<PullbackStrategyLabOptions> options = Options.Create(_options.Value with
+        {
+            Researcher = _options.Value.Researcher with { Transport = transport.Transport },
+        });
+
+        return new ResearcherSeat(
+            _connections, Logger(), _clock, options,
+            new ContextPacker(_connections, Logger(), _clock, options),
+            [transport]).Ask(AsOf);
+    }
+
+    /// <summary>A transport that answers with whatever the replay hands it, or refuses.</summary>
+    private sealed class StubbedSeat : IResearchTransport
+    {
+        private readonly string? _text;
+        private readonly string? _because;
+
+        private StubbedSeat(string transport, string? text, string? because)
+        {
+            Transport = transport;
+            _text = text;
+            _because = because;
+        }
+
+        public static StubbedSeat Answering(string transport, string text) => new(transport, text, null);
+
+        public static StubbedSeat Refusing(string because) =>
+            new(SeatTransport.Subscription, null, because);
+
+        public string Transport { get; }
+
+        public string ConfiguredModel => ResearcherOptions.PinnedModel;
+
+        public SeatAnswer Ask(string pack, CancellationToken cancellationToken) =>
+            _because is not null
+                ? SeatAnswer.Unavailable(Transport, ConfiguredModel, _because)
+                : SeatAnswer.Answer(Transport, ConfiguredModel, "claude-opus-5-20260101", _text!);
     }
 
     /// <summary>

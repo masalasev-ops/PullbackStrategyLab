@@ -50,6 +50,7 @@ public sealed record PanelView(
         "band0.setupsOnFile" => "Setups on file",
         "band0.correctedRows" => "Corrected rows",
         "band0.worstLatenessMinutes" => "Worst lateness, minutes",
+        "band0.researcherSeat" => "Researcher seat",
         "band1.vsLoose" => "Against loose controls",
         "band1.vsTight" => "Against tight controls",
         "band2.ceilingGap" => "Ceiling gap",
@@ -76,6 +77,8 @@ public sealed record PanelView(
             "A correction is a repair the night could not make. Rising means an input stage is failing rather than that the record is improving",
         "band0.worstLatenessMinutes" =>
             "Measured from the session's own end of day. Approaching the lateness bound means a repair is close to being refused outright",
+        "band0.researcherSeat" =>
+            "Reads \"not asked\" when the last weekly ask could not be made, and names the transport that refused. A lapsed subscription and a plan limit look the same from here: turn the local stopgap on rather than lose the week",
         "band1.vsLoose" =>
             "Measures the whole funnel, thrust scan included. Expected to be the larger of the two",
         "band1.vsTight" =>

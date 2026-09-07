@@ -59,7 +59,40 @@ public sealed class ContextPackerTests : IDisposable
     // ---- the deliverable ----------------------------------------------------------------------
 
     [Fact]
-    public void All_nine_sections_are_rendered_and_each_carries_its_own_count()
+    public void The_first_section_is_the_rule_in_force_and_states_every_threshold_per_side()
+    {
+        // The value a proposal moves from, which no section carried until 6.5. A model asked for a
+        // proposal against a pack without it abstained twice, correctly, and said so.
+        // see: The rule in force is the pack's first section, because a proposal moves a threshold from a value
+        Admitter().Admit(Today);
+
+        RenderedSection rule = Packer().Build(Today).Pack.Sections[0];
+
+        Assert.Equal("Rule in force", rule.Name);
+
+        // Every threshold on both sides, named with the gate and the family that own it, because a
+        // proposal naming an execution threshold is refused for a reason the model can read here.
+        foreach (SelectionRule side in (SelectionRule[])[SelectionRule.Long, SelectionRule.Short])
+        {
+            foreach (RuleThreshold threshold in side.Thresholds)
+            {
+                Assert.Contains(
+                    rule.Lines,
+                    line => line.StartsWith($"{side.Direction} {threshold.Name} (gate {threshold.Gate}, ", StringComparison.Ordinal));
+            }
+        }
+
+        // And the value a proposal has to move from, in the store's own text form so it is one
+        // string on both machines.
+        Assert.Contains(
+            rule.Lines,
+            line => line.EndsWith(
+                SelectionRule.Long.Value(SelectionRule.MaximumRetrace).ToString("F6", CultureInfo.InvariantCulture),
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void All_ten_sections_are_rendered_and_each_carries_its_own_count()
     {
         Admitter().Admit(Today);
 

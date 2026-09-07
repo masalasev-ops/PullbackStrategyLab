@@ -654,16 +654,24 @@ public sealed class CheckProofTests
         // OutOfScopeProblems with every other claim, so a table exempted to a checkpoint that has
         // landed is caught there rather than resting exempt forever.
         // "What the pack contains" was the subject here until 6.4 built the packer and turned it
-        // into a claim table, at which point this test went red saying its example now passes. That
-        // is the rule working rather than the test breaking: a deferred table is supposed to stop
-        // being deferred, and the proof follows the property to a table that still is.
-        ArchitectureConformanceCheck.Claim deferred = Placement("Model budget");
+        // into a claim table, and "Model budget" was the subject after it until 6.5 built the seat,
+        // looked for the claim and found that the table is published vendor prices with no code
+        // behind them. Each time this test went red saying its example had stopped being deferred,
+        // which is the rule working rather than the test breaking.
+        //
+        // **No table in the document is deferred now, so the proof is over an authored placement.**
+        // Borrowing whichever live table happened still to be waiting was what made this test move
+        // twice, and the property it holds is about the disposition rather than about any table:
+        // an out-of-scope placement carries a checkpoint, and one naming a checkpoint the record
+        // already has is a problem rather than a rest.
+        ArchitectureConformanceCheck.Claim deferred =
+            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "An unbuilt table", "6.6");
 
         Assert.Equal(ArchitectureConformanceCheck.Deferred, deferred.Verdict);
-        Assert.Equal("6.5", deferred.Closes);
+        Assert.Equal("6.6", deferred.Closes);
 
         string problem = Assert.Single(Problems(
-            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "Model budget", "1.6")));
+            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "An unbuilt table", "1.6")));
         Assert.Contains("already landed", problem, StringComparison.Ordinal);
     }
 
@@ -1663,8 +1671,14 @@ public sealed class CheckProofTests
     {
         ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
 
-        Assert.NotEmpty(PinnedConstantsCheck.RowsDeferredToACheckpoint);
-
+        // **The list is empty from 6.5 and that is the state it is meant to reach.** It held the
+        // researcher model and cadence until that checkpoint built the seat and pinned both, and an
+        // assertion that it is non-empty would have made emptiness a failure rather than the end of
+        // the work. Nothing is lost by allowing it: `Place` fails a row of the authored-parameters
+        // table that is neither pinned, deferred nor exempt, and fails a deferral naming a row the
+        // table does not have, so a row added later with no constant turns the check red rather
+        // than resting. What this test holds is a property of each entry, and it holds vacuously
+        // over none.
         foreach ((string row, string checkpoint, _) in PinnedConstantsCheck.RowsDeferredToACheckpoint)
         {
             Assert.True(schedule.Exists(checkpoint), $"\"{row}\" is deferred to {checkpoint}, which BUILD_PLAN does not have.");

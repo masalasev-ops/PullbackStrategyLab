@@ -247,15 +247,19 @@
       "clauses": [
         {
           "clause": "The weekly job queues and no proposal is produced.",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "the verdict reads the store's own clause: a week with outcome `unavailable` carries a reason and no change of any kind, and the row is written whatever the seat said, so the week is queued rather than lost."
         },
         {
           "clause": "Nothing else affected",
-          "disposition": "deferred"
+          "disposition": "elsewhere",
+          "why": "`writer-ownership` carries it. The seat's only declared write is to `proposal`, asserted in both directions against SCHEMA, so there is no other table an ask can touch whatever becomes of it.",
+          "by": "writer-ownership"
         },
         {
           "clause": "and the seat never returns a partial suggestion.",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "the same clause reaches it as an absence: the store refuses a week with no answer that carries a direction, a gate, a threshold name, either value or a family, so a partial proposal has nowhere to be written."
         }
       ]
     },

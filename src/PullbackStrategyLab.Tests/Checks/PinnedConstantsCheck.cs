@@ -56,6 +56,26 @@ public sealed class PinnedConstantsCheck
         // constant were 23. A list beside the thing it counts is a count somebody has to remember.
         var table = new AuthoredParameters(architecture);
 
+        // The researcher seat, pinned at 6.5 when the operator ruled question 1. The model is a
+        // confounder for the phase's own success criterion, so the identifier a document names and
+        // the identifier a request carries have to be one string; until 2026-09-07 the row said
+        // "pinned by exact identifier" and named none, which is a rule rather than a value and is
+        // why this row was deferred rather than pinned.
+        // see: The model is a frozen parameter of the pack version, and changing it forks the record
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Researcher model",
+            table.Cell("Researcher model").Contains(ResearcherOptions.PinnedModel, StringComparison.Ordinal),
+            defaults.Researcher.Model == ResearcherOptions.PinnedModel,
+            "ResearcherOptions.PinnedModel against the configured default"));
+
+        // The cadence is a word in the document and a number in the code, which is what this pin
+        // reconciles. Weekly rather than nightly because the evidence barely moves in a day and a
+        // nightly ask would produce an idea whether or not there is one.
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Researcher cadence",
+            table.Cell("Researcher cadence").Contains("Weekly", StringComparison.Ordinal),
+            defaults.Researcher.CadenceDays == ResearcherOptions.WeeklyCadenceDays
+                && ResearcherOptions.WeeklyCadenceDays == 7,
+            "ResearcherOptions.WeeklyCadenceDays against the configured default"));
+
         // The daily call ceiling, stated in four places and held in one.
         pins.Add(Pin.Number("ARCHITECTURE.html, authored parameters, Daily API ceiling",
             table.Number("Daily API ceiling"), defaults.DailyCallCeiling, "PullbackStrategyLabOptions.DailyCallCeiling"));
@@ -807,8 +827,11 @@ public sealed class PinnedConstantsCheck
     /// </summary>
     public static IReadOnlyList<(string Row, string Checkpoint, string Component)> RowsDeferredToACheckpoint { get; } =
     [
-        ("Researcher model", "6.5", "ResearcherSeat"),
-        ("Researcher cadence", "6.5", "ResearcherSeat"),
+        // Both rows left this table at 6.5, which built the seat and pinned them. Nothing is
+        // deferred here now, and an empty list is the state this table is meant to reach rather
+        // than a sign it has stopped working: `Place` fails a deferral naming a row the table does
+        // not have and fails a row that is neither pinned, deferred nor exempt, so a row added
+        // later with no constant turns this red rather than resting.
     ];
 
     /// <summary>

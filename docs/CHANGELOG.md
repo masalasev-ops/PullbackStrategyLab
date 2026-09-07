@@ -2683,3 +2683,33 @@ Why:  the operator ruled on 2026-09-07. The totals move because question 1's row
 Was:  the 6.5 row reading "**One obligation falls due here**, raised at 1.5, being that the empty tool set is a property of configuration".
 Now:  "**Three obligations fall due here**, the first raised at 1.5", with the second and third named in the row.
 Why:  asking a real model for a proposal against a real pack raised two: the pack states no rule in force, so nothing supplies the value a proposal moves a threshold from, and the planted-null tripwire fires on the control's name appearing anywhere rather than on a proposal resting on it. Neither is a property of a transport and both are settled at the checkpoint that builds the seat.
+
+### 2026-09-07 — ARCHITECTURE.html — cites The rule in force is the pack's first section, because a proposal moves a threshold from a value
+Was:  "What the pack contains" holding nine rows, opening with Population.
+Now:  ten rows, opening with "Rule in force": the version running, and every threshold it holds per side with the gate and family that own it.
+Why:  a proposal is the direction, the gate, the threshold name, the value it moves from and the value it moves to, and no section said what any threshold currently is. `Variant history` is every past proposal and excludes the baseline by design, so the rule actually running was the one thing the pack never showed. Found by asking a model, which abstained twice with exactly that reason, and no check in this corpus would have said so.
+
+### 2026-09-07 — ARCHITECTURE.html — cites The model is a frozen parameter of the pack version, and changing it forks the record
+Was:  the model budget reading "About 8,400 tokens in and 1,500 out", with per-run and per-year figures computed over it, and "The whole spread from cheapest to dearest is about eight dollars a year."
+Now:  23,545 tokens in, all twelve figures recomputed, a spread of about sixteen dollars, and a paragraph saying what the figure was and that the correction changes nothing about the choice.
+Why:  the input figure was an estimate nobody had measured. The pack over a filled store is 23,545 tokens, measured on 2026-09-07, so every figure derived from it was understated by 2.8 times, including the $4.13 a year the ruling that closed question 1 quoted from this table the day before.
+
+### 2026-09-07 — ARCHITECTURE.html — cites The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops
+Was:  the authored parameters row "Researcher model" stating "Pinned by exact identifier".
+Now:  the row stating `claude-opus-5`, pinned by exact identifier, with why the row named none until the operator ruled.
+Why:  the row stated a rule rather than a value, so `pinned-constants` deferred it rather than pinning it. With the identifier ruled, the number a document states and the identifier a request carries are one string, which is what the pin now holds.
+
+### 2026-09-07 — SCHEMA.md — cites A proposal is a document whose one change is the five fields the version register already stores
+Was:  the research stores table row for `proposal`, and no column table for it anywhere; the `pack_run` note reading "Five of the nine rest on outcomes that have not closed".
+Now:  a column section for `proposal` with its four outcomes, its conditional change columns and its three CHECK clauses, and "Five of the ten".
+Why:  6.5 builds the seat and owes its columns. The load-bearing part is that the change columns are conditional on the outcome: the shape the document carried required a change whatever the answer, and a model that abstained had to put something in the gate field.
+
+### 2026-09-07 — RUNBOOK.md — cites The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops
+Was:  the weekly schedule table holding three rows, ending at Saturday 08:20 for `build-pack`, whose row read "All nine sections are rendered every week".
+Now:  a fourth row, Saturday 08:30 for `ask-researcher`, with its four outcomes and the status-band notice; and "All ten sections".
+Why:  the seat is weekly and the operator's own table is what the registered tasks are written from. A slot in the dispatcher and not in this table is the shape `slot-roster` was written to catch.
+
+### 2026-09-07 — BUILD_PLAN.md — cites The subscription seat is the Claude Code CLI in print mode, and the empty tool set is read back rather than asserted
+Was:  three rows of the carried obligations table due at 6.5, being the 1.5 empty tool set and the two raised at 6.4; and question 1's cost figures reading "$0.15 and $8.27", "about eight dollars a year" and "$4.13 a year".
+Now:  none of the three rows, and the cost figures reading $0.32 to $16.14, about sixteen dollars, and $8.07, each saying what it read before.
+Why:  6.5 settles all three. The pack states the rule in force, the tripwire is scoped to what a proposal rests on with the change fields conditional on not abstaining, and the empty tool set is read back off the session rather than asserted of the arguments alone. The cost figures move because the model budget they were taken from assumed a pack 2.8 times smaller than the measured one.
