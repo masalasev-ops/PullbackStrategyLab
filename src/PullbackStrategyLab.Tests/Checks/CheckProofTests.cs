@@ -592,7 +592,7 @@ public sealed class CheckProofTests
         <table><tr><th>Name</th></tr><tr><td>RunLogger</td></tr></table>
         <h2>Vocabulary</h2>
         <table><tr><th>Term</th></tr><tr><td>setup</td></tr></table>
-        <h2>What the pack contains</h2>
+        <h2>Model budget</h2>
         <table><tr><th>Part</th></tr><tr><td>signals</td></tr></table>
         <h2>A table nobody placed</h2>
         <table><tr><th>Thing</th></tr><tr><td>alpha</td></tr></table>
@@ -653,13 +653,17 @@ public sealed class CheckProofTests
         // to have the checkpoint and the record must not yet carry it. Placement claims go through
         // OutOfScopeProblems with every other claim, so a table exempted to a checkpoint that has
         // landed is caught there rather than resting exempt forever.
-        ArchitectureConformanceCheck.Claim deferred = Placement("What the pack contains");
+        // "What the pack contains" was the subject here until 6.4 built the packer and turned it
+        // into a claim table, at which point this test went red saying its example now passes. That
+        // is the rule working rather than the test breaking: a deferred table is supposed to stop
+        // being deferred, and the proof follows the property to a table that still is.
+        ArchitectureConformanceCheck.Claim deferred = Placement("Model budget");
 
         Assert.Equal(ArchitectureConformanceCheck.Deferred, deferred.Verdict);
-        Assert.Equal("6.4", deferred.Closes);
+        Assert.Equal("6.5", deferred.Closes);
 
         string problem = Assert.Single(Problems(
-            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "What the pack contains", "1.6")));
+            ArchitectureConformanceCheck.Claim.OutOfScope("Tables in the document", "Model budget", "1.6")));
         Assert.Contains("already landed", problem, StringComparison.Ordinal);
     }
 

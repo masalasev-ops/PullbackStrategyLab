@@ -1691,19 +1691,23 @@
       "clauses": [
         {
           "clause": "No pack is written and no ask is made",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "the refusal writes no pack_version row and returns a failed result, so nothing downstream has a pack to ask against. Asserted from the migration's biconditional, which refuses a failed run carrying a version, and behaviourally by the test that drops a table a section reads and finds no version row afterwards"
         },
         {
           "clause": "and the night records why rather than cutting a short one.",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "`refused_because` carries the section that failed, and the store refuses a failed run without one. The section is named rather than only the exception, because a run of refusals reads differently when it is one section every week than when it is a different one each time"
         },
         {
           "clause": "A pack missing a section is not a smaller pack: the correction is computed over the signals screened",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the reason the refusal is whole rather than partial, not a property of its own. The clause it explains is the first one, and the arithmetic it rests on is asserted where the correction is: `pack.signalsScreened` and `pack.familyWiseThreshold` in the fixture"
         },
         {
           "clause": "so a pack that dropped a section would carry a threshold for a set it did not screen and every claim against it would be judged against the wrong number.",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the consequence the clause above avoids, stated so the refusal reads as necessary rather than cautious. There is nothing here to assert that the refusal itself does not already carry"
         }
       ]
     },

@@ -33,7 +33,7 @@ param(
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scores', 'scoreboard',
-                 'ceiling', 'twins', 'snapshot')]
+                 'ceiling', 'twins', 'pack', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -163,6 +163,13 @@ $slots = @{
     # channel is fed from. It spends no vendor call. Weekly rather than nightly because the metric
     # standardises over a trailing window of setups rather than over a night.
     'twins'      = @(, @('twin-pairs'))
+
+    # The third weekly slot, Saturday 08:20, last of the three because it reads what the other two
+    # wrote: the pack's twin section is a reading of the twin run and its ceiling section a reading
+    # of the bound. It spends no vendor call. It runs whether or not the evidence moved, because a
+    # pack that only appeared when there was something to say would leave no record of the weeks
+    # there was not.
+    'pack'       = @(, @('build-pack'))
     'snapshot'   = @(, @('snapshot-db'))
 }
 

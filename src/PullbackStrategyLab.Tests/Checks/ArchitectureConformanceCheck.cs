@@ -685,6 +685,7 @@ public sealed partial class ArchitectureConformanceCheck
         claims.AddRange(ManagementClaims(architecture));
         claims.AddRange(LossCauseClaims(architecture));
         claims.AddRange(ReplayTierClaims(architecture));
+        claims.AddRange(PackSectionClaims(architecture, schedule));
 
         // 7. And every table in the document placed, which is what stops the five above from
         //    being the document as far as this check is concerned. A table nobody reads produces
@@ -945,7 +946,11 @@ public sealed partial class ArchitectureConformanceCheck
     public static IReadOnlyList<string> ClaimTables { get; } =
         ["Component catalogue", "Build order", "The limits", "Failure behaviour", "The phase report",
          "Running on Windows and macOS", "The procedure", "What differs in management",
-         "Why each loss happened", "What each tier of change can be replayed against"];
+         "Why each loss happened", "What each tier of change can be replayed against",
+
+         // A placement exemption until 6.4 and a claim table from it. A list of nine sections a
+         // pack must hold became a statement about the code the moment there was a packer.
+         "What the pack contains"];
 
     /// <summary>
     /// Every other table in the document, and why it yields no claim.
@@ -965,7 +970,6 @@ public sealed partial class ArchitectureConformanceCheck
         ["Vocabulary"] = "definitions of terms, not a statement about the code",
         ["Which kinds of measurement are missing"] =
             "what the design deliberately does not measure, which no code can be checked against",
-        ["What the pack contains"] = "6.4",
         ["Model budget"] = "6.5",
         ["What each vendor endpoint carries"] =
             "what the vendor returns from each route, established by probe and capture rather than by "
@@ -1832,6 +1836,108 @@ public sealed partial class ArchitectureConformanceCheck
     /// for. Read from the migration on the same grounds the blocked order is: what the stage decides
     /// can be changed by an edit to the stage, and what the store refuses cannot.
     /// </summary>
+    /// <summary>
+    /// One claim per section the pack is documented to contain, reconciled in both directions.
+    ///
+    /// <b>The table was a placement exemption until 6.4 and it is a claim table now.</b> A list of
+    /// nine sections a pack must hold is a statement about the code as soon as there is a packer,
+    /// and leaving it placed-but-unclaimed would have let the document and the packer disagree with
+    /// nothing able to say so.
+    ///
+    /// <b>Both directions, because one of them is the one that goes wrong quietly.</b> A section in
+    /// the document and not in the packer is a pack missing a section, which the refusal path turns
+    /// into a red run. A section in the packer and not in the document is a section nobody
+    /// specified, which nothing else would ever notice.
+    ///
+    /// Read from <see cref="PackSections"/> rather than from the packer's own switch, because that
+    /// list is what the switch is driven by: a section declared with no builder throws at the
+    /// section it could not build, so the two cannot come apart without a run going red.
+    /// </summary>
+    private static IReadOnlyList<Claim> PackSectionClaims(string architecture, Schedule schedule)
+    {
+        const string Table = "What the pack contains";
+        var claims = new List<Claim>();
+
+        string? owed = schedule.CheckpointFor("ContextPacker");
+        IReadOnlyList<IReadOnlyList<string>> rows = HtmlTable.BodyRowsUnder(architecture, Table);
+
+        foreach (IReadOnlyList<string> row in rows)
+        {
+            string section = row[0];
+
+            if (owed is not null && !schedule.HasLanded(owed))
+            {
+                claims.Add(Claim.OutOfScope(Table, section, owed));
+                continue;
+            }
+
+            claims.Add(PackSections.Names.Contains(section, StringComparer.Ordinal)
+                ? Claim.Passed(Table, section, "the packer builds this section into every pack")
+                : Claim.Failed(Table, section,
+                    $"the document says a pack contains \"{section}\" and the packer builds "
+                    + string.Join(", ", PackSections.Names)));
+        }
+
+        // The other direction, as one claim rather than one per section: a section the packer
+        // builds that the document does not describe is a section nobody specified.
+        if (owed is null || schedule.HasLanded(owed))
+        {
+            string[] documented = [.. rows.Select(r => r[0])];
+            string[] undocumented =
+                [.. PackSections.Names.Where(n => !documented.Contains(n, StringComparer.Ordinal))];
+
+            claims.Add(undocumented.Length == 0
+                ? Claim.Passed(Table, "every section the packer builds is one the document describes",
+                    $"the packer builds {PackSections.Names.Count} section(s) and the document describes "
+                    + $"{documented.Length}, with no section on either side the other lacks")
+                : Claim.Failed(Table, "every section the packer builds is one the document describes",
+                    "the packer builds sections the document does not describe: "
+                    + string.Join(", ", undocumented)));
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// The tripwire, read from the code that decides it rather than from a store.
+    ///
+    /// The row has two clauses: the version is failed immediately, and no proposal from it is
+    /// admitted. Both rest on one predicate, which is what makes them assertable together at a
+    /// checkpoint where no proposal store exists: a version is failed by a proposal citing the
+    /// null, and the same predicate is what a registry asks before admitting one.
+    ///
+    /// The behavioural half is the test that puts the control's own name through the predicate and
+    /// a near-match beside it, because a tripwire that fired on anything resembling the name would
+    /// be worse than none.
+    /// </summary>
+    private static bool TheNullControlFailsTheVersionThatCitesIt() =>
+        PackVersions.CitesTheNullControl([SignalLibrary.NullControl])
+        && !PackVersions.CitesTheNullControl([SignalLibrary.NullControl + "_squared"])
+        && !PackVersions.CitesTheNullControl([]);
+
+    /// <summary>
+    /// A pack that cannot be built is refused whole, read from the migration that constrains it.
+    ///
+    /// Read from the store rather than from the stage on the same grounds the blocked order and the
+    /// rejected signal are: what a stage decides can be changed by an edit to the stage, and what
+    /// the store refuses cannot. The clause asserted is the biconditional, so a refused run
+    /// carrying a version or a digest is refused by the store and a successful run carrying a
+    /// reason is too.
+    /// </summary>
+    private static bool APackIsRefusedWholeRatherThanCutShort()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("pack-version", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains("refused_because", StringComparison.Ordinal)
+            && migration.Contains(
+                   "(outcome = 'failed'\n                AND refused_because IS NOT NULL\n                AND version IS NULL",
+                   StringComparison.Ordinal)
+            && migration.Contains(
+                   "OR (outcome <> 'failed'\n                AND refused_because IS NULL\n                AND version IS NOT NULL",
+                   StringComparison.Ordinal);
+    }
+
     private static bool ARejectionCarriesWhatItWasMeasuredAt()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
@@ -2054,6 +2160,30 @@ public sealed partial class ArchitectureConformanceCheck
             // admitted signal, and the store is what refuses a rejection carrying neither. The
             // behavioural half is the test that authors a duplicate of an admitted signal and reads
             // the rejection back with both figures on it.
+            // The tripwire, read from the predicate both clauses rest on. "That pack version is
+            // failed immediately" and "no proposal from it is admitted" are one question asked at
+            // two moments, which is what makes them assertable together before a proposal store
+            // exists. Verified over an authored citation, because the seat that writes a real one
+            // lands at 6.5, and it is on the provisional list for that reason.
+            "Proposal cites the planted null signal" => TheNullControlFailsTheVersionThatCitesIt()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a proposal citing the planted null fails its pack version, asserted over an authored "
+                    + "citation, and a name merely resembling the control does not fire it")
+                : Claim.Failed("Failure behaviour", condition,
+                    "the null control no longer fails the version that cites it, so the tripwire is not armed "
+                    + "and a pack that led the model to rummage would go on being used"),
+
+            // The refusal, read from the migration that constrains it rather than from the stage
+            // that writes it, on exactly the terms the blocked order and the rejected signal are.
+            "A pack cannot be built" => APackIsRefusedWholeRatherThanCutShort()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a night that cannot build every section writes no pack and no version, and its run row "
+                    + "carries the section it could not build; the store refuses a refusal carrying a pack and "
+                    + "a pack carrying a refusal")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 057 no longer constrains a refused run to carry its reason and no pack, so a "
+                    + "short pack could be written and would read as complete"),
+
             "A signal is rejected at the correlation limit" => ARejectionCarriesWhatItWasMeasuredAt()
                 ? Claim.Passed("Failure behaviour", condition,
                     "a signal refused at the limit is a row carrying the correlation and the admitted signal it "

@@ -92,6 +92,19 @@ public sealed class PointInTimeCheck
             ["twin_pair"] = "observed_at",
             ["twin_run"] = "observed_at",
 
+            // The pack's run rows, stamped and read to decide an answer: the ledger and the pack
+            // comparison surface both read what a cut held, and a date packed twice writes a second
+            // generation beside the first. An unbounded read would show one date's cut twice.
+            ["pack_run"] = "observed_at",
+
+            // The version register is here too, and its stamp is `created_at` rather than an
+            // observation instant. A version is a definition rather than a reading, which is why it
+            // has no generation key; but which versions existed is still a point-in-time question,
+            // because a proposal cites a version and a hit-rate table for an old session must not
+            // show versions cut after it. So the row is bounded on the instant it came into
+            // existence, which for this table is the same question the other stamps answer.
+            ["pack_version"] = "created_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the
@@ -388,6 +401,19 @@ public sealed class PointInTimeCheck
             + "identity and an instant and no price, so nothing can compute a figure about the market from it. "
             + "The read in the same file that answers for a session is ForLiveSession, which takes an as-of and "
             + "bounds observed_at against it."),
+        new("PackVersionReader.cs", "SELECT version FROM pack_version WHERE fingerprint = @fingerprint",
+            "VersionFor asks whether a tuple already has a version, which is what makes a second cut reuse a row "
+            + "rather than write one. It is a question about the store's contents rather than about a night, on "
+            + "exactly the terms SetupSignalReader.NamesFor is exempt. Bounding it would be worse than useless "
+            + "here: the fingerprint is unique, so a bound that hid an existing row would turn a correct reuse "
+            + "into a failed insert. The read in the same file that answers for a date is Read, which takes an "
+            + "as-of and bounds created_at against it so a hit-rate table never shows a version cut after the "
+            + "session it is about."),
+        new("ContextPacker.cs", "SELECT COALESCE(MAX(version), 0) + 1 FROM pack_version",
+            "NextVersion asks which ordinals are taken, so a new tuple gets one nobody has. It answers about the "
+            + "whole store by necessity: an ordinal bounded on a date would be reissued the moment a version "
+            + "existed past the bound, and two different tuples would share a version number. It returns a "
+            + "number and no evidence, so nothing can compute a figure about the market from it."),
         new("SignalAdmissionTest.cs", "WHERE signal_name = @signal_name",
             "Read asks what the row currently says, so a run that changes nothing writes nothing and the "
             + "stamp goes on meaning when the row last changed rather than when the stage last ran. That is "

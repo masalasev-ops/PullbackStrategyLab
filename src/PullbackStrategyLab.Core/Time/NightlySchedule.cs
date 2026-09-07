@@ -80,6 +80,16 @@ public static class NightlySchedule
         // cheaper of the two to look at first.
         new("twins", "08:10", ["twin-pairs"], WeeklyOn: DayOfWeek.Saturday),
 
+        // The third weekly slot, and it runs last of the three because it reads what the other two
+        // wrote: the pack's twin section is a reading of the twin run, and its ceiling section a
+        // reading of the bound. Weekly rather than nightly because the researcher is asked weekly
+        // and a pack nobody is shown is a pack cut for the store's benefit.
+        //
+        // It runs whether or not the evidence has moved, because a pack that only appears when
+        // there is something to say would leave no record of the weeks there was not, and five of
+        // its nine sections rest on outcomes that have not closed.
+        new("pack", "08:20", ["build-pack"], WeeklyOn: DayOfWeek.Saturday),
+
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
         // omitted it would be reporting thirty-one slots under a heading saying thirty-two. That is

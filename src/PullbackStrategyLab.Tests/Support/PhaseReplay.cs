@@ -913,6 +913,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(HoldoutFigures());
         measurements.AddRange(LibraryFigures());
         measurements.AddRange(TwinFigures());
+        measurements.AddRange(PackFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(StoreIntegrityFigures());
@@ -2713,6 +2714,66 @@ public sealed class PhaseReplay : IDisposable
         }
 
         return figures;
+    }
+
+    /// <summary>
+    /// The versioned evidence pack over the fixture, which is 6.4's deliverable.
+    ///
+    /// <b>The packer is run twice on purpose and the digest of both is compared.</b> Byte-stability
+    /// is the claim the phase report makes of this phase, and a figure taken from one run could not
+    /// see it: two runs of one commit over one store state have to agree, and the only way to
+    /// report that as a measurement is to take both.
+    /// see: A pack version pins what the model saw, and byte-stability is what makes that claim checkable
+    ///
+    /// <b>The claim is the thinnest one this phase makes and the figures say so.</b> Five of the
+    /// nine sections rest on outcomes that have not closed and render empty over this fixture, so
+    /// the orderings a full pack would exercise are largely untested here. `sectionsEmpty` is
+    /// reported rather than hidden, because it is what says how much of the pack the stability
+    /// figure was actually taken over.
+    /// </summary>
+    private IReadOnlyList<Measurement> PackFigures()
+    {
+        var packer = new ContextPacker(_connections, Logger(), _clock, _options);
+
+        PackResult first = packer.Build(AsOf);
+
+        // The clock moves between the cuts, exactly as it does between two real runs. Without it
+        // the second cut would collide on the run row's generation key and the comparison below
+        // would be a comparison the store never allowed to happen.
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        PackResult second = packer.Build(AsOf);
+
+        return
+        [
+            new("pack.version", first.Version.ToString(CultureInfo.InvariantCulture)),
+            new("pack.sectionsRendered", first.Pack.Sections.Count.ToString(CultureInfo.InvariantCulture)),
+            new("pack.sectionsEmpty", first.Pack.SectionsEmpty.ToString(CultureInfo.InvariantCulture)),
+            new("pack.signalsScreened", first.SignalsScreened.ToString(CultureInfo.InvariantCulture)),
+            new("pack.nullControlPlanted", first.NullControlPlanted ? "planted" : "absent"),
+            new("pack.outcome", first.Outcome.ToStorageText()),
+
+            // The two populations, apart and never added
+            // (see: Long and short are never pooled into one figure).
+            new("pack.long.setups", first.LongSetups.ToString(CultureInfo.InvariantCulture)),
+            new("pack.short.setups", first.ShortSetups.ToString(CultureInfo.InvariantCulture)),
+
+            // The claim itself, as a comparison rather than as a value: what matters is that the
+            // two runs agreed, not what they agreed on.
+            new("pack.byteStableAcrossRuns",
+                string.Equals(first.BodyDigest, second.BodyDigest, StringComparison.Ordinal)
+                    ? "identical"
+                    : "differed"),
+            new("pack.versionReusedOnTheSecondRun", second.VersionIsNew ? "forked" : "reused"),
+
+            // Both thresholds, because a claim admitted under one is not a claim under the other
+            // (see: Admission is on the false-discovery rate and the family-wise threshold is recorded beside it).
+            new("pack.correctionForm", MultipleComparison.Form),
+            new("pack.familyWiseThreshold",
+                CorrectionReading.Render(MultipleComparison.FamilyWiseThreshold(first.SignalsScreened))),
+            new("pack.falseDiscoveryThreshold",
+                CorrectionReading.Render(MultipleComparison.FalseDiscoveryThreshold(first.SignalsScreened, []))),
+        ];
     }
 
     /// <summary>
