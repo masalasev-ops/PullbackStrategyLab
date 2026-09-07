@@ -346,6 +346,14 @@
       "mustCarry": "The sessions it was held over",
       "producedBy": "the page",
       "why": "The 4.11 obligation. The minute picture is one session and the trail exit is decided on a daily close the picture never showed, so a daily strip runs beside it. The row named two possible answers and called the choice a question about what a person reads; the store settled it, because minutes are bought for the session a plan is live in and for no session after it."
+    },
+    {
+      "name": "a-seat-that-cannot-ask-says-so-on-the-band",
+      "sentence": "A seat that cannot ask is shown on the status band the morning it happens, naming the transport that was refused",
+      "statedIn": "docs/RUNBOOK.md",
+      "surface": "/scoreboard",
+      "why": "A seat that cannot ask is a fact about the running lab, and nothing in the verification harness reaches the running lab, so recorded and not shown would mean the operator learns of it a quarter later from a gap in the proposal record. **The panel is built at 6.5 and the claim arrives at 6.8**, which is the distinction worth keeping rather than smoothing over: the surface fixture holds no refused ask and its scoreboard is a stored one, so nothing a page can be asked today exercises either the panel or the reason line beside it. **What the sentence is really about is the reason line**, being that the band names the transport that was refused, and that needs a store where a week went unanswered. 6.8 owes a seedable surface anyway, for band 3 and the signal-library panel. The branch that draws the note is the sixth failure shape repaired at 6.5: until then a panel's note was drawn only where the figure was withheld, so a panel carrying both a value and a reason lost the reason.",
+      "arrivesAt": "6.8"
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

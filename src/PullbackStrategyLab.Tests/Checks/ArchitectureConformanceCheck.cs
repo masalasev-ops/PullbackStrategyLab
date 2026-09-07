@@ -970,7 +970,15 @@ public sealed partial class ArchitectureConformanceCheck
         ["Vocabulary"] = "definitions of terms, not a statement about the code",
         ["Which kinds of measurement are missing"] =
             "what the design deliberately does not measure, which no code can be checked against",
-        ["Model budget"] = "6.5",
+        ["Model budget"] = "published vendor prices and the arithmetic over them, which no code can be "
+            + "checked against. It was deferred to 6.5 until that checkpoint built the seat and looked "
+            + "for the claim: every cell is either a rate the vendor publishes or a product of that rate "
+            + "with the pack's token count, and the lab holds neither. What the checkpoint did find is "
+            + "that the token count the whole table rests on was an estimate 2.8 times under the measured "
+            + "pack, so the figures moved and the exemption is what says no check would have caught it. "
+            + "The one number here a check can reach is the model identifier, which is an authored "
+            + "parameter and is pinned as one, and the pack's own size, which is a fixture expectation. "
+            + "Placed as a permanent exemption rather than deferred again, because nothing will close it",
         ["What each vendor endpoint carries"] =
             "what the vendor returns from each route, established by probe and capture rather than by "
             + "reading the code. No check can assert it: the subject is the vendor, and the one thing a "
@@ -1938,6 +1946,32 @@ public sealed partial class ArchitectureConformanceCheck
                    StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Whether a week the seat could not be asked is a row with a reason and no proposal in it.
+    ///
+    /// Read from the migration that constrains it rather than from the stage that writes it, on
+    /// exactly the terms the blocked order and the refused pack are: a stage can be rewritten and a
+    /// CHECK clause cannot be talked round. The behavioural half is the test that hands the seat a
+    /// transport which cannot answer and reads the filed row back.
+    ///
+    /// <b>The document says the job queues and no proposal is produced, and the second half is what
+    /// the store holds.</b> "Never a partial proposal" is an absence, so it is asserted as one: the
+    /// row carries no direction, no gate, no threshold, no values and no family, whatever the reason.
+    /// </summary>
+    private static bool AnExhaustedAllowanceQueuesAndReturnsNothing()
+    {
+        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
+            .Single(m => m.Name.Contains("proposal", StringComparison.Ordinal)).Sql;
+
+        return migration.Contains("unavailable_because", StringComparison.Ordinal)
+            && migration.Contains(
+                   "CHECK (outcome NOT IN ('unavailable', 'unreadable') OR (",
+                   StringComparison.Ordinal)
+            && migration.Contains(
+                   "(unavailable_because IS NOT NULL OR answer_problems IS NOT NULL)\n        AND direction IS NULL AND gate IS NULL AND threshold_name IS NULL",
+                   StringComparison.Ordinal);
+    }
+
     private static bool ARejectionCarriesWhatItWasMeasuredAt()
     {
         string migration = PullbackStrategyLab.Data.MigrationRunner.All()
@@ -2191,6 +2225,21 @@ public sealed partial class ArchitectureConformanceCheck
                 : Claim.Failed("Failure behaviour", condition,
                     "migration 055 no longer constrains a rejected signal to carry the correlation and what it "
                     + "was measured against, so a refusal can be written that nobody can read back"),
+
+            // The queued week, read from the migration that constrains it. The row says the job
+            // queues and no proposal is produced, and it is the second clause the store holds: a
+            // week with no answer carries a reason and none of the change fields, so there is
+            // nowhere for a partial proposal to be written. Verified over an authored refusal,
+            // because a real exhaustion on the configured transport is a fact about the running lab
+            // rather than about the build, and it is on the provisional list for that reason.
+            "AI usage allowance exhausted" => AnExhaustedAllowanceQueuesAndReturnsNothing()
+                ? Claim.Passed("Failure behaviour", condition,
+                    "a week the seat could not be asked is a row carrying the reason and no change of any "
+                    + "kind, so the job queues and never returns a partial proposal, and the store refuses "
+                    + "a week with no answer that carries a threshold")
+                : Claim.Failed("Failure behaviour", condition,
+                    "migration 058 no longer constrains a week with no answer to carry a reason and no "
+                    + "change, so a partial proposal could be filed and would read as one the seat made"),
 
             "Risk gate blocks an order" => TheGateWritesABlockedRowWithItsReason()
                 ? Claim.Passed("Failure behaviour", condition,

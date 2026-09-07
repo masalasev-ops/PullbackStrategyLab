@@ -33,7 +33,7 @@ param(
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scores', 'scoreboard',
-                 'ceiling', 'twins', 'pack', 'snapshot')]
+                 'ceiling', 'twins', 'pack', 'seat', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -170,6 +170,11 @@ $slots = @{
     # pack that only appeared when there was something to say would leave no record of the weeks
     # there was not.
     'pack'       = @(, @('build-pack'))
+
+    # The fourth weekly slot, Saturday 08:30, and the only one that leaves the machine. It asks the
+    # researcher once against the pack and files the answer, which may be a proposal, an abstention,
+    # an unreadable answer or a week the seat could not be asked at all. It spends no vendor call.
+    'seat'       = @(, @('ask-researcher'))
     'snapshot'   = @(, @('snapshot-db'))
 }
 

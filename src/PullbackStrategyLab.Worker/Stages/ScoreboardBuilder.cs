@@ -311,6 +311,17 @@ public sealed class ScoreboardBuilder
             "SELECT COALESCE(MAX(correction_lateness_minutes), 0) FROM setup WHERE as_of <= @as_of",
             asOf, sessionZone);
 
+        // The weeks the seat has been asked at all, and the latest one that failed. Null where the
+        // last ask succeeded: a refusal three weeks back that a later week answered over is history
+        // rather than a live warning, and a band that went on showing it would be a band nobody
+        // reads.
+        int asks = Count(
+            connection,
+            "SELECT COUNT(*) FROM proposal WHERE observed_at <= @end_of_day",
+            asOf, sessionZone);
+
+        StoredProposal? refused = ProposalReader.LatestUnavailable(connection, asOf, sessionZone);
+
         return
         [
             new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null, Flagged),
@@ -318,6 +329,21 @@ public sealed class ScoreboardBuilder
             new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
             new Panel("band0.correctedRows", null, corrected.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
             new Panel("band0.worstLatenessMinutes", null, worstLateness.ToString(CultureInfo.InvariantCulture), null, null, corrected, null, "corrected rows"),
+
+            // **A seat that cannot ask is a fact about the running lab, so it is shown the morning
+            // it happens.** Nothing in the verification harness reaches the running lab, and a
+            // queued week that is recorded and not shown is one the operator learns of a quarter
+            // later from a gap in the proposal record. The reason names the transport that refused,
+            // because what the operator does about a lapsed subscription and about an endpoint that
+            // is switched off are different acts.
+            // see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops
+            // see: Every phase ends in a generated phase report, not in a page somebody looks at
+            new Panel("band0.researcherSeat", null, refused is null ? "asked" : "not asked",
+                null, null, asks, null, "weekly asks", null,
+                refused is null
+                    ? null
+                    : $"the {refused.Transport} seat could not be asked on {refused.AsOf:yyyy-MM-dd}: "
+                      + refused.UnavailableBecause),
         ];
     }
 

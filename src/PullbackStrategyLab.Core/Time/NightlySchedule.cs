@@ -90,6 +90,18 @@ public static class NightlySchedule
         // its nine sections rest on outcomes that have not closed.
         new("pack", "08:20", ["build-pack"], WeeklyOn: DayOfWeek.Saturday),
 
+        // The fourth weekly slot, and the only one that leaves the machine. It runs after `pack`
+        // rather than instead of it, and it cuts the pack again for itself: the body is not stored,
+        // only its digest, so a seat reading the earlier row would have to rebuild the document
+        // anyway. Cutting it here means the digest filed on the proposal is the digest of what the
+        // model actually read, and the two cuts agreeing is byte-stability observed in the running
+        // lab rather than claimed of the build.
+        //
+        // Weekly because the evidence barely moves in a day and a nightly ask would produce an idea
+        // whether or not there is one. It runs whether or not the evidence moved, because a week the
+        // seat declined is a result and a week it was never asked is not.
+        new("seat", "08:30", ["ask-researcher"], WeeklyOn: DayOfWeek.Saturday),
+
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
         // omitted it would be reporting thirty-one slots under a heading saying thirty-two. That is

@@ -1,7 +1,7 @@
 namespace PullbackStrategyLab.Core.Research;
 
 /// <summary>
-/// The nine sections an evidence pack contains, in the order the architecture lists them.
+/// The ten sections an evidence pack contains, in the order the architecture lists them.
 ///
 /// <b>This is the runnable copy of ARCHITECTURE.html's "What the pack contains" and not a second
 /// statement of it.</b> The document is the specification, this list is what the packer builds
@@ -18,14 +18,27 @@ namespace PullbackStrategyLab.Core.Research;
 /// <b>Every section is present in every pack, including the ones with nothing in them.</b> A
 /// section over an empty population renders with a count of nought rather than being left out,
 /// because absent and empty are different statements and only one of them is a fact about the
-/// evidence. Five of the nine are empty today and will be until outcomes close, which is exactly
+/// evidence. Five of the ten are empty today and will be until outcomes close, which is exactly
 /// the case the rule is for.
+///
+/// <b>The first section is the rule in force, and it was added at 6.5 because the pack did not
+/// state one.</b> A proposal is the direction, the gate, the threshold name, the value it moves
+/// from and the value it moves to, and until this section existed no part of the pack said what any
+/// threshold currently is: `Variant history` is every past proposal and excludes the baseline by
+/// design, so the one thing the pack never showed was the rule actually running. Found by asking a
+/// model for a proposal against a filled pack on 2026-09-07, which abstained twice with that as its
+/// reason, and no check in this corpus would have said it. It is the first section rather than a
+/// later one because it is what the evidence after it is evidence about.
+/// see: The rule in force is the pack's first section, because a proposal moves a threshold from a value
 /// </summary>
 public static class PackSections
 {
-    /// <summary>The nine, in document order.</summary>
+    /// <summary>The ten, in document order.</summary>
     public static IReadOnlyList<PackSection> Declared { get; } =
     [
+        new("Rule in force",
+            "The version running, and every threshold it holds per side with the gate and family that own it",
+            RestsOnClosedOutcomes: false),
         new("Population",
             "Count, date span, regime mix, setups per night, long against short",
             RestsOnClosedOutcomes: false),

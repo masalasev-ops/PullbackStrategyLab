@@ -70,6 +70,8 @@ public sealed record PullbackStrategyLabOptions
 
     public UniverseOptions Universe { get; init; } = new();
 
+    public ResearcherOptions Researcher { get; init; } = new();
+
     /// <summary>
     /// The market trackers the regime label is read from. Trackers rather than the indexes
     /// themselves, because a tracker has a bar with a volume and an index has a level.

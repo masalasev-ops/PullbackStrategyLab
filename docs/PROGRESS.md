@@ -17418,3 +17418,108 @@ Carried:    **Two new, both due at 6.5**, being the rule the pack does not state
 Next:       **6.5**, ResearcherSeat, no longer gated: three implementations behind the narrow
             interface, the empty tool set asserted, the key absent from the environment on every
             path, and the two obligations above settled before a proposal is ever written.
+
+## 6.5 — 2026-09-07 — phase-6-5-researcher-seat — ResearcherSeat, three transports behind one narrow interface
+
+Built:      **`ResearcherSeat`, the `ask-researcher` slot, migration 058's `proposal`, and three
+            transports selected by configuration.** The interface is one method, a pack in and
+            proposal text out, which is what makes the three substitutable and what makes the API
+            path cheap enough to sit built and unused against the day the subscription stops
+            (see: The researcher transport is a configuration switch between subscription and API key, over a deliberately narrow interface).
+            The seat cuts the pack it asks against rather than reading the row `build-pack` wrote,
+            because the body is not stored and a seat reading that row would rebuild it anyway; the
+            digest filed on the proposal is then the digest of what the model actually read.
+
+Found:      **There is no .NET Agent SDK, and the transport the operator ruled for does not exist in
+            this language.** The SDK is a library for Python and TypeScript only; the documented way
+            to drive the same loop from another language is to run the CLI as a subprocess with
+            `-p` and a structured output format. So the subscription seat is the Claude Code CLI in
+            print mode, which is the CLI the SDK itself wraps, and what changed is not the transport
+            but what an assertion about it can reach
+            (see: The subscription seat is the Claude Code CLI in print mode, and the empty tool set is read back rather than asserted).
+
+            **The empty tool set is harder on that path than the corpus assumed and ends up better
+            held.** `--allowedTools` auto-approves and does not restrict, so passing it nothing would
+            have left the full tool set in the model's context and merely unapproved; it is
+            `--disallowedTools "*"` that removes every tool from that context. That is an argument a
+            test can read, and an argument is still only what the seat asked for, **so the session's
+            own reported tool list is read back and the answer is refused where it is not empty**,
+            and refused equally where no list was reported at all. A tool arriving from configuration
+            the seat does not control is now refused at the ask, which no test over the seat's own
+            source could have seen.
+
+            **And it asks from an empty directory, which is load-bearing rather than tidy.** A print
+            session without `--bare` loads CLAUDE.md, hooks, MCP servers and plugins discovered from
+            its working directory, and this repository is full of all four; `--bare` is the
+            documented fix and cannot be used, because it never reads the subscription login, which
+            is the one thing this transport exists for.
+
+Found:      **A published statement bounds the subscription path, where the ruling recorded that
+            none existed.** Anthropic's own Agent SDK documentation says third party developers may
+            not offer claude.ai login or plan rate limits for their products without prior approval,
+            and directs them to API key authentication. It is about redistribution to end users
+            rather than about personal automation, so it does not reach a single-operator lab; what
+            it does is name the boundary. **The subscription path stops being defensible the day this
+            lab is offered to anyone else**, which is a condition the operator can see coming rather
+            than a term that might move under them.
+
+Corrected:  **The model budget assumed a pack 2.8 times smaller than the measured one, and the
+            ruling of 2026-09-07 quoted a figure from it.** The table read "About 8,400 tokens in"
+            and the pack over a filled store is 23,545, so every per-run and per-year figure in it
+            was understated: the API path at this model is **$8.07 a year and not $4.13**, and the
+            whole published spread is **about sixteen dollars and not about eight**. The entry filed
+            against 6.0 on 2026-09-07 states the old figures and this entry corrects them.
+            **It changes nothing about the ruling**, which is the half worth keeping: cost could not
+            decide it at either figure, and it was the estimate rather than the arithmetic that was
+            wrong. This is the fifth failure shape in a document rather than in a check: twelve
+            correct figures, computed over a population other than the one named beside them.
+
+Discharged: **All three obligations due here.** The pack states the rule in force, as its first
+            section, because the evidence after it is evidence about it
+            (see: The rule in force is the pack's first section, because a proposal moves a threshold from a value).
+            The tripwire is scoped to the signals a proposal rests on, being the ones it cites and
+            the ones the threshold it moves is replayed against, and the change fields are
+            conditional on not abstaining in the type and in the store's own CHECK clauses, so an
+            abstention has no gate field to fill
+            (see: The planted-null tripwire is scoped to what a proposal rests on, and an abstention rests on nothing).
+            **And the 1.5 obligation is discharged rather than carried**, on the reading above: it
+            said the test asserting the empty tool set was the whole of the guard, and it is not, the
+            seat now refusing an ask whose session reports any tool at all. What remains is that the
+            refusal is code, which is true of every guard this corpus has and is not a residue worth
+            a row.
+
+Found:      **The scoreboard dropped a panel's note whenever a figure sat beside it**, which is the
+            sixth failure shape still live. The withheld branch of the page rendered
+            `WithheldBecause` and the branch with a figure did not, so a panel carrying both a value
+            and a reason would have shown the value alone. It cost nothing while every panel with a
+            reason was also withheld, and the researcher seat is the first that is not: it reads
+            "not asked" and the reason is the whole point of the panel. Repaired in the page rather
+            than worked around in the panel.
+
+Measured:   **Byte-stability is now observed in the running lab rather than only claimed of the
+            build.** The `pack` slot cuts the pack at 08:20 and the seat cuts it again at 08:30 over
+            the same store state; the two digests agree or the packer is not byte-stable there,
+            whatever the golden fixture says. A disagreement is printed by the slot. Null and false
+            are different answers and only one is a fault: a week the pack slot did not run has
+            nothing to compare.
+
+Verified:   `tools/ci.ps1` green at 32 steps, 1,156 tests. `tools/verify-phase.ps1` GREEN: 154 claims,
+            150 passed, 0 failed, 4 out of scope, 0 unexamined. **Out of scope falls from 7 to 4**, the three
+            retired being the seat's catalogue row, the exhausted-allowance failure row and the model
+            budget's table placement, which is what the phase 6 projection said this checkpoint would
+            retire. **Twenty-seven expectations were touched and fifteen of them are new**, so the phase
+            added more than it re-based, which is the reading that figure exists for
+            (see: A fixture expectation changes only with a recorded reason, and the report counts what changed).
+            The twelve that moved are four from the tenth pack section, five from the status band's new
+            panel and three from the seat's own runs over the fixture.
+
+Carried:    **One raised, due at 6.8, and none falls due here.** The status band's seat panel is built
+            and no rendered page exercises it: the surface fixture holds no refused ask and its
+            scoreboard is a stored one, so the sentence the claim is really about, being that the band
+            names the transport that was refused, is exercised by nothing a page can be asked today. It
+            is declared as a surface claim arriving at 6.8, which owes a seedable surface anyway for
+            band 3 and the signal-library panel.
+
+Next:       **6.6**, ProposalRegistry and `replay_result`, where abstention is a valid recorded
+            outcome to screen rather than a failure, and where `ReplayHarness` gains the store a
+            result row can be keyed on.

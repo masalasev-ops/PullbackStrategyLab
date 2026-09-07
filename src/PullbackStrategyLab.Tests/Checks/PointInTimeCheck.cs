@@ -105,6 +105,13 @@ public sealed class PointInTimeCheck
             // existence, which for this table is the same question the other stamps answer.
             ["pack_version"] = "created_at",
 
+            // What the researcher returned, stamped and read to decide an answer: the scoreboard's
+            // third band reads proposal hit rate by pack version, and a week asked twice writes two
+            // rows. An unbounded read would show a proposal filed after the session being looked at,
+            // which for this table is the sharpest form of the fault: a hit-rate figure that included
+            // a proposal made later is a figure about a population that did not exist.
+            ["proposal"] = "observed_at",
+
             // The plan is read to decide an answer, which is what puts it here rather than beside
             // `plan_run` below. A resolver asks what was resting when a session opened, so a replay
             // standing at an old session that saw a plan written after it would resolve a fill the

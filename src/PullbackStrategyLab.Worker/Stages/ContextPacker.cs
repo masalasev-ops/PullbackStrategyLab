@@ -18,7 +18,7 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// pre-registration and the planted null exist to prevent, so the pack carries counts, deciles and
 /// summaries and never the rows underneath.
 ///
-/// <b>All nine sections are rendered, including the ones with nothing in them.</b> Five of the nine
+/// <b>All ten sections are rendered, including the ones with nothing in them.</b> Five of the ten
 /// rest on outcomes that have not closed and will render empty for months. Each carries its own
 /// count and, where that count is nought, the sentence saying which shape of nothing it was, so an
 /// almost-empty pack is legible as almost-empty rather than as a pack.
@@ -255,7 +255,7 @@ public sealed class ContextPacker
     }
 
     /// <summary>
-    /// The nine, in the order the document lists them.
+    /// The ten, in the order the document lists them.
     ///
     /// One method per section would read better and would let the list and the builders drift, so
     /// the switch is over <see cref="PackSections.Declared"/> itself: a section added to the
@@ -302,6 +302,7 @@ public sealed class ContextPacker
         {
             return declared.Name switch
             {
+                "Rule in force" => RuleInForce(connection, asOf),
                 "Population" => Population(connection, asOf),
                 "Loss taxonomy" => LossTaxonomy(connection, asOf),
                 "Ceiling gap" => CeilingGap(connection, asOf),
@@ -317,6 +318,83 @@ public sealed class ContextPacker
                     + "describing it."),
             };
         }
+    }
+
+    /// <summary>
+    /// The version running, and every threshold it holds per side.
+    ///
+    /// <b>This is the value a proposal moves from, and until 6.5 the pack did not carry it.</b> A
+    /// proposal is the direction, the gate, the threshold name, the value it moves from and the
+    /// value it moves to; the first four are nameable from the library and the fifth was in no
+    /// section. `Variant history` is every past proposal and excludes the baseline by design, so the
+    /// rule actually running was the one thing the pack never showed and a model asked for a
+    /// proposal against it abstained, correctly, twice.
+    /// see: The rule in force is the pack's first section, because a proposal moves a threshold from a value
+    ///
+    /// <b>The rule is read from the register and applied to the baseline, rather than printed from
+    /// the constants.</b> The two are the same number today because nothing has been accepted, and
+    /// they stop being the same the day the gate at 6.7 accepts a version. Printing the constants
+    /// would go on being right until then and then be wrong with nothing to say so.
+    ///
+    /// <b>Every threshold is shown and the family says which may move.</b> Execution and recorded
+    /// thresholds are in the list because a proposal naming one is refused for a reason the model
+    /// can read here, rather than refused at the registry over a field it was never told about.
+    /// see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+    /// </summary>
+    private RenderedSection RuleInForce(SqliteConnection connection, DateOnly asOf)
+    {
+        IReadOnlyList<StoredVariant> registered =
+            VariantReader.RegisteredBy(connection, asOf, _options.SessionZone);
+
+        StoredVariant? baseline = registered.FirstOrDefault(v => v.IsBaseline);
+
+        // Ordered by id so two cuts over one store state name the same version in the same words,
+        // and accepted only: an open version is accumulating rather than running.
+        IReadOnlyList<StoredVariant> accepted = [.. registered
+            .Where(v => !v.IsBaseline && v.Status == VariantStatus.Accepted)
+            .OrderBy(v => v.VariantId, StringComparer.Ordinal)];
+
+        var lines = new List<string>
+        {
+            baseline is null
+                ? "in force: the baseline, unregistered, so the version register names no row for it"
+                : $"in force: {baseline.VariantId} (generation {Int(baseline.Generation)}, "
+                  + $"{baseline.Family}, {baseline.Status})",
+        };
+
+        foreach (StoredVariant version in accepted)
+        {
+            lines.Add($"accepted over it: {version.VariantId}, {version.Moved?.Describe() ?? "no threshold moved"}");
+        }
+
+        foreach (string direction in (string[])[SetupDirection.Long, SetupDirection.Short])
+        {
+            SelectionRule rule = accepted
+                .Where(v => v.Moved is MovedThreshold m && m.Direction == direction)
+                .Aggregate(
+                    SelectionRule.For(direction),
+                    (current, v) => current.With(v.Moved!.ThresholdName, v.Moved.To));
+
+            lines.Add($"{direction} gates: {string.Join(" ", rule.Gates)}");
+
+            // Ordered by name with the gate as the tiebreak, because two sides share a threshold
+            // name and one side can hold the same name under two gates.
+            foreach (RuleThreshold threshold in rule.Thresholds
+                .OrderBy(t => t.Name, StringComparer.Ordinal)
+                .ThenBy(t => t.Gate, StringComparer.Ordinal))
+            {
+                lines.Add(
+                    $"{direction} {threshold.Name} (gate {threshold.Gate}, "
+                    + $"{threshold.Family.ToString().ToLowerInvariant()}): {Money(threshold.Value)}");
+            }
+
+            lines.Add(
+                $"{direction} movable by a selection proposal: "
+                + $"{Int(rule.Thresholds.Count(t => t.Family == ThresholdFamily.Selection))} "
+                + $"of {Int(rule.Thresholds.Count)}");
+        }
+
+        return RenderedSection.Of("Rule in force", lines);
     }
 
     /// <summary>

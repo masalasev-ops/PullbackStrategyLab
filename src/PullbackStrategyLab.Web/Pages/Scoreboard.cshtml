@@ -107,6 +107,22 @@ else
 
                                     <span class="count">@panel.Count</span>
                                     <span class="over">@panel.Over</span>
+
+                                    @*
+                                        The note, on a panel that has a figure as well as a
+                                        reason. This branch dropped it until 6.5, which is the
+                                        sixth failure shape exactly: the store held the right
+                                        answer, the check confirmed the row carried it, and the
+                                        surface the sentence was about showed nothing. It cost
+                                        nothing while every panel carrying a reason was also
+                                        withheld, and the researcher seat is the first that is
+                                        not: it reads "not asked" and the reason is the whole
+                                        point of the panel.
+                                    *@
+                                    @if (panel.WithheldBecause is string alongside)
+                                    {
+                                        <span class="withheld-because">@alongside</span>
+                                    }
                                 }
 
                                 @*
