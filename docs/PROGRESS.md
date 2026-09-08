@@ -18643,3 +18643,93 @@ Carried:    **The nine calibration rows keep their verdicts, and the reason is r
             rather than a ruling's.
 
             **This session committed code and may not sign it off.**
+## Not a checkpoint entry — 2026-09-08 — phase-6-12-calibration-current — belongs to 6.12: the calibration walk brought current, the two lost nights reconstructed, and the first comparison of a reconstructed night against the forward one
+
+**Not a checkpoint entry.** It belongs to 6.12, which has landed. An act on the running lab at the
+operator's instruction, and the measurement it made possible. No code changed, no threshold moved,
+and nothing was written to the evidence store.
+
+Acted:      **The calibration walk runs to 2026-09-04, and the two nights the lab lost are in it.**
+            `detect-long --calibrate 2026-08-25 2026-09-04` and the short side likewise, against
+            `data/live`, writing 517 long and 492 short rows over nine sessions. `calibration_setup`
+            goes from 602 sessions and 49,450 rows to **611 sessions and 50,459 rows**, continuous
+            from 2024-04-01 to the last session the store holds a bar for. **Nought passed every
+            gating check on either side**, over all nine.
+
+            **The store was snapshotted first and the evidence store was not touched.** 436,330,496
+            bytes with `integrity_check` ok and all fifty-nine tables' counts matched before the
+            walk; `setup` holds 367 rows after it, as it did before. The rows were written by the
+            detectors in calibration mode rather than copied in from the scratch reconstruction of
+            earlier today, because `calibration_setup` has one declared writer and a row inserted by
+            hand would be a second (see: Data ownership is declared once, in SCHEMA.md).
+
+            **The two lost nights, as reconstructions.** 2026-09-01 flagged 53 long and 82 short with
+            12 long one gate away, all of them `exit-tight`; 2026-09-02 flagged 67 long and 76 short
+            with 14 long one gate away, 12 `exit-tight` and 2 `dip-shape`. **Neither night held a
+            candidate**, so the hole in the evidence cost no trade. **They are reconstructions and
+            not evidence**, and the distinction is not a formality: every bar for those two dates
+            entered the store at 2026-09-03T12:53, so **nought of the 2,066 bars for 2026-09-01 was
+            observable on 2026-09-01**, and a forward detector reading point-in-time sees an empty
+            session (see: The evidence store holds only setups flagged forward, never setups
+            reconstructed from history).
+
+Measured:   **The first comparison of a reconstructed night against the forward night it
+            reconstructs.** Five of the nine sessions were already in the evidence store, so the same
+            night now exists both ways, which has never been true before. Over the **363 rows both
+            stores hold**:
+
+            **360 of 363, or 99.2%, agree on every gating verdict.**
+
+            **The 283 rows that differ on `cluster` are not a disagreement about anything.** That
+            gate counts how many names of one industry were flagged the same night, the two runs flag
+            different populations, so the count differs by construction. It is recorded and never
+            gating, so it cannot move a candidate either way.
+
+            **The three gating disagreements, named in full**, each a forward pass and a reconstructed
+            failure: `2026-09-03-SMCI-long` on `trigger-near`, forward 0.488 against a reconstruction
+            that recorded no value at all; `2026-09-04-ESTC-long` on `trigger-near`, forward 0.894
+            against 2.263; and `2026-09-03-NVTS-short` on `bounce-shape`, forward 0.342 retrace
+            against 0.741 over the same two bars. **All three are one cause**: a different thrust
+            session gives a different extreme, which gives a different pullback, which moves every
+            distance measured off it.
+
+Found:      **The reconstructed walk measures a wider population than the live lab produces, and the
+            long half of that was not written down.** Over the five nights held both ways: **245
+            forward long rows against 392 reconstructed, a ratio of 1.60**, and **122 forward short
+            against 328, a ratio of 2.69**, the two sides stated separately because they have
+            different causes (see: Long and short are never pooled into one figure).
+
+            **The short ratio is already decided and says so.** The market-cap clause of
+            `tradable-shortable` is exempt by name in calibration mode, so names with no
+            point-in-time capitalisation are admitted rather than failing the first gate
+            (see: A calibration run reconstructs against current membership and computes its
+            indicators in memory).
+
+            **The long ratio is the thrust, and that is the half nothing states.** A forward night
+            reads `scan_hit`, the vendor's ranked mover list of 300 names a session. A reconstructed
+            session has no such list for a 2024 date and ranks the session's candidates from the
+            stored windows instead. So the reconstruction finds thrusts the vendor's list never
+            carried, those names clear the recording floor, and they are measured. **It is not a
+            defect and there is no repair**: no scan exists for a historical date at any price, and
+            the alternative to ranking from windows is not reconstructing at all.
+
+            **What it costs is a reading rather than a count.** Of the **357 rows the reconstruction
+            flagged and the forward night did not, nought passed every gating check** and seven were
+            one gate short, so the extra population qualified nothing. What it changes is what a
+            distribution read off `calibration_setup` is a distribution of: the dispersion behind the
+            1,802, the `exit-tight` figures of 2026-09-08, and every funnel count on both sides were
+            computed over this population, and none of them says so at the point of use. Rowed and
+            due at the operator, on the terms the market-cap row already sits on.
+
+Carried:    **One obligation raised, due at the operator**, being whether the calibration figures are
+            read as evidence about the live funnel given the reconstruction measures a wider
+            population. It blocks nothing built and cannot be repaired.
+
+            **The nine sessions are in the calibration store and no forward night was created.** The
+            evidence store still holds five nights and the two lost ones are still lost as evidence,
+            which is the fact band 1 counts. Nothing here moves that count.
+
+            **This session wrote to the running store at the operator's instruction**, which is an act
+            no check in this corpus can see, so it is recorded here with its figures rather than left
+            in a run log (see: Every phase ends in a generated phase report, not in a page somebody
+            looks at).
