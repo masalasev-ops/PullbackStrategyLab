@@ -2833,3 +2833,13 @@ Why:  the defect is the two entry points and not the default. Four of the ten en
 Was:  "`fixtures/expectations.json` names eleven frozen-only checkpoints under `frozenOnly`, of which nought still rest on an open obligation."
 Now:  twelve, the second half unchanged.
 Why:  6.9 names its own permit, on the footing every phase sign-off since 2.12 has. `stated-counts` failed the first run of this commit naming the sentence, which is the registry doing the one thing a prose count cannot do for itself.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "**The phase is twelve rows and the numbers do not ascend with the order.** Nine were written when the whole plan was drafted; three were added by the planning pass of 2026-09-05, being the opening pass at 6.0, the repair pile at 6.10 and the parked row at 6.11."
+Now:  thirteen rows, the same three named, and a fourth added on 2026-09-08 at the operator's request, being the gallery's outcome filter at 6.12, followed by a sentence saying a row added that way is a row like any other and is recorded here rather than built from a conversation.
+Why:  `stated-counts` derives this total from the table's own rows, so the sentence had to move with the row. The second half is written because a checkpoint arriving from a conversation rather than from a planning pass is the shape that would otherwise be built without a done condition, and CLAUDE.md's rule is that anything issued in conversation which will later be cited lands in the repo when it is issued.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "The planning pass, then 6.10, then 6.0(a) and 6.0(b) in that order, then 6.1 to 6.8 in their numbered order, then 6.9. 6.11 sits outside the order and is parked."
+Now:  the same, ending "then 6.9, then 6.12", with 6.11 still outside the order, followed by two sentences: that 6.12 comes after 6.9 and is not signed off by it, because the sign-off of 2026-09-08 covers 6.10 and 6.0 through 6.8 by name and a sign-off cannot cover work authored after it; and that 6.12 does not wait on 6.10, because neither reaches the other.
+Why:  the build order is stated once here rather than inferred, so a row added to the table without a place in that sentence would leave the one statement of order silently incomplete. The sign-off point is stated rather than left to be worked out, because 6.9 reads as covering the phase and a later reader counting rows would find one it never saw.

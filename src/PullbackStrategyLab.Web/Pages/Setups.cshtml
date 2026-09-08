@@ -1,4 +1,5 @@
 @page "/setups"
+@using PullbackStrategyLab.Core.Detection
 @using PullbackStrategyLab.Web.Shell
 @model SetupsModel
 @*
@@ -13,7 +14,7 @@
 *@
 <h1>Setups</h1>
 
-<form class="ask" method="get" action="/setups">
+<form class="ask" method="get" action="/setups" id="ask">
     <label>Night <input name="asOf" value="@Model.AsOf" size="12" /></label>
     <label>Failed check
         <select name="failed">
@@ -24,8 +25,41 @@
             }
         </select>
     </label>
+    @*
+        How far the name got, which is a different question from which gate stopped it. Its own
+        control rather than more entries under "failed check", because the two compose: of the
+        names one gate rejected, which were otherwise clean is one ask and not two.
+    *@
+    <label>Outcome
+        <select name="outcome">
+            <option value="">any</option>
+            @foreach (string outcome in SetupOutcomes.All)
+            {
+                <option value="@outcome" selected="@(string.Equals(outcome, Model.Outcome, StringComparison.Ordinal))">@SetupOutcomes.Label(outcome)</option>
+            }
+        </select>
+    </label>
     <button type="submit">Show</button>
 </form>
+
+@*
+    The filter applies on selection. Local, unbundled, and confined to submitting a form that is
+    already there, on the same split the keyboard paging below is written to: the button stays, so
+    with script off the page behaves exactly as it did, and with script on the trip to the button is
+    gone. It sits here rather than inside the night below, because the case that most needs it is a
+    filter that left nothing on screen and the block down there does not render then.
+    see: Pages are server-rendered with no build step, and any script is local rather than fetched
+*@
+<script>
+    (function () {
+        var ask = document.getElementById('ask');
+        if (!ask) { return; }
+
+        Array.prototype.forEach.call(ask.querySelectorAll('select'), function (select) {
+            select.addEventListener('change', function () { ask.submit(); });
+        });
+    }());
+</script>
 
 @if (Model.Trouble is string trouble)
 {
@@ -38,9 +72,14 @@
 }
 else if (!Model.Setups.HasSetups)
 {
+    @*
+        Which filter emptied the page, in its own words. It named the failed check alone until
+        6.12, so an outcome filter that left nothing would have reported the night as having no
+        setup failing a check nobody asked about.
+    *@
     <p class="lede">
-        @Model.Setups.Flagged setup(s) were flagged on @Model.Setups.AsOf and none of them failed
-        <b>@Model.Failed</b>. The filter is showing you an empty night rather than the night being empty.
+        @Model.Setups.Flagged setup(s) were flagged on @Model.Setups.AsOf and @SetupsView.EmptiedByTheFilter
+        <b>@Model.Setups.AskedFor</b>. The filter is showing you an empty night rather than the night being empty.
     </p>
 }
 else
@@ -166,7 +205,12 @@ else
             }
 
             document.addEventListener('keydown', function (e) {
-                if (e.target && e.target.tagName === 'INPUT') { return; }
+                // SELECT joined INPUT at 6.12. A select takes j and k as type-ahead and the page
+                // took them as paging, so choosing a filter by keyboard moved the selection behind
+                // the open list, and a and d recorded an agreement on whatever it had moved to.
+                if (e.target && (e.target.tagName === 'INPUT'
+                    || e.target.tagName === 'SELECT'
+                    || e.target.tagName === 'TEXTAREA')) { return; }
 
                 switch (e.key) {
                     case 'j': case 'ArrowDown': show(at + 1); e.preventDefault(); break;

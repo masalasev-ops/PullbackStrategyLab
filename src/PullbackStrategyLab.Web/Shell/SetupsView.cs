@@ -16,16 +16,50 @@ namespace PullbackStrategyLab.Web.Shell;
 public sealed record SetupsView(
     string AsOf,
     string? FailedCheck,
+    string? Outcome,
     int Flagged,
     IReadOnlyList<SetupCardView> Long,
     IReadOnlyList<SetupCardView> Short,
     IReadOnlyList<string> CheckNames,
     string? Nothing)
 {
-    public static SetupsView Empty(string asOf, string why) => new(asOf, null, 0, [], [], [], why);
+    public static SetupsView Empty(string asOf, string why) => new(asOf, null, null, 0, [], [], [], why);
 
     /// <summary>How many the filter left, both sides added up. A count of cards, not of figures.</summary>
     public int Shown => Long.Count + Short.Count;
+
+    /// <summary>
+    /// What the page says when a filter, rather than the night, is why nothing is shown.
+    ///
+    /// A constant rather than a literal in the markup, because `surface-claims` reconciles the words
+    /// the corpus promises against the words a member emits, and a sentence that lives only in a
+    /// Razor file can be reworded without anything noticing that the promise moved.
+    /// </summary>
+    public const string EmptiedByTheFilter = "none of them matched";
+
+    /// <summary>
+    /// What the person asked for, in the words the page shows, or null where they asked for a whole
+    /// night.
+    ///
+    /// <b>The page needs this to tell two empty screens apart.</b> A night that flagged nothing and a
+    /// night whose filter left nothing look identical, and the second is the one where the reader
+    /// needs to know the filter did it. The failed-check filter has answered that since 2.9 and the
+    /// outcome filter would otherwise have shipped without it, which is the same page showing
+    /// nothing and giving no reason.
+    /// </summary>
+    public string? AskedFor
+    {
+        get
+        {
+            string[] asked =
+            [
+                .. FailedCheck is null ? Array.Empty<string>() : [$"failed {FailedCheck}"],
+                .. Outcome is null ? Array.Empty<string>() : [SetupOutcomes.Label(Outcome)],
+            ];
+
+            return asked.Length == 0 ? null : string.Join(" and ", asked);
+        }
+    }
 
     /// <summary>
     /// Which stages of this night had already ended other than cleanly when its setups were

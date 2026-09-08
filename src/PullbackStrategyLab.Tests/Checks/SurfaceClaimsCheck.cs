@@ -569,9 +569,17 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
         new(request =>
         {
             string path = request.RequestUri?.AbsolutePath ?? string.Empty;
+            string query = request.RequestUri?.Query ?? string.Empty;
 
             string body = path switch
             {
+                // A gallery whose filter left nothing, which is a state of the same surface rather
+                // than a second surface. The claim about it is that the page says which filter did
+                // it, and that sentence renders only on a night the filter emptied, so the ask has
+                // to be able to produce one. Routed on the query because the claim's surface is a
+                // path and this is the one page whose claims span two of its states.
+                _ when path.StartsWith("/setups", StringComparison.Ordinal)
+                    && query.Contains("outcome=", StringComparison.Ordinal) => EmptiedNight,
                 _ when path.StartsWith("/setups", StringComparison.Ordinal) => Night,
                 _ when path.StartsWith("/scoreboard", StringComparison.Ordinal) => Panels,
                 _ when path.StartsWith("/journal", StringComparison.Ordinal) => Trades,
@@ -586,6 +594,18 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
             };
         });
+
+    /// <summary>
+    /// The same night with the outcome filter applied and nothing left, so the page renders the
+    /// sentence that says a filter and not the night is why the screen is empty.
+    ///
+    /// `flagged` stays at the night's own count while both lists are empty, which is the whole
+    /// distinction: a night that flagged nothing carries `nothing` instead and reads differently.
+    /// </summary>
+    private const string EmptiedNight = """
+        { "asOf": "2026-08-24", "failedCheck": null, "outcome": "passed-all", "flagged": 2,
+          "long": [], "short": [], "checkNames": ["exit-tight"], "nothing": null }
+        """;
 
     /// <summary>
     /// A journal carrying one trade a side, because the two claims it answers are about the two

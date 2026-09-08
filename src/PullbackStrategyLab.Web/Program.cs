@@ -610,12 +610,25 @@ public sealed class LabApiClient
     public async Task<SetupsView> ReadSetupsAsync(
         DateOnly asOf,
         string? failedCheck,
+        string? outcome,
         CancellationToken cancellationToken = default)
     {
         string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        string filter = string.IsNullOrWhiteSpace(failedCheck)
-            ? string.Empty
-            : "?failed=" + Uri.EscapeDataString(failedCheck);
+
+        // Both filters travel or neither does, and they are assembled rather than concatenated so
+        // that adding the second could not leave the first spelled "?failed=" twice. The two narrow
+        // in sequence at the other end, so an ask carrying both is one question and not two.
+        string[] terms =
+        [
+            .. string.IsNullOrWhiteSpace(failedCheck)
+                ? Array.Empty<string>()
+                : ["failed=" + Uri.EscapeDataString(failedCheck)],
+            .. string.IsNullOrWhiteSpace(outcome)
+                ? Array.Empty<string>()
+                : ["outcome=" + Uri.EscapeDataString(outcome)],
+        ];
+
+        string filter = terms.Length == 0 ? string.Empty : "?" + string.Join("&", terms);
 
         try
         {
@@ -647,6 +660,7 @@ public sealed class LabApiClient
             return new SetupsView(
                 payload.AsOf ?? session,
                 payload.FailedCheck,
+                payload.Outcome,
                 payload.Flagged,
                 [.. (payload.Long ?? []).Select(Card)],
                 [.. (payload.Short ?? []).Select(Card)],
@@ -884,6 +898,7 @@ public sealed class LabApiClient
     private sealed record SetupsPayload(
         string? AsOf,
         string? FailedCheck,
+        string? Outcome,
         int Flagged,
         IReadOnlyList<SetupPayload>? Long,
         IReadOnlyList<SetupPayload>? Short,

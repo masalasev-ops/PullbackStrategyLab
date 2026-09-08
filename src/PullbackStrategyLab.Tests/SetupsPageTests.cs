@@ -31,7 +31,7 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
     /// <summary>One setup a side, which is enough to render every part of the page.</summary>
     private const string Night = """
         {
-          "asOf": "2026-08-24", "failedCheck": null, "flagged": 2,
+          "asOf": "2026-08-24", "failedCheck": null, "outcome": null, "flagged": 2,
           "long": [
             { "setupId": "2026-08-24-HOOD-long", "ticker": "HOOD", "direction": "long",
               "rank": 1, "cappedOut": false, "passedAll": false,
@@ -70,12 +70,12 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
         """;
 
     private const string NothingFlagged = """
-        { "asOf": "2026-08-24", "failedCheck": null, "flagged": 0, "long": [], "short": [],
+        { "asOf": "2026-08-24", "failedCheck": null, "outcome": null, "flagged": 0, "long": [], "short": [],
           "checkNames": [], "nothing": "no setups were flagged on 2026-08-24" }
         """;
 
     private const string FilteredToNothing = """
-        { "asOf": "2026-08-24", "failedCheck": "held-floor", "flagged": 2, "long": [], "short": [],
+        { "asOf": "2026-08-24", "failedCheck": "held-floor", "outcome": null, "flagged": 2, "long": [], "short": [],
           "checkNames": ["exit-tight", "held-floor"], "nothing": null }
         """;
 
@@ -306,7 +306,82 @@ public sealed class SetupsPageTests : IClassFixture<WebApplicationFactory<LabApi
         // The distinction the page has to make: two setups were flagged and the filter left none.
         // "Nothing was flagged" and "nothing failed this check" are different nights.
         Assert.Contains("2 setup(s) were flagged", html, StringComparison.Ordinal);
-        Assert.Contains("none of them failed", html, StringComparison.Ordinal);
+        Assert.Contains("none of them matched", html, StringComparison.Ordinal);
+
+        // And it names the filter. It said "none of them failed <check>" until 6.12, which reads as
+        // a sentence about the check filter whichever filter actually emptied the page.
+        Assert.Contains("<b>failed held-floor</b>", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>The night above, emptied by the outcome filter rather than by the check filter.</summary>
+    private const string OutcomeFilteredToNothing = """
+        { "asOf": "2026-08-24", "failedCheck": null, "outcome": "passed-all", "flagged": 2,
+          "long": [], "short": [], "checkNames": ["exit-tight", "held-floor"], "nothing": null }
+        """;
+
+    [Fact]
+    public async Task The_gallery_offers_the_two_outcomes_beside_the_check_filter_rather_than_among_them()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        // Its own control. Folded into the failed-check list the two would be alternatives, and the
+        // question a person has at the gallery is both at once.
+        Assert.Contains("<select name=\"failed\">", html, StringComparison.Ordinal);
+        Assert.Contains("<select name=\"outcome\">", html, StringComparison.Ordinal);
+
+        Assert.Contains("value=\"passed-all\"", html, StringComparison.Ordinal);
+        Assert.Contains("value=\"failed-one\"", html, StringComparison.Ordinal);
+
+        // In words rather than as the wire values, because the page is read by a person.
+        Assert.Contains(">passed everything</option>", html, StringComparison.Ordinal);
+        Assert.Contains(">failed only one</option>", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_chosen_outcome_comes_back_selected_so_the_page_says_what_it_is_showing()
+    {
+        using HttpClient client = Client(Handler(OutcomeFilteredToNothing));
+        string html = await client.GetStringAsync("/setups?outcome=passed-all");
+
+        Assert.Contains("<option value=\"passed-all\" selected", html, StringComparison.Ordinal);
+
+        // And the empty page names the outcome rather than a check nobody asked about.
+        Assert.Contains("2 setup(s) were flagged", html, StringComparison.Ordinal);
+        Assert.Contains("<b>passed everything</b>", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_filter_applies_on_selection_and_the_button_stays_for_a_page_with_no_script()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        // The convenience: a change on either select submits the form that is already there.
+        Assert.Contains("select.addEventListener('change'", html, StringComparison.Ordinal);
+        Assert.Contains("ask.submit()", html, StringComparison.Ordinal);
+
+        // The function: the button is still there, so with script off the page behaves as it did.
+        Assert.Contains("<button type=\"submit\">Show</button>", html, StringComparison.Ordinal);
+
+        // And the script sits outside the night, because the case that most needs it is a filter
+        // that left nothing on screen. Asserted over the emptied page, where the cards are gone.
+        using HttpClient emptied = Client(Handler(OutcomeFilteredToNothing));
+        string empty = await emptied.GetStringAsync("/setups?outcome=passed-all");
+
+        Assert.DoesNotContain("article class=\"setup", empty, StringComparison.Ordinal);
+        Assert.Contains("ask.submit()", empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Keyboard_paging_ignores_a_select_so_choosing_a_filter_cannot_record_an_agreement()
+    {
+        using HttpClient client = Client(Handler(Night));
+        string html = await client.GetStringAsync("/setups");
+
+        // A select takes j and k as type-ahead. Without this guard the page took them as paging
+        // while the list was open, and a and d then recorded an agreement on whatever it moved to.
+        Assert.Contains("e.target.tagName === 'SELECT'", html, StringComparison.Ordinal);
     }
 
     [Fact]
