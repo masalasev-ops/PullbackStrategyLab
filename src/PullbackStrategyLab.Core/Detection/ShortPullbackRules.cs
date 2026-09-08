@@ -389,10 +389,18 @@ public static class ShortPullbackRules
             ? CheckResult.Unknown("no-reclaim", "no 50-day average over the bounce")
             : new CheckResult("no-reclaim", beyond <= rule.Value(SelectionRule.MaximumClosesBeyondFloor), beyond);
 
+    // The mirror of the long side's, guarded the same way and for the same reason. `no-reclaim`
+    // above is deliberately not guarded: its quantity is a count of closes beyond the floor, where
+    // nought means no violations and is the ordinary passing answer on 16,596 of 16,917 calibration
+    // rows. A nought is only not evidence where the quantity is a distance.
     private static CheckResult ExitTight(ShortEvidence e, SelectionRule rule) =>
-        e.StopDistanceRanges is not decimal distance
-            ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
-            : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
+        e.Bounce is { HasNoRange: true }
+            ? CheckResult.Unknown("exit-tight", CheckResult.NoRangeInThePullback)
+            : e.StopDistanceRanges is not decimal distance
+                ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
+                : distance == 0m
+                    ? CheckResult.Unknown("exit-tight", CheckResult.NoRangeInThePullback)
+                    : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
 
     private static CheckResult Cluster(ShortEvidence e, SelectionRule rule) =>
         new("cluster", (e.ClusterCount ?? 0) >= rule.Value(SelectionRule.ClusterThreshold), e.ClusterCount);

@@ -26,6 +26,31 @@ public sealed record CheckResult(string Name, bool Passed, decimal? Value, strin
     public const string NoStopOrRange = "no stop or no daily range for the session";
 
     /// <summary>
+    /// What a distance gate says where the pullback it measures has no range at all, so the distance
+    /// it would report is nought.
+    ///
+    /// <b>A nought is not evidence, which is the whole of the ruling this carries.</b> A gate handed
+    /// nothing reads as empty and fails. A gate reading nought does not: it reads as the tightest
+    /// possible pass, and `exit-tight` at nought claims the give-up sits nought daily ranges from the
+    /// entry, which is the most favourable answer the gate can give and is produced by bars with no
+    /// range in them. The two are opposite readings of the same absence, and only one of them was
+    /// being recorded.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    public const string NoRangeInThePullback =
+        "the pullback has no range at all, so the distance is nought rather than tight";
+
+    /// <summary>
+    /// The same for a ratio taken against the session's own bar, where that bar has no range.
+    ///
+    /// Its own sentence rather than the one above, because the quantity and the reader's question
+    /// are different: a contraction of nought says the session was quiet to a degree no session can
+    /// be, and the bar it was measured from is the setup's own rather than the pullback's.
+    /// </summary>
+    public const string NoRangeInTheSession =
+        "the session's own bar has no range at all, so the ratio is nought rather than contracted";
+
+    /// <summary>
     /// The clauses a multi-clause gate tested, each with its own verdict, or null on a gate that has
     /// only itself to answer for.
     ///

@@ -18452,3 +18452,194 @@ Carried:    **Three obligations, all due at the operator, and none of them block
             and three rows; nothing in `src/` moved, so the fresh-session rule does not bind on this
             entry, and 6.12 itself is still unsigned by the rule that a session which committed code
             may not sign that code off.
+## Not a checkpoint entry — 2026-09-08 — phase-6-12-zero-is-not-evidence — belongs to 6.12: a nought ruled out of evidence, the gate set's provenance put beside the gate set, and why the short side has never come within one gate
+
+**Not a checkpoint entry.** It belongs to 6.12, which has landed. One ruling by the operator with the
+code that executes it, two measurements, and the documents that carry both. No new component, no new
+store, no threshold moved, and no stored row rewritten.
+
+Ruled:      **A nought is not evidence. Taken by the operator on 2026-09-08, closing the row this
+            session raised the same day.** A gate handed nothing reads as empty and fails, which the
+            corpus has asserted since 3.11. A gate reading nought does not read as empty: it reads as
+            the tightest possible pass. `exit-tight` at a distance of nought claims the give-up sits
+            nought daily ranges from the entry, which is the most favourable answer any gate in this
+            lab can give, and it is produced by bars with no range in them rather than by a tight
+            stop. **So a gate whose quantity is a distance records no value with the reason, and the
+            reason is stored on the row rather than left to be inferred**
+            (see: A gate handed an absent or degenerate quantity fails rather than passing).
+
+            **The ruling names what it does not reach, and that half was measured before it was
+            written.** `held-floor` and `no-reclaim` count closes beyond a floor, where nought means
+            no violations: **30,442 of 32,533 long calibration rows and 16,596 of 16,917 short ones**
+            read exactly nought there and pass, so a rule reading "any nought" would fail every clean
+            setup in the lab. A nought is not evidence where the quantity is a distance and it is the
+            whole of the evidence where the quantity is a count.
+
+            **It keys on the range and never on the volume**, which the ruling states outright. Of the
+            five rangeless bars sitting inside a pullback window, four carry a volume of nought and
+            GH's 2024-05-23 traded 700 shares, so a volume test would have missed one of the five and
+            caught nothing the range does not.
+
+            **And it does not rest on `dip-shape` refusing single-bar pullbacks.** That refusal would
+            have hidden the case without closing it, and its two-to-seven is a movable threshold in
+            the selection family, so a version could widen it and the refusal would become the only
+            thing holding the record. **A rule held by another rule's current value is not held.**
+
+Built:      **Three of the four gates guarded, and `PullbackGeometry.Pullback.HasNoRange` is what
+            they read.** `exit-tight` on both lists, `trigger-near` and `contraction`. Two new
+            reasons on `CheckResult`, one for a pullback with no range and one for a session bar with
+            no range, because the quantity and the reader's question differ between them.
+
+            **`exit-tight` carries two guards and both are load-bearing.** The geometry catches it at
+            detection, where the pullback is in hand. The value catches it in a replay, which rebuilds
+            evidence from frozen signals and can hold a distance without the geometry behind it. A
+            distance of nought is exact in the way a trigger distance is not: it needs the entry and
+            the give-up to be the same price.
+
+            **`trigger-near` is guarded on the geometry alone, and the measurement is why.** 38 of
+            32,533 long calibration rows read a trigger distance of exactly nought, and **37 of them
+            sit on ordinary bars ranging from 0.14% to 15.6% of their close on millions of shares**. A
+            close sitting exactly on the entry level is a true and wanted answer to the question that
+            gate asks, and the value guard the other two carry would have discarded all 37.
+
+Found:      **The first form of the rule read every replayed row and every authored gate case as
+            rangeless, and the golden fixture failed nine expectations on it.** `SelectionReplay.
+            PullbackFrom` and `GateCases.Shape` both build a pullback for its bar count and its
+            retrace alone and both fabricated `Trigger: 0m, Stop: 0m`, so a rule reading only
+            `Trigger == Stop` was true of every one of them. **Neither placeholder was wrong before
+            anything read those fields**, and that is the shape: a value nobody consumed became a
+            value a new rule consumed, and the only thing that noticed was the fixture.
+
+            **The replay's was the repairable half and it is repaired.** `trigger_price` and
+            `stop_price` are in the signal library and were being ignored, so a replayed pullback
+            reported two prices it never had. It now reads them. `HasNoRange` additionally requires a
+            real price, which is the belt beside it, because a row whose signals carry neither price
+            still arrives there.
+
+Measured:   **Why the short side has produced no near miss at all. Per gate, over both populations,
+            counting how many rows each gate fails and how many fail it alone.** `cluster` is excluded
+            from "alone" throughout, being recorded and never required.
+
+            | Gate | live short, 122 rows | fails alone | calibration short, 16,917 rows | fails alone |
+            |---|---|---|---|---|
+            | `tradable-shortable` | 0.0% | 0 | 0.0% | 0 |
+            | `moves-enough` | 0.0% | 0 | 0.0% | 0 |
+            | `downtrend` | 0.0% | 0 | 0.0% | 0 |
+            | `averages-squeezing` | 62.3% | 0 | 70.9% | 0 |
+            | `thrust` | 0.0% | 0 | 0.0% | 0 |
+            | `bounce-shape` | 87.7% | 0 | 86.0% | 7 |
+            | `reached-ceiling` | 94.3% | 0 | 94.9% | 4 |
+            | `no-reclaim` | 2.5% | 0 | 1.9% | 0 |
+            | `exit-tight` | 95.9% | 0 | 98.6% | 9 |
+
+            The long side beside it, over 245 live rows and 32,533 calibration rows: `dip-shape` 82.0%
+            and 90.1%, `held-floor` 1.2% and 6.4%, `contraction` 46.1% and 53.4%, `trigger-near` 51.0%
+            and 51.6%, `exit-tight` 98.8% and 98.7%, with **28 and 1,951 failing `exit-tight` alone**
+            and 3 and 389 failing `dip-shape` alone.
+
+            **The answer is spread, not concentration, and the statistic that says so is the count of
+            gating failures per row.**
+
+            | Population | 0 | 1 | 2 | 3 | 4 | 5+ | mean |
+            |---|---|---|---|---|---|---|---|
+            | live long, 245 rows | 0 | 31 | 63 | 77 | 74 | 0 | **2.79** |
+            | live short, 122 rows | 0 | **0** | 16 | 38 | 68 | 0 | **3.43** |
+            | calibration long, 32,533 rows | 30 | 2,340 | 7,294 | 10,840 | 11,927 | 102 | **3.00** |
+            | calibration short, 16,917 rows | 0 | 20 | 975 | 6,187 | 9,611 | 124 | **3.52** |
+
+            **The short side carries about half a gating failure more per row than the long side and
+            its mode is four rather than three.** Four short gates each reject most of what reaches
+            them, `averages-squeezing` at 62.3%, `bounce-shape` at 87.7%, `reached-ceiling` at 94.3%
+            and `exit-tight` at 95.9%, and no single one of them dominates. The long side has one
+            gate that does, `exit-tight` at 98.8%, which is why 28 of its 31 near misses are that one
+            gate. **A row must be at nought on eight gates to be one away, and on the short side four
+            independent rejections make that arithmetic rare rather than any one gate making it
+            impossible.** Over 602 calibration sessions the short side reached one-away 20 times
+            against the long side's 2,340.
+
+            **Nothing here is proposed and no threshold is touched.** The two readings are different
+            faults and the measurement says which this is: one gate would be a threshold or a basis,
+            several is the pattern not occurring on that side as often as the gate set asks.
+
+            **The gate set traced in full, twenty clauses, ten a side.** The count was recorded on
+            2026-09-08 and the list was not; this is the list, and it reconciles against the fourteen
+            already recorded. Form is what the clause tests, threshold is the number.
+
+            | Clause | Form | Threshold | The number |
+            |---|---|---|---|
+            | long `tradable` | reading | reading | $20M turnover, $5 price |
+            | long `moves-enough` | **stated** | **stated** | 5% daily range |
+            | long `uptrend` | reading | none | a word comparison |
+            | long `thrust` | **stated** | reading | 10 sessions |
+            | long `dip-shape` | reading | reading | 2 to 7 bars, 40% retrace |
+            | long `held-floor` | reading | reading | nought closes beyond |
+            | long `contraction` | reading | reading | ratio below 1 |
+            | long `trigger-near` | reading | reading | 1.5 daily ranges |
+            | long `exit-tight` | **stated** | **stated** | 0.5 daily ranges |
+            | long `cluster` | reading | reading | 2 names |
+            | short `tradable-shortable` | reading | reading | four numbers |
+            | short `moves-enough` | **stated** | **stated** | 5% daily range |
+            | short `downtrend` | reading | none | a word comparison |
+            | short `averages-squeezing` | reading | reading | ratio below 1 |
+            | short `thrust` | reading | reading | 10 sessions |
+            | short `bounce-shape` | reading | reading | 2 to 7 bars, 40% retrace |
+            | short `reached-ceiling` | **stated** | reading | 0.5 daily ranges |
+            | short `no-reclaim` | reading | reading | nought closes beyond |
+            | short `exit-tight` | **stated** | **stated** | 0.5 daily ranges |
+            | short `cluster` | reading | reading | 2 names |
+
+            **Six forms and four thresholds are a stated source, nought of either is a derivation, and
+            fourteen of each are an author's reading**, with two clauses carrying no threshold at all.
+            That is the count already recorded, reconciled row by row.
+
+            **The six that are not an author's reading, and what each rests on.** `moves-enough` on
+            both lists rests on ARCHITECTURE's own basis cell, "From the trader's stated preference".
+            `thrust` on the long list rests on the strategy's stated premise that the pattern begins
+            with a sharp move reflecting real news, so no thrust means no premise. `exit-tight` on
+            both lists rests on the risk rule ARCHITECTURE attributes as "The strategy's own rule",
+            and its threshold is attributed the same way. `reached-ceiling` rests on the short
+            pattern's own definition, the bounce being shorted where it is expected to stall, though
+            its half-a-range threshold is a reading rather than a stated figure. **Both stated
+            thresholds are the same two sentences**, being the 5% floor and the half-range cap, each
+            attributed once and each carrying two clauses.
+
+            **And the sourced half is not the sound half.** `exit-tight` is one of only two clauses
+            whose form and threshold are both a stated source, and it is the clause the same day's
+            finding shows rests on a premise nothing in this corpus defines.
+
+Verified:   **Twelve behavioural tests in `ZeroDistanceIsNotEvidenceTests`, proved red before green by
+            neutralising the guards**, at which five of the twelve fail and seven pass. Each guard is
+            exercised against its own negative case in the same file: an ordinary tight stop still
+            passes and records its distance, a close sitting exactly on the entry still passes, an
+            absent distance still says absent rather than rangeless, and a count of nought violations
+            is still the ordinary pass on both sides.
+
+            **The fixture is what caught the misfire**, failing nine expectations across the authored
+            gate boundary cases and the replay verdicts. It is green again with the two placeholders
+            repaired, and none of the nine was the ruling changing a real answer.
+
+            `tools/ci.ps1` green on Windows, **33 steps, 1,210 tests**, up from 1,198.
+
+Carried:    **The nine calibration rows keep their verdicts, and the reason is recorded here rather
+            than written onto them.** They are `2024-05-28-GH-long`, `2024-05-29-GH-long`,
+            `2024-11-08-CLSK-long`, `2026-07-21-AGX-short`, `2026-07-22-AGX-short`,
+            `2026-07-23-AGX-short`, `2026-07-24-AGX-short`, `2026-07-27-AGX-short` and
+            `2026-07-31-DFTX-long`. **Eight of the nine are unaffected by the ruling**: their
+            pullbacks have range, the rangeless bar is one of several, and their distances read 1.25
+            to 3.24. **One is not.** `2024-11-08-CLSK-long` carries passing verdicts on `held-floor`,
+            `contraction`, `trigger-near` and `exit-tight` at a value of exactly 0, and under the rule
+            taken today three of those four would record no value instead. **It is not corrected**,
+            because rewriting a stored verdict would move the population the 1,802 derivation and
+            every funnel figure were computed over, and because the row was never a candidate: it is
+            held out by `dip-shape` at one bar and by `cluster`. The obligation row is closed naming
+            the ruling, in `BUILD_PLAN.md`.
+
+            **No fixture expectation is added for the ruling, and that is a gap rather than a
+            judgement.** Done condition seven binds a checkpoint and this is not one, so nothing
+            fails; what is true is that the guard's subject is a rangeless pullback, the captured day
+            holds none, and the authored gate cases cannot express one because `GateCases.Shape` has
+            no field for a trigger or a stop. Closing it means giving that helper the two prices and
+            re-deriving the gate expectations outside the solution, which is a checkpoint's work
+            rather than a ruling's.
+
+            **This session committed code and may not sign it off.**

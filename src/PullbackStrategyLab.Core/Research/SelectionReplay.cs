@@ -398,8 +398,16 @@ public static class SelectionReplay
                 PullbackExtreme: 0m,
                 PullbackBars: bars,
                 RetraceDepth: Read(signals, "retrace_depth"),
-                Trigger: 0m,
-                Stop: 0m);
+
+                // <b>The frozen prices, which this read fabricated as nought until 2026-09-08.</b>
+                // `trigger_price` and `stop_price` are in the signal library and were being ignored
+                // here, so a replayed pullback reported two prices it never had. Nothing read them
+                // until the zero-distance ruling, and then a rule about the two prices being equal
+                // read every replayed row as degenerate. Reading them is the repair; the guard's own
+                // test for a real price is the belt beside it, because a row whose signals carry
+                // neither price still arrives here.
+                Trigger: Read(signals, "trigger_price") ?? 0m,
+                Stop: Read(signals, "stop_price") ?? 0m);
 
     private static decimal? Read(IReadOnlyDictionary<string, decimal> signals, string name) =>
         signals.TryGetValue(name, out decimal value) ? value : null;
