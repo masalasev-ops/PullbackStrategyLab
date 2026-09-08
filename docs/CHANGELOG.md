@@ -2748,3 +2748,23 @@ Why:  `twins`, `pack`, `seat` and `registry` were built at 6.3 through 6.6, decl
 Was:  the carried obligations table holding twenty-one rows and the operator's heading reading "The nine that are the operator's", with the reading beside it saying none of the nine rows is a phase 5 question and the ninth arriving on 2026-09-04.
 Now:  twenty-three rows, "The eleven that are the operator's", and the reading naming the tenth and eleventh as arriving on 2026-09-07 with 6.7.
 Why:  6.7 raises two findings that block nothing built and that only the operator can settle: the minimum sample a selection version is read against, derived over band 1's population and meaning about seven years over a version's, and the five slots declared everywhere and registered with the scheduler nowhere.
+
+### 2026-09-08 — SCHEMA.md — cites The averages are one implementation, computed nightly and drawn on demand
+Was:  the `scoreboard` column table ending at `n_minimum_sessions`, with no column for whether a panel's own condition is met.
+Now:  a `reads_badly`, `reads_badly_because` row, present together and null on every panel that states no threshold.
+Why:  ARCHITECTURE's figure caption says every panel carries the condition under which it reads badly, and one panel states a threshold: band 0 reads red above 5% of the record. The caption was a static string, nothing formed the ratio and nothing rendered anything red, which is the row raised at 3.5. The state is computed by the builder rather than by the page, on the same terms every other figure there is.
+
+### 2026-09-08 — SCHEMA.md — cites The evidence pack is versioned, and the success criterion is proposal hit rate by pack version
+Was:  the `variant` column table ending at `threshold_from`, `threshold_to`, with nothing recording where a version came from.
+Now:  a `proposal_id` row, written once at creation and null on a version nobody proposed.
+Why:  band 3 is proposal hit rate by pack version, which is the project's stated success criterion. `proposal` carries the pack version it was cut against and the settlement is a status on a version, and nothing carried the second back to the first, so the rate could not be computed even in principle and the band would have read withheld for ever for a reason about the build rather than about the evidence.
+
+### 2026-09-08 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the Checks table holding twenty-seven rows, ending the surface pair at `surface-claims`.
+Now:  a `rendered-classes` row beside it.
+Why:  `surface-claims` reads a page for words and a colour is not a word, so an element that is present and invisible is outside it by construction: not deferred, not exempt, counted nowhere as missing. That is the 5.5 obligation, and 5.5 priced two instruments for it. This checkpoint chooses the one that catches an element that is present and invisible rather than the one that catches an element that vanished, because both recorded instances were the first.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the carried obligations table holding twenty-three rows, six of them falling due at 6.8.
+Now:  seventeen rows, and a section recording what the six were and what happened to each.
+Why:  6.8 is the checkpoint they fall due at and they are one pass over the status band and the scoreboard's panels, which is what the row said they would be. A discharge moves a row into the record of what it was rather than deleting it, so the total a checkpoint's due-point claim derives can still be reconstructed.

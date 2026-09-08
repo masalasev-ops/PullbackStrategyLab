@@ -50,6 +50,17 @@ public sealed class ProposalRegistry
     /// <summary>A week with no answer in it: neither a result nor work.</summary>
     public const string Unactionable = "unactionable";
 
+    /// <summary>
+    /// A proposal a screen let through that has since been registered as a version.
+    ///
+    /// <b>Written here rather than by whoever registers the version</b>, because `proposal.status`
+    /// has one declared writer and a second would put the funnel's own record in two code paths.
+    /// The registry reads the register, sees a version carrying this proposal's id, and moves the
+    /// status; what says a version came from a proposal is `variant.proposal_id`, written once at
+    /// creation (see: The AI writes only to the proposal store).
+    /// </summary>
+    public const string Admitted = "admitted";
+
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
     private readonly IClock _clock;
@@ -92,6 +103,9 @@ public sealed class ProposalRegistry
         Console.WriteLine(
             $"{Name}: {result.Screened} survived the screen, {result.Discarded} killed by it, "
             + $"{result.Inconclusive} inconclusive and still filed");
+
+        Console.WriteLine(
+            $"{Name}: {result.Admitted} proposal(s) registered as a version since the last run");
         Console.WriteLine(
             $"{Name}: {result.BuildTasks} signal request(s), {result.Abstentions} abstention(s), "
             + $"{result.Unactionable} week(s) with no answer");
@@ -125,8 +139,26 @@ public sealed class ProposalRegistry
                 .Where(p => p.Status == ResearcherSeat.Filed)];
         }
 
+        // The proposals a screen already let through, which is a different population from the filed
+        // ones and is read for a different question: not what a screen made of it, but whether it
+        // has since become a version. Read here so both passes see one instant of the store.
+        IReadOnlyList<StoredProposal> survived;
+        IReadOnlyList<string> proposalsWithAVersion;
+
+        using (SqliteConnection reading = _connections.OpenReadOnly())
+        {
+            survived = [.. ProposalReader.Read(reading, asOf, _options.SessionZone)
+                .Where(p => p.Status == Screened)];
+
+            proposalsWithAVersion =
+                [.. VariantReader.RegisteredBy(reading, asOf, _options.SessionZone)
+                    .Select(v => v.ProposalId)
+                    .Where(id => id is not null)
+                    .Select(id => id!)];
+        }
+
         var lines = new List<string>();
-        var dispositions = new List<(string ProposalId, string Status)>();
+        var dispositions = new List<(string ProposalId, string From, string Status)>();
         int screened = 0, discarded = 0, buildTasks = 0, abstentions = 0, unactionable = 0;
         int inconclusive = 0;
 
@@ -154,7 +186,7 @@ public sealed class ProposalRegistry
                     }
 
                     bool killed = result.Verdict != ReplayResult.Survived;
-                    dispositions.Add((proposal.ProposalId, killed ? Discarded : Screened));
+                    dispositions.Add((proposal.ProposalId, ResearcherSeat.Filed, killed ? Discarded : Screened));
 
                     if (killed)
                     {
@@ -171,22 +203,42 @@ public sealed class ProposalRegistry
                     lines.Add(
                         $"{proposal.ProposalId}: a build task, \"{proposal.RequestedSignal}\" on the "
                         + $"{proposal.RequestedAxis} axis, from {Pairs(proposal)} setup(s) it could not separate");
-                    dispositions.Add((proposal.ProposalId, BuildTask));
+                    dispositions.Add((proposal.ProposalId, ResearcherSeat.Filed, BuildTask));
                     buildTasks++;
                     break;
 
                 case "abstained":
                     lines.Add($"{proposal.ProposalId}: abstained, {proposal.AbstainedBecause}");
-                    dispositions.Add((proposal.ProposalId, Recorded));
+                    dispositions.Add((proposal.ProposalId, ResearcherSeat.Filed, Recorded));
                     abstentions++;
                     break;
 
                 default:
                     lines.Add($"{proposal.ProposalId}: {proposal.Outcome}, nothing to screen");
-                    dispositions.Add((proposal.ProposalId, Unactionable));
+                    dispositions.Add((proposal.ProposalId, ResearcherSeat.Filed, Unactionable));
                     unactionable++;
                     break;
             }
+        }
+
+        // **The second pass, and it is what makes the success criterion computable.** Band 3 is
+        // proposal hit rate by pack version, which is a rate over proposals settled as versions, and
+        // a proposal that stopped at `screened` after a version was registered from it would leave
+        // the funnel with no record of having reached the end of itself. It is read from the register
+        // rather than written by whoever registers the version, because this status has one writer.
+        // see: The evidence pack is versioned, and the success criterion is proposal hit rate by pack version
+        int admitted = 0;
+
+        foreach (StoredProposal proposal in survived)
+        {
+            if (!proposalsWithAVersion.Contains(proposal.ProposalId, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            lines.Add($"{proposal.ProposalId}: registered as a version, so the screen is behind it");
+            dispositions.Add((proposal.ProposalId, Screened, Admitted));
+            admitted++;
         }
 
         using SqliteConnection connection = _connections.OpenWrite();
@@ -194,9 +246,9 @@ public sealed class ProposalRegistry
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
-            foreach ((string proposalId, string status) in dispositions)
+            foreach ((string proposalId, string from, string status) in dispositions)
             {
-                MoveStatus(connection, transaction, proposalId, status);
+                MoveStatus(connection, transaction, proposalId, from, status);
             }
 
             transaction.Commit();
@@ -206,7 +258,7 @@ public sealed class ProposalRegistry
 
         return new RegistryResult(
             asOf, filed.Count, screened, discarded, inconclusive, buildTasks, abstentions,
-            unactionable, lines, summary.RowsWritten, RunOutcome.Clean);
+            unactionable, admitted, lines, summary.RowsWritten, RunOutcome.Clean);
     }
 
     private static int Pairs(StoredProposal proposal) =>
@@ -222,7 +274,11 @@ public sealed class ProposalRegistry
     /// would look exactly like the first while resting on a read taken before it.
     /// </summary>
     private static void MoveStatus(
-        SqliteConnection connection, SqliteTransaction transaction, string proposalId, string status)
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string proposalId,
+        string from,
+        string status)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -230,10 +286,11 @@ public sealed class ProposalRegistry
             UPDATE proposal
                SET status = @status
              WHERE proposal_id = @proposal_id
-               AND status = 'filed'
+               AND status = @from
             """;
 
         command.Parameters.AddWithValue("@status", status);
+        command.Parameters.AddWithValue("@from", from);
         command.Parameters.AddWithValue("@proposal_id", proposalId);
         command.ExecuteNonQuery();
     }
@@ -264,6 +321,14 @@ public sealed record RegistryResult(
     int BuildTasks,
     int Abstentions,
     int Unactionable,
+
+    /// <summary>
+    /// Proposals a screen let through that have since been registered as versions.
+    ///
+    /// Counted here rather than derived from the register, because the funnel's own record is what
+    /// band 3 reads and a proposal that reached the end of itself is the event that rate is over.
+    /// </summary>
+    int Admitted,
     IReadOnlyList<string> Lines,
     int RowsWritten,
     RunOutcome Outcome);

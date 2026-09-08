@@ -119,6 +119,14 @@ public static class Program
                 connections,
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
 
+        // Every evidence-pack version side by side, with what was proposed against each. The sixth
+        // screen: its subject is the set of versions rather than one night, which is why it is not a
+        // panel on one of the other five.
+        app.MapGet("/packs/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabPacks.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
+
         // Which of a session's slots ran, which never fired, and which nothing in the store can say
         // anything about. Not a check: it is a read of the running lab, which is the one subject
         // every check in this corpus is unable to take, and the morning screen is where it is read.

@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Measurement;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Data;
@@ -71,6 +72,49 @@ public sealed class ScoreboardBuilder
 
     /// <summary>The ranked subset, which is what a decile curve can be computed over.</summary>
     public const string Candidates = "capped candidates only";
+
+    /// <summary>The population the degraded panel and its own denominator are both over.</summary>
+    public const string NightsRun = "nights the lab ran a stage";
+
+    /// <summary>The population band 3's library panels are over.</summary>
+    public const string Library = "the signal library as the store holds it";
+
+    /// <summary>What the degraded panel reads badly on, stated where the state is computed.</summary>
+    public const string DegradedBar =
+        "reads badly above 5% of the nights the lab ran, because a night the lab lost is more likely "
+        + "to be a night something unusual happened and a series with those quietly absent flatters "
+        + "every figure below it";
+
+    /// <summary>
+    /// What the roll-up panel says once versions exist, which is that there is no roll-up.
+    ///
+    /// The claim is that proposals made against a richer pack hit their targets more often, so one
+    /// figure over every version would be a figure about no pack at all.
+    /// </summary>
+    public const string RatePerVersion =
+        "the hit rate is by pack version and is never pooled across versions, so there is no figure "
+        + "here. The count is how many versions exist, and each has a panel of its own beside this one";
+
+    /// <summary>What band 3 says where no pack has ever been cut.</summary>
+    public const string NoPackVersion =
+        "no evidence pack has been cut, so there is no version to attribute a proposal to. The hit "
+        + "rate is by pack version and a figure over no version is not a smaller figure";
+
+    /// <summary>What a pack version's panel says where nothing it carried has been settled.</summary>
+    public const string NothingAdmitted =
+        "no proposal cut against this version has become a version and been settled, so the hit rate "
+        + "would be a share over nothing. The count beside it is what has been filed";
+
+    /// <summary>What the twin-spread panel says where the window found no pair.</summary>
+    public const string NoTwinPairs =
+        "no twin pair has been found, so there is no outcome spread to take a mean over. The count "
+        + "beside it is how many setups the trailing window actually held";
+
+    /// <summary>What the separating-signals panel says while no outcome has closed.</summary>
+    public const string NothingSeparates =
+        "no signal has been measured against the corrected threshold, because that measurement is "
+        + "over closed outcomes and the pack screens rather than shows. The count beside it is the "
+        + "library the measurement will be over";
 
     /// <summary>
     /// What a withheld band 1 panel says when what it lacks is sessions.
@@ -189,6 +233,8 @@ public sealed class ScoreboardBuilder
             panels.AddRange(LossCauses(connection, direction, asOf, _options.SessionZone));
         }
 
+        panels.AddRange(LoopLearning(connection, asOf, _options.SessionZone));
+
         int skipped = 0;
         int superseded = 0;
 
@@ -293,10 +339,11 @@ public sealed class ScoreboardBuilder
         SqliteConnection connection, DateOnly asOf, string sessionZone)
     {
         int nights = Count(connection, "SELECT COUNT(DISTINCT as_of) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
-        int degraded = Count(
-            connection,
-            "SELECT COUNT(DISTINCT started_at) FROM run_log WHERE outcome <> 'clean' AND started_at <= @end_of_day",
-            asOf, sessionZone);
+
+        // The two figures the degraded panel is a ratio of, over one population and counted the same
+        // way. Read in the session zone rather than grouped in SQL, because a night's late slots run
+        // after midnight UTC and a group by UTC date would split one night across two.
+        (int degradedNights, int ranNights) = DegradedNights(connection, asOf, sessionZone);
         int setups = Count(connection, "SELECT COUNT(*) FROM setup WHERE as_of <= @as_of", asOf, sessionZone);
 
         int corrected = Count(
@@ -325,7 +372,19 @@ public sealed class ScoreboardBuilder
         return
         [
             new Panel("band0.nightsRecorded", null, nights.ToString(CultureInfo.InvariantCulture), null, null, nights, null, Flagged),
-            new Panel("band0.degradedRuns", null, degraded.ToString(CultureInfo.InvariantCulture), null, null, nights, null, "runs recorded"),
+            // **Three populations until 6.8, and no two of them were a ratio.** The figure counted
+            // distinct non-clean run instants, the count beside it was the number of nights any
+            // setup was flagged on, and the label said "runs recorded", so the reader could not form
+            // the ratio the caption asked for and the threshold could not be computed at all. Both
+            // figures are now nights the lab ran a stage on, counted from the same rows in the same
+            // zone, and the panel is named for what it counts.
+            new Panel(
+                "band0.degradedNights", null,
+                degradedNights.ToString(CultureInfo.InvariantCulture), null, null,
+                ranNights, null, NightsRun,
+                ReadsBadly: ranNights > 0
+                    && degradedNights > ranNights * MeasurementParameters.DegradedNightShare,
+                ReadsBadlyBecause: DegradedBar),
             new Panel("band0.setupsOnFile", null, setups.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
             new Panel("band0.correctedRows", null, corrected.ToString(CultureInfo.InvariantCulture), null, null, setups, null, Flagged),
             new Panel("band0.worstLatenessMinutes", null, worstLateness.ToString(CultureInfo.InvariantCulture), null, null, corrected, null, "corrected rows"),
@@ -344,6 +403,210 @@ public sealed class ScoreboardBuilder
                     ? null
                     : $"the {refused.Transport} seat could not be asked on {refused.AsOf:yyyy-MM-dd}: "
                       + refused.UnavailableBecause),
+        ];
+    }
+
+    /// <summary>
+    /// How many nights the lab ran a stage on, and how many of those carried a run that was not
+    /// clean.
+    ///
+    /// <b>Read in the session zone rather than grouped in SQL.</b> `run_log` carries an instant and
+    /// no session, and a night's last slots fire at 21:50 and 22:00 Eastern, which is after midnight
+    /// UTC. Grouping by the UTC date would put one night's early slots on one date and its late ones
+    /// on the next, so a clean night would read as two nights and a degraded one as two degraded
+    /// nights, and the ratio the panel is would be wrong in both directions at once.
+    ///
+    /// <b>Both figures come from the same rows.</b> That is the whole repair: the panel stated a
+    /// count of run instants over a count of nights any setup was flagged on, and no two of its three
+    /// numbers were a ratio.
+    /// </summary>
+    private static (int Degraded, int Ran) DegradedNights(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT started_at, outcome
+              FROM run_log
+             WHERE started_at <= @end_of_day
+            """;
+
+        command.Parameters.AddWithValue("@end_of_day", StoreText.EndOfSession(asOf, sessionZone));
+
+        var ran = new HashSet<DateOnly>();
+        var degraded = new HashSet<DateOnly>();
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            DateOnly night = SessionBoundaries.SessionDateOf(
+                StoreText.StorageTextToTimestamp(reader.GetString(0)), sessionZone);
+
+            ran.Add(night);
+
+            // A run with no outcome is one that started and has not finished, which is a running
+            // stage rather than a degraded night. Counting it would make every build of an evening
+            // read that evening as degraded, because the scoreboard's own run is open while it runs.
+            if (!reader.IsDBNull(1) && !string.Equals(reader.GetString(1), "clean", StringComparison.Ordinal))
+            {
+                degraded.Add(night);
+            }
+        }
+
+        return (degraded.Count, ran.Count);
+    }
+
+    /// <summary>
+    /// Band 3. Whether the research loop is adding anything.
+    ///
+    /// <b>The only band that measures the AI, and it measures the evidence rather than the model.</b>
+    /// The claim is that proposals made against a richer pack hit their targets more often; anything
+    /// else is a story. So the hit rate is per pack version and never pooled across versions, on the
+    /// same grounds the two sides are never pooled: one figure over every version would be a figure
+    /// about no pack at all (see: The evidence pack is versioned, and the success criterion is
+    /// proposal hit rate by pack version).
+    ///
+    /// <b>Every panel here is withheld today and every one carries a count.</b> A hit rate of nought
+    /// over nought proposals reads as a loop that proposes nothing useful, and nought proposals is a
+    /// fact about the record rather than a result. The count beside each is what a reader watches.
+    ///
+    /// <b>The library panels are three figures and not one.</b> Held, admitted and rejected at the
+    /// correlation limit are counts of the same rows under different verdicts, and a single number
+    /// would let a library that grew by rejections read as a library that grew.
+    /// </summary>
+    private static IReadOnlyList<Panel> LoopLearning(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
+    {
+        var panels = new List<Panel>();
+
+        IReadOnlyList<StoredPackVersion> versions = PackVersionReader.Read(connection, asOf, sessionZone);
+
+        // **Written on every build whether or not a version exists**, and that is not decoration.
+        // A panel the builder stops writing keeps its last generation on the date, because a read
+        // takes the latest generation of each panel and a panel with no new one has only the old:
+        // the night the first pack is cut, a page would otherwise show "no pack has been cut"
+        // beside the version it was just cut as. So this name is always here, and what it says
+        // changes rather than whether it exists.
+        panels.Add(new Panel(
+            "band3.proposalHitRate", null, "withheld", null, null,
+            versions.Count, null, "evidence pack versions, each with a panel of its own",
+            WithheldBecause: versions.Count == 0 ? NoPackVersion : RatePerVersion));
+
+        foreach (StoredPackVersion version in versions)
+        {
+            panels.Add(HitRate(connection, version, asOf, sessionZone));
+        }
+
+        panels.AddRange(LibraryPanels(connection, asOf, sessionZone));
+        return panels;
+    }
+
+    /// <summary>
+    /// One pack version's hit rate: of the proposals cut against it, how many became a version that
+    /// was accepted.
+    ///
+    /// <b>The join is `variant.proposal_id`, added at 6.8 because it did not exist.</b> The success
+    /// criterion is a rate over proposals and the settlement is a status on a version, and until this
+    /// checkpoint nothing carried the second back to the first. A panel that could never compute its
+    /// figure would have read withheld for ever for a reason about the build rather than about the
+    /// evidence, which is the one thing a withheld panel must never do.
+    ///
+    /// <b>Withheld until something has been settled, and the count says what has been filed.</b> A
+    /// version with proposals against it and none settled is the ordinary state of a pack for its
+    /// first quarter, and a hit rate of nought there would read as a version that proposed only bad
+    /// ideas.
+    /// </summary>
+    private static Panel HitRate(
+        SqliteConnection connection, StoredPackVersion version, DateOnly asOf, string sessionZone)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*),
+                   COALESCE(SUM(CASE WHEN v.status IN ('accepted', 'rejected') THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN v.status = 'accepted' THEN 1 ELSE 0 END), 0)
+              FROM proposal p
+              LEFT JOIN variant v
+                ON v.proposal_id = p.proposal_id AND v.created_at <= @observed_before
+             WHERE p.observed_at <= @observed_before
+               AND p.pack_version = @version
+            """;
+
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
+        command.Parameters.AddWithValue("@version", version.Version);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        reader.Read();
+
+        int filed = reader.GetInt32(0);
+        int settled = reader.GetInt32(1);
+        int accepted = reader.GetInt32(2);
+
+        string ordinal = version.Version.ToString(CultureInfo.InvariantCulture);
+        string name = "band3.proposalHitRate.v" + ordinal;
+        string population =
+            "proposals filed against pack version " + ordinal
+            + ", of which the ones that became a version and were settled";
+
+        return settled == 0
+            ? new Panel(name, null, "withheld", null, null, filed, null, population,
+                WithheldBecause: NothingAdmitted)
+            : new Panel(
+                name, null, PairedInterval.Figure(accepted / (decimal)settled), null, null,
+                settled, null, population);
+    }
+
+    /// <summary>
+    /// The signal library beside the hit rate: what it holds, what it admitted, what it refused, and
+    /// what the twins say about it.
+    ///
+    /// <b>The last two are the ones that would read as good news while saying nothing.</b> A count of
+    /// signals separating outcomes beyond the corrected threshold is nought today because no outcome
+    /// has closed, and a mean twin spread is absent because no pair exists; both are withheld with the
+    /// count they will be over rather than rendered as nought.
+    /// </summary>
+    private static IReadOnlyList<Panel> LibraryPanels(
+        SqliteConnection connection, DateOnly asOf, string sessionZone)
+    {
+        IReadOnlyList<StoredSignalDefinition> library =
+            SignalDefinitionReader.Read(connection, asOf, sessionZone);
+
+        int held = library.Count;
+        int admitted = library.Count(
+            s => string.Equals(s.LongOutcome, SignalVerdict.AdmittedOutcome, StringComparison.Ordinal)
+              || string.Equals(s.ShortOutcome, SignalVerdict.AdmittedOutcome, StringComparison.Ordinal));
+        int refused = library.Count(
+            s => string.Equals(s.Status, SignalStatus.RejectedCorrelation, StringComparison.Ordinal));
+
+        IReadOnlyList<TwinSideReading> twins = TwinPairReader.Read(connection, asOf, sessionZone);
+        IReadOnlyList<StoredTwinPair> pairs = [.. twins.SelectMany(s => s.Pairs)];
+        int windowSetups = twins.Sum(s => s.WindowSetups);
+
+        return
+        [
+            new Panel("band3.signalsHeld", null, held.ToString(CultureInfo.InvariantCulture),
+                null, null, held, null, Library),
+
+            new Panel("band3.signalsAdmitted", null, admitted.ToString(CultureInfo.InvariantCulture),
+                null, null, held, null, Library),
+
+            new Panel("band3.signalsRefusedAtTheLimit", null, refused.ToString(CultureInfo.InvariantCulture),
+                null, null, held, null, Library),
+
+            // Withheld rather than nought, and the count is the library it will be measured over.
+            new Panel("band3.signalsSeparatingOutcomes", null, "withheld", null, null, held, null,
+                Library, WithheldBecause: NothingSeparates),
+
+            // The window count rather than the pair count, because nought pairs over a window of four
+            // and nought over a window of two hundred and fifty are different statements and only the
+            // second says anything about the thresholds.
+            pairs.Count == 0
+                ? new Panel("band3.twinOutcomeSpread", null, "withheld", null, null, windowSetups, null,
+                    "the setups the trailing window held, on both sides",
+                    WithheldBecause: NoTwinPairs)
+                : new Panel(
+                    "band3.twinOutcomeSpread", null,
+                    PairedInterval.Figure((decimal)pairs.Average(pair => pair.GapPoints)),
+                    null, null, pairs.Count, null, "twin pairs found on both sides"),
         ];
     }
 
@@ -509,10 +772,11 @@ public sealed class ScoreboardBuilder
         command.CommandText = """
             INSERT INTO scoreboard
                 (as_of, panel, direction, figure, low, high, n_rows, n_effective, population,
-                 n_minimum, withheld_because, computed_at, n_sessions, n_minimum_sessions)
+                 n_minimum, withheld_because, computed_at, n_sessions, n_minimum_sessions,
+                 reads_badly, reads_badly_because)
             VALUES (@as_of, @panel, @direction, @figure, @low, @high, @n_rows, @n_effective,
                     @population, @n_minimum, @withheld_because, @computed_at, @n_sessions,
-                    @n_minimum_sessions)
+                    @n_minimum_sessions, @reads_badly, @reads_badly_because)
             -- No conflict target. The primary key does not constrain an account-wide panel,
             -- because SQLite treats nulls as distinct and `direction` is null on every band 0
             -- row; migration 030 adds the partial unique index that does. Naming the primary
@@ -528,6 +792,14 @@ public sealed class ScoreboardBuilder
         command.Parameters.AddWithValue("@high", (object?)panel.High ?? DBNull.Value);
         command.Parameters.AddWithValue("@n_rows", panel.Rows);
         command.Parameters.AddWithValue("@n_effective", (object?)panel.Effective ?? DBNull.Value);
+
+        // The state and its reason, present together or absent together, which the store holds as a
+        // CHECK. A panel stating no threshold carries neither: a condition written in prose beside a
+        // figure is a caption and belongs on the page.
+        command.Parameters.AddWithValue(
+            "@reads_badly", panel.ReadsBadly is bool badly ? badly ? 1 : 0 : (object)DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@reads_badly_because", (object?)panel.ReadsBadlyBecause ?? DBNull.Value);
         command.Parameters.AddWithValue("@population", panel.Population);
         command.Parameters.AddWithValue("@n_minimum", (object?)panel.Minimum ?? DBNull.Value);
         command.Parameters.AddWithValue(
@@ -895,7 +1167,8 @@ public sealed class ScoreboardBuilder
     private sealed record Panel(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
         int? Effective, string Population, int? Minimum = null, string? WithheldBecause = null,
-        int? Sessions = null, int? MinimumSessions = null);
+        int? Sessions = null, int? MinimumSessions = null,
+        bool? ReadsBadly = null, string? ReadsBadlyBecause = null);
 }
 
 /// <summary>What one day's build produced.</summary>

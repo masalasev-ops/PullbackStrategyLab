@@ -164,7 +164,13 @@ public sealed partial class CarriedObligationsCheck
 
         // Stated in advance, on the same grounds as the two above: a parse that stopped matching
         // would hand both clauses below an empty list, and every empty list holds.
-        Assert.True(rows.Count >= 20,
+        // **Twelve rather than twenty from 6.8**, and lowering it carries what changing a fixture
+        // expectation carries. The figure was twenty when the table held thirty-six rows; 6.8
+        // discharged six in one pass and the table holds seventeen, so twenty had stopped being a
+        // floor under a parse and started being a floor under how much work is outstanding, which is
+        // not a property of this check. Twelve is still far above the failure this guards against: a
+        // parser that stopped matching hands back nought or one, never twelve.
+        Assert.True(rows.Count >= 12,
             $"Only {rows.Count} obligation row(s) parsed out of the table. A count this low means the "
             + "parser stopped matching rather than that the corpus discharged them.");
 

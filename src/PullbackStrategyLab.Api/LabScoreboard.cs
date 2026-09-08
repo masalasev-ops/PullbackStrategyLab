@@ -53,7 +53,8 @@ public static class LabScoreboard
         // see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
         command.CommandText = """
             SELECT s.panel, s.direction, s.figure, s.low, s.high, s.n_rows, s.n_effective, s.population,
-                   s.n_minimum, s.withheld_because, s.n_sessions, s.n_minimum_sessions
+                   s.n_minimum, s.withheld_because, s.n_sessions, s.n_minimum_sessions,
+                   s.reads_badly, s.reads_badly_because
               FROM scoreboard s
              WHERE s.computed_at <= @computed_before
                AND s.as_of = (SELECT MAX(as_of)
@@ -85,7 +86,13 @@ public static class LabScoreboard
                 reader.IsDBNull(8) ? null : reader.GetInt32(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetInt32(10),
-                reader.IsDBNull(11) ? null : reader.GetInt32(11));
+                reader.IsDBNull(11) ? null : reader.GetInt32(11),
+
+                // The state the builder computed, carried rather than decided here. A read surface
+                // that applied the threshold itself would be a second implementation of it, and the
+                // page would be the last place anybody looked.
+                reader.IsDBNull(12) ? null : reader.GetInt32(12) == 1,
+                reader.IsDBNull(13) ? null : reader.GetString(13));
 
             if (panel.Direction is null)
             {
@@ -149,4 +156,16 @@ public sealed record PanelResponse(
     int? Minimum,
     string? WithheldBecause,
     int? Sessions,
-    int? MinimumSessions);
+    int? MinimumSessions,
+
+    /// <summary>
+    /// Whether the panel's own condition is met tonight, and what that condition is.
+    ///
+    /// <b>Null on every panel that states no threshold</b>, which is most of them: a condition
+    /// written in prose beside a figure is a caption and belongs on the page. Only band 0's degraded
+    /// share is a number a state can be computed from, and until 6.8 even that was a static string
+    /// with nothing forming the ratio and nothing rendering anything red.
+    /// </summary>
+    bool? ReadsBadly = null,
+
+    string? ReadsBadlyBecause = null);

@@ -17693,3 +17693,77 @@ Carried:    **Two raised, both due at the operator, and neither blocks anything 
 
 Next:       **6.8**, scoreboard band 3 and the pack comparison surface, both rendering their withheld
             state with a count rather than a nought, and carrying the six obligations now due there.
+
+## 6.8 — 2026-09-08 — phase-6-8-band-three — Band 3, the sixth screen, and twenty-eight classes drawn by nothing
+
+Built:      **Scoreboard band 3, the pack comparison page, and migration 061.** The band is one
+            roll-up, one panel per pack version and five library panels, written on every build
+            rather than only on days with something to show: a band that appeared only when there
+            was data would be absent exactly when a reader was most likely to conclude the page had
+            shown everything it has. **Every figure in it is withheld or a count today and each
+            carries the count it will be over**, because a hit rate of nought over nought proposals
+            reads as a loop that proposes nothing useful and nought proposals is a fact about the
+            record (see: The evidence pack is versioned, and the success criterion is proposal hit
+            rate by pack version). The pack comparison surface is the sixth screen, and the
+            navigation says six.
+
+Found:      **The project's stated success criterion could not be computed, even in principle.**
+            Band 3 is proposal hit rate by pack version: `proposal` carries the pack version it was
+            cut against, the settlement is a status on a version, and **nothing carried the second
+            back to the first**. A panel that can never produce its figure would have read withheld
+            for ever for a reason about the build rather than about the evidence, which is the one
+            thing a withheld panel must never do. `variant.proposal_id` is written once at creation
+            by the admitter, the registry moves a screened proposal to `admitted` when a version
+            carrying its id appears, and the rate is a join.
+
+Found:      **A panel the builder stops writing keeps its last generation on the date.** A read takes
+            the latest generation of each panel, so a panel with no new one has only the old: the
+            night the first pack is cut, a page would have shown "no pack has been cut" beside the
+            version it was just cut as. The roll-up is written on every build for that reason, and
+            what it says changes rather than whether it exists. **The rename of `band0.degradedRuns`
+            has the same shape** and is on the record here rather than repaired, because it costs one
+            stale panel on one date.
+
+Found:      **`rendered-classes` found twenty-eight classes drawn by nothing, on its first run.**
+            Among them `good`, `bad`, `warn` and `greyed`, four states rendered identically to each
+            other, and `pill`, a count badge with no badge. Fifteen have rules now and thirteen are
+            declared as structural hooks with why. **This is the 5.5 obligation and 5.5 priced two
+            instruments**: a count of elements against what a view declares it draws, and the classes
+            a rendered element carries against the classes `lab.css` has rules for. The second is
+            built, because a count of elements would have passed on both recorded instances of the
+            fault and this one catches an element that is present and invisible.
+
+Found:      **The band 0 loop rendered no reason at all, so the seat panel's note stopped at the
+            wire.** 6.5 repaired the side blocks, where a panel carrying both a value and a note had
+            the note dropped, and this loop never drew one. A week the seat could not be asked is a
+            fact about the running lab and the morning screen is where it is read, so the note being
+            recorded and not shown means the operator learns of it a quarter later from a gap in the
+            proposal record. **Found by making the 6.5 obligation's claim live rather than by
+            reading the page**, which is what the obligation said it would take.
+
+Found:      **`band0.degradedRuns` stated three populations and no two of them were a ratio.** The
+            figure counted distinct non-clean run instants, the count beside it was the number of
+            nights any setup was flagged on, and the label said "runs recorded", so the caption's own
+            question could not be asked. Both figures are now nights the lab ran a stage on, counted
+            from the same rows and resolved in the session zone rather than grouped by UTC date, and
+            the panel is renamed for what it counts. The threshold is a computed state on the row
+            rather than a sentence on the page.
+
+Measured:   **Band 3 over the golden fixture: seven panels, four of them withheld, and the library
+            holds forty-one.** The band is read off a build taken after the research stages have run,
+            which is the order a real night has: the library is seeded on admission, the four weekly
+            slots run Saturday morning, and `scoreboard` runs at 21:50 after all of them. A build
+            taken before them would have reported an empty band and said nothing about the panels.
+
+Verified:   `tools/ci.ps1` green at 33 steps, 1,185 tests. `tools/verify-phase.ps1` GREEN: 154 claims,
+            154 passed, 0 failed, 0 out of scope, 0 unexamined.
+
+Carried:    **None raised and none falls due here.** The six due at 6.8 are discharged and recorded
+            in `BUILD_PLAN.md`. **One gap is named rather than carried**: telling a repair of the
+            previous night from a stage of this one, from the log alone, would need a session on
+            `run_log`, which forty-seven call sites behind three `params` overloads do not pass.
+            Nothing schedules it, because after 6.9 there is no phase 7 and 6.11 is parked, so it is
+            written down for the sign-off to rule on rather than filed against a checkpoint that
+            will not come.
+
+Next:       **6.9**, the phase sign-off. Fresh session by definition, and this one committed code.

@@ -1,0 +1,136 @@
+@page "/packs"
+@using PullbackStrategyLab.Web.Shell
+@model PacksModel
+@*
+    The pack comparison surface. Every evidence-pack version side by side, the components they
+    differ on named above the table, and what was proposed against each below it.
+
+    The sixth screen, and the one whose subject is not a night. Every other screen here is keyed on
+    one night, one setup or one trade; this one is keyed on the set of versions, which is why it is
+    a screen rather than a panel on one of the five.
+
+    Nothing here computes a rate. Proposal hit rate by pack version is band 3's, computed by the
+    scoreboard builder and read from the store; this page shows the counts that rate is over, so a
+    reader can see which version a rate came from.
+*@
+<h1>@Model.Item.Title</h1>
+<p class="lede">@Model.Item.What.</p>
+
+<p class="muted">As of @Model.Packs.AsOf.</p>
+
+@if (!Model.Packs.HasVersions)
+{
+    <div class="empty-state">
+        <p><b>No pack version to compare.</b> @Model.Packs.Absent</p>
+        <p>
+            That is a different fact from a loop that has learned nothing. A version is written the
+            first time a pack renders, and the packer runs weekly on Saturday morning, so an empty
+            page here means no pack has been cut rather than that the cuts said nothing.
+        </p>
+    </div>
+}
+else
+{
+    @*
+        What the versions differ on, above the table rather than inside it. A version pins what the
+        model was shown, so two versions are two different questions asked of the model, and the one
+        component they differ in is the whole of the difference between the answers.
+    *@
+    <section class="packs difference">
+        <h2>What these versions differ on</h2>
+
+        @if (Model.Packs.DifferOn.Count == 0)
+        {
+            <p class="muted">
+                @(Model.Packs.Versions.Count == 1
+                    ? "One version, so there is nothing to differ from. A second is written the first time a cut computes a different tuple."
+                    : "Nothing, which cannot happen: the fingerprint is the identity, so a cut computing the same tuple finds the row it already has.")
+            </p>
+        }
+        else
+        {
+            <ul class="differ-on">
+                @foreach (string component in Model.Packs.DifferOn)
+                {
+                    <li>@component</li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section class="packs versions">
+        <h2>The versions <span class="pill">@Model.Packs.Versions.Count</span></h2>
+        <p class="muted">
+            The tuple is what the model was shown, and byte-stability is what makes that claim
+            checkable. The store's contents are deliberately not in it: two cuts of one version over
+            a store that has grown are the same version, because the question put to the model was
+            the same question.
+        </p>
+
+        <table class="ledger packs">
+            <tr>
+                <th>Version</th><th>Fingerprint</th><th>Sections</th><th>Screened</th>
+                <th>Correction</th><th>Model</th><th>Proposed</th><th>Where they stand</th>
+            </tr>
+            @foreach (PackVersionView version in Model.Packs.Versions)
+            {
+                <tr>
+                    <td>@version.Label</td>
+                    <td class="fingerprint">@version.ShortFingerprint</td>
+                    <td class="sections">@version.Sections</td>
+                    <td class="screened">@version.SignalsScreened</td>
+                    <td>@version.Correction</td>
+                    <td>@version.ModelIdentifier</td>
+                    <td>
+                        <span class="count">@version.Proposals proposal(s)</span>
+                        @* Counted by kind and never summed: a version that abstained every week and
+                           one that was never asked have the same proposal count. *@
+                        <span class="over">@version.Outcomes</span>
+                    </td>
+                    <td class="statuses">@version.Where</td>
+                </tr>
+            }
+        </table>
+    </section>
+}
+
+@if (Model.Packs.LastCut is PackCutView cut)
+{
+    <section class="packs cut">
+        <h2>The last cut</h2>
+        <p class="muted">
+            A version is deliberately the same across every night it is cut on, so with the version
+            alone a pack whose sections were all empty would be indistinguishable from a pack that
+            was never cut. This is that distinction.
+        </p>
+        <dl class="panels">
+            <div class="panel">
+                <dt>Cut on</dt>
+                <dd><span class="figure">@cut.AsOf</span>
+                    <span class="over">@(cut.Version is int v ? $"as version {v}" : "no version written")</span></dd>
+            </div>
+            <div class="panel">
+                <dt>How full</dt>
+                <dd><span class="figure">@cut.Fullness</span>
+                    <span class="over">five of the ten sections rest on outcomes that have not closed</span></dd>
+            </div>
+            <div class="panel">
+                <dt>Signals screened</dt>
+                <dd><span class="figure">@cut.SignalsScreened</span>
+                    <span class="over">what the corrected threshold was computed over</span></dd>
+            </div>
+            <div class="panel">
+                <dt>Planted null</dt>
+                <dd><span class="figure">@(cut.NullControlPlanted ? "present" : "absent")</span>
+                    <span class="over">a proposal resting on it fails its own pack version</span></dd>
+            </div>
+        </dl>
+
+        @if (cut.RefusedBecause is string refused)
+        {
+            <p class="withheld-because">
+                The cut was refused and no pack was written: @refused
+            </p>
+        }
+    </section>
+}

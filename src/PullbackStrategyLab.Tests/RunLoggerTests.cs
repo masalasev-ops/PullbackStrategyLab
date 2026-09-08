@@ -197,7 +197,15 @@ public sealed class RunLoggerTests : IDisposable
         Insert(connection, "daily-bars", "2026-08-27T22:10:00.000Z", "2026-08-27T22:12:00.000Z", "partial");
         Insert(connection, "indicators", "2026-08-27T23:00:00.000Z", "2026-08-27T23:04:00.000Z", "clean");
 
-        Assert.Equal("daily-bars", RunLogger.DegradedBecause(connection, session, Zone));
+        // **The window travels with the names from 6.8.** The mark is the session's own calendar day
+        // in its own zone, and the lab's night runs 17:15 to 22:00, so a stage rerun in the early
+        // hours to repair the session before falls inside it. The names alone said nothing about
+        // that and a reader took them as this night's.
+        string? mark = RunLogger.DegradedBecause(connection, session, Zone);
+
+        Assert.StartsWith("daily-bars", mark, StringComparison.Ordinal);
+        Assert.Contains("2026-08-27", mark!, StringComparison.Ordinal);
+        Assert.Contains("repairing the session before", mark!, StringComparison.Ordinal);
 
         // The other direction: a night in which nothing stopped short is null rather than empty,
         // because "no stage ended other than cleanly" and "this was never written" would otherwise

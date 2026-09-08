@@ -33,14 +33,27 @@ else
         <p class="muted">Is the record itself sound. Nothing below this line means anything if
            this band does not.</p>
         <dl class="panels">
-            @foreach (PanelView panel in Model.Scoreboard.Health)
+            @foreach (PanelView panel in Model.Scoreboard.Band0)
             {
-                <div class="panel">
+                @* The class carries the state and the class alone: a colour is not a word, so
+                   `surface-claims` could never have seen this and the instrument that does is the
+                   rendered-class sweep added at 6.8. *@
+                <div class="panel @(panel.Red ? "reads-badly" : null)">
                     <dt>@panel.Title</dt>
                     <dd>
-                        <span class="figure">@panel.Figure</span>
+                        <span class="figure @(panel.Withheld ? "muted" : null)">@panel.Figure</span>
                         <span class="count">@panel.Count</span>
                         <span class="over">@panel.Over</span>
+                        @* **The sixth failure shape, in the one band it was left in.** 6.5 repaired
+                           the side blocks, where a panel carrying both a value and a reason had the
+                           reason dropped; this loop never rendered a reason at all, so the seat
+                           panel's own note reached the wire and stopped there. A week the seat could
+                           not be asked is a fact about the running lab and this is the morning it is
+                           read on. *@
+                        @if (panel.WithheldBecause is string why)
+                        {
+                            <span class="withheld-because">@why</span>
+                        }
                         @if (panel.ReadsBadlyWhen is string warns)
                         {
                             <span class="warns">@warns</span>
@@ -50,6 +63,32 @@ else
             }
         </dl>
     </section>
+
+    @*
+        A panel the builder wrote that this page has no band for. Rendered under its own identifier
+        rather than dropped, because a figure computed and then discarded by a surface is the shape
+        this corpus keeps finding, and a page that quietly showed fewer panels than were built would
+        say nothing about it.
+    *@
+    @if (Model.Scoreboard.Unplaced.Count > 0)
+    {
+        <section class="scoreboard-band">
+            <h2>Panels this page has no band for <span class="pill">@Model.Scoreboard.Unplaced.Count</span></h2>
+            <dl class="panels">
+                @foreach (PanelView panel in Model.Scoreboard.Unplaced)
+                {
+                    <div class="panel">
+                        <dt>@panel.Name</dt>
+                        <dd>
+                            <span class="figure">@panel.Figure</span>
+                            <span class="count">@panel.Count</span>
+                            <span class="over">@panel.Over</span>
+                        </dd>
+                    </div>
+                }
+            </dl>
+        </section>
+    }
 
     @foreach ((string side, IReadOnlyList<PanelView> panels) in
         new[] { ("Long", Model.Scoreboard.Long), ("Short", Model.Scoreboard.Short) })
@@ -180,8 +219,53 @@ else
 *@
 <section class="scoreboard-band">
     <h2>Band 3 — is the loop learning</h2>
-    <div class="empty-state">
-        <p><b>Arrives at checkpoint 6.8.</b> Proposal outcomes by pack version, which needs the
-           research loop to exist.</p>
-    </div>
+    <p class="muted">
+        The only band that measures the AI, and it measures the evidence rather than the model.
+        Proposals made against a richer pack hitting their targets more often is the claim; anything
+        else is a story. <b>The rate is per pack version and never pooled across versions</b>, because
+        one figure over every version would be a figure about no pack at all.
+    </p>
+
+    @if (Model.Scoreboard.Band3.Count == 0)
+    {
+        <div class="empty-state">
+            <p><b>No panel has been built for this band yet.</b> That is a different fact from a
+               loop that has produced nothing: the scoreboard writes this band on every build, so an
+               empty one means the build has not run since 6.8 rather than that there is nothing to
+               show.</p>
+        </div>
+    }
+    else
+    {
+        <dl class="panels">
+            @foreach (PanelView panel in Model.Scoreboard.Band3)
+            {
+                <div class="panel @(panel.Red ? "reads-badly" : null)">
+                    <dt>@panel.Title</dt>
+                    <dd>
+                        @* Withheld carries the count it will be over, never a nought. A hit rate of
+                           nought over nought proposals reads as a loop that proposes nothing useful,
+                           and nought proposals is a fact about the record rather than a result. *@
+                        <span class="figure @(panel.Withheld ? "muted" : null)">@panel.Figure</span>
+                        <span class="count">@panel.Count</span>
+                        <span class="over">@panel.Over</span>
+                        @if (panel.WithheldBecause is string why)
+                        {
+                            <span class="withheld-because">@why</span>
+                        }
+                        @if (panel.ReadsBadlyWhen is string warns)
+                        {
+                            <span class="warns">@warns</span>
+                        }
+                    </dd>
+                </div>
+            }
+        </dl>
+
+        <p class="muted">
+            The library counts and the hit rate are two different questions and are not a ratio of
+            each other. A library growing by refusals is a library nothing is being admitted to, and
+            a hit rate is over proposals rather than over signals.
+        </p>
+    }
 </section>

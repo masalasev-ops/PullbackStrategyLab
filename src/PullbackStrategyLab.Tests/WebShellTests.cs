@@ -144,7 +144,7 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// honest placeholder outliving the thing it was standing in for.
     /// </summary>
     private static IReadOnlyList<string> Landed { get; } =
-        ["/setups", "/scoreboard", "/watchlist", "/journal", "/research"];
+        ["/setups", "/scoreboard", "/watchlist", "/journal", "/research", "/packs"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -179,8 +179,13 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         using HttpClient client = Reading();
         string html = await client.GetStringAsync("/scoreboard");
 
-        Assert.Contains("checkpoint 6.8", html, StringComparison.Ordinal);
+        // **Band 3 landed at 6.8 and the sentence naming it went with it**, which is the whole of
+        // what this test is about: a placeholder outliving the thing it stood in for reads as a page
+        // nobody finished. What the scoreboard says now is what it has, and the two checkpoints it
+        // used to name are both behind it.
+        Assert.DoesNotContain("checkpoint 6.8", html, StringComparison.Ordinal);
         Assert.DoesNotContain("checkpoint 4.10", html, StringComparison.Ordinal);
+        Assert.Contains("Band 3", html, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -356,11 +361,11 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
             "neutral", positionsOpen, shortPositionsOpen, riskAtStake);
 
     [Fact]
-    public void The_navigation_holds_five_screens_and_no_two_share_a_path()
+    public void The_navigation_holds_six_screens_and_no_two_share_a_path()
     {
         // Five, matching the screens the architecture describes and the mockup's own tab strip.
-        Assert.Equal(5, Navigation.Items.Count);
-        Assert.Equal(5, Navigation.Items.Select(i => i.Path).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(6, Navigation.Items.Count);
+        Assert.Equal(6, Navigation.Items.Select(i => i.Path).Distinct(StringComparer.Ordinal).Count());
         Assert.All(Navigation.Items, i => Assert.StartsWith("/", i.Path, StringComparison.Ordinal));
     }
 }

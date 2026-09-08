@@ -57,6 +57,17 @@ public sealed class VariantAdmitter
     public const string ValueFlag = "--value";
 
     /// <summary>
+    /// The proposal this version came from, where it came from one.
+    ///
+    /// <b>The join band 3 is defined by.</b> The success criterion is proposal hit rate by pack
+    /// version, and until 6.8 nothing carried a settlement back to the proposal that produced it, so
+    /// the rate could not be computed even in principle. Optional, because a version need not come
+    /// from a proposal: the baseline came from nobody.
+    /// see: The evidence pack is versioned, and the success criterion is proposal hit rate by pack version
+    /// </summary>
+    public const string FromProposalFlag = "--from-proposal";
+
+    /// <summary>
     /// Why a definition may not be typed for a selection version.
     ///
     /// It is derived from the admission assertion, on the same grounds the minimum sample is derived
@@ -207,7 +218,8 @@ public sealed class VariantAdmitter
             }
         }
 
-        VariantAdmission admission = Admit(variantId, family, definition!, target, dryRun, moved);
+        VariantAdmission admission = Admit(
+            variantId, family, definition!, target, dryRun, moved, Flag(args, FromProposalFlag));
 
         Console.WriteLine(
             $"{Name}: {admission.Variant.Describe()}");
@@ -242,7 +254,8 @@ public sealed class VariantAdmitter
         string definition,
         string? target,
         bool dryRun = false,
-        MovedThreshold? moved = null)
+        MovedThreshold? moved = null,
+        string? proposalId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(variantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(family);
@@ -286,6 +299,7 @@ public sealed class VariantAdmitter
             now)
         {
             Moved = moved,
+            ProposalId = proposalId,
         };
 
         if (dryRun)
@@ -311,11 +325,11 @@ public sealed class VariantAdmitter
             INSERT INTO variant (
                 variant_id, generation, family, definition, target,
                 minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
-                direction, gate, threshold_name, threshold_from, threshold_to)
+                direction, gate, threshold_name, threshold_from, threshold_to, proposal_id)
             VALUES (
                 @variant_id, @generation, @family, @definition, @target,
                 @minimum_sample, @minimum_sample_unit, @status, NULL, @created_at,
-                @direction, @gate, @threshold_name, @threshold_from, @threshold_to);
+                @direction, @gate, @threshold_name, @threshold_from, @threshold_to, @proposal_id);
             """;
 
         command.Parameters.AddWithValue("@variant_id", variant.VariantId);
@@ -332,6 +346,7 @@ public sealed class VariantAdmitter
         // Null together on the baseline and on anything that moves no threshold, which is what the
         // store's own five clauses require.
         MovedThreshold? moved = variant.Moved;
+        command.Parameters.AddWithValue("@proposal_id", (object?)variant.ProposalId ?? DBNull.Value);
         command.Parameters.AddWithValue("@direction", (object?)moved?.Direction ?? DBNull.Value);
         command.Parameters.AddWithValue("@gate", (object?)moved?.Gate ?? DBNull.Value);
         command.Parameters.AddWithValue("@threshold_name", (object?)moved?.ThresholdName ?? DBNull.Value);

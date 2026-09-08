@@ -565,7 +565,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     /// carries a note it was handed, so the note has to be handed to it. A body drawn from the live
     /// store would test whichever notes that store happened to hold today.
     /// </summary>
-    private static StubHandler Surfaces() =>
+    internal static StubHandler Surfaces() =>
         new(request =>
         {
             string path = request.RequestUri?.AbsolutePath ?? string.Empty;
@@ -927,7 +927,33 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             { "name": "band0.nightsRecorded", "direction": null, "figure": "214",
               "low": null, "high": null, "rows": 214, "effective": null,
               "population": "every flagged setup", "minimum": null,
-              "withheldBecause": null }
+              "withheldBecause": null },
+
+            { "name": "band0.degradedNights", "direction": null, "figure": "19",
+              "low": null, "high": null, "rows": 214, "effective": null,
+              "population": "nights the lab ran a stage", "minimum": null,
+              "withheldBecause": null, "readsBadly": true,
+              "readsBadlyBecause": "reads badly above 5% of the nights the lab ran, because a night the lab lost is more likely to be a night something unusual happened and a series with those quietly absent flatters every figure below it" },
+
+            { "name": "band0.researcherSeat", "direction": null, "figure": "not asked",
+              "low": null, "high": null, "rows": 7, "effective": null,
+              "population": "weekly asks", "minimum": null,
+              "withheldBecause": "the subscription seat could not be asked on 2026-08-22: the Claude Code session ended 1 and said: Credit balance is too low" },
+
+            { "name": "band3.proposalHitRate", "direction": null, "figure": "withheld",
+              "low": null, "high": null, "rows": 0, "effective": null,
+              "population": "evidence pack versions, each with a panel of its own", "minimum": null,
+              "withheldBecause": "no evidence pack has been cut, so there is no version to attribute a proposal to. The hit rate is by pack version and a figure over no version is not a smaller figure" },
+
+            { "name": "band3.signalsHeld", "direction": null, "figure": "41",
+              "low": null, "high": null, "rows": 41, "effective": null,
+              "population": "the signal library as the store holds it", "minimum": null,
+              "withheldBecause": null },
+
+            { "name": "band3.twinOutcomeSpread", "direction": null, "figure": "withheld",
+              "low": null, "high": null, "rows": 44, "effective": null,
+              "population": "the setups the trailing window held, on both sides", "minimum": null,
+              "withheldBecause": "no twin pair has been found, so there is no outcome spread to take a mean over. The count beside it is how many setups the trailing window actually held" }
           ],
           "long": [
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
