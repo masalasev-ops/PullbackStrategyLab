@@ -79,16 +79,38 @@ public sealed class LabStatusTests : IDisposable
         // The store this reproduces is the live one on the morning of 2026-08-29. Grouped on the UTC
         // date the newest day held forward-returns and scoreboard alone, both clean, and the band
         // read "scoreboard clean" while detect-long, vectorize, controls and cap had all failed and
-        // the night had produced no setups at all. The ordering was right; the population was a
-        // different night.
+        // the night had produced no setups at all. **Both halves were wrong**: the population was a
+        // different night, and the ordering named the wrong stage of the right one.
         Assert.Equal("failed", run.Outcome);
 
-        // vectorize rather than detect-long, because within one outcome the read takes the latest
-        // stage that reached it and vectorize failed five minutes after the detector did. Which of
-        // the two an operator wants named is a separate question from the one this test is about,
-        // and it is carried as an obligation rather than settled here: on this night detect-long is
-        // the cause and vectorize is a consequence of it.
-        Assert.Equal("vectorize", run.Stage);
+        // **detect-long rather than vectorize, from 6.8.** Within a bad outcome the read takes the
+        // earliest stage to reach it, so on this night it names the detector that failed at 22:20
+        // rather than the vectorizer that failed five minutes later because it did. The cause is
+        // what an operator needs and the consequence is what the band showed until this checkpoint.
+        // A clean night keeps the opposite ordering, which is asserted below.
+        Assert.Equal("detect-long", run.Stage);
+    }
+
+    /// <summary>
+    /// A clean night names the last stage to finish, which is the opposite ordering and the reason
+    /// the fix was not one sort.
+    ///
+    /// The last stage finishing clean is what says the night reached its end, so a clean night that
+    /// named its first stage would say nothing about whether the rest of it ran.
+    /// </summary>
+    [Fact]
+    public void A_clean_night_names_the_last_stage_to_finish()
+    {
+        Seed("""
+                ('c1', 'daily-bars',      '2026-08-28T21:30:03.059Z', '2026-08-28T21:30:18.561Z', 'clean', 100, 2005, 1),
+                ('c2', 'indicators',      '2026-08-28T22:00:03.910Z', '2026-08-28T22:00:13.633Z', 'clean',   0, 1989, 1),
+                ('c3', 'scoreboard',      '2026-08-29T01:50:02.702Z', '2026-08-29T01:50:02.777Z', 'clean',   0,   11, 1)
+        """);
+
+        RunSummaryResponse run = Assert.IsType<RunSummaryResponse>(Read().LastRun);
+
+        Assert.Equal("clean", run.Outcome);
+        Assert.Equal("scoreboard", run.Stage);
     }
 
     [Fact]

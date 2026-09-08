@@ -18,6 +18,33 @@ public sealed record ScoreboardView(
 {
     public bool HasPanels => Health.Count > 0 || Long.Count > 0 || Short.Count > 0;
 
+    /// <summary>
+    /// Band 0's panels, which are the account-wide ones about the record itself.
+    ///
+    /// <b>Split by the panel's own name rather than by the wire.</b> Band 3 is account-wide too, so
+    /// both arrive in the same list, and a page that rendered that list under one heading would put
+    /// the loop's own figures inside the health band. The name is what says which band a panel is,
+    /// and it is the store's key rather than a label this view invents.
+    /// </summary>
+    public IReadOnlyList<PanelView> Band0 =>
+        [.. Health.Where(p => p.Name.StartsWith("band0.", StringComparison.Ordinal))];
+
+    /// <summary>Band 3's panels: is the loop learning.</summary>
+    public IReadOnlyList<PanelView> Band3 =>
+        [.. Health.Where(p => p.Name.StartsWith("band3.", StringComparison.Ordinal))];
+
+    /// <summary>
+    /// Account-wide panels belonging to no band this page draws.
+    ///
+    /// <b>Rendered rather than dropped.</b> A panel the builder wrote and this page has no heading
+    /// for is a figure computed and discarded by a surface, which is the shape this corpus keeps
+    /// finding; showing it under its own identifier is worse-looking and honest.
+    /// </summary>
+    public IReadOnlyList<PanelView> Unplaced =>
+        [.. Health.Where(p =>
+            !p.Name.StartsWith("band0.", StringComparison.Ordinal)
+            && !p.Name.StartsWith("band3.", StringComparison.Ordinal))];
+
     public static ScoreboardView Empty(string asOf, string why) => new(asOf, why, [], [], []);
 }
 
@@ -40,13 +67,20 @@ public sealed record PanelView(
     int? Minimum,
     string? WithheldBecause,
     int? Sessions = null,
-    int? MinimumSessions = null)
+    int? MinimumSessions = null,
+    bool? ReadsBadly = null,
+    string? ReadsBadlyBecause = null)
 {
     /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
     public string Title => Name switch
     {
         "band0.nightsRecorded" => "Nights recorded",
-        "band0.degradedRuns" => "Degraded runs",
+
+        // Renamed at 6.8 from `band0.degradedRuns`, which counted run instants and sat beside a
+        // count of nights under a label saying "runs recorded": three populations, no two of them a
+        // ratio. It counts nights now and is named for what it counts.
+        "band0.degradedNights" => "Degraded nights",
+        "band0.degradedRuns" => "Degraded runs, before 6.8 renamed it",
         "band0.setupsOnFile" => "Setups on file",
         "band0.correctedRows" => "Corrected rows",
         "band0.worstLatenessMinutes" => "Worst lateness, minutes",
@@ -58,6 +92,14 @@ public sealed record PanelView(
         "band2.lossCause.noise" => "Noise stop-outs",
         "band2.lossCause.failedSetup" => "Failed setups",
         "band2.lossCause.unclassified" => "Unclassified losses",
+        "band3.proposalHitRate" => "Proposal hit rate",
+        "band3.signalsHeld" => "Signals held",
+        "band3.signalsAdmitted" => "Signals admitted since launch",
+        "band3.signalsRefusedAtTheLimit" => "Refused at the correlation limit",
+        "band3.signalsSeparatingOutcomes" => "Signals separating outcomes",
+        "band3.twinOutcomeSpread" => "Mean twin outcome spread",
+        _ when Name.StartsWith("band3.proposalHitRate.v", StringComparison.Ordinal) =>
+            $"Proposal hit rate, pack version {Name["band3.proposalHitRate.v".Length..]}",
         _ when Name.StartsWith("band2.decile", StringComparison.Ordinal) =>
             $"Decile {Name["band2.decile".Length..]}",
         _ => Name,
@@ -69,7 +111,7 @@ public sealed record PanelView(
     /// Written per panel rather than as a legend, because a legend is read once and a caption is
     /// read every time.
     /// </summary>
-    public string? ReadsBadlyWhen => Name switch
+    public string? ReadsBadlyWhen => ReadsBadlyBecause ?? Name switch
     {
         "band0.degradedRuns" =>
             "Reads red above 5% of the record, because excluded nights are not missing at random",
@@ -93,10 +135,28 @@ public sealed record PanelView(
             "Over every loss whose horizon has closed. Failed setups shrinking as a share is direct evidence the filter improved, and this is the bucket selection changes can actually reduce",
         "band2.lossCause.unclassified" =>
             "Over every loss whose horizon has closed, so a loss still waiting on one is not in it. Rising is a finding about the taxonomy rather than about the trades",
+        "band3.proposalHitRate" or "band3.signalsSeparatingOutcomes" or "band3.twinOutcomeSpread" =>
+            "Withheld until the evidence behind it exists. A rate of nought over nought proposals is not a rate",
+        "band3.signalsAdmitted" =>
+            "A library that only ever grows is a library nothing is being refused from, which is the correlation limit not biting rather than a library improving",
+        "band3.signalsRefusedAtTheLimit" =>
+            "Rising against a flat admitted count means the model is proposing restatements of what is already held",
+        _ when Name.StartsWith("band3.proposalHitRate.v", StringComparison.Ordinal) =>
+            "A rising rate across versions is the result. A version that never abstains is a warning rather than a triumph",
         _ when Name.StartsWith("band2.decile", StringComparison.Ordinal) =>
             "A flat curve across the deciles means the rank is decorative and the cap is truncating at random",
         _ => null,
     };
+
+    /// <summary>
+    /// Whether the panel's own condition is met tonight.
+    ///
+    /// <b>Read from the store rather than computed here.</b> The threshold is applied by the builder
+    /// and the state travels on the row, on the same grounds the interval does: a page that applied
+    /// it would be a second implementation of the arithmetic with the page as the last place anybody
+    /// looked. Null and false are not the same: null is a panel that states no threshold at all.
+    /// </summary>
+    public bool Red => ReadsBadly == true;
 
     /// <summary>Whether the panel is withheld for want of a sample, which is a state rather than a value.</summary>
     public bool Withheld => string.Equals(Figure, "withheld", StringComparison.Ordinal);

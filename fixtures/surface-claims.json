@@ -108,9 +108,10 @@
       "name": "proposal-hit-rate-by-pack-version",
       "sentence": "This is the project's stated success criterion made visible, from 6.8",
       "statedIn": "docs/ARCHITECTURE.html",
-      "surface": "/scoreboard, band 3",
-      "arrivesAt": "6.8",
-      "why": "The only band that measures the AI, and it measures the evidence rather than the model."
+      "surface": "/scoreboard",
+      "mustCarry": "Band 3",
+      "producedBy": "the page",
+      "why": "The only band that measures the AI, and it measures the evidence rather than the model. **Live from 6.8**, where the band is built and the surface fixture gains panels for it. The claim is that the band is on the page at all: what it says today is that every figure in it is withheld, and a band that appeared only on days with data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
     },
     {
       "name": "band-one-shows-how-far-off-the-answer-is",
@@ -352,8 +353,10 @@
       "sentence": "A seat that cannot ask is shown on the status band the morning it happens, naming the transport that was refused",
       "statedIn": "docs/RUNBOOK.md",
       "surface": "/scoreboard",
+      "mustCarry": "the subscription seat could not be asked",
+      "producedBy": "the page",
       "why": "A seat that cannot ask is a fact about the running lab, and nothing in the verification harness reaches the running lab, so recorded and not shown would mean the operator learns of it a quarter later from a gap in the proposal record. **The panel is built at 6.5 and the claim arrives at 6.8**, which is the distinction worth keeping rather than smoothing over: the surface fixture holds no refused ask and its scoreboard is a stored one, so nothing a page can be asked today exercises either the panel or the reason line beside it. **What the sentence is really about is the reason line**, being that the band names the transport that was refused, and that needs a store where a week went unanswered. 6.8 owes a seedable surface anyway, for band 3 and the signal-library panel. The branch that draws the note is the sixth failure shape repaired at 6.5: until then a panel's note was drawn only where the figure was withheld, so a panel carrying both a value and a reason lost the reason.",
-      "arrivesAt": "6.8"
+      "wasDeferredTo": "6.8"
     },
     {
       "name": "the-ledger-shows-a-versions-age",

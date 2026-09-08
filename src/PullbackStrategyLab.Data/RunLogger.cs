@@ -316,12 +316,29 @@ public sealed class RunLogger
     ///
     /// Null rather than an empty string, because "no stage of this session ended other than
     /// cleanly" and "this column was never written" would otherwise be the same value.
+    ///
+    /// <b>The window travels with the names, from 6.8.</b> The window is the session's own calendar
+    /// day in the session zone, and the lab's night runs 17:15 to 22:00, so a stage rerun in the
+    /// early hours to repair the session before falls inside it: every setup recovered for
+    /// 2026-08-28 carries `recheck` in its mark, from a partial recheck at 00:23 Eastern that
+    /// morning repairing the fifteen cluster verdicts of 2026-08-27. **The mark was not wrong by its
+    /// own definition and it named a stage that had nothing to do with the night it was written on**,
+    /// which is a different statement from the one a reader takes from a bare list of names. Saying
+    /// the window is what a reader needs; telling the two apart from the log alone would need a
+    /// session on `run_log`, which it does not carry.
     /// </summary>
     public static string? DegradedBecause(
         SqliteConnection connection, DateOnly session, string sessionZone)
     {
         IReadOnlyList<string> stages = IncompleteStagesOf(connection, session, sessionZone);
-        return stages.Count == 0 ? null : string.Join(", ", stages);
+
+        return stages.Count == 0
+            ? null
+            : string.Join(", ", stages)
+              + " — stages that ended other than cleanly inside "
+              + session.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+              + " in the session zone, so one that ran in that day's early hours may have been "
+              + "repairing the session before";
     }
 
     internal static int CountRows(SqliteConnection connection, string table)

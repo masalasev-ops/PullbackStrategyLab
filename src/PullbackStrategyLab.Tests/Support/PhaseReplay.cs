@@ -925,6 +925,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ClauseFigures());
         measurements.AddRange(RuleFigures());
         measurements.AddRange(AcceptanceFigures());
+        measurements.AddRange(Band3Figures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -3296,6 +3297,83 @@ public sealed class PhaseReplay : IDisposable
                 authored.ResolvedAt is DateTimeOffset resolved
                     ? StoreText.TimestampToStorageText(resolved)
                     : "none"),
+        ];
+    }
+
+    /// <summary>
+    /// Band 3 and the degraded panel, read off a build taken after the research stages have run.
+    ///
+    /// <b>After them rather than at step 17, and the order is the point.</b> Band 3 is about the
+    /// research loop, so a build taken before the library was seeded, the twins found and the
+    /// proposals filed would report an empty band and say nothing about the panels. A real night
+    /// has the order this method restores: `signal-admission` runs on admission, the four weekly
+    /// slots run on Saturday morning, and `scoreboard` runs at 21:50 after all of them.
+    ///
+    /// <b>The rebuild flag is required and not incidental.</b> A second build of a date skips every
+    /// panel that already carries a generation, so without it this would read the build step 17
+    /// took. With it the date gains a new generation beside the old, which is what a rebuild is for
+    /// and what the stale one staying readable is about.
+    /// see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood
+    /// </summary>
+    private IReadOnlyList<Measurement> Band3Figures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf, rebuild: true);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        int Scalar(string sql)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        string Text(string sql)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            return command.ExecuteScalar() as string ?? "absent";
+        }
+
+        // The latest generation of each panel, which is what a reader of the date sees. Without the
+        // bound every figure here would count the step 17 build's rows as well and read double.
+        const string Latest =
+            " AND computed_at = (SELECT MAX(computed_at) FROM scoreboard g "
+            + "WHERE g.as_of = scoreboard.as_of AND g.panel = scoreboard.panel)";
+
+        return
+        [
+            new("band3.panels", Scalar(
+                "SELECT COUNT(*) FROM scoreboard WHERE as_of = @as_of AND panel LIKE 'band3.%'" + Latest)
+                .ToString(CultureInfo.InvariantCulture)),
+
+            new("band3.withheld", Scalar(
+                "SELECT COUNT(*) FROM scoreboard WHERE as_of = @as_of AND panel LIKE 'band3.%' "
+                + "AND figure = 'withheld'" + Latest)
+                .ToString(CultureInfo.InvariantCulture)),
+
+            new("band3.hitRate.figure", Text(
+                "SELECT figure FROM scoreboard WHERE as_of = @as_of AND panel = 'band3.proposalHitRate'"
+                + Latest)),
+
+            new("band3.signalsHeld", Text(
+                "SELECT figure FROM scoreboard WHERE as_of = @as_of AND panel = 'band3.signalsHeld'"
+                + Latest)),
+
+            // The 3.5 repair, read as the two things that were wrong: the population the panel is
+            // over, and that a state exists at all. Whether the state is met is a fact about this
+            // fixture; that the panel can say is a fact about the mechanism.
+            new("band0.degradedNights.population", Text(
+                "SELECT population FROM scoreboard WHERE as_of = @as_of AND panel = 'band0.degradedNights'"
+                + Latest)),
+
+            new("band0.degradedNights.readsBadly", Text(
+                "SELECT CASE WHEN reads_badly IS NULL THEN 'absent' ELSE 'recorded' END FROM scoreboard "
+                + "WHERE as_of = @as_of AND panel = 'band0.degradedNights'" + Latest)),
         ];
     }
 

@@ -147,4 +147,20 @@ public static class MeasurementParameters
     /// see: The execution minimum is 200 paired trades and its conversion waits on a trade existing
     /// </summary>
     public const int ExecutionMinimumPairedTrades = 200;
+
+    /// <summary>
+    /// The share of nights above which the health band reads badly.
+    ///
+    /// <b>Stated in ARCHITECTURE and computed nowhere until 6.8.</b> The figure caption says every
+    /// panel carries the condition under which it reads badly, and band 0's condition is the only
+    /// one of them that is a threshold rather than a sentence: it reads red if degraded nights
+    /// exceed 5% of the record. The caption was a static string, nothing formed the ratio and
+    /// nothing rendered anything red.
+    ///
+    /// <b>Five percent because excluded nights are not missing at random.</b> A night the lab lost
+    /// is more likely to be a night something unusual happened, so a series with those quietly
+    /// absent flatters every figure below it, and one night in twenty is where that stops being
+    /// noise.
+    /// </summary>
+    public const double DegradedNightShare = 0.05d;
 }

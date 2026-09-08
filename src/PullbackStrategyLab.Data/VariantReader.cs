@@ -29,7 +29,8 @@ public sealed class VariantReader
 
     private const string Columns =
         "variant_id, generation, family, definition, target, minimum_sample, minimum_sample_unit, "
-        + "status, resolved_at, created_at, direction, gate, threshold_name, threshold_from, threshold_to";
+        + "status, resolved_at, created_at, direction, gate, threshold_name, threshold_from, threshold_to, "
+        + "proposal_id";
 
     /// <summary>Every version the lab had registered by the end of <paramref name="asOf"/>.</summary>
     public IReadOnlyList<StoredVariant> RegisteredBy(DateOnly asOf, string sessionZone)
@@ -114,6 +115,11 @@ public sealed class VariantReader
                         reader.GetString(12),
                         StoreText.StorageTextToThreshold(reader.GetString(13)),
                         StoreText.StorageTextToThreshold(reader.GetString(14))),
+
+                // Written once at creation like everything else on this row, and null on a version
+                // nobody proposed: the baseline came from no proposal and an operator may register a
+                // version of their own.
+                ProposalId = reader.IsDBNull(15) ? null : reader.GetString(15),
             });
         }
 
@@ -164,6 +170,17 @@ public sealed record StoredVariant(
     /// the store holds as five CHECK clauses rather than as a convention the admitter keeps.
     /// </summary>
     public MovedThreshold? Moved { get; init; }
+
+    /// <summary>
+    /// The proposal this version came from, or null where it came from nobody.
+    ///
+    /// <b>The join band 3 is defined by, and it did not exist until 6.8.</b> The project's stated
+    /// success criterion is proposal hit rate by pack version: `proposal` carries the pack version it
+    /// was cut against and the settlement is a status on a version, and until this column nothing
+    /// carried the second back to the first, so the rate could not be computed even in principle.
+    /// see: The evidence pack is versioned, and the success criterion is proposal hit rate by pack version
+    /// </summary>
+    public string? ProposalId { get; init; }
 
     public bool IsBaseline => Family == VariantFamily.Baseline;
 

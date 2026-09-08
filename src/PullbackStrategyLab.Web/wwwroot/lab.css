@@ -343,6 +343,17 @@ kbd { font: inherit; font-size: 11px; padding: 1px 5px; border: 1px solid var(--
     The interval needs sessions, the decision needs evidence, and the two can disagree, so they are
     two lines rather than one.
 */
+/*
+  A panel whose own condition is met tonight.
+
+  The colour is the whole of it, and that is why it needed an instrument of its own: `surface-claims`
+  renders a page and reads the words that came out, and a colour is not a word. What catches a rule
+  that goes missing here is the rendered-class sweep, which reads the classes a page actually carries
+  and holds them against the rules this file has.
+*/
+.panel.reads-badly { border-left: 3px solid var(--short); padding-left: 9px; }
+.panel.reads-badly .figure { color: var(--short); }
+
 .panel .withheld-because {
     font-size: 11px;
     color: var(--ink3);
@@ -470,3 +481,57 @@ table.ledger td.age { color: var(--ink3); font-variant-numeric: tabular-nums; wh
 .night .count { margin: 0 0 8px; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
 .night p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; }
 .night .warns { display: block; font-size: 12px; color: var(--ink2); }
+
+/*
+  The pack comparison surface. A table whose job is to make one differing component findable, so the
+  tuple's columns stay narrow and the fingerprint is monospaced: what a reader does here is compare
+  two strings by eye.
+*/
+.packs { margin: 0 0 22px; }
+.packs .differ-on { margin: 4px 0 0 18px; padding: 0; font-size: 12px; }
+.packs .differ-on li { margin: 0 0 2px; }
+table.ledger.packs td.fingerprint { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+table.ledger.packs td.sections, table.ledger.packs td.screened, table.ledger.packs td.statuses {
+    font-size: 11px; color: var(--ink3); max-width: 260px;
+}
+table.ledger.packs .count { font-variant-numeric: tabular-nums; }
+table.ledger.packs .over { display: block; font-size: 11px; color: var(--ink3); }
+
+/*
+  Fifteen classes the pages carried and this stylesheet drew nothing for, found by `rendered-classes`
+  on its first run at 6.8.
+
+  **The four state classes are the sharpest of them.** An element carrying `bad` that is drawn
+  exactly like one carrying `good` is present and invisible, which is the fault the check exists for
+  and the one no amount of reading the words on the page could have found. The rest are annotations
+  and badges whose weight was being taken from whatever the surrounding element happened to set.
+*/
+
+/* A count beside a heading, so a reader never sees a list without knowing how long it is. */
+.pill {
+    display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 9px;
+    background: var(--panel); border: 1px solid var(--rule);
+    font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink2);
+}
+
+/* The four states. A result that went well, one that did not, one worth a second look, and one no
+   longer live. Colour and weight, because these sit inside dense tables where a border would be
+   noise. */
+.good { color: var(--long); }
+.bad { color: var(--short); }
+.warn { color: var(--warn, #9a6b00); }
+.greyed { color: var(--ink3); }
+
+/* Numbers in a table read as numbers: tabular figures so columns line up under each other. */
+.num, .tk { font-variant-numeric: tabular-nums; }
+.tk { font-weight: 600; }
+
+/* Annotations under a figure. One weight for all of them, so a reader learns it once. */
+.cause, .borrow, .risk-pair, .caps-caption, .panel-note, .population, .short-of {
+    display: block; font-size: 11px; color: var(--ink3); line-height: 1.35;
+}
+
+/* One side of the journal, on the shape the ledger's own side blocks take. */
+.journal-side { border-left: 3px solid var(--rule); padding: 0 0 0 12px; margin: 0 0 18px; }
+.journal-side.long { border-left-color: var(--long); }
+.journal-side.short { border-left-color: var(--short); }

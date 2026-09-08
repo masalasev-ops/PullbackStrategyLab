@@ -55,9 +55,18 @@ public sealed record LabStatusView(
 
     public string SessionText => Session ?? "no session recorded";
 
+    /// <summary>
+    /// The night's worst outcome and the stage that reached it, with the session it is about.
+    ///
+    /// <b>The session travels with it from 6.8.</b> The band reads the newest session in the log and
+    /// bounds on that session's own calendar day, and the lab's night runs 17:15 to 22:00, so a
+    /// stage rerun in the early hours to repair the session before falls inside the window. Naming
+    /// the session is what stops a reader taking the stage as this evening's; telling the two apart
+    /// from the log alone would need a session on `run_log`, which it does not carry.
+    /// </summary>
     public string LastRunText => LastRunStage is null
         ? "nothing has run"
-        : $"{LastRunStage} · {LastRunOutcome}";
+        : $"{LastRunStage} · {LastRunOutcome} · for {SessionText}";
 
     public string CallsText => string.Create(
         CultureInfo.InvariantCulture, $"{CallsUsed:N0} of {DailyCallCeiling:N0}");

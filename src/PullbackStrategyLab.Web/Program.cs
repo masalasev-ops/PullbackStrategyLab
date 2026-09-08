@@ -362,6 +362,57 @@ public sealed class LabApiClient
     }
 
     /// <summary>
+    /// The pack comparison surface, on the terms every other read here stands on.
+    /// </summary>
+    public async Task<PacksView> ReadPacksAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/packs/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return PacksView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            PacksPayload? payload = await JsonSerializer
+                .DeserializeAsync<PacksPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return PacksView.Empty(session, "the read surface answered with nothing");
+            }
+
+            return new PacksView(
+                payload.AsOf ?? session,
+                payload.Absent,
+                [.. (payload.Versions ?? []).Select(v => new PackVersionView(
+                    v.Version, v.Fingerprint ?? string.Empty, v.Sections ?? string.Empty,
+                    v.SignalsScreened ?? string.Empty, v.SignalsScreenedCount,
+                    v.CorrectionForm ?? string.Empty, v.CorrectionLevel, v.FamilyWiseThreshold,
+                    v.ModelIdentifier ?? string.Empty, v.Proposals, v.RuleChanges, v.SignalRequests,
+                    v.Abstentions, v.NoAnswer, v.Statuses ?? []))],
+                payload.LastCut is null
+                    ? null
+                    : new PackCutView(
+                        payload.LastCut.AsOf ?? session, payload.LastCut.Version,
+                        payload.LastCut.SectionsRendered, payload.LastCut.SectionsEmpty,
+                        payload.LastCut.SignalsScreened, payload.LastCut.NullControlPlanted,
+                        payload.LastCut.Outcome ?? "unknown", payload.LastCut.RefusedBecause));
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return PacksView.Empty(session, "the read surface did not answer");
+        }
+    }
+
+    /// <summary>
     /// The research ledger, on the terms every other read here stands on: it never throws, and an
     /// answer it could not get is a sentence rather than an exception.
     /// </summary>
@@ -554,7 +605,7 @@ public sealed class LabApiClient
             : [.. panels.Select(p => new PanelView(
                 p.Name, p.Direction, p.Figure, p.Low, p.High, p.Rows, p.Effective,
                 p.Population ?? "population not recorded", p.Minimum, p.WithheldBecause,
-                p.Sessions, p.MinimumSessions))];
+                p.Sessions, p.MinimumSessions, p.ReadsBadly, p.ReadsBadlyBecause))];
 
     public async Task<SetupsView> ReadSetupsAsync(
         DateOnly asOf,
@@ -748,10 +799,24 @@ public sealed class LabApiClient
         IReadOnlyList<PanelPayload>? Long,
         IReadOnlyList<PanelPayload>? Short);
 
+    private sealed record PacksPayload(
+        string? AsOf, string? Absent, IReadOnlyList<PackVersionPayload>? Versions,
+        PackCutPayload? LastCut);
+
+    private sealed record PackVersionPayload(
+        int Version, string? Fingerprint, string? Sections, string? SignalsScreened,
+        int SignalsScreenedCount, string? CorrectionForm, double CorrectionLevel,
+        double? FamilyWiseThreshold, string? ModelIdentifier, int Proposals, int RuleChanges,
+        int SignalRequests, int Abstentions, int NoAnswer, IReadOnlyList<string>? Statuses);
+
+    private sealed record PackCutPayload(
+        string? AsOf, int? Version, int SectionsRendered, int SectionsEmpty, int SignalsScreened,
+        bool NullControlPlanted, string? Outcome, string? RefusedBecause);
+
     private sealed record PanelPayload(
         string Name, string? Direction, string Figure, string? Low, string? High, int Rows,
         int? Effective, string? Population, int? Minimum, string? WithheldBecause,
-        int? Sessions, int? MinimumSessions);
+        int? Sessions, int? MinimumSessions, bool? ReadsBadly, string? ReadsBadlyBecause);
 
     private sealed record TradeChartPayload(
         string TradeId,

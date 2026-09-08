@@ -145,9 +145,15 @@ public static class LabStatus
     /// instrument is right and the surface discards the answer.
     ///
     /// So the read takes the night rather than the row: the most recent session in the log, and
-    /// within it the worst outcome any stage reached, failed before partial before clean. The
-    /// stage named is the one that reached it, so the band names the stage that went wrong rather
-    /// than the stage that went last.
+    /// within it the worst outcome any stage reached, failed before partial before clean.
+    ///
+    /// <b>And within that outcome it takes the first stage to reach it, from 6.8.</b> Until then it
+    /// took the last, so on 2026-08-28 it named `vectorize` where `detect-long` had failed five
+    /// minutes earlier and the other three failed because it did: the cause is what an operator
+    /// needs and the consequence is what the band showed. **The rule is not one sort**, which is why
+    /// this was raised at 3.12 and not fixed there. A clean night wants the opposite ordering, the
+    /// last stage finishing clean being what says the night reached its end, so the ordering is
+    /// chosen by the outcome that won: earliest within a bad one, latest within a clean one.
     ///
     /// <b>And the night is bounded in the session zone, not on the UTC date.</b> That grouping was
     /// <c>substr(started_at, 1, 10)</c>, which is the stored UTC day, and the lab's night crosses it:
@@ -155,8 +161,10 @@ public static class LabStatus
     /// following morning. On 2026-08-28 detect-long, vectorize, controls and cap all failed at
     /// 22:20Z to 22:28Z and forward-returns and scoreboard ran clean at 01:30Z and 01:50Z the next
     /// day, so the newest UTC date held those two rows alone and the band read "scoreboard clean"
-    /// over a night that produced no setups at all. The ordering was right and the population was a
-    /// different night. <see cref="RunLogger.IncompleteStagesOf"/> bounds the same table correctly
+    /// over a night that produced no setups at all. **The population was a different night, and the
+    /// ordering was wrong too**: the sentence here said the ordering was right, which was half of the
+    /// overstatement above it and is the reason both were raised together at 3.12 and corrected
+    /// together at 6.8. <see cref="RunLogger.IncompleteStagesOf"/> bounds the same table correctly
     /// and says why in the same words; this read is the one that did not use it.
     /// see: Every phase ends in a generated phase report, not in a page somebody looks at
     /// </summary>
@@ -180,7 +188,12 @@ public static class LabStatus
                           WHEN 'partial' THEN 1
                           ELSE 2
                       END,
-                      started_at DESC
+                      -- Within a bad outcome, the earliest stage to reach it. Within a clean night,
+                      -- the last stage to finish. Only one of the two keys is non-null across the
+                      -- winning group, because every row in it shares an outcome, so the pair reads
+                      -- as one ordering chosen by which outcome won.
+                      CASE WHEN outcome IS NOT NULL AND outcome <> 'clean' THEN started_at END ASC,
+                      CASE WHEN outcome IS NULL OR outcome = 'clean' THEN started_at END DESC
              LIMIT 1;
             """;
 

@@ -40,10 +40,14 @@ public sealed partial class MigrationRunner
     /// <summary>
     /// Applies whatever is outstanding, or everything up to <paramref name="throughVersion"/>.
     ///
-    /// The bound exists for one caller: the test that asserts a table rebuild does not lose
-    /// rows has to stand the store up at the version before the rebuild, put rows in it, and
-    /// then step forward. Stopping short is not something a running lab ever does, which is why
-    /// the parameter is optional and the default is everything.
+    /// The bound exists for the tests that need a store part-built: one asserts that a table
+    /// rebuild does not lose rows, and has to stand the store up at the version before the rebuild,
+    /// put rows in it and step forward; the other stands a store up one migration short to prove
+    /// that every stage refuses a store at a version other than the build's. **It said "one caller"
+    /// from 3.9 and there were two from 3.12**, the second having been added by the checkpoint that
+    /// wrote the sentence, which is a comment asserting the opposite of the code in the one place
+    /// nothing scans. Stopping short is not something a running lab ever does, which is why the
+    /// parameter is optional and the default is everything.
     /// </summary>
     public MigrationResult Apply(SqliteConnection connection, int? throughVersion = null)
     {
