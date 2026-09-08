@@ -18264,3 +18264,191 @@ Carried:    **Nothing new, and one limit stated rather than raised as a row.** T
 
             **This session committed code and may not sign it off.** 6.9 signed off 6.10 and 6.0
             through 6.8 by name and does not cover this row, which BUILD_PLAN now says outright.
+## Not a checkpoint entry — 2026-09-08 — phase-6-12-exit-tight-basis — belongs to 6.12: the give-up gate measured against a level nothing defines, and the trigger end carrying the larger term
+
+**Not a checkpoint entry.** It belongs to 6.12, which has landed. Two measurements the operator asked
+for, three obligations they raised, and one correction to a dated entry. **No code changed, no
+threshold moved, and nothing was written to any store**: every read went through a `mode=ro`
+connection, the row counts were asserted either side, and the write-ahead log was nought bytes at the
+end as it was at the start.
+
+Measured:   **Every gate clause traced to the source of its form and of its threshold, twenty clauses,
+            ten a side.** Each traced by its own agent and then attacked by an independent refuter
+            briefed to hunt inflation, being a clause called sourced where nothing records an origin,
+            and deflation, being an origin missed. One verdict moved, `averages-squeezing`'s form,
+            from stated source to author's reading. **The counts, form and threshold classified
+            separately, and stated before the listing because the shape of the answer is the finding
+            rather than any one row.** Form: **six** a stated source, **nought** a derivation,
+            **fourteen** an author's reading. Threshold: **four** a stated source, **nought** a
+            derivation, **fourteen** an author's reading, and **two** clauses that compare words and
+            carry no threshold at all, being `uptrend` and `downtrend`.
+
+            **The empty column is the finding.** Not one clause in this lab, on either side, has a
+            form or a threshold derived from anything. Every number is either attributed to the
+            trader the lab models in a single unquoted sentence, or it is somebody's choice.
+
+            **The six whose form is a stated source** are `moves-enough` both sides, `thrust` long,
+            `exit-tight` both sides and `reached-ceiling`. **The four whose threshold is** are
+            narrower: the 5% daily-range floor both sides, on ARCHITECTURE's own basis cell reading
+            "From the trader's stated preference", and the 0.5 give-up cap both sides, on
+            ARCHITECTURE's "The strategy's own rule". Everything else in both detectors is an
+            author's reading at both ends: `tradable` and `tradable-shortable`, `dip-shape` and
+            `bounce-shape`, `held-floor` and `no-reclaim`, `contraction` and `averages-squeezing`,
+            `trigger-near`, `cluster` both sides, the short side's `thrust`, and the threshold halves
+            of long `thrust` and `reached-ceiling`.
+
+            **And not one of the twenty thresholds has moved since the day it was written.** The
+            once-only adjustment being unspent is not an exception to the history; it is the whole of
+            it (see: The once-only threshold adjustment is recorded unspent, and the baseline is frozen without it).
+
+            **What `exit-tight` rejects, over `calibration_setup` rather than over the live nights**,
+            being the 602 sessions from 2024-04-01 to 2026-08-24. **The coverage is stated first
+            because it is nearly half the rows**: 15,439 of the 32,533 long and 7,199 of the 16,917
+            short carry no value at all, recorded as "no stop or no daily range for the session". Every
+            figure below is over the **17,093 long and 9,718 short that carry one**, the two sides
+            read separately throughout (see: Long and short are never pooled into one figure).
+
+            | Side | p5 | p25 | p50 | p75 | p95 | max |
+            |---|---|---|---|---|---|---|
+            | long, 17,093 rows | 0.58 | 0.92 | **1.313** | 1.90 | 2.99 | 12.95 |
+            | short, 9,718 rows | 0.58 | 0.95 | **1.428** | 2.10 | 3.41 | 145.61 |
+
+            Under the cap of 0.5 daily ranges: **419 long, 2.45%**, and **232 short, 2.39%**. Under
+            0.75: 2,396 long, 14.02%, and 1,300 short, 13.38%. Under 1.0: 5,171 long, 30.25%, and
+            2,693 short, 27.71%. Over 3.0: 4.93% long and 8.80% short. **The cap sits below the fifth
+            percentile of both sides**, so it is not clipping a tail, it is under the body of the
+            distribution. The two medians and the 97.6% above the cap reproduce the 3.15 entry of
+            2026-09-01 exactly, which is the same population read a second time and not a new one.
+
+            **What moves if the gate measures from the level the plan actually uses.** `exit-tight`
+            takes `PullbackGeometry`'s pair, being the running maximum high and running minimum low
+            across the whole dip; the plan's pair is the final pullback session's own extremes with a
+            0.1 daily-range pad (see: The order prices are derived from the final pullback session's
+            minutes, not from the screening geometry). Over the **1,981 long rows that reach the
+            gate**: shipped **30 pass, 1.51%**; the give-up end swapped alone **35, 1.77%**; the
+            trigger end swapped alone **112, 5.65%**; both, which is the plan's pair, **103, 5.20%**.
+            The dip's running-maximum high sits a median **0.223 daily ranges above** the setup
+            session's own high, and the session low sits **0.160 daily ranges inside** the dip low,
+            most of which the 0.1 pad consumes. **The trigger end carries the larger term by a factor
+            of about sixteen.**
+
+            **The residual is larger than either.** The tightest pair any daily-bar reference can
+            produce, the setup session's own high to its own low with no cushion at either end, still
+            exceeds 0.5 daily ranges on **83.4% of those 1,981 long rows**, on **91.7% of the 2,376
+            short rows passing `bounce-shape`**, and on **92.2% of all 17,093 valued long rows**. On a
+            universe already screened to a 5% average daily range, five qualifying rows in six have a
+            setup session whose own span exceeds half that name's average day.
+
+            **A first reading of this was wrong in its emphasis and the adversarial pass caught it.**
+            Compared over every valued row the reference change looks nearly inert, the median moving
+            1.313 to 0.915 long while the share under the cap moves 2.45% to 2.21%. That is a mixture
+            artefact: a one-session dip is the same bar twice, so the shipped pair is wider there by
+            construction, and those rows carry most of the shipped passes while `dip-shape` refuses
+            every one of them. On the populations that can become trades the direction reverses,
+            `dip-shape` passing long over 3,230 rows going 0.93% to 3.28% and `bounce-shape` passing
+            short over 2,376 going 0.25% to 1.60%. **Nine short rows reach `exit-tight` at all**, which
+            is too few to state a rate over and is why the short side is carried on the shape-passing
+            population above instead. The refutation was verified independently before it was
+            accepted.
+
+            **How many zero-range bars sit inside a pullback window rather than anywhere in the
+            store.** Measured after the finding below was rowed, and it narrows that finding by four
+            orders of magnitude. 128,812 stored rows carry a high equal to their low, which is
+            **128,790 distinct bars** taking the latest observation of each, 73,186 of them with a
+            volume of nought. **1,272 sit on a ticker that ever produced a setup and five sit inside a
+            pullback window**, being GH on 2024-05-23, CLSK on 2024-11-08, AGX on 2026-07-21 and
+            2026-07-22, and DFTX on 2026-07-31. **A zero-range bar is not always a non-trading day**,
+            and the GH bar at a volume of 700 is the instance. The five reach **nine calibration
+            setups and no live setup**, and **one of the nine has its whole pullback on such a bar**,
+            that one being the only row whose trigger equals its stop and the only row where
+            `exit-tight` passed. The other eight carry longer spans, so the bar is one of several and
+            their distances read 1.25 to 3.24.
+
+            **The pair can only flatten when the whole pullback is that one bar**, and `dip-shape` and
+            `bounce-shape` admit two to seven, so all **8,638** single-bar pullbacks across the two
+            tables are refused by the shape gate before this can matter. **So the defect cannot reach
+            a candidate through the shipped gate set**, and what the ruling turns on is narrower than
+            the row first stated: whether four gates recording a value of nought is admissible
+            evidence, rather than whether a name could be ranked on one.
+
+Found:      **`exit-tight` is written for an intraday entry level the corpus never defines, and it is
+            answered off daily bars that cannot satisfy it. The defect is in the gate's basis and not
+            in its value.** ARCHITECTURE's "Why the exit-tight check is the interesting one" derives
+            the 0.5 cap from a worked example and closes it with "The only way to get an exit tight
+            enough is to enter during the day at a moment when a nearby floor has just been
+            established". **Nothing anywhere says what establishes a floor, how near is near, or which
+            minute the entry is taken at**, so there is no level for a give-up distance to be measured
+            from, and **nothing could compute one if there were**: `intraday_bar` holds nought rows
+            and `anchored_vwap` holds nought. **So every long and short funnel figure since 2.11 is a
+            measurement of that mismatch rather than of the pattern.** The counts on both sides were
+            taken with the binding gate comparing a daily-bar span against a threshold written for an
+            intraday one, and no reading of them separates a pattern that does not produce tight stops
+            from a give-up level the strategy does not place a stop at. The 2026-09-02 sitting already
+            said the once survives "for a fault a measurement actually locates rather than for the
+            first fault anybody points at"; this is a fault a measurement locates, and it is located
+            in the basis, so **spending the once against it would fit the number to the mismatch**.
+            Rowed and due at the operator, because defining the floor is authoring the strategy.
+
+            **A bar the vendor prints for a day the name did not trade reaches the geometry, and four
+            gates read nought off it and pass.** `2024-11-08-CLSK-long` sits on a daily bar whose open,
+            high, low and close are all 13.57 with a volume of nought. The pullback is that one bar, so
+            the trigger and the stop are the same price, and `held-floor`, `contraction`,
+            `trigger-near` and `exit-tight` each record a value of exactly 0 and each pass.
+            **`RangeDistance` guards the denominator and never the numerator**: it returns null for an
+            absent or nought average daily range and returns a real 0 for a nought numerator taken off
+            two equal prices (see: A gate handed an absent or degenerate quantity fails rather than
+            passing). **The enabling set is large and the exposure is not**: 128,812 of the 2,381,945
+            stored daily bars carry a high equal to their low and 73,207 of those a volume of nought,
+            over 743 dates, while four calibration setups of 49,450 sit on such a bar and no live setup
+            does. The other three have a longer pullback and read 1.25, 1.29 and 3.24. **The one row
+            that reads nought is stopped by `dip-shape` and `cluster`**, which is other gates and not
+            this one. Rowed and due at the operator, because a guard written before the ruling would be
+            a build session deciding what the pattern is.
+
+            **`calibration_setup` cannot say a give-up distance was absent.** It holds 49,450 rows and
+            **not one null** in `stop_distance_ranges`, while 22,639 store the literal 0 and 22,638 of
+            those carry an `exit-tight` verdict with no value. `setup` is the other way: 35 rows store
+            the literal 0, all on 2026-08-27, and every night from 2026-08-28 records the absence as a
+            null. **Migration 031 already decided that existing rows are copied verbatim and no
+            sentinel is turned into a null, and that decision stands.** What is new is that the
+            distinction 031 created holds in one of the two tables it rebuilt, so a reader telling
+            absent from nought by asking whether the column is null gets the right answer on the
+            evidence store and the wrong one on every calibration row. **Nothing has been read wrongly
+            yet, measured rather than assumed**: `CeilingCalculator` holds the one shipped `IS NOT
+            NULL` guard on that column and reads `setup` alone, and 5.3 established that no calibration
+            row carries a frozen signal to replay. Rowed and due at the operator.
+
+            **`give-up-ranges` is declared `ThresholdFamily.Execution` on both sides**, so no admitted
+            version could move this threshold even if the once were spent. Stated beside the finding
+            rather than rowed, because it is a property of the register that is working as designed and
+            it is the reason a version-level route around the first finding does not exist.
+
+Corrected:  **The 3.12 entry of 2026-08-29 says "all 44 rows of the first night carry the flattened
+            nought the columns forced before migration 031". Read on 2026-09-08, 35 of the 44 carry
+            it** and the other nine carry a real give-up distance. The claim it was making is
+            unchanged, that being the two nights expressing the same state two ways, and the figure
+            beside it was a count of the night rather than a count of the rows the flattening reached.
+            Corrected by this dated entry rather than in place
+            (see: Nothing in the corpus is struck through).
+
+Carried:    **Three obligations, all due at the operator, and none of them blocks a checkpoint.** The
+            operational definition of "a nearby floor has just been established", which is the premise
+            the 0.5 cap rests on; whether a session the vendor prints with no trade in it is part of a
+            pullback; and whether the calibration store is rebuilt so it can record an absence. The
+            first is the one that costs something today, and what it costs is the reading of every
+            funnel count on both sides rather than any count itself.
+
+            **The once stays unspent, and this entry is the reason rather than a restatement of the
+            old one.** The 2026-09-02 decision declined to spend it because the short funnel was short
+            of rows reaching the gate rather than carrying a gate set too strict, and that reasoning is
+            untouched. What this adds is that the long side's rate is not evidence about the pattern
+            either, because the quantity the gate compares is not the quantity the strategy would
+            place a stop against, and the level it should compare has no definition and no stored data.
+            **A threshold adjustment taken now would fit the number to the mismatch**, and the
+            adjustment is once-only
+            (see: The once-only threshold adjustment is recorded unspent, and the baseline is frozen without it).
+
+            **This session committed no code and the two before it did.** The finding above is a record
+            and three rows; nothing in `src/` moved, so the fresh-session rule does not bind on this
+            entry, and 6.12 itself is still unsigned by the rule that a session which committed code
+            may not sign that code off.
