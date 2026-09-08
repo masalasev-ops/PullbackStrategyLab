@@ -59,7 +59,8 @@ public sealed class LabSetups
         DateOnly asOf,
         DateTimeOffset observedBefore,
         string sessionZone,
-        string? failedCheck = null)
+        string? failedCheck = null,
+        string? outcome = null)
     {
         StoreConnectionFactory connections = _connections;
         string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -106,9 +107,25 @@ public sealed class LabSetups
             ? all
             : [.. all.Where(s => s.Checks.Any(c => !c.Passed && string.Equals(c.Name, failedCheck, StringComparison.Ordinal)))];
 
+        // And the other question, which this surface could not answer until 6.12: not which gate
+        // rejected a name but how far the name got. The two narrow in sequence rather than replacing
+        // each other, so "of the names exit-tight rejected, which were otherwise clean" is one ask.
+        //
+        // <b>It reads the gating rule rather than counting failed rows.</b> `cluster` is recorded and
+        // never required, so a setup failing only it has passed everything, and a count over every
+        // failed check would report it as one gate short. `SetupOutcomes` runs `SetupChecks`'s own
+        // definition for exactly that reason: the detector owns what passing means and this is a
+        // reader of it, not a second author of it.
+        if (outcome is not null)
+        {
+            shown = [.. shown.Where(s => SetupOutcomes.Matches(
+                outcome, s.Checks.Select(c => (c.Name, c.Passed))))];
+        }
+
         return new SetupsResponse(
             session,
             failedCheck,
+            outcome,
             all.Length,
             [.. shown.Where(s => s.Direction == SetupDirection.Long)],
             [.. shown.Where(s => s.Direction == SetupDirection.Short)],
@@ -223,13 +240,14 @@ public sealed class LabSetups
 public sealed record SetupsResponse(
     string AsOf,
     string? FailedCheck,
+    string? Outcome,
     int Flagged,
     IReadOnlyList<SetupView> Long,
     IReadOnlyList<SetupView> Short,
     IReadOnlyList<string> CheckNames,
     string? Nothing)
 {
-    public static SetupsResponse Empty(string asOf, string why) => new(asOf, null, 0, [], [], [], why);
+    public static SetupsResponse Empty(string asOf, string why) => new(asOf, null, null, 0, [], [], [], why);
 }
 
 /// <summary>

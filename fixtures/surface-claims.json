@@ -366,6 +366,15 @@
       "mustCarry": "days old",
       "producedBy": "the page",
       "why": "The failure table's own clause for a version whose sample never accumulates, and the half of it that is about a surface. That the version stays open is held by the store and asserted by `architecture-conformance`; that a reader can see how long it has been open is a claim about the rendered page and nothing else could carry it. **The age is computed from the register rather than read off a reading**, so it is on the row from the night the version is registered and does not wait on the gate having run: a version registered since the last 21:45 slot is exactly the case a reader would otherwise see a blank for."
+    },
+    {
+      "name": "emptied-by-which-filter",
+      "sentence": "A result the filter emptied says which filter emptied it",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/setups?outcome=passed-all",
+      "mustCarry": "none of them matched",
+      "producedBy": "SetupsView.EmptiedByTheFilter",
+      "why": "The gallery gained a second filter at 6.12 and the sentence explaining an empty page named the first one. A night that flagged nothing and a night whose filter left nothing render identically, so the reason is the only thing telling them apart, and it was about to become wrong for half the filters on the page."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

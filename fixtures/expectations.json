@@ -12598,6 +12598,38 @@
       "checkpoint": "6.8",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
       "note": "That the state exists at all is the figure worth freezing here. ARCHITECTURE has said the panel reads red above 5% since 3.5 and the caption was a static string with nothing forming the ratio; whether it is met on any given date is a fact about the fixture rather than about the mechanism."
+    },
+    {
+      "id": "gallery.gatingFailures",
+      "tier": "DERIVED",
+      "value": "2026-08-24-HOOD-long=3 2026-08-24-INTC-short=4 IESC-long=3",
+      "checkpoint": "6.12",
+      "producedBy": "produced by running the shipped LabSetups.Read over the golden fixture with the outcome filter set, and read back off the response it returned",
+      "note": "How far each row of the fixture's night sits from being a candidate, which is the figure the two counts below are slices of. It is stated first because it is the one that carries information: it says the nearest row is three gates short, so both counts below are nought over a population that could not have produced anything else. It is also what would move if `cluster` stopped being recorded and never required, and neither count would show that."
+    },
+    {
+      "id": "gallery.passedEverything",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.12",
+      "producedBy": "produced by running the shipped LabSetups.Read over the golden fixture with the outcome filter set, and read back off the response it returned",
+      "note": "The passed-everything filter over the fixture's three setups. Nought, and the population is the point: the nearest row is three gating checks short, so this figure cannot distinguish a working filter from one that returns nothing. It is regression detection and not verification, and the verification is behavioural over an authored night in SetupOutcomeFilterTests, where a row that passes everything exists because this file's population has never contained one. It would become informative on the day the fixture holds a candidate."
+    },
+    {
+      "id": "gallery.failedOnlyOne",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "6.12",
+      "producedBy": "produced by running the shipped LabSetups.Read over the golden fixture with the outcome filter set, and read back off the response it returned",
+      "note": "The failed-only-one filter over the same three setups, nought for the same reason and with the same limit: at distances of 3, 4 and 3 no row is one gate short. Carried beside the count above rather than folded into it because they are different questions and a single figure would hide which of the two the fixture is silent about."
+    },
+    {
+      "id": "gallery.failedOnlyOneSetups",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "6.12",
+      "producedBy": "produced by running the shipped LabSetups.Read over the golden fixture with the outcome filter set, and read back off the response it returned",
+      "note": "The names behind the count above, so a nought says which rows were asked about rather than only how many came back. A count alone reads identically over a night with no near miss and over a filter that was handed no rows at all."
     }
   ],
   "frozenOnly": [

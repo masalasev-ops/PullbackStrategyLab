@@ -135,12 +135,16 @@ public static class Program
                 connections,
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
 
-        app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, IOptions<PullbackStrategyLabOptions> configured, string? failed) =>
+        // `outcome` narrows by how far a name got, where `failed` narrows by which gate stopped it.
+        // Two parameters rather than one set of values, because they compose: the question a person
+        // has at the gallery is usually both at once.
+        app.MapGet("/setups/{asOf}", (string asOf, LabSetups setups, IClock clock, IOptions<PullbackStrategyLabOptions> configured, string? failed, string? outcome) =>
             Results.Ok(setups.Read(
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 clock.UtcNow,
                 configured.Value.SessionZone,
-                string.IsNullOrWhiteSpace(failed) ? null : failed)));
+                string.IsNullOrWhiteSpace(failed) ? null : failed,
+                string.IsNullOrWhiteSpace(outcome) ? null : outcome)));
 
         // The one write this surface makes, and it is a person's opinion of one setup rather than
         // anything the lab computed. Two columns of one row, named in the route so a reader of this

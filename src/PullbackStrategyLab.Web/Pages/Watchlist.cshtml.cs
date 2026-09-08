@@ -64,7 +64,7 @@ public sealed class WatchlistModel : ScreenModel
         }
 
         SetupsView night = await _api
-            .ReadSetupsAsync(asOf, failedCheck: null, cancellationToken)
+            .ReadSetupsAsync(asOf, failedCheck: null, outcome: null, cancellationToken)
             .ConfigureAwait(false);
 
         Watchlist = WatchlistView.Of(night);

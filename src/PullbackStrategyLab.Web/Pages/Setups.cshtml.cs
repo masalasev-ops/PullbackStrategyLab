@@ -37,6 +37,16 @@ public sealed class SetupsModel : ScreenModel
     [BindProperty(SupportsGet = true)]
     public string? Failed { get; set; }
 
+    /// <summary>
+    /// Show only the setups that got this far: everything passed, or one gate short.
+    ///
+    /// The other question, and it is not a check name. Which gate rejected a name and how far the
+    /// name got are different asks, they compose, and the gallery could answer only the first until
+    /// 6.12: a person wanting to know whether anything passed had to read every card.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Outcome { get; set; }
+
     public SetupsView Setups { get; private set; } = SetupsView.Empty(string.Empty, "nothing has been read yet");
 
     /// <summary>Laid once per card, keyed by setup id, so the view does no work per render.</summary>
@@ -99,7 +109,7 @@ public sealed class SetupsModel : ScreenModel
         }
 
         AsOf = session.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        Setups = await _api.ReadSetupsAsync(session, Failed, cancellationToken).ConfigureAwait(false);
+        Setups = await _api.ReadSetupsAsync(session, Failed, Outcome, cancellationToken).ConfigureAwait(false);
         ViewData["Title"] = $"Setups {AsOf}";
 
         var thumbnails = new Dictionary<string, CandlestickGeometry>(StringComparer.Ordinal);

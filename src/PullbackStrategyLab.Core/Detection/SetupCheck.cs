@@ -148,9 +148,95 @@ public static class SetupChecks
         new HashSet<string>(StringComparer.Ordinal) { "cluster" };
 
     /// <summary>Whether every gating check passed, which is what `passed_all` means.</summary>
-    public static bool PassedAll(IEnumerable<CheckResult> results)
+    public static bool PassedAll(IEnumerable<CheckResult> results) => GatingFailures(results) == 0;
+
+    /// <summary>
+    /// How many gating checks a setup failed, which is its distance from being a candidate.
+    ///
+    /// <b>The same rule <see cref="PassedAll"/> runs, expressed once so the two cannot drift.</b>
+    /// Passing everything is this count at nought and was written out separately until 6.12; a
+    /// gallery filter asking "how close did this come" needs the count rather than the boolean, and
+    /// two spellings of one rule is how the answer to "did it pass" and the answer to "by how much
+    /// did it miss" end up disagreeing about a name that failed <c>cluster</c>.
+    ///
+    /// <b><see cref="RecordedNotRequired"/> is why this is not a count of failed rows.</b> A setup
+    /// failing only <c>cluster</c> is a candidate, so a count over every failed check would put it
+    /// one gate away when it is nought gates away. Over the 367 rows the store held on 2026-09-08
+    /// the two readings differ by eight at a distance of one, being 31 against 23, so the difference
+    /// is measurable rather than theoretical.
+    /// </summary>
+    public static int GatingFailures(IEnumerable<CheckResult> results)
     {
         ArgumentNullException.ThrowIfNull(results);
-        return results.All(r => r.Passed || RecordedNotRequired.Contains(r.Name));
+        return GatingFailures(results.Select(r => (r.Name, r.Passed)));
     }
+
+    /// <summary>
+    /// The same rule over a name and a verdict, for a caller holding the read surface's shape rather
+    /// than the detector's.
+    ///
+    /// <b>One rule reached two ways rather than two rules.</b> `CheckResult` is what the detector
+    /// writes and `SetupCheckView` is what the read surface publishes, and they are deliberately
+    /// different types: the wire shape is not the domain shape. Without this overload the gallery's
+    /// filter would have counted gating failures itself, against its own copy of
+    /// <see cref="RecordedNotRequired"/>, and the day <c>cluster</c> stops being the only recorded
+    /// and never required check the two would disagree with nothing saying so.
+    /// </summary>
+    public static int GatingFailures(IEnumerable<(string Name, bool Passed)> checks)
+    {
+        ArgumentNullException.ThrowIfNull(checks);
+        return checks.Count(c => !c.Passed && !RecordedNotRequired.Contains(c.Name));
+    }
+}
+
+/// <summary>
+/// What a reader may ask of a night besides which gate rejected a name.
+///
+/// <b>A vocabulary rather than two literals at each end.</b> The read surface filters on these and
+/// the gallery renders them, and a string spelled in both places is the defect this corpus greps
+/// for: the page would offer an option the surface silently did not recognise, and an unrecognised
+/// filter returns the whole night, which reads exactly like a night where everything qualified.
+///
+/// <b>Neither value is a check name and the two filters compose.</b> The failed-check filter asks
+/// which gate rejected a name; this asks how far the name got. Folding them into one parameter
+/// would make them alternatives, and the question a person actually has on the gallery is both at
+/// once: of the names this gate rejected, which were otherwise clean.
+/// </summary>
+public static class SetupOutcomes
+{
+    /// <summary>Only the setups that cleared every gating check, which is what a candidate is.</summary>
+    public const string PassedEverything = "passed-all";
+
+    /// <summary>Only the setups one gating check away from being a candidate.</summary>
+    public const string FailedOnlyOne = "failed-one";
+
+    /// <summary>Every value the filter accepts, in the order the gallery offers them.</summary>
+    public static IReadOnlyList<string> All { get; } = [PassedEverything, FailedOnlyOne];
+
+    /// <summary>What the gallery calls each one, so the page holds no vocabulary of its own.</summary>
+    public static string Label(string outcome) => outcome switch
+    {
+        PassedEverything => "passed everything",
+        FailedOnlyOne => "failed only one",
+        _ => outcome,
+    };
+
+    /// <summary>
+    /// Whether one setup's checks answer the question this outcome asks.
+    ///
+    /// An outcome outside <see cref="All"/> matches nothing rather than everything, because a filter
+    /// nobody recognises returning the whole night is the failure that cannot be seen: it renders as
+    /// a night in which every name qualified.
+    /// </summary>
+    public static bool Matches(string outcome, IEnumerable<CheckResult> results) =>
+        Matches(outcome, (results ?? throw new ArgumentNullException(nameof(results)))
+            .Select(r => (r.Name, r.Passed)));
+
+    /// <inheritdoc cref="Matches(string, IEnumerable{CheckResult})"/>
+    public static bool Matches(string outcome, IEnumerable<(string Name, bool Passed)> checks) => outcome switch
+    {
+        PassedEverything => SetupChecks.GatingFailures(checks) == 0,
+        FailedOnlyOne => SetupChecks.GatingFailures(checks) == 1,
+        _ => false,
+    };
 }

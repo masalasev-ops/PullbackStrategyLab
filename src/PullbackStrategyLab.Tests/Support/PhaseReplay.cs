@@ -2214,7 +2214,17 @@ public sealed class PhaseReplay : IDisposable
     /// </summary>
     private IReadOnlyList<Measurement> GalleryFigures()
     {
-        SetupsResponse night = new LabSetups(_connections).Read(AsOf, _clock.UtcNow, SessionBoundaries.UsEquities);
+        var gallery = new LabSetups(_connections);
+        SetupsResponse night = gallery.Read(AsOf, _clock.UtcNow, SessionBoundaries.UsEquities);
+
+        // The two outcomes, each asked of the shipped read rather than recomputed here. Asking the
+        // filter is the point: a figure derived in this file from `night` would agree with itself
+        // whatever the filter did, which is the shape a frozen expectation already has.
+        SetupsResponse passedEverything = gallery.Read(
+            AsOf, _clock.UtcNow, SessionBoundaries.UsEquities, null, SetupOutcomes.PassedEverything);
+
+        SetupsResponse failedOnlyOne = gallery.Read(
+            AsOf, _clock.UtcNow, SessionBoundaries.UsEquities, null, SetupOutcomes.FailedOnlyOne);
 
         SetupView[] all = [.. night.Long, .. night.Short];
         int looked = all.Count(s => s.Agreement is not null);
@@ -2253,6 +2263,28 @@ public sealed class PhaseReplay : IDisposable
             // and the second is the state the column exists to distinguish from an absence.
             new Measurement("gallery.planned", all.Count(s => s.PlannedShares is not null).ToString(CultureInfo.InvariantCulture)),
             new Measurement("gallery.plannedShares", all.Sum(s => s.PlannedShares ?? 0).ToString(CultureInfo.InvariantCulture)),
+            // The outcome filter over the fixture's own night, one figure per option, both as a
+            // count and as the names, because a count of nought and a count of nought over a
+            // different population read identically and the names say which rows were asked about.
+            new Measurement(
+                "gallery.passedEverything",
+                (passedEverything.Long.Count + passedEverything.Short.Count).ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "gallery.failedOnlyOne",
+                (failedOnlyOne.Long.Count + failedOnlyOne.Short.Count).ToString(CultureInfo.InvariantCulture)),
+            new Measurement(
+                "gallery.failedOnlyOneSetups",
+                failedOnlyOne.Long.Count + failedOnlyOne.Short.Count == 0
+                    ? "none"
+                    : string.Join(" ", failedOnlyOne.Long.Concat(failedOnlyOne.Short)
+                        .Select(s => s.SetupId).Order(StringComparer.Ordinal))),
+            // The distance every row of the night sits at, which is what the two options above are
+            // slices of. It is the figure that would move if `cluster` stopped being recorded and
+            // never required, and neither count alone would show that.
+            new Measurement(
+                "gallery.gatingFailures",
+                string.Join(" ", all.OrderBy(s => s.SetupId, StringComparer.Ordinal)
+                    .Select(s => $"{s.SetupId}={SetupChecks.GatingFailures(s.Checks.Select(c => (c.Name, c.Passed)))}"))),
             new Measurement("gallery.thumbnail", first?.SetupId ?? "no setup"),
             new Measurement("gallery.thumbnailCandles", thumbnail.Candles.Count.ToString(CultureInfo.InvariantCulture)),
             new Measurement("gallery.thumbnailLastCentre", thumbnail.Candles.Count == 0

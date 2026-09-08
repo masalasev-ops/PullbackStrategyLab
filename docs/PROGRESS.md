@@ -18174,3 +18174,93 @@ Carried:    **None raised as a row, and one discharged.** The migration entry po
 
 Next:       **Nothing scheduled.** The lab runs, 3.6 fires when band 1 reports both conditions for a
             direction, and 5.6 and 6.11 unpark on measured triggers rather than on a date.
+
+
+## 6.12 — 2026-09-08 — phase-6-12-gallery-outcome-filter — the gallery answers what passed, and a filter that applies on selection
+
+The row was written before the build, at the operator's request on 2026-09-08 and after they read a
+night on the running lab and asked whether anything had passed. The gallery could answer which gate
+rejected a name and could not answer the inverse, so the question took a scroll through seventy-five
+cards. It is a checkpoint rather than a conversation because a capability added to a built screen
+with no done condition is a capability nobody can later check.
+
+Built:      **An outcome beside the failed check, and the two compose.** `/setups/{asOf}` takes
+            `outcome` alongside `failed`, being `passed-all` and `failed-one`, and the two narrow in
+            sequence rather than replacing each other, so "of the names `exit-tight` rejected, which
+            were otherwise clean" is one ask. Its own control on the page for the same reason: folded
+            into the failed-check list the two would be alternatives.
+
+            **`SetupOutcomes` in Core, so the vocabulary is spelled once.** The read surface filters on
+            these values and the gallery renders them, and a literal at each end is the defect this
+            corpus greps for: the page would offer an option the surface did not recognise, and an
+            unrecognised filter returning the whole night renders as a night in which every name
+            qualified. An outcome outside the list matches nothing rather than everything, asserted.
+
+            **`SetupChecks.GatingFailures`, with `PassedAll` expressed through it.** Passing everything
+            is that count at nought and was written out separately until now. A gallery asking how
+            close a name came needs the count rather than the boolean, and two spellings of one rule is
+            how the answer to "did it pass" and the answer to "by how much did it miss" end up
+            disagreeing about a row that failed `cluster`.
+
+            **The filter applies on selection.** A local unbundled script submitting the form that is
+            already there, on the split this page states for itself: the button stays, so with script
+            off the page behaves exactly as it did. It sits above the night rather than inside it,
+            because the case that most needs it is a filter that left nothing on screen and the block
+            below does not render then.
+            (see: Pages are server-rendered with no build step, and any script is local rather than fetched)
+
+Found:      **The two readings of "one check away" differ, and the difference is a population rather
+            than a rounding.** `cluster` is recorded and never required, so a setup failing only it is
+            a candidate and a setup failing one gate and `cluster` is still one gate short. Over the
+            **367 rows `data/live` held on 2026-09-08, being every setup of the five nights from
+            2026-08-27 to 2026-09-04**, counting failed rows gives **23** at a distance of one and
+            counting gating failures gives **31**. A first draft of this session's own reading of that
+            store reported the 23, which is the fifth failure shape: the arithmetic was right and the
+            population was not the one named beside it.
+
+            **Choosing a filter by keyboard could record an agreement.** The paging handler ignored
+            `INPUT` and not `SELECT`, and a select takes `j` and `k` as type-ahead, so with the list
+            open those keys moved the selection behind it and `a` and `d` then recorded a verdict on
+            whatever it had moved to. One select existed before this checkpoint and nothing had hit it;
+            adding a second is what made it worth finding. `SELECT` and `TEXTAREA` join the guard, with
+            a test over the rendered page.
+
+Measured:   **Over `data/live`, the night of 2026-09-04, read through the running site**: 75 flagged,
+            **nought** matching passed everything, **9** matching failed only one, of which **8** failed
+            `exit-tight` and **1** failed `dip-shape`. The two filters composed give the same 8 and 1,
+            which is the reconciliation that says they compose rather than replace.
+
+            **Over the same store's five nights**: **nought of 367** setups have passed every gating
+            check, agreeing with the `passed_all` column the detectors wrote, and no setup's only
+            failure is `cluster`, which is why the two readings agree on the passing count while
+            differing by eight on the near-miss count.
+
+Verified:   **A behavioural test per option over an authored night, and the authoring is the point.**
+            No setup has ever passed every gating check on a real night, so a fixture over captured
+            rows could not exercise that branch at all: it would assert an empty answer and pass
+            whether or not the filter worked. The authored night carries a row that passes everything,
+            a row failing only `cluster`, a row failing one gate, a row failing one gate and `cluster`,
+            and a row failing two, which is the set that tells the two readings apart.
+            (see: Gate boundaries are exercised by authored cases and the captured fixture is not asked to do it)
+
+            **Four expectations at 6.12, all `DERIVED`, and two of them are noughts whose note says so.**
+            `gallery.gatingFailures` is the one carrying information: the fixture's three setups sit at
+            3, 4 and 3 gates, so `gallery.passedEverything` and `gallery.failedOnlyOne` are nought over
+            a population that could not have produced anything else. They are regression detection and
+            the behavioural tests are the verification, and the notes say which is which rather than
+            leaving a nought to read as a result.
+
+            **One surface claim declared and asserted**, being that a result the filter emptied says
+            which filter emptied it. The sentence moved to `SetupsView.EmptiedByTheFilter` so the words
+            the page prints and the words the corpus promises are one string, and `surface-claims`
+            renders the emptied state of `/setups` rather than only its populated one.
+
+            `tools/ci.ps1` green on Windows, **33 steps, 1,198 tests**, up from 1,185.
+
+Carried:    **Nothing new, and one limit stated rather than raised as a row.** The golden fixture
+            cannot exercise the passed-everything branch and will not until it holds a candidate, which
+            is a property of a lab that has never produced one rather than a gap anybody can close. It
+            is recorded in the expectations' own notes, where the next reader of those noughts will be.
+
+            **This session committed code and may not sign it off.** 6.9 signed off 6.10 and 6.0
+            through 6.8 by name and does not cover this row, which BUILD_PLAN now says outright.
