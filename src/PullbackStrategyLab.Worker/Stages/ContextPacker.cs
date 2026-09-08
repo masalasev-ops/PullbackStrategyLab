@@ -570,11 +570,18 @@ public sealed class ContextPacker
         ]);
 
     /// <summary>
-    /// A sample of near-identical setups with divergent outcomes, and what each side's window held.
+    /// Every qualifying pair of near-identical setups with divergent outcomes, per direction, and
+    /// what each side's window held.
     ///
     /// The window figure is stated whether or not a pair was found, on the terms 6.3 set: a count
     /// of nought with no window beside it cannot say whether the thresholds refused everything or
     /// whether there was nothing to look at.
+    ///
+    /// <b>Every pair rather than a sample, and the document said a sample until 2026-09-08.</b> A
+    /// cap is a number, and the only basis for one is a distribution of how many pairs a run
+    /// qualifies, which a trailing window that has never been full cannot supply. The count line
+    /// above the pairs is what makes a section too large to read visible on the pack it happens on
+    /// see: The twin-pairs section is uncapped until the window has been full once
     /// </summary>
     private RenderedSection TwinPairsSection(SqliteConnection connection, DateOnly asOf)
     {

@@ -74,7 +74,19 @@ public static class SignalSpace
         return scaled;
     }
 
-    /// <summary>Euclidean distance between two points of the same width.</summary>
+    /// <summary>
+    /// Euclidean distance between two points of the same width.
+    ///
+    /// <b>Not divided by the axis count, and that is a ruling rather than an omission.</b> The
+    /// distance grows with how many signals are compared, so against a library that grows the same
+    /// pair drifts above the pinned 0.5 and the gate hardens without anybody moving it. A width
+    /// correction is not a fix that leaves the number alone: it rescales every distance, so 0.5 and
+    /// the 15-point gap beside it would both have to be re-derived, and re-deriving them against a
+    /// trailing window that has never been full is the thing the threshold's review point exists to
+    /// refuse. All three move at the first full window or none of them do. The width each distance
+    /// was taken across is recorded per run, so the hardening is readable rather than inferred
+    /// see: The twin-pair distance stays unnormalised so the threshold moves with the values
+    /// </summary>
     public static double Distance(IReadOnlyList<double> left, IReadOnlyList<double> right)
     {
         ArgumentNullException.ThrowIfNull(left);

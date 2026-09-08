@@ -11,7 +11,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 3. Nothing to create. The lab keeps two stores under two data roots, `data/live` under the production checkout the nightly runs from and `data/ci` under the working tree, for a scratch store `tools/ci.*` drops and recreates on every run, and `/data` is gitignored in both (see: The lab keeps one store per purpose under one data root, and CI never opens the operator's). **Do not set `PullbackStrategyLab:DataRoot` and do not point it at a synced folder.** A sync client copying an open database mid-write is a real corruption risk rather than a theoretical one, and the repository is the one place both entry points already agree about. **This step said to create a root outside the repository until 4.17**, which contradicted the decision the shipped code follows and is what once armed the fault 3.14 corrected: an operator who followed it and exported the variable had `tools/ci.*` delete whatever it pointed at on its first step. The scripts no longer yield to the variable, so nothing is armed today. **The two roots sat under one repository until the production checkout existed**, and the sentence above is the only thing that changed with it: each root is still derived from the location of the script that opens it, which is the property that keeps the variable unset (see: The nightly runs from its own checkout, updated once a night before the first slot).
 4. Put the vendor API key in `appsettings.Secrets.json`, beside `appsettings.json` in each project that needs it. Gitignored, never committed. It is plaintext, so treat it like a key file: it travels by deliberate copy rather than by accident, and it stays out of any backup that leaves the machine.
 5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. It stays out on both researcher transports: on the subscription path its presence silently defeats plan auth and bills API rates, and on the API path the key belongs in `appsettings.Secrets.json` with every other secret, so one in the environment means two places supply the same credential and nothing on the surface says which won.
-6. `tools/migrate.ps1` on Windows, `tools/migrate` on macOS, to create the schema. It calls the snapshot first and refuses to run without a successful one. **The two are named apart because the second will not run on Windows and does not say so**: `tools/migrate` is a bash script with no extension, and PowerShell called by name returns 0 having done nothing, which reads exactly like a schema that was created. The wrapper finds a bash, says which one it used, and exits 3 with a named message where the machine has none.
+6. `tools/migrate.ps1` on Windows, `tools/migrate` on macOS, to create the schema. It calls the snapshot first and refuses to run without a successful one. **The two are named apart because the second will not run on Windows and does not say so**: `tools/migrate` is a bash script with no extension, and PowerShell called by name returns 0 having done nothing, which reads exactly like a schema that was created. The wrapper finds a bash, says which one it used, and exits 3 with a named message where the machine has none. **Which root it creates the schema in is the open question recorded under "After a merge that carries a migration"**, since neither wrapper names one and the two entry points that run stages both do.
 7. `tools/ci.ps1` or `tools/ci.sh`. Green before anything else.
 
 ### Backfill, one time
@@ -157,31 +157,36 @@ The job counts calls as it goes and stops rather than overrunning the ceiling. A
 
 ### The schedule as installed
 
-**Thirty-two tasks named `PullbackStrategyLab-<slot>`, registered in two acts**: seventeen on
-2026-08-27 and the remaining fifteen on 2026-09-03, each running `tools/nightly.ps1 -Slot <slot>`,
-weekdays for the nightly slots and Saturday 08:00 for `ceiling`. The machine's own timezone is
-Eastern, so the table's ET times are its local times and no conversion is involved; a machine in
-another zone converts them.
+**Thirty-seven tasks named `PullbackStrategyLab-<slot>`, registered in three acts**: seventeen on
+2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+`tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday for the five weekly
+ones. The machine's own timezone is Eastern, so the table's ET times are its local times and no
+conversion is involved; a machine in another zone converts them.
 
-**The fifteen carry the configuration the seventeen carry rather than a second one.** Same principal,
-logon type, run level, two-hour execution limit, instance policy, weekly Monday-to-Friday trigger and
-working directory, built from the XML one of the seventeen exports rather than reassembled from
-parameters, so the two sets differ only in the four lines that must differ: the description, the URI,
-the start boundary and the slot in the arguments.
+**Every act after the first carries the configuration the seventeen carry rather than a second one.**
+Same principal, logon type, run level, two-hour execution limit, instance policy, trigger shape and
+working directory, built from the XML an existing task exports rather than reassembled from
+parameters, so each set differs only in the four lines that must differ: the description, the URI,
+the start boundary and the slot in the arguments. **Read back after the third act, all thirty-seven
+fall into one configuration group** on principal, logon type, run level, execution limit, instance
+policy, battery and idle settings, priority, command and working directory.
 
-**The count is written in two parts rather than as one number, and that is the point of it.** Between
-the two acts fifteen slots were declared in the slot table, the parameter set, the worker's stages
-and the schedule above, reconciled in every direction by `slot-roster`, and called by nothing. A
-paragraph reading thirty-two from the start would say nothing about the four nights that ran
-seventeen of them.
+**The count is written in parts rather than as one number, and that is the point of it.** Between the
+first two acts fifteen slots were declared in the slot table, the parameter set, the worker's stages
+and the schedule above, reconciled in every direction by `slot-roster`, and called by nothing.
+Between the second and the third, five more were. A paragraph reading thirty-seven from the start
+would say nothing about the four nights that ran seventeen of them, or the five Saturdays that ran
+one weekly slot of five.
 
-**And the count is short again, by five, which is the fault writing it in two parts was meant to make
-visible.** Read from the machine on 2026-09-07: thirty-two tasks are registered and the slot table
-declares **thirty-seven**. `twins`, `pack`, `seat` and `registry` were built at 6.3, 6.4, 6.5 and 6.6,
-each declared in all five places and reconciled by `slot-roster` in every direction, and no scheduled
-task was registered for any of them; `acceptance` is built at 6.7 and is the fifth. Saturday
-2026-09-05 was the first Saturday after `twins` and `pack` landed and neither fired, so the weekly
-research loop has never run outside a test.
+**The third act closed a gap of five that had been open since 6.3.** Read from the machine on
+2026-09-07: thirty-two tasks were registered and the slot table declared **thirty-seven**. `twins`,
+`pack`, `seat` and `registry` were built at 6.3, 6.4, 6.5 and 6.6, each declared in all five places
+and reconciled by `slot-roster` in every direction, and no scheduled task was registered for any of
+them; `acceptance` was built at 6.7 and was the fifth. Saturday 2026-09-05 was the first Saturday
+after `twins` and `pack` landed and neither fired, so the weekly research loop had never run outside
+a test. **They were registered on 2026-09-08 and the first live proof is still ahead**: `acceptance`
+first fires that evening at 21:45 and the four weekly slots on Saturday 2026-09-12, so what is
+established today is that the tasks exist and match, not that a cut has been taken.
 
 **`slot-roster` cannot see this and never could.** Whether a scheduled task exists is a property of
 the machine, and every check in this corpus takes its subject from the source, the documents, the
@@ -193,8 +198,9 @@ that it is owed (see: Every phase ends in a generated phase report, not in a pag
 
 **Registering one is the same act the fifteen were registered by**, being an export of an existing
 task's XML with four lines changed: the description, the URI, the start boundary and the slot in the
-arguments. The five outstanding are `twins` at Saturday 08:10, `pack` at Saturday 08:20, `seat` at
-Saturday 08:30, `registry` at Saturday 08:40 and `acceptance` at 21:45 on weekdays.
+arguments. The five registered on 2026-09-08 are `twins` at Saturday 08:10, `pack` at Saturday 08:20,
+`seat` at Saturday 08:30 and `registry` at Saturday 08:40, each from `ceiling`'s XML, and
+`acceptance` at 21:45 on weekdays, from `scores`'s.
 
 `tools/nightly.ps1` maps a slot to the verbs that slot runs and nothing else. It addresses the store
 by absolute path, because `DataRoot` resolves through the working directory and a scheduled task's
@@ -266,13 +272,33 @@ Open the scoreboard. Band 1 is the one that matters. If the tight-control compar
 
 **The schedule runs from `PullbackStrategyLab-nightly`, a clone from `origin` beside the working tree, and nothing else works in it.** `tools/nightly.ps1` derives the data root from its own location, so `data/live` lives under that checkout and `PullbackStrategyLab:DataRoot` stays unset. The working tree keeps `data/ci` and holds no live store at all, which is one fewer way to open the operator's data by accident.
 
-**The checkout does not exist yet and all thirty-two tasks point at the working tree.** That is
-the state as of 2026-09-03, not the arrangement above, which is what this section specifies and what
-step 7 of the move creates. Re-pointing all thirty-two is part of creating it, and it is an edit to
+**The checkout does not exist yet and all thirty-seven tasks point at the working tree.** That is
+the state as of 2026-09-08, not the arrangement above, which is what this section specifies and what
+step 7 of the move creates. Re-pointing all thirty-seven is part of creating it, and it is an edit to
 each task's action rather than a re-registration: the arguments and the working directory are the
 only places a task names a tree.
 
-**`tools/update-nightly.ps1` fast-forwards it to the tip of `main` at 17:00**, fifteen minutes before the first slot, and is registered as its own scheduled task. It is not a slot: it spends no vendor call, runs no stage and writes nothing to the store, so it is deliberately absent from the schedule table above and from what `slot-roster` reconciles.
+**The cost of that gap was paid on 2026-09-07 and it is the fourth instance of the same fault.**
+Every one of the thirty-two slots that night refused on the tree guard, because the working tree
+was on `phase-6-5-researcher-seat`, then `phase-6-6-proposal-registry`, then
+`phase-6-7-acceptance-gate` while phase 6 was being built in it. `run_log` holds no row for the
+date. **The night cost no evidence, because 2026-09-07 was Labor Day and the market was closed**,
+and that is luck rather than design: the same three branches were checked out through the evening of
+a session the market did hold, and the only thing that stopped a repeat is that the checkout the
+schedule points at is also the tree a build session works in. Nothing is proposed here. The guard
+did exactly what 4.2 built it to do, and the arrangement that makes it fire is the one step 7
+replaces.
+
+**`tools/update-nightly.ps1` fast-forwards it to the tip of `main` at 17:00**, fifteen minutes before the first slot. It is not a slot: it spends no vendor call, runs no stage and writes nothing to the store, so it is deliberately absent from the schedule table above and from what `slot-roster` reconciles.
+
+**This section said it "is registered as its own scheduled task" and no such task exists.** Read from
+the machine on 2026-09-08: thirty-seven tasks match `PullbackStrategyLab-*` and every one of them is
+a slot, and no task on the machine runs `update-nightly.ps1` under any name. The two sentences
+disagreed inside this section, since a script that updates a checkout which "does not exist yet"
+has nothing to update, and a reader had no way to tell which half was current. **Which one is
+right is not settled here**: it is either a task owed at the move, alongside re-pointing the
+thirty-seven, or a paragraph describing an arrangement that step 7 creates. What is recorded is that
+the task is absent today.
 
 It refuses rather than repairing, and every refusal leaves the previous build in place for the night:
 
@@ -298,6 +324,33 @@ It refuses rather than repairing, and every refusal leaves the previous build in
 
 This is here because it has happened: migrations 031 and 032 landed on 2026-08-28, the live store was never migrated, four stages died and the lab flagged nothing. Nothing in the verification harness can catch it, because every check in this project takes its subject from the source, the documents, the golden fixture, or a store the check itself builds, and the running lab is in none of those.
 
+**And the command this section names does not open the store the lab runs on.** Read on 2026-09-08
+by running it: `tools/migrate.ps1` from the repository root printed
+`no store at ...\data\pullbackstrategylab.db yet, so there is nothing to snapshot`, applied all
+sixty-one migrations, reported `version 0 to 61`, and exited 0. It had created an empty store at a
+third root. The live store was still at 57 with 2,531,141 rows, and `data/live` is where
+`tools/nightly.ps1` puts it: the slot script sets `PullbackStrategyLab__DataRoot` to
+`<repository>/data/live` and `tools/ci.*` set it to `<repository>/data/ci`, while `tools/migrate`
+and `tools/snapshot-db` set nothing and take `appsettings.json`'s default, which is the relative
+path `data`. **So the documented repair for a store behind its migrations reads as a success in the
+loudest possible way**, sixty-one applied migrations and a version line, while the store the stages
+open is untouched. It is the fault `tools/migrate.ps1`'s own header describes for the wrong shell,
+arriving instead through the root, and it is worse than a silent no-op because the output is a
+transcript of work that really happened somewhere else.
+
+**The live store was migrated on 2026-09-08 by setting the same variable the slot script sets**,
+`PullbackStrategyLab__DataRoot` to `<repository>/data/live`, which snapshotted 436 MB first and took
+it 57 to 61 with `integrity_check` ok and the row count unchanged. **That is what was done and not
+what this document now prescribes**: step 3 of first-time setup says not to set that variable, so
+either the wrappers are missing the root the two other entry points supply or the default is wrong,
+and which of the two is the defect is not ruled on here. It is filed as an obligation.
+
+**One earlier trace exists and it does not prove which command left it.** `data/snapshots` is present
+and empty, created 2026-09-01 01:02 and last written 2026-09-03 21:26, which is a Worker command run
+against the bare root on those dates. Those are also the two nights this document already records as
+lost to a store behind its migrations. Any Worker command with the default root creates that
+directory, so what the trace establishes is the root and not the command.
+
 ---
 
 ## Recovery
@@ -305,7 +358,7 @@ This is here because it has happened: migrations 031 and 032 landed on 2026-08-2
 | Symptom | Do this |
 |---|---|
 | A nightly stage failed | Rerun that stage alone. Every stage is idempotent for its date, **and a stage in the trade chain must be rerun before local midnight Eastern of the session's own day**. `TriggerResolver`, `RiskGate` and `PaperBroker` each read at `observed_at <= EndOfSession(sessionDate)`, so a rerun past that instant writes rows the next stage can never see, and that stage then records `clean` over a read it could not make rather than refusing. **The trade chain has no lateness path**, so past the edge it is silence and not a marked late answer |
-| A stage failed naming a column the store has not got | The store is behind its migrations. Every stage but `migrate`, `snapshot-db` and `list-stages` now refuses before opening the store and names both versions, so this is what the refusal looks like from the other side. Check which way round it is by reading both numbers in the message, because a store ahead of its build refuses identically: if the store is ahead, the production checkout has not had its 17:00 update and the store must not be migrated further. If it is behind, run `tools/migrate.ps1` on Windows or `tools/migrate` on macOS, which snapshots first, then **rerun that night's stages for their own date**, in slot order, **except `universe-build`**: a stage that refused wrote nothing, and the stages after it read what it should have written. On 2026-08-28 four stages died this way and the night flagged nothing at all. **`universe-build` is never rerun for a past date and the night it missed is gone.** It reads the vendor's symbol list at run time, so a rerun stamps that past session with today's membership, and the row it writes is indistinguishable from one the night itself produced. A missing snapshot is a hole somebody can see; a snapshot of the wrong day is survivorship bias nothing can find afterwards. Without it there is no universe for that session, so `indicators` reports nought members and the whole detection chain has nothing to run over: the evidence for that night does not exist and cannot be made to (see: The evidence store holds only setups flagged forward, never setups reconstructed from history) |
+| A stage failed naming a column the store has not got | The store is behind its migrations. Every stage but `migrate`, `snapshot-db` and `list-stages` now refuses before opening the store and names both versions, so this is what the refusal looks like from the other side. Check which way round it is by reading both numbers in the message, because a store ahead of its build refuses identically: if the store is ahead, the production checkout has not had its 17:00 update and the store must not be migrated further. If it is behind, run `tools/migrate.ps1` on Windows or `tools/migrate` on macOS, which snapshots first, **and read "And the command this section names does not open the store the lab runs on" under "After a merge that carries a migration" before believing what it prints**, then **rerun that night's stages for their own date**, in slot order, **except `universe-build`**: a stage that refused wrote nothing, and the stages after it read what it should have written. On 2026-08-28 four stages died this way and the night flagged nothing at all. **`universe-build` is never rerun for a past date and the night it missed is gone.** It reads the vendor's symbol list at run time, so a rerun stamps that past session with today's membership, and the row it writes is indistinguishable from one the night itself produced. A missing snapshot is a hole somebody can see; a snapshot of the wrong day is survivorship bias nothing can find afterwards. Without it there is no universe for that session, so `indicators` reports nought members and the whole detection chain has nothing to run over: the evidence for that night does not exist and cannot be made to (see: The evidence store holds only setups flagged forward, never setups reconstructed from history) |
 | A stage walked part of its list and stopped | Read the slot's log. A stage that stops names why on its own line, and the run entry says `partial` or `failed` with `skipped` counting the names it passed over. Rerun the stage for its date; a name left unstamped is asked again. **Then read the paragraph below about the window**, because rerunning tomorrow does not repair tonight |
 | Vendor returned bad or partial data | Do not delete anything. Re-ingest; the later `observed_at` wins on read |
 | A corporate action was missed | Rerun `actions` for that date, with `--with-dividends` if a dividend is what was missed. It writes the action and raises the rebuild demand, and until that demand is satisfied, calculations for that ticker refuse to run. No other ticker is touched |

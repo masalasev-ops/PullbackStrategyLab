@@ -2768,3 +2768,33 @@ Why:  `surface-claims` reads a page for words and a colour is not a word, so an 
 Was:  the carried obligations table holding twenty-three rows, six of them falling due at 6.8.
 Now:  seventeen rows, and a section recording what the six were and what happened to each.
 Why:  6.8 is the checkpoint they fall due at and they are one pass over the status band and the scoreboard's panels, which is what the row said they would be. A discharge moves a row into the record of what it was rather than deleting it, so the total a checkpoint's due-point claim derives can still be reconstructed.
+
+### 2026-09-08 — ARCHITECTURE.html — cites The twin-pairs section is uncapped until the window has been full once
+Was:  the "What the pack contains" row for twin pairs reading "A sample of near-identical setups with divergent outcomes", against a packer that has emitted every qualifying pair since it was built.
+Now:  every qualifying pair per direction, under the count of pairs found, the window held against the window wanted, the signals compared and the candidates considered, with the sentence recording that the document is the half that moved.
+Why:  a cap is a number and the only basis for one is a distribution of how many pairs a run qualifies, which a trailing window that has never been full cannot supply. Capping on today's counts would put an estimate back in the shape of a constant, which is the fault corrected once already when the twin-pair threshold's review point moved from a phase to a condition.
+
+### 2026-09-08 — ARCHITECTURE.html — cites The twin-pair distance stays unnormalised so the threshold moves with the values
+Was:  the authored-parameters row for the twin-pair threshold ending at the review point being a condition rather than a phase.
+Now:  the same, plus that the distance is not normalised by the number of signals compared, so the threshold hardens as the library grows, and that correcting it rescales every distance and re-derives both values.
+Why:  the hardening is a property a reader of the pinned value needs and it was recorded nowhere. Naming it beside the value is also what makes the single review point legible: three numbers are one setting, and they move at the first full window together or not at all.
+
+### 2026-09-08 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "The schedule as installed" reading thirty-two tasks registered in two acts, with a paragraph recording that the count was short again by five.
+Now:  thirty-seven tasks in three acts, with the third recorded as closing the gap and the first live proof named as still ahead: `acceptance` that evening and the four weekly slots on Saturday 2026-09-12.
+Why:  the five were registered on 2026-09-08. The count stays written in parts rather than as one number for the reason the section already gives: a paragraph reading thirty-seven from the start would say nothing about the five Saturdays that ran one weekly slot of five.
+
+### 2026-09-08 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  "The production checkout" reading that the checkout does not exist yet and all thirty-two tasks point at the working tree, and that `tools/update-nightly.ps1` "is registered as its own scheduled task".
+Now:  thirty-seven, with the night of 2026-09-07 recorded as the fourth instance of the tree guard firing, and the update task recorded as absent from the machine with the two readings of that named and neither chosen.
+Why:  thirty-seven tasks match `PullbackStrategyLab-*` on the machine and every one of them is a slot. The section asserted a task exists two paragraphs after saying the checkout it updates does not, and a reader had no way to tell which half was current.
+
+### 2026-09-08 — RUNBOOK.md — cites The lab keeps one store per purpose under one data root, and CI never opens the operator's
+Was:  "After a merge that carries a migration" ending at the 2026-08-28 night, and the stale-store recovery row and first-time setup step 6 naming `tools/migrate.ps1` with nothing about which store it opens.
+Now:  the reading of 2026-09-08 recorded in all three places: the wrappers set no data root and take `appsettings.json`'s relative default, so the documented repair built an empty store at a third root, printed sixty-one applied migrations and exited 0 while the live store stayed at 57.
+Why:  it is worse than the silent no-op the wrapper's own header was written against, because the output is a transcript of work that really happened somewhere else. Which of the two roots is the defect is not ruled on in RUNBOOK and is filed as an obligation due at 6.9.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the carried obligations table holding seventeen rows, one of them the five slots registered nowhere and one of them the holiday read due at 2026-09-08, and the operator's questions reading eleven.
+Now:  seventeen rows still, the five-slot row moved into a record of what it was, the holiday row repointed to 2026-11-27 with the reading that was made written into it, a row raised at 6.8 for the migration entry point's root due at 6.9, and the operator's questions reading ten.
+Why:  the five tasks were registered on 2026-09-08, which is the only row on the operator's list ever closed by an act rather than by a ruling. The holiday read was made and found nothing to read, every slot of 2026-09-07 having refused on the tree guard, so the question is where it was and its due point is the next closure rather than a date that has passed.

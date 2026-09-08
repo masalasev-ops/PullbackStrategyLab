@@ -17767,3 +17767,86 @@ Carried:    **None raised and none falls due here.** The six due at 6.8 are disc
             will not come.
 
 Next:       **6.9**, the phase sign-off. Fresh session by definition, and this one committed code.
+
+## Not a checkpoint entry — 2026-09-08 — phase-6-8-running-lab — belongs to 6.8: the store four migrations behind, five slots nothing called, and a migration command that repaired the wrong store
+
+**Not a checkpoint entry.** It belongs to 6.8, which has landed. An act on the running lab, two
+rulings by the operator, and the documents that record both. No new component and no new store.
+
+Acted:      **The live store went 57 to 61 and the five research slots were registered.** Both were
+            owed and neither could be taken by a check: whether a store is migrated and whether a
+            scheduled task exists are properties of the machine, and every check in this corpus takes
+            its subject from the source, the documents, the golden fixture or a store it builds
+            itself. The migration snapshotted 436 MB first and came back with `integrity_check` ok
+            and 2,531,141 rows unchanged. The five tasks are `twins`, `pack`, `seat` and `registry`
+            at Saturday 08:10, 08:20, 08:30 and 08:40 from `ceiling`'s XML, and `acceptance` at 21:45
+            on weekdays from `scores`'s, each an export with the four lines changed that must differ.
+            **Read back, all thirty-seven fall into one configuration group** on principal, logon
+            type, run level, execution limit, instance policy, battery and idle settings, priority,
+            command and working directory. What is established is that the tasks exist and match, not
+            that a cut has been taken: `acceptance` first fires this evening and the weekly four on
+            Saturday 2026-09-12.
+
+Found:      **The documented repair for a store behind its migrations repairs nothing and reports
+            success in the loudest available way.** `tools/migrate.ps1` run from the repository root
+            reported no store to snapshot, applied all sixty-one migrations, printed `version 0 to
+            61` and exited 0, having built an empty store at a third root; the live store was still
+            at 57 with 2,531,141 rows. `tools/nightly.ps1` sets `PullbackStrategyLab__DataRoot` to
+            `<repository>/data/live` and `tools/ci.*` set it to `<repository>/data/ci`, while
+            `tools/migrate` and `tools/snapshot-db` set nothing and take `appsettings.json`'s
+            default, the relative path `data`. **It is worse than the silent no-op the wrapper's own
+            header was written against**, that being the fault 3.14 repaired for the wrong shell:
+            there the command did nothing and said nothing, and here the output is a full transcript
+            of sixty-one migrations that really were applied, somewhere no stage opens. Reported and
+            not resolved, on the operator's instruction, and filed due at 6.9 because it blocks no
+            checkpoint and breaks no check. **The live store was migrated by setting the variable the
+            slot script sets**, which is what was done rather than what any document prescribes:
+            RUNBOOK's first-time setup tells the operator not to set it, so the documented procedure
+            reaches `data/live` by no route at all.
+
+Found:      **The one night this corpus scheduled itself to watch is the night nothing ran.** The 5.7
+            row said Monday 2026-09-07 was the lab's first market holiday and that the slot logs and
+            `run_log` were to be read on 2026-09-08 before anything was proposed. They were read.
+            Every one of the thirty-two slots refused on the tree guard, the working tree having been
+            on `phase-6-5-researcher-seat`, then `phase-6-6-proposal-registry`, then
+            `phase-6-7-acceptance-gate` through the evening while phase 6 was built in it, and
+            `run_log` holds no row for the date. **The night cost no evidence, because the market was
+            closed, and that is luck rather than design**: the same three branches were checked out
+            through the evening of a session the market did hold. The guard did what 4.2 built it to
+            do. The row is repointed to Thanksgiving rather than discharged, because the stages it is
+            about still have no observed behaviour on a non-session weekday.
+
+Found:      **`tools/update-nightly.ps1` is described as a registered scheduled task and no such task
+            exists.** Thirty-seven tasks match `PullbackStrategyLab-*` and every one of them is a
+            slot. RUNBOOK asserted the task two paragraphs after saying the checkout it updates does
+            not exist yet, so the section disagreed with itself and a reader had no way to tell which
+            half was current. Recorded as absent with both readings named and neither chosen.
+
+Ruled:      **The twin-pairs pack section is not capped, and the twin-pair distance stays
+            unnormalised.** Both by the operator on 2026-09-08, and both point at one condition. A cap
+            is a number whose only honest basis is a distribution of how many pairs a run qualifies,
+            and the trailing window has never been full, so capping now would choose a sample size
+            against a population nobody has seen: the fault already corrected once when the
+            threshold's review point moved from a phase to a condition. The section states its own
+            count, so a pack too large to read is visible on the pack it happens on (see: The
+            twin-pairs section is uncapped until the window has been full once). Normalising the
+            distance is not a fix that leaves the number alone: it rescales every distance, so 0.5 and
+            the 15-point gap beside it would both have to be re-derived against the same short window
+            the review point exists to refuse. All three are one setting and move at the first full
+            window together or not at all (see: The twin-pair distance stays unnormalised so the
+            threshold moves with the values). `ARCHITECTURE.html` said the section holds a sample and
+            the packer has always emitted every pair, so the document is what moved.
+
+Verified:   `tools/ci.ps1` green at 33 steps, 1,185 tests. `tools/verify-phase.ps1` GREEN: 154 claims,
+            154 passed, 0 failed, 0 out of scope, 0 unexamined.
+
+Carried:    **One raised, at 6.9, and one repointed, to 2026-11-27.** The migration entry point's root
+            is a ruling rather than a repair: the fix is one line in each of two wrappers or one line
+            in `appsettings.json`, and which is right is the thing being ruled, so a session that took
+            it would be signing off code it had just written. The holiday read keeps its date-shaped
+            due point because its subject is a night. **One discharged**, being the five scheduled
+            tasks, which is the only row the operator's list has ever closed by an act rather than by
+            a ruling.
+
+Next:       **6.9**, the phase sign-off, covering 6.10, 6.0 and 6.1 through 6.8 and not waiting on
+            6.11. Fresh session by definition, and the session that wrote this one committed code.
