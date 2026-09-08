@@ -78,8 +78,13 @@ public sealed record VersionView(
     string? ThresholdFrom,
     string? ThresholdTo,
     string? Moved,
+    int AgeDays,
+    AcceptanceView? Acceptance,
     IReadOnlyList<SideView> Sides)
 {
+    /// <summary>How old the version is tonight, which the failure table asks this page to show.</summary>
+    public string Age => AgeDays == 1 ? "1 day old" : $"{AgeDays} days old";
+
     /// <summary>The pre-registration, unit included, because 1802 effective observations and 200 rows are not comparable.</summary>
     public string Sample =>
         $"{MinimumSample.ToString("N0", CultureInfo.InvariantCulture)} {Unit}";
@@ -102,10 +107,25 @@ public sealed record VersionView(
     /// silently omitted, and it is AcceptanceGate at <b>6.7</b> that closes it.
     /// </summary>
     public string? NoAccumulatedSample =>
-        string.Equals(MinimumSampleUnit, "effective_paired_setup_observations", StringComparison.Ordinal)
-            ? "the minimum is in effective observations and nothing converts this version's scored "
-              + "nights into them yet, so the two are not shown as a fraction. AcceptanceGate settles "
-              + "this version at 6.7 and that is the checkpoint that converts them"
+        Acceptance is null && !IsBaseline
+            ? "the gate has taken no reading of this version, so there is no accumulated figure to "
+              + "show against the minimum. That is what a version registered since the last run of "
+              + "the 21:45 slot looks like, and it is a different fact from a version whose sample "
+              + "is not accumulating"
+            : null;
+
+    /// <summary>
+    /// Why the baseline carries no accumulated figure, which is a refusal rather than a wait.
+    ///
+    /// Said on the page rather than left as a blank cell. The baseline is the arm every other
+    /// version is differenced against, so there is no series to take an interval over, and a reader
+    /// seeing nothing where every other version has a figure would read it as a version whose
+    /// evidence has not arrived.
+    /// </summary>
+    public string? NotSettleable =>
+        IsBaseline
+            ? "the baseline is not itself accepted or rejected. It is the arm the paired comparison "
+              + "subtracts, and it closes only if it is edited, which starts a new generation"
             : null;
 
     /// <summary>Whether the version is still open, which is what makes its minimum a thing being waited on.</summary>
@@ -121,6 +141,65 @@ public sealed record VersionView(
             + "compared against was edited",
         _ => Status,
     };
+}
+
+/// <summary>
+/// Where the gate last left one version, said in words.
+///
+/// <b>Four night counts and never one.</b> A night the two rules selected the same names on carries
+/// a difference of exactly nought by construction, so it is shown apart from the nights the version
+/// was actually exercised on. One total would let a version read as maturing on nights it was never
+/// exercised on.
+///
+/// <b>Two win rates and never one, and neither is what settles it.</b> The two rules selected
+/// different names, so a single denominator would put one rule's wins over the other's population.
+/// see: Acceptance measures expectancy, never win rate
+/// </summary>
+public sealed record AcceptanceView(
+    string ReadOn,
+    int AgeDays,
+    int NightsScored,
+    int NightsIdentical,
+    int NightsInSeries,
+    int Disagreements,
+    int EffectiveObservations,
+    int MinimumSample,
+    string MinimumSampleUnit,
+    bool Matured,
+    string? MeanDifference,
+    string? IntervalLow,
+    string? IntervalHigh,
+    string? BaselineWinRate,
+    string? VariantWinRate,
+    string Verdict,
+    string? SettledBecause,
+    string? WithheldBecause,
+    string Population)
+{
+    /// <summary>The accumulated figure against the bar it is read against, unit included.</summary>
+    public string Accumulated => string.Create(
+        CultureInfo.InvariantCulture,
+        $"{EffectiveObservations:N0} of {MinimumSample:N0} {MinimumSampleUnit.Replace('_', ' ')}");
+
+    /// <summary>The interval, or null where the reading produced none.</summary>
+    public string? Interval =>
+        MeanDifference is null ? null : $"{MeanDifference} ({IntervalLow} to {IntervalHigh})";
+
+    /// <summary>The diagnostic, both rates over their own denominators, or null where neither has one.</summary>
+    public string? WinRates =>
+        BaselineWinRate is null
+            ? null
+            : $"baseline {BaselineWinRate}, version {VariantWinRate}";
+
+    /// <summary>Why it stands where it stands, which is exactly one of the two reasons.</summary>
+    public string Because => SettledBecause ?? WithheldBecause ?? Verdict;
+
+    /// <summary>How the nights divide, which is the count a reader has to see rather than one total.</summary>
+    public string Nights => string.Create(
+        CultureInfo.InvariantCulture,
+        $"{NightsScored} night(s) scored, {NightsInSeries} the two rules selected differently on, "
+        + $"{NightsIdentical} they selected identically on and which carry a difference of exactly "
+        + $"nought by construction");
 }
 
 /// <summary>

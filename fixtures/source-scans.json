@@ -66,6 +66,13 @@
       "what": "every table of both populations carries a literal insert in the shipped source",
       "backing": "none",
       "why": "the scan's subject is that a table has a writer at all, and the behavioural form of that is writer-ownership's attribution, which reads the source too. A test per table would be a test that the pipeline writes every table, which is the fixture replay's job and does not reach the tables no fixture night populates"
+    },
+    {
+      "file": "src/PullbackStrategyLab.Tests/AcceptanceGateTests.cs",
+      "what": "the gate carries one UPDATE against the register, its SET names status and resolved_at, and no statement in the file names a column the pre-registration owns",
+      "backing": "test",
+      "by": "AcceptanceGateTests.A_matured_version_whose_interval_clears_nought_is_accepted_and_two_columns_move",
+      "why": "that the type has no path to a target is a claim about the code and a scan is the only thing that can make it; that the target, the minimum sample, the definition and the registration date read the same after a settlement as before it is a claim about what happened, and the named test reads all five back across a real acceptance"
     }
   ]
 }

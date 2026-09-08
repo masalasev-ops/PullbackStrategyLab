@@ -34,6 +34,7 @@ public sealed class VariantScoreReader
         "variant_id, session_date, direction, generation, family, horizon_days, flagged, "
         + "baseline_selected, variant_selected, both_selected, variant_only, baseline_only, "
         + "baseline_mean_return, variant_mean_return, mean_difference, "
+        + "baseline_scored, variant_scored, baseline_wins, variant_wins, "
         + "baseline_outside_cap, variant_outside_cap, unscoreable, withheld_because, computed_at";
 
     /// <summary>Every scored night the lab had by the end of <paramref name="asOf"/>, oldest first.</summary>
@@ -79,11 +80,15 @@ public sealed class VariantScoreReader
                 reader.IsDBNull(12) ? null : reader.GetString(12),
                 reader.IsDBNull(13) ? null : reader.GetString(13),
                 reader.IsDBNull(14) ? null : reader.GetString(14),
-                reader.GetInt32(15),
-                reader.GetInt32(16),
-                reader.GetInt32(17),
-                reader.IsDBNull(18) ? null : reader.GetString(18),
-                StoreText.StorageTextToTimestamp(reader.GetString(19))));
+                reader.IsDBNull(15) ? null : reader.GetInt32(15),
+                reader.IsDBNull(16) ? null : reader.GetInt32(16),
+                reader.IsDBNull(17) ? null : reader.GetInt32(17),
+                reader.IsDBNull(18) ? null : reader.GetInt32(18),
+                reader.GetInt32(19),
+                reader.GetInt32(20),
+                reader.GetInt32(21),
+                reader.IsDBNull(22) ? null : reader.GetString(22),
+                StoreText.StorageTextToTimestamp(reader.GetString(23))));
         }
 
         return scores;
@@ -143,6 +148,13 @@ public sealed class VariantScoreReader
 /// The three return figures are text because they are decimals in the store and a double would
 /// round them on the way past. They are null together, on exactly the rows carrying
 /// <see cref="WithheldBecause"/>, which the store holds as a CHECK in both directions.
+///
+/// <b><see cref="BaselineScored"/> is not <see cref="BaselineSelected"/>, and 052 said it was.</b>
+/// Each mean is taken over the selections whose forward return has landed, so a selection still
+/// inside its horizon is in the second count and in neither mean. The stated denominator was the
+/// larger of the two for the whole of phase 5, which is a figure named over one population and
+/// computed over another; nothing could see it because nothing had ever read the two numbers
+/// together. The four are null on exactly the rows carrying no figure.
 /// </summary>
 public sealed record StoredVariantScore(
     string VariantId,
@@ -160,6 +172,10 @@ public sealed record StoredVariantScore(
     string? BaselineMeanReturn,
     string? VariantMeanReturn,
     string? MeanDifference,
+    int? BaselineScored,
+    int? VariantScored,
+    int? BaselineWins,
+    int? VariantWins,
     int BaselineOutsideCap,
     int VariantOutsideCap,
     int Unscoreable,

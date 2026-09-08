@@ -354,6 +354,15 @@
       "surface": "/scoreboard",
       "why": "A seat that cannot ask is a fact about the running lab, and nothing in the verification harness reaches the running lab, so recorded and not shown would mean the operator learns of it a quarter later from a gap in the proposal record. **The panel is built at 6.5 and the claim arrives at 6.8**, which is the distinction worth keeping rather than smoothing over: the surface fixture holds no refused ask and its scoreboard is a stored one, so nothing a page can be asked today exercises either the panel or the reason line beside it. **What the sentence is really about is the reason line**, being that the band names the transport that was refused, and that needs a store where a week went unanswered. 6.8 owes a seedable surface anyway, for band 3 and the signal-library panel. The branch that draws the note is the sixth failure shape repaired at 6.5: until then a panel's note was drawn only where the figure was withheld, so a panel carrying both a value and a reason lost the reason.",
       "arrivesAt": "6.8"
+    },
+    {
+      "name": "the-ledger-shows-a-versions-age",
+      "sentence": "Stays open, ledger shows its age",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/research",
+      "mustCarry": "days old",
+      "producedBy": "the page",
+      "why": "The failure table's own clause for a version whose sample never accumulates, and the half of it that is about a surface. That the version stays open is held by the store and asserted by `architecture-conformance`; that a reader can see how long it has been open is a claim about the rendered page and nothing else could carry it. **The age is computed from the register rather than read off a reading**, so it is on the row from the night the version is registered and does not wait on the gate having run: a version registered since the last 21:45 slot is exactly the case a reader would otherwise see a blank for."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

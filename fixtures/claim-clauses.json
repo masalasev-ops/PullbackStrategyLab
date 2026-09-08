@@ -293,15 +293,18 @@
       "clauses": [
         {
           "clause": "Stays open, ledger shows its age.",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "the verdict reads the store's own clauses: an open reading is refused unless it carries the shortfall in words, so a version short of its sample stays open and says by how much, and `age_days` is a column on every reading rather than a figure the page computes. The page that draws it is asserted against the rendered ledger by `surface-claims`, which is where a claim about what somebody sees belongs."
         },
         {
           "clause": "No timeout that quietly accepts or rejects",
-          "disposition": "deferred"
+          "disposition": "reaches",
+          "why": "the same clause reaches it as a refusal: the reading refuses any verdict but `open` unless the version reached the sample written into it at creation and produced an interval, so a later stage deciding a version had waited long enough is refused by the row rather than by somebody remembering the rule."
         },
         {
           "clause": "because a timeout is a decision made by the calendar rather than by evidence.",
-          "disposition": "deferred"
+          "disposition": "rationale",
+          "why": "the reason the behaviour is what it is rather than a property of it. What can be asserted is that no settlement is written without a matured sample, and the clause above holds that."
         }
       ]
     },

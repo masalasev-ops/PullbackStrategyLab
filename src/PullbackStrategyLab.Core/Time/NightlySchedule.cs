@@ -66,6 +66,14 @@ public static class NightlySchedule
         new("forward", "21:30", ["forward-returns"]),
         new("losses", "21:35", ["losses"]),
         new("scores", "21:40", ["score-variants"]),
+
+        // 21:45, after the scores and before the scoreboard, because it reads the rows the slot
+        // above wrote and the ledger reads what this one wrote. It settles a version that has
+        // reached the sample written at its creation and leaves every other version open with its
+        // shortfall stated, which is what makes it a nightly slot rather than an act somebody
+        // remembers: the night a version matures is a night nobody can predict.
+        new("acceptance", "21:45", ["settle-variants"]),
+
         new("scoreboard", "21:50", ["scoreboard"]),
 
         // Saturday morning rather than a weeknight, and the report has to know that or it would

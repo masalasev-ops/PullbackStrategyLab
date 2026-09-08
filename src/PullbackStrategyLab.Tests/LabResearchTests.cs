@@ -328,15 +328,23 @@ public sealed class LabResearchTests : IDisposable
                 variant_id, session_date, direction, generation, family, horizon_days,
                 flagged, baseline_selected, variant_selected, both_selected, variant_only, baseline_only,
                 baseline_mean_return, variant_mean_return, mean_difference,
+                baseline_scored, variant_scored, baseline_wins, variant_wins,
                 baseline_outside_cap, variant_outside_cap, unscoreable, withheld_because, computed_at)
             VALUES (@variant_id, @session_date, @direction, 0, 'selection', 10,
                     11, 4, 5, 4, 1, 0,
                     @baseline, @variant, @difference,
+                    @scored_baseline, @scored_variant, @wins_baseline, @wins_variant,
                     0, 0, 0, @withheld, @computed_at);
             """,
             ("@variant_id", variantId),
             ("@session_date", StoreText.DateToStorageText(session)),
             ("@direction", direction),
+            // The four the store requires exactly where a figure is present, from 6.7. Null
+            // together with the means on a withheld night, which is what the seeded rows exercise.
+            ("@scored_baseline", difference is null ? (object)DBNull.Value : 4),
+            ("@scored_variant", difference is null ? (object)DBNull.Value : 5),
+            ("@wins_baseline", difference is null ? (object)DBNull.Value : 1),
+            ("@wins_variant", difference is null ? (object)DBNull.Value : 2),
             ("@baseline", difference is null ? (object)DBNull.Value : "0.0100"),
             ("@variant", difference is null ? (object)DBNull.Value : "0.0310"),
             ("@difference", (object?)difference ?? DBNull.Value),

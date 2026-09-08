@@ -32,7 +32,7 @@ param(
                  'versions',
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
-                 'scores', 'scoreboard',
+                 'scores', 'acceptance', 'scoreboard',
                  'ceiling', 'twins', 'pack', 'seat', 'registry', 'snapshot')]
     [string]$Slot,
 
@@ -155,6 +155,14 @@ $slots = @{
     # seeing on its own line. Reserved in prose by RUNBOOK from the first schedule and dispatched
     # by nothing until 5.2, which is the damage found at 4.5 arriving a second time.
     'scores'     = @(, @('score-variants'))
+
+    # 21:45, after the scores and before the scoreboard, because it reads the rows the slot
+    # above wrote and the ledger reads what this one wrote. It settles a version that has reached
+    # the sample written at its creation and leaves every other version open with its shortfall
+    # stated. It spends no vendor call. A nightly slot rather than an act somebody remembers,
+    # because the night a version matures is a night nobody can predict, and it writes `status`
+    # and `resolved_at` and can reach no other column of the register.
+    'acceptance' = @(, @('settle-variants'))
     'scoreboard' = @(, @('scoreboard'))
     'ceiling'    = @(, @('ceiling'))
 

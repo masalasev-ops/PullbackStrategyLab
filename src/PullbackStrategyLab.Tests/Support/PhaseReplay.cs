@@ -924,6 +924,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(AuthoredParameterFigures());
         measurements.AddRange(ClauseFigures());
         measurements.AddRange(RuleFigures());
+        measurements.AddRange(AcceptanceFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -3224,6 +3225,82 @@ public sealed class PhaseReplay : IDisposable
         : because == HoldoutRegister.NotRecorded ? "matured and not recorded"
         : because == HoldoutRegister.EveryMaturedWindowSpent ? "every matured window spent"
         : "a reason this measurement does not name";
+
+    /// <summary>
+    /// The gate over an authored version, which is 6.7's deliverable.
+    ///
+    /// <b>Authored, because no version can mature and none ever will inside a fixture.</b> V0 was
+    /// frozen against 1,802 effective paired setup observations and a version's effective count
+    /// rises at most one a night, so what a run can exercise is the case the failure table names:
+    /// a version whose sample never accumulates stays open, the ledger shows its age, and nothing
+    /// settles it by the calendar. The version is registered through the shipped admitter rather
+    /// than inserted, so the target on it is the derived one the gate will actually run.
+    /// see: A selection version's target is derived from the settling rule and is not typed
+    ///
+    /// <b>It runs after everything that reads the register.</b> Registering a version changes what
+    /// a night fans a plan out to, so a figure taken above this line would be taken over a register
+    /// this method had already changed.
+    /// </summary>
+    private IReadOnlyList<Measurement> AcceptanceFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        new VariantAdmitter(_connections, Logger(), _clock, _options).Run([
+            AuthoredVersion,
+            VariantAdmitter.FamilyFlag, VariantFamily.Selection,
+            VariantAdmitter.DirectionFlag, SetupDirection.Long,
+            VariantAdmitter.ThresholdFlag, SelectionRule.MaximumRetrace,
+            VariantAdmitter.ValueFlag, "0.50",
+        ]);
+
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        AcceptanceSettlement settlement =
+            new AcceptanceGate(_connections, Logger(), _clock, _options).Settle(AsOf);
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        // Every verdict the run recorded, as the set rather than as a count. "Every reading was
+        // open" and "two of three were" are different facts and a count of readings says neither.
+        IReadOnlyList<StoredAcceptanceReading> readings =
+            AcceptanceReadingReader.LatestBy(connection, AsOf, _options.Value.SessionZone);
+
+        string verdicts = readings.Count == 0
+            ? "none"
+            : string.Join(",", readings
+                .Select(r => r.Verdict)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(v => v, StringComparer.Ordinal));
+
+        StoredVariant authored = VariantReader
+            .RegisteredBy(connection, AsOf, _options.Value.SessionZone)
+            .Single(v => string.Equals(v.VariantId, AuthoredVersion, StringComparison.Ordinal));
+
+        return
+        [
+            new("acceptance.versionsRead", settlement.VersionsRead.ToString(CultureInfo.InvariantCulture)),
+            new("acceptance.baselinesPassed", settlement.BaselinesPassed.ToString(CultureInfo.InvariantCulture)),
+
+            // Accepted and rejected together, because what this figure is about is that the gate
+            // wrote no verdict at all rather than which verdict it wrote.
+            new("acceptance.settled",
+                (settlement.Accepted + settlement.Rejected).ToString(CultureInfo.InvariantCulture)),
+
+            new("acceptance.verdict", verdicts),
+            new("acceptance.effectiveObservations",
+                readings.Sum(r => r.EffectiveObservations).ToString(CultureInfo.InvariantCulture)),
+
+            // Read off the register rather than off the settlement, because the claim is about the
+            // row the gate may write to and not about what the stage reported having done.
+            new("acceptance.resolvedAt",
+                authored.ResolvedAt is DateTimeOffset resolved
+                    ? StoreText.TimestampToStorageText(resolved)
+                    : "none"),
+        ];
+    }
+
+    /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
+    private const string AuthoredVersion = "V-acceptance";
 
     private static IReadOnlyList<Measurement> RuleFigures() =>
     [

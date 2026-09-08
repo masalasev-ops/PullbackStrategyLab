@@ -1215,6 +1215,8 @@ Grain: session + observation. What each of the classifier's two passes wrote, at
 | `pack_run` | date + observation | Insert ContextPacker. What one cut of the pack held, section by section, and the populations it was built over. It exists because a version is deliberately the same across every night it is cut on, so with the version alone a pack whose sections were all empty would be indistinguishable from a pack that was never cut |
 | `proposal` | proposal id | Insert ResearcherSeat (see: The AI writes only to the proposal store) · Update ProposalRegistry (status) |
 | `replay_result` | proposal + window + observation | Insert ReplayHarness. **Store built at 6.6**, which is where a proposal first exists to key a result on. **The grain read `proposal + window` until 6.6 and it could not hold a re-screen**: a screen is a reading rather than a definition, the same proposal screened twice over the same window is two readings because the evidence underneath moved, and this writer has no update path at all, so the second reading would have been a primary-key collision and the first would have gone on reading as current (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood). ReplayHarness itself is built at 5.3 and writes nothing: a screen kills a proposal and never admits one, so until there is a proposal store there is nothing for a result row to belong to, and a screen run before then would be a third statement about a version with nothing reconciling the three (see: Replay screens proposals and the forward paired test admits them) |
+| `acceptance_reading` | variant + observation | Insert AcceptanceGate. **What the gate read of one version, whether or not it settled it.** A settlement is two columns of `variant` and may be no more, the target and the minimum sample being written at creation and never again, so everything the gate weighed lives here (see: Targets and minimum samples are written at creation and are immutable). **Written on every run rather than on the run that settles**, because a version whose sample never accumulates is a state the failure table names and the sequence of readings is what says so. **No baseline has a row and that is a refusal rather than an omission**: it is the arm every other version is differenced against, so there is no series to take an interval over |
+| `acceptance_run` | session + observation | Insert AcceptanceGate. What one night's gate read, with the baselines it passed over counted apart from the versions it read, so a run that settled nothing is told from a run that found nothing registered |
 | `holdout_window` | window id | Insert HoldoutRegistry. **No update path at all**: a window is a fact about the calendar and does not become untrue |
 | `holdout_spend` | window id | Insert HoldoutRegistry. **The key is the rule.** One row per window, so a second spend of the same window is refused by the store rather than by a stage remembering to look (see: Holdout windows are quarters of forward-collected evidence, allocated as they mature, capped at eight) |
 | `holdout_run` | observation | Insert HoldoutRegistry. What one run of the register did, and why it held nothing where it held nothing |
@@ -1405,10 +1407,12 @@ Grain: variant + date + direction. One night of one version against the baseline
 | `generation`, `family` | INTEGER / TEXT | Carried rather than joined, because a score is read back as it stood and a generation that turned over afterwards would restate what the row meant |
 | `horizon_days` | INTEGER | 10, the scoring horizon the difference is taken at |
 | `flagged` | INTEGER | every setup of that side flagged on that night, which is the shared candidate list both rules saw |
-| `baseline_selected`, `variant_selected` | INTEGER | what each rule picked out of it. **Two populations, not one**, so the two means below are over different rows and the row says how many each was over |
+| `baseline_selected`, `variant_selected` | INTEGER | what each rule picked out of it. **Two populations, not one**, so the two means below are over different rows. **They are not the denominators the means were taken over and this row said they were until 6.7**: a selection still inside its horizon is counted here and is in neither mean, so on any night an outcome is open the stated denominator is the larger of the two. That is a figure named over one population and computed over another, and nothing could see it because nothing had ever read the two numbers together |
 | `both_selected`, `variant_only`, `baseline_only` | INTEGER | how the two sets overlap. The last two are derived from the first three and the store checks the arithmetic, because a version that changed nothing and a version whose disagreements cancelled are different facts |
 | `baseline_mean_return`, `variant_mean_return` | TEXT NULL | the mean scoring-horizon forward return over each side's own selections, as a fraction |
 | `mean_difference` | TEXT NULL | the second less the first. **A difference of two means and not a mean of differences**: there is no per-name pairing to take, because the two sets are not the same set. What is paired is the night |
+| `baseline_scored`, `variant_scored` | INTEGER NULL | the rows each mean was actually taken over, being each side's selections whose forward return has landed. **Recorded from 6.7 rather than the sentence above being reworded**, because a denominator a reader has to derive from two other columns is a denominator nobody derives |
+| `baseline_wins`, `variant_wins` | INTEGER NULL | how many of those rows ended ahead, direction-signed. **The diagnostic and never the settlement**: win rate is trivially improvable in the wrong direction, and a version that raised it while lowering expectancy is rejected under that name (see: Acceptance measures expectancy, never win rate). Here rather than recomputed by the gate, because a second reading of what the version selected sitting beside the scorer's own is two implementations of one population |
 | `baseline_outside_cap`, `variant_outside_cap` | INTEGER | how many of each side's selections the night's cap did not reach, and which are therefore refused a fill. **On both sides rather than on the version alone**, because the baseline's own selections past the sixtieth rank are refused on identical terms and a column existing only on the version would read as a penalty the version alone pays (see: The spread capture stays at the capped sixty, and a version selecting outside it is scored as refused) |
 | `unscoreable` | INTEGER | setups of that night whose moved gate the frozen signals could not judge. Counted rather than dropped: a night scored over nine of eleven names is a different fact from a night scored over eleven |
 | `withheld_because` | TEXT NULL | why the row carries no figure, on exactly the rows that carry none, which the table asserts in both directions. A scored night that could not produce a difference is a row rather than an absence |
@@ -1419,6 +1423,53 @@ Grain: variant + date + direction. One night of one version against the baseline
 *A night is scored once, when its scoring horizon has closed, and never rewritten. A figure recomputed as returns arrive would be a figure over a population that changed after somebody read it, which is the defect the population rule exists to name (see: The subject is the flagged setup population, not the trade log).*
 
 *Only a selection version has rows here, which the `family` check states rather than leaves to the writer. An execution version is scored on R and none is admitted in this generation, so the absence is a decision rather than an omission (see: No execution variant is admitted in this generation, and the condition that would reopen it is named).*
+
+### What the gate read of a version
+
+Columns of `acceptance_reading`. Built at 6.7, and the columns are the ones that checkpoint owes
+rather than the whole eventual shape.
+
+Grain: variant + observation. Where one version stood at one instant, on its own side.
+
+| Column | Type | Note |
+|---|---|---|
+| `variant_id`, `observed_at` | TEXT, the key | The version and the instant the reading was taken. A reading is a reading: the series underneath grows every night, so the same version read twice is two rows and the older one stays readable as it stood (see: A scoreboard rebuild writes a new generation of the date's panels, and the stale generation stays readable as it stood) |
+| `session_date` | TEXT | the session the run was for, which is what a ledger opened on an old date is asking about |
+| `direction` | TEXT | which side. On the row rather than in a note, because every figure below is one side's and a reading over the pair would be a pooled figure with the arithmetic left out (see: Long and short are never pooled into one figure) |
+| `generation` | INTEGER | carried rather than joined, on the same terms `variant_score` carries it |
+| `age_days` | INTEGER | how old the version was at this reading, in whole days from the session it was registered in. The failure table's own clause: a version whose sample never accumulates stays open and the ledger shows its age |
+| `nights_scored`, `nights_with_a_figure`, `nights_identical`, `nights_in_series` | INTEGER | **Four counts and never one.** A night the two rules selected the same names on carries a difference of exactly nought by construction, and one total would let it hide inside the first figure: the version would then mature on nights it was never exercised on, with its mean pulled toward nought by them |
+| `disagreements` | INTEGER | the setups the two rules disagreed about across the series, which is the population the difference rests on |
+| `effective_observations` | INTEGER | what the series is worth, counted the way the interval counts it. **A night is one observation and the store cannot say otherwise**: the score row is a difference of two means over two overlapping selections, so there is no per-name pairing and no within-night dispersion to record, and a series that cannot say how its own pairs dispersed is read the way that cannot overstate |
+| `minimum_sample`, `minimum_sample_unit` | INTEGER / TEXT | carried from the pre-registration onto the reading, so a figure and the bar it is read against are one row rather than a join a reader has to make |
+| `matured` | INTEGER | whether the first has reached the second. Recorded rather than derived at the point of reading, because it is the condition the settlement was allowed under |
+| `mean_difference`, `interval_low`, `interval_high` | TEXT NULL | the estimate and the studentised moving-block interval around it, present together or absent together. Text on the same terms every other ratio in this store is text |
+| `baseline_win_rate`, `variant_win_rate` | TEXT NULL | the diagnostic, over the two denominators above. **Two rates rather than one**, because the two rules selected different names and one denominator would put one rule's wins over the other's population |
+| `verdict` | TEXT | `open`, `accepted` or `rejected`. There is no fourth: `unresolved` is what editing the baseline does to a version and this gate never writes it |
+| `settled_because`, `withheld_because` | TEXT NULL | exactly one of the two, held in both directions. A settlement with no reason and a wait with no shortfall are both rows nobody could act on |
+| `population` | TEXT | the rows every figure above was computed over, in words, on the row that carries them. A population that lives anywhere but beside its figure is one a later reader will pair with the wrong figure |
+
+*A settled reading is one that reached its minimum and produced an interval, and the store holds that
+rather than the stage.* Nothing here settles a version on the calendar: a timeout would be a decision
+made by the clock rather than by evidence, so a row saying `accepted` or `rejected` without a matured
+flag and a mean is refused outright.
+
+*The gate writes `status` and `resolved_at` on `variant` and can reach no other column of it.* That
+is the row where a future change could quietly let a result rewrite the target it was measured
+against, so the settlement is one UPDATE naming two columns and there is no second statement to
+declare (see: Targets and minimum samples are written at creation and are immutable).
+
+### What one run of the gate did
+
+Columns of `acceptance_run`. Built at 6.7 alongside the table above.
+
+| Column | Type | Note |
+|---|---|---|
+| `session_date`, `observed_at` | TEXT | PK |
+| `versions_live`, `versions_read`, `baselines_passed` | INTEGER | **Three numbers because they answer three questions.** A night with one live version reads none of them, the baseline being the arm everything else is differenced against, and a run reporting a single nought could not be told from a run that found nothing registered at all |
+| `versions_matured` | INTEGER | how many had reached the sample written into them. Beside the three verdicts rather than derived from them, because a version can mature and still be left open where the series cannot produce an interval |
+| `accepted`, `rejected`, `left_open` | INTEGER | the verdicts, counted apart and summing to `versions_read`, which the store checks |
+| `outcome`, `stopped_because` | TEXT / TEXT NULL | partial where the register holds no open selection version, which is the state after the freeze and before the first proposal is accepted, and is not an error |
 
 ### What one run of the scorer did
 

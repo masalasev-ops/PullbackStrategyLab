@@ -51,6 +51,13 @@ public static class LabResearch
         IReadOnlyList<StoredVariantScore> scores = VariantScoreReader.ScoredBy(connection, asOf, sessionZone);
         HoldoutRegisterState register = HoldoutRegister.Describe(connection, asOf, sessionZone, written: 0);
         StoredScoreRun? lastRun = VariantScoreReader.LastRunBy(connection, asOf, sessionZone);
+
+        // Where each version stood at the last reading the gate took by this date. One row a
+        // version rather than the whole sequence: the ledger shows where a version stands, and what
+        // makes the older readings worth keeping is that the sequence is the record of a version
+        // that never matured.
+        IReadOnlyList<StoredAcceptanceReading> readings =
+            AcceptanceReadingReader.LatestBy(connection, asOf, sessionZone);
         IReadOnlyList<TwinSideReading> twins = TwinPairReader.Read(connection, asOf, sessionZone);
 
         // The generation in force, which is what "live" means on this page. Editing the baseline
@@ -73,6 +80,9 @@ public static class LabResearch
                     .OrderBy(g => g.Key, StringComparer.Ordinal)
                     .Select(g => Side(g.Key, [.. g.OrderBy(s => s.SessionDate)]))];
 
+            StoredAcceptanceReading? reading = readings.FirstOrDefault(
+                r => string.Equals(r.VariantId, variant.VariantId, StringComparison.Ordinal));
+
             versions.Add(new VersionResponse(
                 variant.VariantId,
                 variant.Generation,
@@ -92,6 +102,35 @@ public static class LabResearch
                 variant.Moved is null ? null : StoreText.ThresholdToStorageText(variant.Moved.From),
                 variant.Moved is null ? null : StoreText.ThresholdToStorageText(variant.Moved.To),
                 variant.Moved?.Describe(),
+
+                // How old the version is tonight, from the session it was registered in. Computed
+                // from the register rather than read off the reading, because the baseline has no
+                // reading and a column that was blank on one row of the table would read as a
+                // version whose age nobody knows.
+                Math.Max(0, asOf.DayNumber - DateOnly.FromDateTime(variant.CreatedAt.UtcDateTime).DayNumber),
+
+                reading is null
+                    ? null
+                    : new AcceptanceResponse(
+                        reading.ObservedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        reading.AgeDays,
+                        reading.NightsScored,
+                        reading.NightsIdentical,
+                        reading.NightsInSeries,
+                        reading.Disagreements,
+                        reading.EffectiveObservations,
+                        reading.MinimumSample,
+                        reading.MinimumSampleUnit,
+                        reading.Matured,
+                        reading.MeanDifference,
+                        reading.IntervalLow,
+                        reading.IntervalHigh,
+                        reading.BaselineWinRate,
+                        reading.VariantWinRate,
+                        reading.Verdict,
+                        reading.SettledBecause,
+                        reading.WithheldBecause,
+                        reading.Population),
                 sides));
         }
 
@@ -316,7 +355,42 @@ public sealed record VersionResponse(
     string? ThresholdFrom,
     string? ThresholdTo,
     string? Moved,
+    int AgeDays,
+    AcceptanceResponse? Acceptance,
     IReadOnlyList<SideResponse> Sides);
+
+/// <summary>
+/// Where the gate last left one version.
+///
+/// <b>The counts are four and never one.</b> A night the two rules selected the same names on
+/// carries a difference of exactly nought by construction, so it is counted apart from the nights
+/// the version was actually exercised on: one total would let a version mature on nights it was
+/// never exercised on, with its mean pulled toward nought by them.
+///
+/// <b>Two win rates and never one.</b> The two rules selected different names, so a single
+/// denominator would put one rule's wins over the other's population. They are the diagnostic and
+/// never the settlement (see: Acceptance measures expectancy, never win rate).
+/// </summary>
+public sealed record AcceptanceResponse(
+    string ReadOn,
+    int AgeDays,
+    int NightsScored,
+    int NightsIdentical,
+    int NightsInSeries,
+    int Disagreements,
+    int EffectiveObservations,
+    int MinimumSample,
+    string MinimumSampleUnit,
+    bool Matured,
+    string? MeanDifference,
+    string? IntervalLow,
+    string? IntervalHigh,
+    string? BaselineWinRate,
+    string? VariantWinRate,
+    string Verdict,
+    string? SettledBecause,
+    string? WithheldBecause,
+    string Population);
 
 /// <summary>
 /// One side of one version. There is no field here over both sides and that is the point of the

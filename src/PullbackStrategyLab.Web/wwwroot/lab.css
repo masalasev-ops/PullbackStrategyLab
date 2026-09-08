@@ -434,6 +434,29 @@ table.ledger .withheld-because { display: block; font-size: 11px; color: var(--i
 }
 
 /*
+  What the gate last read of a version.
+
+  It sits above the difference series rather than inside a side block, because it is the version's
+  own reading and a version can have no side at all: the baseline never has one, and a version
+  registered inside the scoring horizon has none yet. Those are exactly the versions the reading is
+  about, so a block drawn only where a side exists would drop the answer on the rows that need it.
+
+  The verdict tints the left edge and nothing else. A settlement is the highest-stakes thing this
+  lab writes and it is not made louder by being coloured; what a reader needs is the figure, the
+  population beside it, and the sentence saying why it stands where it stands.
+*/
+.acceptance { border-left: 3px solid var(--rule); padding: 0 0 0 12px; margin: 0 0 18px; }
+.acceptance.accepted { border-left-color: var(--long); }
+.acceptance.rejected { border-left-color: var(--short); }
+.acceptance .accumulated { margin: 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.acceptance .figure { margin: 4px 0 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.acceptance .over, .acceptance .nights, .acceptance .diagnostic,
+.acceptance .withheld-because, .acceptance .muted {
+    margin: 2px 0 0; font-size: 11px; color: var(--ink3); line-height: 1.35;
+}
+table.ledger td.age { color: var(--ink3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/*
   What the night did, on the morning screen.
 
   It is styled at the weight of a banner rather than of an aside, on the same grounds the degraded
