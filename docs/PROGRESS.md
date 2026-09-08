@@ -17850,3 +17850,327 @@ Carried:    **One raised, at 6.9, and one repointed, to 2026-11-27.** The migrat
 
 Next:       **6.9**, the phase sign-off, covering 6.10, 6.0 and 6.1 through 6.8 and not waiting on
             6.11. Fresh session by definition, and the session that wrote this one committed code.
+
+
+## 6.9 — 2026-09-08 — phase-6-9-sign-off — the phase signs off on ten checkpoints, with two rulings taken and one panel that pools the two sides
+
+Phase 6 signs off, covering 6.10, 6.0 and 6.1 through 6.8, and not waiting on 6.11. Fresh session,
+no commit to this repository before this one, and no code in this one: four documents, this record
+and one fixture permit. **`artifacts/` was moved off disk before either instrument ran**, so nothing
+read below can be a previous run's file still reading as current, which is what the 3.12 sign-off was
+caught by and is the reason that directory is gitignored in full.
+
+Reproduced: `tools/ci.ps1` green on Windows, **33 steps, 1,185 tests, exit 0**, run from PowerShell
+            itself rather than through a shell or a pipe.
+            `tools/verify-phase.ps1` **GREEN on phase 6**, **154 claims, 154 passed, 0 failed, 0 out
+            of scope, 0 unexamined**, coverage examined 11,920 with 0 unexamined, 1,649 expectations
+            of which 1,060 independent and 1 void, inputs CAPTURED 70 and AUTHORED 140, and 0
+            expectations changed since the last commit. **The report carries
+            `3346968f626827598d7b85922b597d5760740501`, working tree clean, generated 2026-09-08
+            05:25:06Z**, and the sha is quoted beside the figures on the terms 5.7 set.
+
+            **The figures match what the 6.8 entries record, exactly, and the comparison was made
+            rather than assumed.** The second 6.8 entry states 33 steps and 1,185 tests, and 154
+            claims, 154 passed, 0 out of scope, 0 unexamined. All six agree.
+
+            **The wrapper said which bash it used**, printing "using C:\Program Files\Git\bin\bash.exe",
+            so the 3.14 repair is still rejecting the System32 launcher on the machine it was written
+            for. `lastLanded` reads **6.10** where the build order's tip is 6.8, which is the same
+            non-defect the phase 5 sign-off noted of 5.8: phase 6's numbers do not ascend with its
+            order by design, and 6.10 has landed.
+
+Answered:   **The four register questions, read off the carried obligations table rather than
+            assembled here.** Four were opened on 2026-09-05 by the planning pass, as rows due at the
+            operator, before any of them was asked. **Two are answered and two remain, and neither of
+            the two that remain blocks anything built.**
+
+            **Question 1**, which transport the researcher runs on and the model it is pinned to,
+            ruled by the operator on 2026-09-07: the subscription through the Agent SDK pinned to
+            `claude-opus-5`, with the API path built beside it and one configuration value away. It
+            had blocked 6.5 outright (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops).
+            **Question 2**, which error rate the pack's corrected threshold controls, ruled on
+            2026-09-06: false-discovery control for admission, with the family-wise figure computed on
+            the same screened set and recorded beside it. It had blocked 6.4 (see: Admission is on the false-discovery rate and the family-wise threshold is recorded beside it).
+            Both rows are kept rather than deleted, so the sitting's total stays reconstructible.
+
+            **Question 3**, whether an earnings calendar is bought, and **question 4**, whether the
+            first pack version is cut before any outcome has closed, remain. Both sit in the
+            obligations table due at the operator and both appear in the operator's ten. Question 3
+            blocks nothing built, `earnings_in_window` being absent from the library so no rule and no
+            proposal can reference it; question 4 blocks 6.11 only, which is parked on the same
+            evidence. **Two more were opened and closed in the same planning pass** rather than filed,
+            being the twin-pair review point and the lazily-resolved attribute, and both are live
+            named decisions rather than prose. The counts derive: two rows of the obligations table
+            name a phase 6 sitting question, the answered table holds two, and the operator's ten
+            holds those same two.
+
+Read:       **The out-of-scope count against the projection, checkpoint by checkpoint. Every step
+            agrees and none is off by one.** The path is **14, 14, 14, 16, 14, 12, 11, 7, 4, 3, 1,
+            0**, against a projection stating the same twelve figures: today 14, the planning pass 14,
+            6.10 14, 6.0(b) 16, 6.1 14, 6.2 12, 6.3 11, 6.4 7, 6.5 4, 6.6 3, 6.7 1, 6.8 0. Each
+            measured figure is in that checkpoint's own entry, and passed plus out of scope equals the
+            claim total at every reading. 6.0(a) has no projection row and records no run, which is by
+            construction rather than a gap: it is a reading off a copy of the live store that builds
+            nothing, and its test count sits in 6.0(b)'s entry.
+
+            **The peak is 16 at 6.0(b), the checkpoint the plan projected it at and the value it
+            projected.** The ceiling of 52 is live rather than nominal: `PhaseReportStage` parses it
+            out of ARCHITECTURE at run time and fails the run both above it and when the document
+            states none, so deleting the sentence goes red rather than silent. It was never
+            approached, the peak leaving thirty-six of headroom, and no raise was needed.
+
+            **The retirements match the projection's own column at every step that names one.** 6.1
+            retired the backfiller's catalogue row and the replay-tier row for a new signal, 6.2 the
+            admission test's catalogue row and the correlation-limit failure row, 6.3 the twin-pair
+            finder's catalogue row, 6.4 four including the placement of the document's own list of
+            what a pack contains, 6.5 the seat's catalogue row, the exhausted-allowance failure row
+            and the model budget's placement, and 6.6 the registry's catalogue row. **6.7 and 6.8
+            record the count and name no retirement**, so the identity of the last three retired rows
+            is not on the record; the counts reconcile against the projection and the names do not,
+            which is worth saying because the projection is the thing they would have been checked
+            against.
+
+            **Reading only the endpoint would have missed that the basis was wrong and the answer
+            right anyway**, which is what checkpoint by checkpoint is for. The plan named its own most
+            likely error, that no new table was projected, and that error happened: 6.4 turned the
+            pack-sections placement exemption into a claim table and took the register from 143 claims
+            to 153. It cost the out-of-scope count nothing, because every row the new table added
+            arrived at the checkpoint that built its subject and so arrived passing. The projection
+            held on twelve readings with its stated assumption broken at the fourth from last.
+
+Read:       **The twelve provisional claims, read off the table rather than assembled, and each waits
+            on 6.11 rather than counting as an ordinary pass.** All twelve pass today. Three are held
+            by ARCHITECTURE's failure table and two of the three say so in the conformance check's own
+            comments: the planted-null failure verified over an authored citation because the seat that
+            writes a real one is a fact about the running lab, the exhausted allowance over an authored
+            refusal for the same reason, and the version whose sample never accumulates. Three are
+            surface claims: the research ledger's twin-pair panel, which renders a window of nought
+            against the 250 the metric wants; band 3's proposal outcomes by pack version; and band 3's
+            signal-library panel. Six are done conditions of 6.4: the pack's loss taxonomy,
+            ceiling-gap, signal-conditionals, twin-pairs and variant-history sections, and
+            byte-stability. **Byte-stability is the thinnest and 6.4's row says so**, an almost-empty
+            pack being easier to make byte-stable than a full one, so it passes and proves least.
+
+            **6.11 is where each is re-read, and it is parked and schedules nothing by that.** Its row
+            says the re-read is not a new checkpoint and not a sign-off condition, and that nothing may
+            be deferred to it, so none of the twelve is an out-of-scope deferral: they are passing
+            claims whose population will change under them, which is the fifth failure shape arriving
+            by the passage of time rather than by anybody writing a sentence.
+
+            **One of the twelve names a holder it does not have.** Claim 11's "Held by" cell reads "a
+            surface claim" and `fixtures/surface-claims.json` has no entry for band 3's signal-library
+            panel; the only band 3 claim in the file is claim 10's `proposal-hit-rate-by-pack-version`.
+            The panel is built and passes, held by the general scoreboard claims that every panel
+            states its population and shows its own count, and by the fixture's `band3.signalsHeld`.
+            What is missing is the specific claim the table says holds it.
+
+Ruled:      **The migration entry point's root, and neither reading is taken as written.** The row
+            offered two: the two wrappers are missing the root the stage-running entry points supply,
+            or the default is wrong and those two compensate for it.
+
+            **Reading (b) is refused, and the register already refuses it.** The default is
+            deliberately a root that is neither store and is what stops a fourth arriving by accident
+            (see: The lab keeps one store per purpose under one data root, and CI never opens the operator's).
+            It is three files rather than the one the row priced, `Worker`, `Api` and `Web` each
+            carrying a `DataRoot` of `data`. And it would not work: `PullbackStrategyLabPaths` composes
+            through `Path.GetFullPath`, so a relative default resolves against the process working
+            directory and `data/live` written there would name a different store in every directory it
+            was run from. **That is the mechanism of the fault rather than a detail of it.** The Worker
+            pins its content root to `AppContext.BaseDirectory` and says why in a comment about
+            schedulers setting a working directory of their own, and the data root beside it was left
+            resolving through the working directory the comment warns about.
+
+            **Reading (a) is right in substance.** Of the ten entry points `shell-executable`
+            reconciles, four assign a data root and all four run stages; `tools/migrate` and
+            `tools/snapshot-db` open the store and assign none.
+
+            **But reading (a)'s obvious repair is refused too, and that is the half the row could not
+            have seen.** A root derived from the script's own location puts `data/live` under whichever
+            checkout the script ran from, so first-time setup step 6 in the working tree would create
+            one there and falsify the sentence saying the working tree holds no live store at all
+            (see: The nightly runs from its own checkout, updated once a night before the first slot).
+            And it removes the symptom the fault was found by: the operator saw a path ending `data`
+            where one ending `data/live` belonged, and a wrong root spelled `data/live` reads exactly
+            right.
+
+            **So the repair is a refusal rather than a default**: each of the two scripts exits with a
+            named message when `PullbackStrategyLab__DataRoot` is unset, saying which roots exist.
+            Nothing is created at a guessed root, no phantom is named after the lab, the absence is
+            loud where it was silent, and no caller breaks, since `tools/ci.*` run the Worker verb
+            directly and never the script, the nightly's `snapshot` slot runs the stage under its own
+            root, and the rehearsal job passes a root inline. The line goes in the two bash scripts and
+            not in the two `.ps1` wrappers, which delegate so that a migration entry point has one
+            implementation rather than two. **Not taken here**, on the done condition's own reason, and
+            RUNBOOK now prescribes setting the variable for the one command and reading the printed
+            path back, rather than recording that as what happened once.
+
+Ruled:      **The session column `run_log` does not carry, which 6.8 named rather than carried. Closed
+            as a stated limitation of the degraded mark: not built, and not carried.** The ruling is
+            about the mark; the status band is a separate defect and is classified below rather than
+            closed here. **Carrying has nowhere to go rather than being merely heavier.** A row due at
+            a sign-off is ordinary and the migration root was one, but 6.9 is the last checkpoint,
+            6.11 forbids anything resting on it, a date-shaped due point has no night to be read on
+            because the subject is the build rather than a night, and `carried-obligations` fails a
+            row whose due point has landed, so a row due at 6.9 goes red the moment this entry is
+            written. Building it is a checkpoint of its own and this session may not take it.
+
+            **The mitigation is honest and complete as a statement.** `DegradedBecause` names the day
+            it bounded and says outright that a stage in that day's early hours may have been repairing
+            the session before, which is the sixth failure shape's remedy applied correctly. No check
+            is false, no claim in ARCHITECTURE is false, and no figure in the record depends on
+            resolving it. What is left is that one reading cannot be resolved from the log alone, and
+            that is now written where the column is declared as well as where it is computed.
+
+            **The price the row states is consistent and it understates the work.** Forty-seven is
+            calls spelled `.Begin(` in the Worker and exactly three `params` methods are named `Begin`,
+            so the sentence reconciles as written. What it leaves out is `BeginUpdatingInPlace`, which
+            opens the same scope under a different name from four more Worker sites, so a session on
+            every scope is fifty-one call sites in the Worker and sixty-one with the suite rather than
+            forty-seven. Counted here because a ruling that declines work on a price should decline it
+            on the right one.
+
+Classified: **Five findings. None reopens the phase, and one is a defect under a hard rule.** None
+            fails a done condition and none breaks a check, which is the test the stopping rules set.
+            Every one of them is code or fixture work this session may not take.
+
+            **`band3.twinOutcomeSpread` pools long and short into one figure, and the stage that feeds
+            it refuses to.** `ScoreboardBuilder.LibraryPanels` reads `TwinPairReader`, which returns
+            one `TwinSideReading` per direction carrying its own `Direction`, `Pairs` and
+            `WindowSetups`, flattens them with `SelectMany`, and renders the mean of `GapPoints` as a
+            single panel with `Direction` null and the population string "twin pairs found on both
+            sides". The withheld branch pools as well, summing `WindowSetups` across sides under "the
+            setups the trailing window held, on both sides", and that is the branch live on the fixture
+            today. **No wrong number is observable yet and the defect is in the shipped code rather
+            than on a page**: both sides' window counts are nought over the golden fixture, so the
+            pooled sum is nought too. The only non-zero pooled figure anywhere is the 44 inside
+            `surface-claims`' own authored page fixture, which carries `direction` null and the "on
+            both sides" population verbatim, so the harness has the pooled shape frozen into it.
+            **And it is band 3 as a whole rather than one panel**: `band3.proposalHitRate.vN` is the
+            same shape, `Direction` null over a population of proposals filed against a pack version,
+            where `proposal` carries a `direction` column. That one is the project's stated success
+            criterion, and it has no proposals yet, so it is a defect waiting on evidence rather than
+            one producing a figure. **The corpus has already decided this three times in the same data
+            path.**
+            `TwinPairResult` is documented as "a list of sides rather than a total" because "a count
+            over both would be two populations under one name", citing the rule by name;
+            `TwinSideView` on the ledger is "One side's reading, never added to the other's"; and the
+            hard rule admits no exception in code, in a report or on a screen. **No decision is owed
+            and none conflicts.** ARCHITECTURE's only mention of the spread as one figure is inside
+            Figure 11, a mockup whose own caption says the figures shown are illustrative rather than
+            measured; it is not a table, so no claim is derived from it, and no claims table anywhere
+            states the twin spread as an account-wide figure. The panel is wrong rather than
+            specified, and what a session takes is a repair rather than a ruling. `long-and-short-are-two-blocks`
+            does not reach it, asserting that the page renders side blocks rather than that no panel
+            inside one pools. One correction to the obvious reading: `GapPoints` is
+            `Math.Abs(outcomes[i] - outcomes[j])`, so the pooled mean is not measuring the gap between
+            the two books; the objection is the one the finder itself gives, being two populations
+            under one name.
+
+            **`3460e7f` reached `main` without a pull request**, being "Phase 6 / 6.3 — TwinPairFinder,
+            and the run row that exists so a run finding nothing can say what it looked at", 28 files
+            and 2,284 insertions including `TwinPairFinder.cs`, migration `056-twin-pair.sql` and 269
+            lines of `fixtures/expectations.json`. It is the only single-parent commit on main's
+            first-parent line since the rule was written, and the reflog says how it arrived: every
+            other phase 6 arrival on main is `pull --ff-only origin main: Fast-forward` and this one is
+            `commit`, which rules out a squash or rebase merge. No pull request in the repository has
+            it as a merge commit, and none has head `phase-6-3-twin-pairs`, the branch the 6.3 entry
+            names. The five phase 4 single-parent commits are not counterexamples: each carries a
+            trailing PR number in its subject, which is a squash merge. **It is the first instance
+            after the rule was written down.** The 3.12 sign-off found `ecf5a3b`, `3e88a35` and
+            `2b5316c`, wrote the Merge section's sentence for the first time, and closed its reasoning
+            with the observation that two instances is the point at which a convention stops being an
+            argument for writing it down and becomes an argument for a check. Writing it down was
+            tried, and it did not hold. **Nothing in the suite reads merge provenance**: the three
+            places that shell out to `git` read numstat, the file index and an executable bit. Nothing
+            in the phase 6 record names the commit, and every other phase 6 commit reached main through
+            a pull request with a conforming subject.
+
+            **The status band shows the session the store is current to, not the session its run
+            belongs to.** `LatestRun` computes the session it bounds on and returns a payload without
+            it; the view renders the run followed by "for" and `SessionText`, where `Session` is
+            `LatestSession`, documented as the last session the lab took a universe snapshot for. Its
+            own doc comment says the band reads the newest session in the log, and both the 6.8
+            discharge and the 6.8 entry say the band names the session its run belongs to. **The two
+            coincide on an ordinary night and come apart on a night `universe-build` failed**, which is
+            the night the band exists for. It is the sixth failure shape inside the pass that repaired
+            the sixth failure shape: the instrument is right and its answer is discarded downstream.
+            **And the branch renders on no page**, the surface fixture setting `lastRun` to null so
+            every rendered page takes the "nothing has run" arm, so the whole of what 6.8 added there
+            is exercised by nothing.
+
+            **Four clause records say "phase 6 is not built", and phase 6 is built.** The Build order
+            P6 claim carries four `unreached` clauses with that reason: proposal hit rate compared
+            across pack versions, the pack being byte-stable, the planted null being present, and no
+            component outside the proposal store accepting a write from the researcher. Three of the
+            four pass today by other means and are on the provisional list. **The mechanism is that
+            they used the disposition that carries no checkpoint.** `deferred` is a clause of an
+            out-of-scope claim, closed by the checkpoint that closes the claim, which has to resolve
+            and which fails once it has landed; `unreached` takes free text and only the presence of a
+            reason is checked. So a deferral written as an `unreached` reason escapes the machinery one
+            level up that exists for exactly it. **Four more reasons are stale the same way**, naming
+            variant scoring, 5.1, the replay harness, and a table count the reason itself calls stale.
+
+            **The pack's ten sections were counted as nine in two BUILD_PLAN sentences.** 6.5 made the
+            rule in force the pack's first section; ARCHITECTURE's table, `PackSections.Declared` and
+            the fixture's `pack.sectionsRendered` all read ten and reconcile in both directions, and
+            the two prose figures did not move with them. **The omission was selective rather than
+            wholesale**: SCHEMA's own pack-version note was updated to five of ten in the same pass,
+            and BUILD_PLAN and six doc comments were not. **One of the six is worse than stale**:
+            `PackSections` says at its head that five of the ten are empty today, and the same file
+            sixty lines further down explains that a pack cut after the twin finder renders four,
+            which is what the fixture reads. A file correcting itself is the 3.12 class of fault with
+            both halves in one place. Corrected here rather than raised, being prose. It sat outside `stated-counts` by construction, the figure being about another
+            document and about the code rather than about this file's own contents.
+
+Corrects:   **"Every one of the thirty-two slots refused" is a figure over the registered population
+            stated of the refused population, and it is in three documents.** The night of 2026-09-07
+            holds thirty-one slot dispatches and thirty-one refusals in
+            `data/live/logs/nightly-2026-09-07.log`. Thirty-two is the count of tasks registered that
+            day, correct and measured in the same pass: thirty-seven exist now, five of them registered
+            on 2026-09-08 by the act that discharged the slot row, and of the thirty-two that existed
+            on the 7th, `ceiling` carries a Saturday trigger and had no run that night to refuse. **The
+            BUILD_PLAN and RUNBOOK sentences are edited cleanly with their prior text in CHANGELOG; the
+            6.8 entry is a record and stands as it was merged, corrected by this entry.** The figure
+            was introduced by the same pass that read thirty-two off the machine, which is the fifth
+            failure shape and the seventh together: a figure whose population came from the sentence
+            beside it, in the one class of claim no check in this corpus reaches, because its subject
+            is the running lab.
+
+            **`SCHEMA.md`'s `degraded_because` note said the column holds stages of the setup's own
+            session.** The code bounds on that session's own calendar day in the session zone, which is
+            the whole subject of the 3.12 row and the repair 6.8 made to the value and to the doc
+            comment. SCHEMA kept the narrower claim, so the one spec that declares what a column holds
+            asserted a population the code does not produce. Corrected, with the residue named in the
+            same note.
+
+Verified:   **No code, so no new test.** Both instruments run again against the tree this entry lands
+            on. `tools/ci.ps1` green on Windows at **33 steps and 1,185 tests**, unchanged because
+            nothing under test moved, and `tools/verify-phase.ps1` **GREEN** at 154 claims, 154
+            passed, 0 failed, 0 out of scope, 0 unexamined, with the report naming this entry's own
+            parent commit and the tree clean. **One figure moved and it is accounted for rather than
+            left**: coverage examined goes 11,920 to 11,932, twelve more, which is the source-scanning
+            checks reading the sentences this pass added to four documents. It is corpus growth rather
+            than a property changing, which is the case the floors are floors for.
+
+Permitted:  **6.9 names its own `frozenOnly` permit.** A sign-off adds no stage to the replayed
+            pipeline and no behaviour to freeze, so there is no figure a market day could be replayed
+            to produce, and the corrections it makes are to prose in three documents rather than to
+            anything the pipeline computes. It stands on the footing 2.12, 3.7, 3.15, 4.13 and 5.7
+            stand on.
+
+Carried:    **None raised as a row, and one discharged.** The migration entry point's root falls due
+            here and is discharged by the ruling above, which is what the row asked for; the table goes
+            from seventeen rows to sixteen, and `carried-obligations` requires that move in the commit
+            that records this checkpoint. **The five findings are named rather than carried**, because
+            after 6.9 there is no phase 7 and 6.11 is parked, so a row for any of them would be a
+            permanent exemption reading as pending. That is what the plan's own endpoint paragraph asks
+            for: nought is the expectation, and anything left names something no phase closes rather
+            than carrying a number. **What is left is code**, being band 3's two pooled panels that must
+            become four, two shell scripts that must refuse, one view that must be handed the session
+            its run belongs to, eight clause reasons that must say what is missing today rather than
+            what was unbuilt in August, a surface claim for the panel the provisional list says one
+            holds, and the pooled shape taken back out of `surface-claims`' own fixture. None of
+            it may be written by the session that signs the phase off.
+
+Next:       **Nothing scheduled.** The lab runs, 3.6 fires when band 1 reports both conditions for a
+            direction, and 5.6 and 6.11 unpark on measured triggers rather than on a date.

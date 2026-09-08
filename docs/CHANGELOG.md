@@ -2798,3 +2798,38 @@ Why:  it is worse than the silent no-op the wrapper's own header was written aga
 Was:  the carried obligations table holding seventeen rows, one of them the five slots registered nowhere and one of them the holiday read due at 2026-09-08, and the operator's questions reading eleven.
 Now:  seventeen rows still, the five-slot row moved into a record of what it was, the holiday row repointed to 2026-11-27 with the reading that was made written into it, a row raised at 6.8 for the migration entry point's root due at 6.9, and the operator's questions reading ten.
 Why:  the five tasks were registered on 2026-09-08, which is the only row on the operator's list ever closed by an act rather than by a ruling. The holiday read was made and found nothing to read, every slot of 2026-09-07 having refused on the tree guard, so the question is where it was and its due point is the next closure rather than a date that has passed.
+
+### 2026-09-08 — RUNBOOK.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "The cost of that gap was paid on 2026-09-07" opening "Every one of the thirty-two slots that night refused on the tree guard".
+Now:  thirty-two tasks registered that night, thirty-one of them scheduled to run on a Monday, and every one of those thirty-one refusing.
+Why:  the log holds thirty-one dispatches and thirty-one refusals. Thirty-two is the count of tasks registered on 2026-09-07, measured in the same pass and written into the sentence about refusals; `ceiling` is a Saturday task and had no run that night to refuse. A figure correct over one population, stated of another, in the one class of sentence no check in this corpus reaches, because its subject is the running lab.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the 5.7 holiday row reading "Every one of the thirty-two slots registered that night refused on the tree guard".
+Now:  thirty-two registered, thirty-one scheduled for a Monday, and every one of those thirty-one refusing.
+Why:  the same figure over the same two populations, in the second of the three places it was written. The third is a PROGRESS entry and is corrected by a dated entry rather than edited.
+
+### 2026-09-08 — SCHEMA.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the `degraded_because` column note reading "which stages of this setup's own session had already ended other than cleanly when the row was written".
+Now:  the window stated as the session's own calendar day in the session zone, with the consequence that a stage in that day's early hours may have been repairing the session before, and the residue named.
+Why:  `RunLogger.DegradedBecause` bounds on the calendar day and says so in the value it writes, which is the repair 6.8 made to the mark and the doc comment. SCHEMA is the spec that declares what a column holds and it kept the narrower claim the 3.12 row was raised about, so the document asserted a population the code does not produce.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "Four of the pack's nine sections are not on that list", naming population, multiple comparison, signal library and planted null; and 6.4's done condition reading "All nine sections of the pack are present" and "Five of the nine rest on outcomes that have not closed".
+Now:  five of ten, with rule in force added to the computable four, and the done condition stating the property without a denominator that goes stale.
+Why:  6.5 made the rule in force the pack's first section, so the pack has held ten since. `ARCHITECTURE.html`'s table, `PackSections.Declared` and the fixture's `pack.sectionsRendered` all read ten and reconcile in both directions; the two prose figures did not move with them. Neither the five provisional sections nor the twelve provisional claims changes, and only the denominator and the computable count do. The count was outside `stated-counts` by construction: it is a figure about another document and about the code, not about this file's own contents.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  the carried obligations table holding seventeen rows, one of them the migration entry point's root due at 6.9.
+Now:  sixteen rows, and a section recording what the one due at 6.9 was and what was ruled.
+Why:  6.9 is the checkpoint it falls due at, and `carried-obligations` fails a row whose due point has landed, so the row has to move in the commit that records the checkpoint. It is discharged by a ruling rather than by a repair, which is what the row asked for and what the done condition required.
+
+### 2026-09-08 — RUNBOOK.md — cites The lab keeps one store per purpose under one data root, and CI never opens the operator's
+Was:  "After a merge that carries a migration" ending at what was done on 2026-09-08 and saying which of the two readings is the defect "is not ruled on here. It is filed as an obligation"; first-time setup step 6 saying which root it creates the schema in "is the open question"; step 3 saying not to set the variable with no exception named; and the stale-store recovery row sending the reader to the finding before believing what the command prints.
+Now:  the 6.9 ruling written out, the two hand-run commands told to set the root for the one command and read the printed path back, step 3 keeping the standing prohibition and naming the exception, and the recovery row saying the same.
+Why:  the defect is the two entry points and not the default. Four of the ten entry points assign a data root and all four run stages; migrate and snapshot-db open the store and assign none. The default is deliberately neither store, lives in three files, and resolves through the process working directory, so moving it would name a different store in every directory it was run from. And the repair is a refusal rather than a default, because a root derived from the script's own location would create `data/live` under whichever checkout the script ran from and would remove the symptom the fault was found by.
+
+### 2026-09-08 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "`fixtures/expectations.json` names eleven frozen-only checkpoints under `frozenOnly`, of which nought still rest on an open obligation."
+Now:  twelve, the second half unchanged.
+Why:  6.9 names its own permit, on the footing every phase sign-off since 2.12 has. `stated-counts` failed the first run of this commit naming the sentence, which is the registry doing the one thing a prose count cannot do for itself.
