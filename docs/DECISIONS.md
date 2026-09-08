@@ -1065,6 +1065,26 @@ So the values do not move at 6.3, which is a decision rather than a deferral: no
 
 The general form is the one the elapsed-time figures already carry: an estimate is not a trigger, and a review point naming a phase is an estimate wearing a schedule's clothes.
 
+**The twin-pairs section is uncapped until the window has been full once**
+Ruled by the operator on 2026-09-08, against the finding that `ContextPacker.TwinPairsSection` emits every qualifying pair per direction where `ARCHITECTURE.html` said the section holds a sample. The document is the thing that moves: the section is uncapped, and it says so.
+
+**Capping it now would choose a sample size against a population nobody has seen.** A cap is a number, and the only honest basis for one is a distribution of how many pairs a run actually qualifies. The finder z-scores over a trailing window of 250 setups and that window has never been full, so the pair counts observed to date are counts from a window a fraction of its intended width. A cap set on them would be set on the wrong population, and it would be set for good, because nobody revisits a number that is never wrong.
+
+**That is the fault already corrected once in this corpus, one document over.** The twin-pair threshold's review point read "Phase 6" and became a condition for exactly this reason: a review taken against a short window is a review in name (see: The twin-pair threshold is reviewed at the first full window rather than at a phase). Capping the section on today's counts would put the same estimate back, in the shape of a constant rather than a schedule.
+
+**Nothing is deferred, because the section states its own count.** Every run writes the pairs found, the window it held against the window it wanted, the signals compared and the candidates considered, per direction. So a section growing past what a reader or a model can take in is visible on the pack it happens on rather than discovered from a token bill, which is what a cap would otherwise be bought to prevent.
+
+**The condition that reopens it is the first full trailing window**, the same instant the threshold's own review falls due, and it is a reopening rather than an obligation: if the counts at a full window are ones a pack can carry, the answer stays no cap and nothing is owed.
+
+**The twin-pair distance stays unnormalised so the threshold moves with the values**
+Ruled by the operator on 2026-09-08. `SignalSpace.Distance` is plain Euclidean over the z-scored axes and is not divided by the number of axes, so the distance between two setups grows with how many signals are compared. The pinned threshold is a distance under 0.5, and against a library that grows the same pair drifts above it: the gate hardens without anybody moving it.
+
+**Normalising is not a fix that leaves the number alone.** Dividing by the square root of the axis count, or any other width correction, rescales every distance the metric produces, so "under 0.5" means a different quantity afterwards. The threshold would have to be re-derived, and so would the 15-point outcome gap that is chosen to sit beside it. All three are one setting expressed as three numbers.
+
+**So all three move at one moment or none do**, and that moment is already fixed: the first time the trailing window is full (see: The twin-pair threshold is reviewed at the first full window rather than at a phase). Normalising before then would re-derive the threshold against the same short window the review point exists to refuse, which is the fault arriving through the metric instead of through the schedule.
+
+**What is not deferred is knowing.** Every run records how many signals it compared, so the width each distance was taken across is on the row, and the hardening can be read off the record rather than inferred from a gate that stopped qualifying pairs.
+
 ## Data and platform
 
 **Every line of code runs unmodified on Windows and on Apple Silicon macOS**
