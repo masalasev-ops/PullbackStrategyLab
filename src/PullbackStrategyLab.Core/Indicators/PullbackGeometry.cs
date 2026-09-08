@@ -234,5 +234,34 @@ public static class PullbackGeometry
         int PullbackBars,
         decimal? RetraceDepth,
         decimal Trigger,
-        decimal Stop);
+        decimal Stop)
+    {
+        /// <summary>
+        /// A pullback that ran over bars and still has no price span at all, the entry level and the
+        /// give-up point being the same price.
+        ///
+        /// <b>Distinct from having no pullback, which is why the bar count is in the test.</b> With
+        /// no bar after the thrust extreme the two prices are seeded from that one bar and are equal
+        /// by construction, and the detector already nulls the distances for it: that is an absence
+        /// and it says so. This is the other case. Bars exist, they were measured, and every one of
+        /// them collapsed to a single price, so the distance between entry and give-up is nought
+        /// because there was no range to measure rather than because the stop is tight.
+        ///
+        /// <b>It keys on the range and never on the volume.</b> A bar with no range is not the same
+        /// thing as a day the name did not trade: of the five such bars sitting inside a pullback
+        /// window on 2026-09-08, four carry a volume of nought and GH's 2024-05-23 traded 700
+        /// shares. Volume would have missed that one and would have caught nothing the range does
+        /// not.
+        /// <b>A trigger of nought is not a price, and the test says so rather than assuming it.</b>
+        /// Two callers build this record for its bar count and its retrace alone and have no prices
+        /// to give, `SelectionReplay.PullbackFrom` where the frozen signals may not carry them and
+        /// the authored gate cases which move a distance directly. Both left the two prices at
+        /// nought, so a rule reading only `Trigger == Stop` called every replayed row and every
+        /// authored case rangeless, and the fixture caught it on nine expectations. The guard is
+        /// about two real prices that turned out to be the same one, which is what a bar with no
+        /// range produces and what a placeholder does not.
+        /// see: A gate handed an absent or degenerate quantity fails rather than passing
+        /// </summary>
+        public bool HasNoRange => PullbackBars > 0 && Trigger != 0m && Trigger == Stop;
+    }
 }

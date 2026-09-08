@@ -153,20 +153,44 @@ public static class LongPullbackRules
             ? CheckResult.Unknown("held-floor", "no 21-day average over the dip")
             : new CheckResult("held-floor", beyond <= rule.Value(SelectionRule.MaximumClosesBeyondFloor), beyond);
 
+    // A ratio of nought is tested on the value, and that is exact rather than a shortcut. The ratio
+    // is the session's range over its average range, the average is null or nought where it cannot
+    // be divided by, so a ratio of nought means the session's own range was nought and nothing else
+    // can produce one. Measured over the store on 2026-09-08 as well as argued: two calibration rows
+    // of 32,533 read exactly nought and both sit on a bar whose high equals its low.
     private static CheckResult Contraction(LongEvidence e, SelectionRule rule) =>
         e.RangeTodayOverAverage is not decimal ratio
             ? CheckResult.Unknown("contraction", "no range average for the session")
-            : new CheckResult("contraction", ratio < rule.Value(SelectionRule.MaximumRangeRatio), ratio);
+            : ratio == 0m
+                ? CheckResult.Unknown("contraction", CheckResult.NoRangeInTheSession)
+                : new CheckResult("contraction", ratio < rule.Value(SelectionRule.MaximumRangeRatio), ratio);
 
+    // <b>This one is tested on the geometry and not on the value, and the difference is the point.</b>
+    // A trigger distance of nought means the close sits exactly on the entry level, which is a true
+    // and wanted reading: 38 calibration rows of 32,533 read exactly nought and 37 of them are
+    // ordinary bars ranging from 0.14% to 15.6% of their close, on millions of shares. Refusing
+    // those would discard a real answer to the question this gate asks. The one that is not ordinary
+    // is the one whose pullback had no range, so the pullback is what the guard reads.
     private static CheckResult TriggerNear(LongEvidence e, SelectionRule rule) =>
-        e.TriggerDistanceRanges is not decimal distance
-            ? CheckResult.Unknown("trigger-near", "no trigger or no daily range for the session")
-            : new CheckResult("trigger-near", distance <= rule.Value(SelectionRule.TriggerReachRanges), distance);
+        e.Pullback is { HasNoRange: true }
+            ? CheckResult.Unknown("trigger-near", CheckResult.NoRangeInThePullback)
+            : e.TriggerDistanceRanges is not decimal distance
+                ? CheckResult.Unknown("trigger-near", "no trigger or no daily range for the session")
+                : new CheckResult("trigger-near", distance <= rule.Value(SelectionRule.TriggerReachRanges), distance);
 
+    // Both guards, and both are load-bearing. The geometry catches it at detection, where the
+    // pullback is in hand. The value catches it in a replay, which rebuilds evidence from frozen
+    // signals and may hold a distance without the geometry that produced it. A distance of nought is
+    // exact here in the way the trigger's is not: it needs the entry and the give-up to be the same
+    // price, and one calibration row of 49,450 reads it, being the row with no range in its pullback.
     private static CheckResult ExitTight(LongEvidence e, SelectionRule rule) =>
-        e.StopDistanceRanges is not decimal distance
-            ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
-            : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
+        e.Pullback is { HasNoRange: true }
+            ? CheckResult.Unknown("exit-tight", CheckResult.NoRangeInThePullback)
+            : e.StopDistanceRanges is not decimal distance
+                ? CheckResult.Unknown("exit-tight", CheckResult.NoStopOrRange)
+                : distance == 0m
+                    ? CheckResult.Unknown("exit-tight", CheckResult.NoRangeInThePullback)
+                    : new CheckResult("exit-tight", distance <= rule.Value(SelectionRule.GiveUpRanges), distance);
 
     private static CheckResult Cluster(LongEvidence e, SelectionRule rule) =>
         new("cluster", (e.ClusterCount ?? 0) >= rule.Value(SelectionRule.ClusterThreshold), e.ClusterCount);

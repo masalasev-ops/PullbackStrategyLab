@@ -182,10 +182,16 @@ public sealed class GateBoundaryTests
     /// <summary>
     /// The instance that shipped, kept as a case of its own rather than left to the class above.
     ///
-    /// The rules were never wrong about a zero distance: zero is inside half a range and the rule
-    /// says so. What was wrong was the assembly one layer up, which computed a distance from a
-    /// geometry that had no pullback and handed it over as though it were a measurement. So the
-    /// assertion sits where the defect was, on the geometry and on what the detector makes of it.
+    /// The defect here was the assembly one layer up, which computed a distance from a geometry that
+    /// had no pullback and handed it over as though it were a measurement. So the assertion sits
+    /// where that defect was, on the geometry and on what the detector makes of it.
+    ///
+    /// <b>The reading beside it, that the rules were never wrong about a zero distance because zero
+    /// is inside half a range, was superseded by the operator's ruling of 2026-09-08.</b> A gate
+    /// reading nought does not read as empty, it reads as the tightest possible pass, so a distance
+    /// of nought is now no value with the reason on the row. `ZeroDistanceIsNotEvidenceTests` holds
+    /// that, and this case is unchanged by it: its distances are absent rather than nought and its
+    /// pullback has no bars, which is the other fact and still says so.
     /// </summary>
     [Fact]
     public void A_thrust_that_has_not_pulled_back_yields_no_distances_rather_than_zero_ones()
