@@ -18351,6 +18351,26 @@ Measured:   **Every gate clause traced to the source of its form and of its thre
             population above instead. The refutation was verified independently before it was
             accepted.
 
+            **How many zero-range bars sit inside a pullback window rather than anywhere in the
+            store.** Measured after the finding below was rowed, and it narrows that finding by four
+            orders of magnitude. 128,812 stored rows carry a high equal to their low, which is
+            **128,790 distinct bars** taking the latest observation of each, 73,186 of them with a
+            volume of nought. **1,272 sit on a ticker that ever produced a setup and five sit inside a
+            pullback window**, being GH on 2024-05-23, CLSK on 2024-11-08, AGX on 2026-07-21 and
+            2026-07-22, and DFTX on 2026-07-31. **A zero-range bar is not always a non-trading day**,
+            and the GH bar at a volume of 700 is the instance. The five reach **nine calibration
+            setups and no live setup**, and **one of the nine has its whole pullback on such a bar**,
+            that one being the only row whose trigger equals its stop and the only row where
+            `exit-tight` passed. The other eight carry longer spans, so the bar is one of several and
+            their distances read 1.25 to 3.24.
+
+            **The pair can only flatten when the whole pullback is that one bar**, and `dip-shape` and
+            `bounce-shape` admit two to seven, so all **8,638** single-bar pullbacks across the two
+            tables are refused by the shape gate before this can matter. **So the defect cannot reach
+            a candidate through the shipped gate set**, and what the ruling turns on is narrower than
+            the row first stated: whether four gates recording a value of nought is admissible
+            evidence, rather than whether a name could be ranked on one.
+
 Found:      **`exit-tight` is written for an intraday entry level the corpus never defines, and it is
             answered off daily bars that cannot satisfy it. The defect is in the gate's basis and not
             in its value.** ARCHITECTURE's "Why the exit-tight check is the interesting one" derives
