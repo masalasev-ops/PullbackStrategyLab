@@ -23,10 +23,10 @@ public static class RepositoryLayout
     public static string Fixtures => Path.Combine(Root, "fixtures", "captured");
 
     /// <summary>
-    /// The five specs and the three records. Everything a citation can live in.
+    /// The six specs and the three records. Everything a citation can live in.
     ///
     /// The artefact was the ninth and is gone: <c>SCREENS.html</c> was deleted at 4.12, once the
-    /// pages it drew existed (see: The corpus is eight documents and a ninth requires retiring one).
+    /// pages it drew existed (see: The corpus is nine documents, and the ninth records where the strategy came from).
     /// </summary>
     public static IReadOnlyList<string> CorpusFiles { get; } =
     [
@@ -35,6 +35,7 @@ public static class RepositoryLayout
         Path.Combine(Docs, "SCHEMA.md"),
         Path.Combine(Docs, "BUILD_PLAN.md"),
         Path.Combine(Docs, "RUNBOOK.md"),
+        Path.Combine(Docs, "SOURCES.md"),
         Path.Combine(Docs, "DECISIONS.md"),
         Path.Combine(Docs, "PROGRESS.md"),
         Path.Combine(Docs, "CHANGELOG.md"),

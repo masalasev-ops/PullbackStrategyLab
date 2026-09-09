@@ -15,7 +15,7 @@ namespace PullbackStrategyLab.Web.Pages;
 /// two sections that describe what it is for rather than from a picture: Two experiment families
 /// says a version is pre-registered with a target and a minimum sample and closes as refuted in
 /// public, and Replay and holdout windows says the budget is quarters, capped at eight, spent once.
-/// see: The corpus is eight documents and a ninth requires retiring one
+/// see: The corpus is nine documents, and the ninth records where the strategy came from
 ///
 /// <b>It reads the session the status band names rather than today's date</b>, on the terms the
 /// scoreboard's read already stands on: a ledger opened on a Sunday should show Friday's register

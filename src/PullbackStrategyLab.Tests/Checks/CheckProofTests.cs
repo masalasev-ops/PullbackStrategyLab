@@ -2005,4 +2005,148 @@ public sealed class CheckProofTests
             CoverageReportedCheck.ScanningFilesOutsideACheck(),
             CoverageReportedCheck.DeclaredScans()));
     }
+
+    /// <summary>
+    /// The document a clause-provenance run reads, written out so the proofs below can remove one
+    /// thing at a time. Small on purpose: two clauses, one source, and everything the real document
+    /// carries in the shape the parsers read.
+    /// </summary>
+    private const string TracedDocument = """
+        ## The source material
+
+        | Source | What it is | Whose words | Where |
+        |---|---|---|---|
+        | `P1` | An interview | his own words | a video id |
+
+        ### The long clauses
+
+        | Clause | Form | Threshold | Bearing on | Disagreement |
+        |---|---|---|---|---|
+        | `tradable` | his own words | no source found | `P1` | none |
+
+        ### tradable, long
+
+        > "A quotation."
+        `P1`, 1:00
+        """;
+
+    private static ClauseProvenanceCheck.ClauseRow Traced(
+        string clause, string side, string form, string threshold, params string[] sources) =>
+        new(clause, side, form, threshold, sources, "none");
+
+    private static readonly ClauseProvenanceCheck.SourceRow[] OneSource =
+        [new("P1", "An interview", "his own words", "a video id")];
+
+    [Fact]
+    public void A_clause_claiming_a_source_and_naming_none_fails()
+    {
+        string problem = Assert.Single(
+            ClauseProvenanceCheck.Problems(
+                [Traced("tradable", "long", "his own words", "no source found")], OneSource, TracedDocument),
+            p => p.Contains("rests on nothing", StringComparison.Ordinal));
+
+        Assert.Contains("tradable, long", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_clause_naming_a_source_the_table_does_not_declare_fails()
+    {
+        string problem = Assert.Single(
+            ClauseProvenanceCheck.Problems(
+                [Traced("tradable", "long", "his own words", "no source found", "P9")], OneSource, TracedDocument),
+            p => p.Contains("resolves to nothing", StringComparison.Ordinal));
+
+        Assert.Contains("P9", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_sourced_clause_whose_section_carries_no_quotation_fails()
+    {
+        string paraphrased = TracedDocument.Replace("> \"A quotation.\"", "He says so.", StringComparison.Ordinal);
+
+        string problem = Assert.Single(
+            ClauseProvenanceCheck.Problems(
+                [Traced("tradable", "long", "his own words", "no source found", "P1")], OneSource, paraphrased),
+            p => p.Contains("carries no quotation", StringComparison.Ordinal));
+
+        Assert.Contains("produced the readings", problem, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_sourced_clause_with_no_section_at_all_fails()
+    {
+        string headless = TracedDocument.Replace("### tradable, long", "### something else, long", StringComparison.Ordinal);
+
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems(
+                [Traced("tradable", "long", "his own words", "no source found", "P1")], OneSource, headless),
+            p => p.Contains("a table cell with nothing behind it", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_reworded_verdict_fails_rather_than_stopping_being_counted()
+    {
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems(
+                [Traced("tradable", "long", "sourced", "no source found", "P1")], OneSource, TracedDocument),
+            p => p.Contains("a verdict is one of", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_clause_the_detectors_run_and_the_document_does_not_trace_fails()
+    {
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems([], OneSource, TracedDocument),
+            p => p.Contains("nothing records what it rests on", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_row_tracing_a_clause_no_detector_runs_fails()
+    {
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems(
+                [Traced("invented-gate", "long", "no source found", "no source found")],
+                OneSource,
+                TracedDocument),
+            p => p.Contains("traces a clause the lab does not run", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_source_declared_and_never_cited_fails()
+    {
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems(
+                [],
+                [.. OneSource, new("S9", "A write-up", "somebody's summary", "a link")],
+                TracedDocument),
+            p => p.Contains("read and nothing rests on it", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_source_that_does_not_say_whose_words_it_is_fails()
+    {
+        Assert.Contains(
+            ClauseProvenanceCheck.Problems(
+                [],
+                [new("P1", "An interview", "a podcast", "a video id")],
+                TracedDocument),
+            p => p.Contains("rests on the trader or on somebody's reading", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void The_committed_trace_reconciles_against_the_detectors_today()
+    {
+        // Against the real document, because the eight above prove the reconciliation works and
+        // this proves it currently holds.
+        string document = RepositoryLayout.Read(
+            Path.Combine(RepositoryLayout.Root, ClauseProvenanceCheck.Document));
+
+        Assert.Empty(ClauseProvenanceCheck.Problems(
+            [
+                .. ClauseProvenanceCheck.Clauses(document, "### The long clauses", "long"),
+                .. ClauseProvenanceCheck.Clauses(document, "### The short clauses", "short"),
+            ],
+            ClauseProvenanceCheck.Sources(document),
+            document));
+    }
 }

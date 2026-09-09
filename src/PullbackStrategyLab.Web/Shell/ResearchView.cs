@@ -14,7 +14,7 @@ namespace PullbackStrategyLab.Web.Shell;
 /// ARCHITECTURE under the heading The question and was there first. So the layout here comes from
 /// the two sections that describe what this page is for, Two experiment families and Replay and
 /// holdout windows, and from the build order's own sentence about what phase 5 makes visible.
-/// see: The corpus is eight documents and a ninth requires retiring one
+/// see: The corpus is nine documents, and the ninth records where the strategy came from
 ///
 /// <b>There is no property here over both sides.</b> A version's long score and its short score are
 /// two figures and the type has no field that could hold one number over the pair, so the rule is

@@ -830,7 +830,7 @@ Settled at 5.2 on 2026-09-03, closing the row raised at 3.5. `DERIVED` means a s
 
 **The tier is a property of the figure rather than of the file the restatement lives in.** Of the seven figures each interval scenario carries, three depend on the resampling: the two bounds, and whether the interval clears zero, which follows from the lower one. Those are `FROZEN`. The other four do not: the point estimate is the mean of the nightly means, the row and session counts are sums, and the effective count follows a formula stated in the corpus and computable by anyone from the same series. Those stay `DERIVED`, because their route through the restatement is arithmetic that does not touch the scheme.
 
-**No fourth tier**, which is the other half of what the row asked. A tier meaning "restated but not independent" would be a second word for what `FROZEN` says, and the argument against a ninth document is the same argument one level down (see: The corpus is eight documents and a ninth requires retiring one).
+**No fourth tier**, which is the other half of what the row asked. A tier meaning "restated but not independent" would be a second word for what `FROZEN` says, and the argument against a ninth document is the same argument one level down (see: The corpus is nine documents, and the ninth records where the strategy came from).
 
 **What verifies the scheme is a behavioural test and is not an expectation at all.** `PairedIntervalTests` measures how often each scheme clears zero over three hundred authored null series per row, at twenty to two hundred and forty nights and against an AR(1) up to 0.9, and that is what caught the lattice rotation the restatement agreed with. A backing of that kind is named beside the assertion it holds up, which is the shape the source-scan register took at 5.8 (see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything).
 
@@ -1045,7 +1045,7 @@ Settled at 6.0(b). The architecture says a proposal carries the one thing that c
 **The signal library stays a spec section and gains a runtime table, reconciled in both directions**
 Settled at 6.0(b), because 6.2 moves the library into `signal_definition` and two statements of one library is how they start disagreeing. **`SCHEMA.md`'s Signals section is the specification and `signal_definition` is the runtime form of it.** The table is seeded from the section rather than authored beside it, and a check reconciles the two in both directions: a signal in the section and not the table fails, and a signal in the table and not the section fails.
 
-**The section is not retired, and the reason is the corpus rule rather than sentiment.** The library is where a signal's formula and its source columns are written down, which is what the point-in-time test is asserted against and what makes a signal proposable at all. Moving that into a store would put the specification somewhere no document review reads and somewhere a build session cannot diff (see: The corpus is eight documents and a ninth requires retiring one).
+**The section is not retired, and the reason is the corpus rule rather than sentiment.** The library is where a signal's formula and its source columns are written down, which is what the point-in-time test is asserted against and what makes a signal proposable at all. Moving that into a store would put the specification somewhere no document review reads and somewhere a build session cannot diff (see: The corpus is nine documents, and the ninth records where the strategy came from).
 
 **What the table adds is what a section cannot carry**: a status the admission test writes, the date a signal was admitted, and the correlation it was admitted against. Those are results rather than specification, and they are the half that belongs in a store.
 
@@ -1293,16 +1293,29 @@ A spec is edited cleanly and its prior text goes to the changelog. A record is c
 Restating writers in the architecture document would be the same fact in two places, which is how a corpus starts to drift and how sync passes start eating whole sessions.
 
 
-**The corpus is eight documents and a ninth requires retiring one**
-Five specs and three records. The artefact is gone: `SCREENS.html` was deleted at 4.12, which is the checkpoint it was scheduled to be retired at from the day the plan was written. Supersedes **The corpus is eight documents plus one artefact, and a ninth requires retiring one**, and the ceiling it sets is unchanged.
+**The corpus is nine documents, and the ninth records where the strategy came from**
+`SOURCES.md` is the ninth. Six specs and three records, and a tenth still requires retiring one or writing down why not. Supersedes **The corpus is eight documents and a ninth requires retiring one**, which held for four phases and whose argument against growth is unchanged and is why this entry has to carry a reason rather than a preference.
 
-A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+**What the corpus was missing is not a document, it is a subject.** Every one of the eight describes the lab: what it builds, what it stores, what it decided, what it did. None of them describes the thing the lab models. The strategy arrived through a person reading interviews and writing gate clauses, and the reading was never written down, so the gate set was authored and never traced. That is not a gap a ninth document was invented to fill; it is the gap that produced fourteen author's readings, and it was invisible for exactly as long as there was nowhere to record the alternative.
 
-**What retiring it cost is stated rather than assumed to be nothing.** The mockup was the only place four of the five screens were drawn, and the built pages have absorbed the layout of every one that exists. The fifth is the research ledger, which is 5.5's and is not built, so its drawing is gone and 5.5 designs from ARCHITECTURE's description instead. That is a real loss and it is carried as an obligation rather than left to be discovered at 5.5.
+**Why it is not distributed through the documents that exist.** ARCHITECTURE's gate boxes are the obvious home and are the wrong one twice over. A gate box says what the lab tests, and a quotation from a trader says what somebody else does; putting the second inside the first makes a document that is half specification and half evidence, and the reader has to work out which on every line, which is the same objection this corpus makes to strikethrough. And a citation spread across twenty boxes is a citation no check can read as a set, so the reverse direction, a source declared and nothing resting on it, could never be asserted.
 
-**What it does not cost is any statement about the method.** The one sentence in the mockup that was about how the lab works rather than about how a page looks, being that a twin pair is put to the model as "these look identical in everything I record and did opposite things, what would you want to see", is in ARCHITECTURE under "The question" and was before this. Checked rather than assumed, because a mockup deleted with a claim in it is the same defect as a decision deleted with reasoning in it.
+**Why it is a spec rather than a record.** A record is corrected by a new dated entry, and a document carrying two answers to "what does this clause rest on" cannot be read by a check. `clause-provenance` reads it as the current statement, so it is edited cleanly and its prior text goes to `CHANGELOG.md` like every other spec.
 
-**The rule that made it deletable is that a mockup and a built page are two answers to one question.** SCREENS drew a journal with a plan-against-actual column and the built one has that column too; the day the two disagreed, nothing would have said which was the specification. An artefact is retired when the thing it stands in for exists, and the alternative is a document that is either duplicated or wrong.
+**What it costs, stated rather than assumed to be nothing.** One more document in the read order, and one more place a clause change has to be reflected: moving a threshold now means editing the clause table as well as the gate box, and a session that edits one and not the other turns the suite red rather than drifting quietly. That is the cost being bought, and it is the point.
+
+**A tenth is not licensed by this.** The argument here is that the source material is a subject the corpus lacked, not that a subject nobody has covered justifies a document. A corpus of the same shape grew past twenty on a previous project one defensible addition at a time.
+
+**A clause states where it came from, and a sourced clause quotes rather than paraphrases**
+Every one of the twenty gate clauses carries a verdict in `SOURCES.md` saying whether its form and its threshold rest on the trader's own words, on nothing, or on a clause that compares words and has no number. A clause claiming his own words names the source and carries a quotation of it.
+
+**Quotation rather than description, because description is what produced the readings.** A sentence saying what a trader does is indistinguishable, once written down, from a sentence saying what the writer took him to mean, and the second is how a threshold nobody chose acquires the authority of one somebody stated. The 5% daily-range floor is the instance: it is his figure, it is stated twice, and he says in the same breath that it is not a hard rule. A description of that sentence would have carried the number and dropped the qualifier, which is what the lab has.
+
+**The verdict vocabulary is closed and the count is derived from the table.** Four words and no others, because a reworded cell stops being counted rather than failing, and `stated-counts` derives the sixteen sourced forms and the four sourced thresholds from the rows rather than reading a figure somebody typed beside them. That is the defect this corpus has shipped repeatedly one level down: a number that is easy to state and derived from nothing.
+
+**Reconciled in every direction, because a citation goes missing quietly.** A clause the detectors run and the document does not trace, a row naming a clause no detector runs, an identifier resolving to no source, a source declared and cited nowhere, and a sourced clause whose section carries no quotation are all failures. A trace that is only checked in one direction is a trace that can be emptied from the other.
+
+**What the check does not assert is whether a quotation supports the verdict beside it.** That is a reading, and a check asserting readings would be asserting its author's, which is the thing being repaired. What is asserted is that the citation is present, resolves, and is accompanied by the source's own words.
 
 **Phase 2 thresholds are calibrated once against nightly counts, before phase 3**
 At that moment no forward return exists anywhere in the store, so there is nothing to fit toward. It is a row count and nothing else. Recorded as a dated event with before and after counts. After phase 3 begins those thresholds move only through the normal proposal route.
@@ -1328,6 +1341,19 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**The corpus is eight documents and a ninth requires retiring one**
+Five specs and three records. The artefact is gone: `SCREENS.html` was deleted at 4.12, which is the checkpoint it was scheduled to be retired at from the day the plan was written. Supersedes **The corpus is eight documents plus one artefact, and a ninth requires retiring one**, and the ceiling it sets is unchanged.
+
+Superseded on 2026-09-09 by **The corpus is nine documents, and the ninth records where the strategy came from**. The ceiling moved by one and the rule that moves it is unchanged: a document is added by retiring one or by writing down why not, and the reasoning for why not is in the superseding entry.
+
+A corpus of the same shape grew past twenty on a previous project and the documentation tax stopped scaling with the size of the work.
+
+**What retiring it cost is stated rather than assumed to be nothing.** The mockup was the only place four of the five screens were drawn, and the built pages have absorbed the layout of every one that exists. The fifth is the research ledger, which is 5.5's and is not built, so its drawing is gone and 5.5 designs from ARCHITECTURE's description instead. That is a real loss and it is carried as an obligation rather than left to be discovered at 5.5.
+
+**What it does not cost is any statement about the method.** The one sentence in the mockup that was about how the lab works rather than about how a page looks, being that a twin pair is put to the model as "these look identical in everything I record and did opposite things, what would you want to see", is in ARCHITECTURE under "The question" and was before this. Checked rather than assumed, because a mockup deleted with a claim in it is the same defect as a decision deleted with reasoning in it.
+
+**The rule that made it deletable is that a mockup and a built page are two answers to one question.** SCREENS drew a journal with a plan-against-actual column and the built one has that column too; the day the two disagreed, nothing would have said which was the specification. An artefact is retired when the thing it stands in for exists, and the alternative is a document that is either duplicated or wrong.
 
 **The minimum sample is 262 effective observations, ratified at two points and 90% power**
 A sample size has three inputs: the difference worth detecting, the confidence demanded, and the dispersion of the statistic. Two of those are judgements and belong to a person. The third is a fact about the market, and until the decision this supersedes nothing in the corpus had measured it.
