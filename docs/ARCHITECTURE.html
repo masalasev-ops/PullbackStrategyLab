@@ -870,6 +870,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>RegimeLabeler</b></td><td>Nightly 18:15</td><td>Market mood from index trend and breadth</td></tr>
 <tr><td><b>LongSetupDetector</b></td><td>Nightly 18:20</td><td>The long pullback pattern, ten checks, all results kept</td></tr>
 <tr><td><b>ShortSetupDetector</b></td><td>Nightly 18:20</td><td>The short bounce pattern, ten checks, all results kept</td></tr>
+<tr><td><b>GenerationOneDetector</b></td><td>From the switch night</td><td>Generation 1's two gate lists over a night's universe as SOURCES.md traces them, proved against the golden fixture and writing nothing until 7.11</td></tr>
 <tr><td><b>SignalVectorizer</b></td><td>Nightly 18:25</td><td>Freezes the point-in-time signal row that makes replay possible</td></tr>
 <tr><td><b>SetupCapper</b></td><td>Nightly 18:28</td><td>Truncates the night to 60, forty long and twenty short</td></tr>
 <tr><td><b>VariantResolver</b></td><td>Nightly 18:30</td><td>Resolves which rule versions are live tonight</td></tr>
@@ -914,7 +915,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 56 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 57 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -1006,7 +1007,7 @@ tr:hover td{background:#f4f2ec}
 <td>Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling, and proposal hit rate compared across pack versions.</td>
 <td>The pack built from the fixture is byte-stable across runs, so a pack change is a deliberate change. The planted null signal is present. No component outside the proposal store accepts a write from the researcher.</td></tr>
 
-<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister</td>
+<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector</td>
 <td>The morning screen saying why a slot that never ran did not. Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers, and the switch night with generation 0's record kept beside it.</td>
 <td>A weekday the guard refused reconciled to thirty-two rows and none missing. Every clause of generation 1 still naming its source, and every row read against the gate list of its own night across the switch.</td></tr>
 </table>

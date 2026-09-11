@@ -19244,3 +19244,69 @@ Carried:    **The operator's half is not met**: the thirty-eighth task, `signals
             before 7.4 with the eleven, which is what the replay at 7.11 counts over.
 
             **This session committed code and may not sign it off.**
+
+## 7.5 — 2026-09-11 — phase-7-5-generation-one — generation 1's gate lists written from the trace, built and proved over the fixture, registered nowhere
+
+Built:      **Generation 1's two gate lists, clause by clause from `SOURCES.md`**, in a new section of
+            that document with two tables in the trace's own verdict vocabulary: nine long clauses and
+            ten short. Where the source gives a form and a number both ship; where it gives a form alone
+            generation 0's number is carried and marked the author's; `moves-enough` is recorded and
+            never required on his own qualifier. The ladders are his three averages without generation
+            0's price clause. `dip-shape` keeps the 40% depth as the author's and loses the two-to-seven
+            session window no source describes. `reached-ceiling` asks two levels to coincide rather than
+            any one to serve. `averages-squeezing` is read on the weekly averages his observation is
+            about. **`weekly-trend` is new on both sides**, the week closing above its 21-week average on
+            a long and below it on a short, with a section quoting him. `trigger-near` and `exit-tight`
+            leave selection because their sourced forms are tests at the entry minute, which is 7.8's;
+            `held-floor` and `no-reclaim` are recorded because his reclaim happens inside the session he
+            enters. The short side's unsourced clauses are the long side's mirrored and marked, on his own
+            word that he flips the long side for shorts. The floor loses `moves-enough`.
+
+            **A decision records the four choices the trace does not force by itself**, because each is
+            one a later session could reasonably make otherwise and none would show in a count.
+
+            **GenerationOneDetector** runs both lists over a night's universe through generation 0's own
+            evidence methods and writes nothing; a clause both generations share is generation 0's check
+            called. It is in the component catalogue and registered with the container, and no verb
+            dispatches it until 7.11. The vectorizer freezes the two quantities generation 1 compares that
+            7.4 did not cover, the weekly squeeze ratio and the confluence distance, so thirteen sourced
+            candidates are frozen in all. **`clause-provenance` widens to generation 1**: the same six rules
+            over its two tables against its lists, in both directions.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,260 tests**, up from 1,252.
+
+Measured:   **Over the golden fixture, clause by clause.** Every generation 1 clause on both sides carries
+            a count over the names each side examined and a verdict on each of the three names the fixture
+            holds a year for, HOOD and IESC long and INTC short: 53 expectations at 7.5. **Eighteen of the
+            verdicts are `DERIVED`**, restated outside the solution by a new `--generation1` mode of
+            `tools/derive-indicators.py` that reads the capture alone and decides the clauses it can reach,
+            being the ladders, `tradable`, `moves-enough`, the reclaim, `contraction`, the weekly screen,
+            the weekly squeeze and the confluence; all eighteen agreed before any expectation was written,
+            and so did the six new signal values. The verdicts needing scans, fundamentals or the pullback
+            geometry are `FROZEN`, and so are the counts, which run over a population of mostly one-session
+            names and say so in their notes.
+
+            **What generation 1 makes of the fixture's night**, stated per side: long, 16 recorded against
+            generation 0's 1 and **2 passing every gating clause against generation 0's none**; short, 8
+            recorded and none passing. The long side's wider record is `moves-enough` leaving the floor.
+            Eleven existing expectations moved, each noted: the frozen signal and store counts by six, the
+            catalogue by one, the library and admission counts by two, and the family-wise threshold to
+            0.05 over 54.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.4's after, 157 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `fc7cd0d`
+            with the working tree dirty: GREEN, phase 7, **158 claims, 158 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,712, 1,260 tests. The new claim is GenerationOneDetector in the catalogue.
+
+Found:      **The trace answered four clauses less than the decision needed**, being which clauses a session
+            can test only once it has opened, what to do with a short clause no source mentions, and what
+            the floor is once a floor clause stops screening. They are one decision rather than four
+            silences.
+
+            **Two names pass generation 1 on a night generation 0 passed none**, over a fixture built for
+            generation 0. That is the first figure in the corpus that is not the entry-level mismatch, and
+            it is one night of thirty names, so it is a reading and not a finding.
+
+Carried:    **No operator's half.** Generation 1 runs nowhere live until 7.11.
+
+            **This session committed code and may not sign it off.**

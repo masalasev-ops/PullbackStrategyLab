@@ -3014,3 +3014,13 @@ Why:  7.4 gives admit-signals a weekly slot, because its answer moves with the p
 Was:  The `slot-roster` row's Asserts cell ending "in both directions |"
 Now:  The same cell, followed by "And every stage the worker advertises that no slot runs is named, as an operator verb RUNBOOK lists or as a stage that is not the night's".
 Why:  7.4's reverse reconciliation. Until it, the check read from the slots to the worker only, so four stages advertised and scheduled by nothing read as fine.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Generation 1's selection keeps what the evening can decide, and the short side's unsourced clauses are the long side's mirrored
+Was:  "The gate set 7.0(c) writes from `SOURCES.md` clause by clause, implemented beside generation 0's and run against the golden fixture only."
+Now:  "The gate set 7.0(c) writes from `SOURCES.md` clause by clause, implemented as GenerationOneDetector beside generation 0's and run against the golden fixture only."
+Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 56 components are listed by layer," and the P7 Builds cell "NightReconciler, CheckRegister"
+Now:  "The 57 components are listed by layer," and "NightReconciler, CheckRegister, GenerationOneDetector"
+Why:  GenerationOneDetector joins the catalogue beside the two detectors it will replace on the switch night.

@@ -922,6 +922,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(ReconciliationFigures());
         measurements.AddRange(CheckRegisterFigures());
         measurements.AddRange(BelowFloorFigures());
+        measurements.AddRange(GenerationOneFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -3245,6 +3246,50 @@ public sealed class PhaseReplay : IDisposable
                 night.Ran + night.NeverRan + night.NotClean + night.Unobservable == night.Slots.Count
                     ? "every slot" : "not every slot"),
         ];
+    }
+
+    /// <summary>
+    /// Generation 1's gate lists over the fixture's night, from 7.5, clause by clause and never pooled.
+    ///
+    /// <b>Two populations and they are stated apart.</b> The counts per clause are over every universe
+    /// member the side examined, which on this fixture is mostly names with one captured session and no
+    /// averages, so most clauses fail for want of an input and the counts are regression figures. The
+    /// verdicts per clause are over the three names the fixture carries a full year for, HOOD and IESC
+    /// long and INTC short, and those are what an independent derivation can reach.
+    /// </summary>
+    private IReadOnlyList<Measurement> GenerationOneFigures()
+    {
+        GenerationOneNight night = new GenerationOneDetector(_connections, _options).Evaluate(AsOf);
+        var figures = new List<Measurement>();
+
+        string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        foreach ((string direction, IReadOnlyList<string> checks) in
+                 new[] { (SetupDirection.Long, GenerationOneChecks.Long), (SetupDirection.Short, GenerationOneChecks.Short) })
+        {
+            IReadOnlyList<GenerationOneVerdict> side = direction == SetupDirection.Long ? night.Long : night.Short;
+
+            figures.Add(new Measurement($"generation1.{direction}.examined", Count(side.Count)));
+            figures.Add(new Measurement($"generation1.{direction}.recorded", Count(night.RecordedOn(direction))));
+            figures.Add(new Measurement($"generation1.{direction}.candidates", Count(night.CandidatesOn(direction))));
+
+            foreach (string check in checks)
+            {
+                figures.Add(new Measurement($"generation1.{direction}.passed.{check}", Count(night.PassedOn(direction, check))));
+            }
+        }
+
+        foreach ((string ticker, string direction) in new[] { ("HOOD", SetupDirection.Long), ("IESC", SetupDirection.Long), ("INTC", SetupDirection.Short) })
+        {
+            GenerationOneVerdict verdict = (direction == SetupDirection.Long ? night.Long : night.Short).Single(v => v.Ticker == ticker);
+
+            foreach (CheckResult result in verdict.Results)
+            {
+                figures.Add(new Measurement($"generation1.{ticker}-{direction}.{result.Name}", result.Passed ? "pass" : "fail"));
+            }
+        }
+
+        return figures;
     }
 
     /// <summary>

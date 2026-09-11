@@ -769,6 +769,99 @@ for a paired comparison and is a departure worth recording as one.
 
 ---
 
+## Generation 1's clauses
+
+Generation 1's two gate lists, written from this trace clause by clause at 7.5 and run by nothing
+live until the switch night at 7.11. **The verdict columns are the trace's own**, in the vocabulary
+the twenty clauses above carry, and say what each generation 1 clause rests on; the last column says
+what generation 1 does with it. Three rules produce every row (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+A form and a number from the source ship together. A form with no number ships with generation 0's
+number carried and marked as the author's. A stated qualifier makes the clause recorded rather than
+screening. Two clauses leave selection because their sourced forms are tests at the minute of entry,
+and a short clause no source states is the long side's sourced form mirrored and marked as the
+author's, on his own word that he trades shorts by flipping the long side around (`P1`, 15:14)
+(see: Generation 1's selection keeps what the evening can decide, and the short side's unsourced clauses are the long side's mirrored).
+
+### Generation 1's long clauses
+
+| Clause | Form | Threshold | Bearing on | Generation 1 |
+|---|---|---|---|---|
+| `tradable` | his own words, in part | no source found | `P1` `P3` `S3` | gating, generation 0's clause unchanged and its two floors the author's |
+| `moves-enough` | his own words | his own words | `P2` `P3` | recorded and never required, because he sets the figure aside in the same breath he states it |
+| `uptrend` | his own words | carries no threshold | `P1` `P3` | gating, his ladder of the three averages and nothing else, generation 0's price clause dropped |
+| `thrust` | his own words | no source found | `P3` `S3` | gating, generation 0's clause unchanged and the ten-session window the author's |
+| `dip-shape` | his own words, in part | no source found | `P1` `P2` | gating, no deeper than generation 0's 40% carried as the author's, and no length window, which no source describes |
+| `held-floor` | his own words, in part | no source found | `P1` `S1` | recorded and never required, being the session's undercut and reclaim of the 9-day average; his reclaim is at the minute of entry, which is 7.8's |
+| `contraction` | his own words | no source found | `P1` `P2` `S2` `S3` | gating, generation 0's clause unchanged and the twenty-day window the author's |
+| `cluster` | his own words | no source found | `P1` `P3` | recorded and never required, as in generation 0 |
+| `weekly-trend` | his own words, in part | carries no threshold | `P1` `P2` | gating, new: the week closing at or above its 21-week average |
+
+`trigger-near` and `exit-tight` are not on the list. Both of their sourced forms are tests at the
+minute of entry, the chase filter measured from the session's own low and the stop measured against
+the tighter of half the range and 5%, and both move to the execution rule at 7.8.
+
+### Generation 1's short clauses
+
+| Clause | Form | Threshold | Bearing on | Generation 1 |
+|---|---|---|---|---|
+| `tradable-shortable` | no source found | no source found | `P1` `P3` | gating, generation 0's clause unchanged, being whether a name can be shorted at all rather than a strategy rule |
+| `moves-enough` | his own words | his own words | `P2` `P3` | recorded and never required, on the long side's reason |
+| `downtrend` | his own words | carries no threshold | `P1` `P3` | gating, his "Lag" ladder and nothing else, generation 0's price clause dropped |
+| `averages-squeezing` | his own words | no source found | `P1` `P2` | gating, read on the weekly averages his observation is about, generation 0's ratio below one over twenty periods carried as the author's |
+| `thrust` | no source found | no source found | `P1` `P3` | gating, generation 0's mirror of the long scans, the author's |
+| `bounce-shape` | no source found | no source found | `P1` | gating, the author's mirror of generation 1's `dip-shape` |
+| `reached-ceiling` | his own words | no source found | `P1` | gating, two levels within half a daily range of the price, being the levels coinciding; the half is the author's |
+| `no-reclaim` | no source found | no source found | `P1` | recorded and never required, the author's mirror of generation 1's `held-floor` |
+| `cluster` | no source found | no source found | `P3` | recorded and never required, as in generation 0 |
+| `weekly-trend` | his own words | carries no threshold | `P1` `P2` | gating, new: the week closing below its 21-week average |
+
+`exit-tight` is not on the list, on the long side's reason.
+
+**The recording floor moves with the lists.** Generation 1 records a name that clears `tradable` or
+`tradable-shortable`, its ladder and `thrust`, and not `moves-enough`, which no longer screens. So it
+records the slower names generation 0 read and discarded, which is what his qualifier asks for and
+what the flagged count at 7.11 has to be measured over.
+
+### weekly-trend, long
+
+**What he specifies.** The weekly chart as a confirmation, and a base that never loses the weekly
+21 EMA.
+
+> "Sometimes the weekly really gives you a clearer picture compared to the daily."
+> `P1`, 1:37:50
+
+> "never violates the weekly 21 EMA"
+> `P2`, on the SMCI base
+
+**What generation 1 implements.** The week in progress, closing at the setup session, at or above
+its 21-week exponential average of weekly closes.
+
+**Where they part.** The reference is his; the reading of it as a close against the average rather
+than an intraweek low is the author's, which is why the form is sourced in part. He names the chart
+and the average and states no number, and none is needed: the clause compares a close with an
+average.
+
+### weekly-trend, short
+
+**What he specifies.** The weekly chart as the reason to take a short, and the instrument he says
+keeps him out of a bad one.
+
+> "For SMCI, one of the main reasons that I would really want to focus on SMCI is the weekly chart,
+> as the weekly chart is really on a downtrend and the key moving averages are really close to each
+> other."
+> `P2`, 1:50:10
+
+> "Sometimes the weekly really gives you a clearer picture compared to the daily. [...] Sometimes I
+> make some mistakes when I'm shorting the stocks."
+> `P1`, 1:37:50 and 1:36:47
+
+**What generation 1 implements.** The week in progress closing below its 21-week exponential
+average, as the mirror of the long side's screen and the reading of "on a downtrend" the lab can
+compute on the evening.
+
+**Where they part.** He reads the whole weekly picture and the lab reads one close against one
+average. That is narrower than his instrument, and it is the part of it a rule can state.
+
 ## What the sources specify and the lab has no gate for
 
 Not clauses the lab implements badly. Things the sources state and the lab does not test at all, each

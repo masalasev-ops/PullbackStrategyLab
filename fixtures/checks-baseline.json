@@ -101,6 +101,8 @@
     },
     "clause-provenance": {
       "scopes": {
+        "generation 1 clause rows reconciled against its detector's lists, in both directions": 19,
+        "generation 1 sourced clauses required to carry a quotation": 14,
         "clause rows reconciled against the detectors' own lists, in both directions": 20,
         "source identifiers resolved against the source table": 40,
         "sources declaring whose words they are": 6,

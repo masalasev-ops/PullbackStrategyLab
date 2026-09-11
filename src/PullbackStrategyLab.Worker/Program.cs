@@ -76,6 +76,10 @@ public static class Program
         builder.Services.AddSingleton<CheckRecomputer>();
         builder.Services.AddSingleton<LongSetupDetector>();
         builder.Services.AddSingleton<ShortSetupDetector>();
+
+        // Generation 1's detector, from 7.5. Registered so the switch night at 7.11 has it to hand,
+        // and dispatched by no verb until then: it writes nothing and registers nothing.
+        builder.Services.AddSingleton<GenerationOneDetector>();
         builder.Services.AddSingleton<ScoreboardBuilder>();
         builder.Services.AddSingleton<CeilingCalculator>();
         builder.Services.AddSingleton<ControlSampler>();

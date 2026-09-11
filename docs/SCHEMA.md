@@ -828,6 +828,12 @@ the operator runs it (see: Generation 1's baseline is written clause by clause f
 | `entry_ceiling` | the lesser of adr_20 / 2 and 0.05 | `indicator_daily.adr_20` | candidate | exit-tight, long |
 | `weekly_ema_gap_9_21` | (9-week − 21-week exponential average) / the 21-week, over weekly closes: the last adjusted close of each Monday-to-Sunday week, the week in progress closing at the setup session, across the last 300 sessions stored | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | averages-squeezing, short |
 | `weekly_ema_21_distance` | (the week's adjusted close − the 21-week exponential average) / that average, over the same weekly closes | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | dip-shape, long |
+| `weekly_squeeze_ratio` | the absolute 9-week less 21-week gap over its mean across the last 20 weeks, each week's gap over every weekly close up to it, on the weekly closes weekly_ema_gap_9_21 reads. Below one is a squeeze. The twenty and the one are carried from generation 0 as the author's | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | averages-squeezing, short |
+| `ceiling_confluence_ranges` | the second-nearest of the 21-day average, the 50-day average and the anchored average price, over adr_20 × close, which is the levels coinciding. Absent where fewer than two could be measured | `daily_bar.adj_close`, `daily_bar.close`, `indicator_daily.ema_21`, `indicator_daily.ema_50`, `indicator_daily.adr_20`, `anchored_vwap.value` | candidate | reached-ceiling, short |
+
+*The last two arrived at 7.5, being the quantities generation 1's `averages-squeezing` and
+`reached-ceiling` compare: its squeeze read on the weekly chart his observation is about, and its
+ceiling read as levels that coincide rather than any one of them serving.*
 
 *Two lookbacks are the author's and say so in their formulas: the five sessions a slope is taken over
 and the forty a base is measured across. Neither is a threshold: a gate written over either still has
