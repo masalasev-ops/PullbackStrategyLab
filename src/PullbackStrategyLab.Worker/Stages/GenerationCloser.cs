@@ -51,6 +51,29 @@ public sealed class GenerationCloser
     /// <summary>What the next baseline is for. Typed, because the baseline is the arm and never settles.</summary>
     public const string TargetFlag = "--target";
 
+    /// <summary>
+    /// Registers generation 1's baseline with the definition and target this checkpoint writes, from
+    /// 7.11, so the operator types the name and nothing else. The definition names both families,
+    /// which is what makes generation 1's baseline whole: a version of it differs in one family and
+    /// never in both.
+    /// see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole
+    /// </summary>
+    public const string GenerationOneFlag = "--generation-one";
+
+    /// <summary>Generation 1's baseline in words, naming the selection gate set and the execution rule.</summary>
+    public const string GenerationOneDefinition =
+        "generation 1: selection by the gate lists SOURCES.md traces clause by clause, being the weekly screen, "
+        + "the ladders, the thrust, the dip or bounce, contraction, the ceiling's confluence and the tradable "
+        + "floors, with moves-enough, held-floor, no-reclaim and cluster recorded and never required; execution "
+        + "by the entry rule, a flush into the hourly 9 and 21 averages taken on the first break of the previous "
+        + "candle, the stop at the session's extreme switching to the entry candle's past 2% and refused past the "
+        + "tighter of half the daily range and 5%, and by the exits, 15% trims at 3R and 5R, the long trail on "
+        + "the 9-day average and the short held three sessions";
+
+    /// <summary>What generation 1's baseline is for. Typed, as every baseline's is, because the baseline never settles.</summary>
+    public const string GenerationOneTarget =
+        "the reference every version of generation 1 is differenced against";
+
     /// <summary>Why the act refuses an empty register.</summary>
     public const string NothingToClose =
         "the register holds no version, so there is no generation to close. The first baseline is "
@@ -80,8 +103,9 @@ public sealed class GenerationCloser
         // The name comes first and is never a flag's value: taking the first bare word anywhere would
         // read the definition as the name when the name is left off.
         string? nextBaseline = args.Length > 0 && !args[0].StartsWith("--", StringComparison.Ordinal) ? args[0] : null;
-        string? definition = Flag(args, DefinitionFlag);
-        string? target = Flag(args, TargetFlag);
+        bool generationOne = args.Contains(GenerationOneFlag, StringComparer.Ordinal);
+        string? definition = Flag(args, DefinitionFlag) ?? (generationOne ? GenerationOneDefinition : null);
+        string? target = Flag(args, TargetFlag) ?? (generationOne ? GenerationOneTarget : null);
         bool dryRun = args.Contains(DryRunFlag, StringComparer.Ordinal);
 
         if (string.IsNullOrWhiteSpace(nextBaseline)
@@ -90,7 +114,8 @@ public sealed class GenerationCloser
         {
             Console.Error.WriteLine(
                 $"{Name}: name the next generation's baseline and say what it is. usage: {Name} <variant-id> "
-                + $"{DefinitionFlag} \"<what it is>\" {TargetFlag} \"<what it is for>\" [{DryRunFlag}]");
+                + $"{DefinitionFlag} \"<what it is>\" {TargetFlag} \"<what it is for>\" [{DryRunFlag}], or "
+                + $"{Name} <variant-id> {GenerationOneFlag} [{DryRunFlag}] for generation 1's baseline");
             return 2;
         }
 

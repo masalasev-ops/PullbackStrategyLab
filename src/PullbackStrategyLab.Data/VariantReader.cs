@@ -141,7 +141,7 @@ public sealed class VariantReader
 /// version is admitted in this generation, so on both this is null; the store carries the same
 /// condition as five CHECK clauses, because a row holding three of the five would read as a version
 /// and could not be scored as one.
-/// see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+/// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
 /// </summary>
 public sealed record MovedThreshold(
     string Direction, string Gate, string ThresholdName, decimal From, decimal To)

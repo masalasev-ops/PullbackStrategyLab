@@ -199,6 +199,10 @@ public sealed class PhaseReplay : IDisposable
     public ScoreboardResult BuildScoreboard() =>
         new ScoreboardBuilder(_connections, Logger(), _clock, _options).Build(AsOf);
 
+    /// <summary>The replay harness over this store with generation 0's baseline rule, for one side.</summary>
+    public ReplayScreening ScreenTheBaseline(string direction) =>
+        new ReplayHarness(_connections, Logger(), _clock, _options).Screen(SelectionRule.For(direction), AsOf);
+
     /// <summary>The short detector, likewise.</summary>
     public DetectResult DetectShort() =>
         new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
@@ -240,227 +244,7 @@ public sealed class PhaseReplay : IDisposable
             return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
         }
 
-        // 1. The tradable list, from the captured symbol list screened against the captured
-        //    market day, with the lab's own floors. The screen's verdict on this market day.
-        UniverseBuildResult screened = Build(_options).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(UniverseBuilder.Name, screened.CallsUsed, screened.RowsWritten, screened.Outcome.ToStorageText()));
-        Record("universe.listedCommonStock", screened.ListedCommonStock);
-        Record("universe.screened", screened.Screened);
-        Record("universe.sessionsScreened", screened.SessionsScreened);
-        Record("universe.survivors", screened.Survivors);
-
-        // 1b. The same stage again with the liquidity floor lifted, which is the universe the
-        //     rest of the replay runs against.
-        //
-        //     The floor is a median over twenty sessions and the fixture holds one market day, so
-        //     applying it here screens on a number that is not the number the floor means. It
-        //     rejected the fixture's own control on a light day whose twenty-session median
-        //     clears the floor three times over, and a fixture that quietly loses a name it was
-        //     built to check is worse than one that admits more names than the lab would trade.
-        //     So the screen's verdict is measured above and reported, and the run continues
-        //     against the wider list. Nothing downstream depends on the floor: it exists to keep
-        //     the per-ticker backfill inside the call budget, and a replay has no budget.
-        UniverseBuildResult admitted = Build(WithoutTheLiquidityFloor()).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(UniverseBuilder.Name + " (floor lifted)", admitted.CallsUsed, admitted.RowsWritten, admitted.Outcome.ToStorageText()));
-        Record("universe.admittedWithoutTheLiquidityFloor", admitted.Survivors);
-        Record("universe.rejectedByTheLiquidityFloor", admitted.Survivors - screened.Survivors);
-
-        // 2. The history seed, RUNBOOK's step 4 narrowed to the names the fixture holds.
-        //
-        //    Narrowed again to the ones the screen actually admitted. A bar carries a foreign key
-        //    to security and a name the screen rejected has no security row, so backfilling one
-        //    is refused by the store rather than quietly stored: history exists for names the lab
-        //    can trade. Which fixture names those are is a measurement of its own, because a
-        //    ticker silently dropping out of the fixture is how a diff stays green over a
-        //    shrinking subject.
-        IReadOnlyList<string> members = UniverseMembers();
-        IReadOnlyList<string> seedable = FixtureTickers.All
-            .Where(members.Contains).Order(StringComparer.Ordinal).ToArray();
-        IReadOnlyList<string> outside = FixtureTickers.All
-            .Where(t => !members.Contains(t)).Order(StringComparer.Ordinal).ToArray();
-
-        Record("fixture.tickersInUniverse", seedable.Count);
-        measurements.Add(new Measurement("fixture.tickersOutsideUniverse",
-            outside.Count == 0 ? "none" : string.Join(" ", outside)));
-
-        var bars = new DailyBarIngestor(Vendor, _connections, Logger(), _clock, _options);
-        BackfillResult seed = bars.BackfillAsync(BackfillSelection.Named, seedable, AsOf)
-            .GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(DailyBarIngestor.BackfillName, seed.CallsUsed, seed.RowsWritten, seed.Outcome.ToStorageText()));
-        Record("backfill.seed.selected", seed.Selected);
-        Record("backfill.seed.barsPublished", seed.BarsPublished);
-        Record("backfill.seed.inserted", seed.Inserted);
-
-        // 3. The night proper, in RUNBOOK's order. Actions first, so a demand raised tonight is
-        //    outstanding when the averages are computed and only a refetch made afterwards
-        //    clears it.
-        ActionIngestResult actions = new ActionIngestor(Vendor, _connections, Logger(), _clock, _options)
-            .IngestAsync(AsOf).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(ActionIngestor.Name, actions.CallsUsed, actions.RowsWritten, actions.Outcome.ToStorageText()));
-        Record("actions.splitsPublished", actions.SplitsPublished);
-        Record("actions.dividendsPublished", actions.DividendsPublished);
-        Record("actions.inUniverse", actions.InUniverse);
-        Record("actions.inserted", actions.Inserted);
-        Record("actions.demandsRaised", actions.DemandsRaised);
-        Record("actions.tickersBlocked", actions.TickersBlocked);
-
-        // 4. The whole market's closes for the session. The fixture tickers already hold this
-        //    date from their histories, so most of what comes back is already stored unchanged,
-        //    which is the idempotence property stated as a number.
-        DailyBarIngestResult bulk = bars.IngestAsync(AsOf).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(DailyBarIngestor.Name, bulk.CallsUsed, bulk.RowsWritten, bulk.Outcome.ToStorageText()));
-        Record("bars.published", bulk.Published);
-        Record("bars.inUniverse", bulk.InUniverse);
-        Record("bars.inserted", bulk.Inserted);
-        Record("bars.unchanged", bulk.Unchanged);
-        Record("bars.corrections", bulk.Corrections);
-
-        // 5. The refetch that answers tonight's demands.
-        BackfillResult rebuild = bars.BackfillAsync(BackfillSelection.TickersWithAnOpenDemand, [], AsOf)
-            .GetAwaiter().GetResult();
-
-        stages.Add(new StageRun("backfill --rebuild", rebuild.CallsUsed, rebuild.RowsWritten, rebuild.Outcome.ToStorageText()));
-        Record("backfill.rebuild.selected", rebuild.Selected);
-        Record("backfill.rebuild.inserted", rebuild.Inserted);
-
-        // 6. The three trackers.
-        IndexIngestResult index = new IndexIngestor(Vendor, _connections, Logger(), _clock, _options)
-            .IngestAsync(AsOf).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(IndexIngestor.Name, index.CallsUsed, index.RowsWritten, index.Outcome.ToStorageText()));
-        Record("index.symbols", index.Symbols);
-        Record("index.barsPublished", index.BarsPublished);
-        Record("index.inserted", index.Inserted);
-
-        // 7. The averages, which refuse for anything short of the warm-up or carrying a demand
-        //    the window does not account for.
-        IndicatorResult indicators = new IndicatorEngine(_connections, Logger(), _clock, _options).Compute(AsOf);
-
-        stages.Add(new StageRun(IndicatorEngine.Name, indicators.CallsUsed, indicators.RowsWritten, indicators.Outcome.ToStorageText()));
-        Record("indicators.members", indicators.Members);
-        Record("indicators.computed", indicators.Computed);
-        Record("indicators.recomputed", indicators.Recomputed);
-        Record("indicators.shortOfWarmup", indicators.ShortOfWarmup);
-        Record("indicators.blocked", indicators.Blocked);
-        Record("indicators.demandsSatisfied", indicators.DemandsSatisfied);
-
-        measurements.Add(new Measurement("fixture.actionsObserved", NamesFrom(
-            "SELECT DISTINCT ticker FROM corporate_action ORDER BY ticker;")));
-        measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
-            "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
-
-        // 8. The six mover scans, which the thrust signals read.
-        ScanResult scans = new ScanEngine(_connections, Logger(), _clock, _options).Scan(AsOf);
-
-        stages.Add(new StageRun(ScanEngine.Name, 0, scans.RowsWritten, scans.Outcome.ToStorageText()));
-        Record("scans.members", scans.Members);
-        Record("scans.measured", scans.Measured);
-        Record("scans.shortOfHistory", scans.ShortOfHistory);
-        Record("scans.hits", scans.Hits);
-        Record("scans.inserted", scans.Inserted);
-
-        // 3.9(d). Every hit the walk writes carries an observation stamp, and every one of them is
-        // inside the session's own day. Two counts rather than one, because a column populated with
-        // an instant outside the session would satisfy "not null" and be worse than a null.
-        Record("scans.stamped", Scalar(
-            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL"));
-        Record("scans.stampedInsideTheSession", Scalar(
-            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL "
-            + "AND observed_at <= @end_of_session"));
-
-        // 9. The ladder grade, which writes a later observation of the same session rather than
-        //    updating the row the engine wrote.
-        TierResult tiers = new TierClassifier(_connections, Logger(), _clock, _options).Classify(AsOf);
-
-        stages.Add(new StageRun(TierClassifier.Name, 0, tiers.RowsWritten, tiers.Outcome.ToStorageText()));
-        Record("tiers.members", tiers.Members);
-        Record("tiers.graded", tiers.Graded);
-        Record("tiers.rising", tiers.Rising);
-        Record("tiers.mixed", tiers.Mixed);
-        Record("tiers.falling", tiers.Falling);
-        Record("tiers.noIndicators", tiers.NoIndicators);
-
-        // 10. The sector lookup, which three later stages read and which used to run after all
-        //     three of them. RUNBOOK scheduled it at 19:00 while `clusters` at 18:15 and both
-        //     detectors at 18:20 read what it writes, so on a live night a name newly surfaced by a
-        //     scan had no industry when the cluster count was taken and no market capitalisation
-        //     when `tradable-shortable` decided. Neither one errors: the cluster reads nought and
-        //     the short check fails for want of a figure. This replay ran it first and so could
-        //     never have shown it, which is the failure the stage order here exists to prevent.
-        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
-            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
-
-        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
-        Record("sectors.unresolved", sectors.Unresolved);
-        Record("sectors.asked", sectors.Asked);
-        Record("sectors.resolved", sectors.Resolved);
-
-        // The two figures 4.17 repaired, frozen so the repair is a fact about the pipeline rather
-        // than a sentence in a record. `asked` counts a name before the request rather than after a
-        // successful answer, so the skipped are inside the count they are stated as a subset of, and
-        // `requests` is `asked` rather than `asked + skipped`: over this fixture nothing is skipped, so
-        // the two readings agree here and would not on the night the repair was written for, where
-        // 149 requests and 148 answers read as "148 asked of which 1 skipped".
-        Record("sectors.skipped", sectors.Skipped);
-        Record("sectors.requests", sectors.Requests);
-
-        // 10a. Every captured fundamentals response read through the real client, including the
-        //      ones no scan surfaced.
-        //
-        //      The resolver above only asks about names a scan hit, which is right for a nightly
-        //      stage and leaves the interesting response unread: `fundamentals-MUZ.json` is the one
-        //      the vendor answered 200 with two empty strings and a capitalisation of the string
-        //      "NA", and it took the whole sector walk down on 2026-08-27. Thirty working examples
-        //      and no failing one is how the parse came to be exercised thirty times against nothing
-        //      that could go wrong, so every captured response is read here rather than only the
-        //      ones tonight's scan happened to want.
-        //
-        //      Recorded as four figures a name so the diff names the field that moved rather than
-        //      reporting one row unequal, and tiered DERIVED against the Python restatement in
-        //      tools/derive-indicators.py --fundamentals, which reads the same bytes with a
-        //      different language's JSON reader and shares no code with this one.
-        //      see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
-        foreach (string ticker in CapturedFundamentalsTickers())
-        {
-            VendorFundamentals? held = Vendor
-                .GetFundamentalsAsync(ticker, new UncountedBudget()).GetAwaiter().GetResult().Value;
-
-            RecordText($"fundamentals.{ticker}.held", held is null ? "no" : "yes");
-
-            if (held is null)
-            {
-                continue;
-            }
-
-            RecordText($"fundamentals.{ticker}.sector", held.Sector ?? "-");
-            RecordText($"fundamentals.{ticker}.industry", held.Industry ?? "-");
-            RecordText($"fundamentals.{ticker}.marketCap", held.MarketCap?.ToString(CultureInfo.InvariantCulture) ?? "-");
-        }
-
-        // 11. The cluster count, then the market mood, then the two detectors.
-        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
-
-        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
-        Record("clusters.hits", clusters.Hits);
-        Record("clusters.withIndustry", clusters.WithIndustry);
-        Record("clusters.counted", clusters.Counted);
-        Record("clusters.clustered", clusters.Clustered);
-
-        RegimeResult regime = new RegimeLabeler(_connections, Logger(), _clock, _options).Label(AsOf);
-
-        stages.Add(new StageRun(RegimeLabeler.Name, 0, regime.RowsWritten, regime.Outcome.ToStorageText()));
-        Record("regime.indexesMeasured", regime.IndexesMeasured);
-        Record("regime.indexesAbove", regime.IndexesAbove);
-        Record("regime.longLadderCount", regime.LongLadderCount);
-        Record("regime.shortLadderCount", regime.ShortLadderCount);
-        Record("regime.indexScore", regime.IndexScore);
-        Record("regime.breadthScore", regime.BreadthScore);
-        measurements.Add(new Measurement("regime.label", regime.Label));
+        ThroughTheRegime(measurements, stages);
 
         DetectResult detected = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
 
@@ -947,6 +731,12 @@ public sealed class PhaseReplay : IDisposable
 
         // Over a store of its own, so nothing the fixture's night recorded moves.
         measurements.AddRange(ExitFigures());
+
+        // Over a second replay of the same night, switched before its detectors, from 7.11.
+        measurements.AddRange(SwitchNightFigures());
+
+        // Over this store, reading generation 1 over the night and the run log the replay left.
+        measurements.AddRange(ForecastFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -3919,6 +3709,400 @@ public sealed class PhaseReplay : IDisposable
     ];
 
     /// <summary>
+    /// The night up to the detectors: the universe, the history, the bars, the averages, the scans,
+    /// the ladder, the sectors, the clusters and the mood, with what each reported.
+    ///
+    /// Split out of <see cref="Run"/> at 7.11, unchanged, so a second replay can stop at the switch,
+    /// register generation 1 and run the detectors over the same night without the rest of the
+    /// pipeline (see <see cref="RunTheSwitchNight"/>).
+    /// </summary>
+    private void ThroughTheRegime(List<Measurement> measurements, List<StageRun> stages)
+    {
+        void Record(string id, long value) =>
+            measurements.Add(new Measurement(id, value.ToString(CultureInfo.InvariantCulture)));
+
+        // Some figures are not counts. A sector is a string and comparing it as one is the point:
+        // the defect that made this necessary was a field read as the wrong type.
+        void RecordText(string id, string value) => measurements.Add(new Measurement(id, value));
+
+        int Scalar(string sql)
+        {
+            using SqliteConnection connection = _connections.OpenReadOnly();
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            command.Parameters.AddWithValue(
+                "@end_of_session", StoreText.EndOfSession(AsOf, SessionBoundaries.UsEquities));
+            return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        // 1. The tradable list, from the captured symbol list screened against the captured
+        //    market day, with the lab's own floors. The screen's verdict on this market day.
+        UniverseBuildResult screened = Build(_options).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(UniverseBuilder.Name, screened.CallsUsed, screened.RowsWritten, screened.Outcome.ToStorageText()));
+        Record("universe.listedCommonStock", screened.ListedCommonStock);
+        Record("universe.screened", screened.Screened);
+        Record("universe.sessionsScreened", screened.SessionsScreened);
+        Record("universe.survivors", screened.Survivors);
+
+        // 1b. The same stage again with the liquidity floor lifted, which is the universe the
+        //     rest of the replay runs against.
+        //
+        //     The floor is a median over twenty sessions and the fixture holds one market day, so
+        //     applying it here screens on a number that is not the number the floor means. It
+        //     rejected the fixture's own control on a light day whose twenty-session median
+        //     clears the floor three times over, and a fixture that quietly loses a name it was
+        //     built to check is worse than one that admits more names than the lab would trade.
+        //     So the screen's verdict is measured above and reported, and the run continues
+        //     against the wider list. Nothing downstream depends on the floor: it exists to keep
+        //     the per-ticker backfill inside the call budget, and a replay has no budget.
+        UniverseBuildResult admitted = Build(WithoutTheLiquidityFloor()).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(UniverseBuilder.Name + " (floor lifted)", admitted.CallsUsed, admitted.RowsWritten, admitted.Outcome.ToStorageText()));
+        Record("universe.admittedWithoutTheLiquidityFloor", admitted.Survivors);
+        Record("universe.rejectedByTheLiquidityFloor", admitted.Survivors - screened.Survivors);
+
+        // 2. The history seed, RUNBOOK's step 4 narrowed to the names the fixture holds.
+        //
+        //    Narrowed again to the ones the screen actually admitted. A bar carries a foreign key
+        //    to security and a name the screen rejected has no security row, so backfilling one
+        //    is refused by the store rather than quietly stored: history exists for names the lab
+        //    can trade. Which fixture names those are is a measurement of its own, because a
+        //    ticker silently dropping out of the fixture is how a diff stays green over a
+        //    shrinking subject.
+        IReadOnlyList<string> members = UniverseMembers();
+        IReadOnlyList<string> seedable = FixtureTickers.All
+            .Where(members.Contains).Order(StringComparer.Ordinal).ToArray();
+        IReadOnlyList<string> outside = FixtureTickers.All
+            .Where(t => !members.Contains(t)).Order(StringComparer.Ordinal).ToArray();
+
+        Record("fixture.tickersInUniverse", seedable.Count);
+        measurements.Add(new Measurement("fixture.tickersOutsideUniverse",
+            outside.Count == 0 ? "none" : string.Join(" ", outside)));
+
+        var bars = new DailyBarIngestor(Vendor, _connections, Logger(), _clock, _options);
+        BackfillResult seed = bars.BackfillAsync(BackfillSelection.Named, seedable, AsOf)
+            .GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(DailyBarIngestor.BackfillName, seed.CallsUsed, seed.RowsWritten, seed.Outcome.ToStorageText()));
+        Record("backfill.seed.selected", seed.Selected);
+        Record("backfill.seed.barsPublished", seed.BarsPublished);
+        Record("backfill.seed.inserted", seed.Inserted);
+
+        // 3. The night proper, in RUNBOOK's order. Actions first, so a demand raised tonight is
+        //    outstanding when the averages are computed and only a refetch made afterwards
+        //    clears it.
+        ActionIngestResult actions = new ActionIngestor(Vendor, _connections, Logger(), _clock, _options)
+            .IngestAsync(AsOf).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(ActionIngestor.Name, actions.CallsUsed, actions.RowsWritten, actions.Outcome.ToStorageText()));
+        Record("actions.splitsPublished", actions.SplitsPublished);
+        Record("actions.dividendsPublished", actions.DividendsPublished);
+        Record("actions.inUniverse", actions.InUniverse);
+        Record("actions.inserted", actions.Inserted);
+        Record("actions.demandsRaised", actions.DemandsRaised);
+        Record("actions.tickersBlocked", actions.TickersBlocked);
+
+        // 4. The whole market's closes for the session. The fixture tickers already hold this
+        //    date from their histories, so most of what comes back is already stored unchanged,
+        //    which is the idempotence property stated as a number.
+        DailyBarIngestResult bulk = bars.IngestAsync(AsOf).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(DailyBarIngestor.Name, bulk.CallsUsed, bulk.RowsWritten, bulk.Outcome.ToStorageText()));
+        Record("bars.published", bulk.Published);
+        Record("bars.inUniverse", bulk.InUniverse);
+        Record("bars.inserted", bulk.Inserted);
+        Record("bars.unchanged", bulk.Unchanged);
+        Record("bars.corrections", bulk.Corrections);
+
+        // 5. The refetch that answers tonight's demands.
+        BackfillResult rebuild = bars.BackfillAsync(BackfillSelection.TickersWithAnOpenDemand, [], AsOf)
+            .GetAwaiter().GetResult();
+
+        stages.Add(new StageRun("backfill --rebuild", rebuild.CallsUsed, rebuild.RowsWritten, rebuild.Outcome.ToStorageText()));
+        Record("backfill.rebuild.selected", rebuild.Selected);
+        Record("backfill.rebuild.inserted", rebuild.Inserted);
+
+        // 6. The three trackers.
+        IndexIngestResult index = new IndexIngestor(Vendor, _connections, Logger(), _clock, _options)
+            .IngestAsync(AsOf).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(IndexIngestor.Name, index.CallsUsed, index.RowsWritten, index.Outcome.ToStorageText()));
+        Record("index.symbols", index.Symbols);
+        Record("index.barsPublished", index.BarsPublished);
+        Record("index.inserted", index.Inserted);
+
+        // 7. The averages, which refuse for anything short of the warm-up or carrying a demand
+        //    the window does not account for.
+        IndicatorResult indicators = new IndicatorEngine(_connections, Logger(), _clock, _options).Compute(AsOf);
+
+        stages.Add(new StageRun(IndicatorEngine.Name, indicators.CallsUsed, indicators.RowsWritten, indicators.Outcome.ToStorageText()));
+        Record("indicators.members", indicators.Members);
+        Record("indicators.computed", indicators.Computed);
+        Record("indicators.recomputed", indicators.Recomputed);
+        Record("indicators.shortOfWarmup", indicators.ShortOfWarmup);
+        Record("indicators.blocked", indicators.Blocked);
+        Record("indicators.demandsSatisfied", indicators.DemandsSatisfied);
+
+        measurements.Add(new Measurement("fixture.actionsObserved", NamesFrom(
+            "SELECT DISTINCT ticker FROM corporate_action ORDER BY ticker;")));
+        measurements.Add(new Measurement("fixture.rebuildsStamped", NamesFrom(
+            "SELECT DISTINCT ticker FROM indicator_rebuild WHERE rebuilt_at IS NOT NULL ORDER BY ticker;")));
+
+        // 8. The six mover scans, which the thrust signals read.
+        ScanResult scans = new ScanEngine(_connections, Logger(), _clock, _options).Scan(AsOf);
+
+        stages.Add(new StageRun(ScanEngine.Name, 0, scans.RowsWritten, scans.Outcome.ToStorageText()));
+        Record("scans.members", scans.Members);
+        Record("scans.measured", scans.Measured);
+        Record("scans.shortOfHistory", scans.ShortOfHistory);
+        Record("scans.hits", scans.Hits);
+        Record("scans.inserted", scans.Inserted);
+
+        // 3.9(d). Every hit the walk writes carries an observation stamp, and every one of them is
+        // inside the session's own day. Two counts rather than one, because a column populated with
+        // an instant outside the session would satisfy "not null" and be worse than a null.
+        Record("scans.stamped", Scalar(
+            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL"));
+        Record("scans.stampedInsideTheSession", Scalar(
+            "SELECT COUNT(*) FROM scan_hit WHERE as_of = @as_of AND observed_at IS NOT NULL "
+            + "AND observed_at <= @end_of_session"));
+
+        // 9. The ladder grade, which writes a later observation of the same session rather than
+        //    updating the row the engine wrote.
+        TierResult tiers = new TierClassifier(_connections, Logger(), _clock, _options).Classify(AsOf);
+
+        stages.Add(new StageRun(TierClassifier.Name, 0, tiers.RowsWritten, tiers.Outcome.ToStorageText()));
+        Record("tiers.members", tiers.Members);
+        Record("tiers.graded", tiers.Graded);
+        Record("tiers.rising", tiers.Rising);
+        Record("tiers.mixed", tiers.Mixed);
+        Record("tiers.falling", tiers.Falling);
+        Record("tiers.noIndicators", tiers.NoIndicators);
+
+        // 10. The sector lookup, which three later stages read and which used to run after all
+        //     three of them. RUNBOOK scheduled it at 19:00 while `clusters` at 18:15 and both
+        //     detectors at 18:20 read what it writes, so on a live night a name newly surfaced by a
+        //     scan had no industry when the cluster count was taken and no market capitalisation
+        //     when `tradable-shortable` decided. Neither one errors: the cluster reads nought and
+        //     the short check fails for want of a figure. This replay ran it first and so could
+        //     never have shown it, which is the failure the stage order here exists to prevent.
+        SectorResult sectors = new SectorResolver(Vendor, _connections, Logger(), _clock, _options)
+            .ResolveAsync(AsOf, SectorResolver.DefaultLimit).GetAwaiter().GetResult();
+
+        stages.Add(new StageRun(SectorResolver.Name, sectors.CallsUsed, sectors.RowsWritten, sectors.Outcome.ToStorageText()));
+        Record("sectors.unresolved", sectors.Unresolved);
+        Record("sectors.asked", sectors.Asked);
+        Record("sectors.resolved", sectors.Resolved);
+
+        // The two figures 4.17 repaired, frozen so the repair is a fact about the pipeline rather
+        // than a sentence in a record. `asked` counts a name before the request rather than after a
+        // successful answer, so the skipped are inside the count they are stated as a subset of, and
+        // `requests` is `asked` rather than `asked + skipped`: over this fixture nothing is skipped, so
+        // the two readings agree here and would not on the night the repair was written for, where
+        // 149 requests and 148 answers read as "148 asked of which 1 skipped".
+        Record("sectors.skipped", sectors.Skipped);
+        Record("sectors.requests", sectors.Requests);
+
+        // 10a. Every captured fundamentals response read through the real client, including the
+        //      ones no scan surfaced.
+        //
+        //      The resolver above only asks about names a scan hit, which is right for a nightly
+        //      stage and leaves the interesting response unread: `fundamentals-MUZ.json` is the one
+        //      the vendor answered 200 with two empty strings and a capitalisation of the string
+        //      "NA", and it took the whole sector walk down on 2026-08-27. Thirty working examples
+        //      and no failing one is how the parse came to be exercised thirty times against nothing
+        //      that could go wrong, so every captured response is read here rather than only the
+        //      ones tonight's scan happened to want.
+        //
+        //      Recorded as four figures a name so the diff names the field that moved rather than
+        //      reporting one row unequal, and tiered DERIVED against the Python restatement in
+        //      tools/derive-indicators.py --fundamentals, which reads the same bytes with a
+        //      different language's JSON reader and shares no code with this one.
+        //      see: Every fixture expectation records how it was produced, and only the independently derived ones verify anything
+        foreach (string ticker in CapturedFundamentalsTickers())
+        {
+            VendorFundamentals? held = Vendor
+                .GetFundamentalsAsync(ticker, new UncountedBudget()).GetAwaiter().GetResult().Value;
+
+            RecordText($"fundamentals.{ticker}.held", held is null ? "no" : "yes");
+
+            if (held is null)
+            {
+                continue;
+            }
+
+            RecordText($"fundamentals.{ticker}.sector", held.Sector ?? "-");
+            RecordText($"fundamentals.{ticker}.industry", held.Industry ?? "-");
+            RecordText($"fundamentals.{ticker}.marketCap", held.MarketCap?.ToString(CultureInfo.InvariantCulture) ?? "-");
+        }
+
+        // 11. The cluster count, then the market mood, then the two detectors.
+        ClusterResult clusters = new ThemeClusterer(_connections, Logger(), _clock, _options).Count(AsOf);
+
+        stages.Add(new StageRun(ThemeClusterer.Name, 0, clusters.RowsWritten, clusters.Outcome.ToStorageText()));
+        Record("clusters.hits", clusters.Hits);
+        Record("clusters.withIndustry", clusters.WithIndustry);
+        Record("clusters.counted", clusters.Counted);
+        Record("clusters.clustered", clusters.Clustered);
+
+        RegimeResult regime = new RegimeLabeler(_connections, Logger(), _clock, _options).Label(AsOf);
+
+        stages.Add(new StageRun(RegimeLabeler.Name, 0, regime.RowsWritten, regime.Outcome.ToStorageText()));
+        Record("regime.indexesMeasured", regime.IndexesMeasured);
+        Record("regime.indexesAbove", regime.IndexesAbove);
+        Record("regime.longLadderCount", regime.LongLadderCount);
+        Record("regime.shortLadderCount", regime.ShortLadderCount);
+        Record("regime.indexScore", regime.IndexScore);
+        Record("regime.breadthScore", regime.BreadthScore);
+        measurements.Add(new Measurement("regime.label", regime.Label));
+    }
+
+    /// <summary>
+    /// The fixture's night as the switch night, from 7.11, read from a second replay of it.
+    ///
+    /// <b>What the done condition asks, and each figure says which half.</b> Generation 1's rows in
+    /// `setup`, generation 0's in its companion, the names both flag with the join reproducing them, and
+    /// the check register retiring generation 0's clauses on that night and introducing generation 1's.
+    /// Long and short are stated apart and never added.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private IReadOnlyList<Measurement> SwitchNightFigures()
+    {
+        using var replay = new PhaseReplay(_handler.Directory);
+        SwitchNight night = replay.RunTheSwitchNight();
+        using SqliteConnection connection = replay.OpenStore();
+
+        string Count(long value) => value.ToString(CultureInfo.InvariantCulture);
+
+        long RowsWhere(string sql)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            return (long)(command.ExecuteScalar() ?? 0L);
+        }
+
+        IReadOnlyList<GenerationPair> both = GenerationComparisonReader.BothFlagged(connection, AsOf, SessionBoundaries.UsEquities);
+
+        string Registered(string sql)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            var names = new List<string>();
+            using SqliteDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                names.Add($"{reader.GetString(0)}:{reader.GetString(1)}");
+            }
+
+            return names.Count == 0 ? "none" : string.Join(" ", names);
+        }
+
+        var figures = new List<Measurement>
+        {
+            new("switch.closedGeneration", Count(night.Closure.ClosedGeneration)),
+            new("switch.baseline", night.Closure.NextBaseline ?? "none"),
+            new("switch.setupRowsOfGenerationZero", Count(RowsWhere("SELECT COUNT(*) FROM setup WHERE as_of = @as_of AND generation = 0"))),
+            new("switch.bothFlagged", both.Count == 0 ? "none" : string.Join(" ", both.Select(b => $"{b.Ticker}-{b.Direction}"))),
+            new("switch.register.retired", Registered(
+                "SELECT direction, check_name FROM check_definition WHERE retired_on = @as_of ORDER BY direction, check_name")),
+            new("switch.register.introduced", Registered(
+                "SELECT direction, check_name FROM check_definition WHERE introduced_on = @as_of "
+                + "AND check_name NOT IN (SELECT check_name FROM check_definition d WHERE d.direction = check_definition.direction AND d.introduced_on < @as_of) "
+                + "ORDER BY direction, check_name")),
+        };
+
+        foreach ((string direction, DetectResult detected) in new[] { (SetupDirection.Long, night.Long), (SetupDirection.Short, night.Short) })
+        {
+            figures.Add(new($"switch.{direction}.setupRows", Count(RowsWhere(
+                $"SELECT COUNT(*) FROM setup WHERE as_of = @as_of AND direction = '{direction}' AND generation = 1"))));
+            figures.Add(new($"switch.{direction}.generationZeroRows", Count(
+                GenerationComparisonReader.GenerationZeroFlagged(connection, direction, AsOf, SessionBoundaries.UsEquities))));
+            figures.Add(new($"switch.{direction}.belowFloorGenerationOne", Count(RowsWhere(
+                $"SELECT COUNT(*) FROM below_floor WHERE as_of = @as_of AND direction = '{direction}' AND generation = 1"))));
+            figures.Add(new($"switch.{direction}.passedAll", Count(detected.PassedAll)));
+        }
+
+        foreach (GenerationPair pair in both)
+        {
+            string at = $"switch.{pair.Ticker}-{pair.Direction}";
+            figures.Add(new($"{at}.passedAllGenerationOne", pair.PassedAllGenerationOne ? "yes" : "no"));
+            figures.Add(new($"{at}.passedAllGenerationZero", pair.PassedAllGenerationZero ? "yes" : "no"));
+        }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// Generation 1's flagged count and minute cost over the fixture's night, from 7.11, read by the
+    /// forecast the operator runs over the live nights, against the headroom the replay's own run log
+    /// leaves once every other stage of the day has spent.
+    /// </summary>
+    private IReadOnlyList<Measurement> ForecastFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        GenerationOneForecastReport report = new GenerationOneForecast(
+            _connections, Logger(), _clock, _options, new PullbackStrategyLabPaths(_root.Path)).Forecast(AsOf, AsOf);
+
+        ForecastNight night = report.Nights.Single();
+        string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        return
+        [
+            new("forecast.long", Count(night.Long)),
+            new("forecast.short", Count(night.Short)),
+            new("forecast.flagged", Count(night.Flagged)),
+            new("forecast.callCost", Count(night.CallCost)),
+            new("forecast.spentElsewhere", Count(night.SpentElsewhere)),
+            new("forecast.headroom", Count(night.Headroom)),
+            new("forecast.generationZeroFlagged", Count(night.GenerationZeroFlagged)),
+            new("forecast.generationZeroCallCost", Count(night.GenerationZeroCallCost)),
+            new("forecast.withoutMinutes", night.WithoutMinutes.Count == 0 ? "none" : string.Join(" ", night.WithoutMinutes)),
+            new("forecast.reportPath", report.Path.Replace('\\', '/')),
+        ];
+    }
+
+    /// <summary>The identifier the fixture's switch night registers generation 1's baseline under.</summary>
+    public const string SwitchNightBaseline = "V1-fixture";
+
+    /// <summary>
+    /// The fixture's night as a switch night, from 7.11: the pipeline to the detectors, then generation
+    /// 1's baseline registered through the act that closes a generation, then both detectors.
+    ///
+    /// <b>The same captured night, so the two replays differ in the register and nothing else.</b> The
+    /// detectors read the generation in force, so over this store they write generation 1's verdicts
+    /// to `setup` and generation 0's to its companion, and generation 0's clauses retire in the check
+    /// register on this night.
+    /// </summary>
+    public SwitchNight RunTheSwitchNight()
+    {
+        var measurements = new List<Measurement>();
+        var stages = new List<StageRun>();
+
+        ThroughTheRegime(measurements, stages);
+
+        // The night before held generation 0's lists, as a lab that had been running generation 0 up to
+        // the switch would, so the register has something for the switch night to retire.
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            new CheckRegister(_clock).Register(connection, SetupDirection.Long, SetupChecks.Long, AsOf.AddDays(-1));
+            new CheckRegister(_clock).Register(connection, SetupDirection.Short, SetupChecks.Short, AsOf.AddDays(-1));
+        }
+
+        GenerationClosure closure = new GenerationCloser(_connections, Logger(), _clock, _options).Close(
+            SwitchNightBaseline, GenerationCloser.GenerationOneDefinition, GenerationCloser.GenerationOneTarget);
+
+        DetectResult longs = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+        DetectResult shorts = new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        return new SwitchNight(closure, longs, shorts);
+    }
+
+    /// <summary>
     /// Rows the store holds that were observed later than this run, which must be none while the
     /// point-in-time probe has not been written yet.
     ///
@@ -4260,3 +4444,6 @@ public sealed record PhaseReplayResult(
     int ScreeningSessions,
     IReadOnlyList<StageRun> Stages,
     IReadOnlyList<Measurement> Measurements);
+
+/// <summary>What the fixture's switch night did: the close that registered generation 1, and both detectors after it.</summary>
+public sealed record SwitchNight(GenerationClosure Closure, DetectResult Long, DetectResult Short);

@@ -19663,3 +19663,110 @@ Carried:    **The operator's half: none owed by this checkpoint alone.** The exi
             for a run.
 
             **This session committed code and may not sign it off.**
+
+## 7.11 — 2026-09-11 — phase-7-11-registration — generation 1 registered through the act that closes a generation, the switch night built and proved over the fixture, and the forecast that states its cost first
+
+Built:      **The switch reads the register.** Both detectors read the generation of the baseline in
+            force on the night. Before generation 1 is registered nothing changes. From the night it is
+            registered, through `close-generation V1 --generation-one`, they score `setup` under
+            generation 1's gate set and write generation 0's verdicts on the same evidence to
+            `setup_generation_zero`, register generation 1's lists in the check register, which retires
+            generation 0's clauses that night and no earlier, and keep the below-floor record under
+            generation 1 with generation 1's floor. **A night keeps the generation its first detection
+            scored it under**, so a rerun after a registration that evening cannot split one night across
+            two gate sets. **Migration 069** gives `setup` a `generation` column
+            outside its key and creates the companion. `GenerationComparisonReader` joins the two on the
+            night, the name and the side. `GenerationCloser` gains `--generation-one`, which supplies a
+            definition naming both families and the baseline's target.
+
+            **GenerationOneForecast**, the operator verb `forecast-generation-one`, runs generation 1's
+            detector over recorded nights on a store copy. For each night it states the flagged count
+            per side and the one list the fetch would buy minutes for, what that list costs against the
+            ceiling less what the day's other stages spent in the vendor's quota day, and the names the
+            fetch's own ticker order could not afford. It writes a report under the data root and no
+            table. Catalogued, 62 components.
+
+            **The obligation raised at 7.8, discharged**: RiskGate, PaperBroker, PositionManager and
+            PlanAudit key a night's plans by the plan, the trigger and order reads carry the plan they are
+            of, and `TwoVersionsOneSetupTests` walks a baseline and a version over one setup to an order, a
+            position, a close and an audit each. It fails on the old keying with the duplicate key the row
+            predicted. The same survey found EntrySizer and the setups read keyed the same way, and both
+            are repaired.
+
+            **What the switch reaches, found by a survey of every reader and repaired where it would
+            break.** ReplayHarness replays generation 0's rule, so it reads generation 0's rows alone.
+            SetupCapper ranks a candidate with no evening geometry after every candidate with one, since
+            generation 1 no longer screens on `exit-tight`. The setups read asks a row's outcome under its
+            own generation's gate set. `weekly-trend` gains a reading. VariantAdmitter refuses a selection
+            version once generation 1 is in force, the pack refuses to cut rather than ask against
+            generation 0's rule, and the pack names the baseline of the generation in force rather than the
+            first in the register.
+
+            **One decision supersedes two**: "Generation 1 opens with no version admissible in either
+            family, and what reopens each is named" replaces the two entries scoped to generation 0 in their
+            own headings, which move to Previously decided with their reasoning. Every citation of either is
+            repointed, in DECISIONS, the three specs that cited them and seven source files. The retirement
+            decision records that it landed.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,310 tests**, up from 1,299.
+
+Measured:   **Twenty-eight expectations at 7.11, all `DERIVED` by hand from figures the fixture already
+            states.** The switched night writes **16 long rows and 8 short to `setup`, all generation 1**,
+            generation 1's recorded counts for the night. Generation 0's companion gets **one row a side**,
+            its recorded counts, and the join returns **HOOD long and INTC short**, generation 0's two names.
+            Both clear generation 1's floor, and neither passes every gating clause of either list. The
+            register retires `exit-tight` and `trigger-near` long and `exit-tight` short on the switch night
+            and introduces `weekly-trend` on both sides. **`check-completeness` is green across the switch**:
+            24 setup rows are held to the list the register says generation 1 ran, the night before reads
+            generation 0's, and the 2 companion rows are held to generation 0's own list, all with floors.
+            **The forecast over the fixture's night states 24 names, 16 long and 8 short with none on both
+            sides, for 120 calls**, against a headroom of the whole 5,000. Every replay stage ran at 22:00
+            UTC on the as-of, while the night's fetch at 20:30 Eastern falls in the next quota day. Generation
+            0's list over the same store is 3 names for 15 calls. Three existing expectations moved: the
+            catalogue's two counts by one, and the schema version to 69.
+
+            `tools/verify-phase.ps1` GREEN: 163 claims, 163 passed, **0 out of scope before and 0 after**,
+            0 unexamined, coverage examined 13,681, 1,924 expectations of which one is void.
+
+Found:      **A rerun of a night after that evening's registration switched it halfway**, and the first CI
+            run of this checkpoint found it: the fixture's own run registers generation 1 once its figures
+            are read, and two tests that detect its night a second time then wrote generation 1 vectors and
+            companion rows beside generation 0's. The rule above closes it, and a test reruns the night.
+
+            **Registering generation 1 would have changed nothing on its own.** The detectors hard-wired
+            generation 0's lists and nothing read the register for a gate set, so the plan's switch needed a
+            writer, not only a registration. That is what this checkpoint adds.
+
+            **Six readers assumed generation 0**, and each would have misreported rather than failed after
+            the switch. The harness would have called every generation 1 row a disagreement and the run
+            worthless. The cap would have dropped a candidate with no geometry and left it unranked and
+            unplanned. The setups read would have counted a generation 1 row one gate short for failing a
+            clause it was never required to pass. The admitter would have taken a threshold of generation
+            0's rule as a version of generation 1. The pack would have named the retired baseline as the
+            rule in force. The reading of `weekly-trend` would have shown a bare number.
+
+            **The scoreboard reads `setup` whole**, so from the switch night band 1 and the ceiling would be
+            taken over rows two gate sets scored. That is a question about what the page shows, not about
+            the build. It is carried to the operator, raised at 7.11, and binds from the first switch night,
+            which is also the operator's act.
+
+Decided:    **The switch is the register, not a date in configuration.** The night generation 1's baseline is
+            registered is the switch night, because that act already closes generation 0 in one transaction,
+            and a second switch elsewhere could disagree with it. **The forecast runs generation 1's detector
+            over stored bars** rather than reading the frozen signals, because that detector is what
+            the switch night runs, and 7.4 froze the quantities as one number with it. **Which names get
+            minutes when the ceiling binds is the fetch's existing ticker order**, and the forecast reports it
+            rather than changing it, since the replay over the live nights decides whether it ever binds.
+            **VariantScorer is not changed.** No generation 1 version can be admitted, so it has nothing of
+            generation 1's to score.
+
+Carried:    **The operator's half: not met.** The forecast over the live nights since 7.4 on a store copy,
+            then registration against the live register, being `close-generation V1 --generation-one` with a
+            dry run first, then the first switch night read the morning after. RUNBOOK's "The switch to
+            generation 1, from 7.11" gives the steps. The live store must be migrated to 069 first, on the
+            terms of "After a merge that carries a migration".
+
+            **Whether the scoreboard reads across the switch, and how**: raised at 7.11, due at the operator,
+            in the obligations table.
+
+            **This session committed code and may not sign it off.** 7.12 is a fresh session's.

@@ -9883,10 +9883,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "68",
+      "value": "69",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql. Was 66 until 7.8. Migration 067 rebuilds trade_plan to carry the rule and creates entry_resolution. Re-derived by reading the migration directory: the highest-numbered file is 067-the-plan-carries-a-rule.sql. Was 67 until 7.10, which adds migration 068 for the trims after the first and the hold limit."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql. Was 66 until 7.8. Migration 067 rebuilds trade_plan to carry the rule and creates entry_resolution. Re-derived by reading the migration directory: the highest-numbered file is 067-the-plan-carries-a-rule.sql. Was 67 until 7.10, which adds migration 068 for the trims after the first and the hold limit. Was 68 until 7.11, which adds migration 069 for the switch night."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
@@ -10457,18 +10457,18 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "61",
+      "value": "62",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer. Was 60 until 7.9, which adds EntryRuleMeasurement."
+      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer. Was 60 until 7.9, which adds EntryRuleMeasurement. Was 61 until 7.11, which adds GenerationOneForecast."
     },
     {
       "id": "catalogue.componentTypes",
       "tier": "DERIVED",
-      "value": "54",
+      "value": "55",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component. Was 52 until 7.8, on the same component. Was 53 until 7.9, on the same component."
+      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component. Was 52 until 7.8, on the same component. Was 53 until 7.9, on the same component. Was 54 until 7.11, on the same component."
     },
     {
       "id": "catalogue.screens",
@@ -14574,6 +14574,230 @@
       "checkpoint": "7.10",
       "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
       "note": "A long and a short position walked to their exits, from 7.10, never pooled. As at the second session the 5R trim, observed on the third, is not yet visible."
+    },
+    {
+      "id": "switch.closedGeneration",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. The act closes the generation in force, generation 0."
+    },
+    {
+      "id": "switch.baseline",
+      "tier": "DERIVED",
+      "value": "V1-fixture",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. The name the fixture registers generation 1 under."
+    },
+    {
+      "id": "switch.setupRowsOfGenerationZero",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Every setup row of the switch night is generation 1's."
+    },
+    {
+      "id": "switch.bothFlagged",
+      "tier": "DERIVED",
+      "value": "HOOD-long INTC-short",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. The names both rules flag, reproduced by the join of the two tables."
+    },
+    {
+      "id": "switch.register.retired",
+      "tier": "DERIVED",
+      "value": "long:exit-tight long:trigger-near short:exit-tight",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the two lists: the night before holds SetupChecks' lists, the switch night registers GenerationOneChecks', so exit-tight and trigger-near retire on the long side, exit-tight on the short, and weekly-trend is introduced on both",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Generation 0's clauses retired in the register on the switch night."
+    },
+    {
+      "id": "switch.register.introduced",
+      "tier": "DERIVED",
+      "value": "long:weekly-trend short:weekly-trend",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the two lists: the night before holds SetupChecks' lists, the switch night registers GenerationOneChecks', so exit-tight and trigger-near retire on the long side, exit-tight on the short, and weekly-trend is introduced on both",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Generation 1's one new clause, introduced on the switch night."
+    },
+    {
+      "id": "switch.long.setupRows",
+      "tier": "DERIVED",
+      "value": "16",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "switch.long.generationZeroRows",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "switch.long.belowFloorGenerationOne",
+      "tier": "DERIVED",
+      "value": "7186",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. 7,202 examined less 16 recorded."
+    },
+    {
+      "id": "switch.long.passedAll",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Generation 1's two long candidates on this night (generation1.long.candidates)."
+    },
+    {
+      "id": "switch.short.setupRows",
+      "tier": "DERIVED",
+      "value": "8",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "switch.short.generationZeroRows",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "switch.short.belowFloorGenerationOne",
+      "tier": "DERIVED",
+      "value": "7194",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. 7,202 examined less 8 recorded."
+    },
+    {
+      "id": "switch.short.passedAll",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. generation1.short.candidates."
+    },
+    {
+      "id": "switch.HOOD-long.passedAllGenerationOne",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. HOOD fails contraction and dip-shape under generation 1."
+    },
+    {
+      "id": "switch.HOOD-long.passedAllGenerationZero",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. HOOD fails exit-tight, dip-shape and contraction under generation 0."
+    },
+    {
+      "id": "switch.INTC-short.passedAllGenerationOne",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. INTC fails bounce-shape and reached-ceiling under generation 1."
+    },
+    {
+      "id": "switch.INTC-short.passedAllGenerationZero",
+      "tier": "DERIVED",
+      "value": "no",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand before the switched replay was read, from figures the fixture already states for the same night: generation 1's detector records 16 long names and 8 short over it (generation1.long.recorded and generation1.short.recorded) out of 7,202 examined a side, generation 0's records HOOD long and INTC short (detect.long.recorded, detect.short.recorded and the setup.2026-08-24-HOOD-long and setup.2026-08-24-INTC-short verdicts), and generation 1's floor is tradable or tradable-shortable, the ladder and the thrust, which HOOD and INTC both clear on the generation1 verdicts. So the switched night writes 16 and 8 rows of generation 1 to setup, one row a side to the companion, and the join is those two names",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. INTC fails exit-tight, bounce-shape, averages-squeezing and reached-ceiling under generation 0."
+    },
+    {
+      "id": "forecast.long",
+      "tier": "DERIVED",
+      "value": "16",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.short",
+      "tier": "DERIVED",
+      "value": "8",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.flagged",
+      "tier": "DERIVED",
+      "value": "24",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. One list across both sides, being what the fetch buys; no name is flagged on both."
+    },
+    {
+      "id": "forecast.callCost",
+      "tier": "DERIVED",
+      "value": "120",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. 24 names at 5 calls."
+    },
+    {
+      "id": "forecast.spentElsewhere",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.headroom",
+      "tier": "DERIVED",
+      "value": "5000",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.generationZeroFlagged",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.generationZeroCallCost",
+      "tier": "DERIVED",
+      "value": "15",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
+    },
+    {
+      "id": "forecast.withoutMinutes",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. The cost is far inside the headroom, so every name gets minutes."
+    },
+    {
+      "id": "forecast.reportPath",
+      "tier": "DERIVED",
+      "value": "reports/generation-one-forecast-2026-08-24-2026-08-24.json",
+      "checkpoint": "7.11",
+      "producedBy": "derived by hand: the reports folder under the data root and the one night the replay forecasts",
+      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Relative to the data root."
     }
   ],
   "frozenOnly": [

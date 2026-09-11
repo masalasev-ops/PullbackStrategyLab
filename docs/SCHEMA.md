@@ -433,6 +433,7 @@ Grain: date + ticker + direction. **Rows are immutable after write, except by a 
 | `corrected_because` | TEXT NULL | why, naming the check and the stage that failed on the night |
 | `correction_lateness_minutes` | INTEGER NULL | how far past the session's own end of day the latest input the correction used arrived. Zero where every input was inside the session's own day |
 | `corrected_from` | TEXT NULL | the check results as they stood before the correction, verbatim, so a repaired row is reversible and a reader can see the verdict was absent rather than only that the row was touched |
+| `generation` | INTEGER | whose gate set scored the row, from 7.11: 0 on every row before the switch night and 1 from it, read off the register's baseline in force on the night, except that a night already detected keeps the generation its first detection wrote, so a rerun cannot split one. Not in the key, because one detector per side writes the table on any night (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole) |
 | `corrected_check` | TEXT NULL | which check the correction recomputed, as a value rather than as a phrase inside `corrected_because`. It is what a restore scoped to one check selects on, and the one thing a caller must be able to select on was the one thing that was prose |
 
 **The three geometry columns are nullable as of migration 031, and nought is not the same answer as none.** They were `NOT NULL`, so a setup whose geometry the detector could not compute had nowhere to record that: the detector wrote nought, `SignalVectorizer` froze the nought into `setup_signal`, which is written once and never updated, and the gallery rendered a trade whose give-up was nothing. A give-up distance of 0 is not a tight stop; it clears every threshold written as a maximum. The golden fixture's `2026-08-24-INTC-short` is the case: `exit-tight` is recorded on that row as failed with value null, and the frozen signal for the same setup on the same night said `0.0000`. Rows written before 031 keep the flattened nought, because reconstructing a detector's decision from a sentinel is a rewrite of a stop and the rule against that has no exception (see: A gate handed an absent or degenerate quantity fails rather than passing).
@@ -452,7 +453,7 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Up
 ### `calibration_setup`
 Grain: date + ticker + direction. Output of a historical detector run, used to count setups per night while thresholds are being calibrated.
 
-Shape of `calibration_setup`: same as `setup`, less `corrected_at`, `corrected_because`, `correction_lateness_minutes`, `corrected_from`, `degraded_because` and `corrected_check`.
+Shape of `calibration_setup`: same as `setup`, less `corrected_at`, `corrected_because`, `correction_lateness_minutes`, `corrected_from`, `degraded_because`, `corrected_check` and `generation`.
 
 **The six are the correction and degradation columns, and the divergence is deliberate.** A calibration row is not evidence, nothing corrects one and no night is degraded by one, so three migrations decline to add them and say so in their own comments. It read "same shape as `setup`" until 4.6, which was six columns wrong and was the sentence a reconciliation would have read as licence to skip the table.
 
@@ -504,6 +505,26 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Re
 
 *Each detector issues its own insert rather than calling a shared helper, which is what lets `writer-ownership` attribute the write to the component that made it. The same price the `setup` insert pays, and for the same reason.*
 
+### `setup_generation_zero`
+Grain: date + ticker + direction. Generation 0's detector's record from the switch night, beside generation 1's in `setup`, for comparison only.
+
+| Column | Type | Note |
+|---|---|---|
+| `setup_id` | TEXT PK | the identity the same name would carry in `setup` |
+| `as_of` | TEXT | the night |
+| `ticker` | TEXT | |
+| `direction` | TEXT | `long` or `short` |
+| `check_results` | TEXT | JSON, generation 0's verdicts on every one of its checks, in the shape `setup.check_results` has |
+| `passed_all` | INTEGER | whether every gating clause of generation 0's list passed |
+| `trigger_price`, `stop_price` | TEXT NULL | the evening's geometry, null where it is absent |
+| `stop_distance_ranges` | TEXT NULL | the give-up distance generation 0's `exit-tight` read |
+| `thrust_scan`, `thrust_session` | TEXT NULL | the thrust the row was measured against |
+| `observed_at` | TEXT | when the detector wrote it, which is what a comparison bounds on |
+
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Read by GenerationComparisonReader, and by nothing in the nightly pipeline
+
+**A second population, so a table and not a flag.** From the switch night the detectors write generation 1's verdicts to `setup` and generation 0's here, both from one evidence, so a name the two disagree about is a name whose rule changed. `setup` is what the minute fetch, the cap, the plans and every reader downstream read, and a name only generation 0 flags must reach none of them, on the grounds `below_floor` and `calibration_setup` stand on. The join of the two on the night, the name and the side is `GenerationComparisonReader`'s (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole).
+
 ### `below_floor`
 Grain: date + ticker + direction + generation. The names a forward night's detector examined and did not record, each with every verdict it was given.
 
@@ -512,7 +533,7 @@ Grain: date + ticker + direction + generation. The names a forward night's detec
 | `as_of` | TEXT | the night |
 | `ticker` | TEXT | |
 | `direction` | TEXT | `long` or `short` |
-| `generation` | INTEGER | whose gate set scored the vector, 0 until the switch night. Defaults to 0 |
+| `generation` | INTEGER | whose gate set scored the vector, 0 until the switch night and 1 from it, with `failed_floor` naming that generation's floor. Defaults to 0 |
 | `check_results` | TEXT | JSON, every check with pass or fail, in the shape `setup.check_results` has |
 | `failed_floor` | TEXT | which of the side's recording-floor clauses the name failed, comma separated |
 | `observed_at` | TEXT | |
@@ -1559,14 +1580,14 @@ whole eventual shape.
 | `created_at` | TEXT | When the version was registered, which is what a point-in-time read of a night bounds on. A replay of an evening sees the versions that evening had and no others |
 | `direction` | TEXT NULL | Which side the moved threshold belongs to. A version is one side's, because a threshold belongs to one side's gate list, and a version spanning both would be two experiments in one row (see: Long and short are never pooled into one figure) |
 | `gate` | TEXT NULL | The gate the moved threshold sits under, as ARCHITECTURE's gate lists name it |
-| `threshold_name` | TEXT NULL | Which named threshold moved. One, and `RuleAdmission` is what asserts that rather than a convention (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation) |
+| `threshold_name` | TEXT NULL | Which named threshold moved. One, and `RuleAdmission` is what asserts that rather than a convention (see: Generation 1 opens with no version admissible in either family, and what reopens each is named) |
 | `threshold_from`, `threshold_to` | TEXT NULL | The baseline's value and the version's. Read through `StoreText.StorageTextToThreshold` and not through the price or the ratio crossing: `liquidity-floor` is twenty million dollars and `maximum-retrace` is the fraction 0.40, both live in this column, and a crossing named for either would be wrong about the other |
 | `proposal_id` | TEXT NULL | The proposal this version came from, or null where it came from nobody. **The join band 3 is defined by, and it did not exist until 6.8**: the project's stated success criterion is proposal hit rate by pack version, `proposal` carries the pack version it was cut against, and the settlement is a status on a version, so with nothing carrying the second back to the first the rate could not be computed even in principle (see: The evidence pack is versioned, and the success criterion is proposal hit rate by pack version). Written once at creation by VariantAdmitter, on exactly the terms the target and the minimum sample are (see: Targets and minimum samples are written at creation and are immutable). Nullable because the baseline came from no proposal and an operator may register a version of their own |
 
 
 *The five columns above are present exactly on a selection version, and the store holds that as five CHECK clauses rather than the admitter holding it as care. The baseline moves nothing and no execution version is admitted in this generation, so on both they are null together. A row carrying three of the five reads as a version and cannot be scored as one, which is the state the clauses refuse.*
 
-*`definition` is derived from these columns for a selection version and typed only for the baseline. A sentence somebody types can disagree with the columns beside it, and the day it does there is nothing to say which of the two the version is (see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation).*
+*`definition` is derived from these columns for a selection version and typed only for the baseline. A sentence somebody types can disagree with the columns beside it, and the day it does there is nothing to say which of the two the version is (see: Generation 1 opens with no version admissible in either family, and what reopens each is named).*
 
 ### What a night's difference came to
 
@@ -1595,7 +1616,7 @@ Grain: variant + date + direction. One night of one version against the baseline
 
 *A night is scored once, when its scoring horizon has closed, and never rewritten. A figure recomputed as returns arrive would be a figure over a population that changed after somebody read it, which is the defect the population rule exists to name (see: The subject is the flagged setup population, not the trade log).*
 
-*Only a selection version has rows here, which the `family` check states rather than leaves to the writer. An execution version is scored on R and none is admitted in this generation, so the absence is a decision rather than an omission (see: No execution variant is admitted in this generation, and the condition that would reopen it is named).*
+*Only a selection version has rows here, which the `family` check states rather than leaves to the writer. An execution version is scored on R and none is admitted in this generation, so the absence is a decision rather than an omission (see: Generation 1 opens with no version admissible in either family, and what reopens each is named).*
 
 ### What the gate read of a version
 
@@ -1726,6 +1747,7 @@ none are indistinguishable from the outside, and the first is a defect.
 |---|---|
 | SetupJournal | It seals the night: every setup row complete, its evidence frozen, and no column written that belongs to a later stage or to a person. A component enforcing immutability by writing would be the second writer of the thing it protects |
 | SessionReplayClock | It reads `intraday_bar` one minute at a time and writes nothing. It is the walk rather than a stage: one clock per session hands ascending minutes to whatever is resolving against them, and the component that decides something is the one that owns a table. Declared here because a component missing from this document and one that deliberately owns none are indistinguishable from the outside |
+| GenerationOneForecast | From 7.11. It runs generation 1's detector over recorded nights on a store copy, reads the run log for what the day's other stages spent, and writes a report file under the data root: the forecast is research over nights already recorded, and a table here would be a store the live lab carries for a question it asks once |
 | EntryRuleMeasurement | From 7.9. It reads the calibration rows, the minutes the backfill bought and the daily bars, runs the entry rule over them, and writes a report file under the data root rather than a row: the reading is research on a store copy, and a table here would be a store the live lab carries for a question it never asks at night |
 | NightReconciler | It establishes which slots of a night did not run and why, and the row saying so is a `run_log` row. `RunLogger` is that table's one writer for both operations and is attributed by the type issuing the statement, so the reconciliation decides and `RunLogger` writes, on the terms every stage records its own run |
 | WatchlistPublisher | **Ruled at 4.1**, having been the one phase-4 component with no store anywhere in this document. The two answers were a `watchlist` table freezing what was shown, or none and a page that projects the setups. The second holds: `setup` already carries `rank` and `capped_out`, every read of it is bounded on when its rows were observed, and a replay of an evening therefore returns the list that evening showed, corrections and all. A stored copy would be a second statement of one night, and it could disagree with the rows it was copied from with nothing reading both to notice. The stage runs at 18:40 to report what would be on the page, which is the only moment a night that was never capped is noticed without somebody opening a browser |

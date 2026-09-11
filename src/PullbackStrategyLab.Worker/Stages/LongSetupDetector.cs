@@ -115,14 +115,22 @@ public sealed class LongSetupDetector
         // The list this night runs, registered before a row is written under it, so every row can be
         // held to the checks in force on its own night rather than to whatever the build carries
         // when it is read. From 7.2.
-        new CheckRegister(_clock).Register(connection, Direction, SetupChecks.Long, asOf);
+        //
+        // From 7.11 the list is the generation in force's: generation 1's from the night its baseline
+        // is registered, which retires generation 0's clauses in the register on that night and no
+        // earlier, so every row before the switch is still held to the list it was written under.
+        int generation = GenerationInForce(connection, asOf, _options.SessionZone);
+
+        new CheckRegister(_clock).Register(
+            connection, Direction, generation >= GenerationOneChecks.Generation ? GenerationOneChecks.Long : SetupChecks.Long, asOf);
 
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
         var source = new StoredFigures(connection, _options.SessionZone);
 
         Tally tally = Walk(
             connection, members, asOf, SetupReader.SetupTable, source,
-            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions, _options.SessionZone));
+            ticker => DailyBarReader.Read(connection, ticker, asOf, HistorySessions, _options.SessionZone),
+            generation);
 
         // A night that could not read a name did not do everything it set out to do, and saying so
         // is what stops the loss reading as a quiet night.
@@ -225,7 +233,8 @@ public sealed class LongSetupDetector
         DateOnly asOf,
         string table,
         ISessionFigures source,
-        Func<string, IReadOnlyList<StoredDailyBar>> window)
+        Func<string, IReadOnlyList<StoredDailyBar>> window,
+        int generation = 0)
     {
         int examined = 0;
         int recorded = 0;
@@ -268,6 +277,42 @@ public sealed class LongSetupDetector
             examined++;
             IReadOnlyList<CheckResult> results = LongPullbackRules.Evaluate(evidence);
 
+            // The switch night and every night after it, from 7.11. Generation 1's verdicts go to
+            // `setup`, which is the lab's record, and generation 0's go to its companion for
+            // comparison, both from the one evidence, so a name the two disagree about is a name
+            // whose rule changed. Only on a forward night: a calibration walk stays generation 0's.
+            // see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole
+            if (generation >= GenerationOneChecks.Generation
+                && string.Equals(table, SetupReader.SetupTable, StringComparison.Ordinal))
+            {
+                if (ClearsRecordingFloor(results))
+                {
+                    InsertGenerationZero(connection, transaction, ticker, asOf, results, SetupChecks.PassedAll(results), evidence, _clock.UtcNow);
+                }
+
+                GenerationOneFigures figures = GenerationOneDetector.Figures(
+                    ticker, asOf, window(ticker),
+                    DailyBarReader.Read(connection, ticker, asOf, SourcedForms.ExtendedHistorySessions, _options.SessionZone),
+                    source, null);
+                IReadOnlyList<CheckResult> sourced = GenerationOneRules.EvaluateLong(evidence, figures);
+
+                if (!GenerationOneChecks.ClearsRecordingFloor(sourced, isLong: true))
+                {
+                    belowFloor++;
+                    RecordBelowFloor(connection, transaction, asOf, ticker, sourced, generation, GenerationOneChecks.RecordingFloorLong, _clock.UtcNow);
+                    continue;
+                }
+
+                bool sourcedAll = GenerationOneChecks.PassedAll(sourced);
+                if (sourcedAll)
+                {
+                    passedAll++;
+                }
+
+                recorded += Insert(connection, transaction, table, ticker, asOf, sourced, sourcedAll, evidence, degradedBecause, generation);
+                continue;
+            }
+
             if (!ClearsRecordingFloor(results))
             {
                 belowFloor++;
@@ -278,7 +323,7 @@ public sealed class LongSetupDetector
                 // record, because its rows are not evidence and nothing is replayed over them.
                 if (string.Equals(table, SetupReader.SetupTable, StringComparison.Ordinal))
                 {
-                    RecordBelowFloor(connection, transaction, asOf, ticker, results, _clock.UtcNow);
+                    RecordBelowFloor(connection, transaction, asOf, ticker, results, GateSetGeneration, RecordingFloor, _clock.UtcNow);
                 }
 
                 continue;
@@ -482,7 +527,8 @@ public sealed class LongSetupDetector
         IReadOnlyList<CheckResult> results,
         bool passedAll,
         LongPullbackRules.LongEvidence evidence,
-        string? degradedBecause)
+        string? degradedBecause,
+        int generation = 0)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -507,10 +553,10 @@ public sealed class LongSetupDetector
               INSERT INTO setup
                   (setup_id, as_of, ticker, direction, check_results, passed_all,
                    trigger_price, stop_price, stop_distance_ranges,
-                   thrust_scan, thrust_session, degraded_because)
+                   thrust_scan, thrust_session, degraded_because, generation)
               VALUES (@setup_id, @as_of, @ticker, @direction, @check_results, @passed_all,
                       @trigger_price, @stop_price, @stop_distance_ranges,
-                      @thrust_scan, @thrust_session, @degraded_because)
+                      @thrust_scan, @thrust_session, @degraded_because, @generation)
               ON CONFLICT (setup_id) DO NOTHING
               """;
 
@@ -548,6 +594,7 @@ public sealed class LongSetupDetector
         // had no column until 032. Null on an ordinary night; the stage names where a stage of this
         // session had already ended other than cleanly when this row was written.
         command.Parameters.AddWithValue("@degraded_because", (object?)degradedBecause ?? DBNull.Value);
+        command.Parameters.AddWithValue("@generation", generation);
 
         command.Parameters.AddWithValue("@thrust_scan", (object?)evidence.ThrustScan ?? DBNull.Value);
         command.Parameters.AddWithValue(
@@ -619,6 +666,8 @@ public sealed class LongSetupDetector
         DateOnly asOf,
         string ticker,
         IReadOnlyList<CheckResult> results,
+        int generation,
+        IReadOnlyList<string> floor,
         DateTimeOffset observedAt)
     {
         using SqliteCommand command = connection.CreateCommand();
@@ -632,15 +681,73 @@ public sealed class LongSetupDetector
         command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@direction", Direction);
-        command.Parameters.AddWithValue("@generation", GateSetGeneration);
+        command.Parameters.AddWithValue("@generation", generation);
         command.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckResultsJson));
         command.Parameters.AddWithValue(
             "@failed_floor",
-            string.Join(",", RecordingFloor.Where(name => !results.Any(r => r.Name == name && r.Passed))));
+            string.Join(",", floor.Where(name => !results.Any(r => r.Name == name && r.Passed))));
         command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
 
         return command.ExecuteNonQuery();
     }
+
+    /// <summary>
+    /// The generation whose gate set scores tonight's `setup` rows: the one the night was first detected
+    /// under where it has been, and otherwise the generation of the baseline in force as the night stands,
+    /// or nought before any is registered. A rerun therefore scores a night as its first run did.
+    /// </summary>
+    public static int GenerationInForce(SqliteConnection connection, DateOnly asOf, string sessionZone) =>
+        SetupReader.GenerationRecordedOn(connection, asOf, sessionZone)
+            ?? VariantReader.BaselineOn(connection, asOf, sessionZone)?.Generation
+            ?? 0;
+
+    /// <summary>
+    /// Generation 0's verdicts on one name that cleared its recording floor, into the companion table,
+    /// from the switch night. Its own insert rather than a shared helper, on the terms every insert here
+    /// pays, so `writer-ownership` attributes the write to this detector.
+    /// </summary>
+    private static int InsertGenerationZero(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string ticker,
+        DateOnly asOf,
+        IReadOnlyList<CheckResult> results,
+        bool passedAll,
+        LongPullbackRules.LongEvidence evidence,
+        DateTimeOffset observedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO setup_generation_zero
+                (setup_id, as_of, ticker, direction, check_results, passed_all,
+                 trigger_price, stop_price, stop_distance_ranges, thrust_scan, thrust_session, observed_at)
+            VALUES (@setup_id, @as_of, @ticker, @direction, @check_results, @passed_all,
+                    @trigger_price, @stop_price, @stop_distance_ranges, @thrust_scan, @thrust_session, @observed_at)
+            ON CONFLICT (setup_id) DO NOTHING
+            """;
+
+        command.Parameters.AddWithValue("@setup_id", SetupId(ticker, asOf));
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@direction", Direction);
+        command.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckResultsJson));
+        command.Parameters.AddWithValue("@passed_all", passedAll ? 1 : 0);
+        command.Parameters.AddWithValue("@trigger_price", Text(Geometry(evidence)?.Trigger, StoreText.PriceToStorageText));
+        command.Parameters.AddWithValue("@stop_price", Text(Geometry(evidence)?.Stop, StoreText.PriceToStorageText));
+        command.Parameters.AddWithValue("@stop_distance_ranges", Text(evidence.StopDistanceRanges, StoreText.RatioToStorageText));
+        command.Parameters.AddWithValue("@thrust_scan", (object?)evidence.ThrustScan ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "@thrust_session",
+            evidence.ThrustSession is DateOnly session ? StoreText.DateToStorageText(session) : (object)DBNull.Value);
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
+
+        return command.ExecuteNonQuery();
+    }
+
+    /// <summary>The evening's geometry, absent where the setup has none, as the setup insert writes it.</summary>
+    private static PullbackGeometry.Pullback? Geometry(LongPullbackRules.LongEvidence evidence) =>
+        NoPullbackYet(evidence.Pullback) ? null : evidence.Pullback;
 
     /// <summary>The identity of one setup: one name, one direction, one night.</summary>
     public static string SetupId(string ticker, DateOnly asOf) =>

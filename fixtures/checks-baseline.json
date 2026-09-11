@@ -81,7 +81,9 @@
         "setup rows read back from the replay store": 3,
         "check results across those rows": 30,
         "check definitions the replay's register holds": 20,
-        "nights and sides whose rows record one set of checks": 2
+        "nights and sides whose rows record one set of checks": 2,
+        "switch-night setup rows held to generation 1's list": 24,
+        "switch-night companion rows held to generation 0's list": 2
       }
     },
     "checkpoint-test-count": {

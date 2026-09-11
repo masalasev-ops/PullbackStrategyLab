@@ -137,6 +137,33 @@ public sealed class SetupReader
     /// <summary>The evidence store. Written forward, one session at a time.</summary>
     public const string SetupTable = "setup";
 
+    /// <summary>
+    /// The generation a night was first detected under, or null where it has not been detected, from
+    /// 7.11: the highest generation any of its `setup` or `below_floor` rows carries.
+    ///
+    /// <b>A night keeps the generation its first detection scored it under.</b> The switch reads the
+    /// register, and a rerun of a night after generation 1 was registered that evening would otherwise
+    /// score its second pass under the other gate set, leaving one night with two lists in it. Across both
+    /// sides, so a registration that lands between the long and the short slot cannot split a night either.
+    /// </summary>
+    public static int? GenerationRecordedOn(SqliteConnection connection, DateOnly asOf, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT MAX(generation) FROM (
+                SELECT generation FROM setup WHERE as_of = @as_of
+                UNION ALL
+                SELECT generation FROM below_floor WHERE as_of = @as_of AND observed_at <= @observed_before)
+            """;
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
+
+        object? value = command.ExecuteScalar();
+        return value is null or DBNull ? null : Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     /// <summary>The calibration store. Read by nobody, and the reader above says so by name.</summary>
     public const string CalibrationTable = "calibration_setup";
 
@@ -153,11 +180,17 @@ public sealed class SetupReader
             ? "degraded_because"
             : "NULL";
 
+        // The gate set a row was scored with, from 7.11, on the same terms: the evidence table records
+        // it and a calibration walk is generation 0's by construction.
+        string generation = string.Equals(table, SetupTable, StringComparison.Ordinal)
+            ? "generation"
+            : "0";
+
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT setup_id, as_of, ticker, direction, check_results, passed_all,
                    rank, capped_out, trigger_price, stop_price, stop_distance_ranges,
-                   agreement, agreement_note, {degraded}
+                   agreement, agreement_note, {degraded}, {generation}
               FROM {table}
              WHERE as_of = @as_of
              ORDER BY direction, ticker
@@ -184,7 +217,8 @@ public sealed class SetupReader
                 reader.IsDBNull(10) ? null : StoreText.StorageTextToRatio(reader.GetString(10)),
                 reader.IsDBNull(11) ? null : reader.GetString(11),
                 reader.IsDBNull(12) ? null : reader.GetString(12),
-                reader.IsDBNull(13) ? null : reader.GetString(13)));
+                reader.IsDBNull(13) ? null : reader.GetString(13),
+                reader.GetInt32(14)));
         }
 
         return setups;
@@ -206,7 +240,9 @@ public sealed record StoredSetup(
     decimal? StopDistanceRanges,
     string? Agreement,
     string? AgreementNote,
-    string? DegradedBecause);
+    string? DegradedBecause,
+    // Which generation's gate set scored the row, from 7.11: nought before the switch night, one after.
+    int Generation = 0);
 
 /// <summary>
 /// The flagged population as counts: how many, per side, over how many sessions and what span.

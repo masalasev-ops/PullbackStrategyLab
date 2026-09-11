@@ -26,7 +26,7 @@ public static class VariantFamily
     /// because the store holds minute bars only from the night capture began at 4.2 and none of the
     /// vendor's earlier history has been bought, and it cannot accumulate, because R needs fills and the funnel
     /// passes a median of nought candidates a night.
-    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
     /// </summary>
     public const string Execution = "execution";
 

@@ -24,7 +24,7 @@ namespace PullbackStrategyLab.Core.Detection;
 /// test would have nothing to reproduce the baseline with; that is named as out of scope rather than
 /// left to be discovered.
 /// see: A selection rule is the gate list plus a named threshold per gate, and one implementation reads it for the detector and the harness alike
-/// see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+/// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
 /// </summary>
 public sealed record SelectionRule(
     string Direction,

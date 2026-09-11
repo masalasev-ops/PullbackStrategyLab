@@ -144,21 +144,24 @@ public sealed class RiskGate
             return new OrderRunResult(sessionDate, 0, new Tally(), nothing.RowsWritten, RunOutcome.Clean, NoTriggers);
         }
 
+        // Keyed by the plan and not by the setup, from 7.11: a plan is one setup under one version, so
+        // a night two versions select the same name on holds two plans for one setup, and a dictionary
+        // keyed on the setup met a duplicate and threw rather than gating either.
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
             .ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
-            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+            .ToDictionary(p => p.PlanId, StringComparer.Ordinal);
 
         // A plan carrying the rule has an executed shape only once its entry is sized, so a touched one
         // missing from the priced plans is either refused at the entry or was never sized, and the two
         // are told apart by whether the sizer wrote a row for it.
         Dictionary<string, CommittedTradePlan> committed = TradePlanReader
             .CommittedForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
-            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+            .ToDictionary(p => p.PlanId, StringComparer.Ordinal);
 
         HashSet<string> refusedAtEntry = [.. EntryResolutionReader
             .ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
             .Where(r => r.RefusedBecause is not null)
-            .Select(r => r.SetupId)];
+            .Select(r => r.PlanId)];
 
         var tally = new Tally();
         OpenBook book = BookComingInto(connection, sessionDate, _options.SessionZone);
@@ -171,11 +174,11 @@ public sealed class RiskGate
             // A resolution with no plan cannot happen through the store: `trigger_resolution` is
             // keyed on the plan and carries a foreign key to it. Refused rather than skipped, because
             // a trigger silently dropped is a fill this lab would never know it had missed.
-            if (!plans.TryGetValue(trigger.SetupId, out StoredTradePlan? plan)
-                && committed.TryGetValue(trigger.SetupId, out CommittedTradePlan? rule)
+            if (!plans.TryGetValue(trigger.PlanId, out StoredTradePlan? plan)
+                && committed.TryGetValue(trigger.PlanId, out CommittedTradePlan? rule)
                 && rule.CarriesTheRule)
             {
-                if (refusedAtEntry.Contains(trigger.SetupId))
+                if (refusedAtEntry.Contains(trigger.PlanId))
                 {
                     tally.CountRefusedAtEntry();
                 }
@@ -190,7 +193,7 @@ public sealed class RiskGate
             if (plan is null)
             {
                 throw new InvalidOperationException(
-                    $"The trigger for {trigger.SetupId} has no plan resting in {sessionDate:yyyy-MM-dd}. A "
+                    $"The trigger for {trigger.PlanId} has no plan resting in {sessionDate:yyyy-MM-dd}. A "
                     + "resolution is written against a plan and cannot outlive one, so this is a store whose "
                     + "rows contradict its own key rather than a session with nothing to gate.");
             }

@@ -145,9 +145,10 @@ public sealed class PositionManager
             return Complete(connection, run, sessionDate, tally, RunOutcome.Clean, NothingToManage, observedAt);
         }
 
+        // Keyed by the plan, from 7.11, since two versions can plan one setup and each position is one plan's.
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, [.. open.Select(p => p.SetupId)], sessionDate, _options.SessionZone)
-            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+            .ForSetups(connection, [.. open.Select(p => p.SetupId).Distinct(StringComparer.Ordinal)], sessionDate, _options.SessionZone)
+            .ToDictionary(p => p.PlanId, StringComparer.Ordinal);
 
         string[] names =
             [.. open.Select(p => p.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
@@ -174,7 +175,7 @@ public sealed class PositionManager
 
         SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate, _options.SessionZone);
 
-        List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.SetupId], sessionDate))];
+        List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.PlanId], sessionDate))];
         var writes = new List<Action<SqliteTransaction>>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         int minutesWalked = 0;

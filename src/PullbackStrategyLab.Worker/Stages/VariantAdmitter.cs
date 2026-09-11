@@ -95,20 +95,34 @@ public sealed class VariantAdmitter
         + TargetFlag;
 
     /// <summary>
-    /// Why an execution version is refused outright in this generation.
+    /// Why an execution version is refused outright, in generation 0 and in generation 1.
     ///
     /// Both routes by which such a version earns its place are closed, so admitting one would put a
     /// row in the register that cannot be screened, scored or resolved, and nothing closes such a
     /// row. Refused here rather than left to a person to remember, and the message names the
     /// condition that would reopen it.
-    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
     /// </summary>
     public const string ExecutionRefused =
-        "no execution variant is admitted in this generation: it cannot be screened, because the store holds "
-        + "minute bars only from the night capture began and none of the vendor's earlier history has been "
-        + "bought, and it cannot accumulate, because R needs fills and the funnel passes a median of nought "
-        + "candidates a night. What reopens it is capture running, from which the screenable population grows at "
-        + "one night a night, and a funnel that produces a trade";
+        "no execution variant is admitted: it cannot be screened, because nothing replays an execution rule "
+        + "over the calibration minutes the backfill buys, and it cannot accumulate, because R needs fills and "
+        + "no trade has fired. What reopens it is an execution replay over those minutes, or a funnel that "
+        + "produces trades";
+
+    /// <summary>
+    /// Why a selection version is refused once generation 1 is in force, from 7.11.
+    ///
+    /// A selection version moves one threshold of its generation's selection rule and is screened by
+    /// the harness reproducing that generation's baseline, and the one selection rule written down is
+    /// generation 0's. A threshold named after the switch would be a move over a rule the lab no longer
+    /// runs, and the version would be compared against a baseline it does not describe.
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
+    /// </summary>
+    public const string GenerationOneSelectionRefused =
+        "no selection version is admitted in generation 1 yet: the only selection rule written down is "
+        + "generation 0's, so a threshold named now would move a rule the lab no longer runs. What reopens it is "
+        + "generation 1's gate set written as a selection rule, with the harness reproducing generation 1's "
+        + "own selections";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -161,6 +175,12 @@ public sealed class VariantAdmitter
         }
 
         MovedThreshold? moved = null;
+
+        if (family == VariantFamily.Selection && GenerationInForce() >= GenerationOneChecks.Generation)
+        {
+            Console.Error.WriteLine($"{Name}: {GenerationOneSelectionRefused}.");
+            return 1;
+        }
 
         if (family == VariantFamily.Selection)
         {
@@ -271,6 +291,14 @@ public sealed class VariantAdmitter
             VariantReader.RegisteredBy(connection, asOf, _options.SessionZone);
 
         int generation = registered.Count == 0 ? 0 : registered.Max(v => v.Generation);
+
+        // Refused here as well as at the command, so no caller can register a version of a rule the
+        // generation in force does not have.
+        if (family == VariantFamily.Selection && generation >= GenerationOneChecks.Generation)
+        {
+            throw new InvalidOperationException(GenerationOneSelectionRefused);
+        }
+
         int minimumSample = family == VariantFamily.Execution
             ? MeasurementParameters.ExecutionMinimumPairedTrades
             : MeasurementParameters.MinimumEffectiveObservations;
@@ -405,6 +433,14 @@ public sealed class VariantAdmitter
         }
 
         return SelectionReplay.AssertAdmissible(baseline.With(threshold, moved), baseline);
+    }
+
+    /// <summary>The generation of the baseline in force as the register stands now.</summary>
+    private int GenerationInForce()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        DateOnly asOf = _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
+        return VariantReader.BaselineOn(connection, asOf, _options.SessionZone)?.Generation ?? 0;
     }
 
     private static string? Flag(string[] args, string flag)

@@ -32,7 +32,10 @@ public sealed class CheckReadingTests
         get
         {
             var data = new TheoryData<string>();
-            foreach (string name in SetupChecks.Long.Concat(SetupChecks.Short).Distinct(StringComparer.Ordinal))
+            // Both generations' lists, from 7.11, since a generation 1 row reaches the same page.
+            foreach (string name in SetupChecks.Long.Concat(SetupChecks.Short)
+                         .Concat(GenerationOneChecks.Long).Concat(GenerationOneChecks.Short)
+                         .Distinct(StringComparer.Ordinal))
             {
                 if (!CompareAWordNotANumber.Contains(name, StringComparer.Ordinal))
                 {

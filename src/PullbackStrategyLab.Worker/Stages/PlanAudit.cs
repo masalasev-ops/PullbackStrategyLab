@@ -113,15 +113,16 @@ public sealed class PlanAudit
             return Complete(connection, run, sessionDate, tally, RunOutcome.Clean, NothingToAudit, observedAt);
         }
 
-        string[] setupIds = [.. trades.Select(t => t.SetupId)];
+        string[] setupIds = [.. trades.Select(t => t.SetupId).Distinct(StringComparer.Ordinal)];
 
+        // Keyed by the plan, from 7.11, since two versions can plan one setup and each trade is one plan's.
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
             .ForSetups(connection, setupIds, sessionDate, _options.SessionZone)
-            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+            .ToDictionary(p => p.PlanId, StringComparer.Ordinal);
 
         Dictionary<string, StoredTradeOrder> orders = TradeOrderReader
             .ForSetups(connection, setupIds, sessionDate, _options.SessionZone)
-            .ToDictionary(o => o.SetupId, StringComparer.Ordinal);
+            .ToDictionary(o => o.PlanId, StringComparer.Ordinal);
 
         ILookup<string, StoredFill> fills = PositionReader
             .FillsFor(connection, [.. trades.Select(t => t.PositionId)], sessionDate, _options.SessionZone)
@@ -141,8 +142,8 @@ public sealed class PlanAudit
             // fill; it is refused rather than filled with noughts so the count says so if it ever
             // does (see: A gate handed an absent or degenerate quantity fails rather than passing).
             if (entry is null || exit is null
-                || !plans.TryGetValue(trade.SetupId, out StoredTradePlan? plan)
-                || !orders.TryGetValue(trade.SetupId, out StoredTradeOrder? order))
+                || !plans.TryGetValue(trade.PlanId, out StoredTradePlan? plan)
+                || !orders.TryGetValue(trade.PlanId, out StoredTradeOrder? order))
             {
                 continue;
             }

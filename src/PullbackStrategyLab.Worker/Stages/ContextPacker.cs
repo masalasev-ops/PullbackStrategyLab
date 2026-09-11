@@ -339,14 +339,24 @@ public sealed class ContextPacker
     /// <b>Every threshold is shown and the family says which may move.</b> Execution and recorded
     /// thresholds are in the list because a proposal naming one is refused for a reason the model
     /// can read here, rather than refused at the registry over a field it was never told about.
-    /// see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
     /// </summary>
     private RenderedSection RuleInForce(SqliteConnection connection, DateOnly asOf)
     {
-        IReadOnlyList<StoredVariant> registered =
-            VariantReader.RegisteredBy(connection, asOf, _options.SessionZone);
+        // The baseline of the generation in force, from 7.11, rather than the first in the register's
+        // order, which after a closed generation is the retired one.
+        IReadOnlyList<StoredVariant> registered = VariantReader.LiveOn(connection, asOf, _options.SessionZone);
 
         StoredVariant? baseline = registered.FirstOrDefault(v => v.IsBaseline);
+
+        // Once generation 1 is in force there is no selection rule a proposal could move a threshold
+        // of, so the section cannot say what the model is asked to move, and a pack without it is not
+        // a smaller pack. The refusal names why, and no ask is made.
+        // see: Generation 1 opens with no version admissible in either family, and what reopens each is named
+        if (baseline is not null && baseline.Generation >= GenerationOneChecks.Generation)
+        {
+            throw new InvalidOperationException(VariantAdmitter.GenerationOneSelectionRefused);
+        }
 
         // Ordered by id so two cuts over one store state name the same version in the same words,
         // and accepted only: an open version is accumulating rather than running.
