@@ -363,6 +363,35 @@ public sealed partial class StatedCountsCheck
             traced.Count(r => !string.Equals(r.Disagreement, "none", StringComparison.Ordinal)),
             "clause rows whose disagreement cell is not none"));
 
+        // The two sentences outside SOURCES.md that restate its counts, derived from the same rows.
+        //
+        // <b>Both shipped wrong in the commit that wrote the trace, and neither was read by anything.</b>
+        // DECISIONS.md's entry on the closed vocabulary said "sixteen sourced forms" where the table
+        // derives fifteen, and BUILD_PLAN.md's 6.12 obligation applied "fourteen" to both columns
+        // where SOURCES moved the form column by nine and the threshold column by nothing. The claims
+        // above parse SOURCES's own summary against its own tables, so a figure restated anywhere else
+        // was outside every assertion: the same count stated in a second place is the second place it
+        // goes stale.
+        string decisions = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "DECISIONS.md"));
+
+        claims.Add(new Claim(
+            "DECISIONS.md, the sourced forms the closed vocabulary counts",
+            InWords(decisions, "derives the ", " sourced forms and the"),
+            traced.Count(r => r.Form is ClauseProvenanceCheck.HisOwnWords or ClauseProvenanceCheck.InPart),
+            "SOURCES.md clause rows whose form verdict is his own words, wholly or in part"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the clause forms the 6.12 obligation says rest on no source",
+            InWords(buildPlan, "in which ", " of the twenty clause forms and"),
+            traced.Count(r => r.Form == ClauseProvenanceCheck.NoSource),
+            "SOURCES.md clause rows whose form verdict is no source found"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the thresholds the 6.12 obligation says rest on no source",
+            InWords(buildPlan, "clause forms and ", " of the twenty thresholds rest on no source"),
+            traced.Count(r => r.Threshold == ClauseProvenanceCheck.NoSource),
+            "SOURCES.md clause rows whose threshold verdict is no source found"));
+
         // BUILD_PLAN.md, the authored parameters still open, over the table itself.
         //
         // <b>Registered at 4.4 because it had just been wrong in three documents at once.</b> The
