@@ -36,7 +36,7 @@ public sealed partial class BarAppendOnlyCheck
     /// Every table holding bars. Named here rather than pattern-matched on the word "bar",
     /// because a table that stopped matching a pattern would leave the check quietly narrower.
     /// </summary>
-    public static IReadOnlyList<string> BarTables { get; } = ["daily_bar", "index_bar", "intraday_bar"];
+    public static IReadOnlyList<string> BarTables { get; } = ["daily_bar", "index_bar", "intraday_bar", "calibration_minute_bar"];
 
     [Fact]
     [Trait("check", "bar-append-only")]

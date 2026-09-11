@@ -49,6 +49,7 @@ public static class Program
         builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<VariantAdmitter>();
         builder.Services.AddSingleton<GenerationCloser>();
+        builder.Services.AddSingleton<MinuteBackfiller>();
         builder.Services.AddSingleton<ReplayHarness>();
         builder.Services.AddSingleton<HoldoutRegistry>();
         builder.Services.AddSingleton<VariantResolver>();
@@ -287,6 +288,7 @@ public static class Program
         [IndexIngestor.Name] = (services, rest) => services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
         [NightReconciler.Name] = (services, rest) => services.GetRequiredService<NightReconciler>().Run(rest),
         [IntradayFetcher.Name] = (services, rest) => services.GetRequiredService<IntradayFetcher>().RunAsync(rest).GetAwaiter().GetResult(),
+        [MinuteBackfiller.Name] = (services, rest) => services.GetRequiredService<MinuteBackfiller>().RunAsync(rest).GetAwaiter().GetResult(),
         [SpreadSnapshotter.Name] = (services, rest) => services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
         [VwapEngine.Name] = (services, rest) => services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
         [WatchlistPublisher.Name] = (services, rest) => services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
@@ -362,6 +364,7 @@ public static class Program
         IndexIngestor.Name,
         NightReconciler.Name,
         IntradayFetcher.Name,
+        MinuteBackfiller.Name,
         SpreadSnapshotter.Name,
         VwapEngine.Name,
         WatchlistPublisher.Name,

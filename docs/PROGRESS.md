@@ -19368,3 +19368,66 @@ Carried:    **No operator's half.** Nothing closes a live generation until 7.11 
             through this act.
 
             **This session committed code and may not sign it off.**
+
+## 7.7 — 2026-09-11 — phase-7-7-minute-backfill — the calibration minutes, laid out by the rule and bought into a table of their own
+
+Built:      **MinuteBackfiller**, the operator verb `backfill-minutes`, which buys one-minute history for
+            every flagged calibration row outside the nightly ceiling. **Where it buys is
+            `MinuteBackfillPlan`**, pure and in Core: a row enters on the first stored session after its
+            own, or the next weekday where the store holds none; for each name the latest entry not yet
+            covered ends a 120-day window and every row inside it is served by it, so each name costs one
+            request per window and overlapping windows are bought once. A row whose unbroken run of bought
+            sessions before its entry is under the warm-up is written to `calibration_minute_shortfall`
+            with what it has. `--dry-run` lays the windows out and prints the calls and the short rows
+            without spending anything, and a run stopped part way resumes, because a window already
+            recorded is not bought again.
+
+            **The minutes land in `calibration_minute_bar` and never in `intraday_bar`.** Migration 066
+            creates it with the live table's shape less the session average, beside a row per request
+            and the shortfall population. It is a bar table and `bar-append-only` names it; the minutes
+            are stamped for `point-in-time`, and the two operational tables are exempt with why.
+            SCHEMA declares all three, RUNBOOK's operator-verb table gains the verb with the dry run as
+            the first step, and `slot-roster` holds it out of the night by name.
+
+            **The warm-up is eleven sessions, derived rather than chosen**: 7.8's longest hourly average
+            is the 21, the lab's convergence rule is three times the period, which is why the daily
+            warm-up is 150 sessions, and a session is six complete hourly bars on the grid the standing
+            decision anchors to the open. If 7.8 lets the closing stub contribute a value, a warm-up
+            counted without it is longer rather than shorter, so the figure cannot come out short.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,278 tests**, up from 1,269.
+
+Measured:   **Over the golden fixture, fifteen expectations at 7.7, all `DERIVED`.** The walk's 325
+            calibration rows over eleven names, and one authored AAPL row on the fixture's as-of, because
+            the fixture holds captured minutes for AAPL alone: 326 rows, 12 names, **17 windows at 85
+            calls**, and **no row short** of the warm-up. A new mode of `tools/derive-indicators.py`,
+            `--minute-windows`, restated the plan from SCHEMA's statement of it over a copy of the replay
+            store and agreed on all six before any expectation was written. **The AAPL window runs
+            2026-04-28 to 2026-08-25 and returns 959 bars over one session, 390 of them regular, which
+            reconciles with the probe's per-name figure** of 959 for one session; the other sixteen
+            windows are answered with nothing, the fixture holding no minutes for those names. **No
+            backfilled minute is in `intraday_bar`**, and the run row says its calls sit outside the
+            ceiling. Three existing expectations moved, each noted: the schema version to 66 and the
+            catalogue's two counts by one.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.6's after, 159 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `a2c05be`
+            with the working tree dirty: GREEN, phase 7, **160 claims, 160 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,944, 1,278 tests. The new claim is MinuteBackfiller in the catalogue.
+
+Found:      **The plan read one short row per window and the fixture has none.** 7.7's row says the rule
+            covers the warm-up on every row but one landing at a window's start. Counted as the unbroken
+            run of bought sessions, which is what an average needs, a row at a window's start is covered
+            whenever the window before it ends close enough, and over the walk's dense rows every one
+            does. The short case is real and is proved over authored cases; it did not arise here.
+
+            **The warm-up counts six hourly bars a session and not seven.** The standing grid decision
+            says the closing half hour is not an hourly bar; 7.10's plan says it contributes a value to an
+            hourly average, and 7.8 implements that. Counting six keeps the backfill's figure safe under
+            either reading, and is recorded rather than decided.
+
+Carried:    **The operator's half: the fetch run against the vendor**, `backfill-minutes --dry-run` first
+            to read its cost, then the run itself on the store 7.9 will copy. Not met; no build session
+            spends vendor calls.
+
+            **This session committed code and may not sign it off.**

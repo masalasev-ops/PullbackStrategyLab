@@ -186,6 +186,58 @@ Insert IntradayFetcher · PK (`session_date`, `observed_at`)
 
 **The bars a wide night stores are labelled with the session they traded in, not the session the fetch was for.** The two were one figure while the stage bought a single session a night, and a twenty-seven session window returns bars from twenty-seven sessions in one answer; stamping all of them with the night the fetch ran would put every anchor's minutes under the wrong day, and the reader bounds on `session_date`.
 
+### `calibration_minute_bar`
+Grain: ticker + minute + observation. From 7.7. One-minute history bought once for the flagged calibration rows, for 7.9 to measure the sourced entry rule over.
+
+| Column | Type |
+|---|---|
+| `ticker`, `bar_ts` | TEXT. The stamp is the instant the bar opened, in UTC |
+| `session_date` | TEXT. Which trading session the minute belongs to, stored rather than derived |
+| `interval_code` | TEXT. `1m`, and the CHECK admits nothing else |
+| `session_window` | TEXT. `regular` or `extended`, per bar |
+| `price_basis` | TEXT. `raw`, as on `intraday_bar` |
+| `open`, `high`, `low`, `close` | TEXT holding a decimal, never REAL |
+| `volume` | INTEGER |
+| `observed_at` | TEXT. In the key, so a second purchase of the same minute is a new row rather than an edit |
+
+Insert MinuteBackfiller · PK (`ticker`, `bar_ts`, `observed_at`)
+
+**A table of its own and never rows in `intraday_bar`.** The live capture table's population is the forward nights the execution family's reopening condition counts, one night a night, and a minute of 2024 bought in one afternoon sitting there would be counted as a night the lab captured. Nothing about a bar's shape says which population it came from, so the two are separate tables, on the grounds `calibration_setup` is a table rather than a flag. **Outside the nightly ceiling**, and every call is on the run row (see: A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes). No foreign key to `security`, on `calibration_setup`'s own reasoning, and no session average, which nothing computes over history. A bar table, and append-only like the other three.
+
+### `calibration_minute_window`
+Grain: ticker + window end + observation. From 7.7. One row per request the backfill made.
+
+| Column | Type |
+|---|---|
+| `ticker` | TEXT |
+| `window_from`, `window_to` | TEXT. The first and last calendar day the request covered. The last is the entry session of the latest row it serves and the first is 119 days before it, being the vendor's 120-day request |
+| `rows_served` | INTEGER. The flagged calibration rows whose entry session falls inside the window |
+| `bars_returned`, `bars_written` | INTEGER. What the vendor sent and what was new |
+| `sessions_answered` | INTEGER. The distinct sessions the returned minutes fell in, which is what the fetched count reconciles against the probe's per-session figure over |
+| `calls_used` | INTEGER. What the request cost, five at the vendor's intraday price |
+| `observed_at` | TEXT |
+
+Insert MinuteBackfiller · PK (`ticker`, `window_to`, `observed_at`)
+
+**A window already recorded is not bought again**, so a run the operator stops part way resumes where it stopped. **The windows are laid out from the latest row of a name backwards**: the latest entry session not yet covered ends a window, every row of that name inside it is served by it, and the next window ends at the latest entry left over. That is one request per name per window with overlapping windows bought once, and it is `MinuteBackfillPlan.Of`.
+
+### `calibration_minute_shortfall`
+Grain: calibration row + observation. From 7.7. The flagged calibration rows the plan leaves short of warm-up.
+
+| Column | Type |
+|---|---|
+| `setup_id` | TEXT. The calibration row, and the foreign key says so |
+| `ticker` | TEXT |
+| `entry_session` | TEXT. The session the row's plan would have been live in: the first session the store holds after the row's own, or the next weekday where it holds none |
+| `window_from` | TEXT. The first day of the window that serves it |
+| `warmup_sessions` | INTEGER. The unbroken run of bought sessions immediately before the entry |
+| `warmup_wanted` | INTEGER. What the hourly 21 needs, and more than the row has, which the CHECK holds |
+| `observed_at` | TEXT |
+
+Insert MinuteBackfiller · PK (`setup_id`, `observed_at`)
+
+**The warm-up wanted is eleven sessions and it is derived, not chosen.** 7.8's longest hourly average is the 21, the lab's own convergence rule for an exponential average is three times its period, which is why the daily warm-up is 150 sessions for the 50-day, and a session is six complete hourly bars on the grid anchored to the open (see: The hourly grid anchors to the session open, and the closing stub is not an hourly bar). Sixty-three bars at six a session is eleven. **A row landing at a window's start is reported rather than bought a second window**, because one request per name per window is the rule written, and a report 7.9 reads names it rather than an average that never converged hiding it.
+
 ### `anchored_vwap`
 Grain: ticker + anchor + through-session + observation. Phase 4. The declining average price the short side's `reached-ceiling` clause reads.
 

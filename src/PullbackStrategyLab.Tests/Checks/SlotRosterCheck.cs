@@ -76,6 +76,7 @@ public sealed partial class SlotRosterCheck
         ["backfill-signals"] = "a one-time act per signal, filling rows recorded before the signal was frozen",
         ["recheck"] = "a repair bounded by the lateness rule, which is an act on the running store a person decides",
         ["reconstructed-read"] = "it reads a calibration store copy, which is research rather than the night",
+        ["backfill-minutes"] = "a one-time purchase of calibration minutes outside the nightly ceiling, from 7.7",
     };
 
     /// <summary>
