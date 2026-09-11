@@ -624,7 +624,7 @@
         {
           "clause": "Not permitted while variants run.",
           "disposition": "unreached",
-          "why": "nothing enforces that a baseline is not edited while versions run; the act has no component until something edits one, and what 5.1 builds is the register that can express the consequence"
+          "why": "nothing refuses an edit while versions run, and from 7.6 nothing needs to: the act that edits is GenerationCloser, and it closes the running versions rather than editing under them, which is the next clause. Whether to take the act while versions run is the operator's decision and no component can hold it"
         },
         {
           "clause": "Doing so closes every open variant as unresolved and starts a new generation",
@@ -1465,7 +1465,7 @@
       "subject": "P7",
       "clauses": [
         {
-          "clause": "NightReconciler, CheckRegister, GenerationOneDetector The morning screen saying why a slot that never ran did not.",
+          "clause": "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser The morning screen saying why a slot that never ran did not.",
           "disposition": "reaches"
         },
         {

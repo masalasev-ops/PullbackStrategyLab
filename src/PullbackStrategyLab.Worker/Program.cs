@@ -48,6 +48,7 @@ public static class Program
         builder.Services.AddSingleton<WatchlistPublisher>();
         builder.Services.AddSingleton<PlanBuilder>();
         builder.Services.AddSingleton<VariantAdmitter>();
+        builder.Services.AddSingleton<GenerationCloser>();
         builder.Services.AddSingleton<ReplayHarness>();
         builder.Services.AddSingleton<HoldoutRegistry>();
         builder.Services.AddSingleton<VariantResolver>();
@@ -291,6 +292,7 @@ public static class Program
         [WatchlistPublisher.Name] = (services, rest) => services.GetRequiredService<WatchlistPublisher>().RunAsync(rest).GetAwaiter().GetResult(),
         [PlanBuilder.Name] = (services, rest) => services.GetRequiredService<PlanBuilder>().Run(rest),
         [VariantAdmitter.Name] = (services, rest) => services.GetRequiredService<VariantAdmitter>().Run(rest),
+        [GenerationCloser.Name] = (services, rest) => services.GetRequiredService<GenerationCloser>().Run(rest),
         [ReplayHarness.Name] = (services, rest) => services.GetRequiredService<ReplayHarness>().Run(rest),
         [HoldoutRegistry.Name] = (services, rest) => services.GetRequiredService<HoldoutRegistry>().Run(rest),
         [VariantResolver.Name] = (services, rest) => services.GetRequiredService<VariantResolver>().Run(rest),
@@ -370,6 +372,7 @@ public static class Program
         // rather than as a roster to reconcile. It now reconciles in both directions.
         PlanBuilder.Name,
         VariantAdmitter.Name,
+        GenerationCloser.Name,
         ReplayHarness.Name,
         HoldoutRegistry.Name,
         VariantResolver.Name,

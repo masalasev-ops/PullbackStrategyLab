@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Core.Research;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Tests.Support;
@@ -1820,20 +1821,63 @@ public sealed partial class ArchitectureConformanceCheck
     }
 
     /// <summary>
-    /// That the register can express a closed generation, which is the assertable half of the
-    /// baseline-edit row until something edits a baseline.
+    /// That editing the baseline closes the generation as the row says, run rather than read.
+    ///
+    /// <b>It read the register's shape until 7.6</b>, because nothing edited a baseline and the
+    /// assertable half was that the store could express the consequence. GenerationCloser is the act
+    /// now, so the claim runs it over an authored register of a baseline, an open version and a
+    /// settled one, and asks the three things the row says: the open version reads `unresolved`, the
+    /// settled one keeps its answer, and a new generation is in force with the old one no longer live.
     /// </summary>
     private static bool TheRegisterCanCloseAGeneration()
     {
-        string migration = PullbackStrategyLab.Data.MigrationRunner.All()
-            .Single(m => m.Name.Contains("variant-and-the-fan-out", StringComparison.Ordinal)).Sql;
+        using var root = new TemporaryDirectory();
+        var connections = new PullbackStrategyLab.Data.StoreConnectionFactory(
+            new PullbackStrategyLab.Core.Configuration.PullbackStrategyLabPaths(root.Path));
+        new PullbackStrategyLab.Data.MigrationRunner(connections).Apply();
 
-        string reader = RepositoryLayout.Read(
-            System.IO.Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "VariantReader.cs"));
+        DateOnly evening = new(2026, 9, 11);
+        var clock = new FixedClock(SessionBoundaries.At(evening, new TimeOnly(19, 0), SessionBoundaries.UsEquities));
+        var options = Microsoft.Extensions.Options.Options.Create(
+            new PullbackStrategyLab.Core.Configuration.PullbackStrategyLabOptions { DataRoot = root.Path });
 
-        return migration.Contains("generation           INTEGER NOT NULL", StringComparison.Ordinal)
-            && migration.Contains("'unresolved'", StringComparison.Ordinal)
-            && reader.Contains("registered.Max(v => v.Generation)", StringComparison.Ordinal);
+        using (Microsoft.Data.Sqlite.SqliteConnection seed = connections.OpenWrite())
+        {
+            TestVersions.SeedBaseline(seed);
+
+            using Microsoft.Data.Sqlite.SqliteCommand command = seed.CreateCommand();
+            command.CommandText = """
+                INSERT INTO variant (
+                    variant_id, generation, family, definition, target,
+                    minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                    direction, gate, threshold_name, threshold_from, threshold_to)
+                VALUES
+                    ('V-open', 0, 'selection', 'a', 't', 1802, 'effective_paired_setup_observations',
+                     'open', NULL, '2026-09-01T22:00:00.000Z', 'long', 'dip-shape', 'maximum-retrace', '0.40', '0.50'),
+                    ('V-settled', 0, 'selection', 'b', 't', 1802, 'effective_paired_setup_observations',
+                     'rejected', '2026-09-05T01:00:00.000Z', '2026-09-01T22:00:00.000Z', 'long', 'dip-shape', 'maximum-retrace', '0.40', '0.35');
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        new PullbackStrategyLab.Worker.Stages.GenerationCloser(
+                connections, new PullbackStrategyLab.Data.RunLogger(clock, options), clock, options)
+            .Close("V-next", "the next rule", "the reference");
+
+        using Microsoft.Data.Sqlite.SqliteConnection read = connections.OpenReadOnly();
+        IReadOnlyList<PullbackStrategyLab.Data.StoredVariant> all =
+            PullbackStrategyLab.Data.VariantReader.RegisteredBy(read, evening, SessionBoundaries.UsEquities);
+        IReadOnlyList<PullbackStrategyLab.Data.StoredVariant> live =
+            PullbackStrategyLab.Data.VariantReader.LiveOn(read, evening, SessionBoundaries.UsEquities);
+
+        string Status(string id) => all.Single(v => v.VariantId == id).Status;
+
+        return Status("V-open") == VariantStatus.Unresolved
+            && Status("V-settled") == VariantStatus.Rejected
+            && Status(TestVersions.Baseline) == VariantStatus.Retired
+            && live.Count == 1
+            && live[0].VariantId == "V-next"
+            && live[0].Generation == 1;
     }
 
     /// <summary>
@@ -2202,18 +2246,18 @@ public sealed partial class ArchitectureConformanceCheck
                     "a table below the plan has gone back to keying on the setup, so the second version's row "
                     + "for a name the first already holds would be refused and the night would lose it silently"),
 
-            // The generation, read from the register's own shape. The act of editing the baseline
-            // has no component until somebody edits one, so what is assertable today is that the
-            // store can express the consequence: a fourth status that is not a rejection, a
-            // generation on every row, and a live set that is one generation rather than all of them.
+            // The generation, closed by the component that closes it. Until 7.6 the act of editing
+            // the baseline had no component and this read the register's shape; GenerationCloser is
+            // the act now, so the claim runs it over an authored register and reads the rows back.
             "Someone edits the baseline" => TheRegisterCanCloseAGeneration()
                 ? Claim.Passed("Failure behaviour", condition,
-                    "the register carries a generation on every version and admits `unresolved` as a status "
-                    + "distinct from rejected, and the live set is the generation in force rather than every "
-                    + "version ever registered")
+                    "GenerationCloser, run over an authored register, closes the open version as `unresolved`, "
+                    + "leaves the settled one its answer, retires the baseline and puts the next generation in "
+                    + "force, so the live set is the new generation rather than every version ever registered")
                 : Claim.Failed("Failure behaviour", condition,
-                    "the register can no longer express a closed generation, so editing the baseline would "
-                    + "either lose the versions it invalidates or leave them reading as rejected"),
+                    "closing a generation no longer does what the row says, so editing the baseline would "
+                    + "either lose the versions it invalidates, leave them reading as rejected, or leave the old "
+                    + "generation live"),
 
             // The rejection, read from the migration that constrains it rather than from the stage
             // that writes it, on exactly the terms the blocked order below is. The row says a

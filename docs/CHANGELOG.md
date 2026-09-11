@@ -3024,3 +3024,28 @@ Why:  The row builds a component and names it, on the rule that `Schedule.Checkp
 Was:  "The 56 components are listed by layer," and the P7 Builds cell "NightReconciler, CheckRegister"
 Now:  "The 57 components are listed by layer," and "NightReconciler, CheckRegister, GenerationOneDetector"
 Why:  GenerationOneDetector joins the catalogue beside the two detectors it will replace on the switch night.
+
+### 2026-09-11 — SCHEMA.md — cites An approved proposal creates a new version from zero, and a running version is never edited
+Was:  "| `variant` | variant id | Insert VariantAdmitter (definition, target, min sample, **once**) · Update AcceptanceGate (status and resolution date **only**) (see: Targets and minimum samples are written at creation and are immutable) |"
+Now:  "| `variant` | variant id | Insert VariantAdmitter / GenerationCloser, **disjoint by generation**: ... · Update AcceptanceGate / GenerationCloser, **disjoint by the status written**: ... |"
+Why:  GenerationCloser is the act that edits the baseline, and it writes the same two columns the gate does on the versions a closed generation leaves open and inserts the next generation's baseline, so the table has two writers per operation and the declaration says how they are disjoint.
+
+### 2026-09-11 — SCHEMA.md — cites A selection version's target is derived from the settling rule and is not typed
+Was:  "| `status` | TEXT | `open`, `accepted`, `rejected` or `unresolved`. The fourth is closed without an answer, ... because what it was compared against stopped existing |"
+Now:  "| `status` | TEXT | `open`, `accepted`, `rejected`, `unresolved` or `retired`. ... **The fifth is the baseline's alone, from 7.6** ... |"
+Why:  The baseline's pre-registration says it is never itself accepted or rejected, and it is not unresolved either, so the act closing its generation needed a status of its own to write, which 7.6's row requires the act to define.
+
+### 2026-09-11 — SCHEMA.md — cites Targets and minimum samples are written at creation and are immutable
+Was:  "| `resolved_at` | TEXT NULL | When it was settled, present exactly when the status is not `open`. AcceptanceGate writes this and `status` and has no path to any column above |"
+Now:  "| `resolved_at` | TEXT NULL | When it was settled or closed, present exactly when the status is not `open`. AcceptanceGate and GenerationCloser write this and `status` and neither has a path to any column above |"
+Why:  The closer is the second writer of the two columns and of nothing above them.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 57 components are listed by layer," and the P7 Builds cell "NightReconciler, CheckRegister, GenerationOneDetector", and the shared-writer paragraph ending "This is precisely the row where a future change could quietly let a result rewrite its own target."
+Now:  "The 58 components are listed by layer," and "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser", and the paragraph adds "From 7.6 GenerationCloser writes it as well, on the same two columns and only on a version still open, and inserts the next generation's baseline into a generation no row yet carries."
+Why:  GenerationCloser joins the catalogue as the act the Failure behaviour row "Someone edits the baseline" describes, and as a third writer of `variant`.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Components are named, not coded
+Was:  "A component that closes every open version of the generation in force as `unresolved`, ... declared in SCHEMA. Nothing performs this act today"
+Now:  "GenerationCloser, a component that closes every open version of the generation in force as `unresolved`, ... declared in SCHEMA. Nothing performed this act before it"
+Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it, and "today" stopped being true in the commit that built it.
