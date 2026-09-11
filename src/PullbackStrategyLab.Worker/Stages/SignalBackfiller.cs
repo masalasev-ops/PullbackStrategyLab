@@ -74,6 +74,8 @@ public sealed class SignalBackfiller
         "entry_ceiling",
         "weekly_ema_gap_9_21",
         "weekly_ema_21_distance",
+        "weekly_squeeze_ratio",
+        "ceiling_confluence_ranges",
     ];
 
     /// <summary>

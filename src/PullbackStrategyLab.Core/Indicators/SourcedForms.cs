@@ -199,6 +199,58 @@ public static class SourcedForms
         return medium == 0m ? null : (shorter - medium) / medium;
     }
 
+    /// <summary>The weeks the weekly squeeze compares against, carried from generation 0's twenty periods.</summary>
+    public const int WeeklySqueezeWindow = 20;
+
+    /// <summary>
+    /// The weekly squeeze, from 7.5: the week's |9-week − 21-week gap| over the mean of that absolute
+    /// gap across the last twenty weeks, each week's gap taken over every weekly close up to it. Below
+    /// one is a squeeze. Generation 0's structure, a gap narrower than its own recent average, read on
+    /// the weekly chart his observation is about; the twenty and the one are carried as the author's.
+    /// Null short of the weeks it needs or with no gap to average.
+    /// </summary>
+    public static decimal? WeeklySqueezeRatio(IReadOnlyList<decimal> weeklyCloses)
+    {
+        ArgumentNullException.ThrowIfNull(weeklyCloses);
+
+        if (weeklyCloses.Count < WeeklyMediumPeriod + WeeklySqueezeWindow - 1)
+        {
+            return null;
+        }
+
+        var gaps = new List<decimal>();
+
+        for (int end = weeklyCloses.Count - WeeklySqueezeWindow + 1; end <= weeklyCloses.Count; end++)
+        {
+            IReadOnlyList<decimal> upTo = [.. weeklyCloses.Take(end)];
+            decimal medium = Averages.Exponential(upTo, WeeklyMediumPeriod);
+
+            if (medium == 0m)
+            {
+                return null;
+            }
+
+            gaps.Add(Math.Abs((Averages.Exponential(upTo, WeeklyShortPeriod) - medium) / medium));
+        }
+
+        decimal mean = gaps.Average();
+        return mean == 0m ? null : gaps[^1] / mean;
+    }
+
+    /// <summary>
+    /// The confluence distance, from 7.5: the second-nearest of the levels that were computable, in
+    /// daily ranges, which is what "at least two levels within reach" comes to. His form is that the
+    /// levels coincide rather than that any one of them serves. Null where fewer than two levels could
+    /// be measured, because a conjunction over one level is not one.
+    /// </summary>
+    public static decimal? ConfluenceDistance(IEnumerable<decimal?> distances)
+    {
+        ArgumentNullException.ThrowIfNull(distances);
+
+        decimal[] measured = [.. distances.OfType<decimal>().Order()];
+        return measured.Length < 2 ? null : measured[1];
+    }
+
     /// <summary>(the week's close − the 21-week average) / the 21-week, or null short of 21 weeks.</summary>
     public static decimal? DistanceFromWeeklyMedium(IReadOnlyList<decimal> weeklyCloses)
     {

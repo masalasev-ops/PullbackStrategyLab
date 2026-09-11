@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Core.Research;
 /// the application ships without the corpus and a store has to stay a directory that can be copied.
 /// So the formula and the source columns reach the store through a list somebody has to keep
 /// honest, and the check is what keeps it honest rather than a convention that a later session
-/// remembers. The cost is fifty-two strings; what it buys is that the column a proposal reads and
+/// remembers. The cost is fifty-four strings; what it buys is that the column a proposal reads and
 /// the sentence a person reads are the same sentence.
 ///
 /// <b>Status here is the specification's status and never a verdict.</b> The section can say
@@ -263,6 +263,18 @@ public static class SignalLibrary
             "daily_bar.adj_close, daily_bar.bar_date",
             "candidate",
             "dip-shape, long"),
+
+        // The two generation 1's clauses compare that 7.4 did not cover, from 7.5.
+        new("weekly_squeeze_ratio",
+            "the absolute 9-week less 21-week gap over its mean across the last 20 weeks, each week's gap over every weekly close up to it, on the weekly closes weekly_ema_gap_9_21 reads. Below one is a squeeze. The twenty and the one are carried from generation 0 as the author's",
+            "daily_bar.adj_close, daily_bar.bar_date",
+            "candidate",
+            "averages-squeezing, short"),
+        new("ceiling_confluence_ranges",
+            "the second-nearest of the 21-day average, the 50-day average and the anchored average price, over adr_20 × close, which is the levels coinciding. Absent where fewer than two could be measured",
+            "daily_bar.adj_close, daily_bar.close, indicator_daily.ema_21, indicator_daily.ema_50, indicator_daily.adr_20, anchored_vwap.value",
+            "candidate",
+            "reached-ceiling, short"),
     ];
 
     /// <summary>The declared signals by name, which is how both the seed and the check index them.</summary>

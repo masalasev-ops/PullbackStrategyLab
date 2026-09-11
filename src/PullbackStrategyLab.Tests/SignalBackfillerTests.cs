@@ -205,7 +205,7 @@ public sealed class SignalBackfillerTests : IDisposable
     {
         Seed("AAA", Flagged);
         FreezeEverythingExceptTheNewSignals();
-        Stage().Backfill(Today, SignalBackfiller.Fills);
+        Stage().Backfill(Today, SixOne);
 
         using SqliteConnection connection = _connections.OpenReadOnly();
 
@@ -222,7 +222,7 @@ public sealed class SignalBackfillerTests : IDisposable
 
         Assert.NotEmpty(asTheNightSawIt);
         Assert.Equal(
-            SignalBackfiller.Fills.Order(StringComparer.Ordinal),
+            SixOne.Order(StringComparer.Ordinal),
             asAReplayReadsIt.Except(asTheNightSawIt, StringComparer.Ordinal).Order(StringComparer.Ordinal));
         Assert.Empty(asTheNightSawIt.Except(asAReplayReadsIt, StringComparer.Ordinal));
     }

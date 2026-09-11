@@ -50,6 +50,11 @@ public sealed partial class ClauseProvenanceCheck
 
     private const string ShortTable = "### The short clauses";
 
+    /// <summary>Generation 1's two tables, from 7.5, held to its own lists on the same terms.</summary>
+    private const string GenerationOneLongTable = "### Generation 1's long clauses";
+
+    private const string GenerationOneShortTable = "### Generation 1's short clauses";
+
     private const string SourceTable = "## The source material";
 
     /// <summary>
@@ -111,7 +116,23 @@ public sealed partial class ClauseProvenanceCheck
 
         IReadOnlyList<string> problems = Problems(rows, sources, document);
 
+        // Generation 1's clauses, from 7.5, and the widening this check was promised: the same six
+        // rules over the lists generation 1's detector runs, so a clause of the new generation cannot
+        // claim a source it does not quote any more than one of the old could. It stays over every
+        // later change to those lists, because generation 1 registers at 7.11 and a baseline whose
+        // provenance could quietly go missing is the thing the phase exists to stop.
+        IReadOnlyList<ClauseRow> generationOne =
+        [
+            .. Clauses(document, GenerationOneLongTable, SetupDirection.Long),
+            .. Clauses(document, GenerationOneShortTable, SetupDirection.Short),
+        ];
+
+        IReadOnlyList<string> generationOneProblems = Problems(
+            generationOne, sources, document, GenerationOneChecks.Long, GenerationOneChecks.Short, "GenerationOneChecks");
+
         coverage
+            .Examined("generation 1 clause rows reconciled against its detector's lists, in both directions", generationOne.Count)
+            .Examined("generation 1 sourced clauses required to carry a quotation", generationOne.Count(r => r.IsSourced))
             .Examined("clause rows reconciled against the detectors' own lists, in both directions", rows.Count)
             .Examined("source identifiers resolved against the source table", rows.Sum(r => r.Sources.Count))
             .Examined("sources declaring whose words they are", sources.Count)
@@ -136,6 +157,14 @@ public sealed partial class ClauseProvenanceCheck
         Assert.True(problems.Count == 0,
             $"{problems.Count} problem(s) with the clause provenance recorded in {Document}:\n  "
             + string.Join("\n  ", problems));
+
+        Assert.True(generationOne.Count == GenerationOneChecks.Long.Count + GenerationOneChecks.Short.Count,
+            $"SOURCES.md's generation 1 tables parsed {generationOne.Count} row(s) against "
+            + $"{GenerationOneChecks.Long.Count + GenerationOneChecks.Short.Count} clauses, so a row was lost or the parser stopped matching.");
+
+        Assert.True(generationOneProblems.Count == 0,
+            $"{generationOneProblems.Count} problem(s) with generation 1's clause provenance in {Document}:\n  "
+            + string.Join("\n  ", generationOneProblems));
     }
 
     /// <summary>
@@ -148,7 +177,17 @@ public sealed partial class ClauseProvenanceCheck
     public static IReadOnlyList<string> Problems(
         IReadOnlyList<ClauseRow> rows,
         IReadOnlyList<SourceRow> sources,
-        string document)
+        string document) =>
+        Problems(rows, sources, document, SetupChecks.Long, SetupChecks.Short, "SetupChecks");
+
+    /// <summary>The same rules against any pair of lists, which is how generation 1's are held from 7.5.</summary>
+    public static IReadOnlyList<string> Problems(
+        IReadOnlyList<ClauseRow> rows,
+        IReadOnlyList<SourceRow> sources,
+        string document,
+        IReadOnlyList<string> longChecks,
+        IReadOnlyList<string> shortChecks,
+        string listName)
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(sources);
@@ -161,7 +200,7 @@ public sealed partial class ClauseProvenanceCheck
         //    document does not trace is a clause whose provenance nobody recorded; a row naming a
         //    clause no detector runs is a trace of something that is not in the lab.
         foreach ((string side, IReadOnlyList<string> code) in
-                 new[] { (SetupDirection.Long, SetupChecks.Long), (SetupDirection.Short, SetupChecks.Short) })
+                 new[] { (SetupDirection.Long, longChecks), (SetupDirection.Short, shortChecks) })
         {
             IReadOnlyList<string> traced = [.. rows.Where(r => r.Side == side).Select(r => r.Clause)];
 
@@ -175,7 +214,7 @@ public sealed partial class ClauseProvenanceCheck
             foreach (string extra in traced.Except(code, StringComparer.Ordinal))
             {
                 problems.Add(
-                    $"{extra} has a {side} row in SOURCES.md and is not in SetupChecks.{(side == SetupDirection.Long ? "Long" : "Short")}, "
+                    $"{extra} has a {side} row in SOURCES.md and is not in {listName}.{(side == SetupDirection.Long ? "Long" : "Short")}, "
                     + "so the document traces a clause the lab does not run.");
             }
 

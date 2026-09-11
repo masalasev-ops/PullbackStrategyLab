@@ -65,6 +65,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --universe <captured-dir> <as-of>
         python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
         python tools/derive-indicators.py --sourced <captured-dir> <as-of> <ticker> <long|short>
+        python tools/derive-indicators.py --generation1 <captured-dir> <as-of> <ticker> <long|short>
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
@@ -912,6 +913,89 @@ def sourced_main(argv):
     print("\n%s %s  as of %s, %d sessions" % (ticker, side, as_of, len(bars)))
     for name, value in derive_sourced(bars, side == "long").items():
         print("  signal.%s-%s.%-24s %s" % (ticker, side, name, value.quantize(PLACES)))
+    return 0
+
+
+def weekly_closes(dates, closes):
+    """The last close of each Monday-to-Sunday week, the week in progress closing at the last session."""
+    weekly = []
+    week = None
+    for d, c in zip(dates, closes):
+        day = datetime.date.fromisoformat(d)
+        monday = day - datetime.timedelta(days=day.weekday())
+        if monday == week:
+            weekly[-1] = c
+        else:
+            weekly.append(c)
+            week = monday
+    return weekly
+
+
+def derive_generation_one(bars, is_long):
+    """Generation 1's clauses a capture alone can decide, and its two new quantities, from SCHEMA and
+    SOURCES.md's own sentences. `thrust`, the pullback shape, `cluster` and the short side's
+    capitalisation need the scans, the fundamentals and the geometry the store assembles, and are not
+    restated here.
+    """
+    extended = bars[-300:]
+    closes_ext = [b["close"] for b in adjusted(extended)]
+    dates_ext = [b["date"] for b in extended]
+    warm = bars[-WARMUP:]
+    adj = adjusted(warm)
+    last = adj[-1]
+    figures = derive(warm)
+    raw_close = warm[-1]["close"]
+    daily_range = figures["adr_20"] * raw_close
+    out = {}
+
+    out["tradable"] = figures["dollar_volume_median_20"] >= 20000000 and last["close"] > 5
+    out["moves-enough"] = figures["adr_20"] >= Decimal("0.05")
+
+    e9, e21, e50 = figures["ema_9"], figures["ema_21"], figures["ema_50"]
+    if is_long:
+        out["uptrend"] = e9 > e21 > e50
+        out["held-floor"] = last["low"] < e9 < last["close"]
+        out["contraction"] = (last["high"] - last["low"]) / figures["range_avg_20"] < 1
+    else:
+        out["downtrend"] = e9 < e21 < e50
+        out["no-reclaim"] = last["high"] > e9 > last["close"]
+
+    weekly = weekly_closes(dates_ext, closes_ext)
+    w21 = ema(weekly, 21)
+    distance = (weekly[-1] - w21) / w21
+    out["weekly-trend"] = distance >= 0 if is_long else distance < 0
+
+    gaps = []
+    for end in range(len(weekly) - 20 + 1, len(weekly) + 1):
+        upto = weekly[:end]
+        m = ema(upto, 21)
+        gaps.append(abs((ema(upto, 9) - m) / m))
+    squeeze = gaps[-1] / (sum(gaps) / len(gaps))
+    out["weekly_squeeze_ratio"] = squeeze
+
+    d21 = abs(last["close"] - e21) / daily_range
+    d50 = abs(last["close"] - e50) / daily_range
+    confluence = max(d21, d50)
+    out["ceiling_confluence_ranges"] = confluence
+
+    if not is_long:
+        out["averages-squeezing"] = squeeze < 1
+        out["reached-ceiling"] = confluence <= Decimal("0.5")
+
+    return out
+
+
+def generation_one_main(argv):
+    if len(argv) < 4:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    captured, as_of, ticker, side = argv[0], argv[1], argv[2], argv[3]
+    bars = captured_bars(captured, ticker, as_of)
+    print("\n%s %s  as of %s" % (ticker, side, as_of))
+    for name, value in derive_generation_one(bars, side == "long").items():
+        shown = ("pass" if value else "fail") if isinstance(value, bool) else value.quantize(PLACES)
+        print("  generation1.%s-%s.%-26s %s" % (ticker, side, name, shown))
     return 0
 
 
@@ -2889,6 +2973,9 @@ def main(argv):
 
     if len(argv) > 1 and argv[1] == "--sourced":
         return sourced_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--generation1":
+        return generation_one_main(argv[2:])
 
     if len(argv) > 1 and argv[1] == "--session":
         return session_main(argv[2:])

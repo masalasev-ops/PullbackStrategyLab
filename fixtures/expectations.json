@@ -9843,10 +9843,10 @@
     {
       "id": "signals.frozen",
       "tier": "DERIVED",
-      "value": "134",
+      "value": "140",
       "checkpoint": "3.11",
       "producedBy": "derived by hand at 3.11 and then run. Ninety-nine were frozen while every geometry signal was written whether or not the detector had one. One is now absent, by the derivation recorded on signals.absent, so ninety-eight are frozen.",
-      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 95. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 101 until 7.4, which freezes the eleven sourced candidates on every setup. Three setups times eleven is thirty-three more, and none is absent: every name in the fixture carries 251 sessions, enough for the 150-session average and twenty-one weeks of weekly closes."
+      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 95. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 101 until 7.4, which freezes the eleven sourced candidates on every setup. Three setups times eleven is thirty-three more, and none is absent: every name in the fixture carries 251 sessions, enough for the 150-session average and twenty-one weeks of weekly closes. Was 134 until 7.5, which freezes weekly_squeeze_ratio and ceiling_confluence_ranges on every setup: three setups, two signals, none absent."
     },
     {
       "id": "signals.setups",
@@ -9875,10 +9875,10 @@
     {
       "id": "store.rowsPointingAtSetup",
       "tier": "DERIVED",
-      "value": "163",
+      "value": "169",
       "checkpoint": "3.12",
       "producedBy": "derived by hand from expectations this fixture already carries, and then run. setup_signal is signals.frozen at 98, being 33 signals for each of two setups and 32 for 2026-08-24-INTC-short, whose stop_distance_ranges is absent. control_setup is controls.loose at 15 plus controls.tight at 14, the tight side being one short of five on one setup, which controls.shortOfFive states. 98 + 29 = 127.",
-      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 124. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 130 until 7.4. The thirty-three sourced candidate values frozen on the three setups are setup_signal rows pointing at a setup."
+      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 124. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 130 until 7.4. The thirty-three sourced candidate values frozen on the three setups are setup_signal rows pointing at a setup. Was 163 until 7.5, on the same six setup_signal rows."
     },
     {
       "id": "store.schemaVersion",
@@ -10457,18 +10457,18 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "56",
+      "value": "57",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row."
+      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night."
     },
     {
       "id": "catalogue.componentTypes",
       "tier": "DERIVED",
-      "value": "49",
+      "value": "50",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row."
+      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component."
     },
     {
       "id": "catalogue.screens",
@@ -11808,10 +11808,10 @@
     {
       "id": "library.declared",
       "tier": "DERIVED",
-      "value": "52",
+      "value": "54",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "Forty-one signals, being the whole library the section declares. It is the figure every count below is read against, and it is derived from the document rather than from SignalLibrary, because the list in code is a transcription and the transcription is what could be wrong. Was 41 until 7.4, which declares eleven candidates derived from the trader's own clause forms in SOURCES.md, each citing its clause."
+      "note": "Forty-one signals, being the whole library the section declares. It is the figure every count below is read against, and it is derived from the document rather than from SignalLibrary, because the list in code is a transcription and the transcription is what could be wrong. Was 41 until 7.4, which declares eleven candidates derived from the trader's own clause forms in SOURCES.md, each citing its clause. Was 52 until 7.5: the two quantities generation 1 compares that 7.4 did not cover."
     },
     {
       "id": "library.active",
@@ -11824,10 +11824,10 @@
     {
       "id": "library.candidates",
       "tier": "DERIVED",
-      "value": "17",
+      "value": "19",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "The signals whose formula and source columns are settled and which nothing computes. This is the population SignalAdmissionTest rules on, and all six are undecided over this fixture. Was 6 until 7.4: the eleven sourced candidates join the six."
+      "note": "The signals whose formula and source columns are settled and which nothing computes. This is the population SignalAdmissionTest rules on, and all six are undecided over this fixture. Was 6 until 7.4: the eleven sourced candidates join the six. Was 17 until 7.5, on the same two."
     },
     {
       "id": "library.nullControls",
@@ -11840,10 +11840,10 @@
     {
       "id": "library.seeded",
       "tier": "DERIVED",
-      "value": "52",
+      "value": "54",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "A first run writes one row per declared signal, so the figure is the library's own size. A seed short of it would be a library missing a signal nobody could propose against. Was 41 until 7.4, on the same eleven."
+      "note": "A first run writes one row per declared signal, so the figure is the library's own size. A seed short of it would be a library missing a signal nobody could propose against. Was 41 until 7.4, on the same eleven. Was 52 until 7.5, on the same two."
     },
     {
       "id": "library.seededOnRerun",
@@ -11888,10 +11888,10 @@
     {
       "id": "admission.undecided",
       "tier": "DERIVED",
-      "value": "17",
+      "value": "19",
       "checkpoint": "6.2",
       "producedBy": "derived from the two figures above rather than measured a second time: with nought rows on either side no verdict is reachable, so every candidate is undecided, which is the six above",
-      "note": "All six candidates, which is the state the live library is in today and will be in for months. Recorded as an outcome with a reason on each row rather than as a silence, because a library that wrote nothing here would read in six months like one whose candidates were all measured and all failed. Was 6 until 7.4. The eleven sourced candidates are frozen and the fixture holds no closed outcome, so each is undecided over an empty population, on the same terms as the six."
+      "note": "All six candidates, which is the state the live library is in today and will be in for months. Recorded as an outcome with a reason on each row rather than as a silence, because a library that wrote nothing here would read in six months like one whose candidates were all measured and all failed. Was 6 until 7.4. The eleven sourced candidates are frozen and the fixture holds no closed outcome, so each is undecided over an empty population, on the same terms as the six. Was 17 until 7.5, the two new candidates undecided over the fixture's empty population."
     },
     {
       "id": "admission.outcome",
@@ -12208,10 +12208,10 @@
     {
       "id": "pack.signalsScreened",
       "tier": "DERIVED",
-      "value": "52",
+      "value": "54",
       "checkpoint": "6.4",
       "producedBy": "tools/derive-signal-library.py --library counting SCHEMA's Signals section with a parser independent of the one the solution ships",
-      "note": "Every signal the library declares is screened, including the planted null, because the correction is paid on everything that was looked at rather than on the subset a proposal cites (see: The correction threshold scales with signals screened, not signals shown). Was 41 until 7.4. The pack screens every signal the library declares, the eleven sourced candidates included, which is the design ContextPacker states: the correction is paid on everything looked at."
+      "note": "Every signal the library declares is screened, including the planted null, because the correction is paid on everything that was looked at rather than on the subset a proposal cites (see: The correction threshold scales with signals screened, not signals shown). Was 41 until 7.4. The pack screens every signal the library declares, the eleven sourced candidates included, which is the design ContextPacker states: the correction is paid on everything looked at. Was 52 until 7.5, the pack screening every declared signal."
     },
     {
       "id": "pack.nullControlPlanted",
@@ -12272,10 +12272,10 @@
     {
       "id": "pack.familyWiseThreshold",
       "tier": "DERIVED",
-      "value": "0.000961538",
+      "value": "0.000925926",
       "checkpoint": "6.4",
       "producedBy": "computed by hand from the level and the count screened, independently of the constant the run reports",
-      "note": "0.05 over the 41 signals screened, to nine places. **It is stated even though nothing has been measured against it**, because it depends on the level and the count screened rather than on any p-value, which is exactly why it is in the version tuple and the realised bar is not (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure). Was 0.05 over 41 until 7.4, and is 0.05 over 52: declaring eleven candidates the pack screens tightens the threshold every proposal is held to, which SCHEMA now says rather than claiming a declaration costs nothing."
+      "note": "0.05 over the 41 signals screened, to nine places. **It is stated even though nothing has been measured against it**, because it depends on the level and the count screened rather than on any p-value, which is exactly why it is in the version tuple and the realised bar is not (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure). Was 0.05 over 41 until 7.4, and is 0.05 over 52: declaring eleven candidates the pack screens tightens the threshold every proposal is held to, which SCHEMA now says rather than claiming a declaration costs nothing. Was 0.05 over 52 until 7.5, and is 0.05 over 54."
     },
     {
       "id": "pack.falseDiscoveryThreshold",
@@ -12578,10 +12578,10 @@
     {
       "id": "band3.signalsHeld",
       "tier": "DERIVED",
-      "value": "52",
+      "value": "54",
       "checkpoint": "6.8",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
-      "note": "The library as the store holds it, which is what the admission stage seeded. The count is the denominator the other library panels are over. Read after the admission stage has seeded the library, which is the order a real night has: the library is seeded on admission and the scoreboard runs at 21:50 after it. Was 41 until 7.4, on the same eleven."
+      "note": "The library as the store holds it, which is what the admission stage seeded. The count is the denominator the other library panels are over. Read after the admission stage has seeded the library, which is the order a real night has: the library is seeded on admission and the scoreboard runs at 21:50 after it. Was 41 until 7.4, on the same eleven. Was 52 until 7.5, on the same two."
     },
     {
       "id": "band0.degradedNights.population",
@@ -13054,6 +13054,478 @@
       "checkpoint": "7.4",
       "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
       "note": "The sourced candidate weekly_ema_21_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.weekly_squeeze_ratio",
+      "tier": "DERIVED",
+      "value": "0.5980",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for averages-squeezing, frozen on this setup from 7.5."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ceiling_confluence_ranges",
+      "tier": "DERIVED",
+      "value": "1.3402",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for reached-ceiling, frozen on this setup from 7.5."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.weekly_squeeze_ratio",
+      "tier": "DERIVED",
+      "value": "0.2000",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for averages-squeezing, frozen on this setup from 7.5."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ceiling_confluence_ranges",
+      "tier": "DERIVED",
+      "value": "2.7559",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for reached-ceiling, frozen on this setup from 7.5."
+    },
+    {
+      "id": "signal.IESC-long.weekly_squeeze_ratio",
+      "tier": "DERIVED",
+      "value": "0.5745",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for averages-squeezing, frozen on this setup from 7.5."
+    },
+    {
+      "id": "signal.IESC-long.ceiling_confluence_ranges",
+      "tier": "DERIVED",
+      "value": "1.3401",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which reads the captured history and bulk responses directly and restates the formula from SCHEMA's sourced table, then run. Agreed to four places",
+      "note": "The quantity generation 1 compares for reached-ceiling, frozen on this setup from 7.5."
+    },
+    {
+      "id": "generation1.HOOD-long.cluster",
+      "tier": "FROZEN",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.contraction",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.dip-shape",
+      "tier": "FROZEN",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.held-floor",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.thrust",
+      "tier": "FROZEN",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.uptrend",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.HOOD-long.weekly-trend",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.cluster",
+      "tier": "FROZEN",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.contraction",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.dip-shape",
+      "tier": "FROZEN",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.held-floor",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.thrust",
+      "tier": "FROZEN",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.tradable",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.uptrend",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.IESC-long.weekly-trend",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.averages-squeezing",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.bounce-shape",
+      "tier": "FROZEN",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.cluster",
+      "tier": "FROZEN",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.downtrend",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.moves-enough",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.no-reclaim",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.reached-ceiling",
+      "tier": "DERIVED",
+      "value": "fail",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.thrust",
+      "tier": "FROZEN",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.tradable-shortable",
+      "tier": "FROZEN",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. The clause needs the scans, the fundamentals or the pullback geometry the store assembles, which the capture-only restatement does not reach",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.INTC-short.weekly-trend",
+      "tier": "DERIVED",
+      "value": "pass",
+      "checkpoint": "7.5",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --generation1, which restates the clause from SOURCES.md's generation 1 table and SCHEMA's formulas over the captured history alone, then run. Agreed before the expectation was written",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.candidates",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.examined",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.cluster",
+      "tier": "FROZEN",
+      "value": "19",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.contraction",
+      "tier": "FROZEN",
+      "value": "19",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.dip-shape",
+      "tier": "FROZEN",
+      "value": "4",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.held-floor",
+      "tier": "FROZEN",
+      "value": "6",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.moves-enough",
+      "tier": "FROZEN",
+      "value": "5",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.thrust",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.tradable",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.uptrend",
+      "tier": "FROZEN",
+      "value": "16",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.passed.weekly-trend",
+      "tier": "FROZEN",
+      "value": "23",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.long.recorded",
+      "tier": "FROZEN",
+      "value": "16",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.candidates",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.examined",
+      "tier": "FROZEN",
+      "value": "7202",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.averages-squeezing",
+      "tier": "FROZEN",
+      "value": "18",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.bounce-shape",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.cluster",
+      "tier": "FROZEN",
+      "value": "19",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.downtrend",
+      "tier": "FROZEN",
+      "value": "8",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.moves-enough",
+      "tier": "FROZEN",
+      "value": "5",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.no-reclaim",
+      "tier": "FROZEN",
+      "value": "4",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.reached-ceiling",
+      "tier": "FROZEN",
+      "value": "5",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.thrust",
+      "tier": "FROZEN",
+      "value": "30",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.tradable-shortable",
+      "tier": "FROZEN",
+      "value": "29",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.passed.weekly-trend",
+      "tier": "FROZEN",
+      "value": "7",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
+    },
+    {
+      "id": "generation1.short.recorded",
+      "tier": "FROZEN",
+      "value": "8",
+      "checkpoint": "7.5",
+      "producedBy": "the replay itself, recorded to detect change. A count over every universe member the side examined, most of which carry one captured session and no averages, so it is a regression figure over a population nothing independent was asked to recount",
+      "note": "Generation 1's gate lists over the fixture's night, from 7.5, registered nowhere and writing nothing."
     }
   ],
   "frozenOnly": [

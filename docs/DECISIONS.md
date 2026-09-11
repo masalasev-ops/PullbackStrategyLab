@@ -930,6 +930,15 @@ The entry the strategy states is a flush into a named level and a reclaim throug
 
 **It will supersede two entries at 7.8, in the commit that ships the code**, because shipped source cites both until then: clause (a) of **The order prices are derived from the final pullback session's minutes, not from the screening geometry**, which requires the prices to be computable on the evening before, and **The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it**.
 
+**Generation 1's selection keeps what the evening can decide, and the short side's unsourced clauses are the long side's mirrored**
+Decided on 2026-09-11 at 7.5, applying the decision on what generation 1 is written from to the four questions it does not settle by itself. **A clause whose sourced form is a test at the minute of entry leaves selection.** `trigger-near`'s form is his chase filter, measured from the session's own low at the moment he would buy, and `exit-tight`'s is the stop tested at the entry minute; neither can be computed at 18:30 for a session that has not opened, so both move to the execution rule at 7.8 and generation 1's selection lists carry neither (see: The give-up gate is retired at selection and reborn as the entry-time ceiling). **A clause whose form is an entry-minute event and has a daily shadow is recorded rather than dropped**: `held-floor`'s reclaim happens inside the session he enters, and the evening can say only whether the session before undercut and reclaimed the 9-day average, which is worth keeping and not worth gating on, and `no-reclaim` mirrors it.
+
+**A short clause no source states is the long side's sourced form mirrored and marked as the author's.** He says he reaches shorts by flipping the long structure around (`P1`, 15:14), so where the long side has a sourced form the short side takes its mirror, and where neither side has one the clause carries over from generation 0 as the author's. `tradable-shortable` is the one exception to marking, because whether a name can be shorted at all is market mechanics rather than a strategy rule. **The weekly screen is new on both sides**, the one instrument he states for refusing a short and confirming a long that the lab had no gate for at all.
+
+**The recording floor loses `moves-enough` because the clause no longer screens.** A floor is the cheap gating clauses, and a clause recorded and never required cannot be one of them without screening through the back door. So generation 1 records the slower names generation 0 discarded unread, and the nightly flagged count moves by an amount 7.11 has to state before the switch.
+
+**A later session could reasonably choose otherwise on each of the four**, keeping a daily chase filter, gating on the daily reclaim, leaving the short side's unsourced clauses as generation 0 wrote them, or keeping the floor, and each choice would be invisible in a count. That is why this is written down rather than left to the lists.
+
 **Replay screens proposals and the forward paired test admits them**
 Replay is free, and free tests are how you overfit. It kills bad proposals cheaply and never accepts one.
 

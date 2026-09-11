@@ -110,6 +110,12 @@ public sealed class SignalVectorizer
         "entry_ceiling",
         "weekly_ema_gap_9_21",
         "weekly_ema_21_distance",
+
+        // The two quantities generation 1's clauses compare that 7.4 did not freeze, from 7.5: its
+        // squeeze read on the weekly chart and its ceiling read as levels that coincide. Frozen for the
+        // same reason, so the replay at 7.11 can judge both clauses over every night from here.
+        "weekly_squeeze_ratio",
+        "ceiling_confluence_ranges",
     ];
 
     /// <summary>
@@ -418,6 +424,7 @@ public sealed class SignalVectorizer
         IReadOnlyList<decimal> weekly = SourcedForms.WeeklyCloses(extendedDates, extendedCloses);
         Ratio(values, "weekly_ema_gap_9_21", SourcedForms.WeeklyAverageGap(weekly));
         Ratio(values, "weekly_ema_21_distance", SourcedForms.DistanceFromWeeklyMedium(weekly));
+        Ratio(values, "weekly_squeeze_ratio", SourcedForms.WeeklySqueezeRatio(weekly));
     }
 
     private static void Ratio(Dictionary<string, string> values, string name, decimal? value)
@@ -481,12 +488,26 @@ public sealed class SignalVectorizer
                 connection, setup.Ticker, anchorSession, asOf, sessionZone)?.Value;
         }
 
-        decimal? nearest = CeilingDistance.Nearest(
-            toAverages, CeilingDistance.ToAnchoredInRanges(last.AdjustedClose, anchored, dailyRange));
+        decimal? toAnchored = CeilingDistance.ToAnchoredInRanges(last.AdjustedClose, anchored, dailyRange);
+        decimal? nearest = CeilingDistance.Nearest(toAverages, toAnchored);
 
         if (nearest is decimal distance)
         {
             values["ceiling_distance_ranges"] = StoreText.RatioToStorageText(distance);
+        }
+
+        // Generation 1's reading of the same levels, from 7.5: the second-nearest, which is what the
+        // levels coinciding comes to. Each level measured on its own, in the units the fold uses.
+        decimal? confluence = SourcedForms.ConfluenceDistance(
+        [
+            RangeDistance.Between(last.AdjustedClose, indicators.EmaMedium, dailyRange),
+            RangeDistance.Between(last.AdjustedClose, indicators.EmaLong, dailyRange),
+            toAnchored,
+        ]);
+
+        if (confluence is decimal coinciding)
+        {
+            values["ceiling_confluence_ranges"] = StoreText.RatioToStorageText(coinciding);
         }
     }
 
