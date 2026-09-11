@@ -9883,10 +9883,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "67",
+      "value": "68",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql. Was 66 until 7.8. Migration 067 rebuilds trade_plan to carry the rule and creates entry_resolution. Re-derived by reading the migration directory: the highest-numbered file is 067-the-plan-carries-a-rule.sql."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql. Was 66 until 7.8. Migration 067 rebuilds trade_plan to carry the rule and creates entry_resolution. Re-derived by reading the migration directory: the highest-numbered file is 067-the-plan-carries-a-rule.sql. Was 67 until 7.10, which adds migration 068 for the trims after the first and the hold limit."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
@@ -10625,10 +10625,10 @@
     {
       "id": "authored.rows",
       "tier": "DERIVED",
-      "value": "46",
+      "value": "47",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "rows of the authored-parameters table Moved from 45 to 46 at 4.8, which adds the row answering when the trail takes over from the fixed stop. That was the one question 4.15 left, so the row arrives filled rather than open."
+      "note": "rows of the authored-parameters table Moved from 45 to 46 at 4.8, which adds the row answering when the trail takes over from the fixed stop. That was the one question 4.15 left, so the row arrives filled rather than open. Was 46 until 7.10, which adds the short hold limit."
     },
     {
       "id": "authored.open",
@@ -10641,18 +10641,18 @@
     {
       "id": "authored.filled",
       "tier": "DERIVED",
-      "value": "46",
+      "value": "47",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "of those, the ones stating a value. Nought open and 45 filled are the same fact twice only while the total holds, which is why both are recorded Moved from 45 to 46 at 4.8 with the row above: the answer and the row landed together."
+      "note": "of those, the ones stating a value. Nought open and 45 filled are the same fact twice only while the total holds, which is why both are recorded Moved from 45 to 46 at 4.8 with the row above: the answer and the row landed together. Was 46 until 7.10, on the same row."
     },
     {
       "id": "authored.citingADecision",
       "tier": "DERIVED",
-      "value": "17",
+      "value": "18",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move Moved from 11 to 12 at 4.8, the new row citing the decision that answers it. Moved 12 to 13 at 5.0(b) on 2026-09-03: the Execution variant sample row gained a citation when it was restated as 200 paired trades converted at the measured trade-level design effect, which is the sitting's decision and is cited at the point of change. Re-derived through tools/derive-authored-parameters.py, which read 13. Moved 13 to 14 at the phase 6 plan on 2026-09-05: the Twin-pair threshold row gained a citation when its review point was rewritten from a phase to a condition, which is a decision taken at the point of change rather than a value moving. Was 14 until 6.5, which authors one more decision citation into the replayed corpus. Moved 15 to 16 at 7.0 on 2026-09-11: the Risk per trade row gained a citation when `SOURCES.md` found its basis to be the trader's own written sentence, which is a citation added at the point of change rather than a value moving. Re-derived through tools/derive-authored-parameters.py, which read 16 before the expectation was edited. Was 16 until 7.8, when the give-up distance cap row came to cite the entry ceiling decision. tools/derive-authored-parameters.py read 17 before the expectation was edited."
+      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move Moved from 11 to 12 at 4.8, the new row citing the decision that answers it. Moved 12 to 13 at 5.0(b) on 2026-09-03: the Execution variant sample row gained a citation when it was restated as 200 paired trades converted at the measured trade-level design effect, which is the sitting's decision and is cited at the point of change. Re-derived through tools/derive-authored-parameters.py, which read 13. Moved 13 to 14 at the phase 6 plan on 2026-09-05: the Twin-pair threshold row gained a citation when its review point was rewritten from a phase to a condition, which is a decision taken at the point of change rather than a value moving. Was 14 until 6.5, which authors one more decision citation into the replayed corpus. Moved 15 to 16 at 7.0 on 2026-09-11: the Risk per trade row gained a citation when `SOURCES.md` found its basis to be the trader's own written sentence, which is a citation added at the point of change rather than a value moving. Re-derived through tools/derive-authored-parameters.py, which read 16 before the expectation was edited. Was 16 until 7.8, when the give-up distance cap row came to cite the entry ceiling decision. tools/derive-authored-parameters.py read 17 before the expectation was edited. Was 17 until 7.10, the hold-limit row citing the decision it rests on."
     },
     {
       "id": "plans.candidates",
@@ -10877,6 +10877,14 @@
       "checkpoint": "4.8",
       "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
       "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. closed on an hourly bar closing back above the 50-day average, which is the short side's exit"
+    },
+    {
+      "id": "manage.closedHoldLimit",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.10",
+      "producedBy": "predicted before the replay was run, then run. Derived from the fixture's own committed figures rather than from a run: fills.entriesFilled is 0, because orders.placed is 0, because orders.triggers is 0, because triggers.touched is 0, because plans.written is 0, because the capped population is empty on this fixture. No position is opened and none is carried in, so the manager is handed nothing and every figure below it is nought by that chain rather than by a run reporting one.",
+      "note": "Over the golden fixture's one market day, on which the funnel passes nothing, so this is a structural nought rather than a measurement of the rules. Closed at the next open after three sessions held, which is the short side's exit from 7.10."
     },
     {
       "id": "manage.trimmed",
@@ -14286,6 +14294,286 @@
       "checkpoint": "7.9",
       "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
       "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "exits.trimsByNight",
+      "tier": "DERIVED",
+      "value": "2,1,1,0",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. One trim a side on the first night, the long 5R on the second, the short 5R on the third, none on the fourth."
+    },
+    {
+      "id": "exits.armedByNight",
+      "tier": "DERIVED",
+      "value": "0,0,2,0",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. Both exits armed on the third close: the long on 113 under a 9-day average of 116, the short on its third session held."
+    },
+    {
+      "id": "exits.long.trims",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.trim1.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-26 11:00",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The first bar reaching 115.40, 3R above 100.10."
+    },
+    {
+      "id": "exits.long.trim1.level",
+      "tier": "DERIVED",
+      "value": "115.4000",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.trim1.price",
+      "tier": "DERIVED",
+      "value": "115.2846",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 115.40 sold a whole spread lower."
+    },
+    {
+      "id": "exits.long.trim1.shares",
+      "tier": "DERIVED",
+      "value": "22",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 15% of 150, floored."
+    },
+    {
+      "id": "exits.long.trim2.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-27 10:00",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The first bar reaching 125.60, 5R above 100.10."
+    },
+    {
+      "id": "exits.long.trim2.level",
+      "tier": "DERIVED",
+      "value": "125.6000",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.trim2.price",
+      "tier": "DERIVED",
+      "value": "125.4744",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.trim2.shares",
+      "tier": "DERIVED",
+      "value": "22",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.exit.reason",
+      "tier": "DERIVED",
+      "value": "trail",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.long.exit.armedSession",
+      "tier": "DERIVED",
+      "value": "2026-08-28",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The close of 113 under a 9-day average of 116."
+    },
+    {
+      "id": "exits.long.exit.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-31 09:30",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The next session is the Monday, and the trail fills at its first minute."
+    },
+    {
+      "id": "exits.long.exit.price",
+      "tier": "DERIVED",
+      "value": "111.8880",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The open of 112 sold a whole spread lower."
+    },
+    {
+      "id": "exits.long.exit.shares",
+      "tier": "DERIVED",
+      "value": "106",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 150 less two trims of 22."
+    },
+    {
+      "id": "exits.long.realisedPnl",
+      "tier": "DERIVED",
+      "value": "2141.8260",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 15.1846 times 22, plus 25.3744 times 22, plus 11.788 times 106."
+    },
+    {
+      "id": "exits.long.realisedR",
+      "tier": "DERIVED",
+      "value": "2.7998",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. Over the realised risk of 150 times 5.10, being 765."
+    },
+    {
+      "id": "exits.short.trims",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.trim1.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-26 11:00",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The first bar reaching 42.30, 3R below 49.95."
+    },
+    {
+      "id": "exits.short.trim1.level",
+      "tier": "DERIVED",
+      "value": "42.3000",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.trim1.price",
+      "tier": "DERIVED",
+      "value": "42.3423",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 42.30 bought back a whole spread higher."
+    },
+    {
+      "id": "exits.short.trim1.shares",
+      "tier": "DERIVED",
+      "value": "45",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 15% of 300."
+    },
+    {
+      "id": "exits.short.trim2.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-28 10:00",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The second session reaches 39 and not 37.20; the third reaches 36.50."
+    },
+    {
+      "id": "exits.short.trim2.level",
+      "tier": "DERIVED",
+      "value": "37.2000",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.trim2.price",
+      "tier": "DERIVED",
+      "value": "37.2372",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.trim2.shares",
+      "tier": "DERIVED",
+      "value": "45",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.exit.reason",
+      "tier": "DERIVED",
+      "value": "hold-limit",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.exit.armedSession",
+      "tier": "DERIVED",
+      "value": "2026-08-28",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. Its third session held, the one it opened in counted."
+    },
+    {
+      "id": "exits.short.exit.bar",
+      "tier": "DERIVED",
+      "value": "2026-08-31 09:30",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled."
+    },
+    {
+      "id": "exits.short.exit.price",
+      "tier": "DERIVED",
+      "value": "37.5375",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. The open of 37.50 bought a whole spread higher."
+    },
+    {
+      "id": "exits.short.exit.shares",
+      "tier": "DERIVED",
+      "value": "210",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 300 less two trims of 45."
+    },
+    {
+      "id": "exits.short.realisedPnl",
+      "tier": "DERIVED",
+      "value": "3521.0475",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. 7.6077 times 45, plus 12.7128 times 45, plus 12.4125 times 210."
+    },
+    {
+      "id": "exits.short.realisedR",
+      "tier": "DERIVED",
+      "value": "4.6027",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. Over the realised risk of 300 times 2.55, being 765."
+    },
+    {
+      "id": "exits.short.asOfSecondSession.trimmedShares",
+      "tier": "DERIVED",
+      "value": "45",
+      "checkpoint": "7.10",
+      "producedBy": "derived by hand before it was run, from ExitCases' authored prices: a spread of ten basis points on every session; EXL long planned at 100 over 95 for 150 shares, filling at 100.10, so R is 5.10 and the levels 115.40 and 125.60; EXS short planned at 50 under 52.50 for 300 shares, filling at 49.95, so R is 2.55 and the levels 42.30 and 37.20; each trim 15% of the planned count, floored",
+      "note": "A long and a short position walked to their exits, from 7.10, never pooled. As at the second session the 5R trim, observed on the third, is not yet visible."
     }
   ],
   "frozenOnly": [

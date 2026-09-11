@@ -27,6 +27,7 @@ public sealed class PositionManagerTests : IDisposable
     private static readonly DateOnly Session = new(2026, 8, 26);
     private static readonly DateOnly NextSession = new(2026, 8, 27);
     private static readonly DateOnly ThirdSession = new(2026, 8, 28);
+    private static readonly DateOnly FourthSession = new(2026, 8, 31);
 
     private const double TenBasisPoints = 10d;
 
@@ -400,16 +401,16 @@ public sealed class PositionManagerTests : IDisposable
         Assert.Equal(88m, position.ExitPrice);
     }
 
-    // ---- the short trim ------------------------------------------------------------------------
+    // ---- the trims ------------------------------------------------------------------------------
 
     /// <summary>
-    /// A short reaching 3R is trimmed by 15% of the planned share count, once, and stays open.
+    /// A short reaching 3R is trimmed by 15% of the planned share count and stays open.
     ///
     /// The entry sold at 99.90 against a give-up point of 105, so the realised risk is 5.10 a share
     /// and 3R is 84.60. The plan was sized at 150 shares, so the trim is 22 of them, floored, and
-    /// 15% of the planned count rather than of what remains is what keeps that number computable
-    /// before the session opened.
-    /// see: The short trim is 15% of the planned position, once, at 3R
+    /// 15% of the planned count rather than of what remains is what keeps that number fixed. 5R is
+    /// 74.40 and this session never reaches it.
+    /// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
     /// </summary>
     [Fact]
     public void A_short_reaching_three_r_is_trimmed_by_fifteen_per_cent_of_the_planned_size()
@@ -430,6 +431,7 @@ public sealed class PositionManagerTests : IDisposable
         StoredPosition position = Positions(Session).Single();
         Assert.Equal(PositionStatus.Open, position.Status);
         Assert.Equal(22, position.TrimmedShares);
+        Assert.Equal(1, position.Trims);
         Assert.Equal(128, position.SharesRemaining);
 
         // 3R below the price the entry actually got, then bought back a whole spread worse.
@@ -441,14 +443,16 @@ public sealed class PositionManagerTests : IDisposable
     }
 
     /// <summary>
-    /// The trim fires once and is not repeated at a further level, and the close covers what is left.
+    /// A short trims again at 5R, never a third time, and the close covers what is left.
     ///
-    /// A fraction of the remainder would be a decaying ladder that never fully exits; a fraction of
-    /// the original is a fixed share count. The realised money is the trim's plus the close's, which
-    /// is why the trim's own figure is on the row rather than only in a fill nothing points at.
+    /// 5R below 99.90 is 74.40, bought back a whole spread worse at 74.4744, and the 12:00 bar trades
+    /// to 70 without a third trim because he names two levels and no third. A fraction of the original
+    /// is a fixed share count, so both trims are 22. The realised money is both trims' plus the
+    /// close's, which is why the trims' figures are on the row rather than only in fills nothing
+    /// points at.
     /// </summary>
     [Fact]
-    public void The_trim_fires_once_and_the_close_covers_what_is_left()
+    public void A_short_trims_again_at_five_r_and_the_close_covers_what_is_left()
     {
         Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
         Order("TSLA", SetupDirection.Short, at: new TimeOnly(10, 0), shares: 150);
@@ -461,23 +465,73 @@ public sealed class PositionManagerTests : IDisposable
 
         ManageRunResult result = Stage().Manage(Session);
 
-        Assert.Equal(1, result.Trimmed);
+        Assert.Equal(2, result.Trimmed);
         Assert.Equal(1, result.ClosedGiveUp);
 
-        Assert.Single(Fills(Session), f => f.Leg == "trim");
+        StoredFill[] trims = [.. Fills(Session).Where(f => f.Leg == "trim").OrderBy(f => f.FilledAt)];
+        Assert.Equal(2, trims.Length);
+        Assert.Equal([84.60m, 74.40m], trims.Select(t => t.RestingPrice));
+        Assert.Equal(74.4744m, trims[1].Price);
+        Assert.EndsWith(":trim2", trims[1].FillId, StringComparison.Ordinal);
 
         StoredFill exit = Fills(Session).Single(f => f.Leg == "exit");
-        Assert.Equal(128, exit.Shares);
+        Assert.Equal(106, exit.Shares);
 
         StoredPosition position = Positions(Session).Single();
-        decimal trimPnl = (99.90m - 84.6846m) * 22;
-        decimal exitPnl = (99.90m - exit.Price) * 128;
+        Assert.Equal(2, position.Trims);
+        Assert.Equal(44, position.TrimmedShares);
+        Assert.Equal(84.6846m, position.TrimPrice);
+
+        decimal trimPnl = ((99.90m - 84.6846m) * 22) + ((99.90m - 74.4744m) * 22);
+        decimal exitPnl = (99.90m - exit.Price) * 106;
+        Assert.Equal(trimPnl, position.TrimRealisedPnl);
         Assert.Equal(trimPnl + exitPnl, position.RealisedPnl);
     }
 
-    /// <summary>A long is never trimmed, because the trim is one side's rule and not a shared routine.</summary>
+    /// <summary>
+    /// A second trim observed in a later session is invisible to an as-of between the two, and the
+    /// first is not. The later trims carry a stamp of their own so a replay standing between them
+    /// reads the state that existed then rather than the running total.
+    /// </summary>
     [Fact]
-    public void A_long_is_never_trimmed_however_far_it_runs()
+    public void A_trim_taken_in_a_later_session_is_invisible_to_an_as_of_between_the_two()
+    {
+        Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
+        Order("TSLA", SetupDirection.Short, at: new TimeOnly(10, 0), shares: 150);
+        Minute("TSLA", Session, new TimeOnly(10, 0), 101m, 101m, 99m, 99.5m);
+        Minute("TSLA", Session, new TimeOnly(11, 0), 90m, 90m, 84m, 84.5m);
+        Quotes("TSLA", Session);
+        Broker().Fill(Session);
+        Stage().Manage(Session);
+
+        Minute("TSLA", NextSession, new TimeOnly(9, 30), 80m, 80m, 74m, 75m);
+        Quotes("TSLA", NextSession);
+        ManageRunResult next = Stage(NextSession).Manage(NextSession);
+
+        Assert.Equal(1, next.Trimmed);
+
+        StoredPosition between = Positions(Session, asOf: Session).Single();
+        Assert.Equal(1, between.Trims);
+        Assert.Equal(22, between.TrimmedShares);
+        Assert.Equal((99.90m - 84.6846m) * 22, between.TrimRealisedPnl);
+
+        StoredPosition after = Positions(Session, asOf: NextSession).Single();
+        Assert.Equal(2, after.Trims);
+        Assert.Equal(44, after.TrimmedShares);
+        Assert.Equal(106, after.SharesRemaining);
+    }
+
+    /// <summary>
+    /// A long is trimmed at 3R and again at 5R, from 7.10, and one bar reaching both takes both.
+    ///
+    /// The long side's trims are his own words: "every time I think this stock is extended I sell
+    /// 15%", at three or five R. The entry bought at 100.10 against 95, so the realised risk is 5.10
+    /// and the levels are 115.40 and 125.60, each sold a whole spread lower. Until 7.10 a long was
+    /// never trimmed, because generation 0's trim was the short side's alone.
+    /// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
+    /// </summary>
+    [Fact]
+    public void A_long_is_trimmed_at_three_r_and_again_at_five_r()
     {
         Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
         Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
@@ -488,146 +542,151 @@ public sealed class PositionManagerTests : IDisposable
 
         ManageRunResult result = Stage().Manage(Session);
 
-        Assert.Equal(0, result.Trimmed);
-        Assert.DoesNotContain(Fills(Session), f => f.Leg == "trim");
-        Assert.Null(Positions(Session).Single().TrimmedShares);
-    }
-
-    // ---- the short's hourly exit ---------------------------------------------------------------
-
-    /// <summary>
-    /// An hourly bar closing back above the 50-day average ends the short, filling at the open of
-    /// the next minute.
-    ///
-    /// The average is the one that stood before this session, because this session's own is computed
-    /// from a close that had not happened when the hourly bar closed.
-    /// </summary>
-    [Fact]
-    public void An_hourly_close_back_above_the_fifty_day_average_ends_the_short()
-    {
-        Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
-        Order("TSLA", SetupDirection.Short, at: new TimeOnly(9, 30), shares: 150);
-        Minute("TSLA", Session, new TimeOnly(9, 30), 101m, 101m, 99m, 99.5m);
-
-        // The last minute of the first hourly bar closes at 104, above a 50-day average of 102.
-        Minute("TSLA", Session, new TimeOnly(10, 29), 103m, 104m, 103m, 104m);
-
-        // The first minute of the second, which is where the exit fills.
-        Minute("TSLA", Session, new TimeOnly(10, 30), 104m, 104.5m, 103.5m, 104m);
-        Quotes("TSLA", Session);
-        DailyBar("TSLA", Evening, close: 100m);
-        Indicators("TSLA", Evening, ema9: 101m, ema50: 102m);
-        Broker().Fill(Session);
-
-        ManageRunResult result = Stage().Manage(Session);
-
-        Assert.Equal(1, result.ClosedReclaim);
-        Assert.Equal(0, result.ClosedGiveUp);
-
-        StoredFill exit = Fills(Session).Single(f => f.Leg == "exit");
-        Assert.Equal(104m, exit.RestingPrice);
-
-        // A short buys to exit, so the whole spread is charged upward.
-        Assert.Equal(104.104m, exit.Price);
-        Assert.Equal(ExitReason.Reclaim, Positions(Session).Single().ExitReason);
-    }
-
-    /// <summary>An hourly close at the average has not closed back above it, so the short is held.</summary>
-    [Fact]
-    public void An_hourly_close_exactly_on_the_fifty_day_average_holds_the_short()
-    {
-        Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
-        Order("TSLA", SetupDirection.Short, at: new TimeOnly(9, 30), shares: 150);
-        Minute("TSLA", Session, new TimeOnly(9, 30), 101m, 101m, 99m, 99.5m);
-        Minute("TSLA", Session, new TimeOnly(10, 29), 101m, 102m, 101m, 102m);
-        Minute("TSLA", Session, new TimeOnly(10, 30), 102m, 102.5m, 101.5m, 102m);
-        Quotes("TSLA", Session);
-        DailyBar("TSLA", Evening, close: 100m);
-        Indicators("TSLA", Evening, ema9: 101m, ema50: 102m);
-        Broker().Fill(Session);
-
-        ManageRunResult result = Stage().Manage(Session);
-
-        Assert.Equal(0, result.ClosedReclaim);
+        Assert.Equal(2, result.Trimmed);
         Assert.Equal(1, result.OpenAtEnd);
+
+        StoredFill[] trims = [.. Fills(Session).Where(f => f.Leg == "trim").OrderBy(f => f.RestingPrice)];
+        Assert.Equal([115.40m, 125.60m], trims.Select(t => t.RestingPrice));
+        Assert.Equal([115.2846m, 125.4744m], trims.Select(t => t.Price));
+
+        StoredPosition position = Positions(Session).Single();
+        Assert.Equal(44, position.TrimmedShares);
+        Assert.Equal(106, position.SharesRemaining);
     }
 
+    // ---- the short's hold limit, from 7.10 -----------------------------------------------------
+
     /// <summary>
-    /// The closing stub is not an hourly bar, so a level it ends above does not end the short.
+    /// A short held three sessions, the one it opened in counted, is armed on the third close and
+    /// closed at the next open, charged the whole spread.
     ///
-    /// The rule turns on an hourly close and a level held for thirty minutes has not been held for
-    /// an hour. The session close is already its own signal, and this rule exists to catch the
-    /// thesis breaking during the day rather than at the bell.
-    /// see: The hourly grid anchors to the session open, and the closing stub is not an hourly bar
+    /// "Generally I hold my shorts for only maybe two to three days", and he does not trail them the
+    /// way he trails his longs, so the short side ends on the sessions held and the lab takes the
+    /// upper of his two. The count is of the daily bars the store holds, so the Friday arms and the
+    /// Monday fills.
+    /// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
     /// </summary>
     [Fact]
-    public void The_closing_stub_is_not_an_hourly_close_and_does_not_end_the_short()
+    public void A_short_held_three_sessions_is_closed_at_the_next_open()
     {
         Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
-        Order("TSLA", SetupDirection.Short, at: new TimeOnly(9, 30), shares: 150);
-        Minute("TSLA", Session, new TimeOnly(9, 30), 101m, 101m, 99m, 99.5m);
-
-        // Inside the stub, which opens at 15:30, and above the average all the way to the bell.
-        Minute("TSLA", Session, new TimeOnly(15, 40), 103m, 104m, 103m, 104m);
-        Minute("TSLA", Session, new TimeOnly(15, 50), 104m, 104.5m, 103.5m, 104m);
+        Order("TSLA", SetupDirection.Short, at: new TimeOnly(10, 0), shares: 150);
+        Minute("TSLA", Session, new TimeOnly(10, 0), 101m, 101m, 99m, 99.5m);
         Quotes("TSLA", Session);
-        DailyBar("TSLA", Evening, close: 100m);
-        Indicators("TSLA", Evening, ema9: 101m, ema50: 102m);
+        DailyBar("TSLA", Session, close: 99.5m);
         Broker().Fill(Session);
 
-        ManageRunResult result = Stage().Manage(Session);
+        Assert.Equal(0, Stage().Manage(Session).ExitsArmed);
 
-        Assert.Equal(0, result.ClosedReclaim);
-        Assert.Equal(1, result.OpenAtEnd);
+        HeldAnotherSession("TSLA", NextSession);
+        Assert.Equal(0, Stage(NextSession).Manage(NextSession).ExitsArmed);
+
+        HeldAnotherSession("TSLA", ThirdSession);
+        ManageRunResult armed = Stage(ThirdSession).Manage(ThirdSession);
+
+        Assert.Equal(1, armed.ExitsArmed);
+        StoredPosition resting = Positions(Session, asOf: ThirdSession).Single();
+        Assert.Equal(ExitReason.HoldLimit, resting.ExitArmedReason);
+        Assert.Equal(ThirdSession, resting.ExitArmedSession);
+
+        Minute("TSLA", FourthSession, new TimeOnly(9, 30), 97m, 98m, 96m, 97.5m);
+        Quotes("TSLA", FourthSession);
+        ManageRunResult exited = Stage(FourthSession).Manage(FourthSession);
+
+        Assert.Equal(1, exited.ClosedHoldLimit);
+        Assert.Equal(0, exited.ClosedGiveUp);
+
+        StoredFill exit = Fills(FourthSession).Single(f => f.Leg == "exit");
+        Assert.Equal(97m, exit.RestingPrice);
+
+        // A short buys to exit, so the whole spread is charged upward off the open it filled at.
+        Assert.Equal(97.097m, exit.Price);
+        Assert.Equal(ExitReason.HoldLimit, Positions(Session).Single().ExitReason);
     }
 
     /// <summary>
-    /// A short with no 50-day average in the store is held rather than measured against a stand-in.
-    ///
-    /// An average approximated from what is to hand is a number that looks like the real thing
-    /// inside the rule deciding whether a short is over.
-    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// A session the store holds no daily bar for is not a session held, so a holiday between the
+    /// entry and the third close moves the exit a session later rather than earlier.
+    /// see: A session is a date the store holds minutes for, and no calendar is authored here
     /// </summary>
     [Fact]
-    public void A_short_with_no_stored_average_is_held_rather_than_measured_against_a_stand_in()
+    public void A_session_the_store_holds_no_bar_for_is_not_a_session_held()
     {
         Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
-        Order("TSLA", SetupDirection.Short, at: new TimeOnly(9, 30), shares: 150);
-        Minute("TSLA", Session, new TimeOnly(9, 30), 101m, 101m, 99m, 99.5m);
-        Minute("TSLA", Session, new TimeOnly(10, 29), 103m, 104m, 103m, 104m);
-        Minute("TSLA", Session, new TimeOnly(10, 30), 104m, 104.5m, 103.5m, 104m);
+        Order("TSLA", SetupDirection.Short, at: new TimeOnly(10, 0), shares: 150);
+        Minute("TSLA", Session, new TimeOnly(10, 0), 101m, 101m, 99m, 99.5m);
         Quotes("TSLA", Session);
+        DailyBar("TSLA", Session, close: 99.5m);
         Broker().Fill(Session);
+        Stage().Manage(Session);
 
-        ManageRunResult result = Stage().Manage(Session);
+        // Minutes and quotes on the next session and no daily bar, which is the store's own record
+        // of a date it holds nothing for.
+        Minute("TSLA", NextSession, new TimeOnly(10, 0), 99m, 100m, 98m, 99m);
+        Quotes("TSLA", NextSession);
+        Stage(NextSession).Manage(NextSession);
 
-        Assert.Equal(0, result.ClosedReclaim);
-        Assert.Equal(1, result.OpenAtEnd);
+        HeldAnotherSession("TSLA", ThirdSession);
+        ManageRunResult third = Stage(ThirdSession).Manage(ThirdSession);
+
+        Assert.Equal(0, third.ExitsArmed);
+        Assert.Null(Positions(Session, asOf: ThirdSession).Single().ExitArmedReason);
     }
 
-    /// <summary>
-    /// A long is never measured against the 50-day average, because the reclaim is the other side's
-    /// rule.
-    /// </summary>
+    /// <summary>A long is never ended by the hold limit, because it is the other side's rule.</summary>
     [Fact]
-    public void A_long_is_never_ended_by_an_hourly_close_above_the_fifty_day_average()
+    public void A_long_is_never_ended_by_the_hold_limit()
     {
         Plan("AAPL", SetupDirection.Long, trigger: 100m, giveUp: 95m);
-        Order("AAPL", SetupDirection.Long, at: new TimeOnly(9, 30), shares: 150);
-        Minute("AAPL", Session, new TimeOnly(9, 30), 101m, 101m, 99m, 100.5m);
-        Minute("AAPL", Session, new TimeOnly(10, 29), 103m, 104m, 103m, 104m);
-        Minute("AAPL", Session, new TimeOnly(10, 30), 104m, 104.5m, 103.5m, 104m);
+        Order("AAPL", SetupDirection.Long, at: new TimeOnly(10, 0), shares: 150);
+        Minute("AAPL", Session, new TimeOnly(10, 0), 99m, 101m, 99m, 100.5m);
         Quotes("AAPL", Session);
-        DailyBar("AAPL", Evening, close: 100m);
-        Indicators("AAPL", Evening, ema9: 101m, ema50: 102m);
-        DailyBar("AAPL", Session, close: 104m);
-        Indicators("AAPL", Session, ema9: 101m, ema50: 102m);
+        DailyBar("AAPL", Session, close: 100.5m);
         Broker().Fill(Session);
+        Stage().Manage(Session);
 
-        ManageRunResult result = Stage().Manage(Session);
+        HeldAnotherSession("AAPL", NextSession);
+        Stage(NextSession).Manage(NextSession);
+        HeldAnotherSession("AAPL", ThirdSession);
+        ManageRunResult third = Stage(ThirdSession).Manage(ThirdSession);
 
-        Assert.Equal(0, result.ClosedReclaim);
-        Assert.Equal(1, result.OpenAtEnd);
+        Assert.Equal(0, third.ExitsArmed);
+        Assert.Equal(1, third.OpenAtEnd);
+    }
+
+    /// <summary>
+    /// An hourly reclaim armed before the rule retired still fills at the next open and is counted
+    /// under its own name. Nothing arms it from 7.10; a row that already carries the arm is a decision
+    /// the lab made under the rule then in force, and dropping it would leave the position with an
+    /// instruction nothing reads.
+    /// </summary>
+    [Fact]
+    public void An_hourly_reclaim_armed_before_the_rule_retired_still_fills_at_the_next_open()
+    {
+        Plan("TSLA", SetupDirection.Short, trigger: 100m, giveUp: 105m);
+        Order("TSLA", SetupDirection.Short, at: new TimeOnly(10, 0), shares: 150);
+        Minute("TSLA", Session, new TimeOnly(10, 0), 101m, 101m, 99m, 99.5m);
+        Quotes("TSLA", Session);
+        Broker().Fill(Session);
+        Stage().Manage(Session);
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        using (SqliteCommand command = connection.CreateCommand())
+        {
+            command.CommandText =
+                "UPDATE position SET exit_armed_session = @session, exit_armed_reason = @reason;";
+            command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(Session));
+            command.Parameters.AddWithValue("@reason", ExitReason.Reclaim);
+            command.ExecuteNonQuery();
+        }
+
+        Minute("TSLA", NextSession, new TimeOnly(9, 30), 103m, 104m, 102m, 103.5m);
+        Quotes("TSLA", NextSession);
+        ManageRunResult exited = Stage(NextSession).Manage(NextSession);
+
+        Assert.Equal(1, exited.ClosedReclaim);
+        Assert.Equal(0, exited.ClosedHoldLimit);
+        Assert.Equal(ExitReason.Reclaim, Positions(Session).Single().ExitReason);
     }
 
     // ---- what cannot be priced -----------------------------------------------------------------
@@ -820,6 +879,7 @@ public sealed class PositionManagerTests : IDisposable
         Assert.Equal(1, run.ClosedGiveUp);
         Assert.Equal(0, run.ClosedTrail);
         Assert.Equal(0, run.ClosedReclaim);
+        Assert.Equal(0, run.ClosedHoldLimit);
         Assert.Equal(0, run.Trimmed);
         Assert.Equal(1, run.ClosedInTheirOwnSession);
         Assert.Equal(0, run.OpenAtEnd);
@@ -827,6 +887,14 @@ public sealed class PositionManagerTests : IDisposable
     }
 
     // ---- scaffolding ---------------------------------------------------------------------------
+
+    /// <summary>One more session held: a minute to walk, both passes quoted, and the day's bar.</summary>
+    private void HeldAnotherSession(string ticker, DateOnly session)
+    {
+        Minute(ticker, session, new TimeOnly(10, 0), 99m, 100m, 98m, 99m);
+        Quotes(ticker, session);
+        DailyBar(ticker, session, close: 99m);
+    }
 
     private PaperBroker Broker(DateOnly? on = null)
     {
@@ -853,13 +921,13 @@ public sealed class PositionManagerTests : IDisposable
     private IReadOnlyList<StoredPosition> Positions(DateOnly openedSession, DateOnly? asOf = null)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? ThirdSession, SessionBoundaries.UsEquities);
+        return PositionReader.ForOpenedSession(connection, openedSession, asOf ?? FourthSession, SessionBoundaries.UsEquities);
     }
 
     private IReadOnlyList<StoredFill> Fills(DateOnly session)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
-        return PositionReader.FillsOf(connection, session, ThirdSession, SessionBoundaries.UsEquities);
+        return PositionReader.FillsOf(connection, session, FourthSession, SessionBoundaries.UsEquities);
     }
 
     private static string SetupIdOf(string ticker, string direction, DateOnly evening) =>

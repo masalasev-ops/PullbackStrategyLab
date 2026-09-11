@@ -422,6 +422,8 @@ Nothing is lost by excluding it. The session close is already its own signal and
 
 The two boundaries are `SessionBoundaries.RegularSessionOpen` and `RegularSessionClose`, shipped at 4.2 with the minute bars. `HourlyGrid` derives the grid from them and restates neither, so the session's definition lives in one file.
 
+*Noted on 2026-09-11, at 7.10.* The short exit this entry was written for retired at 7.10, stated in no source (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed). The grid stands, and its consumer is now generation 1's entry, whose hourly averages are built on it (see: Generation 1's entry is armed by the flush into the hourly zone and taken on the first break after it, and a session gets one such decision).
+
 **The anchored average price is anchored at the swing the thrust ran from**
 The short side's `reached-ceiling` asks whether price came back within half a daily range of "the declining average price anchored to the last swing high". Until 4.4 that anchor was a phrase: nothing said which bar the swing high was, which minute inside it, or what the average was taken over, so three sessions computing the level would all have produced plausible prices and no two would have had to agree. The clause decides the verdict of the gate 423 of the 432 short calibration rows that reach it are refused by, so the level is not a detail of it.
 
@@ -611,12 +613,24 @@ The 9-day average is a daily series, so an intraday touch of it exits on noise r
 
 **The exit is whichever of the fixed give-up point and the trail is reached first**, which is the long side's answer to the question the short side already had. The short side has a stated exit trigger, an hourly close back above the 50-day average, and the long side's "let it run" stated nothing; this is the same asymmetry the pooling rule addresses one level up (see: Long and short are never pooled into one figure).
 
-**The short trim is 15% of the planned position, once, at 3R**
-Fifteen per cent of the share count the plan was sized at, not of what remains, fired once when 3R is reached and not repeated at further levels.
+*Corrected on 2026-09-11, at 7.10.* The short side's trigger this entry calls stated is stated in no source `SOURCES.md` read, and it retired at 7.10; the short side now ends on a count of sessions held, on his own word that he does not trail his shorts. The long side's "let it run" did state something after all: the trail below is his, "I close my whole position at the first close below the 9 EMA" (`P1` 2:52:06). **The ruling is unchanged** (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed).
 
-A fraction of the remainder is a decaying ladder that never fully exits, and it makes R accounting depend on how many times the rule has already fired. A fraction of the original is a fixed share count computable at plan time, which keeps it immutable with the rest of the plan (see: The plan is written before the session and is immutable after publication). Repeating levels would be a second rule set, and the document describes one.
+**Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed**
+Decided on 2026-09-11 at 7.10, from the exits section of `SOURCES.md`, which was written with its prediction first and traced against the material second. Two trims on each side, the long trail unchanged, the short held rather than trailed, and generation 0's short exit retired.
 
-**The 15 is arbitrary and is recorded as such.** It is inherited from the strategy's own "about 15%" and nothing derives it. A later session reading this row should see a choice made inside a defensible range rather than a value with a basis.
+**The long side trims at 3R and at 5R, 15% of the planned position each time.** "I would sell partial into strength when it's up three [R] or five [R]" and "every time I think this stock is extended I sell 15%" (`P1` 2:27:23 and 2:28:54). The 15, the 3 and the 5 are his. What "extended" means beyond those levels he judges by eye and with no indicator (`P2` 41:22), so the rule stops at the two levels he names rather than carrying a third number nobody stated. Each trim is a fraction of the planned count and not of what remains, on the reasoning the entry this supersedes gave and which survives: a fixed share count rather than a decaying ladder. **A trim never takes the whole position**, because it reduces one and the exit rules end one, so where a gate's reduction left the planned fraction at or above what is held there is no trim.
+
+**The long trail is unchanged and now carries his words**: "I close my whole position at the first close below the 9 EMA" (`P1` 2:52:06) (see: The long trail is evaluated on the daily close and fills at the next open). He names no timeframe for the close, so the daily close is the lab's reading, and his use of the 21 or the 50 early in a strong move (`P2` 42:30) is recorded rather than built.
+
+**The short side is not trailed, on his own word, and is closed after three sessions held.** "I'm not trailing the shorts like the longs, like the close above the 9 EMA" (`P2` 1:47:28), and "generally I hold my shorts for only maybe two to three days" (`P1` 25:18). The prediction mirrored the long trail here and the source contradicts it, so no mirror ships. A short held three sessions, the one it opened in counted, is armed on that close and filled at the next open on the trail's own mechanic; the three is the upper of his two figures, and sessions are the dates the store holds a daily bar for. "Generally" and "maybe" are qualifiers, and an exit cannot be recorded without acting on it the way a gate can, so the hold is the rule and the qualifiers are recorded beside it.
+
+**The short trims at the long side's levels, marked as the author's.** He takes part of a short's profit in its first two or three days (`P1` 3:36:56) and names no fraction or level for it, so it carries the long side's 15% at 3R and 5R, which are generation 0's own fraction and level with the second level added.
+
+**The hourly close back above the 50-day average retires.** No source read states it, and a baseline whose reason for existing is to be his does not carry an exit he never described. A position already armed on it still fills, so no row is left with an instruction nothing reads, and the night's record keeps counting it. The hourly grid stands for the entry's levels (see: The hourly grid anchors to the session open, and the closing stub is not an hourly bar).
+
+**It applies to the live lab from the commit that ships it**, as the entry rule did at 7.8: there is one execution path, generation 0's register holds no trade, and generation 1 registers at 7.11 naming these exits. A later session could reasonably trim at a third level, mirror the long trail onto the short side, or take two sessions rather than three, and each would be invisible in a count, which is why this is written down.
+
+It supersedes **The short trim is 15% of the planned position, once, at 3R**.
 
 **Trimming into support is dropped from the baseline rather than defined here**
 The clause is removed. The short side keeps its trim at 3R and its exit on an hourly close back above the 50-day average.
@@ -626,6 +640,8 @@ Support is defined nowhere in this corpus: not in the vocabulary, not in the sig
 **It is dropped rather than defined because phase 5 is where a rule variant is tested against evidence.** A support definition belongs there as a named variant carrying its own stated level, where it can be screened and paired; baked into the baseline it cannot be told apart from the rest of the rule set, and every figure the baseline produces would carry an invented number nobody could isolate.
 
 Recorded as dropped, with the reason, so a later session reads a decision rather than an omission. Without this entry the clause's absence is indistinguishable from an oversight, and the next reader restores it.
+
+*Noted on 2026-09-11, at 7.10.* The second sentence describes generation 0's short exits. From 7.10 the short side trims at 3R and again at 5R and closes after three sessions held, and the hourly close retired (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed). What this entry rules, that no trim rests at a support level, stands for generation 1 as it did for generation 0.
 
 **The audit holds three pairs and they answer three different questions**
 `plan_audit` carries execution at both ends, the plan's stop against where the trade ended, and the size the plan carried against the size the gate placed. Three pairs and not one field.
@@ -1406,6 +1422,15 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 ---
 
 ## Previously decided
+
+**The short trim is 15% of the planned position, once, at 3R**
+Fifteen per cent of the share count the plan was sized at, not of what remains, fired once when 3R is reached and not repeated at further levels.
+
+A fraction of the remainder is a decaying ladder that never fully exits, and it makes R accounting depend on how many times the rule has already fired. A fraction of the original is a fixed share count computable at plan time, which keeps it immutable with the rest of the plan (see: The plan is written before the session and is immutable after publication). Repeating levels would be a second rule set, and the document describes one.
+
+**The 15 is arbitrary and is recorded as such.** It is inherited from the strategy's own "about 15%" and nothing derives it. A later session reading this row should see a choice made inside a defensible range rather than a value with a basis.
+
+Superseded on 2026-09-11, at 7.10, by **Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed**. What it got right survives: a trim is a fraction of the planned count rather than of what remains, and the 15 is his. What moved is the "once", which the trace of `SOURCES.md` found to be the lab's and not the source's, since he names two levels; and the side, since from 7.10 the long side trims on his own words and the short side on the long side's figures mirrored. Its reason for not repeating, that repeating levels would be a second rule set the document did not describe, was true of the document it was written against and is not true of the source.
 
 **The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it**
 PlanBuilder computes the share count at 18:30 from the risk budget and the plan's own give-up distance, and writes it on the plan. RiskGate at trigger may reduce that count to fit a cap, or block the order outright, and it never computes a size of its own.

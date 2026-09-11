@@ -1,48 +1,75 @@
 namespace PullbackStrategyLab.Core.Trading;
 
 /// <summary>
-/// The short side's rule set: trim 15% of the planned position once at 3R, then close on an hourly
-/// bar that closes back above the 50-day average.
+/// The short side's rule set from 7.10: trim 15% of the planned position at 3R and again at 5R, and
+/// close at the next open once the position has been held three sessions.
 ///
-/// <b>Not the long side's rule with a sign flipped, and the shape is why.</b> This side has two
-/// rules where the long side has one, one of them reduces a position rather than ending it, and both
-/// are evaluated inside the session rather than on its close. The done condition asks for separate
-/// code paths because a single routine could only be their union, and the union is a strategy
-/// nobody trades (see: Long and short are never pooled into one figure).
+/// <b>Not the long side's rule with a sign flipped, and his own words are why.</b> "I'm not trailing
+/// the shorts like the longs, like the close above the 9 EMA" (<c>P2</c> 1:47:28), and "generally I
+/// hold my shorts for only maybe two to three days" (<c>P1</c> 25:18). So the short side has no trail
+/// and ends on a count of sessions, where the long side ends on a daily-series condition. The
+/// prediction written before the trace mirrored the long trail here, and the trace contradicts it,
+/// which is why SOURCES.md records the prediction beside what the source actually says.
+/// see: Long and short are never pooled into one figure
 ///
-/// <b>Both numbers are recorded as arbitrary within a defensible range.</b> The 15 is inherited from
-/// the strategy's own "about 15%" and the 3 is the level it names; nothing derives either. They are
-/// constants here rather than configuration so a later session reads a choice with a citation rather
-/// than a knob (see: The short trim is 15% of the planned position, once, at 3R).
+/// <b>The trims are the long side's figures mirrored and marked as the author's.</b> He takes profits
+/// on a short into the first two or three days (<c>P1</c> 3:36:56) and names no fraction and no level
+/// for it, so the short side carries the long side's 15% at 3R and 5R, generation 0's own fraction and
+/// first level among them.
+/// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
 ///
 /// <b>The trim into support is not here and its absence is a decision rather than an oversight.</b>
-/// Support is defined nowhere in this corpus, so a level written now would be authored rather than
-/// recovered, and phase 5 is where a rule variant carrying its own stated level is tested against
-/// evidence (see: Trimming into support is dropped from the baseline rather than defined here).
+/// Support is defined nowhere in this corpus as a level a trim could rest at (see: Trimming into
+/// support is dropped from the baseline rather than defined here).
 /// </summary>
 public static class ShortExitRules
 {
-    /// <summary>The fraction of the planned share count the trim takes, once.</summary>
-    public const decimal TrimFraction = 0.15m;
+    /// <summary>
+    /// The exit forms this side runs, named as SOURCES.md's exits table names them, so
+    /// <c>clause-provenance</c> can hold the document and the code to one list.
+    /// </summary>
+    public static IReadOnlyList<string> Forms { get; } = [ExitReason.Trim, ExitReason.HoldLimit];
 
-    /// <summary>How many R of open profit fires the trim.</summary>
-    public const decimal TrimAt = 3m;
+    /// <summary>The fraction of the planned share count each trim takes: the long side's, mirrored.</summary>
+    public const decimal TrimFraction = LongExitRules.TrimFraction;
+
+    /// <summary>The R multiples at which the trims fire: the long side's, mirrored.</summary>
+    public static IReadOnlyList<decimal> TrimAt => LongExitRules.TrimAt;
 
     /// <summary>
-    /// The price at which a short is <see cref="TrimAt"/> R in profit, measured from the price the
-    /// entry actually got.
+    /// How many sessions a short is held before it is closed at the next open, the upper of his two.
     ///
-    /// <b>From the realised risk, not the planned one.</b> R is taken over the distance from the
-    /// fill to the give-up point, because that is the money the position can lose; the plan's
-    /// intended distance is a figure the slippage moved. Sizing the trim level off the intended
-    /// distance would put the trim at a different multiple of the risk actually taken, which is the
-    /// same two-numbers-one-name fault <c>risk_intended</c> beside <c>risk_realised</c> exists to
-    /// make visible.
+    /// Counted from the store rather than from a calendar, the session the position opened in being
+    /// the first, so a market holiday is absent from the count by not being there.
     /// </summary>
-    public static decimal TrimLevel(decimal entryPrice, decimal giveUpPrice)
+    public const int HoldSessions = 3;
+
+    /// <summary>
+    /// Whether a short held for <paramref name="sessionsHeld"/> sessions, this one included, is closed
+    /// at the next open.
+    ///
+    /// At or beyond rather than exactly at, so a night the stage did not run is caught on the next one
+    /// rather than holding the position for ever.
+    /// </summary>
+    public static bool HoldLimitReached(int sessionsHeld)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(sessionsHeld);
+
+        return sessionsHeld >= HoldSessions;
+    }
+
+    /// <summary>
+    /// The price at which the next trim fires, having taken <paramref name="trimsTaken"/> already, or
+    /// null where both have been taken.
+    ///
+    /// <b>From the realised risk, not the planned one</b>, on the long side's reasoning: R is the
+    /// distance from the fill to the give-up point, because that is what the position can lose.
+    /// </summary>
+    public static decimal? TrimLevel(decimal entryPrice, decimal giveUpPrice, int trimsTaken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(entryPrice);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(giveUpPrice);
+        ArgumentOutOfRangeException.ThrowIfNegative(trimsTaken);
 
         if (giveUpPrice <= entryPrice)
         {
@@ -53,51 +80,14 @@ public static class ShortExitRules
                 + "the trim level at or above the entry, where the position is not in profit at all.");
         }
 
-        return entryPrice - (TrimAt * (giveUpPrice - entryPrice));
+        return trimsTaken >= TrimAt.Count
+            ? null
+            : entryPrice - (TrimAt[trimsTaken] * (giveUpPrice - entryPrice));
     }
 
-    /// <summary>
-    /// How many shares the trim takes, given what the plan was sized at and what is actually held.
-    ///
-    /// <b>A fraction of the planned count and not of what remains.</b> A fraction of the remainder is
-    /// a decaying ladder that never fully exits and makes R accounting depend on how many times the
-    /// rule has already fired; a fraction of the original is a fixed share count computable at plan
-    /// time, which keeps it immutable with the rest of the plan.
-    ///
-    /// <b>Floored, and capped at what is held.</b> Floored because a share count is whole and the
-    /// rounding has to go somewhere; capped because RiskGate may have reduced the order below the
-    /// plan's size, and a trim larger than the position would close more than was ever opened.
-    /// Both are guards on the arithmetic rather than rules, so neither is a parameter.
-    /// </summary>
-    public static int TrimShares(int plannedShares, int heldShares)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(plannedShares);
-        ArgumentOutOfRangeException.ThrowIfNegative(heldShares);
-
-        int wanted = (int)Math.Floor(plannedShares * TrimFraction);
-
-        return Math.Min(wanted, heldShares);
-    }
-
-    /// <summary>
-    /// Whether an hourly bar closing at <paramref name="adjustedHourlyClose"/> has reclaimed the
-    /// 50-day average, which ends the short.
-    ///
-    /// <b>The close is put on the adjusted basis and the average is not moved.</b> <c>ema_50</c> is
-    /// computed on adjusted close and <c>intraday_bar</c> holds what the vendor printed, so the two
-    /// live on different bases and a comparison between them is wrong by every split since. The
-    /// caller converts, because the factor is a fact about a stored daily bar and this stays pure.
-    ///
-    /// <b>Above, not at.</b> A bar closing exactly on the average has not closed back above it, on
-    /// the same reading <see cref="LongExitRules.TrailArmedBy"/> takes from the other side.
-    /// </summary>
-    public static bool Reclaimed(decimal adjustedHourlyClose, decimal fiftyDayAverage)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(adjustedHourlyClose);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(fiftyDayAverage);
-
-        return adjustedHourlyClose > fiftyDayAverage;
-    }
+    /// <summary>How many shares a trim takes: see <see cref="TrimArithmetic.SharesOf"/>.</summary>
+    public static int TrimShares(int plannedShares, int heldShares) =>
+        TrimArithmetic.SharesOf(plannedShares, heldShares, TrimFraction);
 
     /// <summary>
     /// What multiplies a printed price to put it on the adjusted basis the averages are computed on.

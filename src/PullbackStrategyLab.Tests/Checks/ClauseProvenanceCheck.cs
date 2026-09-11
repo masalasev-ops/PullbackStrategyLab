@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Core.Trading;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 using Xunit.Abstractions;
@@ -54,6 +55,15 @@ public sealed partial class ClauseProvenanceCheck
     private const string GenerationOneLongTable = "### Generation 1's long clauses";
 
     private const string GenerationOneShortTable = "### Generation 1's short clauses";
+
+    /// <summary>
+    /// Generation 1's exits, from 7.10, held to the two rule sets' own lists on the same terms. The
+    /// exits register inside the baseline at 7.11 beside the gates, so a form claiming a source there
+    /// carries the same weight and belongs under the same guard.
+    /// </summary>
+    private const string GenerationOneLongExits = "### Generation 1's long exits";
+
+    private const string GenerationOneShortExits = "### Generation 1's short exits";
 
     private const string SourceTable = "## The source material";
 
@@ -130,7 +140,20 @@ public sealed partial class ClauseProvenanceCheck
         IReadOnlyList<string> generationOneProblems = Problems(
             generationOne, sources, document, GenerationOneChecks.Long, GenerationOneChecks.Short, "GenerationOneChecks");
 
+        // The exits, from 7.10: the same six rules over the forms each exit rule set says it runs, a
+        // widening rather than a new check because the property is identical.
+        IReadOnlyList<ClauseRow> exits =
+        [
+            .. Clauses(document, GenerationOneLongExits, SetupDirection.Long),
+            .. Clauses(document, GenerationOneShortExits, SetupDirection.Short),
+        ];
+
+        IReadOnlyList<string> exitProblems = Problems(
+            exits, sources, document, LongExitRules.Forms, ShortExitRules.Forms, "the exit rule sets' Forms");
+
         coverage
+            .Examined("generation 1 exit rows reconciled against the two exit rule sets' lists, in both directions", exits.Count)
+            .Examined("generation 1 sourced exit forms required to carry a quotation", exits.Count(r => r.IsSourced))
             .Examined("generation 1 clause rows reconciled against its detector's lists, in both directions", generationOne.Count)
             .Examined("generation 1 sourced clauses required to carry a quotation", generationOne.Count(r => r.IsSourced))
             .Examined("clause rows reconciled against the detectors' own lists, in both directions", rows.Count)
@@ -165,6 +188,14 @@ public sealed partial class ClauseProvenanceCheck
         Assert.True(generationOneProblems.Count == 0,
             $"{generationOneProblems.Count} problem(s) with generation 1's clause provenance in {Document}:\n  "
             + string.Join("\n  ", generationOneProblems));
+
+        Assert.True(exits.Count == LongExitRules.Forms.Count + ShortExitRules.Forms.Count,
+            $"SOURCES.md's generation 1 exit tables parsed {exits.Count} row(s) against "
+            + $"{LongExitRules.Forms.Count + ShortExitRules.Forms.Count} forms, so a row was lost or the parser stopped matching.");
+
+        Assert.True(exitProblems.Count == 0,
+            $"{exitProblems.Count} problem(s) with generation 1's exit provenance in {Document}:\n  "
+            + string.Join("\n  ", exitProblems));
     }
 
     /// <summary>
@@ -214,7 +245,7 @@ public sealed partial class ClauseProvenanceCheck
             foreach (string extra in traced.Except(code, StringComparer.Ordinal))
             {
                 problems.Add(
-                    $"{extra} has a {side} row in SOURCES.md and is not in {listName}.{(side == SetupDirection.Long ? "Long" : "Short")}, "
+                    $"{extra} has a {side} row in SOURCES.md and is not in {listName}'s {side} list, "
                     + "so the document traces a clause the lab does not run.");
             }
 
