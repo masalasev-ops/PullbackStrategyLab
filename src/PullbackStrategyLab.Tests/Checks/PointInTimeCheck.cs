@@ -82,6 +82,13 @@ public sealed class PointInTimeCheck
             // being a second stamp to bound on.
             ["signal_definition"] = "observed_at",
 
+            // The gate lists as data, from 7.2, stamped for the reason the library is: which checks
+            // were in force on a night is read to decide whether a row is complete, and a read for an
+            // old instant that saw a check registered afterwards would hold that night's rows to a
+            // list the night never ran. `retired_observed_at` is the retirement's own instant and is
+            // bounded beside it rather than being a second stamp for the row.
+            ["check_definition"] = "observed_at",
+
             // The twin pairs and their run rows, both stamped and both read to decide an answer. The
             // ledger's panel is what a person reads a night's twins off, and a rerun of a date writes
             // a new generation beside the old, so an unbounded read would show one date's pairs twice

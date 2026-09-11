@@ -62,6 +62,15 @@
         { "return": "0.05", "maeAtr": "-0.1", "atr": "0.00", "dailyRange": "0.00", "stopRanges": "0.5" },
         { "return": "0.04", "maeAtr": "-0.1", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
       ]
+    },
+    {
+      "name": "a-nought-give-up-is-not-a-trade",
+      "why": "The flattened absence 031 left behind: a row whose give-up distance the detector wrote as the literal 0, which the ruling of 2026-09-08 reads as no stop at all rather than a stop of no width. Judged against a give-up of nothing, no path survives, so the row counted as stopped out and sat among the subjects that ended ahead and among all subjects, pushing the bound to 0.5000 and the achieved rate to 0.3333. Out of the population it is bound 1.0000 over one subject ahead and achieved 0.5000 over two, and the difference is the guard. The nought row here never traded against its entry, which is the shape 35 of the live store's nought rows would have to take to be counted as winners at all.",
+      "subjects": [
+        { "return": "0.05", "maeAtr": "-0.2", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" },
+        { "return": "0.06", "maeAtr": "0.1", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0" },
+        { "return": "-0.02", "maeAtr": "-1.5", "atr": "1.00", "dailyRange": "2.00", "stopRanges": "0.5" }
+      ]
     }
   ]
 }

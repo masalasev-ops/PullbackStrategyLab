@@ -1,5 +1,6 @@
 using System.Text.Json;
 using PullbackStrategyLab.Core.Detection;
+using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 using Xunit.Abstractions;
@@ -62,26 +63,71 @@ public sealed class CheckCompletenessCheck
         // Every setup the replay produced, read back from the store the fixture run leaves behind.
         // A property asserted over hand-written rows would say the assertion works and nothing about
         // what the detector wrote.
-        IReadOnlyList<StoredCheckResults> setups = ReadSetups();
+        //
+        // <b>Each row is held to the list in force on its own night, from 7.2.</b> The label has said
+        // "every check defined at its date" since 2026-08-26 and every row was compared with the list
+        // the build carries today, so a gate added to the detector would have read every historical
+        // row as missing it. `check_definition` is what the detectors register their list in on the
+        // night they run, and the row's own session reads it back.
+        Replay replay = ReadReplay();
+        IReadOnlyList<StoredCheckResults> setups = replay.Setups;
         int rowsChecked = 0;
 
         foreach (StoredCheckResults setup in setups)
         {
-            IReadOnlyList<string> expected = setup.Direction == "long" ? SetupChecks.Long : SetupChecks.Short;
-            string[] missing = [.. expected.Where(name => !setup.Names.Contains(name))];
-            string[] extra = [.. setup.Names.Where(name => !expected.Contains(name))];
+            IReadOnlyList<string> expected = replay.DefinedOn(setup.Direction, setup.AsOf);
 
-            if (missing.Length > 0)
+            if (expected.Count == 0)
             {
-                problems.Add($"{setup.SetupId} has no result for: {string.Join(", ", missing)}");
+                problems.Add($"{setup.SetupId}: the register holds no {setup.Direction} list for {setup.AsOf}, "
+                    + "so nothing says which checks its night ran and the row cannot be held to them.");
+                continue;
             }
 
-            if (extra.Length > 0)
-            {
-                problems.Add($"{setup.SetupId} records a check no gate names: {string.Join(", ", extra)}");
-            }
-
+            problems.AddRange(RowProblems(setup.SetupId, setup.Names, expected));
             rowsChecked++;
+        }
+
+        // The cheap half, which needs no register: every row of a side on one night records the same
+        // set of checks, because one detector wrote them all under one list. And the latest night's
+        // set is the list the build carries, because that is the list the detector ran last.
+        int nightsOfOneSet = 0;
+
+        foreach (IGrouping<(string Direction, string AsOf), StoredCheckResults> night in setups
+                     .GroupBy(s => (s.Direction, s.AsOf))
+                     .OrderBy(g => g.Key.AsOf, StringComparer.Ordinal))
+        {
+            string[] sets = [.. night.Select(s => string.Join(",", s.Names.Order(StringComparer.Ordinal))).Distinct(StringComparer.Ordinal)];
+
+            if (sets.Length == 1)
+            {
+                nightsOfOneSet++;
+            }
+            else
+            {
+                problems.Add($"the {night.Key.Direction} rows of {night.Key.AsOf} record {sets.Length} different sets "
+                    + "of checks, and one detector writes a side's night under one list.");
+            }
+        }
+
+        foreach ((string direction, IReadOnlyList<string> declared) in
+                 new[] { ("long", SetupChecks.Long), ("short", SetupChecks.Short) })
+        {
+            StoredCheckResults? latest = setups
+                .Where(s => s.Direction == direction)
+                .OrderBy(s => s.AsOf, StringComparer.Ordinal)
+                .LastOrDefault();
+
+            if (latest is not null
+                && !latest.Names.Order(StringComparer.Ordinal).SequenceEqual(declared.Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            {
+                problems.Add($"the latest {direction} night, {latest.AsOf}, records a set of checks that is not the "
+                    + "list the build carries, and the latest night is the one the build's detector wrote.");
+            }
+
+            // The register against the list, both ways: what is in force now is what the detector runs.
+            problems.AddRange(Divergences(direction, replay.InForceNow(direction), declared)
+                .Select(p => "check_definition against SetupChecks: " + p));
         }
 
         coverage
@@ -90,6 +136,8 @@ public sealed class CheckCompletenessCheck
             .Examined("checks the detectors declare", SetupChecks.Long.Count + SetupChecks.Short.Count)
             .Examined("setup rows read back from the replay store", rowsChecked)
             .Examined("check results across those rows", setups.Sum(s => s.Names.Count))
+            .Examined("check definitions the replay's register holds", replay.Definitions)
+            .Examined("nights and sides whose rows record one set of checks", nightsOfOneSet)
             .NoSourceScan(
                 "it reads rows the detectors actually wrote in a run, and the names they declare, from the "
                 + "compiled code. A detector that stopped recording a check leaves rows missing it rather than "
@@ -171,40 +219,124 @@ public sealed class CheckCompletenessCheck
     }
 
     /// <summary>
-    /// The setups a replay of its own produced.
+    /// What one row fails to hold of the list in force on its night, in both directions.
+    ///
+    /// Pure and public, so the date-awareness is proved against a list written by hand: a row of an
+    /// earlier night held to a later list reads as missing the check added since, which is the
+    /// comparison this check made of every row until 7.2.
+    /// </summary>
+    public static IReadOnlyList<string> RowProblems(
+        string setupId, IReadOnlyCollection<string> recorded, IReadOnlyCollection<string> expected)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(setupId);
+        ArgumentNullException.ThrowIfNull(recorded);
+        ArgumentNullException.ThrowIfNull(expected);
+
+        var problems = new List<string>();
+        string[] missing = [.. expected.Where(name => !recorded.Contains(name))];
+        string[] extra = [.. recorded.Where(name => !expected.Contains(name))];
+
+        if (missing.Length > 0)
+        {
+            problems.Add($"{setupId} has no result for: {string.Join(", ", missing)}");
+        }
+
+        if (extra.Length > 0)
+        {
+            problems.Add($"{setupId} records a check not defined on its night: {string.Join(", ", extra)}");
+        }
+
+        return problems;
+    }
+
+    /// <summary>
+    /// The setups a replay of its own produced, and the check register it left.
     ///
     /// Its own rather than the store `fixture-replay` leaves behind, which was the first attempt and
     /// which fails intermittently: the two checks run in the same assembly and the file is held open
     /// by whichever got there first. A shared artefact between two checks is a coupling neither one
     /// declares, and it fails on timing rather than on the property.
     /// </summary>
-    private static IReadOnlyList<StoredCheckResults> ReadSetups()
+    private static Replay ReadReplay()
     {
         using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
         replay.Run();
 
         using Microsoft.Data.Sqlite.SqliteConnection connection = replay.OpenStore();
-        using Microsoft.Data.Sqlite.SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT setup_id, direction, check_results FROM setup";
-
         var setups = new List<StoredCheckResults>();
-        using Microsoft.Data.Sqlite.SqliteDataReader reader = command.ExecuteReader();
 
-        while (reader.Read())
+        using (Microsoft.Data.Sqlite.SqliteCommand command = connection.CreateCommand())
         {
-            CheckResult[] results =
-                JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(2), Json) ?? [];
+            command.CommandText = "SELECT setup_id, direction, check_results, as_of FROM setup";
+            using Microsoft.Data.Sqlite.SqliteDataReader reader = command.ExecuteReader();
 
-            setups.Add(new StoredCheckResults(
-                reader.GetString(0),
-                reader.GetString(1),
-                [.. results.Select(r => r.Name)]));
+            while (reader.Read())
+            {
+                CheckResult[] results =
+                    JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(2), Json) ?? [];
+
+                setups.Add(new StoredCheckResults(
+                    reader.GetString(0),
+                    reader.GetString(1),
+                    [.. results.Select(r => r.Name)],
+                    reader.GetString(3)));
+            }
         }
 
-        return setups;
+        // Every night a row was written on, read back from the register as of the end of time: the
+        // question is which list the night ran, and the replay has finished writing.
+        var defined = new Dictionary<(string, string), IReadOnlyList<string>>();
+
+        foreach ((string direction, string asOf) in setups.Select(s => (s.Direction, s.AsOf)).Distinct())
+        {
+            defined[(direction, asOf)] = CheckRegister.DefinedOn(
+                connection, direction, StoreText.StorageTextToDate(asOf), EndOfTime);
+        }
+
+        var open = new Dictionary<string, List<string>>(StringComparer.Ordinal) { ["long"] = [], ["short"] = [] };
+        int definitions = 0;
+
+        using (Microsoft.Data.Sqlite.SqliteCommand command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                SELECT direction, check_name, retired_on FROM check_definition
+                 WHERE observed_at <= '9999-12-31T23:59:59.999Z';
+                """;
+            using Microsoft.Data.Sqlite.SqliteDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                definitions++;
+                if (reader.IsDBNull(2))
+                {
+                    open[reader.GetString(0)].Add(reader.GetString(1));
+                }
+            }
+        }
+
+        return new Replay(
+            setups,
+            defined,
+            open.ToDictionary(o => o.Key, o => (IReadOnlyList<string>)o.Value, StringComparer.Ordinal),
+            definitions);
+    }
+
+    private static readonly DateTimeOffset EndOfTime = new(9999, 12, 31, 23, 59, 59, TimeSpan.Zero);
+
+    private sealed record Replay(
+        IReadOnlyList<StoredCheckResults> Setups,
+        IReadOnlyDictionary<(string, string), IReadOnlyList<string>> Defined,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> InForce,
+        int Definitions)
+    {
+        public IReadOnlyList<string> DefinedOn(string direction, string asOf) =>
+            Defined.TryGetValue((direction, asOf), out IReadOnlyList<string>? names) ? names : [];
+
+        public IReadOnlyList<string> InForceNow(string direction) =>
+            InForce.TryGetValue(direction, out IReadOnlyList<string>? names) ? names : [];
     }
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    private sealed record StoredCheckResults(string SetupId, string Direction, IReadOnlyList<string> Names);
+    private sealed record StoredCheckResults(string SetupId, string Direction, IReadOnlyList<string> Names, string AsOf);
 }

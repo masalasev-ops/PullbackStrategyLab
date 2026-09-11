@@ -99,6 +99,17 @@ public static class WinRateCeiling
     }
 
     /// <summary>
+    /// Whether a subject carries a give-up distance a path could be judged against. A nought is the
+    /// flattened absence the detector wrote before 031, and is read as absent rather than as a stop
+    /// of no width.
+    /// </summary>
+    public static bool HasAGiveUpDistance(Subject subject)
+    {
+        ArgumentNullException.ThrowIfNull(subject);
+        return subject.StopDistanceRanges > 0m;
+    }
+
+    /// <summary>
     /// The bound over one population, or null where there is nothing to compute it from.
     ///
     /// Null rather than nought, because a ceiling of nought over an empty population reads on a
@@ -109,9 +120,20 @@ public static class WinRateCeiling
     /// assumption and the whole point of the figure is the gap between it and what was achieved.
     /// see: Long and short are never pooled into one figure
     /// </summary>
-    public static Bound? Of(IReadOnlyList<Subject> subjects)
+    public static Bound? Of(IReadOnlyList<Subject> all)
     {
-        ArgumentNullException.ThrowIfNull(subjects);
+        ArgumentNullException.ThrowIfNull(all);
+
+        // A nought give-up distance is not a trade and is out of the population, from 7.2. The
+        // detector wrote the literal 0 where it meant absent until 031 gave the column a null, and 35
+        // live rows still carry it; the ruling of 2026-09-08 is that a nought is not evidence of a
+        // stop. Left in, such a row is judged by `Survived` against a give-up of nothing, which no
+        // excursion can be smaller than, so it counts as stopped out: it stays among the subjects
+        // that ended ahead and among all subjects, and pushes both the ceiling and the achieved rate
+        // down for a row that was never a trade. The calculator's own `IS NOT NULL` could not see
+        // it, because the column is text and the sentinel is a value rather than an absence.
+        // see: A gate handed an absent or degenerate quantity fails rather than passing
+        IReadOnlyList<Subject> subjects = [.. all.Where(HasAGiveUpDistance)];
 
         if (subjects.Count == 0)
         {

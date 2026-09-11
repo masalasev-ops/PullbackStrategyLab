@@ -2175,7 +2175,15 @@ def ceiling_main(argv):
 
     for scenario in spec["scenarios"]:
         name = scenario["name"]
-        subjects = scenario["subjects"]
+        # A nought give-up distance is the absence the detector flattened to 0 before 031, and it
+        # is out of the population rather than judged against a stop of no width, which no path can
+        # stay inside. Restated here from the ruling rather than from the shipped filter, from 7.2.
+        subjects = [s for s in scenario["subjects"] if Decimal(s["stopRanges"]) > 0]
+
+        if not subjects:
+            print()
+            print("  ceiling.%s %s" % (name, "no bound"))
+            continue
 
         def survived(s):
             atr = Decimal(s["atr"])
