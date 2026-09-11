@@ -63,7 +63,7 @@ public static class NightlySchedule
         new("watchlist", "18:40", ["publish-watchlist"]),
         new("intraday", "20:30", ["intraday-bars"]),
         new("vwap", "21:00", ["vwap"]),
-        new("resolve", "21:05", ["resolve-triggers"]),
+        new("resolve", "21:05", ["resolve-triggers", "size-entries"]),
         new("orders", "21:10", ["orders"]),
         new("fills", "21:15", ["fills"]),
         new("manage", "21:20", ["manage"]),

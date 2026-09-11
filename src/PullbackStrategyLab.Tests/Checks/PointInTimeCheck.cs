@@ -169,6 +169,11 @@ public sealed class PointInTimeCheck
             // night could not have placed.
             ["trigger_resolution"] = "observed_at",
 
+            // The entry minute's resolution, from 7.8, read by the gate to decide what to place: a
+            // replay standing at an old session that saw a resolution written after it would place an
+            // order the night could not have.
+            ["entry_resolution"] = "observed_at",
+
             // An order is an observation about a session and is read to decide an answer: 4.9
             // compares planned against executed, so a replay standing at an old date that saw an
             // order written after it would audit a position the night could not have held.

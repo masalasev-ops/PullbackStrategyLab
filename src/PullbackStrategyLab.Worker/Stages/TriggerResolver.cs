@@ -30,6 +30,14 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// decides the order of a session as well as its outcomes.
 /// see: The trigger is touched, not closed through
 ///
+/// <b>From 7.8 a plan carries the rule and the trigger is the rule's break.</b> A plan written with the
+/// flush and reclaim names no price, so the minute it triggers is the minute <see cref="EntryWatch"/>
+/// takes its entry: the price reached the hourly zone, and then the previous candle's extreme was
+/// touched, through the same <see cref="TriggerTouch"/>. A plan written before 7.8 still triggers on the
+/// price it carries. A rule plan whose name has too little hourly history for a level is unresolvable
+/// with the reason, which is a different fact from a flush that never came or a reclaim that never did.
+/// see: Order prices and the share count resolve at the entry minute
+///
 /// <b>The pairing is asserted fail-closed and is not restated.</b> A plan written on the evening of
 /// N is live in the next session, so a plan resolved against a session at or before its own date
 /// would be resolved against the prices it was computed from.
@@ -67,6 +75,10 @@ public sealed class TriggerResolver
     /// <summary>The session traded and this name has no stored minute in it.</summary>
     public const string NameHeldNoMinutes =
         "the store holds no regular-session minute for this name in this session";
+
+    /// <summary>A rule plan's name holds too few hourly closes for the averages its zone is made of.</summary>
+    public const string TooFewHourlyCloses =
+        "the store holds too few hourly closes for this name to form the hourly averages the entry rule reads";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -146,8 +158,8 @@ public sealed class TriggerResolver
 
         // What was resting when this session opened, which is the question `live_session` was stored
         // to answer rather than one derived by stepping a calendar back over a weekend.
-        IReadOnlyList<StoredTradePlan> plans =
-            TradePlanReader.ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone);
+        IReadOnlyList<CommittedTradePlan> plans =
+            TradePlanReader.CommittedForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone);
 
         if (plans.Count == 0)
         {
@@ -168,7 +180,7 @@ public sealed class TriggerResolver
         // among good ones is the case a check of the first would pass.
         DateOnly setupAsOf = plans[0].AsOf;
 
-        foreach (StoredTradePlan plan in plans)
+        foreach (CommittedTradePlan plan in plans)
         {
             IntradayFetcher.Pairing.Of(sessionDate, plan.AsOf);
 
@@ -183,6 +195,19 @@ public sealed class TriggerResolver
 
         var touchedAt = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
         var minutesOf = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // The rule's watch per plan that carries it, started from the name's hourly history as the store
+        // held it before this session.
+        Dictionary<string, EntryWatch> watches = plans
+            .Where(p => p.CarriesTheRule)
+            .ToDictionary(
+                p => p.PlanId,
+                p => new EntryWatch(
+                    p.Direction,
+                    IntradayBarReader.HourlyClosesBefore(connection, p.Ticker, sessionDate, sessionDate, _options.SessionZone),
+                    sessionDate,
+                    _options.SessionZone),
+                StringComparer.Ordinal);
 
         // One pass over the session. Each plan is decided by the first minute that reaches its
         // trigger, so a plan already touched is skipped rather than overwritten: the earliest touch
@@ -200,16 +225,20 @@ public sealed class TriggerResolver
                 }
             }
 
-            foreach (StoredTradePlan plan in plans)
+            foreach (CommittedTradePlan plan in plans)
             {
-                if (touchedAt.ContainsKey(plan.SetupId) || minute.Of(plan.Ticker) is not StoredIntradayBar bar)
+                if (touchedAt.ContainsKey(plan.PlanId) || minute.Of(plan.Ticker) is not StoredIntradayBar bar)
                 {
                     continue;
                 }
 
-                if (TriggerTouch.Reached(plan.Direction, plan.TriggerPrice, bar.High, bar.Low))
+                bool reached = watches.TryGetValue(plan.PlanId, out EntryWatch? watch)
+                    ? watch.Observe(bar.OpenedAt, bar.High, bar.Low, bar.Close) is not null
+                    : TriggerTouch.Reached(plan.Direction, plan.TriggerPrice!.Value, bar.High, bar.Low);
+
+                if (reached)
                 {
-                    touchedAt[plan.SetupId] = minute.OpenedAt;
+                    touchedAt[plan.PlanId] = minute.OpenedAt;
                 }
             }
         }
@@ -217,10 +246,11 @@ public sealed class TriggerResolver
         int touched = 0;
         int notTouched = 0;
         int unresolvable = 0;
+        int withoutLevels = 0;
 
         using SqliteTransaction transaction = connection.BeginTransaction();
 
-        foreach (StoredTradePlan plan in plans)
+        foreach (CommittedTradePlan plan in plans)
         {
             // How many minutes this plan was asked over, which is the name's count and is stored on
             // every row: a resolution that says nothing about what it walked cannot be told apart
@@ -231,7 +261,7 @@ public sealed class TriggerResolver
             DateTimeOffset? at = null;
             string? because = null;
 
-            if (touchedAt.TryGetValue(plan.SetupId, out DateTimeOffset when))
+            if (touchedAt.TryGetValue(plan.PlanId, out DateTimeOffset when))
             {
                 outcome = "touched";
                 at = when;
@@ -248,6 +278,13 @@ public sealed class TriggerResolver
                 outcome = "unresolvable";
                 because = NameHeldNoMinutes;
                 unresolvable++;
+            }
+            else if (watches.TryGetValue(plan.PlanId, out EntryWatch? watch) && !watch.HadLevels)
+            {
+                outcome = "unresolvable";
+                because = TooFewHourlyCloses;
+                unresolvable++;
+                withoutLevels++;
             }
             else
             {
@@ -266,9 +303,11 @@ public sealed class TriggerResolver
         // traded is the same fault one name wide, so it carries the same outcome.
         string? stoppedBecause = clock.Minutes == 0
             ? SessionHeldNoMinutes
-            : unresolvable > 0
+            : unresolvable > withoutLevels
                 ? NameHeldNoMinutes
-                : null;
+                : withoutLevels > 0
+                    ? TooFewHourlyCloses
+                    : null;
 
         RunOutcome outcome_ = stoppedBecause is null ? RunOutcome.Clean : RunOutcome.Partial;
         RunSummary summary = run.Complete(outcome_);
@@ -285,7 +324,7 @@ public sealed class TriggerResolver
     private static void Insert(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        StoredTradePlan plan,
+        CommittedTradePlan plan,
         string outcome,
         DateTimeOffset? touchedAt,
         int minutesWalked,

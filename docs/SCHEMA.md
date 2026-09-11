@@ -924,6 +924,7 @@ Declared at store level. Columns owed at their checkpoint.
 | `trade_plan` | setup + variant | Insert PlanBuilder. **Never updated after its session date** (see: The plan is written before the session and is immutable after publication) |
 | `plan_run` | session + observation | Insert PlanBuilder. What one evening's plan stage did, with its refusals counted by reason |
 | `trigger_resolution` | plan | Insert TriggerResolver. What the session did to each plan resting in it, one row per plan and no price copied from either the plan or the bar |
+| `entry_resolution` | plan | Insert EntrySizer. From 7.8, what the entry minute resolved for each plan carrying the rule that triggered: the entry, the stop and the size, or why the stop refused it (see: Order prices and the share count resolve at the entry minute) |
 | `trigger_run` | session + observation | Insert TriggerResolver. What one replay walked beside what it decided |
 | `trade_order` | order id | Insert RiskGate only (see: RiskGate is the sole writer of orders, for both directions and every version). Blocked orders written with a reason, never dropped |
 | `order_run` | session + observation | Insert RiskGate. What one evening's gate decided, with its refusals and reductions counted by cap |
@@ -950,10 +951,12 @@ shape.
 | `variant_id` | TEXT | The version that plan belongs to, carried so a row reads without a join (see: Targets and minimum samples are written at creation and are immutable) |
 | `as_of` | TEXT | The evening the plan was written on |
 | `live_session` | TEXT | The session it is live in, stored rather than derived |
-| `trigger_price`, `give_up_price`, `give_up_distance` | TEXT | Prices, and the distance between them in money. **The final pullback session's regular-hours extremes with the give-up point 0.1 ADR beyond, from 4.18, and not `setup.trigger_price` and `setup.stop_price`**, which are the screening geometry a whole dip wide and were what this stage copied here from 4.16 until the 4.13 sign-off found it (see: The order prices are derived from the final pullback session's minutes, not from the screening geometry) |
-| `shares` | INTEGER, `> 0` | The size, which is PlanBuilder's and not RiskGate's |
+| `trigger_price`, `give_up_price`, `give_up_distance` | TEXT NULL | Prices, and the distance between them in money. **Null on a plan carrying the rule, from 7.8**, whose prices resolve at the entry minute into `entry_resolution`; the store holds the five figures present together and exactly on a plan written with the evening's prices (see: Order prices and the share count resolve at the entry minute). On such a plan they are **The final pullback session's regular-hours extremes with the give-up point 0.1 ADR beyond, from 4.18, and not `setup.trigger_price` and `setup.stop_price`**, which are the screening geometry a whole dip wide and were what this stage copied here from 4.16 until the 4.13 sign-off found it (see: The order prices are derived from the final pullback session's minutes, not from the screening geometry) |
+| `shares` | INTEGER NULL, `> 0` | The size on a plan written with the evening's prices, which was PlanBuilder's. Null on a plan carrying the rule, whose size EntrySizer resolves at the entry minute |
+| `entry_rule` | TEXT | `evening-prices` on every plan written before 7.8 and `flush-reclaim` from it: which rule the plan carries, so a reader knows whether its prices are on the row or at the entry minute |
+| `stop_ceiling` | TEXT NULL | The widest stop the entry may take, as a fraction of the entry price: the tighter of half the name's daily range and 5%, known at 18:30 because the range is tonight's. Present exactly on a plan carrying the rule, and read through the ratio crossing (see: The entry ceiling is the tighter of half the daily range and 5%) |
 | `equity`, `risk_fraction`, `risk_budget` | TEXT | What the size was computed from, so a plan can be re-derived without knowing which constants were in force |
-| `risk_at_stake` | TEXT | What the rounded share count actually risks, at or below `risk_budget` |
+| `risk_at_stake` | TEXT NULL | What the rounded share count actually risks, at or below `risk_budget`, on a plan written with the evening's prices |
 | `ticker`, `direction` | TEXT | The name and the side, carried so a plan reads without a join |
 | `observed_at` | TEXT | When the plan was written, which is what a point-in-time read of an evening bounds on |
 
@@ -1017,6 +1020,32 @@ carries `minutes_walked` and `names_walked` for that reason: a blind night repor
 which nothing triggered is the shape that cost this lab a second evening of evidence, and the figure
 that says so has to be on the morning's run row rather than in a rate three months later.
 
+### The entry, as its minute resolved it
+
+Columns of `entry_resolution`. Built at 7.8.
+
+| Column | Form | Why |
+|---|---|---|
+| `plan_id` | TEXT, the key | One resolution per plan that triggered, on `trigger_resolution`'s precedent, because the plan row is never touched after its session |
+| `setup_id`, `variant_id`, `live_session`, `ticker`, `direction` | TEXT | Carried so a row reads without a join |
+| `entry_minute` | TEXT | The minute the rule took the entry, which is `trigger_resolution.touched_at` for the same plan, and the walk that sized it refuses where the two disagree |
+| `candle_minutes` | INTEGER, 1, 5 or 15 | The width of the candle whose predecessor was broken, by how far into the session it was |
+| `level`, `level_value` | TEXT | Which hourly average the flush reached and where it stood, `hourly-ema-9` or `hourly-ema-21` |
+| `armed_at` | TEXT | The minute the flush reached the zone |
+| `entry_price` | TEXT | The previous candle's extreme the break reached, which is the price the order rests at |
+| `session_extreme`, `candle_extreme` | TEXT | The session's and the entry candle's low for a long, high for a short, **through the entry minute and never past it**, which is what the stop is set from |
+| `stop_ceiling` | TEXT | The plan's ceiling, read through the ratio crossing |
+| `stop_basis`, `stop_price`, `stop_distance`, `stop_fraction` | TEXT NULL | `session-extreme` or `entry-candle`, the stop, its distance in money and as a fraction of the entry. Present together, and absent only where the chase filter refused the entry before a stop was taken |
+| `shares`, `risk_at_stake` | INTEGER NULL / TEXT NULL | The size the risk budget buys at the stop, rounded down, and what it risks. Present exactly when the entry was not refused |
+| `risk_budget` | TEXT | The budget the size was taken from, the plan's |
+| `refused_because` | TEXT NULL | Why the entry was refused: the chase filter, the ceiling, a budget buying under one share, or a walk that disagreed with the resolver's minute |
+| `observed_at` | TEXT | When the sizer ran, which a point-in-time read of a session bounds on |
+
+**A refusal is a row and not an absence**, on the terms a blocked order carries its reason. It is a
+refusal of the entry rather than a cap on an order, so no order follows it and RiskGate counts it in
+`order_run.refused_at_entry` rather than writing a blocked order. **The stop is kept on a row the
+ceiling refused**, so the row says how wide the stop it refused was.
+
 ### The order, and the caps that shaped it
 
 Columns of `trade_order`. Built at 4.6, and the columns are the ones that checkpoint owes.
@@ -1044,16 +1073,17 @@ harness reads an unquoted identifier after `CREATE TABLE` or `INSERT INTO`, so a
 `writer-ownership`, `bar-append-only`, `price-storage-form` and `point-in-time` cannot see. A store
 nothing scans is the shape this corpus keeps finding, and it is not worth buying with a name.
 
-**No give-up price is copied here.** A reduction keeps the plan's give-up price, so there is one
-give-up price for a trade and it lives in `trade_plan`. A column here would be a second statement of
-it that a later reduction could move, and R would then depend on which row a reader opened
-(see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it).
+**No give-up price is copied here.** A reduction keeps the give-up price the trade was sized against,
+so there is one give-up price for a trade: the plan's on a plan written with the evening's prices, and
+the entry resolution's on a plan carrying the rule, from 7.8. A column here would be a second statement
+of it that a later reduction could move, and R would then depend on which row a reader opened
+(see: Order prices and the share count resolve at the entry minute).
 
-**Two of the six limits are not applied by RiskGate and both are named rather than absent.** Risk per
-trade is what the plan was sized from, so it is asserted and a plan over its budget stops the stage
-rather than being trimmed. The give-up distance cap is `exit-tight` at detection, so a plan that
-reached a trigger cleared it hours before, and re-applying it here would be a second implementation of
-a gate that could disagree with the first on a day the daily range was restated.
+**Five of the six limits are applied by RiskGate from 7.8, and the sixth is named where it is.** Risk
+per trade is enforced against the stop the entry resolved, as a cap that reduces and says so in
+`bound_by`, rather than asserted of a figure written the evening before. The give-up distance is the
+entry ceiling, the tighter of half the daily range and 5%, applied to the stop by EntrySizer, and an
+entry it refuses reaches the gate as a refusal and gets no order (see: The entry ceiling is the tighter of half the daily range and 5%).
 
 **The count caps see only the session being walked, until `position` exists.** A position is
 PaperBroker's row and arrives at 4.7, so what RiskGate can count today is what it has placed inside
@@ -1188,6 +1218,8 @@ Grain: session + observation. What one evening's gate decided, at 21:10.
 | `triggers`, `placed`, `reduced`, `blocked` | INTEGER | what the gate was given and what it did |
 | `blocked_open_positions`, `blocked_open_shorts`, `blocked_below_one_share` | INTEGER | the three ways an order was refused |
 | `reduced_position_size`, `reduced_total_risk` | INTEGER | the two proportional caps, counted apart, because a night of trims is a different night from a night of blocks |
+| `reduced_risk_per_trade` | INTEGER | the orders the risk budget reduced, from 7.8, when risk per trade became a cap the gate enforces rather than a figure it asserts |
+| `refused_at_entry` | INTEGER | the touched plans carrying the rule whose entry EntrySizer refused, from 7.8, which get no order because a refusal of the entry is not a cap |
 | `outcome`, `stopped_because` | TEXT / TEXT NULL | a night of blocked orders is clean: the caps binding is what they are for |
 
 #### `fill_run`
@@ -1267,7 +1299,7 @@ Columns of `plan_audit`. Built at 4.9. Three pairs answering three different que
 | `planned_trigger`, `executed_entry`, `entry_difference`, `entry_difference_bps`, `entry_basis` | TEXT / REAL | **The first question, execution at the entry.** The price the instruction named against the price it got, positive where the trade was worse off. Basis points beside the money because six cents on a six-dollar stock and six cents on a four-hundred-dollar one are two different facts. `entry_basis` is `slipped` or `gapped`, so a gap is never read as slippage |
 | `exit_resting_price`, `executed_exit`, `exit_difference`, `exit_difference_bps`, `exit_basis`, `exit_reason` | TEXT / REAL | The same question at the exit, against the price the exit rule named rather than against the plan's stop |
 | `planned_give_up`, `give_up_difference`, `give_up_difference_bps` | TEXT / REAL | **The second question, and not the first restated.** The plan's stop against where the trade actually ended. Equal to the exit pair on a give-up exit and a different quantity on every other one: a trail exit ends nowhere near the give-up point by design, so reading the two as one would report every winner as an enormous execution failure |
-| `planned_shares`, `executed_shares`, `shares_difference`, `reduced_because` | INTEGER / TEXT NULL | **The third question, the gate.** The size the plan carried against the size that was placed, with the cap that bound or null where none did. RiskGate may reduce a size and may never recompute one, so this is an intention against an outcome rather than two runs of one formula (see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it) |
+| `planned_shares`, `executed_shares`, `shares_difference`, `reduced_because` | INTEGER / TEXT NULL | **The third question, the gate.** The size the plan carried against the size that was placed, with the cap that bound or null where none did. RiskGate may reduce a size and never grows one, so this is the size the entry resolved against the size the gate placed rather than two runs of one formula (see: Order prices and the share count resolve at the entry minute) |
 | `risk_intended`, `risk_realised`, `risk_difference` | TEXT | The two above in the unit everything is scored in |
 | `observed_at` | TEXT | |
 

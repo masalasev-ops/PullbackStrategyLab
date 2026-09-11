@@ -11,11 +11,12 @@ namespace PullbackStrategyLab.Core.Trading;
 /// the only thing that may write an order; this decides what the row says.
 /// see: RiskGate is the sole writer of orders, for both directions and every version
 ///
-/// <b>It reduces or blocks and it never recomputes a size.</b> The plan's share count arrives here
-/// and leaves here either unchanged, smaller, or refused. Nothing in this file divides a risk budget
-/// by a give-up distance: that happened at 18:30 and doing it again would make `plan_audit` compare
-/// two runs of one formula rather than an intention against an outcome.
-/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+/// <b>It reduces or blocks and it never grows a size.</b> The resolved share count arrives here and
+/// leaves either unchanged, smaller, or refused. **From 7.8 risk per trade is one of the caps** rather
+/// than a figure asserted of the plan: the size is resolved at the entry minute against the stop that
+/// minute gives, and the gate enforces the budget against that distance, so an order can never put more
+/// at stake than the budget it names whatever produced the count.
+/// see: Order prices and the share count resolve at the entry minute
 ///
 /// <b>A reduction keeps the plan's give-up price</b>, which is why nothing here returns one. R for a
 /// trade is the distance the plan named, whatever size the caps allowed, and a trade that risked less
@@ -35,8 +36,11 @@ public static class RiskLimits
     /// <summary>The account's total risk at stake would exceed what may be at risk at once.</summary>
     public const string TotalRisk = "total-risk";
 
+    /// <summary>The order would lose more than the risk budget at its stop, from 7.8.</summary>
+    public const string RiskPerTrade = "risk-per-trade";
+
     /// <summary>Every cap by name, in the order they are applied.</summary>
-    public static IReadOnlyList<string> All { get; } = [OpenPositions, OpenShorts, PositionSize, TotalRisk];
+    public static IReadOnlyList<string> All { get; } = [OpenPositions, OpenShorts, RiskPerTrade, PositionSize, TotalRisk];
 
     /// <summary>
     /// Apply every cap to one order, in the order that lets a count cap refuse before a proportional
@@ -51,7 +55,8 @@ public static class RiskLimits
     /// see: Entry slippage is the whole captured spread, symmetric between the directions
     /// </summary>
     public static RiskVerdict Apply(
-        string direction, int plannedShares, decimal triggerPrice, decimal giveUpDistance, OpenBook book)
+        string direction, int plannedShares, decimal triggerPrice, decimal giveUpDistance, OpenBook book,
+        decimal? riskBudget = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(direction);
         ArgumentNullException.ThrowIfNull(book);
@@ -89,6 +94,19 @@ public static class RiskLimits
         int shares = plannedShares;
         string? boundBy = null;
 
+        // Risk per trade first among the proportional caps, because it is the one limit that belongs to
+        // the order alone rather than to the book: whatever the book holds, one order may not lose more
+        // than its budget at its stop.
+        if (riskBudget is decimal budget)
+        {
+            int byBudget = (int)Math.Floor(budget / giveUpDistance);
+            if (byBudget < shares)
+            {
+                shares = byBudget;
+                boundBy = RiskPerTrade;
+            }
+        }
+
         int byPositionSize = (int)Math.Floor(RiskCaps.MaxPositionValue / triggerPrice);
         if (byPositionSize < shares)
         {
@@ -113,7 +131,9 @@ public static class RiskLimits
                 boundBy == PositionSize
                     ? $"one share at {triggerPrice} is more than the {RiskCaps.MaxPositionFraction:P0} "
                       + "of the account one position may be"
-                    : $"{roomLeft} of risk is left and one share would put {giveUpDistance} at stake");
+                    : boundBy == RiskPerTrade
+                        ? $"one share would put {giveUpDistance} at stake against a budget of {riskBudget}"
+                        : $"{roomLeft} of risk is left and one share would put {giveUpDistance} at stake");
         }
 
         return shares == plannedShares

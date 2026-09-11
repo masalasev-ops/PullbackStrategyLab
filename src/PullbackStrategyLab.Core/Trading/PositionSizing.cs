@@ -8,9 +8,11 @@ namespace PullbackStrategyLab.Core.Trading;
 /// arithmetic over three numbers, and the stage around it is a read and an insert. That makes the
 /// rounding assertable over every distance rather than over the ones a fixture happened to produce.
 ///
-/// <b>PlanBuilder sizes and the plan's size is authoritative.</b> RiskGate may reduce it or block it
-/// at trigger and never recomputes it.
-/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+/// <b>The size resolves at the entry minute, from 7.8, and EntrySizer is the one caller.</b> The plan
+/// carries the rule rather than a price, so the distance a size is taken over exists only once the
+/// entry minute has set the stop. RiskGate may reduce that size to fit a cap, the risk budget among
+/// them, or block the order, and never grows it.
+/// see: Order prices and the share count resolve at the entry minute
 ///
 /// <b>The give-up distance is a price, not a ratio.</b> `setup.stop_distance_ranges` is the distance
 /// expressed in daily ranges, which is what `exit-tight` and the cap rank on; dividing a risk budget

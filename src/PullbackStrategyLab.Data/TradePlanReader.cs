@@ -20,6 +20,16 @@ namespace PullbackStrategyLab.Data;
 /// bound will rarely exclude anything; that is a fact about today's writer rather than a property of
 /// the read, and a read that trusted it would stop being point-in-time the day a backfill existed.
 /// see: A reader's signature does not establish point-in-time; the query does
+///
+/// <b>Two shapes of a plan from 7.8, and a caller says which it wants.</b> A plan carrying the entry rule
+/// names no price until its entry minute, so what the evening committed to and what the session
+/// executed are different rows. <see cref="StoredTradePlan"/> is the executed shape, every figure
+/// present: an evening's plan as it was written, or a rule plan joined to its entry resolution, which is
+/// what every stage downstream of the entry reads. <see cref="CommittedTradePlan"/> is the plan as the
+/// evening wrote it, prices absent on a rule plan, which is what the resolver, the sizer and a surface
+/// publishing the evening read. A rule plan whose entry was refused, or has not been resolved, has no
+/// executed shape and is not returned as one.
+/// see: Order prices and the share count resolve at the entry minute
 /// </summary>
 public sealed class TradePlanReader
 {
@@ -34,20 +44,27 @@ public sealed class TradePlanReader
         return ForLiveSession(connection, liveSession, asOf, sessionZone);
     }
 
-    /// <summary>The plans written on the evening of <paramref name="writtenOn"/>, as at <paramref name="asOf"/>.</summary>
-    public IReadOnlyList<StoredTradePlan> WrittenOn(DateOnly writtenOn, DateOnly asOf, string sessionZone)
+    /// <summary>The plans written on the evening of <paramref name="writtenOn"/>, as that evening committed them.</summary>
+    public IReadOnlyList<CommittedTradePlan> WrittenOn(DateOnly writtenOn, DateOnly asOf, string sessionZone)
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
         return WrittenOn(connection, writtenOn, asOf, sessionZone);
     }
 
+    /// <summary>The plans resting in <paramref name="liveSession"/> in their executed shape: priced, sized, and only those that are.</summary>
     public static IReadOnlyList<StoredTradePlan> ForLiveSession(
         SqliteConnection connection, DateOnly liveSession, DateOnly asOf, string sessionZone) =>
         Read(connection, "live_session", liveSession, asOf, sessionZone);
 
-    public static IReadOnlyList<StoredTradePlan> WrittenOn(
+    /// <summary>What the evening of <paramref name="writtenOn"/> committed to, rule plans included with no price.</summary>
+    public static IReadOnlyList<CommittedTradePlan> WrittenOn(
         SqliteConnection connection, DateOnly writtenOn, DateOnly asOf, string sessionZone) =>
-        Read(connection, "as_of", writtenOn, asOf, sessionZone);
+        ReadCommitted(connection, "as_of", writtenOn, asOf, sessionZone);
+
+    /// <summary>Every plan resting in <paramref name="liveSession"/> as it was committed, which is what an entry is resolved from.</summary>
+    public static IReadOnlyList<CommittedTradePlan> CommittedForLiveSession(
+        SqliteConnection connection, DateOnly liveSession, DateOnly asOf, string sessionZone) =>
+        ReadCommitted(connection, "live_session", liveSession, asOf, sessionZone);
 
     /// <summary>
     /// The plans behind a named set of setups, as at <paramref name="asOf"/>.
@@ -76,13 +93,20 @@ public sealed class TradePlanReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
-                   trigger_price, give_up_price, give_up_distance, shares,
-                   equity, risk_fraction, risk_budget, risk_at_stake, observed_at
-              FROM trade_plan
-             WHERE setup_id IN ({slots})
-               AND observed_at <= @observed_before
-             ORDER BY direction, ticker
+            SELECT p.plan_id, p.variant_id, p.setup_id, p.as_of, p.live_session, p.ticker, p.direction,
+                   COALESCE(p.trigger_price, r.entry_price), COALESCE(p.give_up_price, r.stop_price),
+                   COALESCE(p.give_up_distance, r.stop_distance), COALESCE(p.shares, r.shares),
+                   p.equity, p.risk_fraction, p.risk_budget, COALESCE(p.risk_at_stake, r.risk_at_stake),
+                   p.observed_at, p.entry_rule
+              FROM trade_plan p
+              LEFT JOIN entry_resolution r
+                ON r.plan_id = p.plan_id
+               AND r.refused_because IS NULL
+               AND r.observed_at <= @observed_before
+             WHERE p.setup_id IN ({slots})
+               AND p.observed_at <= @observed_before
+               AND COALESCE(p.trigger_price, r.entry_price) IS NOT NULL
+             ORDER BY p.direction, p.ticker
             """;
 
         int slot = 0;
@@ -113,13 +137,20 @@ public sealed class TradePlanReader
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT plan_id, variant_id, setup_id, as_of, live_session, ticker, direction,
-                   trigger_price, give_up_price, give_up_distance, shares,
-                   equity, risk_fraction, risk_budget, risk_at_stake, observed_at
-              FROM trade_plan
-             WHERE {bounded} = @date
-               AND observed_at <= @observed_before
-             ORDER BY direction, ticker
+            SELECT p.plan_id, p.variant_id, p.setup_id, p.as_of, p.live_session, p.ticker, p.direction,
+                   COALESCE(p.trigger_price, r.entry_price), COALESCE(p.give_up_price, r.stop_price),
+                   COALESCE(p.give_up_distance, r.stop_distance), COALESCE(p.shares, r.shares),
+                   p.equity, p.risk_fraction, p.risk_budget, COALESCE(p.risk_at_stake, r.risk_at_stake),
+                   p.observed_at, p.entry_rule
+              FROM trade_plan p
+              LEFT JOIN entry_resolution r
+                ON r.plan_id = p.plan_id
+               AND r.refused_because IS NULL
+               AND r.observed_at <= @observed_before
+             WHERE p.{bounded} = @date
+               AND p.observed_at <= @observed_before
+               AND COALESCE(p.trigger_price, r.entry_price) IS NOT NULL
+             ORDER BY p.direction, p.ticker
             """;
 
         command.Parameters.AddWithValue("@date", StoreText.DateToStorageText(date));
@@ -153,7 +184,64 @@ public sealed class TradePlanReader
                 StoreText.StorageTextToRatio(reader.GetString(12)),
                 StoreText.StorageTextToPrice(reader.GetString(13)),
                 StoreText.StorageTextToPrice(reader.GetString(14)),
-                StoreText.StorageTextToTimestamp(reader.GetString(15))));
+                StoreText.StorageTextToTimestamp(reader.GetString(15)))
+            {
+                EntryRule = reader.GetString(16),
+            });
+        }
+
+        return plans;
+    }
+
+    /// <summary>The plans as committed, one column or the other chosen against a constant.</summary>
+    private static IReadOnlyList<CommittedTradePlan> ReadCommitted(
+        SqliteConnection connection, string column, DateOnly date, DateOnly asOf, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        string bounded = string.Equals(column, "live_session", StringComparison.Ordinal)
+            ? "live_session"
+            : "as_of";
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT plan_id, variant_id, setup_id, as_of, live_session, ticker, direction, entry_rule,
+                   trigger_price, give_up_price, give_up_distance, shares, stop_ceiling,
+                   equity, risk_fraction, risk_budget, risk_at_stake, observed_at
+              FROM trade_plan
+             WHERE {bounded} = @date
+               AND observed_at <= @observed_before
+             ORDER BY direction, ticker
+            """;
+
+        command.Parameters.AddWithValue("@date", StoreText.DateToStorageText(date));
+        command.Parameters.AddWithValue(
+            "@observed_before", StoreText.EndOfSession(asOf, sessionZone));
+
+        var plans = new List<CommittedTradePlan>();
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            plans.Add(new CommittedTradePlan(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                StoreText.StorageTextToDate(reader.GetString(3)),
+                StoreText.StorageTextToDate(reader.GetString(4)),
+                reader.GetString(5),
+                reader.GetString(6),
+                reader.GetString(7),
+                reader.IsDBNull(8) ? null : StoreText.StorageTextToPrice(reader.GetString(8)),
+                reader.IsDBNull(9) ? null : StoreText.StorageTextToPrice(reader.GetString(9)),
+                reader.IsDBNull(10) ? null : StoreText.StorageTextToPrice(reader.GetString(10)),
+                reader.IsDBNull(11) ? null : reader.GetInt32(11),
+                reader.IsDBNull(12) ? null : StoreText.StorageTextToRatio(reader.GetString(12)),
+                StoreText.StorageTextToPrice(reader.GetString(13)),
+                StoreText.StorageTextToRatio(reader.GetString(14)),
+                StoreText.StorageTextToPrice(reader.GetString(15)),
+                reader.IsDBNull(16) ? null : StoreText.StorageTextToPrice(reader.GetString(16)),
+                StoreText.StorageTextToTimestamp(reader.GetString(17))));
         }
 
         return plans;
@@ -205,7 +293,11 @@ public sealed class TradePlanReader
     }
 }
 
-/// <summary>One plan as the store holds it.</summary>
+/// <summary>
+/// One plan in its executed shape: an evening's plan as written, or a rule plan with the figures its entry
+/// minute resolved. <see cref="TriggerPrice"/> is the price the order rests at and
+/// <see cref="GiveUpPrice"/> the one stop the trade has, whichever of the two produced them.
+/// </summary>
 public sealed record StoredTradePlan(
     string PlanId,
     string VariantId,
@@ -222,7 +314,40 @@ public sealed record StoredTradePlan(
     decimal RiskFraction,
     decimal RiskBudget,
     decimal RiskAtStake,
-    DateTimeOffset ObservedAt);
+    DateTimeOffset ObservedAt)
+{
+    /// <summary>Which rule the plan carried: the evening's prices, or the flush and reclaim resolved at the entry minute.</summary>
+    public string EntryRule { get; init; } = "evening-prices";
+}
+
+/// <summary>
+/// One plan as the evening committed it. On a plan carrying the entry rule the prices, the size and the
+/// risk at stake are absent, because they resolve at the entry minute, and <see cref="StopCeiling"/> is
+/// the widest stop the entry may take.
+/// </summary>
+public sealed record CommittedTradePlan(
+    string PlanId,
+    string VariantId,
+    string SetupId,
+    DateOnly AsOf,
+    DateOnly LiveSession,
+    string Ticker,
+    string Direction,
+    string EntryRule,
+    decimal? TriggerPrice,
+    decimal? GiveUpPrice,
+    decimal? GiveUpDistance,
+    int? Shares,
+    decimal? StopCeiling,
+    decimal Equity,
+    decimal RiskFraction,
+    decimal RiskBudget,
+    decimal? RiskAtStake,
+    DateTimeOffset ObservedAt)
+{
+    /// <summary>Whether the plan carries the rule rather than the evening's prices.</summary>
+    public bool CarriesTheRule => StopCeiling is not null;
+}
 
 /// <summary>One run of the plan stage, with its refusals broken out by reason.</summary>
 public sealed record StoredPlanRun(

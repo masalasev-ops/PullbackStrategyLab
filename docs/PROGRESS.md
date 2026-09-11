@@ -19431,3 +19431,90 @@ Carried:    **The operator's half: the fetch run against the vendor**, `backfill
             spends vendor calls.
 
             **This session committed code and may not sign it off.**
+
+## 7.8 — 2026-09-11 — phase-7-8-plan-carries-a-rule — the plan carries the rule, and the entry minute resolves the price, the stop and the size
+
+Built:      **The entry rule, in Core.** `EntryWatch` is fed a session one minute at a time and takes the
+            entry his sentence describes: armed when a minute reaches the nearer edge of the zone the
+            hourly 9 and 21 averages make, taken on the first touch of the previous candle's extreme after
+            the flush, on a one, five or fifteen minute candle by how far into the session it is. The
+            hourly averages start from the name's hourly closes over the sessions the store holds, the
+            closing half hour counted as a bar, and a name with fewer than sixty-three closes has no level.
+            `EntryStop` resolves the stop: the chase filter at 3% off the session's extreme, the
+            session's extreme through the entry minute, the entry candle's past 2%, and a refusal past the
+            tighter of half the daily range and 5%. **The stop is forward-only by construction**: the
+            watch answers from the minutes it has been fed, so an extreme set after the entry is one it
+            has not seen.
+
+            **The plan carries the rule.** Migration 067 rebuilds `trade_plan` so its prices, size and risk
+            at stake are absent on a plan carrying the rule and present exactly on one written with the
+            evening's prices, which every existing row is copied as, and adds `entry_rule` and
+            `stop_ceiling`. PlanBuilder writes the rule and the ceiling and no price. **EntrySizer**, the
+            resolve slot's second verb `size-entries`, walks each triggered plan's session again to the
+            resolver's minute, resolves the stop and the size into `entry_resolution`, a table keyed on the
+            plan, or writes why the stop refused it. TriggerResolver triggers a rule plan on the watch and
+            an evening's plan on its price. **RiskGate enforces risk per trade** as a cap that reduces and
+            names itself, counts the entries refused before a cap was asked, and reports a touched rule
+            plan nobody sized as a partial night. `TradePlanReader` returns a plan in two shapes, as
+            committed and as executed, and every stage downstream of the entry reads the executed one, so
+            PaperBroker, PositionManager, PlanAudit and LossClassifier read the resolved figures unchanged.
+            `OrderPrices` retires with the two clauses it implemented.
+
+            **Three decisions move with the code.** The plan-size entry and the two-of-six-limits entry go
+            to Previously decided with their reasoning and a closing paragraph each, clauses (a) and (b) of
+            the order-price decision are marked superseded inside it, which stays live for clause (d), and
+            the four 7.0 entries that named the supersessions as pending say they have landed. **Every
+            citation of the two moved entries outside a record is repointed**, fourteen places across
+            code, migrations, tests, SCHEMA, BUILD_PLAN, ARCHITECTURE and one live decision, and
+            `no-superseded-citation` is green. **A new decision records the entry rule's six
+            readings** the sentence does not settle.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,289 tests**, up from 1,278.
+
+Measured:   **Over authored long and short sessions, in a store of their own: twenty-six expectations at 7.8,
+            all `DERIVED` by hand.** Every prior hourly close is the zone price, so both averages sit on it
+            exactly. The long flushes at 09:32 and enters at 09:34 on 09:33's high of 100.20, with the
+            session's low through 09:34 at 99.70 as the stop: 1,500 shares at the $750 budget, 349 placed
+            under the position cap. The short flushes up at 09:32 and enters at 09:35 on 09:34's low of
+            50.00, the session's high through 09:35 at 50.30 as the stop: 2,500 shares, 700 placed. The
+            gate places them in the order they triggered. **Each session prints a new extreme after the
+            entry, 98.00 under the long and 52.00 over the short, and neither stop uses it.** A third name
+            flushes and never reclaims, is not touched, and writes no order. Six existing expectations
+            moved, each noted: the schema version, the catalogue's two counts, the observable stages, the
+            tables keyed on the plan, and the authored rows citing a decision, re-derived by
+            `tools/derive-authored-parameters.py` first.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.7's after, 160 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `587d5cc`
+            with the working tree dirty: GREEN, phase 7, **161 claims, 161 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 13,204, 1,288 tests, before the row-survival test for 067 was added. The new claim is EntrySizer in
+            the catalogue.
+
+Found:      **The plan read "a new slot sizes between resolve and orders", and the sizer is the resolve
+            slot's second verb instead.** It runs after the resolver and before the gate at 21:10, which is
+            what the plan's reason needs, and it adds no task to the operator's scheduler. This is the same
+            amendment 7.1 made for its reconciler, and the plan's own row is read as satisfied rather than
+            edited.
+
+            **The audit's third pair keeps its meaning.** The plan expected it to lose it, on the reading
+            that the gate would size; with the sizer a stage of its own, the pair compares the size the
+            entry resolved against the size the gate placed, which is still an intention against an outcome.
+
+            **Generation 0's live plans take the entry-minute rule from tonight's build**, not from the
+            switch night. V0's execution changes before its generation closes at 7.11, and that is recorded
+            rather than hidden: the plan's own row supersedes the decisions in this commit, and the live
+            funnel has passed a median of nought candidates a night, so no plan V0 ever wrote changes. The
+            rule a V0 plan executes after tonight is generation 1's, which is what the switch would have
+            given it a week later.
+
+            **Four stages still key a night's plans by setup rather than by plan**, which a survey for this
+            checkpoint found: RiskGate, PaperBroker, PositionManager and PlanAudit would throw on a duplicate
+            key once two versions plan one setup. Nothing live has two versions, so it bites nobody today,
+            and it is carried to 7.11, where versions of generation 1 first become possible.
+
+Carried:    **The operator's half: none at this checkpoint.** The rule runs on the live store from the
+            first night the checkout moves past this commit, with nothing for the operator to do but move it.
+
+            **Setup-keyed plan dictionaries in four stages, due at 7.11.**
+
+            **This session committed code and may not sign it off.**

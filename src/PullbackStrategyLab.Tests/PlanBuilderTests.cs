@@ -56,16 +56,17 @@ public sealed class PlanBuilderTests : IDisposable
         return new PlanBuilder(_connections, new RunLogger(_clock, options), _clock, options);
     }
 
-    // ---- the size, and who owns it -------------------------------------------------------
+    // ---- the rule, which is what a plan carries from 7.8 ---------------------------------------
 
     /// <summary>
-    /// The plan carries a share count, sized from the risk budget and the give-up distance.
+    /// The plan carries the rule, the risk budget and the ceiling the stop may not exceed, and no price
+    /// and no size, because those resolve at the entry minute.
     ///
-    /// $100,000 at 0.75% is a $750 budget, and a give-up distance of $2.50 buys 300 shares exactly.
-    /// The figures are asserted against the arithmetic rather than against a remembered number.
+    /// The ceiling is the tighter of half the daily range and 5%: a 5% range gives 2.5%.
+    /// see: Order prices and the share count resolve at the entry minute
     /// </summary>
     [Fact]
-    public void The_plan_carries_a_share_count_sized_from_the_risk_budget()
+    public void The_plan_carries_the_rule_and_the_ceiling_and_no_price()
     {
         Candidate("AAPL", "long", trigger: 102.50m, giveUp: 100.00m);
 
@@ -74,56 +75,44 @@ public sealed class PlanBuilderTests : IDisposable
         Assert.Equal(1, result.Candidates);
         Assert.Equal(1, result.Planned);
 
-        StoredTradePlan plan = Plans().Single();
+        CommittedTradePlan plan = Plans().Single();
 
-        Assert.Equal(2.50m, plan.GiveUpDistance);
-        Assert.Equal(300, plan.Shares);
+        Assert.Equal(EntryRule.FlushReclaim, plan.EntryRule);
+        Assert.True(plan.CarriesTheRule);
+        Assert.Equal(0.025m, plan.StopCeiling);
+        Assert.Null(plan.TriggerPrice);
+        Assert.Null(plan.GiveUpPrice);
+        Assert.Null(plan.GiveUpDistance);
+        Assert.Null(plan.Shares);
+        Assert.Null(plan.RiskAtStake);
         Assert.Equal(750m, plan.RiskBudget);
-        Assert.Equal(750m, plan.RiskAtStake);
         Assert.Equal(PositionSizing.NotionalEquity, plan.Equity);
         Assert.Equal(PositionSizing.RiskPerTrade, plan.RiskFraction);
     }
 
     /// <summary>
-    /// The rounding is down and it is visible, which is why the plan stores both figures.
-    ///
-    /// A $7 distance divides into $750 a hundred and seven times with $1 left over. Rounding up
-    /// would put $756 at stake on a trade whose whole purpose is to risk $750, and storing only the
-    /// budget would state a number this trade will never lose.
+    /// On a range wider than 10% the absolute 5% is the tighter, which is the only place it binds.
     /// </summary>
     [Fact]
-    public void The_share_count_rounds_down_and_the_plan_records_both_figures()
+    public void The_ceiling_is_five_percent_where_half_the_range_is_wider()
     {
-        Candidate("MSFT", "long", trigger: 207m, giveUp: 200m);
+        Candidate("TSLA", "long", trigger: 102.50m, giveUp: 100.00m, averageDailyRange: 0.14m);
 
         Stage().Build(Evening);
 
-        StoredTradePlan plan = Plans().Single();
-
-        Assert.Equal(107, plan.Shares);
-        Assert.Equal(750m, plan.RiskBudget);
-        Assert.Equal(749m, plan.RiskAtStake);
-        Assert.True(plan.RiskAtStake <= plan.RiskBudget);
+        Assert.Equal(0.05m, Plans().Single().StopCeiling);
     }
 
     /// <summary>
-    /// Nothing recomputes the size at trigger, asserted over the shipped source rather than over an
-    /// intention.
-    ///
-    /// <b>This is the half of the decision a behavioural test cannot reach yet</b>, because RiskGate
-    /// arrives at 4.6 and there is no trigger path to run. What can be asserted now is that the one
-    /// function that turns a distance into a share count is called from exactly one place, so a
-    /// second sizing cannot appear without this failing. When RiskGate lands it may call
-    /// <see cref="PositionSizing.RiskAtStake"/> and the caps, and it may not call
-    /// <see cref="PositionSizing.SharesFor"/>.
+    /// Only the sizer turns a distance into a share count, asserted over the shipped source.
     ///
     /// <b>A scan, and it is named as one rather than passed off as the property.</b> It cannot see a
-    /// component that reimplements the division instead of calling the function, so it is evidence
-    /// that no second caller exists and not evidence that no second sizing exists. The behavioural
-    /// half arrives at 4.6 with the component that could break it, and 4.6's row carries it.
+    /// component that reimplements the division, so it is evidence that no second caller exists. From
+    /// 7.8 the one caller is the stage that resolves the entry, and the plan stage is not it; the
+    /// behavioural half is EntrySizer's own tests, which size an entry and read the row back.
     /// </summary>
     [Fact]
-    public void Only_the_plan_stage_turns_a_distance_into_a_share_count()
+    public void Only_the_sizer_turns_a_distance_into_a_share_count()
     {
         IReadOnlyList<string> callers =
         [
@@ -134,9 +123,7 @@ public sealed class PlanBuilderTests : IDisposable
                 .Order(StringComparer.Ordinal),
         ];
 
-        // One caller, and the declaring file is not one of them: the scan looks for the qualified
-        // call, which PositionSizing.cs does not write about itself.
-        Assert.Equal(["PlanBuilder.cs"], callers);
+        Assert.Equal(["EntrySizer.cs"], callers);
     }
 
     // ---- the refusals --------------------------------------------------------------------
@@ -191,73 +178,11 @@ public sealed class PlanBuilderTests : IDisposable
     }
 
     /// <summary>
-    /// A give-up distance wider than the whole risk budget buys under one share, so no plan is
-    /// written rather than a plan for nought shares.
-    ///
-    /// The third reason, and the only one of the three that is arithmetic rather than a defect in
-    /// the row: it depends on the budget as well as on the setup, which is why the count is stored
-    /// rather than derived from `setup` later.
+    /// A candidate whose daily range the store does not hold gets no plan and is counted as an absent
+    /// geometry, rather than a plan with a ceiling taken from a stand-in.
     /// </summary>
     [Fact]
-    public void A_distance_wider_than_the_budget_gets_no_plan()
-    {
-        Candidate("BRKA", "long", trigger: 701_000m, giveUp: 690_000m);
-
-        PlanRunResult result = Stage().Build(Evening);
-
-        Assert.Equal(0, result.Planned);
-        Assert.Equal(1, result.RefusedBelowOneShare);
-        Assert.Empty(Plans());
-    }
-
-    // ---- the prices, which are the session's and not the screening geometry's ---------------
-
-    /// <summary>
-    /// The plan's prices are the final pullback session's regular-hours extremes with the give-up
-    /// point one tenth of an average daily range beyond, and not the setup's own pair.
-    ///
-    /// <b>The case the 4.13 sign-off found the stage failing, on both sides.</b> The setup rows here
-    /// carry a screening pair a whole dip wide, being what the detector computes and what the stage
-    /// copied into the plan from 4.16; the session's bar carries different extremes, and the plan is
-    /// asserted against the bar. A long enters through the session's high and gives up 0.1 ADR
-    /// under its low; a short enters through the low and gives up 0.1 ADR over the high.
-    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
-    /// </summary>
-    [Fact]
-    public void The_plan_prices_are_the_sessions_extremes_and_the_offset_and_not_the_setups_pair()
-    {
-        Candidate("AAPL", "long", trigger: 100m, giveUp: 90m, withSession: false);
-        Session("AAPL", high: 104m, low: 101m, close: 100m);
-
-        Candidate("INTC", "short", trigger: 50m, giveUp: 60m, withSession: false);
-        Session("INTC", high: 52m, low: 49m, close: 50m);
-
-        PlanRunResult result = Stage().Build(Evening);
-        Assert.Equal(2, result.Planned);
-
-        // ADR is 5% of a close of 100, which is 5, and a tenth of it is 0.5.
-        StoredTradePlan aapl = Plans().Single(p => p.Ticker == "AAPL");
-        Assert.Equal(104m, aapl.TriggerPrice);
-        Assert.Equal(100.5m, aapl.GiveUpPrice);
-        Assert.Equal(3.5m, aapl.GiveUpDistance);
-
-        // ADR is 5% of 50, which is 2.5, and a tenth of it is 0.25.
-        StoredTradePlan intc = Plans().Single(p => p.Ticker == "INTC");
-        Assert.Equal(49m, intc.TriggerPrice);
-        Assert.Equal(52.25m, intc.GiveUpPrice);
-        Assert.Equal(3.25m, intc.GiveUpDistance);
-
-        // And neither is the pair the setup row carries, which is the regression this case exists for.
-        Assert.NotEqual(101m, aapl.TriggerPrice);
-        Assert.NotEqual(87m, aapl.GiveUpPrice);
-    }
-
-    /// <summary>
-    /// A candidate whose final session's bar or figures the store does not hold gets no plan and is
-    /// counted as an absent geometry, rather than a plan on a stand-in.
-    /// </summary>
-    [Fact]
-    public void A_candidate_with_no_session_bar_gets_no_plan_and_is_counted_as_absent()
+    public void A_candidate_with_no_daily_range_gets_no_plan_and_is_counted_as_absent()
     {
         Candidate("AAPL", "long", trigger: 100m, giveUp: 95m, withSession: false);
 
@@ -266,6 +191,7 @@ public sealed class PlanBuilderTests : IDisposable
         Assert.Equal(1, result.Candidates);
         Assert.Equal(0, result.Planned);
         Assert.Equal(1, result.RefusedAbsentGeometry);
+        Assert.Equal(0, result.RefusedBelowOneShare);
         Assert.Empty(Plans());
     }
 
@@ -278,14 +204,14 @@ public sealed class PlanBuilderTests : IDisposable
         Candidate("AAPL", "long", trigger: 102.50m, giveUp: 100.00m);
 
         Stage().Build(Evening);
-        StoredTradePlan first = Plans().Single();
+        CommittedTradePlan first = Plans().Single();
 
         PlanRunResult again = Stage().Build(Evening);
 
         Assert.Equal(1, again.Candidates);
         Assert.Equal(1, again.Planned);
 
-        StoredTradePlan after = Plans().Single();
+        CommittedTradePlan after = Plans().Single();
 
         Assert.Equal(first, after);
         Assert.Single(Plans());
@@ -358,11 +284,15 @@ public sealed class PlanBuilderTests : IDisposable
         using SqliteConnection connection = _connections.OpenReadOnly();
 
         Assert.Single(TradePlanReader.WrittenOn(connection, Evening, Evening, SessionBoundaries.UsEquities));
-        Assert.Single(TradePlanReader.ForLiveSession(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
+        Assert.Single(TradePlanReader.CommittedForLiveSession(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
+
+        // A plan carrying the rule has no executed shape until its entry is resolved, so the priced
+        // read of the session it rests in has nothing to return yet.
+        Assert.Empty(TradePlanReader.ForLiveSession(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
 
         // The evening is not the live session, so asking the wrong question returns nothing rather
         // than the same row twice.
-        Assert.Empty(TradePlanReader.ForLiveSession(connection, Evening, Evening, SessionBoundaries.UsEquities));
+        Assert.Empty(TradePlanReader.CommittedForLiveSession(connection, Evening, Evening, SessionBoundaries.UsEquities));
         Assert.Empty(TradePlanReader.WrittenOn(connection, new DateOnly(2026, 8, 26), new DateOnly(2026, 8, 26), SessionBoundaries.UsEquities));
     }
 
@@ -539,14 +469,14 @@ public sealed class PlanBuilderTests : IDisposable
         Assert.Equal(2, run.Planned);
         Assert.Equal(1, run.CandidatesPlanned);
 
-        IReadOnlyList<StoredTradePlan> plans = Plans();
+        IReadOnlyList<CommittedTradePlan> plans = Plans();
         Assert.Equal(2, plans.Count);
         Assert.Single(plans.Select(p => p.SetupId).Distinct());
         Assert.Equal(2, plans.Select(p => p.PlanId).Distinct().Count());
         Assert.Equal(["F1a", TestVersions.Baseline], plans.Select(p => p.VariantId).Order().ToArray());
     }
 
-    private IReadOnlyList<StoredTradePlan> Plans()
+    private IReadOnlyList<CommittedTradePlan> Plans()
     {
         using SqliteConnection connection = _connections.OpenReadOnly();
         return TradePlanReader.WrittenOn(connection, Evening, Evening, SessionBoundaries.UsEquities);
@@ -558,10 +488,7 @@ public sealed class PlanBuilderTests : IDisposable
         return TradePlanReader.RunsFor(connection, Evening);
     }
 
-    /// <summary>
-    /// The fraction of price the authored session's average daily range is, so the offset the
-    /// derivation adds is <c>AverageDailyRange * close * OrderPrices.GiveUpOffsetInRanges</c>.
-    /// </summary>
+    /// <summary>The fraction of price the authored session's average daily range is, which sets the ceiling.</summary>
     private const decimal AverageDailyRange = 0.05m;
 
     /// <summary>
@@ -582,14 +509,12 @@ public sealed class PlanBuilderTests : IDisposable
         decimal? giveUp,
         bool passedAll = true,
         bool? cappedOut = false,
-        bool withSession = true)
+        bool withSession = true,
+        decimal averageDailyRange = AverageDailyRange)
     {
         if (trigger is decimal t && giveUp is decimal g && t != g && withSession)
         {
-            bool isLong = string.Equals(direction, "long", StringComparison.Ordinal);
-            decimal close = isLong ? t : g;
-            decimal offset = AverageDailyRange * close * OrderPrices.GiveUpOffsetInRanges;
-            Session(ticker, high: isLong ? t : g + offset, low: isLong ? g + offset : t, close: close);
+            Session(ticker, high: Math.Max(t, g), low: Math.Min(t, g), close: t, averageDailyRange);
         }
 
         using SqliteConnection connection = _connections.OpenWrite();
@@ -628,7 +553,7 @@ public sealed class PlanBuilderTests : IDisposable
     }
 
     /// <summary>The final pullback session's daily bar and the figures beside it, as the stage reads them.</summary>
-    private void Session(string ticker, decimal high, decimal low, decimal close)
+    private void Session(string ticker, decimal high, decimal low, decimal close, decimal averageDailyRange = AverageDailyRange)
     {
         using SqliteConnection connection = _connections.OpenWrite();
 
@@ -677,7 +602,7 @@ public sealed class PlanBuilderTests : IDisposable
                 SessionBoundaries.At(Evening, new TimeOnly(18, 0), SessionBoundaries.UsEquities)));
         figures.Parameters.AddWithValue("@close", StoreText.PriceToStorageText(close));
         figures.Parameters.AddWithValue("@atr", StoreText.PriceToStorageText(high - low));
-        figures.Parameters.AddWithValue("@adr", StoreText.RatioToStorageText(AverageDailyRange));
+        figures.Parameters.AddWithValue("@adr", StoreText.RatioToStorageText(averageDailyRange));
         figures.Parameters.AddWithValue("@dollars", StoreText.PriceToStorageText(50_000_000m));
         figures.Parameters.AddWithValue("@range", StoreText.PriceToStorageText(high - low));
         figures.ExecuteNonQuery();

@@ -938,6 +938,9 @@ public sealed class PhaseReplay : IDisposable
         // It adds a calibration row, so it runs after every figure that counts them.
         measurements.AddRange(MinuteBackfillFigures());
 
+        // Over a store of its own, so nothing the fixture's night recorded moves.
+        measurements.AddRange(EntryRuleFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -3594,6 +3597,59 @@ public sealed class PhaseReplay : IDisposable
 
     /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
     private const string AuthoredVersion = "V-acceptance";
+
+    /// <summary>
+    /// The entry rule carried from a plan to an order over one long and one short session, from 7.8.
+    ///
+    /// <b>AUTHORED, over a store of its own.</b> The fixture's night passes no candidate, so no plan of it
+    /// ever reaches an entry; the three plans and their minutes are <see cref="EntryRuleCases"/>'s,
+    /// written so every figure below is derivable by hand, and the shipped resolver, sizer and gate run
+    /// over them. Long and short are stated apart and never added.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private static IReadOnlyList<Measurement> EntryRuleFigures()
+    {
+        using var cases = new EntryRuleCases();
+        (TriggerRunResult triggers, _, OrderRunResult orders) = cases.Run();
+
+        IReadOnlyList<StoredEntryResolution> resolutions = cases.Resolutions();
+        IReadOnlyList<StoredTradeOrder> placed = cases.Orders();
+
+        string Local(DateTimeOffset instant) =>
+            TimeZoneInfo.ConvertTime(instant, TimeZoneInfo.FindSystemTimeZoneById(SessionBoundaries.UsEquities))
+                .ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        var figures = new List<Measurement>
+        {
+            new("entry.touched", triggers.Touched.ToString(CultureInfo.InvariantCulture)),
+            new("entry.notTouched", triggers.NotTouched.ToString(CultureInfo.InvariantCulture)),
+            new("entry.ordersPlaced", orders.Placed.ToString(CultureInfo.InvariantCulture)),
+            new("entry.orderOfPlacement", string.Join(",", placed.OrderBy(o => o.TriggeredAt).Select(o => o.Ticker))),
+            new("entry.noReclaim.outcome",
+                cases.Triggers().Single(t => t.Ticker == EntryRuleCases.NoReclaim).Outcome),
+            new("entry.noReclaim.orders",
+                placed.Count(o => o.Ticker == EntryRuleCases.NoReclaim).ToString(CultureInfo.InvariantCulture)),
+        };
+
+        foreach ((string side, string ticker) in new[] { ("long", EntryRuleCases.Long), ("short", EntryRuleCases.Short) })
+        {
+            StoredEntryResolution entry = resolutions.Single(r => r.Ticker == ticker);
+            StoredTradeOrder order = placed.Single(o => o.Ticker == ticker);
+
+            figures.Add(new($"entry.{side}.minute", Local(entry.EntryMinute)));
+            figures.Add(new($"entry.{side}.candleMinutes", entry.CandleMinutes.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new($"entry.{side}.armedAt", Local(entry.ArmedAt)));
+            figures.Add(new($"entry.{side}.price", Figure(entry.EntryPrice)));
+            figures.Add(new($"entry.{side}.stopBasis", entry.StopBasis ?? "none"));
+            figures.Add(new($"entry.{side}.stop", entry.StopPrice is decimal stop ? Figure(stop) : "none"));
+            figures.Add(new($"entry.{side}.sessionExtremeAtEntry", Figure(entry.SessionExtreme)));
+            figures.Add(new($"entry.{side}.shares", entry.Shares?.ToString(CultureInfo.InvariantCulture) ?? "none"));
+            figures.Add(new($"entry.{side}.orderShares", order.Shares.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new($"entry.{side}.boundBy", order.BoundBy ?? "none"));
+        }
+
+        return figures;
+    }
 
     /// <summary>The name the fixture holds captured minutes for, and the only one a backfill request can be answered for.</summary>
     public const string BackfillTicker = "AAPL";

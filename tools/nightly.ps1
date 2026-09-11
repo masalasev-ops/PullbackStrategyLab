@@ -117,8 +117,9 @@ $slots = @{
     # the caps bind and that is a comparison across names. Its own slot rather than a second verb
     # inside 'vwap': an averaging that does not run can be rerun any evening, and so can this, but a
     # session with plans resting in it and no minutes is a night the lab was blind on, and the run
-    # row says partial rather than clean.
-    'resolve'    = @(, @('resolve-triggers'))
+    # row says partial rather than clean. From 7.8 the sizer is its second verb, because the size
+    # of an entry resolves at its minute and has to exist before the gate at 21:10 reads it.
+    'resolve'    = @(@('resolve-triggers'), @('size-entries'))
     # 21:10, over the triggers the replay recorded. It applies the caps in the order the
     # triggers happened, so a full book blocks the later ones, and it writes a row for every
     # refusal: a blocked order is evidence about the caps rather than an absence of evidence.

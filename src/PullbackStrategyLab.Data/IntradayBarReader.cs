@@ -154,6 +154,41 @@ public sealed class IntradayBarReader
     }
 
     /// <summary>
+    /// One name's hourly closes over the sessions the store holds before <paramref name="sessionDate"/>,
+    /// oldest first, which is the history the entry rule's hourly averages start the session from, from
+    /// 7.8.
+    ///
+    /// <b>Every session held in the window, and a gap is a gap.</b> The minutes are bought for the
+    /// sessions a name was flagged around, so the series is what the store holds rather than a calendar's
+    /// worth; the entry rule refuses a level with fewer closes behind it than its warm-up. Bounded on the
+    /// observation instant through the two reads it is made of.
+    /// </summary>
+    public static IReadOnlyList<decimal> HourlyClosesBefore(
+        SqliteConnection connection, string ticker, DateOnly sessionDate, DateOnly asOf, string sessionZone)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticker);
+
+        var closes = new List<decimal>();
+
+        foreach (DateOnly held in SessionsHeld(
+                     connection, ticker, sessionDate.AddDays(-(HistoryDays - 1)), sessionDate.AddDays(-1), asOf, sessionZone))
+        {
+            IReadOnlyList<StoredIntradayBar> bars = Read(connection, ticker, held, asOf, sessionZone);
+            closes.AddRange(Core.Trading.EntryRule.HourlyCloses(bars.Select(b => (b.OpenedAt, b.Close)), held, sessionZone));
+        }
+
+        return closes;
+    }
+
+    /// <summary>
+    /// How far back the hourly history reaches, in calendar days: the vendor's one-request window, which
+    /// is what a calibration backfill buys behind each entry and more than the nightly fetch's
+    /// twenty-seven sessions.
+    /// </summary>
+    public const int HistoryDays = 120;
+
+    /// <summary>
     /// The sessions in a window for which the store holds a minute of one name, oldest first.
     ///
     /// <b>The sessions and not the bars, because the question is which sessions are missing.</b> A

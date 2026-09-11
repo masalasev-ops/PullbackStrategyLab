@@ -129,8 +129,9 @@ public sealed class WatchlistPageTests : IClassFixture<WebApplicationFactory<Lab
     ///
     /// RiskGate may reduce it at the trigger or block the order outright, hours after anybody reads
     /// this screen, so a column presented as the size of the trade would be a screen claiming
-    /// something the lab does not know yet.
-    /// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+    /// something the lab does not know yet. From 7.8 a plan carrying the rule has no count at all
+    /// until its entry minute, and the case here is a plan written with the evening's prices.
+    /// see: Order prices and the share count resolve at the entry minute
     /// </summary>
     [Fact]
     public async Task The_page_says_the_count_is_the_plans_intention_and_not_what_was_placed()

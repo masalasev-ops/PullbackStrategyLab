@@ -1,3 +1,5 @@
+using PullbackStrategyLab.Core.Trading;
+
 namespace PullbackStrategyLab.Core.Measurement;
 
 /// <summary>
@@ -29,13 +31,13 @@ public static class MinuteBackfillPlan
     /// <summary>
     /// The longest hourly average 7.8 reads, whose warm-up is what a window has to hold before an entry.
     /// </summary>
-    public const int LongestHourlyPeriod = 21;
+    public const int LongestHourlyPeriod = EntryRule.LongPeriod;
 
     /// <summary>
     /// How many hourly bars a warm-up needs: three times the period, the lab's own convergence rule for
     /// an exponential average, which is why the daily warm-up is 150 sessions for the 50-day average.
     /// </summary>
-    public const int WarmupHourlyBars = 3 * LongestHourlyPeriod;
+    public const int WarmupHourlyBars = EntryRule.WarmupHourlyBars;
 
     /// <summary>
     /// Complete hourly bars in a regular session on the grid anchored to the open. The closing half hour

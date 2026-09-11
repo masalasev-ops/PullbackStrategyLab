@@ -10,22 +10,22 @@ using PullbackStrategyLab.Data;
 namespace PullbackStrategyLab.Worker.Stages;
 
 /// <summary>
-/// One committed instruction per capped candidate: enter here, give up here, this many shares.
+/// One committed instruction per capped candidate and live version: the entry rule, and the widest stop
+/// the entry may take.
 ///
 /// <b>Declared in SCHEMA since phase 4 was planned and built by no checkpoint until 4.16.</b> The
 /// catalogue slots it at 18:30, the runbook reserves the slot, and the phase built PlanAudit without
 /// it, so as written it built an auditor of a thing it never built.
 /// see: The plan is written before the session and is immutable after publication
 ///
-/// <b>This stage sizes, and the size it writes is authoritative.</b> RiskGate at 4.6 may reduce a
-/// size or block the order and never recomputes one. Three places in the corpus answered this
-/// differently: the vocabulary calls a plan a committed instruction naming this many shares, the
-/// catalogue gives sizing to the component that runs on trigger in the following session, and 4.1's
-/// watchlist renders no share count because it was waiting for that component. The plan is locked
-/// before the open and the watchlist publishes it at 18:40, so a size has to exist by then; and
-/// recomputing at trigger would leave `plan_audit` comparing two of this lab's own numbers rather
-/// than an intention against an outcome.
-/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+/// <b>From 7.8 the plan carries the rule and no price.</b> The entry the strategy states is a flush into
+/// the hourly averages and a break of the previous candle's extreme, so the entry price, the stop and
+/// the share count are known at the minute of entry and not at 18:30. What is known tonight is written:
+/// which rule, the risk budget the size will be taken from, and the ceiling the stop may not exceed,
+/// being the tighter of half the name's daily range and 5%, which is tonight's range and so tonight's
+/// figure. Until 7.8 this stage sized and wrote the evening's prices, and those plans say so on the row.
+/// see: Order prices and the share count resolve at the entry minute
+/// see: The entry ceiling is the tighter of half the daily range and 5%
 ///
 /// <b>The population is the rows the cap kept, and 2.11's row can be read as saying otherwise.</b>
 /// That row settled for this phase that "the plan is written against flagged setups rather than
@@ -45,24 +45,16 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// check, so on a night with no candidate there is nothing here to plan, and the run row says which
 /// of the three shapes of nothing it was.
 ///
-/// <b>The order prices are the final pullback session's regular-hours extremes with the give-up
-/// point 0.1 ADR beyond, and until 4.18 they were the screening geometry.</b> This stage copied
-/// `setup.trigger_price` and `setup.stop_price` into the plan from 4.16, which is the low of the
-/// whole dip and the reading the order-price decision names as the one to refuse, and its entry
-/// did not say so. The 4.13 sign-off found it by reading the stage against the decision. The
-/// derivation is <see cref="OrderPrices"/>, read from the session's daily bar rather than its
-/// minutes, because the vendor's daily bar carries the regular-hours extremes and the minutes are
-/// not in the store at 18:30; the reasoning and the measurement are on that type.
-/// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
-///
 /// <b>A setup with no trade geometry gets no plan.</b> Not a plan sized on nought: a give-up
 /// distance of nought divides into the risk budget as many times as you like, and the share count
 /// that comes back is a number with nothing behind it. Two shapes reach this stage and both are
 /// refused, counted apart because only one of them is the defect the 3.15 obligation named. An
 /// absent price is the shape migration 031 made expressible. An equal pair is the shape that
 /// survived it, where the thrust has not pulled back yet so the entry level and the give-up point
-/// are the same price and two of the four columns still state a number.
+/// are the same price and two of the four columns still state a number. That clause of the order-price
+/// decision stands after 7.8; the two clauses placing the prices at 18:30 do not.
 /// see: A gate handed an absent or degenerate quantity fails rather than passing
+/// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
 ///
 /// <b>`live_session` is the next weekday and the limitation is stated rather than hidden.</b> A plan
 /// written on the evening of N is live in the next session, and on that evening nothing in this lab
@@ -216,30 +208,23 @@ public sealed class PlanBuilder
                 continue;
             }
 
-            // The order prices, from the final pullback session's regular-hours extremes and the
-            // name's average daily range, both read from the store as they stood on this evening.
-            // A candidate whose bar or range the store does not hold is refused as an absent
-            // geometry rather than planned on a stand-in, which cannot happen to a row the detector
-            // flagged from those same figures and is counted where it would show if it did.
-            OrderPrices.Pair? prices = PricesFor(connection, setup, asOf, _options.SessionZone);
+            // The ceiling the entry's stop may not exceed, from the name's average daily range as the
+            // store held it this evening. A candidate whose range the store does not hold is refused as
+            // an absent geometry rather than planned on a stand-in, which cannot happen to a row the
+            // detector flagged from that same figure and is counted where it would show if it did.
+            // Nothing is refused for its size tonight: the size resolves at the entry minute, so the
+            // below-one-share count is written as nought from 7.8 and the sizer carries that refusal.
+            decimal? ceiling = CeilingFor(connection, setup, asOf, _options.SessionZone);
 
-            if (prices is null)
+            if (ceiling is null)
             {
                 absentGeometry++;
                 continue;
             }
 
-            int shares = PositionSizing.SharesFor(prices.Distance);
-
-            if (shares < 1)
-            {
-                belowOneShare++;
-                continue;
-            }
-
             foreach (StoredVariant variant in live)
             {
-                Insert(connection, transaction, setup, variant, liveSession, prices, shares, observedAt);
+                Insert(connection, transaction, setup, variant, liveSession, ceiling.Value, observedAt);
                 planned++;
             }
 
@@ -286,42 +271,28 @@ public sealed class PlanBuilder
     }
 
     /// <summary>
-    /// The trigger and the give-up point for one capped candidate, or null where the store holds
-    /// no bar or no range for its final pullback session.
-    ///
-    /// The final pullback session is the evening the setup was flagged on, which is the session
-    /// whose extremes the decision names and whose daily bar carries them. The range is the same
-    /// figure the detector measured the screening distances in, being the average daily range as a
-    /// fraction of price put back into price through that session's close, so the offset is in the
-    /// unit the row was flagged in.
-    /// see: The order prices are derived from the final pullback session's minutes, not from the screening geometry
+    /// The widest stop one candidate's entry may take, as a fraction of the entry price, or null where the
+    /// store holds no range for the evening. The range is the average daily range as a fraction of price,
+    /// the figure the detector measured the screening distances in.
+    /// see: The entry ceiling is the tighter of half the daily range and 5%
     /// </summary>
-    private static OrderPrices.Pair? PricesFor(SqliteConnection connection, StoredSetup setup, DateOnly asOf, string sessionZone)
+    private static decimal? CeilingFor(SqliteConnection connection, StoredSetup setup, DateOnly asOf, string sessionZone)
     {
-        StoredDailyBar? session = DailyBarReader.Latest(
-            connection,
-            setup.Ticker,
-            asOf,
-            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(asOf, sessionZone)));
         StoredIndicators? figures = IndicatorDailyReader.Read(connection, setup.Ticker, asOf, asOf, sessionZone);
 
-        if (session is null || figures is null || figures.AverageDailyRange <= 0m || session.Close <= 0m)
-        {
-            return null;
-        }
-
-        return OrderPrices.For(setup.Direction, session.High, session.Low, figures.AverageDailyRange * session.Close);
+        return figures is null || figures.AverageDailyRange <= 0m
+            ? null
+            : EntryRule.CeilingFor(figures.AverageDailyRange);
     }
 
     /// <summary>
     /// One plan, for one candidate under one version.
     ///
-    /// <b>The size is the same under every version and that is not an oversight.</b> A selection
+    /// <b>The rule is the same under every version and that is not an oversight.</b> A selection
     /// version changes which stocks are picked and leaves entry and exit alone, so two versions
     /// planning the same candidate on the same evening plan it identically; what differs is which
-    /// candidates each has. An execution version would size differently and none is admitted in this
-    /// generation, so the fan-out ships with the geometry computed once per candidate rather than
-    /// once per plan. The day an execution version is admitted, the prices move inside this loop.
+    /// candidates each has. An execution version would carry a different rule and none is admitted in
+    /// this generation.
     /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
     /// </summary>
     private static void Insert(
@@ -330,12 +301,9 @@ public sealed class PlanBuilder
         StoredSetup setup,
         StoredVariant variant,
         DateOnly liveSession,
-        OrderPrices.Pair prices,
-        int shares,
+        decimal stopCeiling,
         DateTimeOffset observedAt)
     {
-        decimal distance = prices.Distance;
-
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
 
@@ -345,13 +313,13 @@ public sealed class PlanBuilder
         // see: The plan is written before the session and is immutable after publication
         command.CommandText = """
             INSERT INTO trade_plan (
-                plan_id, setup_id, variant_id, as_of, live_session, ticker, direction,
-                trigger_price, give_up_price, give_up_distance, shares,
+                plan_id, setup_id, variant_id, as_of, live_session, ticker, direction, entry_rule,
+                trigger_price, give_up_price, give_up_distance, shares, stop_ceiling,
                 equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
             VALUES (
-                @plan_id, @setup_id, @variant_id, @as_of, @live_session, @ticker, @direction,
-                @trigger_price, @give_up_price, @give_up_distance, @shares,
-                @equity, @risk_fraction, @risk_budget, @risk_at_stake, @observed_at)
+                @plan_id, @setup_id, @variant_id, @as_of, @live_session, @ticker, @direction, @entry_rule,
+                NULL, NULL, NULL, NULL, @stop_ceiling,
+                @equity, @risk_fraction, @risk_budget, NULL, @observed_at)
             ON CONFLICT (setup_id, variant_id) DO NOTHING;
             """;
 
@@ -362,15 +330,11 @@ public sealed class PlanBuilder
         command.Parameters.AddWithValue("@live_session", StoreText.DateToStorageText(liveSession));
         command.Parameters.AddWithValue("@ticker", setup.Ticker);
         command.Parameters.AddWithValue("@direction", setup.Direction);
-        command.Parameters.AddWithValue("@trigger_price", StoreText.PriceToStorageText(prices.Trigger));
-        command.Parameters.AddWithValue("@give_up_price", StoreText.PriceToStorageText(prices.GiveUp));
-        command.Parameters.AddWithValue("@give_up_distance", StoreText.PriceToStorageText(distance));
-        command.Parameters.AddWithValue("@shares", shares);
+        command.Parameters.AddWithValue("@entry_rule", EntryRule.FlushReclaim);
+        command.Parameters.AddWithValue("@stop_ceiling", StoreText.RatioToStorageText(stopCeiling));
         command.Parameters.AddWithValue("@equity", StoreText.PriceToStorageText(PositionSizing.NotionalEquity));
         command.Parameters.AddWithValue("@risk_fraction", StoreText.RatioToStorageText(PositionSizing.RiskPerTrade));
         command.Parameters.AddWithValue("@risk_budget", StoreText.PriceToStorageText(PositionSizing.RiskBudget));
-        command.Parameters.AddWithValue(
-            "@risk_at_stake", StoreText.PriceToStorageText(PositionSizing.RiskAtStake(shares, distance)));
         command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
         command.ExecuteNonQuery();
     }
