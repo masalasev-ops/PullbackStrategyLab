@@ -68,9 +68,26 @@ public sealed record SlotView(
     bool InsideTheSession,
     string? Unobservable,
     IReadOnlyList<StageView> Stages,
-    FetchView? Bought = null)
+    FetchView? Bought = null,
+    string? DidNotRunBecause = null)
 {
     public bool IsUnobservable => Unobservable is not null;
+
+    /// <summary>
+    /// Why the slot did not run, in words, or null where the next night's reconciliation recorded no
+    /// reason.
+    ///
+    /// <b>A reason this build has no sentence for is shown as the stored word rather than thrown
+    /// on.</b> The page is read the morning after, and a morning screen that failed to render because
+    /// the store was written by a newer build would hide every other slot to report one.
+    /// </summary>
+    public string? DidNotRunReads => DidNotRunBecause switch
+    {
+        null => null,
+        string known when Core.Time.DidNotRunBecause.Reasons.Contains(known, StringComparer.Ordinal) =>
+            Core.Time.DidNotRunBecause.Reads(known),
+        string unknown => $"a reason this build has no sentence for, stored as \"{unknown}\"",
+    };
 
     public bool Ran =>
         !IsUnobservable && Stages.All(s => string.Equals(s.Outcome, "clean", StringComparison.Ordinal));

@@ -237,6 +237,39 @@ public sealed class LabNightTests : IDisposable
         Assert.Single(night.Slots.Single(s => s.Slot == "sectors").Stages);
     }
 
+    /// <summary>
+    /// A slot the next night's reconciliation recorded as not having run carries its reason, and
+    /// still reads as never having run.
+    ///
+    /// <b>The reason is read by the session the row states, not by when it was written</b>, which is
+    /// the next evening: a read bounded on the instant would find it under the wrong night.
+    ///
+    /// Population: one reason recorded through the table's one writer for a weekday, written the
+    /// evening after it.
+    /// </summary>
+    [Fact]
+    public void A_slot_the_reconciliation_recorded_carries_its_reason_and_still_never_ran()
+    {
+        var logger = new RunLogger(
+            new FixedClock(SessionBoundaries.At(Weekday.AddDays(1), new TimeOnly(17, 50), Zone)),
+            Microsoft.Extensions.Options.Options.Create(new PullbackStrategyLabOptions()));
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            logger.RecordDidNotRun(connection, "reconcile-night", "spread-open", Weekday, DidNotRunBecause.RefusedByTheTreeGuard);
+        }
+
+        NightResponseOfSlots night = LabNight.Read(_connections, Weekday, Zone);
+        SlotResponse spread = night.Slots.Single(s => s.Slot == "spread-open");
+
+        Assert.Equal(DidNotRunBecause.RefusedByTheTreeGuard, spread.DidNotRunBecause);
+        Assert.True(spread.NeverRan);
+        Assert.Null(night.Slots.Single(s => s.Slot == "universe").DidNotRunBecause);
+
+        // And the night it was written on does not read the row as one of its own stages.
+        Assert.Empty(LabNight.Read(_connections, Weekday.AddDays(1), Zone).Unscheduled);
+    }
+
     private void SeedRun(string stage, DateOnly session, string startedAt, string? ended, string? outcome)
     {
         using SqliteConnection connection = _connections.OpenWrite();

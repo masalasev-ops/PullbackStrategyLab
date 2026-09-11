@@ -66,7 +66,12 @@ $slots = @{
     'actions'    = @(, @('actions'))
     'bars'       = @(, @('daily-bars'))
     'rebuild'    = @(, @('backfill', '--rebuild'))
-    'index'      = @(, @('index-bars'))
+    # The index history, then the reconciliation that reads it. `index-bars` refetches each
+    # tracker's whole history every night, so once it has run the store knows whether the session
+    # before was one the market held, whatever happened on the nights between, which is the one
+    # thing `reconcile-night` needs to tell a lost night from a holiday. The daily bulk cannot say:
+    # it asks for its own date and nothing else.
+    'index'      = @(@('index-bars'), @('reconcile-night'))
     'indicators' = @(, @('indicators'))
     'scans'      = @(@('scans'), @('tiers'))
     # Twice, and the second pass is usually free. A name the vendor refused or answered
@@ -201,6 +206,18 @@ function Write-Line([string]$text) {
     Add-Content -Path $log -Value $stamped -Encoding utf8
 }
 
+# The one line a slot that will not run leaves for the next night to read.
+#
+# A slot this script refuses never reaches the worker, and the one declared writer of run_log is
+# inside the worker, so nothing it could do tonight would put a row in the store. It writes this
+# instead, and `reconcile-night` reads the night's log the next evening from a tree the guard passed
+# and writes the row through RunLogger. The reason is one of DidNotRunBecause.WrittenByTheSlotScript,
+# and `slot-roster` holds every reason this file passes to that list; the reconciliation's parser is
+# tested against this format string as the file spells it, so the two cannot become two spellings.
+function Write-DidNotRun([string]$because) {
+    Write-Line ("  did-not-run slot={0} session={1} because={2}" -f $Slot, (Get-Date -Format 'yyyy-MM-dd'), $because)
+}
+
 # Runs one stage, puts both of its streams in the log, and leaves its exit code in
 # $script:StageExitCode.
 #
@@ -247,6 +264,21 @@ Write-Line ("slot {0} starting, {1} at {2}, store {3}" -f $Slot, $branch, $commi
 # night's log say what produced it, which is the discipline the phase report carries with its sha.
 Write-Line (Get-ShellProvenance -Name 'nightly')
 
+# The operator's pause, and it comes before the tree guard because it is the more deliberate of the
+# two facts: a paused slot runs nothing whichever tree it is in, so the ref cannot matter, and a
+# night recorded as refused when the operator had paused it would say the machine did something the
+# operator did not choose. The file's first line is the operator's reason, if they wrote one.
+#
+# It exits 0. A pause is an instruction carried out rather than a fault, and the scheduler surfacing
+# thirty-two failures for a lab somebody paused on purpose is how a real failure gets ignored.
+$pause = Join-Path $dataRoot 'paused'
+if (Test-Path $pause) {
+    $why = @(Get-Content $pause -TotalCount 1) -join ''
+    Write-Line ("  paused by the operator: {0}" -f $(if ($why) { $why } else { 'no reason written' }))
+    Write-DidNotRun 'paused-by-operator'
+    exit 0
+}
+
 # The tree is this repository's production checkout, and the ref is a property of the tree that
 # nothing else in this corpus can see. `tools/ci.*` reads the source, the documents and a store it
 # builds; `tools/verify-phase` reads those and the golden fixture. Neither can tell which ref
@@ -259,6 +291,7 @@ if ($branch -ne 'main' -and -not $AllowBranch) {
     Write-Line ("  refusing: the tree is on '{0}' and not on main. The nightly runs from this repository's" -f $branch)
     Write-Line "  production checkout, so a slot dispatched from a branch runs whatever that branch happens to hold."
     Write-Line "  Return the tree to main, or pass -AllowBranch if you mean to run from this one."
+    Write-DidNotRun 'refused-by-tree-guard'
     exit 4
 }
 
@@ -268,6 +301,7 @@ if ($branch -ne 'main' -and -not $AllowBranch) {
 if ($branch -eq 'unknown' -and -not $AllowBranch) {
     Write-Line "  refusing: the tree's branch could not be read, so this slot cannot confirm it runs from main."
     Write-Line "  Pass -AllowBranch if you mean to run from a checkout git cannot describe."
+    Write-DidNotRun 'refused-by-tree-guard'
     exit 4
 }
 

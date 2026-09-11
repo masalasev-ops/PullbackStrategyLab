@@ -18976,3 +18976,90 @@ Carried:    **Two rows due at the operator, and both block nothing built**: the 
             it refused on the tree guard, and the night's log is where that would be written.
 
             **This session committed code and may not sign it off.**
+
+## 7.1 — 2026-09-11 — phase-7-1-reconciliation — the night that did not run leaves a row saying why, written the next evening from its log
+
+Built:      **`run_log` can say a slot did not run.** Migration 062 rebuilds the table with `slot`,
+            `session_date` and `did_not_run_because`, widens `outcome` to `did-not-run`, holds the reason
+            and that outcome together with a CHECK, and allows one such row per slot and session through a
+            partial unique index. Every run that happened is copied verbatim with the three columns null;
+            `MigrationRowSurvivalTests` seeds three runs, one of them still open, and reads every column
+            back. The four reasons are one vocabulary in Core, `DidNotRunBecause`: refused by the tree
+            guard, market closed, paused by the operator, and a fault.
+
+            **The guard writes one structured line and the next night writes the row.** `tools/nightly.ps1`
+            writes `did-not-run slot=<slot> session=<date> because=<reason>` before each of its two `exit 4`
+            refusals, and **NightReconciler**, the verb `reconcile-night`, reads each of the seven days
+            before today against the schedule, `run_log` and that night's log, and writes a row through
+            `RunLogger.RecordDidNotRun` for every slot that fired and did not run. It reads the guard's older
+            wording too, so the nights before this commit can be reconciled by naming their date. A slot
+            whose starting line is in the log with nothing of it in `run_log` is a fault; `snapshot-db`,
+            which never writes a run entry, is counted as unseeable when it fired rather than as a fault.
+            **A slot whose reason nothing establishes gets no row.** The three readers bounded on
+            `started_at` leave these rows out, because each is written on a later night than the one it
+            describes, and `RunLogger.DidNotRunOn` reads them by the session they state.
+
+            **A pause the operator can make.** A file named `paused` under the data root stops every slot
+            before the tree guard, logs the reason on its first line, writes the structured line and exits
+            0, so a deliberate pause does not read as thirty-two failures. The reason vocabulary had no
+            way to arrive at `paused-by-operator` without it.
+
+            **The morning screen names the reason.** `LabNight` carries it per slot, the watchlist writes
+            "It did not run because" and the sentence, and `surface-claims` holds the rendered page to the
+            sentence Core emits.
+
+            **`slot-roster`'s floors are equalities** against the Core declaration, having been twenty-two
+            since 4.5 over a table of thirty-seven, and it gains a sixth reconciliation: the reasons Core
+            names against the store's constraint in both directions, the reasons the script writes against
+            exactly the two Core says it writes, a sentence for every reason, and the log directory and
+            pause file spelled once. **`slot-diagnostics`** asserts both refusals write the line before they
+            exit, and the `slot-diagnostics` workflow job now requires the line in the log of a refusal the
+            real interpreter made. `tools/slot-log-verdict.ps1` knows the two new lines as the script's own.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,240 tests**, up from 1,224.
+
+Measured:   **Over the golden fixture, 7.1's done condition.** A Monday fires thirty-two slots, derived from
+            RUNBOOK's schedule before it was run: thirty-seven, less the five Saturday slots. The fixture's
+            session, 2026-08-24, with every slot refused and each log line rendered from the slot script's
+            own format strings, reconciles to **thirty-two refused rows and nought missing**, nought under any
+            other reason, and nought on a second run. The same session with no log, over a store holding no
+            later index bar, reconciles to thirty-two missing and nothing written, which is the holiday trap
+            closed. Eight expectations, all `DERIVED`, at 7.1. `store.schemaVersion` moved 61 to 62,
+            `night.observableStages` 39 to 40 and the two catalogue counts 54 to 55 and 47 to 48, each for
+            the reason in its note.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.0's after, 154 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `136a19d`
+            with the working tree dirty: GREEN, phase 7, **156 claims, 156 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,276, 1,240 tests. The two new claims are NightReconciler in the catalogue and the
+            P7 build-order row; the first read out of scope, closed by 7.1, until this entry landed it.
+
+Found:      **The plan's mechanism for "market closed" rested on something the lab does not do.** It put
+            the reconciliation after the next night's `bars` slot, on the reading that the next night's
+            daily ingest covers the session before. It does not: `daily-bars` asks the bulk endpoint for its
+            own date alone, so a night whose ingest never ran is never ingested by the night after it, and
+            "no daily bar after that ingest" would have read every lost night as a holiday, which is the
+            trap the plan was written to close. `index-bars` refetches each tracker's whole history every
+            night, so the reconciliation is the second verb of the `index` slot and a weekday is closed only
+            where every tracker holds a later session and none holds that one. **This amends 7.1's own
+            deliverable cell**, recorded in CHANGELOG with the prior text, and it is named here in those
+            words because the amendment and the build land in one commit from one session.
+
+            **A second verb rather than a new slot, and that keeps the done condition's thirty-two.** A slot
+            of its own would have made a weekday thirty-three and needed a thirty-eighth task on the
+            machine. Joining the slot whose output it reads is what a two-verb slot means in the script's
+            own comment, and it registers nothing new.
+
+            **`slot-roster`'s two floors had not been true for two phases**: twenty-two against thirty-seven,
+            so fifteen slots could have stopped parsing with the check green.
+
+Carried:    **The operator's half is not met.** It is three acts on the machine the lab runs on, and a build
+            session makes none of them: the clone at `PullbackStrategyLab-nightly`, the thirty-seven tasks
+            repointed at it with the 17:00 update task, and the unread nights read. For the last, once the
+            production tree carries this build and its store is migrated to 62, `reconcile-night 2026-09-07`
+            and each evening since reconciles those nights from their logs, and the widened minute fetch's
+            result for them is in the `intraday_fetch` rows and on the morning screen. **No new task is
+            owed**: the reconciliation joins the `index` slot. All three are due at the operator and named as
+            7.1's operator's half in its own row, so the obligations table gains no row for them.
+
+            **This session committed code and may not sign it off.**

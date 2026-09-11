@@ -919,6 +919,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(RegistryFigures());
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
+        measurements.AddRange(ReconciliationFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -3241,6 +3242,59 @@ public sealed class PhaseReplay : IDisposable
             new Measurement("night.accountedFor",
                 night.Ran + night.NeverRan + night.NotClean + night.Unobservable == night.Slots.Count
                     ? "every slot" : "not every slot"),
+        ];
+    }
+
+    /// <summary>
+    /// The next night's reconciliation of the fixture's own session, which is 7.1's deliverable.
+    ///
+    /// <b>Over a store it builds for the purpose, and the reason is the done condition's own.</b> The
+    /// replay's store ran a stage for most slots of 2026-08-24, so a refusal fed to it would be
+    /// answered with the slots the replay ran, which is a fact about the replay rather than about the
+    /// reconciliation. So a second store is migrated empty beside the first, and two nights are asked
+    /// of it: the fixture's session as the guard would have left it, every slot of a Monday refused,
+    /// with each log line rendered from the slot script's own format strings; and the same session
+    /// with no log at all, which is the lost night the reconciliation must not guess at.
+    ///
+    /// <b>The refused night is AUTHORED input, said to be one</b>, on the same terms as the synthetic
+    /// split: no captured night refused, and a reconciliation fed only captured nights would never
+    /// write a row.
+    /// </summary>
+    private IReadOnlyList<Measurement> ReconciliationFigures()
+    {
+        using var scratch = new TemporaryDirectory();
+        var paths = new PullbackStrategyLabPaths(scratch.Path);
+        var connections = new StoreConnectionFactory(paths);
+        new MigrationRunner(connections).Apply();
+
+        // The evening after the fixture's session, at the minute the slot runs.
+        DateOnly next = AsOf.AddDays(1);
+        var clock = new FixedClock(SessionBoundaries.At(next, new TimeOnly(17, 50), _options.Value.SessionZone));
+        var reconciler = new NightReconciler(
+            connections, paths, new RunLogger(clock, _options), clock, _options);
+
+        IReadOnlyList<string> refused =
+        [
+            .. NightlySchedule.FiresOn(AsOf.DayOfWeek)
+                .SelectMany(slot => SlotScriptLines.Refused(AsOf, slot.Slot, slot.At)),
+        ];
+
+        NightReconciliation lost = reconciler.Reconcile([AsOf], _ => []).Nights.Single();
+        NightReconciliation guarded = reconciler.Reconcile([AsOf], _ => refused).Nights.Single();
+        NightReconciliation again = reconciler.Reconcile([AsOf], _ => refused).Nights.Single();
+
+        string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        return
+        [
+            new Measurement("reconcile.slotsFired", Count(guarded.Due)),
+            new Measurement("reconcile.refused", Count(guarded.WrittenBecause.GetValueOrDefault(DidNotRunBecause.RefusedByTheTreeGuard))),
+            new Measurement("reconcile.missing", Count(guarded.Missing)),
+            new Measurement("reconcile.otherReasons", Count(guarded.Written - guarded.WrittenBecause.GetValueOrDefault(DidNotRunBecause.RefusedByTheTreeGuard))),
+            new Measurement("reconcile.lostNightMissing", Count(lost.Missing)),
+            new Measurement("reconcile.lostNightWritten", Count(lost.Written)),
+            new Measurement("reconcile.lostNightMarket", lost.Market.ToString()),
+            new Measurement("reconcile.secondRunWritten", Count(again.Written)),
         ];
     }
 

@@ -135,6 +135,86 @@ public sealed class RunLogger
     }
 
     /// <summary>
+    /// Records that one scheduled slot did not run on one session, and why. Returns false where the
+    /// store already holds that fact, so a reconciliation run every night over the week before it
+    /// writes each slot's row once.
+    ///
+    /// <b>Here rather than in the stage that decides it, for the reason every statement against this
+    /// table is.</b> <c>writer-ownership</c> attributes a write to the type that issues it, so the
+    /// reconciliation deciding a slot did not run and a second type inserting the row would be a
+    /// second declared writer of <c>run_log</c>.
+    ///
+    /// <b><c>started_at</c> and <c>ended_at</c> are when the row was written, which is the next
+    /// night</b>, and <paramref name="session"/> is the session it is about. A slot that never ran has
+    /// no instant of its own, and stamping one would put a declared time where every other row of the
+    /// table holds a measured one. The readers below that bound on the instant leave these rows out.
+    /// </summary>
+    public bool RecordDidNotRun(
+        SqliteConnection connection, string writtenBy, string slot, DateOnly session, string because)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(writtenBy);
+        ArgumentException.ThrowIfNullOrWhiteSpace(slot);
+
+        if (!DidNotRunBecause.Reasons.Contains(because, StringComparer.Ordinal))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(because), because, "not one of the four reasons a slot can have not run for");
+        }
+
+        string now = StoreText.TimestampToStorageText(_clock.UtcNow);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO run_log
+                (run_id, stage, started_at, ended_at, outcome, rows_written, calls_used,
+                 counts_against_ceiling, slot, session_date, did_not_run_because)
+            VALUES (@run_id, @stage, @now, @now, 'did-not-run', NULL, 0, 0, @slot, @session, @because)
+            ON CONFLICT DO NOTHING;
+            """;
+        command.Parameters.AddWithValue("@run_id", Guid.NewGuid().ToString("n"));
+        command.Parameters.AddWithValue("@stage", writtenBy);
+        command.Parameters.AddWithValue("@now", now);
+        command.Parameters.AddWithValue("@slot", slot);
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+        command.Parameters.AddWithValue("@because", because);
+
+        return command.ExecuteNonQuery() == 1;
+    }
+
+    /// <summary>
+    /// The slots recorded as not having run on one session, with the reason for each.
+    ///
+    /// Keyed on the session the row states rather than on when it was written, which is the whole
+    /// reason the column exists: every one of these rows is written on a later night than the one it
+    /// is about.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> DidNotRunOn(SqliteConnection connection, DateOnly session)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT slot, did_not_run_because
+              FROM run_log
+             WHERE did_not_run_because IS NOT NULL
+               AND session_date = @session
+             ORDER BY slot;
+            """;
+        command.Parameters.AddWithValue("@session", StoreText.DateToStorageText(session));
+
+        var reasons = new Dictionary<string, string>(StringComparer.Ordinal);
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            reasons[reader.GetString(0)] = reader.GetString(1);
+        }
+
+        return reasons;
+    }
+
+    /// <summary>
     /// Vendor calls already spent in one quota day, summed across every stage. The ceiling is
     /// a daily total rather than a per-stage allowance, so a stage cannot know its own
     /// budget without reading what the earlier stages spent.
@@ -206,6 +286,7 @@ public sealed class RunLogger
               FROM run_log
              WHERE stage = @stage
                AND ended_at IS NOT NULL
+               AND did_not_run_because IS NULL
                AND started_at >= @start_of_day
                AND started_at <= @end_of_day;
             """;
@@ -250,6 +331,7 @@ public sealed class RunLogger
               FROM run_log r
              WHERE r.started_at >= @start_of_day
                AND r.started_at <= @end_of_day
+               AND r.did_not_run_because IS NULL
              ORDER BY r.started_at, r.run_id;
             """;
 
@@ -291,6 +373,7 @@ public sealed class RunLogger
               FROM run_log
              WHERE ended_at IS NOT NULL
                AND outcome <> 'clean'
+               AND did_not_run_because IS NULL
                AND started_at >= @start_of_day
                AND started_at <= @end_of_day
              ORDER BY stage;

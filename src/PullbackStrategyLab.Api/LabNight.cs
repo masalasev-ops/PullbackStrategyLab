@@ -51,6 +51,11 @@ public static class LabNight
             .StagesOn(connection, asOf, sessionZone)
             .ToDictionary(r => r.Stage, StringComparer.Ordinal);
 
+        // Why a slot did not run, where the next night's reconciliation could establish it. Read by
+        // the session the row is about rather than by when it was written, because every one of
+        // these rows is written on a later night than the one it describes.
+        IReadOnlyDictionary<string, string> didNotRun = RunLogger.DidNotRunOn(connection, asOf);
+
         var slots = new List<SlotResponse>();
 
         // The slots that session was due, which on any day but Saturday is the list less the weekly
@@ -68,7 +73,8 @@ public static class LabNight
                 slot.InsideTheSession,
                 slot.LeavesNoRunEntry,
                 stages,
-                Bought(connection, slot, asOf, sessionZone)));
+                Bought(connection, slot, asOf, sessionZone),
+                didNotRun.GetValueOrDefault(slot.Slot)));
         }
 
         // Every stage that ran and belongs to no slot of this session. Counted rather than dropped:
@@ -183,14 +189,22 @@ public sealed record NightResponseOfSlots(
         new(asOf, why, [], 0, 0, 0, 0, []);
 }
 
-/// <summary>One slot of the night, with each stage it runs.</summary>
+/// <summary>
+/// One slot of the night, with each stage it runs.
+///
+/// <paramref name="DidNotRunBecause"/> is which of the four reasons the next night's reconciliation
+/// recorded for a slot that did not run, and null on a slot that ran or whose reason nothing could
+/// establish. A slot carrying one still never ran: the reason says why, and it does not turn a
+/// night the lab lost into one it did not.
+/// </summary>
 public sealed record SlotResponse(
     string Slot,
     string At,
     bool InsideTheSession,
     string? Unobservable,
     IReadOnlyList<StageResponse> Stages,
-    FetchResponse? Bought = null)
+    FetchResponse? Bought = null,
+    string? DidNotRunBecause = null)
 {
     /// <summary>Whether every stage of the slot ran and ended cleanly.</summary>
     public bool Ran =>

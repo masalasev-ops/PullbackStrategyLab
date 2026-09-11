@@ -322,11 +322,15 @@
     "slot-diagnostics": {
       "scopes": {
         "slot verbs routed through the isolating function": 22,
-        "worker invocations in tools/nightly.ps1": 1
+        "worker invocations in tools/nightly.ps1": 1,
+        "refusals in tools/nightly.ps1 that write the did-not-run line": 2
       }
     },
     "slot-roster": {
       "scopes": {
+        "reasons a slot did not run for, in Core": 4,
+        "reasons the store's constraint accepts": 4,
+        "reasons the slot script writes into the night's log": 2,
         "slots declared in tools/nightly.ps1": 24,
         "slot names its own parameter set accepts": 24,
         "distinct worker verbs the slots run": 27,

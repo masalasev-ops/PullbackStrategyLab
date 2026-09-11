@@ -1461,6 +1461,42 @@
       ]
     },
     {
+      "table": "Build order",
+      "subject": "P7",
+      "clauses": [
+        {
+          "clause": "NightReconciler The morning screen saying why a slot that never ran did not.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers",
+          "disposition": "unreached",
+          "why": "generation 1's gate set is 7.5's and its measurement 7.9's, so nothing of it exists at 7.1"
+        },
+        {
+          "clause": "and the switch night with generation 0's record kept beside it.",
+          "disposition": "unreached",
+          "why": "the switch is 7.11's"
+        },
+        {
+          "clause": "A weekday the guard refused reconciled to thirty-two rows and none missing.",
+          "disposition": "elsewhere",
+          "by": "fixture-replay",
+          "why": "`reconcile.refused` and `reconcile.missing` are DERIVED expectations the replay produces by feeding a refused Monday, rendered from the slot script's own format strings, to the shipped reconciliation"
+        },
+        {
+          "clause": "Every clause of generation 1 still naming its source",
+          "disposition": "unreached",
+          "why": "`clause-provenance` holds generation 0's twenty clauses today, and generation 1's gate set is 7.5's"
+        },
+        {
+          "clause": "and every row read against the gate list of its own night across the switch.",
+          "disposition": "unreached",
+          "why": "the date-aware gate list is 7.2's and the switch 7.11's"
+        }
+      ]
+    },
+    {
       "table": "The phase report",
       "subject": "Document conformance",
       "clauses": [

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker;
@@ -98,7 +99,15 @@ public sealed partial class SlotRosterCheck
         string[] documented = [.. slots.Where(slot =>
             SlotVerbsOf(script, slot).Any(verb => runbook.Contains($"`{verb}`", StringComparison.Ordinal)))];
 
+        IReadOnlyList<string> vocabulary = DidNotRunBecause.Reasons;
+        string[] constrained = ReasonsTheStoreAccepts();
+        string[] scriptWrites =
+            [.. WriteDidNotRun().Matches(script).Select(m => m.Groups["because"].Value).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+
         coverage
+            .Examined("reasons a slot did not run for, in Core", vocabulary.Count)
+            .Examined("reasons the store's constraint accepts", constrained.Length)
+            .Examined("reasons the slot script writes into the night's log", scriptWrites.Length)
             .Examined("slots declared in tools/nightly.ps1", slots.Length)
             .Examined("slot names its own parameter set accepts", accepted.Length)
             .Examined("distinct worker verbs the slots run", verbs.Length)
@@ -116,14 +125,22 @@ public sealed partial class SlotRosterCheck
 
         // Stated in advance, on the rule a sweep expecting a non-zero count states that count. A
         // pattern that stopped matching would hand every comparison below two empty sets, which agree.
-        Assert.True(slots.Length >= 22,
-            $"tools/nightly.ps1 declares {slots.Length} slots. It has held at least twenty-two since 4.5, "
-            + "so the parser stopped matching rather than the schedule getting shorter.");
+        //
+        // <b>Equalities from 7.1, having been floors of twenty-two since 4.5.</b> The floors were set
+        // when the table held twenty-two and it holds thirty-seven, so fifteen slots could have
+        // stopped parsing with nothing here noticing. The Core declaration is the independent count:
+        // it is a list in a compiled assembly, read without a regex, so the script's parse has to
+        // reach exactly that many rather than at least a number that has not been true for two
+        // phases.
+        Assert.True(slots.Length == NightlySchedule.Slots.Count,
+            $"tools/nightly.ps1 parses to {slots.Length} slots and NightlySchedule declares "
+            + $"{NightlySchedule.Slots.Count}. The set comparisons below would name a slot the two disagree "
+            + "about, so a count that differs with no name beside it is the parser having stopped matching.");
 
-        Assert.True(attribute.Success && accepted.Length >= 22,
-            $"The dispatcher's ValidateSet resolved to {accepted.Length} name(s). It accepts one name per "
-            + "slot, so a count below the slot count means the attribute was not read rather than that it "
-            + "rejects something.");
+        Assert.True(attribute.Success && accepted.Length == NightlySchedule.Slots.Count,
+            $"The dispatcher's ValidateSet resolved to {accepted.Length} name(s) against "
+            + $"{NightlySchedule.Slots.Count} declared slots. It accepts one name per slot, so a different "
+            + "count means the attribute was not read rather than that it rejects something.");
 
         // 1. The slot table against the parameter set, both ways. A slot the attribute rejects is a
         //    stage nobody can run; a name the attribute accepts with no slot behind it fails on the
@@ -222,6 +239,91 @@ public sealed partial class SlotRosterCheck
             $"{wrongTime.Length} slot(s) declare a time RUNBOOK's schedule does not have a row for, so the "
             + "morning report and the operator's own table disagree about when the night runs:\n  "
             + string.Join("\n  ", wrongTime));
+
+        // 6. Why a slot did not run, from 7.1. Four places hold the vocabulary and each one is a
+        //    different failure if it drifts: the migration's CHECK refuses a reason Core would write,
+        //    the script writes a reason the store refuses, or the page has no sentence for a reason
+        //    the store holds. So Core's list is held to the store's constraint in both directions,
+        //    the script is held to exactly the reasons Core says it writes, and every reason has a
+        //    sentence. And the two names the script and the reconciliation must spell alike, the
+        //    night's log and the pause file, are held to the one spelling in Core.
+        Assert.True(vocabulary.Count == 4 && constrained.Length == vocabulary.Count,
+            $"Core names {vocabulary.Count} reason(s) a slot did not run for and the store's constraint "
+            + $"parses to {constrained.Length}. There are four, stated in advance, so a different count is "
+            + "the vocabulary having grown in one place or the constraint having stopped parsing.");
+
+        string[] refusedByTheStore = [.. vocabulary.Except(constrained, StringComparer.Ordinal)];
+        string[] storedAndUnnamed = [.. constrained.Except(vocabulary, StringComparer.Ordinal)];
+
+        Assert.True(refusedByTheStore.Length == 0 && storedAndUnnamed.Length == 0,
+            "The reasons Core names and the reasons run_log's constraint accepts differ. A reason Core has "
+            + "and the store refuses fails the reconciliation's insert on the night it first occurs; a reason "
+            + "the store accepts and Core does not name is one the page has no sentence for.\n  Core only: "
+            + string.Join(", ", refusedByTheStore) + "\n  store only: " + string.Join(", ", storedAndUnnamed));
+
+        string[] writesUndeclared = [.. scriptWrites.Except(DidNotRunBecause.WrittenByTheSlotScript, StringComparer.Ordinal)];
+        string[] declaredUnwritten = [.. DidNotRunBecause.WrittenByTheSlotScript.Except(scriptWrites, StringComparer.Ordinal)];
+
+        Assert.True(writesUndeclared.Length == 0 && declaredUnwritten.Length == 0,
+            "tools/nightly.ps1 and DidNotRunBecause.WrittenByTheSlotScript disagree about which reasons the "
+            + "script writes. The other two are derived by the reconciliation, and a script writing one of "
+            + "them would be asserting a holiday or a fault it cannot see.\n  script only: "
+            + string.Join(", ", writesUndeclared) + "\n  declared only: " + string.Join(", ", declaredUnwritten));
+
+        string[] unsayable =
+            [.. vocabulary.Where(reason => string.IsNullOrWhiteSpace(DidNotRunBecause.Reads(reason)))];
+
+        Assert.True(unsayable.Length == 0,
+            "Reason(s) with no sentence for the morning screen: " + string.Join(", ", unsayable));
+
+        Match pause = PauseFileAssignment().Match(script);
+        Match logDirectory = LogDirectoryAssignment().Match(script);
+
+        Assert.True(pause.Success && pause.Groups["name"].Value == PullbackStrategyLabPaths.PauseFileName,
+            $"tools/nightly.ps1 reads the pause file as '{pause.Groups["name"].Value}' and Core names it "
+            + $"'{PullbackStrategyLabPaths.PauseFileName}', so an operator following RUNBOOK would pause nothing.");
+
+        Assert.True(logDirectory.Success && logDirectory.Groups["name"].Value == PullbackStrategyLabPaths.LogDirectoryName,
+            $"tools/nightly.ps1 writes its log under '{logDirectory.Groups["name"].Value}' and the reconciliation "
+            + $"reads it under '{PullbackStrategyLabPaths.LogDirectoryName}', so every refused night would read "
+            + "as a night with no log.");
+
+        Assert.Contains("\"nightly-{0}.log\" -f (Get-Date -Format 'yyyy-MM-dd')", script, StringComparison.Ordinal);
+        Assert.Equal(
+            "nightly-2026-09-07.log",
+            Path.GetFileName(new PullbackStrategyLabPaths(RepositoryLayout.Root).NightLogFile(new DateOnly(2026, 9, 7))));
+    }
+
+    /// <summary>The reason each call to the script's one did-not-run writer passes.</summary>
+    [GeneratedRegex(@"Write-DidNotRun\s+'(?<because>[a-z-]+)'", RegexOptions.CultureInvariant)]
+    private static partial Regex WriteDidNotRun();
+
+    [GeneratedRegex(@"did_not_run_because\s+IS\s+NULL\s+OR\s+did_not_run_because\s+IN\s*\((?<body>[^)]*)\)",
+        RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex ReasonConstraint();
+
+    [GeneratedRegex(@"\$pause\s*=\s*Join-Path\s+\$dataRoot\s+'(?<name>[^']+)'", RegexOptions.CultureInvariant)]
+    private static partial Regex PauseFileAssignment();
+
+    [GeneratedRegex(@"\$logDirectory\s*=\s*Join-Path\s+\$dataRoot\s+'(?<name>[^']+)'", RegexOptions.CultureInvariant)]
+    private static partial Regex LogDirectoryAssignment();
+
+    /// <summary>
+    /// The reasons the latest migration to constrain <c>did_not_run_because</c> accepts. The latest
+    /// rather than 062 by name, so a later rebuild of the table is what this reads.
+    /// </summary>
+    private static string[] ReasonsTheStoreAccepts()
+    {
+        string migrations = Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "Migrations");
+
+        Match? latest = Directory.EnumerateFiles(migrations, "*.sql")
+            .Order(StringComparer.Ordinal)
+            .Select(f => ReasonConstraint().Match(RepositoryLayout.Read(f)))
+            .LastOrDefault(m => m.Success);
+
+        return latest is null
+            ? []
+            : [.. QuotedName().Matches(latest.Groups["body"].Value).Select(m => m.Groups["name"].Value).Order(StringComparer.Ordinal)];
     }
 
     /// <summary>The verbs of one slot, read out of that slot's own line of the hashtable.</summary>

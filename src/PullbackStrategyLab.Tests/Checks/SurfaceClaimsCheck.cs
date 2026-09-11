@@ -779,9 +779,13 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     private const string Slots = """
         {
           "asOf": "2026-08-24", "absent": null,
-          "ran": 1, "neverRan": 1, "notClean": 1, "unobservable": 1,
+          "ran": 1, "neverRan": 2, "notClean": 1, "unobservable": 1,
           "unscheduled": ["ceiling"],
           "slots": [
+            { "slot": "spread-open", "at": "10:15", "insideTheSession": true, "unobservable": null,
+              "didNotRunBecause": "refused-by-tree-guard",
+              "stages": [ { "stage": "spreads", "startedAt": null, "endedAt": null,
+                            "outcome": null, "callsUsed": 0, "unobservable": null } ] },
             { "slot": "universe", "at": "17:15", "insideTheSession": false, "unobservable": null,
               "stages": [ { "stage": "universe-build", "startedAt": "2026-08-24 17:15",
                             "endedAt": "17:18", "outcome": "clean", "callsUsed": 2005,

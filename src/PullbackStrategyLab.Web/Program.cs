@@ -514,7 +514,8 @@ public sealed class LabApiClient
                         ? new FetchView(
                             b.Requested, b.Fetched, b.Empty, b.BarsWritten, b.Stored,
                             b.WindowSessions, b.WindowAsks)
-                        : null))],
+                        : null,
+                    s.DidNotRunBecause))],
                 payload.Ran,
                 payload.NeverRan,
                 payload.NotClean,
@@ -796,7 +797,7 @@ public sealed class LabApiClient
 
     private sealed record SlotPayload(
         string Slot, string At, bool InsideTheSession, string? Unobservable,
-        IReadOnlyList<StagePayload>? Stages, FetchPayload? Bought);
+        IReadOnlyList<StagePayload>? Stages, FetchPayload? Bought, string? DidNotRunBecause);
 
     private sealed record FetchPayload(
         int Requested, int Fetched, int Empty, int BarsWritten, int Stored,
