@@ -85,7 +85,8 @@ public interface ISessionFigures
     ///
     /// <b>It is not the same absence a forward night can have.</b> A forward night with no level
     /// becomes anchorable as the store accumulates minutes; a reconstructed 2024 session does not,
-    /// because the vendor holds minute bars for a bounded window and not for two years. The two are
+    /// because the store it is walked in holds minutes only from the night capture began, and a purchase
+    /// of the vendor's earlier history belongs to a research store rather than to this one. The two are
     /// recorded as different clause sets, on the same grounds `tradable-shortable` records its
     /// market-cap exemption rather than passing a clause silently.
     /// </summary>
@@ -632,9 +633,9 @@ public sealed class CalibrationFigures : ISessionFigures
     ///
     /// <b>A reconstructed session can never carry an anchored level.</b> The level is a
     /// volume-weighted average over minute bars, the calibration walk runs from 2024-04-01, and
-    /// minute bars exist in this lab only from the night IntradayFetcher first ran. The vendor holds
-    /// them for a bounded window and not for two years, so this is not a purchase anybody has
-    /// declined; there is nothing to buy.
+    /// minute bars exist in this store only from the night IntradayFetcher first ran. The vendor sells
+    /// one-minute history back to 2004, so the absence is the store's rather than the vendor's: a
+    /// purchase of that history belongs to a research store, and this walk reads the evidence store.
     ///
     /// <b>Which is why the re-measurement the 2.11 obligation asks for cannot be a re-run of this
     /// walk.</b> Every calibration row would record the anchored clause as unreachable, the funnel

@@ -182,8 +182,8 @@ public static class LabTradeChart
     public const string MinutesAreNotCapturedAfterTheEntrySession =
         "minute bars are bought for the session a plan is live in, and for a later session of the "
         + "same name only where the detector flagged it again that evening. This position closed in "
-        + "a session the store holds no minute of, and the vendor sells no minute history to buy one "
-        + "back, so the daily strip is the whole picture of how it ended";
+        + "a session the store holds no minute of, because nothing bought that session's minutes on the "
+        + "night it ran, so the daily strip is the whole picture of how it ended";
 }
 
 /// <summary>

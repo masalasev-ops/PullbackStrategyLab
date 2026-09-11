@@ -453,9 +453,21 @@ public sealed partial class StatedCountsCheck
             authored.Count(r => r.Count > 2 && r[2].Equals("Phase 2 count check", StringComparison.OrdinalIgnoreCase)),
             "rows of the authored parameters table whose review point is the phase 2 count check"));
 
-        // BUILD_PLAN.md, six phases.
-        Assert.Contains("Six phases.", buildPlan, StringComparison.Ordinal);
-        claims.Add(new Claim("BUILD_PLAN.md, six phases", 6, PhaseHeading().Matches(buildPlan).Count, "phase headings"));
+        // BUILD_PLAN.md, seven phases. It read six until 7.0, when the corpus said three times that
+        // there was no phase 7 and then opened one; the literal moved with the sentence, which is the
+        // only way a hard-coded figure here stays honest.
+        Assert.Contains("Seven phases.", buildPlan, StringComparison.Ordinal);
+        claims.Add(new Claim("BUILD_PLAN.md, seven phases", 7, PhaseHeading().Matches(buildPlan).Count, "phase headings"));
+
+        // BUILD_PLAN.md, phase 7's own row count, registered in the commit that states it rather than
+        // after the first one goes stale. Read out of the phase 7 slice alone, because phases 5 and 6
+        // open with the same sentence shape and an unbounded read takes whichever comes first.
+        string phaseSeven = Between(buildPlan, "## Phase 7 — The realignment", "## Carried obligations");
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, phase 7's row count",
+            InWords(phaseSeven, "The phase is ", " rows"),
+            MarkdownTable.BodyRowsAfter(buildPlan, "## Phase 7 — The realignment").Count,
+            "rows of the phase 7 table"));
 
         // BUILD_PLAN.md, the obligations classified at 4.1 against the obligations table itself.
         //

@@ -74,12 +74,50 @@ public sealed class ActionIngestor
         _options = options.Value;
     }
 
+    /// <summary>
+    /// The options this stage knows, and nothing else.
+    ///
+    /// <b>An option it does not know is refused by name rather than ignored, from 7.0.</b> Until then
+    /// the date was the first argument not starting with two dashes and every other dashed argument
+    /// was read only by the one comparison against <see cref="SplitsOnlyFlag"/>, so an unknown option
+    /// passed through without a word. RUNBOOK's recovery row named <c>--with-dividends</c>, which exists
+    /// nowhere, and following it ran the stage and reported success; it happened to do the right thing
+    /// only because dividends are the default. That is the fault <c>recheck</c> was repaired for after
+    /// 3.13, in a stage nobody went back to, and the repair is the same: an option nobody reads is an
+    /// instruction nobody carried out.
+    /// </summary>
+    public static IReadOnlySet<string> KnownOptions { get; } =
+        new HashSet<string>(StringComparer.Ordinal) { SplitsOnlyFlag };
+
+    /// <summary>What a run was asked for: the date, if one was given, and whether dividends are requested.</summary>
+    public sealed record Arguments(string? Date, bool WithDividends)
+    {
+        /// <summary>Reads the arguments, refusing any dashed option <see cref="KnownOptions"/> does not hold.</summary>
+        public static Arguments Parse(IReadOnlyList<string> args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            string? unknown = args.FirstOrDefault(a => a.StartsWith("--", StringComparison.Ordinal) && !KnownOptions.Contains(a));
+            if (unknown is not null)
+            {
+                throw new ArgumentException(
+                    $"'{unknown}' is not an option this stage knows. It takes "
+                    + $"{string.Join(", ", KnownOptions.Order(StringComparer.Ordinal))} and a date. Dividends are "
+                    + "requested by default. An option is refused rather than ignored, because an option nobody "
+                    + "reads is an instruction nobody carried out.");
+            }
+
+            return new Arguments(
+                args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal)),
+                RequestsDividendsByDefault && !args.Contains(SplitsOnlyFlag, StringComparer.Ordinal));
+        }
+    }
+
     public async Task<int> RunAsync(string[] args, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(args);
 
-        string? date = args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
-        bool withDividends = RequestsDividendsByDefault && !args.Contains(SplitsOnlyFlag, StringComparer.Ordinal);
+        (string? date, bool withDividends) = Arguments.Parse(args);
 
         DateOnly effectiveDate = date is not null
             ? DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)

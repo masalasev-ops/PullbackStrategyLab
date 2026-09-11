@@ -18848,3 +18848,131 @@ Carried:    **Three things this trace could not settle, recorded in the document
             and on the strict reading this document uses that does not establish one.
 
             **This session committed code and may not sign it off.**
+
+## 7.0 — 2026-09-11 — phase-7-0-opening — what the phase is built against: the vendor's minute history read, a false claim corrected where it was stated, and generation 1 decided
+
+**Built from a separate worktree, and the production checkout was left on `main` at `fdc975c` for the whole
+of it.** All thirty-seven scheduled tasks point at the working tree, so a build session working in it on a
+branch would have refused every slot that fired, and a night not recorded is gone for good. The worktree is
+`PullbackStrategyLab-phase7` beside it. **The production tree has not been moved forward and must not be
+until the live store is migrated to match**, because phase 7 adds migrations and a tree ahead of its store
+is the fault of 2026-08-28.
+
+Built:      **7.0(a), the reading.** One call through the lab's own `EodhdClient`, constructed from the
+            worker's own configuration by a throwaway harness outside the repository, so the token was
+            bound by the options system and reached no command line, log or output. Nothing of the
+            harness is committed; 7.0 has no component.
+
+            **7.0(b), the claim that the vendor sells no minute history, corrected where it was stated.**
+            The plan counted eight places and the sweep found the claim in **nineteen places in the
+            source across fourteen files**, **five sentences in two specs**, **four sentences in three
+            decision entries** and **six lines in five record entries**. Each was rewritten for its own
+            sentence rather than by a find-and-replace, because each claimed a different consequence of
+            the false depth. **Two are strings a person reads and no test pinned either**:
+            `NightView.Unrecoverable` on the morning screen and `VariantAdmitter.ExecutionRefused`, the
+            reason recorded on a refused admission, which also carried the reopening condition the
+            2026-09-03 correction had already replaced. **Three statements were read as true and left**:
+            `SCHEMA.md`'s "inside the vendor's reach and outside the store's", the same phrase in
+            `ShortPullbackRules` and in migration 039, and every sentence stating 120 days as the width of
+            one request. **The reconstructed walk's comments keep their claim and change their reason**:
+            a 2024 session still carries no anchored level in the store it is walked in, because that
+            store holds only what capture bought, and a purchase of earlier history belongs to a research
+            store rather than to it; the tests asserting that absence keep their names.
+
+            **Beside it**: `ARCHITECTURE.html`'s replay note and table said two of the short side's gates
+            could not be replayed, where 6.1 had lifted both; the one-time backfill still said two days;
+            `RUNBOOK.md` named `actions --with-dividends`, which exists in no source file; and five
+            present-tense sentences in the source counted thirty-two slots over a list of thirty-seven.
+            **`ActionIngestor` refuses an option it does not know**, on the repair `recheck` was given
+            after 3.13, with three tests exercising the refusal, the one option it knows and the default.
+
+            **7.0(c), eight decisions**, under "How changes are judged": generation 0 retired and
+            generation 1 registering only once its rule is whole; the one-time backfill ruling given its
+            first entry and extended to minutes; what generation 1's baseline is written from; the
+            give-up gate retired at selection and reborn at the entry minute; the entry ceiling as the
+            tighter of half the daily range and 5%; the switch to the entry candle at more than 2%; risk
+            per trade staying at 0.75% with its citation; and order prices and the share count resolving
+            at the entry minute. **Four of them supersede entries that shipped source still cites**, and
+            each names the entry and moves it with the code, at 7.8 or at 7.11, so `no-superseded-citation`
+            is green here with those entries live.
+
+            **`BUILD_PLAN.md` opens phase 7**: "Seven phases.", a section of thirteen rows placed before
+            the carried obligations so both readers of the plan bound the sections where they did, and the
+            three sentences saying there is no phase 7 recorded as a reversal. `stated-counts` holds the
+            phase count and the new row count, registered in the commit that states them.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,224 tests**, up from 1,221.
+
+Measured:   **7.0(a), the probe, on 2026-09-11.** Request as sent:
+            `https://eodhd.com/api/intraday/AAPL.US?api_token=<elided>&fmt=json&interval=1m&from=1711958400&to=1712016000`,
+            being 04:00 to 20:00 New York on 2024-04-01. **959 bars.** First bar opened 2024-04-01 08:00Z,
+            04:00 New York; last opened 23:59Z, 19:59 New York. **Extended hours came back**: 329 bars
+            before the regular open, 390 inside it and 240 after the close, and none on another date. 390
+            is every minute of the regular session. **5 calls consumed.** **A bar on 2024-04-01 refutes the
+            depth claim.** 959 is also the count the 2026-09-01 probe returned for 2026-08-25: a full
+            extended session is 960 minutes, and both came back one short twenty-nine months apart, so the
+            count does not decay with age.
+
+            **The out-of-scope count, before and after: nought and nought.** Before, read by
+            `tools/verify-phase.ps1` on a clean `fdc975c` in a second worktree: GREEN, phase 6, 154
+            claims, 154 passed, 0 out of scope, 0 unexamined, coverage examined 12,143, 1,221 tests.
+            After, read on this tree before its commit, so the report names `fdc975c` with the working
+            tree dirty: GREEN, phase 7, 154 claims, 154 passed, 0 out of scope, 0 unexamined, coverage
+            examined 12,191, 1,224 tests, one expectation changed since the last commit. **Opening a
+            phase moved nothing out of scope**, because no claim in ARCHITECTURE defers to a phase 7
+            checkpoint yet; the claims phase 7 owes are written with the components they describe.
+
+            **One expectation moved and was re-derived first.** `authored.citingADecision` went 15 to
+            16 because the risk-per-trade row gained a citation; `tools/derive-authored-parameters.py`,
+            which shares no code with the check, read 16 before the expectation was edited.
+            `stated-counts` failed the permit sentence the moment 7.0's permit was written, twelve
+            against thirteen, and the sentence moved with it.
+
+Found:      **The horizon the corpus recorded was the probe's own window.** The 4.4 entry of 2026-09-01
+            gave the vendor's one-minute history as reaching 2026-05-05, from one call that returned 82
+            sessions; 2026-09-01 less 120 days is 2026-05-04, so the figure is one request's width back
+            from the day it was taken. An earlier probe of the same kind the same day, over 2026-08-25, had
+            stated its answer as a lower bound, and the qualifier was dropped between the two.
+
+            **The correction of 2026-09-03 repeated the claim it sat beside.** The execution-variant entry
+            was corrected that day for its premise about capture and said in the same paragraph that "the
+            vendor sells no minute history at that resolution". A correction is where a reader stops
+            doubting an entry, which is why it was worth finding.
+
+            **A check asserted the true figure and printed it while the cell it validates said the false
+            one.** `architecture-conformance` compares the replay table's selection row code to code, reads
+            only the row's first cell, and emitted "nine of the long side's ten gates and nine of the short
+            side's ten" as its pass message over a cell reading seven.
+
+            **The corpus says there is no phase 7 three times, not four**; the fourth the planning pass
+            reported was 6.9's row, which never says it.
+
+            **The nearby-floor row is answered, so the obligations table is twenty rows and fourteen at
+            the operator, not the twenty-one and fifteen the plan gave.** The row asked what establishes a
+            nearby floor and which minute the entry is taken at; `SOURCES.md` states both in the trader's
+            own words, and 7.0's decisions answer it. Leaving it open beside them would have the corpus
+            contradict itself. It moves verbatim into a record section, and its one unanswerable part, the
+            anchored level's anchor, is a new row.
+
+Corrected:  Five dated entries, whose text is left as it stood: the 4.4 entry of 2026-09-01, in two
+            places, the depth of 2026-05-05 and the calibration sessions said to be unanchorable "at any
+            price"; the 4.13 entry of 2026-09-02, whose correction said the vendor "sells none"; and the
+            5.0(a) entries of 2026-09-02 and 2026-09-03, which restated the 2026-05-05 horizon and said a
+            session not bought inside it cannot be bought later. **Each was true of the store and false of
+            the vendor.** The correction of record is appended to **No execution variant is admitted in
+            this generation, and the condition that would reopen it is named**.
+
+Carried:    **Two rows due at the operator, and both block nothing built**: the anchored level's anchor
+            rule, which the source gives as a procedure fitted to reactions that come after the anchor, and
+            the re-entry rule, for which the source gives no form.
+
+            **Due at the operator: moving the production tree forward.** It sits at `fdc975c` and phase 7
+            merges to `main` from the worktree. Before it moves, the live store is snapshotted and migrated
+            on the procedure in RUNBOOK, or the stages refuse on the version guard, which is the safe
+            direction of that failure and still a lost night.
+
+            **Due at the operator: two evenings to check.** This session worked on branches in the
+            production tree on 2026-09-08 and 2026-09-09 while writing `SOURCES.md`; if a slot fired then
+            it refused on the tree guard, and the night's log is where that would be written.
+
+            **This session committed code and may not sign it off.**

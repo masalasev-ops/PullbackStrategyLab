@@ -10,7 +10,8 @@ namespace PullbackStrategyLab.Core.Time;
 /// fifteen of the thirty-two slots had never run once, because whether a scheduled task exists is a
 /// property of the machine and every check in this corpus takes its subject from the source, the
 /// documents, the fixture or a store it builds itself. What that cost is on the record: four flagged
-/// nights whose minute bars cannot be bought back at any price.
+/// nights whose minute bars were never bought on the night, so none can stand as those nights'
+/// evidence.
 ///
 /// <b>So the instrument is a read of the live store rather than a fifth thing to reconcile.</b>
 /// <c>run_log</c> records which stages ran for a session and this list declares which were meant to,
@@ -29,7 +30,7 @@ namespace PullbackStrategyLab.Core.Time;
 public static class NightlySchedule
 {
     /// <summary>
-    /// The thirty-two slots, in the order the night runs them.
+    /// The thirty-seven slots, in the order the night runs them.
     ///
     /// <b>Order is the declaration and not a sort.</b> Two slots share 17:20 and two share 18:28, so
     /// ordering by time alone would put them in whichever order a comparer happened to choose, and
@@ -121,7 +122,7 @@ public static class NightlySchedule
 
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
-        // omitted it would be reporting thirty-one slots under a heading saying thirty-two. That is
+        // omitted it would be reporting thirty-six slots under a heading saying thirty-seven. That is
         // the under-reporting shape: a check that narrows its own scope and goes on passing.
         new("snapshot", "22:00", ["snapshot-db"],
             LeavesNoRunEntry:

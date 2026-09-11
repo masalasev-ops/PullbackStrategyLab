@@ -9,8 +9,8 @@ namespace PullbackStrategyLab.Web.Shell;
 /// market.</b> Every check in this corpus takes its subject from the source, the documents, the
 /// golden fixture or a store it builds itself, so a green build says nothing about whether the
 /// night ran. Fifteen of the thirty-two slots had never fired while four lists declaring them all
-/// agreed, and the cost was four flagged nights whose minute bars cannot be bought back at any
-/// price.
+/// agreed, and the cost was four flagged nights whose minute bars were never bought on the night,
+/// so none can stand as those nights' evidence.
 ///
 /// <b>Four states rather than two, and the fourth is the one that matters most here.</b> A slot ran
 /// cleanly, a slot never fired, a slot fired and did not end cleanly, or nothing in the store can
@@ -82,16 +82,18 @@ public sealed record SlotView(
     /// <summary>
     /// What is unrecoverable about this slot not having fired, or null where nothing is.
     ///
-    /// <b>Two slots lose something that cannot be bought back and the rest do not.</b> A quote has
-    /// no history at all, so a spread pass that does not fire is a sample that never existed; minute
-    /// bars reach back a bounded number of days, so a session outside that window cannot be bought
-    /// afterwards at any price. Everything else this lab fetches can be re-asked for, and a report
-    /// that treated all thirty-two the same would put the two that matter in a list of thirty.
+    /// <b>Four slots lose something no later run repairs, and the rest do not.</b> A quote has no
+    /// history at all, so a spread pass that does not fire is a sample that never existed. The symbol
+    /// list is read at run time, so a missed universe cannot be rerun for its own date. Minute bars
+    /// are the third kind: the vendor sells them back to 2004, so the bar is not what is lost; its
+    /// standing is, because a minute bought after the night is invisible to that night's setups.
+    /// Everything else this lab fetches can be re-asked for, and a report that treated all
+    /// thirty-seven the same would put the four that matter in a list of thirty-three.
     /// </summary>
     public string? Unrecoverable => Slot switch
     {
-        "intraday" => "minute bars reach back a bounded number of days. A session not captured "
-            + "inside that window cannot be bought afterwards at any price",
+        "intraday" => "the vendor still sells these minutes, but a minute bought after this night is "
+            + "observed after it, so it can never stand as evidence for the setups flagged on it",
         "spread-open" or "spread-close" => "a quote has no history to buy back at all, so a pass "
             + "that did not fire is a sample that never existed",
         "universe" => "the symbol list is read at run time, so a rerun stamps this session with "

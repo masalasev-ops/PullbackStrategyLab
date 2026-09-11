@@ -23,8 +23,8 @@ public static class VariantFamily
     ///
     /// <b>None is admitted in this generation and that is recorded rather than merely true.</b>
     /// Both routes by which such a version earns its place are closed: it cannot be screened,
-    /// because minute bars exist only from the night capture began at 4.2 and the vendor sells no
-    /// history to buy the gap back, and it cannot accumulate, because R needs fills and the funnel
+    /// because the store holds minute bars only from the night capture began at 4.2 and none of the
+    /// vendor's earlier history has been bought, and it cannot accumulate, because R needs fills and the funnel
     /// passes a median of nought candidates a night.
     /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
     /// </summary>

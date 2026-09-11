@@ -21,13 +21,13 @@ namespace PullbackStrategyLab.Api;
 /// <b>So this is not a check and nothing in the verification harness calls it.</b> It is a figure a
 /// person reads on the morning it happens, on the terms CLAUDE.md sets for a property about the
 /// running system, and it belongs beside the morning queue because that is the screen somebody opens
-/// the morning after. What it cost to learn: four flagged nights whose minute bars cannot be bought
-/// back at any price, the two spread passes never taken at all, and the lab flagging nothing on the
+/// the morning after. What it cost to learn: four flagged nights whose minute bars were never bought
+/// on the night, so none can stand as those nights' evidence, the two spread passes never taken at all, and the lab flagging nothing on the
 /// night four stages died on a missing column.
 ///
 /// <b>It reports the slot it cannot see rather than shortening its list.</b> <c>snapshot-db</c>
 /// takes no run logger and leaves no run entry, so this has no answer about it, and a report of
-/// thirty-one slots under a heading saying thirty-two is the under-reporting shape one level up.
+/// thirty-six slots under a heading saying thirty-seven is the under-reporting shape one level up.
 /// </summary>
 public static class LabNight
 {
@@ -102,7 +102,8 @@ public static class LabNight
     ///
     /// It is the intraday slot alone rather than a figure per slot. Every other stage's outcome
     /// says what it did; this is the one whose "clean" was compatible with having bought nothing,
-    /// and it is the one whose miss cannot be bought back at any price.
+    /// and it is the one whose miss no later purchase repairs, because a minute bought after the night
+    /// is invisible to that night's setups.
     /// </summary>
     private static FetchResponse? Bought(
         SqliteConnection connection, NightSlot slot, DateOnly asOf, string sessionZone)
