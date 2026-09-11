@@ -884,6 +884,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>VwapEngine</b></td><td>Nightly 21:00</td><td>The anchored average price. It wrote a running session average onto every stored minute from 4.4 and stopped at 4.7, because no reader for it was ever named and a running average is derivable from the stored minutes whenever one is wanted (see: The session average is derived when it is wanted and is not stored on a bar)</td></tr>
 <tr><td><b>TriggerResolver</b></td><td>Nightly 21:05</td><td>Decides minute by minute whether each plan triggered: the flush into the hourly zone and the break after it on a plan carrying the rule</td></tr>
 <tr><td><b>EntrySizer</b></td><td>Nightly 21:05, after the resolver</td><td>Resolves the stop and the size of every entry at its minute, refusing a chased entry, a stop past the ceiling and a size under one share</td></tr>
+<tr><td><b>EntryRuleMeasurement</b></td><td>Manual, on a store copy</td><td>Generation 1's entry rule over the calibration minutes, reported per side with the level set it was computed over named</td></tr>
 <tr><td><b>RiskGate</b></td><td>21:10 as a slot, on trigger as an act</td><td>Enforces every cap including the risk budget and may reduce or block the size the entry resolved but never grow it. The only thing that may open a position. <b>The runbook and the dispatcher put it at 21:10 and this row said on trigger, and both are true of different things</b>: the <code>orders</code> slot runs once after the close over the session's replay, and inside that walk the gate acts at the minute each trigger was reached, in the order the triggers happened, which is why a full book blocks the later ones</td></tr>
 <tr><td><b>PaperBroker</b></td><td>Nightly 21:15</td><td>Fills every entry at a deliberately pessimistic price. Every exit is PositionManager's from 4.8, because the exit is whichever rule is reached first and that comparison cannot be made by two components</td></tr>
 <tr><td><b>PositionManager</b></td><td>Nightly 21:20</td><td>Trails, trims and exits, including the give-up point. Separate rule sets per direction. After PaperBroker, because a position has to exist before it can be managed, and it walks the same session again so an entry priced five minutes earlier can be exited in the session it opened in</td></tr>
@@ -918,7 +919,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 60 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 61 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -1010,7 +1011,7 @@ tr:hover td{background:#f4f2ec}
 <td>Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling, and proposal hit rate compared across pack versions.</td>
 <td>The pack built from the fixture is byte-stable across runs, so a pack change is a deliberate change. The planted null signal is present. No component outside the proposal store accepts a write from the researcher.</td></tr>
 
-<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller, EntrySizer</td>
+<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller, EntrySizer, EntryRuleMeasurement</td>
 <td>The morning screen saying why a slot that never ran did not. Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers, and the switch night with generation 0's record kept beside it.</td>
 <td>A weekday the guard refused reconciled to thirty-two rows and none missing. Every clause of generation 1 still naming its source, and every row read against the gate list of its own night across the switch.</td></tr>
 </table>

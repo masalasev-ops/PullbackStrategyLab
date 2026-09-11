@@ -19518,3 +19518,58 @@ Carried:    **The operator's half: none at this checkpoint.** The rule runs on t
             **Setup-keyed plan dictionaries in four stages, due at 7.11.**
 
             **This session committed code and may not sign it off.**
+
+## 7.9 — 2026-09-11 — phase-7-9-entry-rule-measured — the sourced entry rule measured over the calibration minutes, before it goes live
+
+Built:      **EntryRuleMeasurement**, the operator verb `measure-entry-rule`, run on a store copy. Every
+            flagged calibration row is taken to its entry session, on the rule the backfill used to buy
+            it, which the two now share; the entry rule is watched over that session's bought minutes from
+            the hourly history before it; and the stop the entry resolves is set against the row's own
+            ceiling, from the daily range the engine's own arithmetic gives on the evening it was flagged.
+            **Per side**, never pooled, the report says how many rows entered, how many were refused, and
+            why the rest did not, being no minutes, no level, no flush or no reclaim; how the stops fall,
+            at the session's extreme or the entry candle, against the ceiling, with their medians; and the
+            win-rate ceiling's bound over the stops that entered.
+
+            **The bound is measured from the entry and not from the setup's close.** The stored
+            reconstructed outcome runs from the setup session's close and holds no excursion at all, since
+            no indicator row exists for a calibration date, so it is the wrong population twice over for a
+            stop resolved at the entry minute. `EntryOutcome` measures both halves from the entry price,
+            over the rest of the entry session's minutes and the horizon's daily bars, with the excursion in
+            the ATR the flag evening's bars give, which is what the ceiling's own conversion reads.
+
+            **The report names the level set it was computed over**, the hourly 9 and 21 averages, and says
+            the anchored average price was not evaluated and why, so a second report over the same minutes
+            can sit beside it once the anchor is ruled. It is a JSON file and a text file under the data
+            root's `reports` folder, and the run records the path relative to the root. The stage writes no
+            table, and SCHEMA's list of components that own none says why. `CalibrationMinuteReader` reads
+            the research table on the point-in-time terms the live minutes are read on.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,294 tests**, up from 1,289.
+
+Measured:   **Twice over the fixture, stated apart: forty-six expectations at 7.9, all `DERIVED` by hand.**
+            Over the golden fixture's own calibration rows the report reads 238 long rows and 88 short, and
+            **nothing enters**: the backfill bought minutes for one session of one name, AAPL on
+            2026-08-25, with no hourly history before it, so that row has minutes and no level and every
+            other row has no minutes. That is the operator's run in miniature and it says what it lacked
+            rather than being empty. Over `CalibrationEntryCases`' authored rows, where every daily range is
+            4% so the ceiling is 2%: the long side reads three rows, two entered at a 0.50% stop and one
+            flushed and never reclaimed, **a bound of one in two and one in two achieved**, being two
+            entries that ended ahead of which one traded through its stop first; the short side one row,
+            entered at a 0.60% stop, ahead and stopped first, a bound of nought. Two existing expectations
+            moved, the catalogue's two counts by one.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.8's after, 161 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `f2d9230`
+            with the working tree dirty: GREEN, phase 7, **162 claims, 162 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 13,326, 1,294 tests. The new claim is EntryRuleMeasurement in the catalogue.
+
+Found:      **The reconstructed outcome cannot bound a stop resolved at the entry.** It was the population
+            the plan's wording pointed at, being the ceiling calculator's, and it carries no excursion for a
+            calibration row and runs from the setup's close; the reading measures from the entry instead and
+            says so in its own summary, so the figure is over the population its name says.
+
+Carried:    **The operator's half: the run over the real backfill on a store copy, and the report read.**
+            Not met; it waits on 7.7's operator half, the backfill itself.
+
+            **This session committed code and may not sign it off.**

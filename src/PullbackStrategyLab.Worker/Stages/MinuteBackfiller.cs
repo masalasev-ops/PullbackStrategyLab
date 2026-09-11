@@ -175,7 +175,7 @@ public sealed class MinuteBackfiller
     /// authors no calendar, so this is what a session is, on the terms the intraday fetch counts its
     /// anchor window.
     /// </summary>
-    private static IReadOnlyList<DateOnly> Sessions(SqliteConnection connection, DateTimeOffset observedBefore)
+    public static IReadOnlyList<DateOnly> Sessions(SqliteConnection connection, DateTimeOffset observedBefore)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -217,14 +217,25 @@ public sealed class MinuteBackfiller
         while (reader.Read())
         {
             DateOnly asOf = StoreText.StorageTextToDate(reader.GetString(2));
-            int found = Array.BinarySearch(traded, asOf);
-            int next = found >= 0 ? found + 1 : ~found;
-            DateOnly entry = next < traded.Length ? traded[next] : PlanBuilder.NextWeekday(asOf);
-
-            rows.Add(new MinuteBackfillPlan.Row(reader.GetString(0), reader.GetString(1), entry));
+            rows.Add(new MinuteBackfillPlan.Row(reader.GetString(0), reader.GetString(1), EntrySessionFor(asOf, traded)));
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// The session a calibration row's plan would have been live in: the first session the store holds
+    /// after the row's own, or the next weekday where it holds none. Shared with the measurement that
+    /// resolves the entry over the minutes this stage bought, so the two agree on which session a row is.
+    /// </summary>
+    public static DateOnly EntrySessionFor(DateOnly flagged, IReadOnlyList<DateOnly> traded)
+    {
+        ArgumentNullException.ThrowIfNull(traded);
+
+        DateOnly[] sessions = traded as DateOnly[] ?? [.. traded];
+        int found = Array.BinarySearch(sessions, flagged);
+        int next = found >= 0 ? found + 1 : ~found;
+        return next < sessions.Length ? sessions[next] : PlanBuilder.NextWeekday(flagged);
     }
 
     private static bool AlreadyBought(SqliteConnection connection, MinuteBackfillPlan.Window window)
