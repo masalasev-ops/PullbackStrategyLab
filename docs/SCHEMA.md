@@ -491,6 +491,24 @@ Insert SignalAdmissionTest · Update SignalAdmissionTest · **Read by nobody yet
 
 *Four outcomes reach three statuses, and the missing one is deliberate.* A candidate measured and found not to tighten stays a candidate, because nothing about it was refused and it can be asked again over a wider population; a fourth status would say the question was closed. What separates it from a candidate nobody has measured is `decided_at`, null on the second and set on the first. **The status is one value over two sides**: a signal earns its place if it tightens on either, because the library is one library and a signal admitted for shorts is computed on every setup, and it is refused only where both sides refuse it.
 
+### `check_definition`
+Grain: check name + direction + the session it was introduced on. The two gate lists as data, with the sessions each check was in force for, written from `SetupChecks` by the detectors on the night they run and never authored beside it (see: The signal library stays a spec section and gains a runtime table, reconciled in both directions).
+
+| Column | Type | Note |
+|---|---|---|
+| `check_name` | TEXT | as `SetupChecks` names it |
+| `direction` | TEXT | `long` or `short`. The two gate lists are two lists and a name can be on both (see: Long and short are never pooled into one figure) |
+| `introduced_on` | TEXT | the first session the check was in force for |
+| `retired_on` | TEXT NULL | the first session it was not. Null while it runs |
+| `observed_at` | TEXT | when the row was written. Never touched after the insert |
+| `retired_observed_at` | TEXT NULL | when the retirement was written, **null together with `retired_on`** |
+
+Insert CheckRegister · Update CheckRegister · Read by `check-completeness` and SetupJournal, each holding a setup row to the list in force on its own night
+
+**What it is for.** `check-completeness` claimed from 2026-08-26 that every setup row records a result for every check defined at its date, and compared every row against the list the build carries today, so a gate added to a detector would have read every historical row as missing it. From 7.2 a row is held to the checks this table says were in force on its `as_of`, read as of the instant the reading is for: a check registered afterwards is not yet in the list and a retirement written afterwards has not happened yet.
+
+**The detectors register their list before they write a row under it.** A check the night's list holds and the register does not is introduced on that session, and one the register holds and the list does not is retired on it, so the register moves exactly when a detector's list does. **The first registration of a side reaches back** to the earliest session `setup` already holds a row of that side for, because those rows were written by a detector with no register to write to, and dating its list on the first registered night would read every one of them as recording checks not yet defined. A check retired and brought back is a second row, so the sessions a check was in force for are never overwritten.
+
 ### `control_setup`
 Grain: setup + control ticker + set. Matched controls, drawn nightly, no API cost. Still one row per ticker per set per setup after the tight set was allowed to reach across sessions: where a name qualifies on several sessions the nearest is drawn and the others are not, so a set is five distinct names rather than one name seen five times.
 

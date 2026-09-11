@@ -920,6 +920,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(LedgerFigures());
         measurements.AddRange(NightFigures());
         measurements.AddRange(ReconciliationFigures());
+        measurements.AddRange(CheckRegisterFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -3242,6 +3243,31 @@ public sealed class PhaseReplay : IDisposable
             new Measurement("night.accountedFor",
                 night.Ran + night.NeverRan + night.NotClean + night.Unobservable == night.Slots.Count
                     ? "every slot" : "not every slot"),
+        ];
+    }
+
+    /// <summary>
+    /// What the two detectors registered as their lists on the fixture's night, from 7.2.
+    ///
+    /// The detectors registered before they wrote, so the register holds each side's list introduced
+    /// on the fixture's own session, it being the first registration in a store with no earlier row.
+    /// The counts are the gate lists' own and derivable from ARCHITECTURE's two check lists without
+    /// reading any code; what the figures add is that the store now says it.
+    /// </summary>
+    private IReadOnlyList<Measurement> CheckRegisterFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        DateTimeOffset now = _clock.UtcNow;
+
+        IReadOnlyList<string> longList = CheckRegister.DefinedOn(connection, "long", AsOf, now);
+        IReadOnlyList<string> shortList = CheckRegister.DefinedOn(connection, "short", AsOf, now);
+        IReadOnlyList<string> dayBefore = CheckRegister.DefinedOn(connection, "long", AsOf.AddDays(-1), now);
+
+        return
+        [
+            new Measurement("checkRegister.long", longList.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("checkRegister.short", shortList.Count.ToString(CultureInfo.InvariantCulture)),
+            new Measurement("checkRegister.dayBefore", dayBefore.Count.ToString(CultureInfo.InvariantCulture)),
         ];
     }
 

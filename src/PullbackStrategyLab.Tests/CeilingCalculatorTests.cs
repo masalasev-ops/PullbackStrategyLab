@@ -307,6 +307,31 @@ public sealed class CeilingCalculatorTests : IDisposable
         Assert.Equal(1m, bound.Bound);
     }
 
+    /// <summary>
+    /// A setup whose give-up distance is the literal nought the detector wrote before 031 is out of
+    /// the population, on the same terms as a null one, from 7.2.
+    ///
+    /// <b>This is the test that fails when the guard is removed</b>, and the figures say by how
+    /// much. With the guard, one subject ended ahead and survived: bound 1 over one subject. Without
+    /// it, the nought row is judged against a give-up of nothing, which no excursion is smaller than,
+    /// so it counts as stopped out: two subjects, one of two ahead kept, bound 0.5. The calculator's
+    /// own `IS NOT NULL` passes the row, because the sentinel is a value and not an absence.
+    /// see: A gate handed an absent or degenerate quantity fails rather than passing
+    /// </summary>
+    [Fact]
+    public void A_setup_whose_give_up_distance_is_the_flattened_nought_is_not_in_the_population()
+    {
+        Seed("AAA", "long", returnSigned: 0.08m, maeAtr: -1.0m, stopDistanceRanges: 1.00m);
+        Seed("BBB", "long", returnSigned: 0.05m, maeAtr: 0.2m, stopDistanceRanges: 0m);
+
+        (string Direction, int Subjects, decimal Bound, decimal Achieved) bound =
+            Assert.Single(Stage().Compute(AsOf).Bounds);
+
+        Assert.Equal(1, bound.Subjects);
+        Assert.Equal(1m, bound.Bound);
+        Assert.Equal(1m, bound.Achieved);
+    }
+
     [Fact]
     public void A_forward_return_filled_after_the_run_instant_is_not_read()
     {

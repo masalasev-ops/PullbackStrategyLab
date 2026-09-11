@@ -2979,3 +2979,18 @@ Why:  7.1's row asks `slot-diagnostics` to assert the guard's new line, and the 
 Was:  "| `slot-roster` | every CI run | The night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction |"
 Now:  The same row, followed in the Asserts cell by "And the four reasons a slot did not run for agree across Core, the store's constraint and the slot script, in both directions".
 Why:  7.1's sixth reconciliation. The check's two floors of twenty-two became equalities against the Core declaration in the same commit, which changes no row here.
+
+### 2026-09-11 — BUILD_PLAN.md — cites The signal library stays a spec section and gains a runtime table, reconciled in both directions
+Was:  "through a `check_definition` table on the signal library's pattern, seeded from `SetupChecks`"
+Now:  "through a `check_definition` table CheckRegister writes on the signal library's pattern, seeded from `SetupChecks`"
+Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 55 components are listed by layer," and the P7 Builds cell "NightReconciler"
+Now:  "The 56 components are listed by layer," and "NightReconciler, CheckRegister"
+Why:  CheckRegister joins the catalogue at 7.2 as the one writer of `check_definition`, which `writer-ownership` resolves against the catalogue.
+
+### 2026-09-11 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "| `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |"
+Now:  The same row, followed in the Asserts cell by "The date is real from 7.2: each row is held to the list `check_definition` says was in force on its night, every row of a side on one night records one set, and the latest night's set is the build's".
+Why:  The label claimed date-awareness from 2026-08-26 and every row was compared with today's list; the row now says what the check reads.

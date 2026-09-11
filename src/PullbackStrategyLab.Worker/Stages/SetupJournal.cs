@@ -122,9 +122,17 @@ public sealed class SetupJournal
                 continue;
             }
 
-            IReadOnlyList<string> expected = string.Equals(setup.Direction, "long", StringComparison.Ordinal)
-                ? SetupChecks.Long
-                : SetupChecks.Short;
+            // The list in force on the night being sealed, from 7.2, rather than the one the build
+            // carries: a journal rerun for an old date after a gate was added would otherwise record
+            // every row of it as missing a check that did not yet exist. A store the detectors have
+            // not registered a list in since 063 holds none, and the build's own list is then the
+            // only one there is.
+            IReadOnlyList<string> registered = CheckRegister.DefinedOn(connection, setup.Direction, asOf, sealedAt);
+            IReadOnlyList<string> expected = registered.Count > 0
+                ? registered
+                : string.Equals(setup.Direction, "long", StringComparison.Ordinal)
+                    ? SetupChecks.Long
+                    : SetupChecks.Short;
 
             string[] missing = [.. expected.Where(name => !results.Any(r => string.Equals(r.Name, name, StringComparison.Ordinal)))];
 

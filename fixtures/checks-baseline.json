@@ -79,7 +79,9 @@
         "gates in the short check list": 10,
         "checks the detectors declare": 20,
         "setup rows read back from the replay store": 3,
-        "check results across those rows": 30
+        "check results across those rows": 30,
+        "check definitions the replay's register holds": 20,
+        "nights and sides whose rows record one set of checks": 2
       }
     },
     "checkpoint-test-count": {

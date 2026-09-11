@@ -19063,3 +19063,72 @@ Carried:    **The operator's half is not met.** It is three acts on the machine 
             7.1's operator's half in its own row, so the obligations table gains no row for them.
 
             **This session committed code and may not sign it off.**
+
+## 7.2 — 2026-09-11 — phase-7-2-instruments — the win-rate bound stops counting a nought as a stop, and every row is held to its own night's gate list
+
+Built:      **A nought give-up distance is out of the bound's population.** `WinRateCeiling.Of` leaves out
+            every subject whose give-up distance is not above nought before anything is judged, under the
+            ruling that a nought is not evidence of a stop. **The guard sits in `Of`, the one caller of
+            `Survived`, rather than inside `Survived`**, because "absent" means out of the population and
+            `Survived` answers only survived or not: left in, the row was judged against a give-up of
+            nothing, counted as stopped out, and stayed among the subjects that ended ahead and among all
+            subjects. `CeilingCalculator`'s `IS NOT NULL` could not see it, the column being text and the
+            sentinel a value. `tools/derive-indicators.py --ceiling`, which shares no code with the bound,
+            restates the same rule from the ruling.
+
+            **`check_definition` and CheckRegister.** Migration 063 creates the gate lists as data, one row
+            per check, side and introduction, with the session each check was in force from and the first
+            it was not, stamped when written and when retired. The detectors register the list they run
+            before they write a row under it: a check the list holds and the register does not is
+            introduced on that session, one the register holds and the list does not is retired on it.
+            **The first registration of a side reaches back** to the earliest session `setup` already
+            holds for it, because those rows were written with no register and the list being registered
+            is the one that wrote them.
+
+            **`check-completeness` reads the date it has always named.** Each row is held to the list in
+            force on its own `as_of`; every row of a side on one night records one set; the latest night's
+            set is the build's list; and the register's list in force is `SetupChecks`, in both directions.
+            `SetupJournal` takes the sealed night's list from the register too, falling back to the
+            build's list only in a store no detector has registered in.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,247 tests**, up from 1,240.
+
+Measured:   **7.2's done condition, both halves, as tests that fail when the guard is removed.** A store
+            holding one subject that ended ahead and survived and one with a nought give-up distance: with
+            the guard, one subject and a bound of 1; without, two subjects and a bound of 0.5.
+            `CheckRegisterTests.A_gate_added_to_the_list_leaves_no_historical_row_reading_as_missing`
+            registers a list on one night and the list plus one gate the next, and holds each night's row
+            to its own list with nothing missing, then holds the first row to the later list and reads the
+            added gate as missing, which is what `check-completeness` did to every row until now.
+
+            **Over the golden fixture**, seven expectations at 7.2, all `DERIVED`: the authored ceiling
+            scenario `a-nought-give-up-is-not-a-trade` at two subjects, bound 1.0000, achieved 0.5000 and
+            gap 0.5000, re-derived by the Python restatement before the expectation was written; and the
+            register holding ten checks a side on the fixture's night and none the night before, derived
+            from ARCHITECTURE's two check lists. `store.schemaVersion` moved 62 to 63 and the catalogue
+            counts 55 to 56 and 48 to 49.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.1's after, 156 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `25767be`
+            with the working tree dirty: GREEN, phase 7, **157 claims, 157 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,365, 1,247 tests. The new claim is CheckRegister in the catalogue.
+
+Found:      **The plan placed the guard in the calculator's SQL filter, and the filter cannot hold it.**
+            `stop_distance_ranges` is text, so `> 0` in SQL would compare a string, and the reading through
+            the ratio crossing happens after the rows are read. The guard is on the parsed value.
+
+            **Where the register starts is a judgement, recorded here and in SCHEMA.** Dating the first list
+            on the first registered night would read every row already in the store as recording checks not
+            yet defined; reaching back to the earliest row of the side dates the list to the rows it wrote.
+            It assumes the store's existing rows were written under the list the build runs on that first
+            night, which holds for the fixture and is the only statement the store can make about rows that
+            predate the register.
+
+Carried:    **The operator's half is not met**: `ceiling` has not been run over the live store and its
+            output has not been read, because a build session does not open the running store. The live
+            store holds 35 `setup` rows whose give-up distance is the literal nought, all on 2026-08-27, so
+            the first run after this build is the first bound that does not count them as stopped out. The
+            register is written by the detectors from the first night the production tree carries this
+            build, once the store is migrated to 63.
+
+            **This session committed code and may not sign it off.**

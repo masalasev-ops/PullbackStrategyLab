@@ -122,6 +122,11 @@ public sealed class ShortSetupDetector
         using SqliteConnection connection = _connections.OpenWrite();
         using RunScope run = _runLogger.Begin(connection, Name, SetupReader.SetupTable);
 
+        // The list this night runs, registered before a row is written under it, so every row can be
+        // held to the checks in force on its own night rather than to whatever the build carries
+        // when it is read. From 7.2.
+        new CheckRegister(_clock).Register(connection, Direction, SetupChecks.Short, asOf);
+
         IReadOnlyList<string> members = UniverseSnapshotReader.Members(connection, asOf);
         var source = new StoredFigures(connection, _options.SessionZone);
 
