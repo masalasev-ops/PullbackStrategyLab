@@ -19770,3 +19770,247 @@ Carried:    **The operator's half: not met.** The forecast over the live nights 
             in the obligations table.
 
             **This session committed code and may not sign it off.** 7.12 is a fresh session's.
+
+## 7.12 — 2026-09-11 — phase-7-sign-off — the phase signs off on twelve checkpoints, with the amended done condition upheld, one obligation row widened to the readers the switch reaches, and a forecast that pairs a night with the wrong evening
+
+Phase 7 signs off, covering 7.0 through 7.11. Fresh session, no commit to this repository in phase 7
+before this one, and no code in this one: two specs corrected, two records added to, this entry and
+one fixture permit. **Worked in a worktree of its own**, `PullbackStrategyLab-signoff7` on
+`phase-7-12-sign-off` off `origin/main` at `6ffcef3`, created by this session, so no `artifacts/` file
+existed before either instrument ran. The production checkout was not touched and is still at
+`fdc975c` on `main`, clean.
+
+Reproduced: `tools/ci.ps1` green on Windows, **34 steps, 1,310 tests, exit 0**, its first line naming
+            `shell PowerShell 5.1.26100.9444 (Desktop), host DESKTOP-JFQU9GM`.
+            `tools/verify-phase.ps1` **GREEN on phase 7**, **163 claims, 163 passed, 0 failed, 0 out
+            of scope, 0 unexamined**, coverage examined 13,684 with 0 unexamined, 1,924 expectations of
+            which 1,300 `DERIVED`, 624 `FROZEN` and 1 void, inputs CAPTURED 70 and AUTHORED 144, and 0
+            expectations changed since the last commit. **The report carries
+            `6ffcef31122f5a03bea4c7656d8121cf0348c419`, working tree clean, generated 2026-09-11
+            19:31:54Z**, and the wrapper named Git for Windows' bash 5.3.15 as what ran the gate.
+            **Out of scope and unexamined, apart: nought claims and nought claims.** The coverage
+            items reported out of scope all rest on a price or are exempt by design, and none names a
+            checkpoint, so none can fall overdue. Coverage examined is three above the 13,681 7.11
+            recorded, with every property scope at or above its floor; 7.11's entry does not say which
+            tree its run read, so the difference is recorded rather than attributed. **All twelve pull
+            requests, #108 to #119, show ten of ten GitHub checks passing**, read with `gh pr checks`,
+            which is where `two-platform`'s macOS half is carried: this machine cannot run
+            `tools/ci.sh`.
+
+            **The first attempt at both produced nothing, and the provenance line is how that was
+            seen.** They were invoked as `pwsh -File`, this machine has no `pwsh`, and both logs held
+            nothing but the exit-code line this session appended, with `$LASTEXITCODE` empty. Neither
+            log opened with a shell and a host, so neither was a result. Both were then run from
+            Windows PowerShell, which is what the scheduler runs too.
+
+Ruled:      **7.10's amended done condition stands.** The entry says in those words that it amends
+            its own done condition, and the amendment meets every test this session could put to it.
+            **The quotations are the source's**: `SOURCES.md`'s "hold-limit, short" quotes "I'm not
+            trailing the shorts like the longs, like the close above the 9 EMA" at `P2` 1:47:28 and
+            "generally I hold my shorts for only maybe two to three days" at `P1` 25:18, and the exits
+            section sets its prediction down before the trace, a short trail as the author's mirror,
+            and records that the trace contradicts it. **CHANGELOG holds the prior text**: the entry of
+            2026-09-11 citing **Generation 1 trims 15% at 3R and again at 5R on both sides, and a short
+            is held three sessions rather than trailed** quotes the changed clause of the deliverable
+            and the whole done condition, and what it elides with `[...]` is text
+            `git diff de8df3f 075e75f -- docs/BUILD_PLAN.md` shows unchanged. **It is not narrower**: it
+            replaces the short trail's bar with the hold limit's bar, and the fixture holds that bar as
+            `DERIVED`. Re-derived here: the short trims 45 at 42.30 and 45 at 37.20 with ten basis
+            points on each fill and buys 210 at the 2026-08-31 open for 37.5375, so 7.6077 times 45,
+            12.7128 times 45 and 12.4125 times 210 come to 3,521.0475 over a realised risk of 765,
+            4.6027R; the long's three legs reconcile the same way to 2,141.826 and 2.7998R. **And the plan's own rule reaches it**:
+            the plan said the built rule takes whatever standing the trace records, and a mirror
+            answers a side the source leaves open, which this side it does not. The three sessions
+            are the upper of his two figures, a reading recorded in the decision and in `SOURCES.md`
+            rather than a threshold this session proposes.
+
+            **7.8 and 7.10 apply generation 1's execution to V0's live plans before the switch, and
+            that stands, with a dated note.** It is the one place in the corpus a running version's
+            execution changes in place, so it is recorded under **An approved proposal creates a new
+            version from zero, and a running version is never edited** rather than only in the two
+            entries that did it. That ruling's reason is that an edit contaminates a record with no way
+            to detect it afterwards, and both halves are false here: migration 067 gives every plan an
+            `entry_rule` of `evening-prices` or `flush-reclaim` with a constraint tying the prices to
+            the first, every exit records its rule, and V0 holds no trade, no score and no version
+            beside it. **The window has not opened**, the production checkout being at `fdc975c`, and
+            it is as long as the gap the operator leaves between moving the checkout and registering.
+
+            **The forecast's headroom is not right for the live nights, in two respects, and neither
+            changes a figure it counts.** Subtracting every other stage's spend in the quota day is the
+            right capacity question, and including the next evening's stages is right with it, because
+            they spend from the same vendor day. **But the night is paired with the wrong evening.**
+            `IntradayFetcher` at 20:30 buys the session just closed for the names flagged the evening
+            before, `PhaseReplay` saying so at its fetch, so night N's list is bought on the evening of
+            the session after it, and `GenerationOneForecast` reads the quota day holding 20:30 on N,
+            which is the day the fetch of the night before's list spends in. From Monday to Wednesday the two days
+            hold much the same spend. A Friday's list is set against a Saturday UTC day holding almost
+            nothing where its fetch spends on Tuesday's, beside that evening's `universe-build`, and a
+            Thursday's the other way. **And the casualty it names is the wrong one.** The fetch is the
+            first spender in a quota day that opens at midnight UTC, so `RunLogger.Begin` hands it
+            nearly the whole ceiling, and it buys every name; what the ceiling then cuts is the next
+            evening's first stages, `universe-build` among them, which is the one stage no rerun
+            replaces. The names the report lists as going without minutes are what a fetch spending
+            last would lose. **Neither could show over the fixture**, where every replay stage ran on
+            the previous quota day and the spend is a structural nought, and no test gives the spend
+            term a value other than nought. RUNBOOK's step 2 now tells the operator to read each
+            night's cost against the next row's headroom and what a night over it costs; the repair
+            to the report is code and is under what is left.
+
+Accepted:   **7.1**, the reconciliation as the `index` slot's second verb. `daily-bars` asks the bulk
+            endpoint for its own date alone and `index-bars` refetches every tracker's whole history,
+            so only the second can tell a closed session from a lost ingest, and the slot table carries
+            `'index' = @(@('index-bars'), @('reconcile-night'))`. It amended 7.1's deliverable cell, said
+            so, and its prior text is in CHANGELOG.
+            **7.6**, `retired`. A baseline is never accepted or rejected on its own pre-registration,
+            and `unresolved` is what closing a generation makes of the versions beside it. Migration 065
+            allows `retired` on a baseline alone and a baseline only `open` or `retired`.
+            **7.7**, no short rows over the fixture. "Short" is short of the eleven-session warm-up, not
+            the short side, and the naming clause of the done condition has an empty population over the
+            golden fixture, `minuteBackfill.short` reading none. The stage's own write is held by
+            `MinuteBackfillTests` over a store with one row short and one not, so both populations of
+            that clause are run.
+            **7.8**, the sizer as the `resolve` slot's second verb, reading what `resolve-triggers`
+            writes and adding no task, with RiskGate still the only writer of orders; and `plan_audit`'s
+            third pair, which compares the executed plan's shares, being the size the entry resolved,
+            against the order's, an intention against an outcome as before.
+            **7.9**, the bound measured from the entry. A calibration row carries no excursion and runs
+            from the setup's close, so for a stop resolved at the entry minute `EntryOutcome` is the only
+            population the bound's name fits, and the report says so.
+            **7.10**, trims at his two levels and no third, "extended" being his eye (`P2` 41:22); the
+            later trims in `further_*` with their own stamp, which `PositionReader` shows only once that
+            stamp is inside the bound and folds into the totals `TradeJournal` reads on either side; and
+            `TrimArithmetic.SharesOf` returning nought where the planned fraction would take everything
+            held.
+            **7.11**, the switch as the register and a night keeping its first detection's generation,
+            which `SetupReader.GenerationRecordedOn` reads as the highest generation any `setup` or
+            `below_floor` row of the night carries, across both sides; the ticker order reported and not
+            changed, subject to the ruling above on what it describes; VariantScorer unchanged, no
+            generation 1 version being admissible; ReplayHarness reading generation 0's rows alone, so
+            its population stops at the switch night, with nothing to replay for; and SetupCapper
+            ranking a candidate with no give-up distance last. **Its example is narrower than its
+            comment**: generation 1's `dip-shape` requires at least one pullback bar, so "a thrust that
+            has not pulled back yet" cannot reach the cap, and PlanBuilder refuses a candidate with no
+            geometry a plan and counts it. The key it ranks the others on is a finding below.
+
+Verified:   **The plan's verification list, check by check.** `decision-resolves` and
+            `no-superseded-citation` are steps 5 and 6 and green: 163 decision names, 1,528 citations
+            resolved, and 1,361 checked against the 15 names under Previously decided.
+            **`stated-counts`** reads seven phases and phase 7's thirteen rows among its 64 claims.
+            **`clause-provenance`** reconciles 19 generation 1 clause rows and 4 exit rows against the
+            detector's and the two exit rule sets' lists in both directions, requiring 14 and 4
+            quotations, beside generation 0's 20. **`check-completeness`** holds the switch night's 24
+            `setup` rows to generation 1's list and its 2 companion rows to generation 0's, and the
+            register's list for the night before to generation 0's. **Its population is stated rather
+            than assumed**: that replay holds rows on the switch night only, so the side before the
+            switch is asserted through the register, and generation 0's rows are held in the ordinary
+            replay. **`slot-roster`** reconciles by equality, 38 slots in `tools/nightly.ps1`, in its
+            parameter set and in the Core declaration, and accounts for 15 advertised stages as operator
+            verbs or not the night's. **`writer-ownership`** holds 90 declared writers whose store and
+            component both exist and 11 operations with more than one writer, each disjointness stated,
+            the phase's new tables among them. **Done condition seven**: 7.1 to 7.11 each carry `DERIVED`
+            expectations, 8, 7, 5, 33, 24 of 59, 8, 15, 26, 46, 36 and 28, and 7.0 stands on its permit.
+
+Found:      **Eight findings. None reopens the phase**: none fails a done condition and none breaks a
+            check, which is the test the stopping rules set. Four are corrected here because they are
+            prose, one is a row widened, and three are code this session may not write.
+
+            **The 7.11 row is well formed and narrower than its population.** It reconciles under
+            `stated-counts` between the obligations table and the operator's, and it names the
+            scoreboard. `CeilingCalculator` and `ScoredSetupReader` read `setup` with no generation too,
+            so from the first Saturday after the switch `ceiling`, `twin-pairs` and `admit-signals`
+            store figures and rulings over two gate sets' rows, which is the fifth shape in a stored
+            result rather than on a page. `SetupReader.PopulationTo` sums `passed_all` across
+            generations and is latent while the pack refuses under generation 1. **Two readers carry
+            generation 0's quantity as well as its population**: `ceiling` judges survival against the
+            evening give-up distance, and SetupCapper ranks generation 1's candidates on it, while from
+            7.8 the stop is resolved at the entry minute. The row is widened rather than joined by a
+            second, and a dated note under **The screen and the cap both rank on give-up distance in
+            daily-range units, ascending** records that its mechanism is generation 0's.
+
+            **RUNBOOK's schedule described generation 0's exits**, the `manage` row a single short trim
+            and the hourly close above the 50-day, three checkpoints after 7.10 retired both. Corrected,
+            with the `trades` row's trimmed-short sentence.
+
+            **RUNBOOK's switch procedure could not be followed without guessing, in four places.** Step 1
+            waits on a 17:00 update task the same document records as absent; step 2 bounds the forecast
+            to nights since 7.4, of which the production checkout has run none, where the forecast reads
+            nothing 7.4 froze; a clone derives its data root from its own location, and nothing said the
+            store and the secrets file must be carried in; and the minute backfill is outside the lab's
+            count and inside the vendor's own allowance, which the evening shares. Each corrected, and a
+            step added naming what binds from the switch night.
+
+            **7.9's golden figure is over a mixed population and does not say so.** 238 long rows is the
+            walk's 237 and the authored AAPL row, which is also the one row `noLevels` counts; 7.7 states
+            that split and 7.9's entry and expectation call all 238 "the golden fixture's own calibration
+            rows". The figures are right and the entry is corrected here: the long side's golden reading
+            is 237 captured rows and 1 authored.
+
+            **The operator section's prose counts had gone stale beside a registered heading.** It read
+            fourteen rows under a heading of fifteen, with eight and nine from earlier states of the
+            list, and none of them is registered with `stated-counts`. Restated without numbers a later
+            row would stale again.
+
+            **The pack's population section adds long and short into one figure three times**, `setups`,
+            `setups per session` and `passed every gate`, under a doc comment saying the two sides are
+            never added. It predates this phase, from 6.4, and it is in the build the production
+            checkout runs, so the first live cut, due on Saturday 2026-09-12, carries it to the seat.
+
+            **The forecast's pairing and its named casualty**, ruled above.
+
+            **6.9's five code findings reached the end of phase 7 untaken.** They were named rather than
+            carried because no phase 7 existed, and phase 7 was then planned without them: band 3's two
+            pooled panels are still at `ScoreboardBuilder` lines 581 to 609, and `tools/migrate` and
+            `tools/snapshot-db` still assign no data root and refuse none. Naming a code finding in a
+            record is the route by which it is not found again, and this entry repeats it only because
+            the table has no due point a code repair can honestly carry.
+
+Corrects:   **7.9's entry of 2026-09-11**, whose "238 long rows" over "the golden fixture's own
+            calibration rows" is 237 rows of the walk and 1 authored row, as above. The entry stands as
+            merged.
+
+Left:       **What is left is code**, and none of it may be written by the session that signs the
+            phase off: the forecast's quota day keyed on the session after the night and its report naming the next
+            evening's stages rather than the fetch's later names; the filter or stated population each
+            reader in the widened row needs once the operator rules; the pack's population section
+            split by side; and 6.9's five, being band 3's two pooled panels, the two shell scripts that
+            must refuse an unset root, the status band's session, eight clause reasons and the pooled
+            shape in `surface-claims`' own fixture.
+
+Permitted:  **7.12 names its own `frozenOnly` permit**, on the footing 2.12, 3.7, 3.15, 4.13, 5.7 and
+            6.9 stand on: a sign-off adds no stage to the replayed pipeline and no behaviour to freeze,
+            and what it corrects is prose. `stated-counts`' permit sentence moves from thirteen to
+            fourteen with it.
+
+Carried:    **None raised as a row, and one widened**: the row raised at 7.11, due at the operator,
+            now names every reader of `setup` across the switch and the two that read the evening
+            give-up distance. The table stays twenty-one rows, fifteen of them due at the operator.
+
+Operator:   **What each checkpoint left for the operator, and whether its entry says so in words.**
+            7.0 names no operator's half in its row and carries two acts: moving the production
+            checkout forward once the store is migrated, and reading the logs of 2026-09-08 and
+            2026-09-09. 7.1: "The operator's half is not met", the clone, the tasks repointed with the
+            17:00 update task, and the unread nights read. 7.2: "not met", `ceiling` over the live
+            store. 7.3: "No operator's half." 7.4: "not met", the `signals` task at Saturday 08:15,
+            with `backfill-signals` beside it. 7.5 and 7.6: "No operator's half." 7.7: "Not met", the
+            fetch. 7.8: "none at this checkpoint". 7.9: "Not met", the run on a store copy. 7.10: "none
+            owed by this checkpoint alone". 7.11: "not met", the forecast, the registration and the
+            first switch night. **Every one says it in words.**
+
+            **The order it has to happen in, migration first.** (1) In the tree the tasks point at, in one
+            sitting between two slots, `git pull --ff-only` on `main`, then `tools/migrate.ps1` with
+            `PullbackStrategyLab__DataRoot` set to that tree's `data/live`, reading back the path and 61
+            to 69. (2) `reconcile-night` naming 2026-09-07 and each evening after it that the index
+            slot's own seven days do not reach, which also reads the two evenings 7.0 names. (3)
+            `ceiling` over the migrated store, which the Saturday slot runs once the tree has moved,
+            read before the switch. (4) The `signals` task
+            registered, and `backfill-signals` run once. (5) The clone, if it is to precede the switch,
+            carrying the store and the secrets in on the move procedure's steps 1 to 6 before the tasks
+            are repointed and the update task registered. (6) `backfill-minutes --dry-run`, read against
+            the vendor's own allowance, then the run. (7) A store copy, and `measure-entry-rule` on it.
+            (8) `forecast-generation-one` on a copy over every night with a snapshot, read on RUNBOOK's
+            corrected terms. (9) A ruling on the widened row, or the switch taken knowing what it binds.
+            (10) `close-generation V1 --generation-one --dry-run`, then the act before 18:20 on a weekday.
+            (11) The morning after, read.
+
+Next:       **Nothing scheduled.** Phase 7 is the last phase `BUILD_PLAN.md` holds, and what follows it
+            is the operator's list above and, if a build session is commissioned, the code named above.
