@@ -684,6 +684,7 @@ public sealed class PhaseReplay : IDisposable
         Record("manage.closedGiveUp", managed.ClosedGiveUp);
         Record("manage.closedTrail", managed.ClosedTrail);
         Record("manage.closedReclaim", managed.ClosedReclaim);
+        Record("manage.closedHoldLimit", managed.ClosedHoldLimit);
         Record("manage.trimmed", managed.Trimmed);
         Record("manage.exitsArmed", managed.ExitsArmed);
         Record("manage.heldNoQuote", managed.HeldNoQuote);
@@ -943,6 +944,9 @@ public sealed class PhaseReplay : IDisposable
 
         // Over the calibration rows and the minutes the backfill above bought, and over authored rows.
         measurements.AddRange(EntryRuleMeasurementFigures());
+
+        // Over a store of its own, so nothing the fixture's night recorded moves.
+        measurements.AddRange(ExitFigures());
 
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
@@ -3647,6 +3651,64 @@ public sealed class PhaseReplay : IDisposable
                 figures.Add(new($"{at}.achieved", Fraction(side.Achieved)));
             }
         }
+
+        return figures;
+    }
+
+    /// <summary>
+    /// A long and a short position walked to their exits over four sessions, from 7.10.
+    ///
+    /// <b>AUTHORED, over a store of its own.</b> The fixture's night opens no position, so every trim
+    /// and exit below is <see cref="ExitCases"/>' and derivable by hand from the prices it writes. The
+    /// shipped broker and manager run over them. Long and short are stated apart and never added.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private static IReadOnlyList<Measurement> ExitFigures()
+    {
+        using var cases = new ExitCases();
+        IReadOnlyList<ManageRunResult> nights = cases.Run();
+
+        string Local(DateTimeOffset instant) =>
+            TimeZoneInfo.ConvertTime(instant, TimeZoneInfo.FindSystemTimeZoneById(SessionBoundaries.UsEquities))
+                .ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        string Day(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        var figures = new List<Measurement>
+        {
+            new("exits.trimsByNight", string.Join(",", nights.Select(n => n.Trimmed))),
+            new("exits.armedByNight", string.Join(",", nights.Select(n => n.ExitsArmed))),
+        };
+
+        foreach ((string side, string ticker) in new[] { ("long", ExitCases.Long), ("short", ExitCases.Short) })
+        {
+            IReadOnlyList<StoredFill> fills = cases.Exits(ticker);
+            StoredFill[] trims = [.. fills.Where(f => f.Leg == "trim")];
+            StoredFill exit = fills.Single(f => f.Leg == "exit");
+            StoredPosition closed = cases.Position(ticker, ExitCases.Sessions[^1]);
+
+            figures.Add(new($"exits.{side}.trims", trims.Length.ToString(CultureInfo.InvariantCulture)));
+
+            for (int i = 0; i < trims.Length; i++)
+            {
+                string at = $"exits.{side}.trim{i + 1}";
+                figures.Add(new($"{at}.bar", $"{Day(trims[i].SessionDate)} {Local(trims[i].FilledAt)}"));
+                figures.Add(new($"{at}.level", Figure(trims[i].RestingPrice)));
+                figures.Add(new($"{at}.price", Figure(trims[i].Price)));
+                figures.Add(new($"{at}.shares", trims[i].Shares.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            figures.Add(new($"exits.{side}.exit.reason", closed.ExitReason ?? "none"));
+            figures.Add(new($"exits.{side}.exit.armedSession", closed.ExitArmedSession is DateOnly armed ? Day(armed) : "none"));
+            figures.Add(new($"exits.{side}.exit.bar", $"{Day(exit.SessionDate)} {Local(exit.FilledAt)}"));
+            figures.Add(new($"exits.{side}.exit.price", Figure(exit.Price)));
+            figures.Add(new($"exits.{side}.exit.shares", exit.Shares.ToString(CultureInfo.InvariantCulture)));
+            figures.Add(new($"exits.{side}.realisedPnl", Figure(closed.RealisedPnl!.Value)));
+            figures.Add(new($"exits.{side}.realisedR", Figure((decimal)closed.RealisedR!.Value)));
+        }
+
+        StoredPosition between = cases.Position(ExitCases.Short, ExitCases.Sessions[1]);
+        figures.Add(new("exits.short.asOfSecondSession.trimmedShares", (between.TrimmedShares ?? 0).ToString(CultureInfo.InvariantCulture)));
 
         return figures;
     }

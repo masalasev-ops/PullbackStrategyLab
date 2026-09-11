@@ -13,12 +13,14 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// What happened to the positions PaperBroker opened: the two rule sets, and every exit.
 ///
 /// <b>Two rule sets and two code paths, which is the deliverable rather than a preference.</b>
-/// <see cref="LongExitRules"/> is a daily-series condition evaluated once at the close and acted on
-/// the next morning. <see cref="ShortExitRules"/> is an intraday level plus an hourly-close
-/// condition, both acted on inside the session. They are not mirror images and one routine with a
+/// <see cref="LongExitRules"/> ends a position on a daily-series condition evaluated once at the
+/// close and acted on the next morning. <see cref="ShortExitRules"/> ends one on the sessions it has
+/// been held, from 7.10, because he does not trail his shorts. Both trim at 3R and again at 5R inside
+/// the session, each side through its own rule. They are not mirror images and one routine with a
 /// sign flag could only be their union, which is a strategy nobody trades and the single easiest
 /// way to get a convincing answer to the wrong question.
 /// see: Long and short are never pooled into one figure
+/// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
 ///
 /// <b>Every exit is here, including the give-up point, and that is what moved at 4.8.</b> The rule
 /// is that the exit is whichever of the give-up point and the rule set is reached first, and a
@@ -97,9 +99,10 @@ public sealed class PositionManager
             + $"{result.LongsManaged} long and {result.ShortsManaged} short");
         Console.WriteLine(
             $"{Name}: {result.ClosedGiveUp} closed on the give-up point, {result.ClosedTrail} on the trail, "
-            + $"{result.ClosedReclaim} on an hourly reclaim");
+            + $"{result.ClosedHoldLimit} on the short hold limit, {result.ClosedReclaim} on an hourly reclaim "
+            + "armed before that rule retired");
         Console.WriteLine(
-            $"{Name}: {result.Trimmed} trimmed at 3R, {result.ExitsArmed} exit(s) armed for the next open, "
+            $"{Name}: {result.Trimmed} trim(s) taken at 3R or 5R, {result.ExitsArmed} exit(s) armed for the next open, "
             + $"{result.HeldNoQuote} held because the session quoted no book");
         Console.WriteLine(
             $"{Name}: {result.Slipped} charged the captured spread, {result.Gapped} filled at an open "
@@ -118,8 +121,8 @@ public sealed class PositionManager
     /// Run both rule sets over <paramref name="sessionDate"/>.
     ///
     /// Idempotent: every update is guarded on the state it changes, so a close applies only to a row
-    /// this run still reads as open and a trim only to one that has not been trimmed. A rerun over a
-    /// managed session writes nothing.
+    /// this run still reads as open and a trim only to one holding the trims this run read. A rerun
+    /// over a managed session writes nothing.
     /// </summary>
     public ManageRunResult Manage(DateOnly sessionDate)
     {
@@ -169,50 +172,27 @@ public sealed class PositionManager
                     .Select(s => new QuotedSpread(s.Pass, s.SpreadBasisPoints!.Value, s.QuoteLagSeconds, s.StraddleSeconds))),
             StringComparer.Ordinal);
 
-        // The 50-day average as it stood before this session, and the factor that puts a printed
-        // price on the basis it is computed on. Read once a name rather than once a minute, and
-        // strictly before this session on both halves, because an hourly bar at 11:30 cannot be
-        // measured against an average computed from the 16:00 close.
-        Dictionary<string, Reclaim?> reclaimAgainst = names.ToDictionary(
-            name => name,
-            name => ReclaimLevelOf(connection, name, sessionDate, _options.SessionZone),
-            StringComparer.Ordinal);
-
         SessionReplayClock clock = SessionReplayClock.ForSession(connection, names, sessionDate, sessionDate, _options.SessionZone);
 
         List<Holding> live = [.. open.Select(p => Holding.From(p, plans[p.SetupId], sessionDate))];
         var writes = new List<Action<SqliteTransaction>>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        var hourOf = new Dictionary<string, int?>(StringComparer.Ordinal);
-        var lastBarOfHour = new Dictionary<string, StoredIntradayBar>(StringComparer.Ordinal);
         int minutesWalked = 0;
 
         foreach (ReplayMinute minute in clock.Walk())
         {
             minutesWalked++;
 
-            // Both of these are facts about the minute rather than about any one position, so they
-            // are decided once over every name that traded in it. Two positions can share a ticker,
-            // and asking each of them separately would give the second one a different answer to
-            // the same question.
+            // A fact about the minute rather than about any one position, so it is decided once over
+            // every name that traded in it. Two positions can share a ticker, and asking each of them
+            // separately would give the second one a different answer to the same question.
             var firstMinuteOf = new HashSet<string>(StringComparer.Ordinal);
-            var reclaimedNow = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach ((string ticker, StoredIntradayBar traded) in minute.Bars)
+            foreach ((string ticker, _) in minute.Bars)
             {
                 if (seen.Add(ticker))
                 {
                     firstMinuteOf.Add(ticker);
-                }
-
-                // The hourly grid, closed out one bar behind: an hourly close is only known once a
-                // minute of the next hour has printed, and the fill is at that minute's open, which
-                // is the next price after the close and the same mechanic the trail takes from the
-                // daily series.
-                if (ClosedTheHourAboveTheAverage(
-                        ticker, traded, sessionDate, hourOf, lastBarOfHour, reclaimAgainst[ticker], _options.SessionZone))
-                {
-                    reclaimedNow.Add(ticker);
                 }
             }
 
@@ -236,11 +216,6 @@ public sealed class PositionManager
                     continue;
                 }
 
-                if (!holding.IsLong && holding.ArmedReason is null && reclaimedNow.Contains(holding.Ticker))
-                {
-                    holding.ArmFor(ExitReason.Reclaim);
-                }
-
                 QuotedSpread? quote = quotes[holding.Ticker];
                 ExitCandidate? exit = ExitReason.First(
                     CandidatesAt(holding, bar, firstMinuteOf.Contains(holding.Ticker)));
@@ -248,11 +223,19 @@ public sealed class PositionManager
                 if (exit is not null)
                 {
                     Close(holding, exit, bar, quote, sessionDate, observedAt, writes, tally);
+                    continue;
                 }
-                else if (holding.TrimIsAvailable && TriggerTouch.Reached(
-                             SetupDirection.Short, holding.TrimLevel!.Value, bar.High, bar.Low))
+
+                // Every level this bar reached, in order, because a resting instruction at each of
+                // them would have filled in it. A trim that cannot be taken, for want of a quote or of
+                // shares to take, stops the ladder for this minute rather than skipping a level.
+                while (holding.NextTrimLevel is decimal level
+                       && TriggerTouch.Reached(holding.Direction, level, bar.High, bar.Low))
                 {
-                    Trim(holding, bar, quote, observedAt, writes, tally);
+                    if (!Trim(holding, level, bar, quote, observedAt, writes, tally))
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -283,12 +266,21 @@ public sealed class PositionManager
             tally.ExitsArmed++;
         }
 
-        // An arm the walk raised and could not fill, because the store held no later minute of the
-        // session. It fills at the next session's open, which is the same answer the trail takes.
-        foreach (Holding holding in live.Where(h => !h.IsClosed && h.PendingReclaim))
+        // Arm the hold limit on the session's own close, for every short held three sessions, this
+        // one included. Counted from the daily bars the store holds, so a holiday is not a session
+        // held, and filled at the next open on the trail's own mechanic.
+        foreach (Holding holding in live.Where(h => !h.IsClosed && !h.IsLong && h.ArmedReason is null))
         {
+            int held = DailyBarReader.SessionsBetween(
+                connection, holding.Ticker, holding.OpenedSession, sessionDate, sessionDate, _options.SessionZone);
+
+            if (!ShortExitRules.HoldLimitReached(held))
+            {
+                continue;
+            }
+
             Holding armed = holding;
-            writes.Add(tx => ArmExit(tx, armed.PositionId, sessionDate, ExitReason.Reclaim));
+            writes.Add(tx => ArmExit(tx, armed.PositionId, sessionDate, ExitReason.HoldLimit));
             tally.ExitsArmed++;
         }
 
@@ -328,15 +320,14 @@ public sealed class PositionManager
             yield return new ExitCandidate(ExitReason.GaveUp, holding.GiveUpPrice, AtTheOpen: true);
         }
 
-        // An exit armed in an earlier session fires at this name's first minute of this one; an exit
-        // armed inside this walk fires at the minute the walk armed it for, which is this one. An
-        // exit the store already carries for this same session is neither: it was armed by an
-        // earlier run of this walk, on this session's close, and fills at the next session's open.
-        // Until the 4.13 sign-off the second and third read alike, so a rerun of a session that had
-        // armed the trail fired it at that session's first minute and closed the position a session
-        // early, where the stage's own summary said a rerun writes nothing.
-        if (holding.ArmedReason is string reason
-            && (holding.ArmedThisWalk || (holding.ArmedInAnEarlierSession && firstOfSession)))
+        // An exit armed in an earlier session fires at this name's first minute of this one. An exit
+        // the store already carries for this same session does not: it was armed by an earlier run
+        // of this walk, on this session's close, and fills at the next session's open. Until the 4.13
+        // sign-off the two read alike, so a rerun of a session that had armed the trail fired it at
+        // that session's first minute and closed the position a session early, where the stage's
+        // own summary said a rerun writes nothing. Nothing arms inside the walk from 7.10, when the
+        // hourly reclaim retired, so every arm is one of those two.
+        if (holding.ArmedReason is string reason && holding.ArmedInAnEarlierSession && firstOfSession)
         {
             yield return new ExitCandidate(reason, bar.Open, AtTheOpen: true);
         }
@@ -345,69 +336,6 @@ public sealed class PositionManager
         {
             yield return new ExitCandidate(ExitReason.GaveUp, holding.GiveUpPrice, AtTheOpen: false);
         }
-    }
-
-    /// <summary>
-    /// Whether the hourly bar that ended before <paramref name="bar"/> closed back above the 50-day
-    /// average, which arms the short exit for this minute's open.
-    ///
-    /// The stub is not an hourly bar, so its close never reaches this: <see cref="HourlyGrid"/>
-    /// returns null for it, and null is not a completed hour to compare against
-    /// (see: The hourly grid anchors to the session open, and the closing stub is not an hourly bar).
-    /// </summary>
-    private static bool ClosedTheHourAboveTheAverage(
-        string ticker,
-        StoredIntradayBar bar,
-        DateOnly sessionDate,
-        Dictionary<string, int?> hourOf,
-        Dictionary<string, StoredIntradayBar> lastBarOfHour,
-        Reclaim? against, string sessionZone)
-    {
-        int? hour = HourlyGrid.BarIndexOf(bar.OpenedAt, sessionDate, sessionZone);
-
-        bool reclaimed = hourOf.TryGetValue(ticker, out int? previous)
-            && previous is not null
-            && previous != hour
-            && lastBarOfHour.TryGetValue(ticker, out StoredIntradayBar? closed)
-            && against is not null
-            && ShortExitRules.Reclaimed(closed.Close * against.Factor, against.FiftyDayAverage);
-
-        hourOf[ticker] = hour;
-        lastBarOfHour[ticker] = bar;
-
-        return reclaimed;
-    }
-
-    /// <summary>
-    /// The 50-day average this session's hourly closes are measured against, with the factor that
-    /// puts a printed price on the basis it is computed on, or null where the store holds neither.
-    ///
-    /// Null rather than a stand-in. An average approximated from what is to hand is a number that
-    /// looks like the real thing inside the rule deciding whether a short is over, which is the
-    /// refusal <c>reached-ceiling</c> already carries one level up.
-    /// see: A gate handed an absent or degenerate quantity fails rather than passing
-    /// </summary>
-    private static Reclaim? ReclaimLevelOf(SqliteConnection connection, string ticker, DateOnly sessionDate, string sessionZone)
-    {
-        StoredIndicators? indicators =
-            IndicatorDailyReader.LatestBefore(connection, ticker, sessionDate, sessionDate, sessionZone);
-
-        if (indicators is null)
-        {
-            return null;
-        }
-
-        StoredDailyBar? bar = DailyBarReader.Latest(
-            connection,
-            ticker,
-            indicators.AsOf,
-            StoreText.StorageTextToTimestamp(StoreText.EndOfSession(sessionDate, sessionZone)));
-
-        return bar is null
-            ? null
-            : new Reclaim(
-                indicators.EmaLong,
-                ShortExitRules.AdjustmentFactor(bar.Close, bar.AdjustedClose));
     }
 
     /// <summary>Whether this session's close arms the long trail, read on the adjusted basis at both ends.</summary>
@@ -484,15 +412,19 @@ public sealed class PositionManager
     }
 
     /// <summary>
-    /// Take the short trim, which reduces the position and leaves it open.
+    /// Take one trim, which reduces the position and leaves it open, and say whether it was taken.
     ///
     /// <b>Filled at the trim level and charged the whole spread, never at a better open.</b> A bar
     /// that opens past the trim level has opened in the position's favour, and taking that open
     /// would price a fill better than a resting instruction could have got. The gap rule is for an
     /// open that is past a price the wrong way, and this is the other way.
+    ///
+    /// <b>The first trim's fill keeps the identifier it has always had</b>, so a row trimmed before
+    /// 7.10 and a rerun over it name the same fill; the second is the same with its number.
     /// </summary>
-    private static void Trim(
+    private static bool Trim(
         Holding holding,
+        decimal level,
         StoredIntradayBar bar,
         QuotedSpread? quote,
         DateTimeOffset observedAt,
@@ -502,32 +434,47 @@ public sealed class PositionManager
         if (quote is null)
         {
             holding.CountHeldForNoQuote(tally);
-            return;
+            return false;
         }
 
-        int shares = ShortExitRules.TrimShares(holding.PlannedShares, holding.SharesRemaining);
+        int shares = holding.IsLong
+            ? LongExitRules.TrimShares(holding.PlannedShares, holding.SharesRemaining)
+            : ShortExitRules.TrimShares(holding.PlannedShares, holding.SharesRemaining);
 
         if (shares == 0)
         {
-            return;
+            return false;
         }
 
-        Fill fill = FillModel.Exit(
-            SetupDirection.Short, holding.TrimLevel!.Value, openedThrough: null, quote.BasisPoints);
+        Fill fill = FillModel.Exit(holding.Direction, level, openedThrough: null, quote.BasisPoints);
 
-        decimal pnl = (holding.EntryPrice - fill.Price) * shares;
-        string fillId = $"{holding.PlanId}:trim";
+        decimal pnl = (holding.IsLong ? fill.Price - holding.EntryPrice : holding.EntryPrice - fill.Price) * shares;
+        int before = holding.TrimsTaken;
+        string fillId = before == 0 ? $"{holding.PlanId}:trim" : $"{holding.PlanId}:trim{before + 1}";
 
         holding.RecordTrim(shares, pnl);
 
+        int furtherTrims = holding.FurtherTrims;
+        int furtherShares = holding.FurtherTrimmedShares;
+        decimal furtherPnl = holding.FurtherTrimRealisedPnl;
+
         writes.Add(tx =>
         {
-            InsertFill(tx, holding, fillId, "trim", bar.SessionDate, bar.OpenedAt, holding.TrimLevel!.Value, fill, shares, quote, observedAt);
-            TrimPosition(tx, holding.PositionId, fillId, bar.OpenedAt, shares, fill.Price, pnl, observedAt);
+            InsertFill(tx, holding, fillId, "trim", bar.SessionDate, bar.OpenedAt, level, fill, shares, quote, observedAt);
+
+            if (before == 0)
+            {
+                TrimPosition(tx, holding.PositionId, fillId, bar.OpenedAt, shares, fill.Price, pnl, observedAt);
+            }
+            else
+            {
+                TrimFurther(tx, holding.PositionId, furtherTrims, furtherShares, furtherPnl, observedAt);
+            }
         });
 
         tally.Trimmed++;
         tally.CountBasis(fill.Basis);
+        return true;
     }
 
     private static void ClosePosition(
@@ -606,6 +553,41 @@ public sealed class PositionManager
         command.Parameters.AddWithValue("@trim_price", StoreText.PriceToStorageText(price));
         command.Parameters.AddWithValue("@trim_realised_pnl", StoreText.PriceToStorageText(pnl));
         command.Parameters.AddWithValue("@trim_observed_at", StoreText.TimestampToStorageText(observedAt));
+        command.Parameters.AddWithValue("@position_id", positionId);
+        command.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Record a trim after the first, beside it and never over it, guarded on the count this run
+    /// read so a rerun cannot take the same trim twice. The totals are written whole rather than
+    /// added in SQL, because the money is TEXT and arithmetic on it belongs to the decimal side.
+    /// </summary>
+    private static void TrimFurther(
+        SqliteTransaction transaction,
+        string positionId,
+        int furtherTrims,
+        int furtherShares,
+        decimal furtherPnl,
+        DateTimeOffset observedAt)
+    {
+        using SqliteCommand command = transaction.Connection!.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE position
+               SET further_trims = @further_trims,
+                   further_trimmed_shares = @further_trimmed_shares,
+                   further_trim_realised_pnl = @further_trim_realised_pnl,
+                   further_trim_observed_at = @further_trim_observed_at
+             WHERE position_id = @position_id
+               AND status = 'open'
+               AND trim_fill_id IS NOT NULL
+               AND further_trims = @further_trims - 1;
+            """;
+
+        command.Parameters.AddWithValue("@further_trims", furtherTrims);
+        command.Parameters.AddWithValue("@further_trimmed_shares", furtherShares);
+        command.Parameters.AddWithValue("@further_trim_realised_pnl", StoreText.PriceToStorageText(furtherPnl));
+        command.Parameters.AddWithValue("@further_trim_observed_at", StoreText.TimestampToStorageText(observedAt));
         command.Parameters.AddWithValue("@position_id", positionId);
         command.ExecuteNonQuery();
     }
@@ -710,12 +692,12 @@ public sealed class PositionManager
         command.CommandText = """
             INSERT INTO manage_run (
                 session_date, open_at_start, longs_managed, shorts_managed, closed_give_up,
-                closed_trail, closed_reclaim, trimmed, exits_armed, gapped, slipped, held_no_quote,
+                closed_trail, closed_reclaim, closed_hold_limit, trimmed, exits_armed, gapped, slipped, held_no_quote,
                 closed_in_their_own_session, open_at_end, names_walked, minutes_walked,
                 outcome, stopped_because, observed_at)
             VALUES (
                 @session_date, @open_at_start, @longs_managed, @shorts_managed, @closed_give_up,
-                @closed_trail, @closed_reclaim, @trimmed, @exits_armed, @gapped, @slipped, @held_no_quote,
+                @closed_trail, @closed_reclaim, @closed_hold_limit, @trimmed, @exits_armed, @gapped, @slipped, @held_no_quote,
                 @closed_in_their_own_session, @open_at_end, @names_walked, @minutes_walked,
                 @outcome, @stopped_because, @observed_at)
             ON CONFLICT (session_date, observed_at) DO NOTHING;
@@ -728,6 +710,7 @@ public sealed class PositionManager
         command.Parameters.AddWithValue("@closed_give_up", tally.ClosedGiveUp);
         command.Parameters.AddWithValue("@closed_trail", tally.ClosedTrail);
         command.Parameters.AddWithValue("@closed_reclaim", tally.ClosedReclaim);
+        command.Parameters.AddWithValue("@closed_hold_limit", tally.ClosedHoldLimit);
         command.Parameters.AddWithValue("@trimmed", tally.Trimmed);
         command.Parameters.AddWithValue("@exits_armed", tally.ExitsArmed);
         command.Parameters.AddWithValue("@gapped", tally.Gapped);
@@ -743,11 +726,8 @@ public sealed class PositionManager
         command.ExecuteNonQuery();
     }
 
-    /// <summary>The 50-day average a short is measured against, and what puts a printed price on its basis.</summary>
-    private sealed record Reclaim(decimal FiftyDayAverage, decimal Factor);
-
     /// <summary>
-    /// One position as the walk carries it: the plan's give-up point, the trim level derived from
+    /// One position as the walk carries it: the plan's give-up point, the trim levels derived from
     /// the price the entry actually got, and whatever the walk has already done to it.
     ///
     /// Held rather than re-read, because the writes are deferred to one transaction so a night is
@@ -771,9 +751,11 @@ public sealed class PositionManager
             decimal giveUpPrice,
             decimal entryPrice,
             decimal riskRealised,
-            decimal? trimLevel,
+            int trimsTaken,
             int trimmedShares,
             decimal trimRealisedPnl,
+            int furtherTrimmedShares,
+            decimal furtherTrimRealisedPnl,
             string? armedReason,
             DateOnly? armedSession,
             DateOnly sessionDate)
@@ -791,9 +773,11 @@ public sealed class PositionManager
             GiveUpPrice = giveUpPrice;
             EntryPrice = entryPrice;
             RiskRealised = riskRealised;
-            TrimLevel = trimLevel;
+            TrimsTaken = trimsTaken;
             TrimmedShares = trimmedShares;
             TrimRealisedPnl = trimRealisedPnl;
+            FurtherTrimmedShares = furtherTrimmedShares;
+            FurtherTrimRealisedPnl = furtherTrimRealisedPnl;
             ArmedReason = armedReason;
 
             // Read off the session that armed it against the one being walked, and never off the
@@ -808,9 +792,6 @@ public sealed class PositionManager
 
         /// <summary>The minute the entry filled, before which no bar of its own session is its concern.</summary>
         public DateTimeOffset OpenedAt { get; }
-
-        /// <summary>Whether this walk armed the exit, as opposed to reading an arm off the store.</summary>
-        public bool ArmedThisWalk { get; private set; }
 
         /// <summary>The plan this position belongs to, and the version that plan belongs to.</summary>
         public string PlanId { get; }
@@ -835,12 +816,28 @@ public sealed class PositionManager
 
         public decimal RiskRealised { get; }
 
-        /// <summary>The 3R level, on the short side only. Null on a long, which has no trim rule.</summary>
-        public decimal? TrimLevel { get; }
+        /// <summary>How many trims the position has taken, the first included.</summary>
+        public int TrimsTaken { get; private set; }
 
+        /// <summary>Every trim's shares and money together, which is what an exit adds its own to.</summary>
         public int TrimmedShares { get; private set; }
 
         public decimal TrimRealisedPnl { get; private set; }
+
+        /// <summary>The trims after the first, which the row records beside the first rather than over it.</summary>
+        public int FurtherTrims => Math.Max(0, TrimsTaken - 1);
+
+        public int FurtherTrimmedShares { get; private set; }
+
+        public decimal FurtherTrimRealisedPnl { get; private set; }
+
+        /// <summary>
+        /// The price the next trim fires at, or null where both have been taken or the geometry has
+        /// no risk to take a multiple of. Each side through its own rule.
+        /// </summary>
+        public decimal? NextTrimLevel => IsLong
+            ? (GiveUpPrice < EntryPrice ? LongExitRules.TrimLevel(EntryPrice, GiveUpPrice, TrimsTaken) : null)
+            : (GiveUpPrice > EntryPrice ? ShortExitRules.TrimLevel(EntryPrice, GiveUpPrice, TrimsTaken) : null);
 
         /// <summary>Which rule has an exit armed against this position, or null where none has.</summary>
         public string? ArmedReason { get; private set; }
@@ -853,18 +850,6 @@ public sealed class PositionManager
         public bool IsLong => string.Equals(Direction, SetupDirection.Long, StringComparison.Ordinal);
 
         public int SharesRemaining => Shares - TrimmedShares;
-
-        /// <summary>Whether the trim rule can still fire: a short, with a level, not yet trimmed.</summary>
-        public bool TrimIsAvailable => TrimLevel is not null && TrimmedShares == 0;
-
-        /// <summary>An arming this walk raised that no later minute of this session could fill.</summary>
-        public bool PendingReclaim => ArmedThisWalk && ArmedReason is not null;
-
-        public void ArmFor(string reason)
-        {
-            ArmedReason = reason;
-            ArmedThisWalk = true;
-        }
 
         /// <summary>Count this position among the night's holds, once however many minutes it lasts.</summary>
         public void CountHeldForNoQuote(Tally tally)
@@ -882,13 +867,19 @@ public sealed class PositionManager
 
         public void RecordTrim(int shares, decimal pnl)
         {
-            TrimmedShares = shares;
-            TrimRealisedPnl = pnl;
+            if (TrimsTaken > 0)
+            {
+                FurtherTrimmedShares += shares;
+                FurtherTrimRealisedPnl += pnl;
+            }
+
+            TrimsTaken++;
+            TrimmedShares += shares;
+            TrimRealisedPnl += pnl;
         }
 
         public static Holding From(StoredPosition position, StoredTradePlan plan, DateOnly sessionDate)
         {
-            bool isShort = string.Equals(position.Direction, SetupDirection.Short, StringComparison.Ordinal);
             decimal entryPrice = position.EntryPrice!.Value;
 
             return new Holding(
@@ -905,11 +896,11 @@ public sealed class PositionManager
                 plan.GiveUpPrice,
                 entryPrice,
                 position.RiskRealised!.Value,
-                isShort && plan.GiveUpPrice > entryPrice
-                    ? ShortExitRules.TrimLevel(entryPrice, plan.GiveUpPrice)
-                    : null,
+                position.Trims,
                 position.TrimmedShares ?? 0,
                 position.TrimRealisedPnl ?? 0m,
+                position.FurtherTrimmedShares,
+                position.FurtherTrimRealisedPnl,
                 position.ExitArmedReason,
                 position.ExitArmedSession,
                 sessionDate);
@@ -930,6 +921,8 @@ public sealed class PositionManager
         public int ClosedTrail { get; private set; }
 
         public int ClosedReclaim { get; private set; }
+
+        public int ClosedHoldLimit { get; private set; }
 
         public int Trimmed { get; set; }
 
@@ -967,6 +960,9 @@ public sealed class PositionManager
                     return;
                 case ExitReason.Reclaim:
                     ClosedReclaim++;
+                    return;
+                case ExitReason.HoldLimit:
+                    ClosedHoldLimit++;
                     return;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -1009,6 +1005,8 @@ public sealed record ManageRunResult(
     public int ClosedTrail => Counts.ClosedTrail;
 
     public int ClosedReclaim => Counts.ClosedReclaim;
+
+    public int ClosedHoldLimit => Counts.ClosedHoldLimit;
 
     public int Trimmed => Counts.Trimmed;
 

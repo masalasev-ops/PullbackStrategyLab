@@ -862,6 +862,154 @@ compute on the evening.
 **Where they part.** He reads the whole weekly picture and the lab reads one close against one
 average. That is narrower than his instrument, and it is the part of it a rule can state.
 
+## Generation 1's exits
+
+The exits generation 1 registers with at 7.11, traced against the same seven sources on the same
+discipline as the clauses above: a form claiming his own words quotes them, and the trace records
+what the source says rather than what the lab would like it to have said. **The prediction below was
+written before the trace ran**, on the terms a sweep states the answer it expects in advance, so the
+run could contradict it, and one row of it did. The verdict columns use the four words the clauses
+use and `clause-provenance` holds them to the two exit rule sets' own lists, in both directions
+(see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed).
+
+### What was predicted
+
+| Exit | Long form | Short form | Timeframe | Predicted standing |
+|---|---|---|---|---|
+| The trail | the first close below the 9 EMA, the whole position | a close above the 9 EMA, the author's mirror | the daily close, filling at the next open | long quoted; short no source found, so the mirror ships as the author's |
+| The trims | 15% each time, at 3R or above | quicker on shorts, in the first two to three days | R multiples, not a timeframe | both figures his and the "once" the lab's; the short side's speed a form with no number |
+
+### What the trace found
+
+**The long side came out as predicted.** The trail is his, twice in one interview and once in the
+other, and it names no timeframe for the close, so the daily close the lab reads it on is the lab's
+reading. The trims are his, fraction and levels both.
+
+**The short side did not.** The source does not leave the short trail unstated, which is what the
+prediction assumed; it states that there is none. He does not trail his shorts the way he trails his
+longs, he takes their exits more aggressively, and he generally holds them two to three days. So the
+mirror the prediction put there is contradicted rather than supplied, and generation 1 ships the form
+he does state: a short is closed at the next open once it has been held three sessions, the upper of
+his two figures. **Where the source gives the other side a form of its own, that form ships and no
+mirror does**, which is the rule the mirror always rested on read in the direction it had not been
+needed in before.
+
+**The trims came out as predicted, with a limit the prediction did not have.** He names two levels,
+three and five R, and says what "extended" means beyond them is his own observation measured with no
+indicator. So the rule trims at the two levels he gives and stops, rather than trimming "each time"
+at a spacing nobody stated.
+
+**Generation 0's hourly close back above the 50-day average is stated in no source read here**, and
+retires at 7.10. It was never among the forms this document traced, because it is an exit and the
+trace was of gates, and it is the one exit rule the lab ran that had no statement behind it at all.
+
+### Generation 1's long exits
+
+| Exit | Form | Threshold | Bearing on | Generation 1 |
+|---|---|---|---|---|
+| `trail` | his own words | carries no threshold | `P1` `P2` | the whole position on the first daily close below the 9-day average, filling at the next open; the daily close is the lab's reading, since he names no timeframe for it |
+| `trim` | his own words | his own words | `P1` `P2` | 15% of the planned position at 3R and again at 5R, and no third |
+
+### Generation 1's short exits
+
+| Exit | Form | Threshold | Bearing on | Generation 1 |
+|---|---|---|---|---|
+| `trim` | his own words | no source found | `P1` `P2` | 15% of the planned position at 3R and again at 5R, the long side's figures mirrored and marked as the author's |
+| `hold-limit` | his own words | his own words | `P1` `P2` | closed at the next open once held three sessions, the one it opened in counted; the three is the upper of his two figures |
+
+`trail` is not on the short list, on his own word that he does not trail his shorts.
+
+### trail, long
+
+**What he specifies.** The first close below the 9-day average, for the whole position.
+
+> "So every time I think this stock is extended I sell 15%. [...] And then I closed this trade on the
+> first close below the 9 EMA."
+> `P1`, 2:28:54 and 2:29:20
+
+> "And then I sell some into strength here and then I sell more into strength here and then I close
+> my whole position at the first close below the 9 EMA."
+> `P1`, 2:52:06
+
+> "For selling into weakness I use trailing stops and mostly I'm using the 9 EMA as my trailing
+> moving average. [...] Sometimes when I'm in a strong uptrend and I'm entering the position early,
+> in the early stage of a move, I will use the 21 or even the 50 EMA for trailing."
+> `P2`, 42:30
+
+**What generation 1 implements.** A daily close below the 9-day average arms the exit and the whole
+remaining position fills at the next session's open, unchanged from generation 0.
+
+**Where they part.** He names no timeframe for the close, and the lab reads the daily one. He also
+trails a strong early move on the 21 or the 50, which the lab records here and does not build: which
+moves count as strong and early is a judgement with no stated measure.
+
+### trim, long
+
+**What he specifies.** A fraction, and two levels.
+
+> "I actually don't have a very strict sell rule. I would sell partial into strength when it's up
+> three [R] or five [R]."
+> `P1`, 2:27:23
+
+> "So every time I think this stock is extended I sell 15%."
+> `P1`, 2:28:54
+
+> "The trim of the position is around 10 to 15%. [...] There are some situations when the profits is
+> larger than [three] risk multiples that I will consider selling part of it into the strength."
+> `P2`, 40:51
+
+And what "extended" is, which is why the rule stops at his two levels:
+
+> "Also when the stock is extended from the 9 EMA, I'm not using an indicator for the distance
+> between this price and the 9 EMA. I'm just using my own observation."
+> `P2`, 41:22 and 41:58
+
+**What generation 1 implements.** 15% of the planned position at 3R, and 15% again at 5R, each a
+resting instruction at the level, R taken from the price the entry actually got.
+
+**Where they part.** He trims whenever he judges the stock extended, most often on the hourly chart
+(`P1`, 2:27:54), and the lab trims at the two levels he names. A third level would be a number no
+source states.
+
+### trim, short
+
+**What he specifies.** That he takes a short's profit sooner than a long's, into its move.
+
+> "And are you quicker to take profits on shorts than your longs? Yes, definitely. So mostly I would
+> like to take profit for the first maybe two or three days. [...] But for the shorts I really want to
+> sell some into strength in the first maybe two or three days when it has some follow through."
+> `P1`, 3:36:30 and 3:36:56
+
+> "Most of the shorts are selling into the strength."
+> `P2`, 1:47:28
+
+**What generation 1 implements.** The long side's trims mirrored: 15% of the planned position at 3R
+below the entry and again at 5R, marked as the author's.
+
+**Where they part.** He names no fraction and no level for a short, so both figures are the long
+side's carried across. The form, taking part of a short's profit early, is his.
+
+### hold-limit, short
+
+**What he specifies.** No trail, and a hold of two to three days.
+
+> "I'm taking profits a bit more aggressively in closing them into strength. So, generally I hold my
+> shorts for only maybe two to three days."
+> `P1`, 25:18
+
+> "The exit of the shorts, I'm taking the exit more aggressively than the long. I'm not trailing the
+> shorts like the longs, like the close above the 9 EMA."
+> `P2`, 1:47:28
+
+**What generation 1 implements.** A short held three sessions, the one it opened in counted, is armed
+on the third close and closed at the next open. Sessions are the dates the store holds a daily bar
+for, so a holiday is not a session held.
+
+**Where they part.** "Generally" and "maybe" are qualifiers, and a gate given a qualifier is recorded
+rather than screening. An exit cannot be recorded without acting on it the way a gate can, so the
+hold is the rule and the qualifiers are recorded here. The three is the upper of his two figures,
+which is the reading that exits no sooner than he says he does.
+
 ## What the sources specify and the lab has no gate for
 
 Not clauses the lab implements badly. Things the sources state and the lab does not test at all, each
@@ -882,7 +1030,7 @@ exist.
 | The absolute stop ceiling of 5%, and a working maximum of 2.5% to 3% | `P1` at 17:48, `P2` at 25:48, `P3` | `exit-tight` implements the range-relative clause and neither absolute one |
 | Re-entry after a stop-out | `P3` | "Some of my big winners over the years were caught by re-entries", with the cost named. The lab cannot re-enter a name it stopped out of |
 | Exposure that responds to feedback | `P1` at 15:44 and 40:55, `P3` | Risk varied with the equity curve, three to eleven positions, long exposure to 280% on margin. The lab fixes risk, caps at four and holds no margin. A deliberate difference that should read as a decision |
-| Repeated trims | `P1` at 2:28:54, `P2` at 40:51 | "Every time I think this stock is extended I sell 15%", at 3R or 5R. The lab trims 15% once at 3R. The 15 and the 3R are his; the "once" is the lab's |
+| Repeated trims | `P1` at 2:28:54, `P2` at 40:51 | "Every time I think this stock is extended I sell 15%", at 3R or 5R. Generation 0 trimmed 15% once at 3R, and the "once" was the lab's. From 7.10 the lab trims at 3R and at 5R on both sides, traced under "Generation 1's exits" |
 
 ---
 

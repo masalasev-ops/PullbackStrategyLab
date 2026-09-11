@@ -47,47 +47,68 @@ public sealed class ExitRulesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => LongExitRules.TrailArmedBy(100m, -1m));
     }
 
-    // ---- the short trim ------------------------------------------------------------------------
+    // ---- the trims, both sides, from 7.10 --------------------------------------------------------
 
     /// <summary>
-    /// The trim level is three units of realised risk below the price the entry actually got.
+    /// The short's trim levels are three and then five units of realised risk below the price the
+    /// entry actually got, and there is no third.
     ///
     /// From the realised distance and not the plan's, because R is taken over the money the position
     /// can lose and the slippage moved that.
+    /// see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed
     /// </summary>
     [Fact]
-    public void The_trim_level_is_three_units_of_realised_risk_below_the_entry()
+    public void The_short_trims_at_three_and_then_five_units_of_realised_risk_and_no_further()
     {
-        Assert.Equal(84.60m, ShortExitRules.TrimLevel(entryPrice: 99.90m, giveUpPrice: 105m));
-        Assert.Equal(3m, ShortExitRules.TrimAt);
+        Assert.Equal(84.60m, ShortExitRules.TrimLevel(entryPrice: 99.90m, giveUpPrice: 105m, trimsTaken: 0));
+        Assert.Equal(74.40m, ShortExitRules.TrimLevel(entryPrice: 99.90m, giveUpPrice: 105m, trimsTaken: 1));
+        Assert.Null(ShortExitRules.TrimLevel(entryPrice: 99.90m, giveUpPrice: 105m, trimsTaken: 2));
+        Assert.Equal([3m, 5m], ShortExitRules.TrimAt);
     }
 
-    /// <summary>A give-up point that is not above a short's entry is refused rather than inverted.</summary>
+    /// <summary>The long's are the same multiples above its entry, which is the side they are his on.</summary>
     [Fact]
-    public void A_give_up_point_at_or_below_a_shorts_entry_is_refused()
+    public void The_long_trims_at_three_and_then_five_units_of_realised_risk_and_no_further()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ShortExitRules.TrimLevel(100m, 100m));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ShortExitRules.TrimLevel(100m, 95m));
+        Assert.Equal(115.40m, LongExitRules.TrimLevel(entryPrice: 100.10m, giveUpPrice: 95m, trimsTaken: 0));
+        Assert.Equal(125.60m, LongExitRules.TrimLevel(entryPrice: 100.10m, giveUpPrice: 95m, trimsTaken: 1));
+        Assert.Null(LongExitRules.TrimLevel(entryPrice: 100.10m, giveUpPrice: 95m, trimsTaken: 2));
+        Assert.Equal([3m, 5m], LongExitRules.TrimAt);
     }
 
-    /// <summary>The trim takes 15% of the planned share count, floored to whole shares.</summary>
+    /// <summary>A give-up point on the wrong side of either entry is refused rather than inverted.</summary>
     [Fact]
-    public void The_trim_takes_fifteen_per_cent_of_the_planned_count_floored()
+    public void A_give_up_point_on_the_wrong_side_of_the_entry_is_refused()
     {
-        Assert.Equal(0.15m, ShortExitRules.TrimFraction);
+        Assert.Throws<ArgumentOutOfRangeException>(() => ShortExitRules.TrimLevel(100m, 100m, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ShortExitRules.TrimLevel(100m, 95m, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => LongExitRules.TrimLevel(100m, 100m, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => LongExitRules.TrimLevel(100m, 105m, 0));
+    }
+
+    /// <summary>Each trim takes 15% of the planned share count, floored to whole shares, on both sides.</summary>
+    [Fact]
+    public void Each_trim_takes_fifteen_per_cent_of_the_planned_count_floored()
+    {
+        Assert.Equal(0.15m, LongExitRules.TrimFraction);
+        Assert.Equal(LongExitRules.TrimFraction, ShortExitRules.TrimFraction);
         Assert.Equal(22, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 150));
-        Assert.Equal(15, ShortExitRules.TrimShares(plannedShares: 100, heldShares: 100));
+        Assert.Equal(22, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 128));
+        Assert.Equal(15, LongExitRules.TrimShares(plannedShares: 100, heldShares: 100));
     }
 
     /// <summary>
-    /// The trim is capped at what is held, because RiskGate may have reduced the order below the
-    /// plan's size and a trim larger than the position would close more than was ever opened.
+    /// A trim never takes everything that is held, because it reduces a position and the exit rules
+    /// end one. Until 7.10 it was capped at what was held instead, which on a row RiskGate had cut far
+    /// enough closed every share and left the row open with nothing in it.
     /// </summary>
     [Fact]
-    public void The_trim_never_exceeds_what_is_held()
+    public void A_trim_never_takes_everything_that_is_held()
     {
-        Assert.Equal(10, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 10));
+        Assert.Equal(0, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 22));
+        Assert.Equal(0, LongExitRules.TrimShares(plannedShares: 150, heldShares: 10));
         Assert.Equal(0, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 0));
+        Assert.Equal(22, ShortExitRules.TrimShares(plannedShares: 150, heldShares: 23));
     }
 
     /// <summary>A position too small for one whole share of trim is not trimmed at all.</summary>
@@ -98,15 +119,29 @@ public sealed class ExitRulesTests
         Assert.Equal(1, ShortExitRules.TrimShares(plannedShares: 7, heldShares: 7));
     }
 
-    // ---- the short's hourly exit ---------------------------------------------------------------
+    // ---- the short's hold limit, from 7.10 ----------------------------------------------------
 
-    /// <summary>An hourly close above the 50-day average reclaims it; one at it does not.</summary>
+    /// <summary>
+    /// A short held three sessions, the one it opened in counted, is closed at the next open; one held
+    /// two is not. The upper of his "two to three days".
+    /// </summary>
     [Fact]
-    public void A_close_above_the_fifty_day_average_reclaims_it_and_one_at_it_does_not()
+    public void A_short_held_three_sessions_reaches_its_hold_limit_and_one_held_two_does_not()
     {
-        Assert.True(ShortExitRules.Reclaimed(adjustedHourlyClose: 101m, fiftyDayAverage: 100m));
-        Assert.False(ShortExitRules.Reclaimed(adjustedHourlyClose: 100m, fiftyDayAverage: 100m));
-        Assert.False(ShortExitRules.Reclaimed(adjustedHourlyClose: 99m, fiftyDayAverage: 100m));
+        Assert.Equal(3, ShortExitRules.HoldSessions);
+        Assert.False(ShortExitRules.HoldLimitReached(2));
+        Assert.True(ShortExitRules.HoldLimitReached(3));
+        Assert.True(ShortExitRules.HoldLimitReached(4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ShortExitRules.HoldLimitReached(-1));
+    }
+
+    /// <summary>The two sides run the exit forms SOURCES.md traces, and the short side has no trail.</summary>
+    [Fact]
+    public void Each_side_runs_the_forms_the_trace_records_and_the_short_side_has_no_trail()
+    {
+        Assert.Equal([ExitReason.Trail, ExitReason.Trim], LongExitRules.Forms);
+        Assert.Equal([ExitReason.Trim, ExitReason.HoldLimit], ShortExitRules.Forms);
+        Assert.DoesNotContain(ExitReason.Trail, ShortExitRules.Forms);
     }
 
     /// <summary>
@@ -167,17 +202,20 @@ public sealed class ExitRulesTests
         Assert.Equal(0, ExitReason.Rank(ExitReason.GaveUp));
         Assert.Equal(1, ExitReason.Rank(ExitReason.Trail));
         Assert.Equal(1, ExitReason.Rank(ExitReason.Reclaim));
+        Assert.Equal(1, ExitReason.Rank(ExitReason.HoldLimit));
     }
 
     /// <summary>
-    /// The two rule-set exits share a rank because they can never contest each other: one is the
-    /// long side's and one is the short side's, and no position has both.
+    /// The rule-set exits share a rank because they can never contest each other: the trail is the
+    /// long side's and the hold limit the short side's, and no position has both. The retired hourly
+    /// reclaim keeps its rank so an arm made before 7.10 still resolves.
     /// </summary>
     [Fact]
-    public void The_two_rule_set_exits_share_a_rank_because_no_position_has_both()
+    public void The_rule_set_exits_share_a_rank_because_no_position_has_both()
     {
+        Assert.Equal(ExitReason.Rank(ExitReason.Trail), ExitReason.Rank(ExitReason.HoldLimit));
         Assert.Equal(ExitReason.Rank(ExitReason.Trail), ExitReason.Rank(ExitReason.Reclaim));
-        Assert.Equal(3, ExitReason.ThatCloseAPosition.Count);
+        Assert.Equal(4, ExitReason.ThatCloseAPosition.Count);
         Assert.DoesNotContain(ExitReason.Trim, ExitReason.ThatCloseAPosition);
     }
 

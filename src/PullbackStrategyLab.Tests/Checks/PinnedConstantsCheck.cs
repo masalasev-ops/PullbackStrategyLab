@@ -535,14 +535,22 @@ public sealed class PinnedConstantsCheck
                 && LongExitRules.TrailArmedBy(adjustedClose: 99m, nineDayAverage: 100m)
                 && !LongExitRules.TrailArmedBy(adjustedClose: 100m, nineDayAverage: 100m),
             "IndicatorEngine.EmaShortPeriod and LongExitRules.TrailArmedBy, strictly below"));
-        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Short exit, trim fraction",
-            table.Cell("Short exit, trim fraction").Contains("15% of the planned position, once, at 3R", StringComparison.Ordinal),
-            ShortExitRules.TrimFraction == 0.15m
-                && ShortExitRules.TrimAt == 3m
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Exit trims",
+            table.Cell("Exit trims").Contains("15% of the planned position at 3R and again at 5R, on both sides", StringComparison.Ordinal),
+            LongExitRules.TrimFraction == 0.15m
+                && ShortExitRules.TrimFraction == 0.15m
+                && LongExitRules.TrimAt.SequenceEqual([3m, 5m])
+                && ShortExitRules.TrimAt.SequenceEqual([3m, 5m])
                 && ShortExitRules.TrimShares(plannedShares: 150, heldShares: 150) == 22,
-            "ShortExitRules.TrimFraction, TrimAt and TrimShares of the planned count"));
-        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Short exit, the hourly grid",
-            table.Cell("Short exit, the hourly grid").Contains("Six complete hourly bars, and the closing remainder is not one", StringComparison.Ordinal),
+            "LongExitRules and ShortExitRules, TrimFraction, TrimAt and TrimShares of the planned count"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Short exit, hold limit",
+            table.Cell("Short exit, hold limit").Contains("Three sessions held, the entry's own counted, closing at the next open", StringComparison.Ordinal),
+            ShortExitRules.HoldSessions == 3
+                && ShortExitRules.HoldLimitReached(3)
+                && !ShortExitRules.HoldLimitReached(2),
+            "ShortExitRules.HoldSessions and HoldLimitReached, at or beyond"));
+        pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, The hourly grid",
+            table.Cell("The hourly grid").Contains("Six complete hourly bars, and the closing remainder is not one", StringComparison.Ordinal),
             HourlyGrid.CompleteBars == 6
                 && HourlyGrid.HasStub
                 && HourlyGrid.StubOpen is TimeOnly stub

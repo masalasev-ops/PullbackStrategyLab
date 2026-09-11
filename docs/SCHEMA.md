@@ -1115,18 +1115,23 @@ Columns of `position`. Built at 4.7, and the columns are the ones that checkpoin
 | `closed_session`, `closed_at`, `exit_fill_id`, `exit_price`, `exit_reason` | TEXT NULL | The exit. Present exactly on a closed row |
 | `realised_pnl` | TEXT NULL | The money, at the two prices the fills actually got |
 | `realised_r` | REAL NULL | The result in R, which is a ratio and not money. Below minus one wherever the exit cost more than the risk it was measured against, which a gap through the give-up point always does |
-| `trim_fill_id`, `trimmed_at`, `trimmed_shares`, `trim_price`, `trim_realised_pnl` | TEXT / INTEGER NULL | The short trim at 3R, which reduces a position and leaves it open. Present exactly on a trimmed row, and asserted by a test rather than by a CHECK: `fill` holds a foreign key into this table, so rebuilding it to add one would rewrite that clause as a side effect of a tidiness. `realised_pnl` on the close is this figure plus the close's own, so a reader is never asked to derive the first half from a fill row nothing points at |
-| `exit_armed_session`, `exit_armed_reason` | TEXT NULL | An exit decided in one session and filled at the open of the next, with the rule that decided it. The long trail needs this because it is evaluated on a daily close and the next price after that close is the next session's open; the short reclaim needs it in the one case where the store holds no later minute of the session |
+| `trim_fill_id`, `trimmed_at`, `trimmed_shares`, `trim_price`, `trim_realised_pnl` | TEXT / INTEGER NULL | The first trim, at 3R on either side from 7.10 and on the short side alone before it, which reduces a position and leaves it open. Present exactly on a trimmed row, and asserted by a test rather than by a CHECK: `fill` holds a foreign key into this table, so rebuilding it to add one would rewrite that clause as a side effect of a tidiness. `realised_pnl` on the close is this figure plus the close's own, so a reader is never asked to derive the first half from a fill row nothing points at |
+| `further_trims`, `further_trimmed_shares`, `further_trim_realised_pnl` | INTEGER / INTEGER NULL / TEXT NULL | Every trim after the first, from 7.10, when a position trims at 3R and again at 5R: how many, their shares together and their money together. Beside the first trim's columns and never over them, so the first keeps its own stamp. The reader adds the two into one total, so nothing downstream reads a first trim as all of them (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed) |
+| `exit_armed_session`, `exit_armed_reason` | TEXT NULL | An exit decided in one session and filled at the open of the next, with the rule that decided it. The long trail and the short hold limit both need this, because each is decided on a session's close and the next price after that close is the next session's open. An hourly reclaim armed before 7.10 still fills |
 | `observed_at` | TEXT | When the position was opened, which is what a point-in-time read bounds on |
 | `closed_observed_at` | TEXT NULL | When the close was observed. The second half of the bound |
-| `trim_observed_at` | TEXT NULL | When the trim was observed. The third |
+| `trim_observed_at` | TEXT NULL | When the first trim was observed. The third |
+| `further_trim_observed_at` | TEXT NULL | When the last trim after the first was observed. The fourth, from 7.10 |
 
-**Three stamps, because this is the one updated table in the phase.** A row is inserted when it
-fills, updated when a short is trimmed and updated again when it closes, so a single stamp would
-answer a replay standing between any two of those with the state the row ended in. Every read
-bounds `observed_at` for whether the row exists at all, `trim_observed_at` for whether the trim
-had happened yet and `closed_observed_at` for whether the close had, and either event observed
-after the as-of reads as not having happened, which is what it was.
+**Four stamps, because this is the one updated table in the phase.** A row is inserted when it
+fills, updated when it is trimmed, updated again if it trims a second time, and updated when it
+closes, so a single stamp would answer a replay standing between any two of those with the state the
+row ended in. Every read bounds `observed_at` for whether the row exists at all, `trim_observed_at`
+for whether the first trim had happened yet, `further_trim_observed_at` for whether a later one had,
+and `closed_observed_at` for whether the close had, and any event observed after the as-of reads as
+not having happened, which is what it was. The fourth arrived at 7.10 with the second trim, and it is
+a column of its own because a running total under one stamp could only say when the last trim
+happened.
 
 **`exit_armed_session` carries no stamp of its own and does not need one**, because the column is
 the session that armed the exit rather than the fact that something did. A session later than the
@@ -1137,11 +1142,11 @@ here would be a second statement of the one price R is measured against. That is
 `trade_order` took at 4.6 and `trigger_resolution` at 4.5.
 
 **A position can end three ways from 4.8, and one component decides which.** The give-up point is a
-resting instruction the plan carried from 18:30; the long trail and the short reclaim are rules
+resting instruction the plan carried; the long trail and the short side's rule are rules
 PositionManager evaluates. The exit is whichever is reached first, which is a comparison across
 rules, and a comparison cannot be made by two components each of which sees one side of it. So the
-give-up exit moved out of PaperBroker with the rest of them, and `exit_reason` is `give-up`, `trail`
-or `hourly-reclaim` (see: Every exit is PositionManager's and every entry is PaperBroker's).
+give-up exit moved out of PaperBroker with the rest of them, and `exit_reason` is `give-up`, `trail`,
+`hold-limit` from 7.10, or `hourly-reclaim` on a row armed before the rule retired (see: Every exit is PositionManager's and every entry is PaperBroker's) (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed).
 
 ### What one end of one trade cost
 
@@ -1248,8 +1253,8 @@ Grain: session + observation. What one evening's two rule sets did, at 21:20.
 | `session_date`, `observed_at` | TEXT | PK |
 | `open_at_start`, `open_at_end` | INTEGER | the positions handed to the manager, being everything open at any point in the session including the entries priced five minutes earlier, and what was still open when it finished |
 | `longs_managed`, `shorts_managed` | INTEGER | the two rule sets are separate code paths, so the two populations are separate figures (see: Long and short are never pooled into one figure) |
-| `closed_give_up`, `closed_trail`, `closed_reclaim` | INTEGER | each exit under the rule that produced it. A night of trail exits is a different night from a night of stop-outs, and a single total lets the one that is a finding hide inside the one that is ordinary |
-| `trimmed` | INTEGER | shorts that reached 3R and were reduced, which is not an exit and is counted apart from them |
+| `closed_give_up`, `closed_trail`, `closed_reclaim`, `closed_hold_limit` | INTEGER | each exit under the rule that produced it, the hold limit from 7.10 and the reclaim only on a row armed before that. A night of trail exits is a different night from a night of stop-outs, and a single total lets the one that is a finding hide inside the one that is ordinary |
+| `trimmed` | INTEGER | trims taken, at 3R or 5R and on either side from 7.10, which are not exits and are counted apart from them. A position that trims twice in a night counts twice |
 | `exits_armed` | INTEGER | exits decided on this session and filled at the next open. The rule that armed each one is on the position row |
 | `gapped`, `slipped` | INTEGER | how the fills were priced, counted apart, on the same terms `fill_run` counts entries |
 | `held_no_quote` | INTEGER | positions a rule reached and the session quoted no usable book for, held rather than closed at a price nobody measured. Counted once per position however many minutes the hold lasts |

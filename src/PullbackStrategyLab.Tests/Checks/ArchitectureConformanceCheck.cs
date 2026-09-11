@@ -1066,9 +1066,9 @@ public sealed partial class ArchitectureConformanceCheck
                 "Exit rule" => TheTwoRuleSetsAreBuiltAndSeparate(row[1], row[2])
                     ? Claim.Passed(Table, what,
                         "the long trail reads a daily close against the 9-day average and fills at the next "
-                        + "open, the short trim takes 15% of the planned size at 3R, the short exit reads an "
-                        + "hourly close against the 50-day average, the two live in separate files, and both "
-                        + "cells' \"whichever is reached first\" is one ordering over all three reasons")
+                        + "open, both sides trim 15% of the planned size at 3R and again at 5R, the short closes "
+                        + "at the next open after three sessions held, the two live in separate files, and both "
+                        + "cells' \"whichever is reached first\" is one ordering over every reason that closes a position")
                     : Claim.Failed(Table, what,
                         "a clause of the exit-rule row no longer matches the rules the code holds, or the two "
                         + "rule sets stopped being separate code paths, which is the one way to test a "
@@ -1105,8 +1105,8 @@ public sealed partial class ArchitectureConformanceCheck
         Type shortSide = typeof(Core.Trading.ShortExitRules);
 
         bool separate = longSide.GetMethod("TrailArmedBy") is not null
-            && longSide.GetMethod("Reclaimed") is null
-            && shortSide.GetMethod("Reclaimed") is not null
+            && longSide.GetMethod("HoldLimitReached") is null
+            && shortSide.GetMethod("HoldLimitReached") is not null
             && shortSide.GetMethod("TrailArmedBy") is null
             && !longSide.GetMethods().Concat(shortSide.GetMethods())
                 .SelectMany(m => m.GetParameters())
@@ -1118,22 +1118,29 @@ public sealed partial class ArchitectureConformanceCheck
             && !Core.Trading.LongExitRules.TrailArmedBy(adjustedClose: 100m, nineDayAverage: 100m)
             && manager.Contains("ExitReason.Trail", StringComparison.Ordinal);
 
-        bool trim = shortCell.Contains("15%", StringComparison.Ordinal)
-            && shortCell.Contains("3R", StringComparison.Ordinal)
+        // Both cells name the two levels, and each side's rule holds them, from 7.10.
+        bool trim = new[] { longCell, shortCell }.All(cell =>
+                cell.Contains("15%", StringComparison.Ordinal)
+                && cell.Contains("3R", StringComparison.Ordinal)
+                && cell.Contains("5R", StringComparison.Ordinal))
+            && Core.Trading.LongExitRules.TrimFraction == 0.15m
             && Core.Trading.ShortExitRules.TrimFraction == 0.15m
-            && Core.Trading.ShortExitRules.TrimAt == 3m
+            && Core.Trading.LongExitRules.TrimAt.SequenceEqual([3m, 5m])
+            && Core.Trading.ShortExitRules.TrimAt.SequenceEqual([3m, 5m])
             && Core.Trading.ShortExitRules.TrimShares(plannedShares: 150, heldShares: 150) == 22;
 
-        bool reclaim = shortCell.Contains("50-day", StringComparison.Ordinal)
-            && Core.Trading.ShortExitRules.Reclaimed(adjustedHourlyClose: 101m, fiftyDayAverage: 100m)
-            && !Core.Trading.ShortExitRules.Reclaimed(adjustedHourlyClose: 100m, fiftyDayAverage: 100m)
-            && manager.Contains("ExitReason.Reclaim", StringComparison.Ordinal);
+        bool holdLimit = shortCell.Contains("three sessions", StringComparison.Ordinal)
+            && !shortCell.Contains("50-day", StringComparison.Ordinal)
+            && Core.Trading.ShortExitRules.HoldSessions == 3
+            && Core.Trading.ShortExitRules.HoldLimitReached(3)
+            && !Core.Trading.ShortExitRules.HoldLimitReached(2)
+            && manager.Contains("ExitReason.HoldLimit", StringComparison.Ordinal);
 
         // Both cells say it, and it is one ordering over all three reasons rather than two rules
         // each knowing about the stop.
         bool whicheverIsFirst = longCell.Contains("whichever is reached first", StringComparison.Ordinal)
             && shortCell.Contains("whichever is reached first", StringComparison.Ordinal)
-            && Core.Trading.ExitReason.ThatCloseAPosition.Count == 3
+            && Core.Trading.ExitReason.ThatCloseAPosition.Count == 4
             && Core.Trading.ExitReason.First(
                 [
                     new Core.Trading.ExitCandidate(Core.Trading.ExitReason.Trail, 88m, AtTheOpen: true),
@@ -1141,7 +1148,7 @@ public sealed partial class ArchitectureConformanceCheck
                 ])?.Reason == Core.Trading.ExitReason.GaveUp
             && manager.Contains("ExitReason.First(", StringComparison.Ordinal);
 
-        return separate && trail && trim && reclaim && whicheverIsFirst;
+        return separate && trail && trim && holdLimit && whicheverIsFirst;
     }
 
 

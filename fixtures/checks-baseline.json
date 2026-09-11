@@ -106,7 +106,9 @@
         "clause rows reconciled against the detectors' own lists, in both directions": 20,
         "source identifiers resolved against the source table": 40,
         "sources declaring whose words they are": 6,
-        "sourced clauses required to carry a quotation": 15
+        "sourced clauses required to carry a quotation": 15,
+        "generation 1 exit rows reconciled against the two exit rule sets' lists, in both directions": 4,
+        "generation 1 sourced exit forms required to carry a quotation": 4
       }
     },
     "clock-usage": {
@@ -217,8 +219,9 @@
         "ARCHITECTURE.html, authored parameters, Risk per trade": 1,
         "ARCHITECTURE.html, authored parameters, Scan breadth": 1,
         "ARCHITECTURE.html, authored parameters, Selection variant sample": 1,
-        "ARCHITECTURE.html, authored parameters, Short exit, the hourly grid": 1,
-        "ARCHITECTURE.html, authored parameters, Short exit, trim fraction": 1,
+        "ARCHITECTURE.html, authored parameters, The hourly grid": 1,
+        "ARCHITECTURE.html, authored parameters, Exit trims": 1,
+        "ARCHITECTURE.html, authored parameters, Short exit, hold limit": 1,
         "ARCHITECTURE.html, authored parameters, Signal correlation limit": 1,
         "ARCHITECTURE.html, authored parameters, Squeeze test": 1,
         "ARCHITECTURE.html, authored parameters, Starting equity": 1,

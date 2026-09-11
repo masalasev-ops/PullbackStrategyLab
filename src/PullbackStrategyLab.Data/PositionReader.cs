@@ -34,7 +34,9 @@ public sealed class PositionReader
         -- Appended rather than placed beside `setup_id`, so no ordinal below this line moves. The
         -- plan is what a position belongs to from 5.1 and the setup is what the plan was written
         -- for, and both are carried.
-        plan_id, variant_id
+        plan_id, variant_id,
+        -- The trims after the first, from 7.10, appended for the same reason.
+        further_trims, further_trimmed_shares, further_trim_realised_pnl, further_trim_observed_at
         """;
 
     private readonly StoreConnectionFactory _connections;
@@ -360,7 +362,7 @@ public sealed class PositionReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT session_date, open_at_start, longs_managed, shorts_managed, closed_give_up,
-                   closed_trail, closed_reclaim, trimmed, exits_armed, gapped, slipped,
+                   closed_trail, closed_reclaim, closed_hold_limit, trimmed, exits_armed, gapped, slipped,
                    held_no_quote, closed_in_their_own_session, open_at_end, names_walked,
                    minutes_walked, outcome, stopped_because, observed_at
               FROM manage_run
@@ -392,9 +394,10 @@ public sealed class PositionReader
                 reader.GetInt32(13),
                 reader.GetInt32(14),
                 reader.GetInt32(15),
-                reader.GetString(16),
-                reader.IsDBNull(17) ? null : reader.GetString(17),
-                StoreText.StorageTextToTimestamp(reader.GetString(18))));
+                reader.GetInt32(16),
+                reader.GetString(17),
+                reader.IsDBNull(18) ? null : reader.GetString(18),
+                StoreText.StorageTextToTimestamp(reader.GetString(19))));
         }
 
         return runs;
@@ -434,6 +437,18 @@ public sealed class PositionReader
                 : StoreText.StorageTextToTimestamp(reader.GetString(32));
 
             bool trimIsVisible = trimObservedAt is not null && trimObservedAt <= bound;
+
+            // The trims after the first carry a stamp of their own, from 7.10, so a replay standing
+            // between the first trim and a later one reads the first and not the later. The two are
+            // added together here and nowhere else, so every reader of the row sees one total.
+            DateTimeOffset? furtherObservedAt = reader.IsDBNull(40)
+                ? null
+                : StoreText.StorageTextToTimestamp(reader.GetString(40));
+
+            bool furtherIsVisible = trimIsVisible && furtherObservedAt is not null && furtherObservedAt <= bound;
+            int furtherShares = furtherIsVisible && !reader.IsDBNull(38) ? reader.GetInt32(38) : 0;
+            decimal furtherPnl = furtherIsVisible && !reader.IsDBNull(39) ? StoreText.StorageTextToPrice(reader.GetString(39)) : 0m;
+            int trims = !trimIsVisible ? 0 : 1 + (furtherIsVisible ? reader.GetInt32(37) : 0);
 
             // An arming needs no stamp of its own, because the column is the session that armed
             // the exit rather than the fact that something did. A session later than the as-of is
@@ -484,14 +499,17 @@ public sealed class PositionReader
                 closeIsVisible ? closedObservedAt : null,
                 trimIsVisible ? reader.GetString(27) : null,
                 trimIsVisible ? StoreText.StorageTextToTimestamp(reader.GetString(28)) : null,
-                trimIsVisible ? reader.GetInt32(29) : null,
+                trimIsVisible ? reader.GetInt32(29) + furtherShares : null,
                 trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(30)) : null,
-                trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(31)) : null,
+                trimIsVisible ? StoreText.StorageTextToPrice(reader.GetString(31)) + furtherPnl : null,
                 trimIsVisible ? trimObservedAt : null,
                 armIsVisible ? armedSession : null,
                 armIsVisible && !reader.IsDBNull(34) ? reader.GetString(34) : null,
                 reader.GetString(35),
-                reader.GetString(36)));
+                reader.GetString(36),
+                trims,
+                furtherShares,
+                furtherPnl));
         }
 
         return positions;
@@ -542,7 +560,9 @@ public sealed record StoredPosition(
     DateTimeOffset? ClosedObservedAt,
     string? TrimFillId,
     DateTimeOffset? TrimmedAt,
+    // Every trim the as-of can see, the first and those after it together, from 7.10.
     int? TrimmedShares,
+    // The first trim's price, which is the one the row names; a later trim's is on its fill.
     decimal? TrimPrice,
     decimal? TrimRealisedPnl,
     DateTimeOffset? TrimObservedAt,
@@ -550,7 +570,12 @@ public sealed record StoredPosition(
     string? ExitArmedReason,
     // Last, matching the column list, so no ordinal above this line moved when the fan-out landed.
     string PlanId,
-    string VariantId)
+    string VariantId,
+    // How many trims the as-of can see, from 7.10, when a position can be trimmed more than once,
+    // and what the trims after the first came to, which the totals above already include.
+    int Trims = 0,
+    int FurtherTrimmedShares = 0,
+    decimal FurtherTrimRealisedPnl = 0m)
 {
     /// <summary>What is still held, which is what an exit closes and what a further trim could not.</summary>
     public int SharesRemaining => Shares - (TrimmedShares ?? 0);
@@ -608,6 +633,7 @@ public sealed record StoredManageRun(
     int ClosedGiveUp,
     int ClosedTrail,
     int ClosedReclaim,
+    int ClosedHoldLimit,
     int Trimmed,
     int ExitsArmed,
     int Gapped,

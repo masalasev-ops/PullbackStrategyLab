@@ -26,9 +26,9 @@ namespace PullbackStrategyLab.Core.Trading;
 /// downstream could tell the two apart (see: A stop-out is noise when the ten-day return reached one
 /// R, and cause of loss is two questions rather than one ordered list).
 ///
-/// <b>The two rule-set exits never contest each other</b>, because one is the long side's and one is
-/// the short side's and no position has both. That is asserted rather than assumed, so a later
-/// session adding a third rule finds a rank missing rather than a silent tie.
+/// <b>The rule-set exits never contest each other</b>, because the trail is the long side's and the
+/// hold limit the short side's and no position has both. That is asserted rather than assumed, so a
+/// later session adding a rule finds a rank missing rather than a silent tie.
 /// see: Long and short are never pooled into one figure
 /// </summary>
 public static class ExitReason
@@ -39,18 +39,28 @@ public static class ExitReason
     /// <summary>The long trail: a daily close below the 9-day average, filling at the next open.</summary>
     public const string Trail = "trail";
 
-    /// <summary>The short exit: an hourly bar closing back above the 50-day average.</summary>
+    /// <summary>
+    /// Generation 0's short exit, an hourly bar closing back above the 50-day average, retired at
+    /// 7.10 because no source states it. Kept as a reason so a row armed or closed on it before then
+    /// still reads, and an arm already on a row still fills at the next open; nothing arms it now.
+    /// </summary>
     public const string Reclaim = "hourly-reclaim";
 
     /// <summary>
-    /// The short trim at 3R. Present for completeness and never an exit reason on a position row: a
-    /// trim reduces a position and does not end one, so it carries its own fill leg and leaves the
-    /// row open (see: The short trim is 15% of the planned position, once, at 3R).
+    /// The short exit from 7.10: the position has been held three sessions, and closes at the next
+    /// open (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed).
+    /// </summary>
+    public const string HoldLimit = "hold-limit";
+
+    /// <summary>
+    /// A trim, at 3R and again at 5R on both sides from 7.10. Never an exit reason on a position row:
+    /// a trim reduces a position and does not end one, so it carries its own fill leg and leaves the
+    /// row open.
     /// </summary>
     public const string Trim = "trim";
 
-    /// <summary>The three reasons that can close a position, in the order they resolve a tie.</summary>
-    public static IReadOnlyList<string> ThatCloseAPosition { get; } = [GaveUp, Trail, Reclaim];
+    /// <summary>The four reasons that can close a position, in the order they resolve a tie.</summary>
+    public static IReadOnlyList<string> ThatCloseAPosition { get; } = [GaveUp, Trail, Reclaim, HoldLimit];
 
     /// <summary>
     /// Which of two reasons resolves first when both name the same minute. Lower wins.
@@ -68,6 +78,7 @@ public static class ExitReason
             GaveUp => 0,
             Trail => 1,
             Reclaim => 1,
+            HoldLimit => 1,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(reason),
                 $"'{reason}' is not one of the {ThatCloseAPosition.Count} reasons that close a position. "

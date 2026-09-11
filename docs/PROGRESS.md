@@ -19573,3 +19573,93 @@ Carried:    **The operator's half: the run over the real backfill on a store cop
             Not met; it waits on 7.7's operator half, the backfill itself.
 
             **This session committed code and may not sign it off.**
+
+## 7.10 — 2026-09-11 — phase-7-10-exits — the exits traced against the source before they were built, and built as the trace found them
+
+Built:      **`SOURCES.md` gains "Generation 1's exits"**, on the document's own discipline: the
+            prediction the plan wrote is set down first as it was written, then what the trace
+            found, then the two exit tables in the check's four-word vocabulary and a quoted section
+            for every sourced form. `clause-provenance` widens to it, reconciling the two tables
+            against `LongExitRules.Forms` and `ShortExitRules.Forms` in both directions under the same
+            six rules the gate tables carry, with a floor under each of its two new scopes.
+
+            **The long side**: the trail is unchanged and now cites him three times, and the side
+            trims 15% of the planned position at 3R and again at 5R, his fraction and both his levels.
+            **The short side**: no trail, on his own word, and a hold limit instead, armed on the close
+            of the third session held, the one it opened in counted, and filled at the next open; the
+            same two trims, the long side's figures mirrored and marked as the author's. **Generation
+            0's hourly close back above the 50-day average retires**, stated in no source; a row
+            already armed on it still fills and is counted under its own name. `TrimArithmetic` holds
+            the rounding both sides share, and a trim now never takes the whole position, where until
+            7.10 it was capped at what was held and on a row the gate had cut far enough closed every
+            share while leaving the row open.
+
+            **Migration 068** records every trim after the first beside it and never over it:
+            `further_trims`, their shares and money together, and a stamp of their own, so a replay
+            standing between two trims reads the first and not the second. Overwriting the first
+            trim's columns with running totals would have left that state unrecoverable, since one
+            stamp can only say when the last change happened. `manage_run` gains `closed_hold_limit`.
+            The reader adds the two halves into one total, so nothing downstream reads a first trim as
+            all of them.
+
+            **One decision supersedes one**: "Generation 1 trims 15% at 3R and again at 5R on both
+            sides, and a short is held three sessions rather than trailed" replaces "The short trim is
+            15% of the planned position, once, at 3R", which moves to Previously decided with its
+            reasoning and a closing paragraph. Three live entries gain dated notes rather than moving,
+            because their rulings stand: the long trail's entry called the short side's trigger
+            stated, which the trace refutes; the support-trim entry's second sentence described
+            generation 0's short exits; and the hourly grid's entry was written for the exit that
+            retired, and its consumer is now 7.8's entry. BUILD_PLAN's 4.8 row repoints its citation.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,299 tests**, up from 1,294.
+
+Amended:    **This checkpoint amends its own done condition.** BUILD_PLAN's 7.10 row said the short
+            trail is a close above the 9-day average, the mirror of the long one, and the done
+            condition asked for each position's expected trim and trail bars. The trace contradicts
+            the premise: "I'm not trailing the shorts like the longs, like the close above the 9 EMA"
+            (`P2` 1:47:28). The plan's own rule was that the built rule takes whatever standing the
+            trace records, and that a mirror answers a side the source leaves open, which this side
+            it does not. So the row now says each side takes the form the trace records, and the done
+            condition names the trail's bar on the long side and the hold limit's on the short. The
+            prior text is in CHANGELOG. The sign-off is asked to rule on it.
+
+Measured:   **Thirty-six expectations at 7.10, all `DERIVED` by hand before the replay ran.** Over
+            `ExitCases`' authored long and short, four sessions, ten basis points of spread on each:
+            the long, filled at 100.10 over 95, trims 22 at 115.40 on 2026-08-26 11:00 and 22 at 125.60
+            on 2026-08-27 10:00, arms its trail on 2026-08-28 on a close of 113 under a 9-day average of
+            116, and sells 106 at the 2026-08-31 09:30 open for 111.888, **2141.826 realised, 2.7998R**.
+            The short, filled at 49.95 under 52.50, trims 45 at 42.30 on 2026-08-26 11:00, reaches
+            nothing on the second session, trims 45 at 37.20 on 2026-08-28 10:00, arms its hold limit on
+            that third close, and buys 210 at the 2026-08-31 09:30 open for 37.5375, **3521.0475
+            realised, 4.6027R**. As at its second session the short reads one trim of 45, the second not
+            yet visible. The golden night's new `manage.closedHoldLimit` is a structural nought on the
+            chain every manage figure already rests on. Four existing expectations moved: the schema
+            version to 68, and the authored-parameters table's rows, filled rows and rows citing a
+            decision each by one, for the hold-limit row.
+
+            `tools/verify-phase.ps1` GREEN: 162 claims, 162 passed, **0 out of scope before and 0 after**,
+            0 unexamined, coverage examined 13,490, 1,896 expectations of which one is void.
+
+Found:      **The short exit generation 0 ran was the one exit with nothing behind it.** Every other exit
+            form the lab carried has a source sentence; the hourly close above the 50-day has none in
+            the seven sources, and the trace of the gates never reached it because it is not a gate.
+
+            **A trim could close a position and leave it open.** `ShortExitRules.TrimShares` capped a
+            trim at what was held, so on a row RiskGate had reduced below 15% of the plan's size the one
+            trim took every share and the row stayed open with nothing in it. Unreachable in the record,
+            since no trade has fired, and now refused by the arithmetic rather than by chance.
+
+Decided:    **The exits apply to the live lab from this commit**, as 7.8's entry did: there is one
+            execution path, generation 0's register holds no trade, and generation 1 registers at 7.11
+            naming these exits. **The rule trims at his two levels and stops**, because "extended"
+            beyond them is his own observation with no measure, and a third level would be a number no
+            source states. **The hold is three sessions**, the upper of his "two to three days", the
+            reading that exits no sooner than he says he does. "Generally" and "maybe" are recorded as
+            qualifiers, and the hold is the rule, because an exit cannot be recorded without acting on
+            it the way a gate can.
+
+Carried:    **The operator's half: none owed by this checkpoint alone.** The exits run on the first
+            position the lab opens, and no live night has opened one; nothing here asks the operator
+            for a run.
+
+            **This session committed code and may not sign it off.**
