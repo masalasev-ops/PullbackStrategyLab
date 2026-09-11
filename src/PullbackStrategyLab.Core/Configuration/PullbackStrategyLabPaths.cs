@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace PullbackStrategyLab.Core.Configuration;
@@ -28,6 +29,27 @@ public sealed partial class PullbackStrategyLabPaths
     public string StoreFile => Path.Combine(DataRoot, StoreFileName);
 
     public string SnapshotDirectory => Path.Combine(DataRoot, SnapshotDirectoryName);
+
+    /// <summary>
+    /// Where <c>tools/nightly.ps1</c> writes each night's log, which is the one record of a slot the
+    /// worker never started. The script composes the same name from the same root, and
+    /// <c>slot-roster</c> holds the two to one spelling.
+    /// </summary>
+    public const string LogDirectoryName = "logs";
+
+    /// <summary>
+    /// The file whose presence pauses every slot. The operator creates it, the script reads it
+    /// before the tree guard, and a paused slot leaves a line in the night's log saying so.
+    /// </summary>
+    public const string PauseFileName = "paused";
+
+    public string LogDirectory => Path.Combine(DataRoot, LogDirectoryName);
+
+    /// <summary>One night's log, named for the session the way the script names it.</summary>
+    public string NightLogFile(DateOnly session) =>
+        Path.Combine(LogDirectory, "nightly-" + session.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".log");
+
+    public string PauseFile => Path.Combine(DataRoot, PauseFileName);
 
     /// <summary>A snapshot named for the instant it was taken, in a form that sorts chronologically.</summary>
     public string SnapshotFile(DateTimeOffset takenAt) =>

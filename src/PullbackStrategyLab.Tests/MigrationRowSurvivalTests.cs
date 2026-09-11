@@ -22,6 +22,7 @@ public sealed class MigrationRowSurvivalTests
     private const int BeforeTheRekey = 4;
     private const int BeforeTheIndicatorRekey = 8;
     private const int BeforeTheGeometryRebuild = 30;
+    private const int BeforeTheRunLogRebuild = 61;
 
     [Fact]
     public void Migration_005_rebuilds_both_tables_and_loses_no_row()
@@ -152,6 +153,60 @@ public sealed class MigrationRowSurvivalTests
         // assertion 028 exists for. Under the UTC bound it passed against a stamp in the wrong
         // session, because the bound was wrong by the same offset and the two cancelled.
         Assert.Null(IndicatorDailyReader.Read(connection, "AAA", new DateOnly(2026, 8, 24), new DateOnly(2026, 8, 23), SessionBoundaries.UsEquities));
+    }
+
+    /// <summary>
+    /// Migration 062 rebuilds <c>run_log</c> to widen its outcome constraint, and loses no run.
+    ///
+    /// Every column travels, the four that existed before it included, and the three it adds are
+    /// null on every copied row: a run that happened carries no slot, no stated session and no reason
+    /// it did not run, and a migration inventing one would be writing a record nobody made.
+    /// </summary>
+    [Fact]
+    public void Migration_062_rebuilds_the_run_log_and_loses_no_run()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        runner.Apply(connection, throughVersion: BeforeTheRunLogRebuild);
+
+        Execute(connection, """
+            INSERT INTO run_log
+                (run_id, stage, started_at, ended_at, outcome, rows_written, calls_used, counts_against_ceiling, skipped)
+            VALUES
+                ('a', 'sectors',        '2026-08-27T22:12:00.000Z', '2026-08-27T22:14:00.000Z', 'failed', NULL, 149, 1, 86),
+                ('b', 'daily-bars',     '2026-08-27T21:30:00.000Z', '2026-08-27T21:31:00.000Z', 'clean',  1203, 100, 1, NULL),
+                ('c', 'backfill',       '2026-08-25T15:00:00.000Z', NULL,                       NULL,     NULL, 1900, 0, NULL);
+            """);
+
+        Assert.Equal(3, Count(connection, "run_log"));
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("062-run-log-did-not-run.sql", after.Applied);
+
+        Assert.Equal(3, Count(connection, "run_log"));
+
+        Assert.Equal(149L, Scalar(connection, "SELECT calls_used FROM run_log WHERE run_id = 'a';"));
+        Assert.Equal(86L, Scalar(connection, "SELECT skipped FROM run_log WHERE run_id = 'a';"));
+        Assert.Equal(0L, Scalar(connection, "SELECT counts_against_ceiling FROM run_log WHERE run_id = 'c';"));
+        Assert.Equal(DBNull.Value, Scalar(connection, "SELECT ended_at FROM run_log WHERE run_id = 'c';"));
+        Assert.Equal(0L, Scalar(connection, """
+            SELECT COUNT(*) FROM run_log
+             WHERE slot IS NOT NULL OR session_date IS NOT NULL OR did_not_run_because IS NOT NULL;
+            """));
+
+        // And the constraint holds the outcome and the reason together: one without the other is
+        // refused, whichever it is.
+        Assert.Throws<SqliteException>(() => Execute(connection, """
+            INSERT INTO run_log (run_id, stage, started_at, outcome, calls_used)
+            VALUES ('d', 'reconcile-night', '2026-09-08T21:50:00.000Z', 'did-not-run', 0);
+            """));
+        Assert.Throws<SqliteException>(() => Execute(connection, """
+            INSERT INTO run_log (run_id, stage, started_at, outcome, calls_used, slot, session_date, did_not_run_because)
+            VALUES ('e', 'reconcile-night', '2026-09-08T21:50:00.000Z', 'clean', 0, 'universe', '2026-09-07', 'fault');
+            """));
     }
 
     private static void Execute(SqliteConnection connection, string sql)

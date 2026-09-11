@@ -41,6 +41,7 @@ public static class Program
         builder.Services.AddSingleton<ActionIngestor>();
         builder.Services.AddSingleton<IndicatorEngine>();
         builder.Services.AddSingleton<IndexIngestor>();
+        builder.Services.AddSingleton<NightReconciler>();
         builder.Services.AddSingleton<IntradayFetcher>();
         builder.Services.AddSingleton<SpreadSnapshotter>();
         builder.Services.AddSingleton<VwapEngine>();
@@ -279,6 +280,7 @@ public static class Program
         [ActionIngestor.Name] = (services, rest) => services.GetRequiredService<ActionIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
         [DailyBarIngestor.BackfillName] = (services, rest) => services.GetRequiredService<DailyBarIngestor>().RunBackfillAsync(rest).GetAwaiter().GetResult(),
         [IndexIngestor.Name] = (services, rest) => services.GetRequiredService<IndexIngestor>().RunAsync(rest).GetAwaiter().GetResult(),
+        [NightReconciler.Name] = (services, rest) => services.GetRequiredService<NightReconciler>().Run(rest),
         [IntradayFetcher.Name] = (services, rest) => services.GetRequiredService<IntradayFetcher>().RunAsync(rest).GetAwaiter().GetResult(),
         [SpreadSnapshotter.Name] = (services, rest) => services.GetRequiredService<SpreadSnapshotter>().RunAsync(rest).GetAwaiter().GetResult(),
         [VwapEngine.Name] = (services, rest) => services.GetRequiredService<VwapEngine>().RunAsync(rest).GetAwaiter().GetResult(),
@@ -352,6 +354,7 @@ public static class Program
         ActionIngestor.Name,
         DailyBarIngestor.BackfillName,
         IndexIngestor.Name,
+        NightReconciler.Name,
         IntradayFetcher.Name,
         SpreadSnapshotter.Name,
         VwapEngine.Name,

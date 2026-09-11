@@ -290,6 +290,25 @@ jobs:
               "so a job reading it cannot tell a stage that ran from a stage that never started.")
           }
 
+          # 1a. From 7.1 the refusal also leaves the one structured line the next night's
+          #     reconciliation reads, since the guard exits before the worker and nothing it does
+          #     tonight can reach run_log. The reconciliation's parser is tested against the format
+          #     string as the script spells it; this is where the interpreter the scheduler runs is
+          #     seen to write it, on a refusal it really made.
+          $structured = if ($refused.Path -eq 'nothing') { $null } else {
+            Select-String -Path $refused.Path `
+              -Pattern 'did-not-run slot=universe session=\d{4}-\d{2}-\d{2} because=refused-by-tree-guard' |
+              Select-Object -First 1
+          }
+
+          if ($null -eq $structured) {
+            throw ("The tree guard refused the slot and the log carries no did-not-run line for it, so " +
+              "the next night's reconciliation would find nothing to record and the refused night " +
+              "would read as a night nobody can account for.")
+          }
+
+          Write-Output "the refusal left: $($structured.Line.Trim())"
+
           $ErrorActionPreference = 'Continue'
 
           # 2. The wrong-output case: the stage runs and writes its own message, and the pattern

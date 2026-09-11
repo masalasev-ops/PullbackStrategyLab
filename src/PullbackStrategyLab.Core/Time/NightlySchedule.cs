@@ -44,7 +44,12 @@ public static class NightlySchedule
         new("actions", "17:20", ["actions"]),
         new("bars", "17:30", ["daily-bars"]),
         new("rebuild", "17:45", ["backfill"]),
-        new("index", "17:50", ["index-bars"]),
+        // The reconciliation is the second verb of this slot rather than a slot of its own, because
+        // it reads what the first writes. `index-bars` refetches each tracker's whole history every
+        // night, so once it has run the store knows whether the session before was one the market
+        // held, whether or not that session's own night ran. The daily bulk cannot say so: it asks
+        // for its own date and nothing else.
+        new("index", "17:50", ["index-bars", "reconcile-night"]),
         new("indicators", "18:00", ["indicators"]),
         new("scans", "18:10", ["scans", "tiers"]),
         new("sectors", "18:12", ["sectors"]),
@@ -142,6 +147,24 @@ public static class NightlySchedule
     /// </summary>
     public static IReadOnlyList<NightSlot> Due(DayOfWeek on) =>
         [.. Slots.Where(s => s.WeeklyOn is null || s.WeeklyOn == on)];
+
+    /// <summary>
+    /// The slots a registered task fires on a day, which is a narrower list than <see cref="Due"/>
+    /// on a Saturday and on a Sunday.
+    ///
+    /// <b>Two lists because they answer two questions.</b> <see cref="Due"/> is the population a
+    /// morning report of a session is over, and it keeps the weekly slots on their own day beside the
+    /// rest. The tasks themselves are registered weekdays for the nightly slots and Saturday for the
+    /// weekly ones, so on a Saturday the nightly slots do not fire at all, and a reconciliation that
+    /// took the report's list would record thirty-two slots as not having run on every Saturday of
+    /// the lab's life for want of a reason that does not exist.
+    /// </summary>
+    public static IReadOnlyList<NightSlot> FiresOn(DayOfWeek on) => on switch
+    {
+        DayOfWeek.Sunday => [],
+        DayOfWeek.Saturday => [.. Slots.Where(s => s.WeeklyOn == DayOfWeek.Saturday)],
+        _ => [.. Slots.Where(s => s.WeeklyOn is null)],
+    };
 
     /// <summary>The stages a run report expects to find, which is every stage of every slot that logs one.</summary>
     public static IReadOnlyList<string> ObservableStages { get; } =

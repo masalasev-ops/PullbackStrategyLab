@@ -51,6 +51,10 @@ $slotOwn = @(
     '\s+production checkout,',
     '\s+Return the tree to main,',
     '\s+Pass -AllowBranch',
+    # From 7.1 a slot the script will not run says so in one structured line the next night's
+    # reconciliation reads, and a paused slot says who paused it. Both are the script's own words.
+    '\s+did-not-run slot=',
+    '\s+paused by the operator:',
     '\s+running ',
     'exited \d+; slot \S+ stops here'
 )

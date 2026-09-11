@@ -481,6 +481,9 @@ table.ledger td.age { color: var(--ink3); font-variant-numeric: tabular-nums; wh
 .night .count { margin: 0 0 8px; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
 .night p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; }
 .night .warns { display: block; font-size: 12px; color: var(--ink2); }
+/* Why a slot that never ran did not, where the next night's reconciliation could say. On its own line,
+   because it answers the line above it rather than continuing it. */
+.night .because { display: block; font-size: 12px; color: var(--ink); }
 
 /*
   The pack comparison surface. A table whose job is to make one differing component findable, so the

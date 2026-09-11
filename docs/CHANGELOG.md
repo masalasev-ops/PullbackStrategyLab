@@ -2944,3 +2944,38 @@ Why:  `--with-dividends` exists in no source file. Following the row ran the sta
 Was:  "`fixtures/expectations.json` names twelve frozen-only checkpoints under `frozenOnly`".
 Now:  "names thirteen frozen-only checkpoints".
 Why:  7.0 landed without contributing an expectation and carries a settled permit on the precedent 6.0 and 3.13 set, so the fixture holds one more permit. `stated-counts` derives the figure from the fixture and failed the sentence the moment the permit was written, which is the claim doing what it was registered for; the permit rests on no open obligation, so the clause after the count still reads nought.
+
+### 2026-09-11 — BUILD_PLAN.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  "The tree guard writes a structured line to the night's log, and a reconciliation stage reads the schedule against `run_log` and the log and writes the missing rows through the table's one declared writer. **It runs after the next night's `bars` slot has ingested the session in question**, so a session with no daily bar after that ingest is market closed and a night whose ingest did not run is never read as a holiday."
+Now:  "The tree guard writes a structured line to the night's log, and NightReconciler reads the schedule against `run_log` and the log and writes the missing rows through the table's one declared writer. **It runs as the second verb of the next night's `index` slot**, after `index-bars` has refetched every tracker's whole history, so a weekday no tracker holds once a later session is stored is market closed and a night whose ingest did not run is never read as a holiday (see: A slot that did not run is recorded the next night from its log, and a holiday is read from the index history)."
+Why:  The row rested on the next night's daily ingest covering the session before, and it does not: `daily-bars` asks the bulk endpoint for its own date alone, so a lost night is never ingested by the night after it. `index-bars` refetches each tracker's whole history every night, which is the reading the row wanted. The row also names the component it builds, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 54 components are listed by layer,"
+Now:  "The 55 components are listed by layer,"
+Why:  NightReconciler joins the catalogue at 7.1, after RunLogger, whose table it writes through. The Build order gains a P7 row naming it, on the direction 4.14 added: a catalogued component no phase's Builds row names fails.
+
+### 2026-09-11 — SCHEMA.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  "| `outcome` | TEXT | `clean`, `partial`, `failed` |"
+Now:  "| `outcome` | TEXT | `clean`, `partial`, `failed`, or `did-not-run` on a row recording a slot that never ran, present exactly when `did_not_run_because` is |"
+Why:  Migration 062 widens the constraint and adds `slot`, `session_date` and `did_not_run_because`, each added to the table as its own row.
+
+### 2026-09-11 — RUNBOOK.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  "| 17:50 | `index-bars`, one call a tracker | 3 |"
+Now:  "| 17:50 | `index-bars`, one call a tracker, then `reconcile-night`, which records every slot of the week before that did not run with which of four reasons it was. ... | 3 |"
+Why:  The reconciliation is the slot's second verb because it reads what the first writes, so the slot count stays thirty-seven and no new task is registered.
+
+### 2026-09-11 — RUNBOOK.md — cites The nightly runs from its own checkout, updated once a night before the first slot
+Was:  "A firing is now a signal that something is wrong with the production checkout rather than the ordinary cost of merging in the evening, and `-AllowBranch` has no legitimate use there."
+Now:  The same sentence, followed by "**From 7.1 a firing also reaches the morning screen**: the guard writes one line the next night's reconciliation turns into a `run_log` row per refused slot, so a refused night reads as refused rather than as a night nobody can account for."
+Why:  The paragraph says the guard should never fire and nothing said where a firing would be seen other than the scheduler.
+
+### 2026-09-11 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "| `slot-diagnostics` | every CI run | Every stage the slot script runs is invoked through the one function that keeps a native command's stderr, so a failing stage's message and the line saying the slot stopped both reach the night's log |"
+Now:  The same row, followed in the Asserts cell by "And every refusal of the tree guard writes the line the next night's reconciliation reads before it exits".
+Why:  7.1's row asks `slot-diagnostics` to assert the guard's new line, and the roster states what each check asserts.
+
+### 2026-09-11 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "| `slot-roster` | every CI run | The night's dispatcher, its own parameter set, the worker's advertised stages and RUNBOOK's schedule name the same slots and the same verbs, reconciled in every direction |"
+Now:  The same row, followed in the Asserts cell by "And the four reasons a slot did not run for agree across Core, the store's constraint and the slot script, in both directions".
+Why:  7.1's sixth reconciliation. The check's two floors of twenty-two became equalities against the Core declaration in the same commit, which changes no row here.

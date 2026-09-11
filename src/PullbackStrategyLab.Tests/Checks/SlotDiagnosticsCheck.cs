@@ -66,10 +66,13 @@ public sealed partial class SlotDiagnosticsCheck
         string[] verbs = [.. SlotVerb().Matches(script).Select(m => m.Groups["verb"].Value)];
         int invocations = WorkerInvocation().Matches(script).Count;
         int inside = function.Success ? WorkerInvocation().Matches(body).Count : 0;
+        int refusals = GuardExit().Matches(script).Count;
+        int recordedRefusals = RecordedGuardExit().Matches(script).Count;
 
         coverage
             .Examined("slot verbs routed through the isolating function", verbs.Length)
             .Examined("worker invocations in tools/nightly.ps1", invocations)
+            .Examined("refusals in tools/nightly.ps1 that write the did-not-run line", recordedRefusals)
             .Scan(
                 "no stage is invoked outside Invoke-Stage, and that function sets its own error preference",
                 CheckCoverage.Backing.Runner(
@@ -108,5 +111,24 @@ public sealed partial class SlotDiagnosticsCheck
         // The stop line is the other half of what the defect lost. A slot that stops with the message
         // logged and no line saying it stopped still reads as a slot that ran out of work to do.
         Assert.Contains("exited {1}; slot {2} stops here", script, StringComparison.Ordinal);
+
+        // From 7.1, every refusal of the tree guard writes the one line the next night's
+        // reconciliation reads before it exits, because the guard exits before the worker and a
+        // refusal that leaves no line is a night nothing can account for. Stated in advance: the
+        // guard refuses in two places, a tree on a branch and a tree whose ref cannot be read. The
+        // slot-diagnostics job then produces a real refusal and requires the line in the log.
+        Assert.True(refusals == 2 && recordedRefusals == refusals,
+            $"tools/nightly.ps1 has {refusals} tree-guard exit(s) and {recordedRefusals} of them write the "
+            + "did-not-run line first. Every refusal writes it, and there are two, so a refusal that skips it "
+            + "leaves a refused night reading as one nobody can account for.");
     }
+
+    /// <summary>Every exit the tree guard makes, which is the script's one use of exit code 4.</summary>
+    [GeneratedRegex(@"^\s*exit 4\s*$", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex GuardExit();
+
+    /// <summary>A guard exit with the structured line written on the line before it.</summary>
+    [GeneratedRegex(@"^\s*Write-DidNotRun 'refused-by-tree-guard'\s*\r?\n\s*exit 4\s*$",
+        RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex RecordedGuardExit();
 }

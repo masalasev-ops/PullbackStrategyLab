@@ -9883,10 +9883,10 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "61",
+      "value": "62",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
@@ -10457,18 +10457,18 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "54",
+      "value": "55",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "rows in the component catalogue"
+      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is."
     },
     {
       "id": "catalogue.componentTypes",
       "tier": "DERIVED",
-      "value": "47",
+      "value": "48",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "of those, the ones that are a type rather than a screen"
+      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is."
     },
     {
       "id": "catalogue.screens",
@@ -11665,10 +11665,10 @@
     {
       "id": "night.observableStages",
       "tier": "DERIVED",
-      "value": "39",
+      "value": "40",
       "checkpoint": "5.5",
       "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry.",
-      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran."
+      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran. Was 39 until 7.1, which adds `reconcile-night` as the second verb of the `index` slot. It takes a RunLogger like every other observable stage, so a report can say whether it ran, and the slot count does not move because the stage joins a slot rather than making one."
     },
     {
       "id": "night.unobservable",
@@ -12630,6 +12630,70 @@
       "checkpoint": "6.12",
       "producedBy": "produced by running the shipped LabSetups.Read over the golden fixture with the outcome filter set, and read back off the response it returned",
       "note": "The names behind the count above, so a nought says which rows were asked about rather than only how many came back. A count alone reads identically over a night with no near miss and over a filter that was handed no rows at all."
+    },
+    {
+      "id": "reconcile.slotsFired",
+      "tier": "DERIVED",
+      "value": "32",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "How many slots the schedule fires on the fixture's session, a Monday. It is the population every figure below is over, and it is thirty-two rather than thirty-seven because the five weekly slots fire on Saturday alone: a reconciliation that took the whole list would record five slots as not having run on every weekday of the lab's life."
+    },
+    {
+      "id": "reconcile.refused",
+      "tier": "DERIVED",
+      "value": "32",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "7.1's done condition: a weekday the guard refused reconciles to thirty-two refused rows. Every slot, snapshot-db included, because the log says the guard refused it and that is a fact about the slot whether or not it would have written a run entry."
+    },
+    {
+      "id": "reconcile.missing",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "7.1's done condition, the other half: none missing. A slot is missing only where nothing establishes why it did not run, and on a night the guard refused every slot the log establishes all of them."
+    },
+    {
+      "id": "reconcile.otherReasons",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "Rows written under any of the other three reasons on the refused night. Nought, because a refusal in the log is what happened to the slot and it is recorded before the index history is asked whether the market was open, which is the order 2026-09-07 needs: the guard refused thirty-one slots on Labor Day and the rows say refused."
+    },
+    {
+      "id": "reconcile.lostNightMissing",
+      "tier": "DERIVED",
+      "value": "32",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "The same session with no log at all, over a store holding no index bar after it. All thirty-two are missing: a lost night and a holiday look the same until a later session's index history is stored, and the reconciliation does not guess."
+    },
+    {
+      "id": "reconcile.lostNightWritten",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "What the lost night wrote, which is nothing. This is the holiday trap closed: a night whose ingest never ran is never read as market closed."
+    },
+    {
+      "id": "reconcile.lostNightMarket",
+      "tier": "DERIVED",
+      "value": "NotYetKnown",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "What the index history says about the fixture's session in a store holding none, which is that it cannot place it yet. Frozen as the name rather than the sentence, so a rewording of the sentence does not move a figure."
+    },
+    {
+      "id": "reconcile.secondRunWritten",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.1",
+      "producedBy": "derived by hand from RUNBOOK's schedule before it was run: thirty-seven slots, five of them Saturday's weekly research slots, so a Monday fires thirty-two. The refused night is AUTHORED, every slot of the Monday refused on the tree guard with its log lines rendered from tools/nightly.ps1's own format strings, and fed to the shipped NightReconciler over a store the replay migrates empty for the purpose",
+      "note": "The refused night reconciled a second time writes nothing, because the store holds one row per slot and session and the writer declines a second. It is what lets every night look back a week and catch up a night this stage did not run on."
     }
   ],
   "frozenOnly": [
