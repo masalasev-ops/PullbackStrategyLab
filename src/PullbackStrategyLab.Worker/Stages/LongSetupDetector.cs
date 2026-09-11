@@ -271,6 +271,16 @@ public sealed class LongSetupDetector
             if (!ClearsRecordingFloor(results))
             {
                 belowFloor++;
+
+                // Kept rather than discarded, from 7.3, and on a forward night only. The vector was
+                // computed in full and thrown away, so a later change to the floor could only be
+                // measured forward; this is what makes it replayable. A calibration walk has no such
+                // record, because its rows are not evidence and nothing is replayed over them.
+                if (string.Equals(table, SetupReader.SetupTable, StringComparison.Ordinal))
+                {
+                    RecordBelowFloor(connection, transaction, asOf, ticker, results, _clock.UtcNow);
+                }
+
                 continue;
             }
 
@@ -582,6 +592,51 @@ public sealed class LongSetupDetector
         command.Parameters.AddWithValue("@ticker", ticker);
         command.Parameters.AddWithValue("@direction", Direction);
         command.Parameters.AddWithValue("@message", DetectorErrorReader.Describe(error));
+        command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
+
+        return command.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Which gate set this detector scores a vector under. Generation 0's, the only one there is until
+    /// the switch night, when this detector moves to the companion table and generation 1's takes its
+    /// place (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole).
+    /// </summary>
+    public const int GateSetGeneration = 0;
+
+    /// <summary>
+    /// One name that missed the recording floor, with every verdict it was given and which floor
+    /// clauses sank it.
+    ///
+    /// <b>Its own insert, not a shared helper</b>, on the terms the setup and error inserts pay, so
+    /// `writer-ownership` attributes the write to the detector that made it. Nothing in the nightly
+    /// pipeline reads the table, which is what keeps these names out of the fetch, the control pool,
+    /// band 1 and the vendor budget.
+    /// </summary>
+    private static int RecordBelowFloor(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        DateOnly asOf,
+        string ticker,
+        IReadOnlyList<CheckResult> results,
+        DateTimeOffset observedAt)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO below_floor (as_of, ticker, direction, generation, check_results, failed_floor, observed_at)
+            VALUES (@as_of, @ticker, @direction, @generation, @check_results, @failed_floor, @observed_at)
+            ON CONFLICT (as_of, ticker, direction, generation) DO NOTHING
+            """;
+
+        command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
+        command.Parameters.AddWithValue("@ticker", ticker);
+        command.Parameters.AddWithValue("@direction", Direction);
+        command.Parameters.AddWithValue("@generation", GateSetGeneration);
+        command.Parameters.AddWithValue("@check_results", JsonSerializer.Serialize(results, CheckResultsJson));
+        command.Parameters.AddWithValue(
+            "@failed_floor",
+            string.Join(",", RecordingFloor.Where(name => !results.Any(r => r.Name == name && r.Passed))));
         command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
 
         return command.ExecuteNonQuery();

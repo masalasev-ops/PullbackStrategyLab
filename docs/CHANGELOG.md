@@ -2994,3 +2994,8 @@ Why:  CheckRegister joins the catalogue at 7.2 as the one writer of `check_defin
 Was:  "| `check-completeness` | every CI run | Every setup row has a result recorded for every check defined at its date, with the check names read from ARCHITECTURE's own gate lists and reconciled in both directions |"
 Now:  The same row, followed in the Asserts cell by "The date is real from 7.2: each row is held to the list `check_definition` says was in force on its night, every row of a side on one night records one set, and the latest night's set is the build's".
 Why:  The label claimed date-awareness from 2026-08-26 and every row was compared with today's list; the row now says what the check reads.
+
+### 2026-09-11 — ARCHITECTURE.html — cites A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+Was:  "<td>Forward only. Those rows do not exist and cannot be made to exist</td>" in the Structural row of "What each tier of change can be replayed against"
+Now:  A signal needing data never captured stays forward only; a change to the recording floor is replayable over the nights from 7.3, whose detectors keep every below-floor name with its verdicts in `below_floor`, and forward only before them. Neither is admitted as a version in this generation.
+Why:  7.3 keeps the vector a name below the floor was scored with, which was computed in full and discarded, so the row's claim that the floor could never be replayed stopped being true of every night after the record begins.

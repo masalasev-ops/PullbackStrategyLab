@@ -921,6 +921,7 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(NightFigures());
         measurements.AddRange(ReconciliationFigures());
         measurements.AddRange(CheckRegisterFigures());
+        measurements.AddRange(BelowFloorFigures());
         measurements.AddRange(StoreIntegrityFigures());
         measurements.AddRange(CataloguePlacementFigures());
         measurements.AddRange(AuthoredParameterFigures());
@@ -3243,6 +3244,56 @@ public sealed class PhaseReplay : IDisposable
             new Measurement("night.accountedFor",
                 night.Ran + night.NeverRan + night.NotClean + night.Unobservable == night.Slots.Count
                     ? "every slot" : "not every slot"),
+        ];
+    }
+
+    /// <summary>
+    /// The names the fixture's night examined and did not record, kept with their verdicts from 7.3.
+    ///
+    /// <b>Each count is the detector's own below-floor count written down rather than discarded</b>,
+    /// and the population is every universe member the side examined less the one it recorded. The
+    /// overlap with `setup` is the property that keeps the two populations apart: a name is on one
+    /// side of the floor or the other, never both.
+    /// </summary>
+    private IReadOnlyList<Measurement> BelowFloorFigures()
+    {
+        int Count(string sql)
+        {
+            using SqliteConnection connection = _connections.OpenReadOnly();
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            command.Parameters.AddWithValue("@observed_before", StoreText.TimestampToStorageText(_clock.UtcNow));
+            return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        string Figure(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        return
+        [
+            new Measurement("belowFloor.long", Figure(Count("""
+                SELECT COUNT(*) FROM below_floor
+                 WHERE as_of = @as_of AND direction = 'long' AND observed_at <= @observed_before
+                """))),
+            new Measurement("belowFloor.short", Figure(Count("""
+                SELECT COUNT(*) FROM below_floor
+                 WHERE as_of = @as_of AND direction = 'short' AND observed_at <= @observed_before
+                """))),
+            new Measurement("belowFloor.notGenerationZero", Figure(Count("""
+                SELECT COUNT(*) FROM below_floor
+                 WHERE as_of = @as_of AND generation <> 0 AND observed_at <= @observed_before
+                """))),
+            new Measurement("belowFloor.alsoInSetup", Figure(Count("""
+                SELECT COUNT(*) FROM below_floor b
+                  JOIN setup s ON s.as_of = b.as_of AND s.ticker = b.ticker AND s.direction = b.direction
+                 WHERE b.as_of = @as_of AND b.observed_at <= @observed_before
+                   AND s.setup_id = b.as_of || '-' || b.ticker || '-' || b.direction
+                   AND (s.corrected_at IS NULL OR s.corrected_at <= @observed_before)
+                """))),
+            new Measurement("belowFloor.withNoFailedClause", Figure(Count("""
+                SELECT COUNT(*) FROM below_floor
+                 WHERE as_of = @as_of AND failed_floor = '' AND observed_at <= @observed_before
+                """))),
         ];
     }
 
