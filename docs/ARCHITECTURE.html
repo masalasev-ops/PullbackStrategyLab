@@ -860,6 +860,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30, and 17:45 for the refetch</td><td>Pulls the whole market’s closing prices in one bulk request. Also owns the per-ticker history refetch, which is how a corporate action is honoured and how the one-time backfill is done, because a second component issuing the same insert would be a second writer of the same table</td></tr>
 <tr><td><b>ActionIngestor</b></td><td>Nightly 17:20</td><td>Splits and dividends, and raises a rebuild demand for any action that moves the adjusted close. It raises the demand and never satisfies it</td></tr>
 <tr><td><b>IntradayFetcher</b></td><td>Nightly 20:30</td><td>Minute bars for every flagged setup, after the close</td></tr>
+<tr><td><b>MinuteBackfiller</b></td><td>Manual</td><td>Minute history bought once for the flagged calibration rows, into a research table the nightly capture never reads</td></tr>
 <tr><td><b>IndexIngestor</b></td><td>Nightly</td><td>Index bars for the market-mood inputs</td></tr>
 <tr><td><b>SectorResolver</b></td><td>On first sighting</td><td>Sector, industry and market cap, on first sighting, cached</td></tr>
 <tr><td><b>SpreadSnapshotter</b></td><td>10:15 and 15:45, inside the session</td><td>Bid-ask spread for the night's capped names, sampled twice. The only job that runs while the market is open, and unrecoverable if missed. The first sample is past the opening auction, whose quotes describe an event rather than a name, and inside the first hour, where a pullback trigger most often fires; the second is late enough to catch a book that widened through the day and outside the closing auction. Two rather than one because a single quote cannot be checked, and two rather than three because a third buys the shape of the curve rather than a check on its level, at sixty more unrecoverable calls a session for ever</td></tr>
@@ -916,7 +917,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 58 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 59 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -1008,7 +1009,7 @@ tr:hover td{background:#f4f2ec}
 <td>Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling, and proposal hit rate compared across pack versions.</td>
 <td>The pack built from the fixture is byte-stable across runs, so a pack change is a deliberate change. The planted null signal is present. No component outside the proposal store accepts a write from the researcher.</td></tr>
 
-<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser</td>
+<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller</td>
 <td>The morning screen saying why a slot that never ran did not. Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers, and the switch night with generation 0's record kept beside it.</td>
 <td>A weekday the guard refused reconciled to thirty-two rows and none missing. Every clause of generation 1 still naming its source, and every row read against the gate list of its own night across the switch.</td></tr>
 </table>

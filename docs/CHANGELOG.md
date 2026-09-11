@@ -3049,3 +3049,18 @@ Why:  GenerationCloser joins the catalogue as the act the Failure behaviour row 
 Was:  "A component that closes every open version of the generation in force as `unresolved`, ... declared in SCHEMA. Nothing performs this act today"
 Now:  "GenerationCloser, a component that closes every open version of the generation in force as `unresolved`, ... declared in SCHEMA. Nothing performed this act before it"
 Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it, and "today" stopped being true in the commit that built it.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 58 components are listed by layer," and the P7 Builds cell "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser"
+Now:  "The 59 components are listed by layer," and "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller"
+Why:  MinuteBackfiller joins the catalogue as the component that buys the calibration minutes.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Components are named, not coded
+Was:  "| 7.7 | **The minute backfill.** One-minute history for the flagged calibration rows: ..."
+Now:  "| 7.7 | **The minute backfill.** MinuteBackfiller buys one-minute history for the flagged calibration rows: ..."
+Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it.
+
+### 2026-09-11 — RUNBOOK.md — cites A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes
+Was:  "`admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs:" and "`slot-roster` excludes the three by name and holds this table to them,"
+Now:  "`admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs, and a fourth from 7.7:" and "`slot-roster` excludes the four by name and holds this table to them,"
+Why:  `backfill-minutes` is an operator verb from 7.7, a one-time purchase no slot may take, and the table gains its row.

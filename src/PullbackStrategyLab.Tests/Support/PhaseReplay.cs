@@ -935,6 +935,9 @@ public sealed class PhaseReplay : IDisposable
         // closing the generation changes what a night fans out to, so no figure above may see it.
         measurements.AddRange(GenerationCloseFigures());
 
+        // It adds a calibration row, so it runs after every figure that counts them.
+        measurements.AddRange(MinuteBackfillFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -3591,6 +3594,88 @@ public sealed class PhaseReplay : IDisposable
 
     /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
     private const string AuthoredVersion = "V-acceptance";
+
+    /// <summary>The name the fixture holds captured minutes for, and the only one a backfill request can be answered for.</summary>
+    public const string BackfillTicker = "AAPL";
+
+    /// <summary>
+    /// The calibration minute backfill over the fixture's calibration rows, from 7.7.
+    ///
+    /// <b>One row is authored, and it is the one that can be answered.</b> The fixture holds captured
+    /// minutes for one name and one session, AAPL on 2026-08-25, and the calibration walk flags eleven
+    /// other names, so every request the walk's own rows make is answered with nothing. An AAPL row on
+    /// the fixture's as-of enters on 2026-08-25, the next weekday, and its window is answered with the
+    /// captured session: 959 bars, which is the probe's per-name figure for one session, so the fetched
+    /// count reconciles against it. AUTHORED, on the terms the IESC setup is.
+    ///
+    /// <b>The live capture table is asserted untouched</b>, by the minutes the two tables share, which
+    /// must be none.
+    /// </summary>
+    private IReadOnlyList<Measurement> MinuteBackfillFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        string authored = $"{Session(AsOf)}-{BackfillTicker}-long";
+
+        using (SqliteConnection write = _connections.OpenWrite())
+        {
+            using SqliteCommand command = write.CreateCommand();
+            command.CommandText = """
+                INSERT INTO calibration_setup (setup_id, as_of, ticker, direction, check_results, passed_all)
+                VALUES (@id, @as_of, @ticker, 'long', '[]', 0);
+                """;
+            command.Parameters.AddWithValue("@id", authored);
+            command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(AsOf));
+            command.Parameters.AddWithValue("@ticker", BackfillTicker);
+            command.ExecuteNonQuery();
+        }
+
+        MinuteBackfillResult result = new MinuteBackfiller(Vendor, _connections, Logger(), _clock, _options)
+            .BackfillAsync().GetAwaiter().GetResult();
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+
+        string Text(string sql)
+        {
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddWithValue("@ticker", BackfillTicker);
+            return Convert.ToString(command.ExecuteScalar(), CultureInfo.InvariantCulture) ?? "none";
+        }
+
+        string shortRows = Text("""
+            SELECT COALESCE(GROUP_CONCAT(ticker || ' ' || entry_session || ' held ' || warmup_sessions, '; '), 'none')
+              FROM (SELECT ticker, entry_session, warmup_sessions FROM calibration_minute_shortfall
+                     ORDER BY ticker, entry_session);
+            """);
+
+        return
+        [
+            new("minuteBackfill.rows", result.Rows.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.names", result.Names.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.windows", result.Windows.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.calls", result.CallsUsed.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.shortRows", result.ShortRows.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.short", shortRows),
+            new("minuteBackfill.barsReturned", result.BarsReturned.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.sessionsAnswered", result.SessionsAnswered.ToString(CultureInfo.InvariantCulture)),
+            new("minuteBackfill.barsWritten", result.BarsWritten.ToString(CultureInfo.InvariantCulture)),
+            new($"minuteBackfill.{BackfillTicker}.window", Text(
+                "SELECT window_from || ' to ' || window_to FROM calibration_minute_window WHERE ticker = @ticker;")),
+            new($"minuteBackfill.{BackfillTicker}.barsPerSession", Text(
+                "SELECT bars_returned / sessions_answered FROM calibration_minute_window WHERE ticker = @ticker AND sessions_answered > 0;")),
+            new($"minuteBackfill.{BackfillTicker}.regularMinutes", Text(
+                "SELECT COUNT(*) FROM calibration_minute_bar WHERE ticker = @ticker AND session_window = 'regular';")),
+            new($"minuteBackfill.{BackfillTicker}.calls", Text(
+                "SELECT calls_used FROM calibration_minute_window WHERE ticker = @ticker;")),
+            new("minuteBackfill.inTheLiveCaptureTable", Text("""
+                SELECT COUNT(*) FROM intraday_bar i
+                  JOIN calibration_minute_bar c ON c.ticker = i.ticker AND c.bar_ts = i.bar_ts;
+                """)),
+            new("minuteBackfill.countsAgainstTheCeiling", Text(
+                "SELECT counts_against_ceiling FROM run_log WHERE stage = 'backfill-minutes';")),
+        ];
+    }
 
     /// <summary>The baseline the fixture's closed generation is replaced by, registered only to prove the act.</summary>
     public const string FixtureNextBaseline = "V-fixture-next";

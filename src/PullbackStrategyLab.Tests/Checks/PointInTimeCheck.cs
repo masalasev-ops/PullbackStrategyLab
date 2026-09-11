@@ -53,6 +53,11 @@ public sealed class PointInTimeCheck
             ["daily_bar"] = "observed_at",
             ["index_bar"] = "observed_at",
             ["intraday_bar"] = "observed_at",
+
+            // The calibration minutes, from 7.7, stamped on the terms the live minutes are. 7.9 reads
+            // them to resolve an entry the way a night would have, and a read standing at an old
+            // instant that saw minutes bought afterwards would be answering with bars nobody held.
+            ["calibration_minute_bar"] = "observed_at",
             ["spread_snapshot"] = "observed_at",
 
             // The anchored level is read by a gate, so "what the anchored average was, as far as
@@ -272,6 +277,14 @@ public sealed class PointInTimeCheck
                 "observed_at is when one night's minute-bar fetch ran and what it reached, which is "
                 + "operational on the same terms as run_log. Nothing computes a figure about the market "
                 + "from it: the bars it counts are in intraday_bar, which is stamped and bounded.",
+            ["calibration_minute_window"] =
+                "observed_at is when one request of the calibration backfill was made and what it returned, "
+                + "which is operational on the same terms as intraday_fetch. Nothing computes a figure about the "
+                + "market from it: the minutes it counts are in calibration_minute_bar, which is stamped and bounded.",
+            ["calibration_minute_shortfall"] =
+                "observed_at is when a backfill run laid its windows out. The shortfall is a fact about the plan's "
+                + "geometry over the calibration rows rather than an observation of the market, and the same rows "
+                + "and sessions give the same shortfall whenever it is computed.",
             ["vwap_run"] =
                 "observed_at is when one night's averaging ran and what it reached, which is operational "
                 + "on the same terms as intraday_fetch above. Nothing computes a figure about the market "

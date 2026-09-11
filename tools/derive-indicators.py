@@ -74,6 +74,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --gates   <gate-cases.json>
         python tools/derive-indicators.py --cap     <cap-cases.json>
         python tools/derive-indicators.py --point-in-time <store.db> <as-of> <ticker>
+        python tools/derive-indicators.py --minute-windows <store.db> <captured-dir>
 """
 
 import datetime
@@ -2913,7 +2914,79 @@ def fundamentals_main(argv):
     return 0
 
 
+def minute_windows_main(argv):
+    """The calibration minute backfill's plan, restated from SCHEMA's statement of it, from 7.7.
+
+    Reads a replay store copy for the calibration rows and the stored sessions, and the captured
+    directory for the one name it holds minutes for. The rule, as SCHEMA states it and not as the C#
+    does: a row enters on the first stored session after its own, or the next weekday where the store
+    holds none; for each name the latest entry not yet covered ends a 120-day window whose first day is
+    119 days before it, every row of the name inside it is served by it, and the next window ends at the
+    latest entry left over. A row is short where the unbroken run of bought sessions immediately before
+    its entry is under eleven, sixty-three hourly bars at six a session. Each window costs five calls.
+    """
+    if len(argv) < 2:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    store, captured = argv[0], argv[1]
+    connection = sqlite3.connect(store)
+    sessions = sorted(datetime.date.fromisoformat(r[0]) for r in connection.execute("SELECT DISTINCT bar_date FROM daily_bar"))
+    rows = connection.execute("SELECT setup_id, ticker, as_of FROM calibration_setup").fetchall()
+
+    def entry(as_of):
+        later = [s for s in sessions if s > as_of]
+        if later:
+            return later[0]
+        day = as_of + datetime.timedelta(days=1)
+        while day.weekday() >= 5:
+            day += datetime.timedelta(days=1)
+        return day
+
+    by_name = {}
+    for setup_id, ticker, as_of in rows:
+        by_name.setdefault(ticker, []).append((entry(datetime.date.fromisoformat(as_of)), setup_id))
+
+    windows, short = [], []
+    for ticker in sorted(by_name):
+        entries = sorted(by_name[ticker], key=lambda e: (-e[0].toordinal(), e[1]))
+        named = []
+        while entries:
+            end = entries[0][0]
+            start = end - datetime.timedelta(days=119)
+            served = [e for e in entries if e[0] >= start]
+            entries = [e for e in entries if e[0] < start]
+            named.append((start, end, served))
+        for start, end, served in named:
+            for when, setup_id in served:
+                held = 0
+                for s in reversed([s for s in sessions if s < when]):
+                    if held >= 11 or not any(a <= s <= b for a, b, _ in named):
+                        break
+                    held += 1
+                if held < 11:
+                    short.append((ticker, when, held))
+        windows.extend((ticker, a, b, len(c)) for a, b, c in named)
+
+    print("rows %d, names %d, windows %d, calls %d, short %d" % (
+        len(rows), len(by_name), len(windows), 5 * len(windows), len(short)))
+    for ticker, when, held in short:
+        print("  short %s %s held %d" % (ticker, when, held))
+
+    for ticker, a, b, served in windows:
+        path = os.path.join(captured, "intraday-%s.json" % ticker)
+        if os.path.exists(path):
+            minutes = json.load(open(path, encoding="utf-8"))
+            dates = sorted({m["datetime"][:10] for m in minutes})
+            print("  %s window %s to %s, %d row(s), captured %d bar(s) over %d session(s)" % (
+                ticker, a, b, served, len(minutes), len(dates)))
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "--minute-windows":
+        return minute_windows_main(argv[2:])
+
     if len(argv) > 1 and argv[1] == "--dispersion":
         return dispersion_main(argv[2:] or [''])
 
