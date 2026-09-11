@@ -18733,3 +18733,118 @@ Carried:    **One obligation raised, due at the operator**, being whether the ca
             no check in this corpus can see, so it is recorded here with its figures rather than left
             in a run log (see: Every phase ends in a generated phase report, not in a page somebody
             looks at).
+
+## Not a checkpoint entry — 2026-09-09 — phase-6-12-source-trace — belongs to 6.12: the gate set traced against its source material, and the ninth document
+
+**Not a checkpoint entry.** It belongs to 6.12, which has landed. One new document, one new check, and
+the corpus ceiling moved by one. **No threshold, gate or timeframe changed**, and nothing was written
+to any store: this pass reads source material and the corpus, and every disagreement it finds is
+recorded rather than acted on.
+
+Built:      **`docs/SOURCES.md`, the ninth document, and the first place this corpus names the trader
+            it models.** Seven sources, four of them his own words and three somebody's summary, each
+            located by video identifier or URL and each declaring which of the two it is. The twenty
+            gate clauses traced against them, ten a side and never pooled, each on its form and its
+            threshold separately, with a quotation under every clause that claims one.
+
+            **`clause-provenance`, the twenty-ninth check.** Every clause the document says rests on a
+            source still names one, still resolves it against the source table, and still quotes it.
+            Reconciled in every direction: a clause the detectors run and the document does not trace,
+            a row naming a clause no detector runs, an identifier resolving to no source, a source
+            declared and cited nowhere, and a sourced clause whose section carries no quotation are
+            all failures. Nine proof tests written against rows built by hand, and a tenth against the
+            committed document, so the guard is breakable on purpose rather than trusted.
+
+            **The counts are derived from the document's own clause tables by `stated-counts`**, seven
+            claims, rather than stated beside them. That is the whole mechanism and it earned itself
+            inside one session: a first pass put the sourced forms at sixteen by reading the short
+            side's `cluster` as covered by the sentence that covers the long side's, which names a
+            sector and never a direction. Deriving the figure moved it to fifteen. A number typed
+            beside the table would have stayed at sixteen and read as authoritative.
+
+            **Wired in three places.** `SetupChecks` cites the document from the list the detectors
+            run, so the twenty names and the twenty traces are keyed on one another. Each of
+            ARCHITECTURE's twenty gate boxes carries a pointer to its own clause. And ARCHITECTURE's
+            "Where this gate set came from" no longer carries counts, because it was restating a
+            figure another document now derives.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,221 tests**, up from 1,198.
+
+Measured:   **Fifteen of the twenty clause forms rest on the trader's own words and four of the twenty
+            thresholds do.** Twelve forms wholly, three in part, five on nothing any source states. Two
+            clauses carry no threshold. Every figure here is derived from the document's tables rather
+            than counted by hand, which is why they are quoted rather than restated.
+
+            **Against the trace of 2026-09-08, the form column moves by nine and the threshold column
+            does not move at all.** That trace read the corpus, because no document named a source; it
+            found six sourced forms and four sourced thresholds and was a true statement about the
+            corpus rather than about the material. **The source material says what to test in nearly
+            every case and says where to cut in two.** So the lab's questions are largely the trader's
+            own and the lab's numbers are still somebody's choice, which is the same finding the
+            earlier trace reached from the other side and is now the one that survives.
+
+            **Thirteen of the twenty carry a named disagreement, and most of them are inside the
+            sourced set rather than among the unsourced clauses.** A sourced clause is not thereby a
+            faithful one, which is the reading the earlier trace could not have had. `moves-enough` is
+            the sharpest: form and threshold both in his own words, and the lab gates hard on a figure
+            he states in the same breath is not a hard rule.
+
+            **One verdict of the 2026-09-08 trace reverses.** `averages-squeezing`'s form was demoted
+            there from stated source to author's reading because nothing in the corpus recorded the
+            observation ARCHITECTURE's cell attributes to him. The observation exists, in his own
+            words, twice, and both times on a short. The cell was right. What is wrong is the chart:
+            his statement is about the weekly averages converging and the lab computes a daily gap
+            against its own twenty-session history.
+
+            **`corpus.documents` moves from 8 to 9 in the golden fixture**, `DERIVED`, with the reason
+            on the expectation. Its own note says a document added to `/docs` and not to
+            `RepositoryLayout.CorpusFiles` would be one nothing scans, and that is what it did: both
+            halves landed in this commit because the expectation would not let the second be forgotten.
+
+Found:      **The three disagreements the operator named all hold, and one figure carried into this
+            project comes from no source.** The stop rule is two-part in his own words, the entry is an
+            intraday flush reclaiming a named support, and the risk per trade is 0.5%. **The "exceeds
+            5%" switch point is not in either written breakdown.** The financialwisdomtv article states
+            the rule with no figure at all; the formulation traces to social summaries of it, which
+            fuse his absolute ceiling of 5% with the switch condition. In the primary the two are
+            different rules and the switch is much tighter: the case where he abandons the day low for
+            the entry candle low is a stop he calls too wide at "more than 2%". Recorded as
+            fourth-hand so it does not enter the corpus as a citation on its way to becoming a
+            threshold.
+
+            **The risk-per-trade basis cell is better sourced than the earlier trace credited and is
+            out of date.** "Midpoint of the 0.5 to 1% range the strategy is described with" is quoting
+            his own written sentence rather than describing him, so it can carry a citation. By 2026 he
+            states 0.5% as the figure and twice as a limit, and the upper bound the midpoint was taken
+            over appears in none of his later statements.
+
+            **The floor definition 6.12 carries as undefined is specified in the sources, on both
+            sides.** A level from a named set, an intraday break below it, and a recovery through the
+            prior bar's high on a 1, 5 or 15 minute chart depending on how far into the session it
+            happens. That does not discharge the obligation and it changes what the obligation is: the
+            premise `exit-tight` rests on is unimplemented rather than undefined, and the row is
+            written against the second. Left as it stands, because rewriting it is the operator's.
+
+Carried:    **Three things this trace could not settle, recorded in the document rather than as new
+            obligation rows, because each is a reading of an existing source rather than a judgement
+            anybody is waiting on.**
+
+            **The SMCI arithmetic appears to be this lab author's own.** ARCHITECTURE derives the 0.5
+            cap from a worked example running 6.8% daily range to a 3.4% permitted give-up to a 5.6%
+            dip low. He discusses SMCI at length in the 2024 interview, as both a long and a short, and
+            none of those three figures is stated by him there or anywhere else read here. The rule the
+            example illustrates is sourced three times over; the arithmetic illustrating it is sourced
+            nowhere. Settling it needs the figures found in a source or the section saying whose
+            arithmetic it is.
+
+            **The three stop percentages sit in an image that could not be read.** COIN at 2.87%, SOFI
+            at 1.97% and GME at 3.23%. The R multiples for COIN and GME are confirmed in the 2024
+            interview in his own words; the three percentages are stated in no source read here, and
+            the substack post carries an image captioned "Examples of my high R trades in 2024" that
+            this trace could not read.
+
+            **Which direction the leader scan runs.** The one place the short side's `thrust` could
+            acquire a source says "the biggest movers of the past 30 days" without naming a direction,
+            and on the strict reading this document uses that does not establish one.
+
+            **This session committed code and may not sign it off.**

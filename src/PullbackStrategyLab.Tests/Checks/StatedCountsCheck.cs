@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using PullbackStrategyLab.Core.Detection;
 using PullbackStrategyLab.Tests.Support;
 using Xunit;
 using Xunit.Abstractions;
@@ -299,10 +300,97 @@ public sealed partial class StatedCountsCheck
         // no rows at all, and the total below it is what actually holds the shape: eight rows, five
         // of them specs and three records, reconciled in three directions.
         IReadOnlyList<IReadOnlyList<string>> lifecycle = MarkdownTable.BodyRowsAfter(claude, "## Document lifecycle");
-        Assert.Contains("Five specs and three records.", claude, StringComparison.Ordinal);
-        claims.Add(new Claim("CLAUDE.md, five specs", 5, KindCount(lifecycle, "spec"), "lifecycle rows marked spec"));
+        Assert.Contains("Six specs and three records.", claude, StringComparison.Ordinal);
+        claims.Add(new Claim("CLAUDE.md, six specs", 6, KindCount(lifecycle, "spec"), "lifecycle rows marked spec"));
         claims.Add(new Claim("CLAUDE.md, three records", 3, KindCount(lifecycle, "record"), "lifecycle rows marked record"));
-        claims.Add(new Claim("The corpus is eight documents", 8, lifecycle.Count, "rows of the lifecycle table"));
+        claims.Add(new Claim("The corpus is nine documents", 9, lifecycle.Count, "rows of the lifecycle table"));
+
+        // SOURCES.md, the trace's own counts, derived from its two clause tables rather than read
+        // from a figure beside them.
+        //
+        // <b>This is the claim the document exists to make and the one easiest to leave stale.</b>
+        // The 2026-09-08 trace stated six sourced forms and four sourced thresholds in ARCHITECTURE
+        // as prose over a table nothing derived, and the figure it stated was correct on the day and
+        // had no way of staying correct. So the six counts below are the rows, matched on a closed
+        // verdict vocabulary `clause-provenance` holds shut: a reworded cell fails there rather than
+        // quietly falling out of the count here.
+        string sources = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "SOURCES.md"));
+        IReadOnlyList<ClauseProvenanceCheck.ClauseRow> traced =
+        [
+            .. ClauseProvenanceCheck.Clauses(sources, "### The long clauses", SetupDirection.Long),
+            .. ClauseProvenanceCheck.Clauses(sources, "### The short clauses", SetupDirection.Short),
+        ];
+
+        claims.Add(new Claim(
+            "SOURCES.md, clause forms resting on his own words",
+            InWords(sources, "Of the twenty clause forms, ", " rest on his own words"),
+            traced.Count(r => r.Form is ClauseProvenanceCheck.HisOwnWords or ClauseProvenanceCheck.InPart),
+            "clause rows whose form verdict is his own words, wholly or in part"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, clause forms resting on his own words wholly",
+            InWords(sources, "rest on his own words**, ", " wholly and three in part"),
+            traced.Count(r => r.Form == ClauseProvenanceCheck.HisOwnWords),
+            "clause rows whose form verdict is his own words without qualification"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, clause forms with no source",
+            InWords(sources, "and **", " have no source**, being"),
+            traced.Count(r => r.Form == ClauseProvenanceCheck.NoSource),
+            "clause rows whose form verdict is no source found"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, thresholds resting on his own words",
+            InWords(sources, "Of the twenty thresholds, **", " rest on his own words"),
+            traced.Count(r => r.Threshold == ClauseProvenanceCheck.HisOwnWords),
+            "clause rows whose threshold verdict is his own words"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, thresholds with no source",
+            InWords(sources, "A further **", " have no source**, and"),
+            traced.Count(r => r.Threshold == ClauseProvenanceCheck.NoSource),
+            "clause rows whose threshold verdict is no source found"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, clauses carrying no threshold",
+            InWords(sources, "have no source**, and **", " clauses carry no threshold"),
+            traced.Count(r => r.Threshold == ClauseProvenanceCheck.NoThreshold),
+            "clause rows whose threshold verdict is carries no threshold"));
+
+        claims.Add(new Claim(
+            "SOURCES.md, clauses carrying a named disagreement",
+            InWords(sources, "And **", " of the twenty carry a named disagreement"),
+            traced.Count(r => !string.Equals(r.Disagreement, "none", StringComparison.Ordinal)),
+            "clause rows whose disagreement cell is not none"));
+
+        // The two sentences outside SOURCES.md that restate its counts, derived from the same rows.
+        //
+        // <b>Both shipped wrong in the commit that wrote the trace, and neither was read by anything.</b>
+        // DECISIONS.md's entry on the closed vocabulary said "sixteen sourced forms" where the table
+        // derives fifteen, and BUILD_PLAN.md's 6.12 obligation applied "fourteen" to both columns
+        // where SOURCES moved the form column by nine and the threshold column by nothing. The claims
+        // above parse SOURCES's own summary against its own tables, so a figure restated anywhere else
+        // was outside every assertion: the same count stated in a second place is the second place it
+        // goes stale.
+        string decisions = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "DECISIONS.md"));
+
+        claims.Add(new Claim(
+            "DECISIONS.md, the sourced forms the closed vocabulary counts",
+            InWords(decisions, "derives the ", " sourced forms and the"),
+            traced.Count(r => r.Form is ClauseProvenanceCheck.HisOwnWords or ClauseProvenanceCheck.InPart),
+            "SOURCES.md clause rows whose form verdict is his own words, wholly or in part"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the clause forms the 6.12 obligation says rest on no source",
+            InWords(buildPlan, "in which ", " of the twenty clause forms and"),
+            traced.Count(r => r.Form == ClauseProvenanceCheck.NoSource),
+            "SOURCES.md clause rows whose form verdict is no source found"));
+
+        claims.Add(new Claim(
+            "BUILD_PLAN.md, the thresholds the 6.12 obligation says rest on no source",
+            InWords(buildPlan, "clause forms and ", " of the twenty thresholds rest on no source"),
+            traced.Count(r => r.Threshold == ClauseProvenanceCheck.NoSource),
+            "SOURCES.md clause rows whose threshold verdict is no source found"));
 
         // BUILD_PLAN.md, the authored parameters still open, over the table itself.
         //

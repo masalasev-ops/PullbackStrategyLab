@@ -11121,10 +11121,10 @@
     {
       "id": "corpus.documents",
       "tier": "DERIVED",
-      "value": "8",
+      "value": "9",
       "checkpoint": "4.12",
-      "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is eight. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "the five specs and three records, counted from the directory rather than from the list that names them. RepositoryLayout.CorpusFiles is what decision-resolves and no-superseded-citation read, so a ninth document added to /docs and not to that list would be one nothing scans, and this figure is what would say so"
+      "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, SOURCES.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is nine. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files. It read 8 until 2026-09-09, when SOURCES.md was added; the old figure no longer holds because the ceiling moved by one and the directory has one more file in it, which is exactly what this expectation exists to notice.",
+      "note": "the six specs and three records, counted from the directory rather than from the list that names them. RepositoryLayout.CorpusFiles is what decision-resolves and no-superseded-citation read, so a document added to /docs and not to that list would be one nothing scans, and this figure is what would say so. It did say so: SOURCES.md was added to the directory and to that list in the same commit, and this figure is the reason the second half could not be forgotten"
     },
     {
       "id": "corpus.artefacts",
@@ -11132,7 +11132,7 @@
       "value": "0",
       "checkpoint": "4.12",
       "producedBy": "derived by hand from a directory listing before the replay was run, then run. `/docs` holds ARCHITECTURE.html, SCHEMA.md, BUILD_PLAN.md, RUNBOOK.md, DECISIONS.md, PROGRESS.md and CHANGELOG.md, and CLAUDE.md sits at the root, which is eight. It is a figure about the repository rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "the artefacts among them, which is the nought that is the subject. SCREENS.html was the ninth and this figure read 1 until 4.12 retired it, once the pages it drew existed. A figure that could only ever be nought would be worth nothing (see: The corpus is eight documents and a ninth requires retiring one)"
+      "note": "the artefacts among them, which is the nought that is the subject. SCREENS.html was the ninth of its day and this figure read 1 until 4.12 retired it, once the pages it drew existed. A figure that could only ever be nought would be worth nothing (see: The corpus is nine documents, and the ninth records where the strategy came from)"
     },
     {
       "id": "replay.verdict.2026-08-24-HOOD-long.cluster",

@@ -172,6 +172,7 @@ Executable, named, run by `tools/ci.*`. Each is a property that should hold at e
 | `clock-usage` | every CI run | Nothing outside the clock reads the machine clock |
 | `shell-executable` | every CI run | Every shell entry point is recorded executable in the index, which is the bit Windows does not have |
 | `signal-library` | every CI run | The signal library says one thing in SCHEMA's Signals section, in the list the Worker ships and in the `signal_definition` the admission stage seeds, reconciled in every direction. One disagreement is admitted and named: a stored row may record a rejection where the section says candidate, because a rejection is measured rather than declared |
+| `clause-provenance` | every CI run | Every clause SOURCES.md says rests on a source still names one, still resolves it against the source table, and still quotes it. The twenty clause rows are reconciled against the detectors' own lists in both directions, the verdict vocabulary is closed so a reworded cell fails rather than stopping being counted, and a source declared and never cited fails from the other side |
 
 **The table lists every check that runs, not only the properties this file argues for.** A check that runs as a CI step and is not declared here is a property nobody wrote down, and the phase report enumerates checks by name, so the two would disagree with nothing to reconcile them.
 
@@ -307,7 +308,7 @@ Done conditions are written against **what the file will say after the edit**, n
 
 ## Document lifecycle
 
-Five specs and three records. A ninth document requires retiring one or writing down why not.
+Six specs and three records. A tenth document requires retiring one or writing down why not.
 
 | Document | Kind | Rule |
 |---|---|---|
@@ -316,9 +317,12 @@ Five specs and three records. A ninth document requires retiring one or writing 
 | `SCHEMA.md` | spec | clean edits. **The only place data ownership is declared** |
 | `BUILD_PLAN.md` | spec | checkpoints and their done conditions |
 | `RUNBOOK.md` | spec | clean edits |
+| `SOURCES.md` | spec | clean edits. **The only place the strategy's source material is named**, and what every clause rests on |
 | `DECISIONS.md` | record | grouped by topic, superseded entries move to "Previously decided" keeping their reasoning |
 | `PROGRESS.md` | record | append only, corrections are new dated entries |
 | `CHANGELOG.md` | record | prior text of every clean spec edit |
-A corpus of the same shape grew past twenty documents on a previous project and the documentation tax stopped scaling with the size of the work. (see: The corpus is eight documents and a ninth requires retiring one)
+A corpus of the same shape grew past twenty documents on a previous project and the documentation tax stopped scaling with the size of the work. (see: The corpus is nine documents, and the ninth records where the strategy came from)
 
 **`SCREENS.html` was the ninth and is gone.** It held mockups of the five screens and was retired at 4.12, the checkpoint the plan scheduled it for, once the pages it drew existed. A mockup and a built page are two answers to one question, and the day the two disagreed nothing would have said which was the specification.
+
+**`SOURCES.md` is the ninth now, and nothing was retired for it.** The ceiling held for four phases and the reason it moved is that the corpus had no place for the one thing it was entirely missing: what the strategy this lab models actually says, in the trader's own words, with a citation. Fourteen of the twenty gate clauses were recorded as an author's reading, and an author's reading is what a corpus produces when the source lives outside it. The alternative was to distribute the material through ARCHITECTURE's gate boxes, which would put quotations in a document whose job is to describe the lab rather than its source, and would leave no single place a check could read.

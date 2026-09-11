@@ -101,6 +101,7 @@ Invoke-Step 'check-architecture-conformance' { Invoke-Check 'architecture-confor
 Invoke-Step 'check-store-portability'      { Invoke-Check 'store-portability' }
 Invoke-Step 'check-price-storage-form'     { Invoke-Check 'price-storage-form' }
 Invoke-Step 'check-signal-library'         { Invoke-Check 'signal-library' }
+Invoke-Step 'check-clause-provenance'      { Invoke-Check 'clause-provenance' }
 
 Invoke-Step 'check-shell-executable'       { Invoke-Check 'shell-executable' }
 

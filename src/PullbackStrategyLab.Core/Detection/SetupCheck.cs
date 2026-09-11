@@ -129,6 +129,20 @@ public static class SetupDirection
 /// `check-completeness`, which reads the document's gate ids and asserts them against these lists
 /// in both directions: a gate the detector does not run, and a check no gate names, are both
 /// failures. That is what makes the document the single statement of what the strategy is.
+///
+/// <b>Where each of these twenty came from is `docs/SOURCES.md`, clause by clause.</b> Fifteen of
+/// the twenty forms rest on the trader's own words and are quoted there; five rest on nothing any
+/// source states. Four of the twenty thresholds rest on his own words and fourteen are somebody's
+/// choice, which is a fact about this list that reading it cannot show and that nothing in the
+/// corpus recorded until 2026-09-09. A clause is not better for being sourced and thirteen of the
+/// twenty carry a named disagreement with the source they cite, so the document is where a later
+/// session tells a rule the strategy states from a rule this lab invented.
+/// see: A clause states where it came from, and a sourced clause quotes rather than paraphrases
+///
+/// <b>The names below are what that trace is keyed on.</b> `clause-provenance` reconciles these two
+/// lists against the document's two clause tables in both directions, so renaming a check here
+/// without editing the trace fails rather than leaving a clause whose provenance silently describes
+/// a gate that no longer exists.
 /// </summary>
 public static class SetupChecks
 {

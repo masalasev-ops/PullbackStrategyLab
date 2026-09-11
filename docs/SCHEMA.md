@@ -597,7 +597,7 @@ The library. Every quantity the frozen row can carry, its formula, and the store
 **This section is the specification and `signal_definition` is the runtime form of it**, seeded from
 here by SignalAdmissionTest since 6.2 and reconciled against it in both directions by
 `signal-library`, so a signal in one and not the other fails rather than reading as new. It stays a
-section rather than becoming a document of its own (see: The corpus is eight documents and a ninth requires retiring one),
+section rather than becoming a document of its own (see: The corpus is nine documents, and the ninth records where the strategy came from),
 and it is not retired into the store, because a formula and its source columns are what the
 point-in-time test is asserted against and what makes a signal proposable at all, and a
 specification nobody can diff is not one (see: The signal library stays a spec section and gains a runtime table, reconciled in both directions).

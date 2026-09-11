@@ -33,7 +33,7 @@ namespace PullbackStrategyLab.Tests.Checks;
 /// </summary>
 public sealed class ChangelogReconcilesCheck
 {
-    /// <summary>The five specs. A record is not one: it is corrected by a new dated entry.</summary>
+    /// <summary>The six specs. A record is not one: it is corrected by a new dated entry.</summary>
     private static readonly string[] Specs =
     [
         "CLAUDE.md",
@@ -41,6 +41,7 @@ public sealed class ChangelogReconcilesCheck
         "docs/SCHEMA.md",
         "docs/BUILD_PLAN.md",
         "docs/RUNBOOK.md",
+        "docs/SOURCES.md",
     ];
 
     private const string Changelog = "docs/CHANGELOG.md";
