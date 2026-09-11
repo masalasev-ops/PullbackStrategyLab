@@ -19132,3 +19132,45 @@ Carried:    **The operator's half is not met**: `ceiling` has not been run over 
             build, once the store is migrated to 63.
 
             **This session committed code and may not sign it off.**
+
+## 7.3 — 2026-09-11 — phase-7-3-below-floor — the names below the recording floor kept with their verdicts, so a floor can be replayed
+
+Built:      **`below_floor`**, migration 064: one row per name a forward night's detector examined and did
+            not record, with `check_results` in the shape a setup row gives it, which of the side's floor
+            clauses it failed, the generation whose gate set scored it, defaulting to 0, and when it was
+            written. Each detector issues its own insert on the branch where it used to count the name and
+            move on, **on forward nights only**: a calibration walk is not evidence and nothing replays
+            over one. **Nothing in the nightly pipeline reads the table**, so the minute fetch, the control
+            pool, band 1, the plan and the vendor budget never see a name in it; it is a table rather than
+            a flag on `setup` because membership in `setup` is the fact all of those read.
+
+            **The recording floor has a statement in SCHEMA for the first time**: the four checks a side,
+            where the lists live, why they exist, and that lowering the floor is a threshold change this
+            row does not make. ARCHITECTURE's replay-tier table said a change to the floor is forward only
+            and can never be made replayable; it is now replayable over the nights from this one.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,250 tests**, up from 1,247.
+
+Measured:   **7.3's done condition over the golden fixture: 7,201 below-floor rows a side, and `setup`'s own
+            count unchanged.** Five expectations at 7.3, all `DERIVED`: 7,201 long and 7,201 short, each
+            derived before the run from the fixture's own examined count of 7,202 less the one row each side
+            records; nought rows under any generation but 0; nought names on both sides of the floor; and
+            nought rows naming no failed clause. `detect.long.recorded` and `detect.short.recorded` stay at 1,
+            which is the unchanged setup count. `store.schemaVersion` moved 63 to 64.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.2's after, 157 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `8a3bbcd`
+            with the working tree dirty: GREEN, phase 7, **157 claims, 157 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,416, 1,250 tests. No claim moved: the replay-tier table's Structural row is
+            asserted by admission refusing a structural candidate, which is unchanged.
+
+Found:      **The fixture's one authored long setup sits below the floor as the detector reads it.** IESC is
+            authored into `setup` for the vectorizer, which the captured night does not flag, so the long
+            side's detector wrote it to `below_floor` too, and a join of the two tables on name returns it.
+            The overlap figure and its test count detector-written rows only, by the id the detectors write,
+            and say so; stated over both, it would be a figure over a mixed population.
+
+Carried:    **No operator's half.** The table fills from the first night the production tree carries this
+            build, once the store is migrated to 64, at about fourteen thousand rows a night.
+
+            **This session committed code and may not sign it off.**

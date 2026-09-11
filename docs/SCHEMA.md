@@ -452,6 +452,25 @@ Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Re
 
 *Each detector issues its own insert rather than calling a shared helper, which is what lets `writer-ownership` attribute the write to the component that made it. The same price the `setup` insert pays, and for the same reason.*
 
+### `below_floor`
+Grain: date + ticker + direction + generation. The names a forward night's detector examined and did not record, each with every verdict it was given.
+
+| Column | Type | Note |
+|---|---|---|
+| `as_of` | TEXT | the night |
+| `ticker` | TEXT | |
+| `direction` | TEXT | `long` or `short` |
+| `generation` | INTEGER | whose gate set scored the vector, 0 until the switch night. Defaults to 0 |
+| `check_results` | TEXT | JSON, every check with pass or fail, in the shape `setup.check_results` has |
+| `failed_floor` | TEXT | which of the side's recording-floor clauses the name failed, comma separated |
+| `observed_at` | TEXT | |
+
+Insert LongSetupDetector / ShortSetupDetector, **disjoint by `direction`** · Read by nobody
+
+**The recording floor, which had no statement in this document until 7.3.** A detector evaluates every check on every name it examines and writes a `setup` row only for a name that passes four of them: `tradable`, `moves-enough`, `uptrend` and `thrust` on the long side, and `tradable-shortable`, `moves-enough`, `downtrend` and `thrust` on the short. They are the cheap filters deciding whether the pattern test has anything to say about a stock at all, and two thousand rows a night of names that barely move would bury the record the research loop reads. The lists are `LongSetupDetector.RecordingFloor` and `ShortSetupDetector.RecordingFloor`. **Lowering the floor is a threshold change** and is not what this table is for: it widens the record and changes no rule.
+
+**What the table buys is a replayable floor.** Until 7.3 the vector a name below the floor was scored with was computed in full and discarded, 7,201 names a side on the golden fixture's night, so a change to the floor could be measured only forward, and ARCHITECTURE ruled it so. **A table and not a flag on `setup`**, because membership in `setup` is itself the fact the minute fetch, the control pool, band 1, the plan and the vendor budget read, and a below-floor name was not flagged; one predicate away from all of those is where it must never be, on the grounds `calibration_setup` is a table rather than a flag. Forward nights only, because a calibration row is not evidence and nothing replays over one.
+
 *A silent skip shrinks the recorded universe without anyone noticing. Every count downstream is over the setups that were recorded, so a name the detector could not read is simply absent: the night looks lighter, the counts stay plausible, and nothing says a name was lost. The run that lost one is recorded `partial` rather than `clean`.*
 
 ### `setup_signal`

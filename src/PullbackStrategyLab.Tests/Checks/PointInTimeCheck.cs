@@ -224,6 +224,12 @@ public sealed class PointInTimeCheck
             // property is the failure this corpus keeps meeting from new directions.
             ["detector_error"] = "observed_at",
 
+            // The names below the recording floor, from 7.3. Nothing reads the table yet, and it is
+            // stamped rather than exempt for the reason the library is: the read it exists for is a
+            // replay of a changed floor, and a replay standing at an old night that saw a vector
+            // written after it would score a floor that night could not have been scored against.
+            ["below_floor"] = "observed_at",
+
             // Added at 3.9(d). It was the last table feeding a point-in-time read with no
             // stamp at all, so a hit inserted for a past session was invisible to every bound
             // rather than merely unbounded by one. The 300 rows that predate the column were
