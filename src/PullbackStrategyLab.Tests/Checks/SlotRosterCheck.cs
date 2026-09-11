@@ -90,6 +90,7 @@ public sealed partial class SlotRosterCheck
         ["capture-response"] = "one captured response added to the fixture, on the same terms",
         ["phase-report"] = "what tools/verify-phase runs, which reads the build and never the lab",
         ["admit-variant"] = "the human step that registers a version, which no schedule may take",
+        ["close-generation"] = "the act that closes a generation and registers the next baseline, a decision no schedule may take",
         ["replay"] = "a replay screen asked of a proposal, run when one is filed",
         ["holdout"] = "the holdout register, spent by the replay screen rather than on a clock",
     };

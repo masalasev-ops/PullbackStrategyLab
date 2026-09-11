@@ -898,6 +898,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>ResearcherSeat</b></td><td>Weekly</td><td>Asks the model once a week and files the answer</td></tr>
 <tr><td><b>ProposalRegistry</b></td><td>On write</td><td>Holds proposals: rule changes and signal requests</td></tr>
 <tr><td><b>VariantAdmitter</b></td><td>Manual</td><td>The human step. Writes the target and the sample, once</td></tr>
+<tr><td><b>GenerationCloser</b></td><td>Manual</td><td>Closes the generation in force by writing its open versions unresolved and its baseline retired, then registers the next baseline in the same transaction</td></tr>
 <tr><td><b>SignalBackfiller</b></td><td>On admission</td><td>Computes a newly admitted signal across all stored history</td></tr>
 <tr><td><b>SignalAdmissionTest</b></td><td>Weekly, Saturday 08:15</td><td>Admits a signal only if it tightens outcome-similar neighbourhoods</td></tr>
 <tr><td><b>ReplayHarness</b></td><td>On proposal</td><td>Re-filters stored setups with a new rule, in seconds</td></tr>
@@ -915,7 +916,7 @@ tr:hover td{background:#f4f2ec}
 <tr><td><b>Lab scoreboard page</b></td><td>On request</td><td>The four bands. Is the pattern real, can the lab sort it, is the loop learning</td></tr>
 </table>
 <div class="rule"><b class="lab">Ordering</b>
-<p>The 57 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
+<p>The 58 components are listed by layer, which is the order they run in on a given night rather than the order they were designed in. ControlSampler belongs with the detect layer and ScoreboardBuilder with the measure layer; both were added after the first pass and sit at the end. The chart page sits with the screens rather than with the ingest components it draws from. Nothing depends on the ordering, because components are referred to by name.</p></div>
 
 <h2 id="where-data-ownership-is-declared">Where data ownership is declared</h2>
 <p>Every store, its grain, and its writer for each operation are declared in <code>SCHEMA.md</code> and nowhere else. A conformance check asserts that file against the code in both directions: every declared writer exists, and every writer in the code is declared.</p>
@@ -923,7 +924,7 @@ tr:hover td{background:#f4f2ec}
 <div class="rule"><b class="lab">Three separations worth asserting directly</b>
 <p><b>The two detectors</b> both write <code>setup</code>, on disjoint rows rather than disjoint columns, separated by direction. Assert that neither writes a row of the other’s direction.</p>
 <p><b>SignalVectorizer and SignalBackfiller</b> both write <code>setup_signal</code>. The vectorizer writes new rows nightly; the backfiller adds signals to old rows and may never touch a signal the vectorizer owns for that date.</p>
-<p><b>VariantAdmitter and AcceptanceGate</b> both write <code>variant</code>. The admitter writes the definition and the target once at creation and never again; the gate writes only status and resolution date. This is precisely the row where a future change could quietly let a result rewrite its own target.</p></div>
+<p><b>VariantAdmitter and AcceptanceGate</b> both write <code>variant</code>. The admitter writes the definition and the target once at creation and never again; the gate writes only status and resolution date. This is precisely the row where a future change could quietly let a result rewrite its own target. From 7.6 <b>GenerationCloser</b> writes it as well, on the same two columns and only on a version still open, and inserts the next generation’s baseline into a generation no row yet carries.</p></div>
 
 <h2 id="failure-behaviour">Failure behaviour</h2>
 <table>
@@ -1007,7 +1008,7 @@ tr:hover td{background:#f4f2ec}
 <td>Twin pairs, the versioned pack, the AI proposing, a person admitting, the gate settling, and proposal hit rate compared across pack versions.</td>
 <td>The pack built from the fixture is byte-stable across runs, so a pack change is a deliberate change. The planted null signal is present. No component outside the proposal store accepts a write from the researcher.</td></tr>
 
-<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector</td>
+<tr><td><b>P7</b></td><td>NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser</td>
 <td>The morning screen saying why a slot that never ran did not. Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers, and the switch night with generation 0's record kept beside it.</td>
 <td>A weekday the guard refused reconciled to thirty-two rows and none missing. Every clause of generation 1 still naming its source, and every row read against the gate list of its own night across the switch.</td></tr>
 </table>

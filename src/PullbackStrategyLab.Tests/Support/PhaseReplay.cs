@@ -931,6 +931,10 @@ public sealed class PhaseReplay : IDisposable
         measurements.AddRange(AcceptanceFigures());
         measurements.AddRange(Band3Figures());
 
+        // After everything that reads the register, on the terms AcceptanceFigures states for itself:
+        // closing the generation changes what a night fans out to, so no figure above may see it.
+        measurements.AddRange(GenerationCloseFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -3587,6 +3591,58 @@ public sealed class PhaseReplay : IDisposable
 
     /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
     private const string AuthoredVersion = "V-acceptance";
+
+    /// <summary>The baseline the fixture's closed generation is replaced by, registered only to prove the act.</summary>
+    public const string FixtureNextBaseline = "V-fixture-next";
+
+    /// <summary>
+    /// The fixture's generation closed through the shipped act, from 7.6.
+    ///
+    /// <b>What the register holds when this runs is two rows, and both are the fixture's own.</b> The
+    /// baseline seeded at construction and the version AcceptanceFigures registered, both in generation
+    /// 0 and both open, the version still open because nothing can mature inside a fixture. So closing
+    /// the generation has one version to write `unresolved` on and one baseline to retire, which is
+    /// derivable by hand from those two facts without reading the component.
+    ///
+    /// <b>It is not generation 1's registration.</b> The next baseline is a placeholder whose only job is
+    /// to be the row the act opens; generation 1 registers through this act at 7.11.
+    /// see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole
+    /// </summary>
+    private IReadOnlyList<Measurement> GenerationCloseFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        GenerationClosure closure = new GenerationCloser(_connections, Logger(), _clock, _options).Close(
+            FixtureNextBaseline,
+            "the fixture's placeholder for a next generation, registered only to prove the act",
+            "the reference the fixture's next generation would be differenced against");
+
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        IReadOnlyList<StoredVariant> registered =
+            VariantReader.RegisteredBy(connection, AsOf, _options.Value.SessionZone);
+        IReadOnlyList<StoredVariant> live =
+            VariantReader.LiveOn(connection, AsOf, _options.Value.SessionZone);
+
+        string StatusOf(string id) =>
+            registered.SingleOrDefault(v => string.Equals(v.VariantId, id, StringComparison.Ordinal))?.Status ?? "absent";
+
+        return
+        [
+            new("generationClose.closedGeneration", closure.ClosedGeneration.ToString(CultureInfo.InvariantCulture)),
+            new("generationClose.unresolvedWritten", registered
+                .Count(v => v.Generation == closure.ClosedGeneration && v.Status == VariantStatus.Unresolved)
+                .ToString(CultureInfo.InvariantCulture)),
+            new("generationClose.stillOpenInClosed", registered
+                .Count(v => v.Generation == closure.ClosedGeneration && v.Status == VariantStatus.Open)
+                .ToString(CultureInfo.InvariantCulture)),
+            new("generationClose.authoredVersion", StatusOf(AuthoredVersion)),
+            new("generationClose.closedBaseline", StatusOf(TestVersions.Baseline)),
+            new("generationClose.nextBaseline", StatusOf(FixtureNextBaseline)),
+            new("generationClose.generationInForce",
+                live.Count == 0 ? "none" : live.Max(v => v.Generation).ToString(CultureInfo.InvariantCulture)),
+            new("generationClose.live", live.Count.ToString(CultureInfo.InvariantCulture)),
+        ];
+    }
 
     private static IReadOnlyList<Measurement> RuleFigures() =>
     [

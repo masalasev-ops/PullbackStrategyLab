@@ -19310,3 +19310,61 @@ Found:      **The trace answered four clauses less than the decision needed**, b
 Carried:    **No operator's half.** Generation 1 runs nowhere live until 7.11.
 
             **This session committed code and may not sign it off.**
+
+## 7.6 — 2026-09-11 — phase-7-6-generation-close — the act that closes a generation, and the status a closed baseline carries
+
+Built:      **GenerationCloser**, the operator verb `close-generation`, which in one transaction writes
+            `unresolved` on every open version of the generation in force, retires that generation's
+            baseline, and registers the next generation's baseline with the derived minimum. The
+            generation is read rather than given, on the admitter's terms. A version already accepted or
+            rejected keeps its answer and its date. It refuses an empty register, a generation with no
+            open baseline and a next baseline named after a registered version, and `--dry-run` writes
+            nothing. It is in the component catalogue and the P7 Builds cell, dispatched and registered,
+            and `slot-roster` holds it out of the night by name, beside `admit-variant`.
+
+            **The baseline's closed status is `retired`, and the act defines it.** A baseline is never
+            accepted or rejected on its own pre-registration, and it is not unresolved either, being the
+            thing whose going away makes the others so. Migration 065 rebuilds `variant` to admit it and
+            adds two clauses: `retired` on a baseline alone, and a baseline only ever open or retired.
+            Every column and index travels, and a row-survival test proves it over a register a score
+            row points at.
+
+            **SCHEMA declares the two new writes, each disjoint from the existing writer**: the insert by
+            generation, since the admitter writes into the generation in force and the closer only the
+            first row of the next, and the update by the status written, since the gate writes `accepted`
+            or `rejected` and the closer `unresolved` or `retired`, both only on an open version.
+
+            **The Failure behaviour row "Someone edits the baseline" is now asserted by running the act**
+            over an authored register rather than by reading the register's shape, which was all 5.1
+            could assert while nothing edited a baseline.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,269 tests**, up from 1,260.
+
+Measured:   **Over the golden fixture, after every figure that reads the register.** The fixture's
+            register is two rows, V0 and V-acceptance, both generation 0 and both open. Closing it writes
+            one `unresolved`, retires V0, leaves nothing open in generation 0, and puts generation 1 in
+            force with its one baseline live: **eight expectations at 7.6, all `DERIVED`** by hand from
+            those two rows and the rule before the run, and the run agreed. The next baseline the fixture
+            opens is a placeholder named for what it is, and is not generation 1's registration, which is
+            7.11's. Three existing expectations moved, each noted: the schema version to 65 and the
+            catalogue's two counts by one.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.5's after, 158 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `09f8e9c`
+            with the working tree dirty: GREEN, phase 7, **159 claims, 159 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,780, 1,269 tests. The new claim is GenerationCloser in the catalogue, which read
+            as deferred to 7.6 until this entry recorded 7.6, and that is the rule working rather than a count moving.
+
+Found:      **An existing test authored the closed baseline as `unresolved`**, `VariantRegisterTests`'
+            generation test, and migration 065 refuses that row. It is the reading this checkpoint exists
+            to rule out, so the test now authors it `retired` and says why.
+
+            **The verb's first draft read the definition as the name when the name was left off**, taking
+            the first bare word anywhere in the arguments, which is what `admit-variant` still does. A test
+            caught it, and the name is now the first argument or nothing. `admit-variant` is untouched,
+            because changing another stage's parsing is not this checkpoint's.
+
+Carried:    **No operator's half.** Nothing closes a live generation until 7.11 registers generation 1
+            through this act.
+
+            **This session committed code and may not sign it off.**

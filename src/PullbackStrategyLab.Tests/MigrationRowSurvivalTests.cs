@@ -23,6 +23,7 @@ public sealed class MigrationRowSurvivalTests
     private const int BeforeTheIndicatorRekey = 8;
     private const int BeforeTheGeometryRebuild = 30;
     private const int BeforeTheRunLogRebuild = 61;
+    private const int BeforeTheRetiredBaseline = 64;
 
     [Fact]
     public void Migration_005_rebuilds_both_tables_and_loses_no_row()
@@ -206,6 +207,80 @@ public sealed class MigrationRowSurvivalTests
         Assert.Throws<SqliteException>(() => Execute(connection, """
             INSERT INTO run_log (run_id, stage, started_at, outcome, calls_used, slot, session_date, did_not_run_because)
             VALUES ('e', 'reconcile-night', '2026-09-08T21:50:00.000Z', 'clean', 0, 'universe', '2026-09-07', 'fault');
+            """));
+    }
+
+    /// <summary>
+    /// Migration 065 rebuilds <c>variant</c> to admit the retired baseline, against a register that
+    /// other tables point at, and loses no version and orphans no score.
+    ///
+    /// Every column travels, the five a selection version moves and the status and resolution of a
+    /// settled one included, and a score row pointing at a version still points at it afterwards. The
+    /// 031 test above is why the child row is here: a rebuild proved over an empty neighbourhood is a
+    /// rebuild nobody has run against a store with anything in it.
+    /// </summary>
+    [Fact]
+    public void Migration_065_rebuilds_the_register_that_scores_point_at_and_loses_no_version()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        runner.Apply(connection, throughVersion: BeforeTheRetiredBaseline);
+
+        Execute(connection, """
+            INSERT INTO variant (
+                variant_id, generation, family, definition, target,
+                minimum_sample, minimum_sample_unit, status, resolved_at, created_at,
+                direction, gate, threshold_name, threshold_from, threshold_to)
+            VALUES
+                ('V0', 0, 'baseline', 'the rule', 'the reference', 1802,
+                 'effective_paired_setup_observations', 'open', NULL, '2026-09-01T22:00:00.000Z',
+                 NULL, NULL, NULL, NULL, NULL),
+                ('V1', 0, 'selection', 'retrace to 0.50', 'derived', 1802,
+                 'effective_paired_setup_observations', 'rejected', '2026-09-05T01:00:00.000Z', '2026-09-02T22:00:00.000Z',
+                 'long', 'dip-shape', 'maximum-retrace', '0.40', '0.50');
+
+            INSERT INTO variant_score (
+                variant_id, session_date, direction, generation, family, horizon_days,
+                flagged, baseline_selected, variant_selected, both_selected, variant_only, baseline_only,
+                baseline_mean_return, variant_mean_return, mean_difference,
+                baseline_scored, variant_scored, baseline_wins, variant_wins,
+                baseline_outside_cap, variant_outside_cap, unscoreable, withheld_because, computed_at)
+            VALUES (
+                'V1', '2026-09-03', 'long', 0, 'selection', 5,
+                3, 1, 2, 1, 1, 0,
+                NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL,
+                0, 0, 0, 'nothing selected has landed', '2026-09-03T23:00:00.000Z');
+            """);
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("065-variant-retired.sql", after.Applied);
+
+        Assert.Equal(2, Count(connection, "variant"));
+        Assert.Equal(1, Count(connection, "variant_score"));
+        Assert.Empty(MigrationRunner.ForeignKeyViolations(connection));
+
+        Assert.Equal("rejected", Scalar(connection, "SELECT status FROM variant WHERE variant_id = 'V1';"));
+        Assert.Equal("2026-09-05T01:00:00.000Z", Scalar(connection, "SELECT resolved_at FROM variant WHERE variant_id = 'V1';"));
+        Assert.Equal("0.50", Scalar(connection, "SELECT threshold_to FROM variant WHERE variant_id = 'V1';"));
+        Assert.Equal("maximum-retrace", Scalar(connection, "SELECT threshold_name FROM variant WHERE variant_id = 'V1';"));
+
+        // The baseline can now be retired, and only the baseline.
+        Execute(connection, "UPDATE variant SET status = 'retired', resolved_at = '2026-09-11T23:00:00.000Z' WHERE variant_id = 'V0';");
+        Assert.Equal("retired", Scalar(connection, "SELECT status FROM variant WHERE variant_id = 'V0';"));
+        Assert.Throws<SqliteException>(() => Execute(connection,
+            "UPDATE variant SET status = 'retired' WHERE variant_id = 'V1';"));
+
+        // And the one-baseline-per-generation index came back with the table.
+        Assert.Throws<SqliteException>(() => Execute(connection, """
+            INSERT INTO variant (
+                variant_id, generation, family, definition, target,
+                minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
+            VALUES ('V0b', 0, 'baseline', 'a second', 'the reference', 1802,
+                    'effective_paired_setup_observations', 'open', NULL, '2026-09-11T23:00:00.000Z');
             """));
     }
 

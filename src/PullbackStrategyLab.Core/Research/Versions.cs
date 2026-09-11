@@ -51,7 +51,18 @@ public static class VariantStatus
     /// </summary>
     public const string Unresolved = "unresolved";
 
-    public static IReadOnlyList<string> All { get; } = [Open, Accepted, Rejected, Unresolved];
+    /// <summary>
+    /// The baseline of a closed generation, from 7.6, and never any other version.
+    ///
+    /// Not unresolved: an unresolved version was never measured because the thing it was compared
+    /// against stopped existing, and the baseline is that thing. Not accepted or rejected either,
+    /// because the baseline is the arm the paired comparison subtracts and its own pre-registration
+    /// says it is never itself settled. The store holds it to the baseline alone.
+    /// see: A selection version's target is derived from the settling rule and is not typed
+    /// </summary>
+    public const string Retired = "retired";
+
+    public static IReadOnlyList<string> All { get; } = [Open, Accepted, Rejected, Unresolved, Retired];
 }
 
 /// <summary>

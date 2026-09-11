@@ -139,6 +139,7 @@ public sealed record VersionView(
         "rejected" => "rejected, measured and short of its target",
         "unresolved" => "unresolved, closed without ever being measured because the baseline it was "
             + "compared against was edited",
+        "retired" => "retired, the baseline of a generation that has been closed and replaced",
         _ => Status,
     };
 }

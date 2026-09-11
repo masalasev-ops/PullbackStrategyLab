@@ -232,6 +232,10 @@ public sealed class VariantRegisterTests : IDisposable
     /// <summary>
     /// Only the generation in force is fanned out to. An older generation's versions stay readable
     /// and stop being planned against, which is what editing the baseline does to them.
+    ///
+    /// The closed baseline read `unresolved` here until 7.6, which the store then refused: a baseline
+    /// is never unresolved, being the thing whose going away makes the others so, and it reads
+    /// `retired` once the act closing its generation has run.
     /// </summary>
     [Fact]
     public void Only_the_generation_in_force_is_live()
@@ -245,7 +249,7 @@ public sealed class VariantRegisterTests : IDisposable
                     minimum_sample, minimum_sample_unit, status, resolved_at, created_at)
                 VALUES
                     ('V0', 0, 'baseline', 'the first rule', 'the reference', 1802,
-                     'effective_paired_setup_observations', 'unresolved', '2026-09-02T22:00:00.000Z',
+                     'effective_paired_setup_observations', 'retired', '2026-09-02T22:00:00.000Z',
                      '2026-09-01T22:28:00.000Z'),
                     ('V1', 1, 'baseline', 'the rule after the edit', 'the reference', 1802,
                      'effective_paired_setup_observations', 'open', NULL,
