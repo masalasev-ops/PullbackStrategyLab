@@ -226,6 +226,25 @@ public static class SetupChecks
         ArgumentNullException.ThrowIfNull(checks);
         return checks.Count(c => !c.Passed && !RecordedNotRequired.Contains(c.Name));
     }
+
+    /// <summary>
+    /// The same count under the gate set a row was scored with, from 7.11.
+    ///
+    /// <b>A row's gate set is its generation's</b>, and the two differ in which clauses are recorded
+    /// and never required: generation 0 records `cluster` alone and generation 1 also records
+    /// `moves-enough`, `held-floor` and `no-reclaim`. Counting a generation 1 row against generation
+    /// 0's set would put a candidate one gate away for failing a clause it was never required to pass.
+    /// </summary>
+    public static int GatingFailures(IEnumerable<(string Name, bool Passed)> checks, int generation)
+    {
+        ArgumentNullException.ThrowIfNull(checks);
+        IReadOnlySet<string> recorded = RecordedNotRequiredFor(generation);
+        return checks.Count(c => !c.Passed && !recorded.Contains(c.Name));
+    }
+
+    /// <summary>The clauses recorded and never required under one generation's gate set.</summary>
+    public static IReadOnlySet<string> RecordedNotRequiredFor(int generation) =>
+        generation >= GenerationOneChecks.Generation ? GenerationOneChecks.RecordedNotRequired : RecordedNotRequired;
 }
 
 /// <summary>
@@ -272,10 +291,14 @@ public static class SetupOutcomes
             .Select(r => (r.Name, r.Passed)));
 
     /// <inheritdoc cref="Matches(string, IEnumerable{CheckResult})"/>
-    public static bool Matches(string outcome, IEnumerable<(string Name, bool Passed)> checks) => outcome switch
+    public static bool Matches(string outcome, IEnumerable<(string Name, bool Passed)> checks) =>
+        Matches(outcome, checks, generation: 0);
+
+    /// <summary>The same question of a row scored under a given generation's gate set, from 7.11.</summary>
+    public static bool Matches(string outcome, IEnumerable<(string Name, bool Passed)> checks, int generation) => outcome switch
     {
-        PassedEverything => SetupChecks.GatingFailures(checks) == 0,
-        FailedOnlyOne => SetupChecks.GatingFailures(checks) == 1,
+        PassedEverything => SetupChecks.GatingFailures(checks, generation) == 0,
+        FailedOnlyOne => SetupChecks.GatingFailures(checks, generation) == 1,
         _ => false,
     };
 }

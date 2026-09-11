@@ -406,7 +406,7 @@ public sealed class VariantRegisterTests : IDisposable
     /// admissible. What refuses here now is a version moving the give-up distance, which is an
     /// execution threshold and no execution version is admitted in this generation. The exit code is
     /// what this test is about and it is the same code for either refusal.
-    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
     /// </summary>
     [Fact]
     public void A_refused_candidate_and_a_malformed_command_exit_differently()

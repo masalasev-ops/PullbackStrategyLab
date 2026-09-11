@@ -88,9 +88,23 @@ public sealed class LabSetups
         // of N for session N+1, and the gallery and the watchlist are both reading the evening of N.
         // Reading by live session would return the plans written last night, which is the set every
         // row on this page is not about.
+        //
+        // <b>One plan a setup on this page, the baseline's where versions planned it too.</b> A plan is
+        // one setup under one version from 5.1, so a night two versions select one name holds two
+        // plans for it, and a dictionary keyed on the setup threw on that night until 7.11. The gallery
+        // shows what the lab committed to, which is the baseline's, and the versions' plans are the
+        // research ledger's to show.
+        string? baseline = VariantReader.BaselineOn(connection, asOf, sessionZone)?.VariantId;
+
         IReadOnlyDictionary<string, CommittedTradePlan> planned = TradePlanReader
             .WrittenOn(connection, asOf, asOf, sessionZone)
-            .ToDictionary(plan => plan.SetupId, StringComparer.Ordinal);
+            .GroupBy(plan => plan.SetupId, StringComparer.Ordinal)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(plan => string.Equals(plan.VariantId, baseline, StringComparison.Ordinal) ? 0 : 1)
+                    .ThenBy(plan => plan.VariantId, StringComparer.Ordinal)
+                    .First(),
+                StringComparer.Ordinal);
 
         SetupView[] all =
         [
@@ -116,10 +130,16 @@ public sealed class LabSetups
         // failed check would report it as one gate short. `SetupOutcomes` runs `SetupChecks`'s own
         // definition for exactly that reason: the detector owns what passing means and this is a
         // reader of it, not a second author of it.
+        //
+        // From 7.11 the rule is the row's own generation's, since the two gate sets record different
+        // clauses without requiring them.
         if (outcome is not null)
         {
+            IReadOnlyDictionary<string, int> generationOf =
+                stored.ToDictionary(s => s.SetupId, s => s.Generation, StringComparer.Ordinal);
+
             shown = [.. shown.Where(s => SetupOutcomes.Matches(
-                outcome, s.Checks.Select(c => (c.Name, c.Passed))))];
+                outcome, s.Checks.Select(c => (c.Name, c.Passed)), generationOf[s.SetupId]))];
         }
 
         return new SetupsResponse(

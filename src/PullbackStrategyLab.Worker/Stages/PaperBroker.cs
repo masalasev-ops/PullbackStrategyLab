@@ -150,9 +150,10 @@ public sealed class PaperBroker
         string[] names =
             [.. placed.Select(o => o.Ticker).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
+        // Keyed by the plan, from 7.11, since two versions can plan one setup and each order is one plan's.
         Dictionary<string, StoredTradePlan> plans = TradePlanReader
-            .ForSetups(connection, [.. placed.Select(o => o.SetupId)], sessionDate, _options.SessionZone)
-            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+            .ForSetups(connection, [.. placed.Select(o => o.SetupId).Distinct(StringComparer.Ordinal)], sessionDate, _options.SessionZone)
+            .ToDictionary(p => p.PlanId, StringComparer.Ordinal);
 
         if (sampling.IsUnsampled)
         {
@@ -163,7 +164,7 @@ public sealed class PaperBroker
 
             foreach (StoredTradeOrder order in placed)
             {
-                InsertUnfilled(unsampled, plans[order.SetupId], order, SessionWasNeverSampled, observedAt);
+                InsertUnfilled(unsampled, plans[order.PlanId], order, SessionWasNeverSampled, observedAt);
                 tally.EntriesUnfilled++;
             }
 
@@ -213,8 +214,8 @@ public sealed class PaperBroker
                     continue;
                 }
 
-                Open(plans[order.SetupId], order, bar, quotes[order.Ticker], observedAt, writes, tally);
-                filled.Add(order.SetupId);
+                Open(plans[order.PlanId], order, bar, quotes[order.Ticker], observedAt, writes, tally);
+                filled.Add(order.PlanId);
             }
         }
 
@@ -222,11 +223,11 @@ public sealed class PaperBroker
         // store as it stands, since the resolver found that minute in the same table; it can happen
         // after a vendor correction removed one. Recorded rather than dropped: a placed order with
         // no row at all is a fill nobody would know was missing.
-        foreach (StoredTradeOrder order in placed.Where(o => !filled.Contains(o.SetupId)))
+        foreach (StoredTradeOrder order in placed.Where(o => !filled.Contains(o.PlanId)))
         {
             StoredTradeOrder captured = order;
             writes.Add(tx => InsertUnfilled(
-                tx, plans[captured.SetupId], captured, TriggerMinuteNotStored, observedAt));
+                tx, plans[captured.PlanId], captured, TriggerMinuteNotStored, observedAt));
             tally.EntriesUnfilled++;
         }
 

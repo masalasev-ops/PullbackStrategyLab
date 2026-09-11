@@ -52,6 +52,7 @@ public static class Program
         builder.Services.AddSingleton<MinuteBackfiller>();
         builder.Services.AddSingleton<EntrySizer>();
         builder.Services.AddSingleton<EntryRuleMeasurement>();
+        builder.Services.AddSingleton<GenerationOneForecast>();
         builder.Services.AddSingleton<ReplayHarness>();
         builder.Services.AddSingleton<HoldoutRegistry>();
         builder.Services.AddSingleton<VariantResolver>();
@@ -304,6 +305,7 @@ public static class Program
         [TriggerResolver.Name] = (services, rest) => services.GetRequiredService<TriggerResolver>().Run(rest),
         [EntrySizer.Name] = (services, rest) => services.GetRequiredService<EntrySizer>().Run(rest),
         [EntryRuleMeasurement.Name] = (services, rest) => services.GetRequiredService<EntryRuleMeasurement>().Run(rest),
+        [GenerationOneForecast.Name] = (services, rest) => services.GetRequiredService<GenerationOneForecast>().Run(rest),
         [RiskGate.Name] = (services, rest) => services.GetRequiredService<RiskGate>().Run(rest),
         [PaperBroker.Name] = (services, rest) => services.GetRequiredService<PaperBroker>().Run(rest),
         [PositionManager.Name] = (services, rest) => services.GetRequiredService<PositionManager>().Run(rest),
@@ -387,6 +389,7 @@ public static class Program
         TriggerResolver.Name,
         EntrySizer.Name,
         EntryRuleMeasurement.Name,
+        GenerationOneForecast.Name,
         RiskGate.Name,
         PaperBroker.Name,
         PositionManager.Name,

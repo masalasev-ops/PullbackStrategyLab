@@ -293,7 +293,7 @@ public sealed class PlanBuilder
     /// planning the same candidate on the same evening plan it identically; what differs is which
     /// candidates each has. An execution version would carry a different rule and none is admitted in
     /// this generation.
-    /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+    /// see: Generation 1 opens with no version admissible in either family, and what reopens each is named
     /// </summary>
     private static void Insert(
         SqliteConnection connection,

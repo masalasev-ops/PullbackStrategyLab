@@ -229,7 +229,14 @@ public sealed class RunLogger
     /// bounded between its two instants, so the two statements differ in the parameter they take and
     /// not in a comment above them, and the truncation appears nowhere in the shipped source.
     /// </summary>
-    public static int CallsUsedOn(SqliteConnection connection, VendorQuotaDay quotaDay)
+    public static int CallsUsedOn(SqliteConnection connection, VendorQuotaDay quotaDay) =>
+        CallsUsedOn(connection, quotaDay, exceptStage: null);
+
+    /// <summary>
+    /// The same total less one stage's own, from 7.11, for a forecast asking what a stage would have
+    /// had left once every other stage of the day had spent.
+    /// </summary>
+    public static int CallsUsedOn(SqliteConnection connection, VendorQuotaDay quotaDay, string? exceptStage)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -239,10 +246,12 @@ public sealed class RunLogger
               FROM run_log
              WHERE started_at >= @quota_day_start
                AND started_at < @quota_day_end
-               AND counts_against_ceiling = 1;
+               AND counts_against_ceiling = 1
+               AND (@except IS NULL OR stage <> @except);
             """;
         command.Parameters.AddWithValue("@quota_day_start", StoreText.TimestampToStorageText(quotaDay.Start));
         command.Parameters.AddWithValue("@quota_day_end", StoreText.TimestampToStorageText(quotaDay.End));
+        command.Parameters.AddWithValue("@except", (object?)exceptStage ?? DBNull.Value);
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 

@@ -129,6 +129,12 @@ public static class CheckReading
                 $"{Ranges(number)} daily range(s) to the give-up point",
                 $"cap {Ranges(LongPullbackRules.GiveUpRanges)}"),
 
+            // Generation 1's, from 7.11: the week's close against its 21-week average, above it long
+            // and below it short.
+            "weekly-trend" => new Reading(
+                $"{Percent(number)} from the 21-week average",
+                "at or above it long, below it short"),
+
             "cluster" => new Reading(
                 $"{Whole(number)} same-industry name(s) the same night",
                 $"needs {LongPullbackRules.ClusterThreshold}, recorded and never gating"),

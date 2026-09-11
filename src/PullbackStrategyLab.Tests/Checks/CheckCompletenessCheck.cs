@@ -130,7 +130,17 @@ public sealed class CheckCompletenessCheck
                 .Select(p => "check_definition against SetupChecks: " + p));
         }
 
+        // Across the switch, from 7.11. The fixture's night replayed as the switch night, with generation
+        // 0's lists registered the night before: every `setup` row is held to the list the register
+        // says generation 1 ran that night, the register is asked to say generation 0's list the night
+        // before, and every row generation 0 wrote to its companion is held to generation 0's own list.
+        // Each side of the switch against its own gate list, which is the done condition 7.11 carries.
+        // see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole
+        (int switchedRows, int companionRows) = AcrossTheSwitch(problems);
+
         coverage
+            .Examined("switch-night setup rows held to generation 1's list", switchedRows)
+            .Examined("switch-night companion rows held to generation 0's list", companionRows)
             .Examined("gates in the long check list", longGates.Count)
             .Examined("gates in the short check list", shortGates.Count)
             .Examined("checks the detectors declare", SetupChecks.Long.Count + SetupChecks.Short.Count)
@@ -183,6 +193,66 @@ public sealed class CheckCompletenessCheck
 
         Assert.True(problems.Count == 0,
             $"{problems.Count} completeness problem(s):\n  " + string.Join("\n  ", problems.Take(20)));
+    }
+
+    /// <summary>
+    /// The switch night over the fixture, read on both sides of the switch.
+    ///
+    /// Its own replay, on the grounds <see cref="ReadReplay"/> has one: a store shared between two checks
+    /// is a coupling neither declares.
+    /// </summary>
+    private static (int SwitchedRows, int CompanionRows) AcrossTheSwitch(List<string> problems)
+    {
+        using var replay = new PhaseReplay(RepositoryLayout.Fixtures);
+        replay.RunTheSwitchNight();
+
+        using Microsoft.Data.Sqlite.SqliteConnection connection = replay.OpenStore();
+        DateOnly night = replay.AsOf;
+        int switched = 0;
+        int companion = 0;
+
+        foreach ((string direction, IReadOnlyList<string> generationOne, IReadOnlyList<string> generationZero) in
+                 new[] { ("long", GenerationOneChecks.Long, SetupChecks.Long), ("short", GenerationOneChecks.Short, SetupChecks.Short) })
+        {
+            IReadOnlyList<string> registered = CheckRegister.DefinedOn(connection, direction, night, EndOfTime);
+            IReadOnlyList<string> before = CheckRegister.DefinedOn(connection, direction, night.AddDays(-1), EndOfTime);
+
+            if (!registered.Order(StringComparer.Ordinal).SequenceEqual(generationOne.Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            {
+                problems.Add($"the switch night's {direction} list in the register is not generation 1's.");
+            }
+
+            if (!before.Order(StringComparer.Ordinal).SequenceEqual(generationZero.Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            {
+                problems.Add($"the night before the switch, the {direction} list in the register is not generation 0's.");
+            }
+
+            foreach ((string table, IReadOnlyList<string> expected, bool isCompanion) in
+                     new[] { ("setup", registered, false), ("setup_generation_zero", generationZero, true) })
+            {
+                using Microsoft.Data.Sqlite.SqliteCommand command = connection.CreateCommand();
+                command.CommandText = $"SELECT setup_id, check_results FROM {table} WHERE direction = @direction";
+                command.Parameters.AddWithValue("@direction", direction);
+                using Microsoft.Data.Sqlite.SqliteDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    CheckResult[] results = JsonSerializer.Deserialize<CheckResult[]>(reader.GetString(1), Json) ?? [];
+                    problems.AddRange(RowProblems($"{table}:{reader.GetString(0)}", [.. results.Select(r => r.Name)], expected));
+
+                    if (isCompanion)
+                    {
+                        companion++;
+                    }
+                    else
+                    {
+                        switched++;
+                    }
+                }
+            }
+        }
+
+        return (switched, companion);
     }
 
     /// <summary>

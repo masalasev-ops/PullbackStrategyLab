@@ -240,6 +240,12 @@ public sealed class PointInTimeCheck
             // written after it would score a floor that night could not have been scored against.
             ["below_floor"] = "observed_at",
 
+            // Generation 0's record beside generation 1's from the switch night, from 7.11. Read only to
+            // compare the two, and stamped for the reason the below-floor record is: a comparison
+            // standing at an old night that saw a row written after it would join a verdict the night
+            // could not have had.
+            ["setup_generation_zero"] = "observed_at",
+
             // Added at 3.9(d). It was the last table feeding a point-in-time read with no
             // stamp at all, so a hit inserted for a past session was invisible to every bound
             // rather than merely unbounded by one. The 300 rows that predate the column were

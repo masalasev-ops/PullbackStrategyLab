@@ -44,7 +44,7 @@ public sealed class TradeOrderReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT order_id, setup_id, live_session, ticker, direction, triggered_at, status,
-                   planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at
+                   planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at, plan_id
               FROM trade_order
              WHERE live_session = @live_session
                AND observed_at <= @observed_before
@@ -79,7 +79,8 @@ public sealed class TradeOrderReader
                 StoreText.StorageTextToPrice(reader.GetString(9)),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
                 reader.IsDBNull(11) ? null : reader.GetString(11),
-                StoreText.StorageTextToTimestamp(reader.GetString(12))));
+                StoreText.StorageTextToTimestamp(reader.GetString(12)),
+                reader.GetString(13)));
         }
 
         return orders;
@@ -110,7 +111,7 @@ public sealed class TradeOrderReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT order_id, setup_id, live_session, ticker, direction, triggered_at, status,
-                   planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at
+                   planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at, plan_id
               FROM trade_order
              WHERE setup_id IN ({slots})
                AND observed_at <= @observed_before
@@ -225,7 +226,10 @@ public sealed record StoredTradeOrder(
     decimal RiskAtStake,
     string? BoundBy,
     string? BlockedBecause,
-    DateTimeOffset ObservedAt);
+    DateTimeOffset ObservedAt,
+    // The plan the order was placed for, from 7.11, so a night two versions plan one setup on is keyed
+    // by the plan rather than by the setup the two share.
+    string PlanId);
 
 /// <summary>An order's identity and the instant it was written, which is all provenance needs.</summary>
 public sealed record OrderProvenance(string OrderId, DateTimeOffset ObservedAt);

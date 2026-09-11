@@ -84,17 +84,19 @@ public sealed class SetupCapper
         // among names it was never ranked against.
         NightlyCap.Candidate[] candidates =
         [
-            // The give-up distance is nullable from 031 and cannot be null here, because a setup
-            // that passed every check passed `exit-tight`, which fails outright on an absent stop
-            // distance. The pattern makes that a filter rather than an assumption: a candidate that
-            // somehow arrived without one is dropped from the ranking rather than ranked at nought,
-            // which is the position a cap ordered on give-up would put it in.
+            // The give-up distance is nullable from 031. Under generation 0 it cannot be null here,
+            // because a setup that passed every check passed `exit-tight`, which fails outright on an
+            // absent stop distance. Generation 1 retired `exit-tight` at selection at the switch night,
+            // so from 7.11 a candidate can arrive with no evening geometry at all, being a thrust that
+            // has not pulled back yet. It is ranked after every candidate that has one rather than at
+            // nought, which is the position a cap ordered on give-up would otherwise put it in, and
+            // rather than dropped, which would leave a candidate with no rank and no plan and nothing
+            // saying why.
             // see: A gate handed an absent or degenerate quantity fails rather than passing
             .. setups
                 .Where(s => s.PassedAll)
-                .Where(s => s.StopDistanceRanges is not null)
                 .Select(s => new NightlyCap.Candidate(
-                    s.SetupId, s.Ticker, s.Direction, s.StopDistanceRanges!.Value)),
+                    s.SetupId, s.Ticker, s.Direction, s.StopDistanceRanges ?? decimal.MaxValue)),
         ];
 
         IReadOnlyList<NightlyCap.Placement> placements = NightlyCap.Apply(candidates);

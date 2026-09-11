@@ -99,7 +99,7 @@ public sealed class EntrySizer
         Dictionary<string, StoredTriggerResolution> touched = TriggerResolutionReader
             .ForLiveSession(connection, sessionDate, sessionDate, zone)
             .Where(r => string.Equals(r.Outcome, "touched", StringComparison.Ordinal) && r.TouchedAt is not null)
-            .ToDictionary(r => r.SetupId, StringComparer.Ordinal);
+            .ToDictionary(r => r.PlanId, StringComparer.Ordinal);
 
         HashSet<string> resolved = [.. EntryResolutionReader
             .ForLiveSession(connection, sessionDate, sessionDate, zone)
@@ -108,7 +108,7 @@ public sealed class EntrySizer
         CommittedTradePlan[] entries =
         [
             .. TradePlanReader.CommittedForLiveSession(connection, sessionDate, sessionDate, zone)
-                .Where(p => p.CarriesTheRule && touched.ContainsKey(p.SetupId)),
+                .Where(p => p.CarriesTheRule && touched.ContainsKey(p.PlanId)),
         ];
 
         if (entries.Length == 0)
@@ -151,7 +151,7 @@ public sealed class EntrySizer
         {
             foreach (CommittedTradePlan plan in toSize)
             {
-                StoredTriggerResolution trigger = touched[plan.SetupId];
+                StoredTriggerResolution trigger = touched[plan.PlanId];
                 EntryPoint? entry = watches[plan.PlanId].Entry;
 
                 if (entry is null || entry.Minute != trigger.TouchedAt)

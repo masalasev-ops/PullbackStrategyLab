@@ -148,7 +148,7 @@ reconciled against this document.
 | Saturday 08:30 | `ask-researcher`, which asks the researcher once against the pack and files the answer. It spends no vendor call and is the only slot that leaves the machine. **It cuts the pack again for itself** rather than reading the row `build-pack` wrote, because the body is not stored and a seat reading that row would rebuild the document anyway; the digest filed on the proposal is then the digest of what the model actually read, and the two cuts agreeing is byte-stability observed in the running lab rather than claimed of the build. **Four outcomes, and three of them are not a proposal**: a seat that could not be asked, an answer that is not the agreed document, an abstention, and a proposal. A week the seat could not be asked names the transport that refused and is shown on the status band the same morning, because a queued job nobody is told about is learned of a quarter later from a gap in the proposal record (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops) | 0 |
 | Saturday 08:40 | `screen-proposals`, which reads what the seat filed and sends each kind where it goes. It spends no vendor call. **A rule change goes to the replay screen and a signal request is a build task**, which is the whole reason the registry accepts two kinds: the signal library is a hard ceiling on the proposal space and only the second kind lifts it (see: Proposals come in two kinds, rule changes over existing signals and requests for a new signal). **A screen kills or lets through and never admits** (see: Replay screens proposals and the forward paired test admits them). **And the commonest verdict this lab can produce today is `inconclusive`**: the funnel passes a median of nought candidates a night, so over a population where the baseline selected nothing a candidate selecting nothing too has said nothing rather than changed nothing. Such a proposal stays filed and is read again as the store grows, and the result row written each time is the record that the evidence still cannot separate anything | 0 |
 
-**Four stages the worker advertises are run by an operator and by no slot, and that is a decision per verb rather than an oversight.** `admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs, a fourth from 7.7 and a fifth from 7.9:
+**Four stages the worker advertises are run by an operator and by no slot, and that is a decision per verb rather than an oversight.** `admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs, a fourth from 7.7, a fifth from 7.9 and a sixth from 7.11:
 
 | Verb | Why no slot runs it |
 |---|---|
@@ -156,9 +156,10 @@ reconciled against this document.
 | `recheck` | A repair bounded by the lateness rule, taking `--apply` and `--restore`, which is an act on the running store with a person deciding it (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound) |
 | `reconstructed-read` | It reads a calibration store copy, which is research on a copy rather than the night |
 | `backfill-minutes` | From 7.7. A one-time purchase of one-minute history for the flagged calibration rows, outside the nightly ceiling, into `calibration_minute_bar` and never into `intraday_bar`. **Run it with `--dry-run` first**, which lays the windows out and prints the calls they cost and the rows they leave short of warm-up without spending anything; then run it on the store 7.9 will copy. A run stopped part way resumes, because a window already recorded is not bought again (see: A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes) |
+| `forecast-generation-one` | From 7.11. Generation 1's gate set over the recorded nights between two dates, each night's flagged count per side and the names it would buy minutes for, their call cost against the ceiling less what the day's other stages spent, and the names the fetch could not afford in its own ticker order. **Run it on a store copy** over the nights since 7.4 landed, before the switch, and read the report under the data root's `reports` folder (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole) |
 | `measure-entry-rule` | From 7.9. Generation 1's entry rule run over the calibration minutes `backfill-minutes` bought, per side: how many flagged rows produce an entry and why the rest do not, the stops against the ceiling, and the win-rate ceiling's bound over the stops that entered. **Run it on a store copy**, never the live store, after the backfill, and read the report it writes under the data root's `reports` folder, which names the level set it was computed over and says the anchored level was not evaluated. A second run beside the first once the anchor is ruled (see: Order prices and the share count resolve at the entry minute) |
 
-`slot-roster` excludes the five by name and holds this table to them, so a verb that gains a slot or loses its reason fails there rather than going quiet.
+`slot-roster` excludes the six by name and holds this table to them, so a verb that gains a slot or loses its reason fails there rather than going quiet.
 
 **`universe-build` was missing from this table until 2026-08-27 and it is the one row that cannot be recovered by rerunning tomorrow.** `UniverseSnapshotReader.Members` matches the snapshot date exactly and offers no fallback, deliberately: a stage that quietly read current membership on a night with no snapshot would produce a reconstructed answer indistinguishable from a real one. So a night without this stage flags nothing, and the run reports **clean** while recording it. Every other row here can be rerun for its date; a delisted name is simply absent from tomorrow's symbol list, so a missing snapshot is a permanent hole in the evidence (see: The evidence store holds only setups flagged forward, never setups reconstructed from history).
 
@@ -389,6 +390,33 @@ and empty, created 2026-09-01 01:02 and last written 2026-09-03 21:26, which is 
 against the bare root on those dates. Those are also the two nights this document already records as
 lost to a store behind its migrations. Any Worker command with the default root creates that
 directory, so what the trace establishes is the root and not the command.
+
+### The switch to generation 1, from 7.11
+
+**Generation 1 registers once and the night after it registers is the switch night.** Registering is
+the act that closes generation 0: every open version is closed as unresolved, V0 is retired, and
+generation 1's baseline is registered, in one transaction. From the next detect slot the detectors
+score `setup` under generation 1's gate set and write generation 0's verdicts to
+`setup_generation_zero`, and the check register retires generation 0's clauses on that night. It is
+irreversible by design, which is why every step before it is a reading (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole).
+
+1. **Migrate the live store to 069**, on the terms of the section above: merge, the 17:00 update, then
+   `tools/migrate.ps1` with `PullbackStrategyLab__DataRoot` set to `<repository>/data/live`.
+2. **Forecast on a store copy.** `forecast-generation-one <from> <to>` over the nights since 7.4 landed,
+   with the data root set to the copy. Read the report: the flagged count per night, its call cost
+   against the headroom the day's other stages left, and any names the fetch could not afford. A night
+   over the headroom is a night whose later names go without minutes in ticker order, and that is
+   decided before the switch rather than found on its first night.
+3. **Read the act before taking it.** `close-generation V1 --generation-one --dry-run` against the live
+   store prints the generation that closes, what becomes unresolved and retired, and the baseline that
+   opens, and writes nothing. `--generation-one` supplies the definition naming both families and the
+   baseline's target, so nothing is typed but the name.
+4. **Take it on an evening before the detect slot**, the same command without `--dry-run`. That night is
+   the switch night.
+5. **Read the morning after**: `setup` rows carry `generation` 1, `setup_generation_zero` holds generation
+   0's names beside them, and the check register lists generation 1's clauses for that night. From then
+   no selection or execution version is admitted and the weekly pack refuses with the reason, until the
+   conditions that reopen each are met (see: Generation 1 opens with no version admissible in either family, and what reopens each is named).
 
 ---
 

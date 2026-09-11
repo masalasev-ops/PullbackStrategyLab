@@ -351,8 +351,12 @@ public sealed class ReplayHarness
                 IReadOnlyDictionary<string, IReadOnlyDictionary<string, decimal>> signals =
                     FrozenSignals(connection, night);
 
+                // Generation 0's rows alone, from 7.11. The rule this harness replays is generation 0's
+                // selection rule, and a row generation 1 scored after the switch night carries a
+                // different gate set it cannot reproduce, so reading it would report a disagreement
+                // that is a change of rule rather than a fault in the harness.
                 foreach (StoredSetup setup in SetupReader.Read(connection, night)
-                             .Where(s => s.Direction == direction))
+                             .Where(s => s.Direction == direction && s.Generation == 0))
                 {
                     rows++;
 

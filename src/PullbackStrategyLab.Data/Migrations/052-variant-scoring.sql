@@ -16,9 +16,9 @@
 -- admitter.</b> The baseline moves nothing and an execution version moves no selection threshold, so
 -- on both the five are null together. A row carrying three of the five is a row that reads as a
 -- version and cannot be scored as one.
--- see: A version changes one threshold over the existing gate list, and structural change is out of scope for this generation
+-- see: Generation 1 opens with no version admissible in either family, and what reopens each is named
 -- see: Two experiment families, selection and execution, scored differently and never mixed in one version
--- see: No execution variant is admitted in this generation, and the condition that would reopen it is named
+-- see: Generation 1 opens with no version admissible in either family, and what reopens each is named
 
 -- The same setting 051 needed and for the same reason: a rename must be only a rename, because
 -- `variant` is named in `trade_plan`'s foreign key and, from this file, in `variant_score`'s.

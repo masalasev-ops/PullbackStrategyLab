@@ -78,6 +78,7 @@ public sealed partial class SlotRosterCheck
         ["reconstructed-read"] = "it reads a calibration store copy, which is research rather than the night",
         ["backfill-minutes"] = "a one-time purchase of calibration minutes outside the nightly ceiling, from 7.7",
         ["measure-entry-rule"] = "a reading of the entry rule over the calibration minutes on a store copy, from 7.9",
+        ["forecast-generation-one"] = "a forecast of generation 1's flagged count and minute cost over recorded nights on a store copy, from 7.11",
     };
 
     /// <summary>

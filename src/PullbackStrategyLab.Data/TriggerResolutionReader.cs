@@ -42,7 +42,7 @@ public sealed class TriggerResolutionReader
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT setup_id, live_session, ticker, direction, outcome,
-                   touched_at, minutes_walked, unresolved_because, observed_at
+                   touched_at, minutes_walked, unresolved_because, observed_at, plan_id
               FROM trigger_resolution
              WHERE live_session = @live_session
                AND observed_at <= @observed_before
@@ -67,7 +67,8 @@ public sealed class TriggerResolutionReader
                 reader.IsDBNull(5) ? null : StoreText.StorageTextToTimestamp(reader.GetString(5)),
                 reader.GetInt32(6),
                 reader.IsDBNull(7) ? null : reader.GetString(7),
-                StoreText.StorageTextToTimestamp(reader.GetString(8))));
+                StoreText.StorageTextToTimestamp(reader.GetString(8)),
+                reader.GetString(9)));
         }
 
         return resolutions;
@@ -129,7 +130,10 @@ public sealed record StoredTriggerResolution(
     DateTimeOffset? TouchedAt,
     int MinutesWalked,
     string? UnresolvedBecause,
-    DateTimeOffset ObservedAt);
+    DateTimeOffset ObservedAt,
+    // The plan the resolution is of, from 7.11: the table is keyed on it, and a stage keying on the
+    // setup instead met a duplicate the first night two versions planned one name.
+    string PlanId);
 
 /// <summary>One run of the resolver, with what it walked beside what it decided.</summary>
 public sealed record StoredTriggerRun(
