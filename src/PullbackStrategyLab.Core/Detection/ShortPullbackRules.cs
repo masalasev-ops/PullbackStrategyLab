@@ -309,8 +309,9 @@ public static class ShortPullbackRules
     ///
     /// <b>Not the same absence as the one above and the difference is permanence.</b> A forward row
     /// with no level becomes anchorable as the store accumulates minutes. A reconstructed 2024
-    /// session does not: the vendor holds minute bars for a bounded window and not for two years, so
-    /// there is nothing to buy. Recorded rather than folded in, on the same grounds
+    /// session does not: the store it is walked in holds minutes only from the night capture began. The
+    /// vendor sells the earlier history, and a purchase of it belongs to a research store rather than to
+    /// this one, so the absence is this store's and not the market's. Recorded rather than folded in, on the same grounds
     /// <see cref="ClausesRunWithoutTheCap"/> is: a count read off these rows is a count under a gate
     /// that is narrower than the document by an amount nothing will close.
     /// </summary>

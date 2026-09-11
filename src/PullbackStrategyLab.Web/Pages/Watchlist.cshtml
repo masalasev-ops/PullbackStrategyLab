@@ -58,7 +58,7 @@
             that never fired, and until 6.10 it did not: the warning sat inside the Missing loop
             alone, so it was structurally unreachable for a slot that ran, spent its calls and
             bought nothing. That is the shape the night of 2026-09-04 took, and the slot whose miss
-            cannot be bought back at any price is exactly the one it took it in.
+            no later purchase repairs is exactly the one it took it in.
         *@
         @foreach (SlotView slot in Model.Night.Ragged)
         {
@@ -98,8 +98,8 @@
 
         @if (Model.Night.Unobservable > 0)
         {
-            @* Reported rather than dropped. A count of thirty-one under a heading saying
-               thirty-two is the under-reporting shape, one level up from the store. *@
+            @* Reported rather than dropped. A count of thirty-six under a heading saying
+               thirty-seven is the under-reporting shape, one level up from the store. *@
             @foreach (SlotView slot in Model.Night.Slots.Where(s => s.IsUnobservable))
             {
                 <p class="muted"><b>@slot.At @slot.Slot</b>: @slot.Unobservable.</p>

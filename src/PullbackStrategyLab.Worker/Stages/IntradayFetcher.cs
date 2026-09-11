@@ -12,9 +12,10 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// <summary>
 /// Minute bars for every flagged setup, after the close.
 ///
-/// <b>The only unrecoverable input the lab has.</b> The vendor's minute history reaches back a
-/// bounded number of days, so a session not captured inside that window cannot be bought afterwards
-/// at any price. Everything else this lab fetches can be re-asked for: daily history arrives whole
+/// <b>Unrecoverable as evidence, though not as data.</b> The vendor sells one-minute history back to
+/// 2004 in requests of at most 120 days each, so a bar can always be bought again; what cannot is its
+/// standing, because a minute observed after the night a name is flagged is invisible to that night's
+/// setups under the point-in-time rule. Everything else this lab fetches can be re-asked for: daily history arrives whole
 /// on every request, a symbol list is regenerated nightly, and a fundamentals lookup is the same
 /// answer next week. That is why this stage leads phase 4 rather than the watchlist, which loses
 /// nothing by waiting an evening.

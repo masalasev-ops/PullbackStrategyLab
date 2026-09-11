@@ -392,4 +392,40 @@ public sealed class ActionIngestorTests : IDisposable
         command.CommandText = $"SELECT COUNT(*) FROM {table};";
         return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
     }
+
+    /// <summary>
+    /// The option RUNBOOK's recovery row named until 7.0 is refused by name.
+    ///
+    /// <c>--with-dividends</c> exists in no source file, and until 7.0 passing it ran the stage and
+    /// reported success because the parse ignored every dashed argument but one. Asserted by running
+    /// the parse rather than by reading it, because the fault was that nothing read the option.
+    /// </summary>
+    [Fact]
+    public void An_option_the_stage_does_not_know_is_refused_by_name()
+    {
+        ArgumentException refused = Assert.Throws<ArgumentException>(
+            () => ActionIngestor.Arguments.Parse(["2026-08-21", "--with-dividends"]));
+
+        Assert.Contains("--with-dividends", refused.Message, StringComparison.Ordinal);
+        Assert.Contains("refused rather than ignored", refused.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_one_option_it_knows_still_narrows_the_request_to_splits()
+    {
+        ActionIngestor.Arguments parsed = ActionIngestor.Arguments.Parse(["2026-08-21", ActionIngestor.SplitsOnlyFlag]);
+
+        Assert.Equal("2026-08-21", parsed.Date);
+        Assert.False(parsed.WithDividends);
+    }
+
+    [Fact]
+    public void With_no_option_a_date_is_read_and_dividends_are_requested()
+    {
+        ActionIngestor.Arguments parsed = ActionIngestor.Arguments.Parse(["2026-08-21"]);
+
+        Assert.Equal("2026-08-21", parsed.Date);
+        Assert.True(parsed.WithDividends);
+        Assert.Null(ActionIngestor.Arguments.Parse([]).Date);
+    }
 }

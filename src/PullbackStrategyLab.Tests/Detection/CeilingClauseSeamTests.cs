@@ -59,8 +59,8 @@ public sealed class CeilingClauseSeamTests
     {
         // The third way a verdict runs two clauses, and the only one that is permanent. A forward
         // row with no level becomes anchorable as the store accumulates minutes; a reconstructed
-        // 2024 session does not, because the vendor holds minute bars for a bounded window and there
-        // is nothing to buy. Reading the two alike would tell somebody the clause is coming.
+        // 2024 session does not, because the store it is walked in holds minutes only from the night
+        // capture began. The vendor sells that history; this store never holds it. Reading the two alike would tell somebody the clause is coming.
         CheckResult verdict = Ceiling(Evidence(toAverages: 0.9m, toAnchored: null, reconstructed: true));
 
         Assert.Equal(ShortPullbackRules.ClausesRunInReconstruction, verdict.Note);

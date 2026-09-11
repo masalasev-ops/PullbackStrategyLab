@@ -824,7 +824,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
           "closedSession": "2026-08-27", "openedSession": "2026-08-24",
           "exitReason": "trail", "nothing": null,
           "heldSessions": 4, "sessionsWithNoMinutes": 3, "heldPastItsOwnSession": true,
-          "minutesAbsentBecause": "minute bars are bought for the session a plan is live in, which is the session the entry filled in, and for no session after it. This position was held past that session and the vendor sells no minute history to buy the rest back, so the daily strip is the whole picture of how it ended",
+          "minutesAbsentBecause": "minute bars are bought for the session a plan is live in, which is the session the entry filled in, and for no session after it. This position was held past that session and nothing bought the later sessions' minutes on the nights they ran, so the daily strip is the whole picture of how it ended",
           "bars": [],
           "levels": [
             { "name": "trigger", "price": "100.00", "what": "the price the plan committed to before the session opened" },

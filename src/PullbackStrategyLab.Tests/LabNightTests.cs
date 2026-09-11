@@ -45,7 +45,7 @@ public sealed class LabNightTests : IDisposable
 
     /// <summary>
     /// A night on which nothing ran reports every slot as never having fired, and names the ones
-    /// whose input cannot be bought back.
+    /// whose loss no later run repairs.
     ///
     /// <b>This is the night of 2026-09-03 in miniature.</b> Fifteen slots had never fired and the
     /// four lists that declare them all agreed, so nothing said so; this report says so on the
@@ -120,8 +120,8 @@ public sealed class LabNightTests : IDisposable
     /// the other two.
     ///
     /// <b>Folding it in is the under-reporting shape, one level up from a check.</b>
-    /// <c>snapshot-db</c> takes no run logger, so a report that dropped it would say thirty-one
-    /// under a heading meaning thirty-two and would read as complete.
+    /// <c>snapshot-db</c> takes no run logger, so a report that dropped it would say thirty-six
+    /// under a heading meaning thirty-seven and would read as complete.
     ///
     /// Population: a migrated store with an empty run log, read for a weekday.
     /// </summary>

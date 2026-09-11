@@ -101,9 +101,12 @@ public interface IMarketDataVendor
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// One ticker's minute bars over a window of instants. The only unrecoverable request the lab
-    /// makes: the vendor's minute history reaches back a bounded number of days and a session not
-    /// captured inside it cannot be bought afterwards at any price.
+    /// One ticker's minute bars over a window of instants. The vendor sells one-minute history back
+    /// to 2004, pre-market and after-hours included, and a single request may span at most 120 days,
+    /// so a bar can always be bought again. What cannot be bought again is its standing: a minute
+    /// observed after the night a name is flagged is invisible to that night's setups under the
+    /// point-in-time rule, which is why this is the request whose miss a later purchase does not repair.
+    /// see: The intraday fetch buys the twenty-seven session anchor window, and the count starts on the first night it runs at that width
     ///
     /// <b>The window is instants rather than dates</b>, because a session is a span of instants in a
     /// named zone and a date is not. Asking by date would put the boundary in this method, where it
@@ -111,7 +114,7 @@ public interface IMarketDataVendor
     ///
     /// It answers with whatever the vendor holds for that window, including bars outside the regular
     /// session where the vendor carries them. Nothing is filtered here: an extended-hours minute is
-    /// as unrecoverable as a regular one, so the caller stores every bar and labels each with the
+    /// as much a part of the night's record as a regular one, so the caller stores every bar and labels each with the
     /// session it fell in rather than dropping the ones it does not currently read.
     /// see: Minute bars are fetched for every flagged setup, not only the planned ones
     /// </summary>

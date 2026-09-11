@@ -104,11 +104,11 @@ public sealed class VariantAdmitter
     /// see: No execution variant is admitted in this generation, and the condition that would reopen it is named
     /// </summary>
     public const string ExecutionRefused =
-        "no execution variant is admitted in this generation: it cannot be screened, because minute bars "
-        + "exist only from the night capture began and the vendor sells no history to buy the gap back, and it "
-        + "cannot accumulate, because R needs fills and the funnel passes a median of nought candidates a night. "
-        + "What reopens it is the screenable population growing at one night a night, and a funnel that produces "
-        + "a trade";
+        "no execution variant is admitted in this generation: it cannot be screened, because the store holds "
+        + "minute bars only from the night capture began and none of the vendor's earlier history has been "
+        + "bought, and it cannot accumulate, because R needs fills and the funnel passes a median of nought "
+        + "candidates a night. What reopens it is capture running, from which the screenable population grows at "
+        + "one night a night, and a funnel that produces a trade";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
