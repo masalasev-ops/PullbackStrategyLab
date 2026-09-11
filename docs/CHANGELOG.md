@@ -3094,3 +3094,18 @@ Why:  The sizer is the resolve slot's second verb, so the night gains no task.
 Was:  "None of the twenty rows above fall due at 4.17"
 Now:  "None of the twenty-one rows above fall due at 4.17", with a row raised at 7.8 and due at 7.11: four stages key a night's plans by setup rather than by plan and would throw once two versions plan one setup
 Why:  The survey 7.8 ran found it, nothing live has two versions yet, and 7.11 is where versions of generation 1 first become possible.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Components are named, not coded
+Was:  "The 60 components are listed by layer," and the P7 Builds cell ending "MinuteBackfiller, EntrySizer"
+Now:  "The 61 components are listed by layer," and the cell ending "MinuteBackfiller, EntrySizer, EntryRuleMeasurement", with the component's catalogue row
+Why:  EntryRuleMeasurement joins the catalogue as the reading of the entry rule over the calibration minutes.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Components are named, not coded
+Was:  "| 7.9 | **The sourced rule measured before it goes live.** 7.8's rule run over the backfilled calibration minutes on a store copy, ..."
+Now:  "| 7.9 | **The sourced rule measured before it goes live.** EntryRuleMeasurement runs 7.8's rule over the backfilled calibration minutes on a store copy, ..."
+Why:  The row builds a component and names it, on the rule that `Schedule.CheckpointFor` answers when a component is owed from the earliest row naming it.
+
+### 2026-09-11 — RUNBOOK.md — cites Order prices and the share count resolve at the entry minute
+Was:  "The three that stay operator verbs, and a fourth from 7.7:" and "`slot-roster` excludes the four by name"
+Now:  "The three that stay operator verbs, a fourth from 7.7 and a fifth from 7.9:" and "`slot-roster` excludes the five by name", with a row for `measure-entry-rule`
+Why:  The measurement is an operator verb run on a store copy, and no slot takes it.

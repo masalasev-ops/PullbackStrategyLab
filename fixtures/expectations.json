@@ -10457,18 +10457,18 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "60",
+      "value": "61",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer."
+      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer. Was 60 until 7.9, which adds EntryRuleMeasurement."
     },
     {
       "id": "catalogue.componentTypes",
       "tier": "DERIVED",
-      "value": "53",
+      "value": "54",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component. Was 52 until 7.8, on the same component."
+      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component. Was 52 until 7.8, on the same component. Was 53 until 7.9, on the same component."
     },
     {
       "id": "catalogue.screens",
@@ -13918,6 +13918,374 @@
       "checkpoint": "7.8",
       "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
       "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The cap that reduced it."
+    },
+    {
+      "id": "entryReading.levelSet",
+      "tier": "DERIVED",
+      "value": "hourly-ema-9, hourly-ema-21",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. The level set the reading was computed over, named on every report; the anchored average price was not evaluated."
+    },
+    {
+      "id": "entryReading.reportPath",
+      "tier": "DERIVED",
+      "value": "reports/entry-rule-2026-08-24.json",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand: the reports folder under the data root and the as-of the replay stands at",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Relative to the data root, so no absolute path is recorded."
+    },
+    {
+      "id": "entryReading.golden.long.rows",
+      "tier": "DERIVED",
+      "value": "238",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.noMinutes",
+      "tier": "DERIVED",
+      "value": "237",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.noLevels",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.noReclaim",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.entered",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.refused",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.boundSubjects",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.long.medianStop",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.long.medianCeiling",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.long.bound",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.long.achieved",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.short.rows",
+      "tier": "DERIVED",
+      "value": "88",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.noMinutes",
+      "tier": "DERIVED",
+      "value": "88",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.noLevels",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.noReclaim",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.entered",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.refused",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.boundSubjects",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.golden.short.medianStop",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.short.medianCeiling",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.short.bound",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.golden.short.achieved",
+      "tier": "DERIVED",
+      "value": "none",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from figures the fixture already states: the calibration walk records 237 long rows and 88 short, 7.7 adds one authored AAPL long row, and the backfill bought minutes for AAPL on 2026-08-25 alone with no hourly history before it, so that row has minutes and no level and every other row has no minutes",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Nothing entered, so there is no stop to take a median of and no subject to bound."
+    },
+    {
+      "id": "entryReading.authored.long.rows",
+      "tier": "DERIVED",
+      "value": "3",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.noMinutes",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.noLevels",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.noReclaim",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. NRC flushes and never reclaims."
+    },
+    {
+      "id": "entryReading.authored.long.entered",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.refused",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.medianStop",
+      "tier": "DERIVED",
+      "value": "0.0050",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. Both long entries stop 0.50 under 100.20, 0.499%, to four places 0.0050."
+    },
+    {
+      "id": "entryReading.authored.long.medianCeiling",
+      "tier": "DERIVED",
+      "value": "0.0200",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.boundSubjects",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.long.bound",
+      "tier": "DERIVED",
+      "value": "0.5000",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. LNG and WIN both end ahead; LNG trades through its stop first and WIN does not, so one kept of two ahead."
+    },
+    {
+      "id": "entryReading.authored.long.achieved",
+      "tier": "DERIVED",
+      "value": "0.5000",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. One kept of two subjects."
+    },
+    {
+      "id": "entryReading.authored.short.rows",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.noMinutes",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.noLevels",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.noReclaim",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.entered",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.refused",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.medianStop",
+      "tier": "DERIVED",
+      "value": "0.0060",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. 0.30 over 50.00, 0.60%."
+    },
+    {
+      "id": "entryReading.authored.short.medianCeiling",
+      "tier": "DERIVED",
+      "value": "0.0200",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.boundSubjects",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
+    },
+    {
+      "id": "entryReading.authored.short.bound",
+      "tier": "DERIVED",
+      "value": "0.0000",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9. SHT ends ahead having traded through its stop first, so nothing is kept."
+    },
+    {
+      "id": "entryReading.authored.short.achieved",
+      "tier": "DERIVED",
+      "value": "0.0000",
+      "checkpoint": "7.9",
+      "producedBy": "derived by hand before it was run, from CalibrationEntryCases' authored rows: a daily range of 4% everywhere so a ceiling of 2% and an ATR of 4 at a zone of 100 and 2 at 50, entries of 100.20 over 99.70 and 50.00 under 50.30, and horizons closing at 104.00 after a low of 98.00, at 105.00 with nothing under 99.90, and at 48.00 after a high of 52.00",
+      "note": "Generation 1's entry rule measured over calibration minutes, from 7.9."
     }
   ],
   "frozenOnly": [

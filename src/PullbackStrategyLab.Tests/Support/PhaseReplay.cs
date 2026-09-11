@@ -941,6 +941,9 @@ public sealed class PhaseReplay : IDisposable
         // Over a store of its own, so nothing the fixture's night recorded moves.
         measurements.AddRange(EntryRuleFigures());
 
+        // Over the calibration rows and the minutes the backfill above bought, and over authored rows.
+        measurements.AddRange(EntryRuleMeasurementFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -3597,6 +3600,56 @@ public sealed class PhaseReplay : IDisposable
 
     /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
     private const string AuthoredVersion = "V-acceptance";
+
+    /// <summary>
+    /// The entry rule measured over calibration minutes, from 7.9, twice and stated apart.
+    ///
+    /// <b>Over the golden fixture's own calibration rows first.</b> The backfill bought minutes for one
+    /// session of one name, AAPL on 2026-08-25, and no hourly history before it, so the one row with
+    /// minutes has no level and every other row has no minutes: the report says so rather than being
+    /// empty. <b>Then over <see cref="CalibrationEntryCases"/>' authored rows</b>, where the rule enters,
+    /// refuses nothing, and the bound is taken, every figure derivable by hand. Long and short apart.
+    /// see: Long and short are never pooled into one figure
+    /// </summary>
+    private IReadOnlyList<Measurement> EntryRuleMeasurementFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        EntryRuleReport golden = new EntryRuleMeasurement(
+            _connections, Logger(), _clock, _options, new PullbackStrategyLabPaths(_root.Path)).Measure();
+
+        using var cases = new CalibrationEntryCases();
+        EntryRuleReport authored = cases.Measure();
+
+        string Fraction(decimal? value) => value is decimal present ? Figure(present) : "none";
+
+        var figures = new List<Measurement>
+        {
+            new("entryReading.levelSet", EntryRuleReading.LevelSet),
+            new("entryReading.reportPath", golden.Path.Replace('\\', '/')),
+        };
+
+        foreach ((string name, EntryRuleReport report) in new[] { ("golden", golden), ("authored", authored) })
+        {
+            foreach (EntryRuleReading.Side side in report.Sides)
+            {
+                string at = $"entryReading.{name}.{side.Direction}";
+                figures.Add(new($"{at}.rows", side.Rows.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.noMinutes", side.NoMinutes.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.noLevels", side.NoLevels.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.noReclaim", side.NoReclaim.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.entered", side.Entered.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.refused", side.Refused.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.medianStop", Fraction(side.MedianStopFraction)));
+                figures.Add(new($"{at}.medianCeiling", Fraction(side.MedianCeiling)));
+                figures.Add(new($"{at}.boundSubjects", side.BoundSubjects.ToString(CultureInfo.InvariantCulture)));
+                figures.Add(new($"{at}.bound", Fraction(side.Bound)));
+                figures.Add(new($"{at}.achieved", Fraction(side.Achieved)));
+            }
+        }
+
+        return figures;
+    }
 
     /// <summary>
     /// The entry rule carried from a plan to an order over one long and one short session, from 7.8.
