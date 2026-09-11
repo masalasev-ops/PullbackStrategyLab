@@ -172,6 +172,47 @@ public sealed partial class SignalLibraryCheck : IDisposable
             }
         }
 
+        // From 7.4, a sourced candidate cites the SOURCES.md clause it was derived from, in the code
+        // and in the section's own clause cell, and the clause is a heading SOURCES.md carries. Every
+        // row of the sourced table cites one, and no signal outside it does, so a candidate cannot be
+        // moved into the sourced set without saying which clause it came from.
+        string sources = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "SOURCES.md"));
+        IReadOnlyDictionary<string, string> cells = ClauseCells();
+        int clausesResolved = 0;
+
+        foreach (DeclaredSignal signal in SignalLibrary.Declared)
+        {
+            cells.TryGetValue(signal.Name, out string? cell);
+
+            if (signal.Clause is null && cell is null)
+            {
+                continue;
+            }
+
+            if (signal.Clause != cell)
+            {
+                problems.Add($"{signal.Name}: the code cites clause \"{signal.Clause}\" and the section's clause cell "
+                    + $"reads \"{cell}\".");
+                continue;
+            }
+
+            if (signal.Status != SignalStatus.Candidate)
+            {
+                problems.Add($"{signal.Name}: a sourced signal is declared {signal.Status}. It is frozen so it can be "
+                    + "replayed and it is a candidate until the admission test rules on it.");
+            }
+
+            if (!sources.Contains($"### {signal.Clause}\n", StringComparison.Ordinal)
+                && !sources.Contains($"### {signal.Clause}\r\n", StringComparison.Ordinal))
+            {
+                problems.Add($"{signal.Name}: cites \"{signal.Clause}\", which is not a clause heading in SOURCES.md, "
+                    + "so the form it claims to rest on cannot be found.");
+                continue;
+            }
+
+            clausesResolved++;
+        }
+
         // The third statement, and the only one that is a behaviour rather than a list: what the
         // stage actually writes. A seed that dropped a row, wrote a formula it had made up, or lost
         // the null-control flag would satisfy everything above.
@@ -221,6 +262,7 @@ public sealed partial class SignalLibraryCheck : IDisposable
             .Examined("signals reconciled between SCHEMA.md and SignalLibrary, in both directions", compared)
             .Examined("signals reconciled between SignalLibrary and the seeded signal_definition", stored.Count)
             .Examined("status cells checked against the two a specification may state", section.Count)
+            .Examined("sourced candidates whose clause resolves to a SOURCES.md heading", clausesResolved)
             .NoSourceScan(
                 "every side of this check is the thing itself rather than a description of one. The section is "
                 + "the specification, SignalLibrary is the list the Worker ships, and the third side is a store "
@@ -242,6 +284,16 @@ public sealed partial class SignalLibraryCheck : IDisposable
             $"{problems.Count} disagreement(s) between the three statements of the signal library:\n  "
             + string.Join("\n  ", problems));
     }
+
+    /// <summary>The fifth cell of every five-column signal row, which is the sourced table's clause.</summary>
+    [GeneratedRegex(
+        @"^\|\s*`(?<name>[a-z_0-9]+)`\s*\|(?:(?:\\\||[^|])*\|){3}\s*(?<clause>[a-z][a-z-]*, (?:long|short))\s*\|\s*$",
+        RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex ClauseCell();
+
+    private static IReadOnlyDictionary<string, string> ClauseCells() =>
+        ClauseCell().Matches(SectionText()).ToDictionary(
+            m => m.Groups["name"].Value, m => m.Groups["clause"].Value, StringComparer.Ordinal);
 
     /// <summary>SCHEMA.md's Signals section as text, bounded by its own heading like every read of it.</summary>
     private static string SectionText()

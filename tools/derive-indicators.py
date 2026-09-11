@@ -64,6 +64,7 @@ Usage:  python tools/derive-indicators.py <store.db> <as-of> <ticker> [<ticker> 
         python tools/derive-indicators.py --index <captured-dir> <as-of> <symbol> [<symbol> ...]
         python tools/derive-indicators.py --universe <captured-dir> <as-of>
         python tools/derive-indicators.py --signals <store.db> <as-of> <ticker> <trigger>
+        python tools/derive-indicators.py --sourced <captured-dir> <as-of> <ticker> <long|short>
         python tools/derive-indicators.py --scans   <store.db> <as-of> [<ranks>]
         python tools/derive-indicators.py --ladder  <store.db> <as-of>
         python tools/derive-indicators.py --regime  <store.db> <as-of> [<symbol> ...]
@@ -797,6 +798,120 @@ def signals_main(argv):
     for name, value in derive_signals(bars, trigger).items():
         print("  signal.%s-long.%-26s %s" % (ticker, name, value.quantize(PLACES)))
 
+    return 0
+
+
+def captured_bars(captured, ticker, as_of):
+    """One name's daily bars as the fixture's store holds them, read from the capture itself.
+
+    The per-ticker history, with the as-of session replaced by the whole-market bulk response
+    where that answered for the name, because the night's ingest writes the bulk figure beside the
+    history's and a read takes the later observation. Oldest first, nothing after the as-of.
+    """
+    with open(os.path.join(captured, "history-%s.json" % ticker), encoding="utf-8") as handle:
+        rows = json.load(handle)
+
+    bars = {}
+    for r in rows:
+        if r["date"] <= as_of:
+            bars[r["date"]] = r
+
+    with open(os.path.join(captured, "bulk-end-of-day.json"), encoding="utf-8") as handle:
+        for r in json.load(handle):
+            if r.get("code") == ticker and r["date"] == as_of:
+                bars[as_of] = r
+
+    return [
+        {
+            "date": d,
+            "open": Decimal(str(bars[d]["open"])),
+            "high": Decimal(str(bars[d]["high"])),
+            "low": Decimal(str(bars[d]["low"])),
+            "close": Decimal(str(bars[d]["close"])),
+            "adj_close": Decimal(str(bars[d]["adjusted_close"])),
+            "volume": Decimal(str(bars[d]["volume"])),
+        }
+        for d in sorted(bars)
+    ]
+
+
+def derive_sourced(bars, is_long):
+    """The eleven candidates 7.4 freezes, restated from SCHEMA's formulas rather than from the stage.
+
+    Written from the table's own sentences: the weekly close is the last close of a Monday-to-Sunday
+    week with the week in progress closing at the as-of session; a slope compares the average five
+    sessions apart, each over the engine's 150-session window; the 150-session average is read over
+    the last 300 sessions. Nothing here calls the code it checks.
+    """
+    extended = bars[-300:]
+    warm = bars[-(WARMUP + 20):]
+    adj_ext = adjusted(extended)
+    closes_ext = [b["close"] for b in adj_ext]
+    dates_ext = [b["date"] for b in extended]
+    adj_warm = adjusted(warm)
+    closes_warm = [b["close"] for b in adj_warm]
+    last = adj_warm[-1]
+    out = {}
+
+    if len(closes_ext) >= 150:
+        average = ema(closes_ext, 150)
+        out["ema_150_distance"] = (closes_ext[-1] - average) / average
+
+    for period, name in ((9, "ema_9_slope"), (21, "ema_21_slope"), (50, "ema_50_slope")):
+        now = ema(closes_warm[-WARMUP:], period)
+        then = ema(closes_warm[-(WARMUP + 5):-5], period)
+        out[name] = (now - then) / then
+
+    cutoff = (datetime.date.fromisoformat(dates_ext[-1]) - datetime.timedelta(days=30)).isoformat()
+    earlier = [i for i, d in enumerate(dates_ext) if d <= cutoff]
+    if earlier:
+        out["return_30_days"] = closes_ext[-1] / closes_ext[earlier[-1]] - 1
+
+    figures = derive(bars[-WARMUP:])
+    adr = figures["adr_20"]
+    ema9 = figures["ema_9"]
+    base = adj_warm[-40:]
+    out["base_span_ranges"] = (max(b["high"] for b in base) - min(b["low"] for b in base)) / (adr * last["close"])
+
+    if is_long:
+        out["undercut_reclaim_ema_9"] = Decimal(1 if last["low"] < ema9 < last["close"] else 0)
+        out["from_session_extreme"] = (last["close"] - last["low"]) / last["low"]
+    else:
+        out["undercut_reclaim_ema_9"] = Decimal(1 if last["high"] > ema9 > last["close"] else 0)
+        out["from_session_extreme"] = (last["high"] - last["close"]) / last["high"]
+
+    out["entry_ceiling"] = min(adr / 2, Decimal("0.05"))
+
+    weekly = []
+    week = None
+    for d, c in zip(dates_ext, closes_ext):
+        day = datetime.date.fromisoformat(d)
+        monday = day - datetime.timedelta(days=day.weekday())
+        if monday == week:
+            weekly[-1] = c
+        else:
+            weekly.append(c)
+            week = monday
+
+    if len(weekly) >= 21:
+        w9 = ema(weekly, 9)
+        w21 = ema(weekly, 21)
+        out["weekly_ema_gap_9_21"] = (w9 - w21) / w21
+        out["weekly_ema_21_distance"] = (weekly[-1] - w21) / w21
+
+    return out
+
+
+def sourced_main(argv):
+    if len(argv) < 4:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 2
+
+    captured, as_of, ticker, side = argv[0], argv[1], argv[2], argv[3]
+    bars = captured_bars(captured, ticker, as_of)
+    print("\n%s %s  as of %s, %d sessions" % (ticker, side, as_of, len(bars)))
+    for name, value in derive_sourced(bars, side == "long").items():
+        print("  signal.%s-%s.%-24s %s" % (ticker, side, name, value.quantize(PLACES)))
     return 0
 
 
@@ -2771,6 +2886,9 @@ def main(argv):
 
     if len(argv) > 1 and argv[1] == "--signals":
         return signals_main(argv[2:])
+
+    if len(argv) > 1 and argv[1] == "--sourced":
+        return sourced_main(argv[2:])
 
     if len(argv) > 1 and argv[1] == "--session":
         return session_main(argv[2:])

@@ -64,6 +64,36 @@ public sealed partial class SlotRosterCheck
             + "rather than a bare verb, and the table states the whole command an operator would type",
     };
 
+    /// <summary>
+    /// Stages the worker advertises that an operator runs and no slot does, from 7.4, each with why.
+    ///
+    /// <b>The three RUNBOOK names as operator verbs</b>, and the reverse reconciliation below holds the
+    /// table there to this list: a verb that gains a slot, or one RUNBOOK stops naming, fails rather than
+    /// going quiet. The fourth unscheduled stage, `admit-signals`, gained the Saturday slot at 7.4.
+    /// </summary>
+    private static readonly Dictionary<string, string> OperatorVerbs = new(StringComparer.Ordinal)
+    {
+        ["backfill-signals"] = "a one-time act per signal, filling rows recorded before the signal was frozen",
+        ["recheck"] = "a repair bounded by the lateness rule, which is an act on the running store a person decides",
+        ["reconstructed-read"] = "it reads a calibration store copy, which is research rather than the night",
+    };
+
+    /// <summary>
+    /// Every other advertised stage no slot runs, and why, so the reverse direction has a reason for
+    /// each rather than a filter. Asserted to be advertised and to be run by no slot, like the verbs.
+    /// </summary>
+    private static readonly Dictionary<string, string> NotANightlyStage = new(StringComparer.Ordinal)
+    {
+        ["migrate"] = "the repair a behind store needs, run by the operator before the night and never inside it",
+        ["delisted-list"] = "the one-time purchase of delisted history, spread across nights by the operator",
+        ["capture-fixture"] = "the golden fixture's capture, a one-time act whose output is committed",
+        ["capture-response"] = "one captured response added to the fixture, on the same terms",
+        ["phase-report"] = "what tools/verify-phase runs, which reads the build and never the lab",
+        ["admit-variant"] = "the human step that registers a version, which no schedule may take",
+        ["replay"] = "a replay screen asked of a proposal, run when one is filed",
+        ["holdout"] = "the holdout register, spent by the replay screen rather than on a clock",
+    };
+
     /// <summary>The keys of the $slots table: one slot name per line of the hashtable.</summary>
     [GeneratedRegex(@"^\s*'(?<slot>[a-z-]+)'\s*=\s*@\(", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
     private static partial Regex SlotKey();
@@ -108,6 +138,7 @@ public sealed partial class SlotRosterCheck
             .Examined("reasons a slot did not run for, in Core", vocabulary.Count)
             .Examined("reasons the store's constraint accepts", constrained.Length)
             .Examined("reasons the slot script writes into the night's log", scriptWrites.Length)
+            .Examined("advertised stages accounted for as operator verbs or as not the night's", OperatorVerbs.Count + NotANightlyStage.Count)
             .Examined("slots declared in tools/nightly.ps1", slots.Length)
             .Examined("slot names its own parameter set accepts", accepted.Length)
             .Examined("distinct worker verbs the slots run", verbs.Length)
@@ -239,6 +270,36 @@ public sealed partial class SlotRosterCheck
             $"{wrongTime.Length} slot(s) declare a time RUNBOOK's schedule does not have a row for, so the "
             + "morning report and the operator's own table disagree about when the night runs:\n  "
             + string.Join("\n  ", wrongTime));
+
+        // 5a. The worker's advertised stages the other way round, from 7.4: every stage no slot runs is
+        //     an operator verb RUNBOOK names or a stage that is not the night's, by name, and every name
+        //     in either list is advertised and run by no slot. Until 7.4 the reconciliation ran from the
+        //     slots to the worker only, so four stages advertised and scheduled by nothing read as fine.
+        string[] slotVerbs = [.. verbs];
+        string[] unscheduled = [.. Program.StageNames.Where(stage => !slotVerbs.Contains(stage, StringComparer.Ordinal))];
+        string[] unaccounted = [.. unscheduled.Where(stage => !OperatorVerbs.ContainsKey(stage) && !NotANightlyStage.ContainsKey(stage))];
+
+        Assert.True(unaccounted.Length == 0,
+            $"{unaccounted.Length} stage(s) the worker advertises are run by no slot and named nowhere as an operator "
+            + "verb or as a stage that is not the night's, so nothing says whether leaving them unscheduled was "
+            + "decided:\n  " + string.Join("\n  ", unaccounted));
+
+        foreach (string name in OperatorVerbs.Keys.Concat(NotANightlyStage.Keys))
+        {
+            Assert.True(Program.StageNames.Contains(name, StringComparer.Ordinal),
+                $"'{name}' is excused from a slot and the worker does not advertise it, so the excuse covers nothing.");
+            Assert.False(slotVerbs.Contains(name, StringComparer.Ordinal),
+                $"'{name}' is excused from a slot and a slot runs it, so one of the two is wrong.");
+        }
+
+        string operatorTable = runbook[runbook.IndexOf("| Verb | Why no slot runs it |", StringComparison.Ordinal)..];
+
+        foreach (string verb in OperatorVerbs.Keys)
+        {
+            Assert.True(operatorTable.Contains($"| `{verb}` |", StringComparison.Ordinal),
+                $"RUNBOOK's operator-verb table does not name `{verb}`, so an operator reading it has no way to know "
+                + "the stage is theirs to run.");
+        }
 
         // 6. Why a slot did not run, from 7.1. Four places hold the vocabulary and each one is a
         //    different failure if it drifts: the migration's CHECK refuses a reason Core would write,

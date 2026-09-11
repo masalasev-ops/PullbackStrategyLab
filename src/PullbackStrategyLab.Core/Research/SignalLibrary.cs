@@ -16,7 +16,7 @@ namespace PullbackStrategyLab.Core.Research;
 /// the application ships without the corpus and a store has to stay a directory that can be copied.
 /// So the formula and the source columns reach the store through a list somebody has to keep
 /// honest, and the check is what keeps it honest rather than a convention that a later session
-/// remembers. The cost is forty-one strings; what it buys is that the column a proposal reads and
+/// remembers. The cost is fifty-two strings; what it buys is that the column a proposal reads and
 /// the sentence a person reads are the same sentence.
 ///
 /// <b>Status here is the specification's status and never a verdict.</b> The section can say
@@ -202,6 +202,67 @@ public static class SignalLibrary
             "the calendar day of as_of, meaning nothing",
             "setup.as_of",
             "candidate"),
+
+        // The daily-bar quantities the trader's own clause forms compare, from 7.4, each citing the
+        // SOURCES.md clause it was derived from. Candidates that SignalVectorizer freezes nightly, so
+        // a rule written over them replays across every night from 7.4 before generation 1 registers;
+        // they stay candidates until the admission test rules on them.
+        // see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening
+        new("ema_150_distance",
+            "(adjusted close − the 150-session exponential average of adjusted closes) / that average, over the last 300 sessions stored",
+            "daily_bar.adj_close",
+            "candidate",
+            "uptrend, long"),
+        new("ema_9_slope",
+            "(ema_9 now − ema_9 five sessions earlier) / ema_9 five sessions earlier, each over the engine's 150-session window. The five is the author's",
+            "daily_bar.adj_close",
+            "candidate",
+            "uptrend, long"),
+        new("ema_21_slope",
+            "(ema_21 now − ema_21 five sessions earlier) / ema_21 five sessions earlier, each over the engine's 150-session window. The five is the author's",
+            "daily_bar.adj_close",
+            "candidate",
+            "uptrend, long"),
+        new("ema_50_slope",
+            "(ema_50 now − ema_50 five sessions earlier) / ema_50 five sessions earlier, each over the engine's 150-session window. The five is the author's",
+            "daily_bar.adj_close",
+            "candidate",
+            "downtrend, short"),
+        new("return_30_days",
+            "the adjusted close over the adjusted close of the last session on or before thirty calendar days earlier, less one",
+            "daily_bar.adj_close, daily_bar.bar_date",
+            "candidate",
+            "thrust, long"),
+        new("base_span_ranges",
+            "(highest adjusted high − lowest adjusted low over the last 40 sessions) / (adr_20 × adjusted close). The forty is the author's, eight weeks being the shortest base the sources describe",
+            "daily_bar.high, daily_bar.low, daily_bar.close, daily_bar.adj_close, indicator_daily.adr_20",
+            "candidate",
+            "dip-shape, long"),
+        new("undercut_reclaim_ema_9",
+            "1 where the session's adjusted low is below ema_9 and its adjusted close above it, long, or its adjusted high above ema_9 and its close below, short, the short being the author's mirror; 0 otherwise",
+            "daily_bar.high, daily_bar.low, daily_bar.close, daily_bar.adj_close, indicator_daily.ema_9",
+            "candidate",
+            "held-floor, long"),
+        new("from_session_extreme",
+            "(adjusted close − adjusted low) / adjusted low, long; (adjusted high − adjusted close) / adjusted high, short, the short being the author's mirror",
+            "daily_bar.high, daily_bar.low, daily_bar.close, daily_bar.adj_close",
+            "candidate",
+            "trigger-near, long"),
+        new("entry_ceiling",
+            "the lesser of adr_20 / 2 and 0.05",
+            "indicator_daily.adr_20",
+            "candidate",
+            "exit-tight, long"),
+        new("weekly_ema_gap_9_21",
+            "(9-week − 21-week exponential average) / the 21-week, over weekly closes: the last adjusted close of each Monday-to-Sunday week, the week in progress closing at the setup session, across the last 300 sessions stored",
+            "daily_bar.adj_close, daily_bar.bar_date",
+            "candidate",
+            "averages-squeezing, short"),
+        new("weekly_ema_21_distance",
+            "(the week's adjusted close − the 21-week exponential average) / that average, over the same weekly closes",
+            "daily_bar.adj_close, daily_bar.bar_date",
+            "candidate",
+            "dip-shape, long"),
     ];
 
     /// <summary>The declared signals by name, which is how both the seed and the check index them.</summary>
@@ -214,6 +275,10 @@ public static class SignalLibrary
     /// </summary>
     public static IReadOnlyList<DeclaredSignal> Active { get; } =
         [.. Declared.Where(s => s.Status == SignalStatus.Active)];
+
+    /// <summary>The candidates derived from the trader's own clause forms, from 7.4, which the vectorizer freezes.</summary>
+    public static IReadOnlyList<DeclaredSignal> Sourced { get; } =
+        [.. Declared.Where(s => s.IsSourced)];
 
     /// <summary>The signals the specification calls candidates, being what the admission test has to rule on.</summary>
     public static IReadOnlyList<DeclaredSignal> Candidates { get; } =
@@ -228,8 +293,15 @@ public static class SignalLibrary
 /// own order. One entry names a table rather than a column, and it is kept as written rather than
 /// normalised into a column that does not exist.
 /// </summary>
-public sealed record DeclaredSignal(string Name, string Formula, string SourceColumns, string Status)
+public sealed record DeclaredSignal(string Name, string Formula, string SourceColumns, string Status, string? Clause = null)
 {
+    /// <summary>
+    /// The heading of the SOURCES.md clause a sourced candidate was derived from, as "name, side", or
+    /// null on a signal that was not derived from one. `signal-library` holds it to the section's own
+    /// clause cell and to a heading SOURCES.md carries.
+    /// </summary>
+    public bool IsSourced => Clause is not null;
+
     /// <summary>Whether this is the planted null control, which is a fact about the signal rather than about a run.</summary>
     public bool IsNullControl => string.Equals(Name, SignalLibrary.NullControl, StringComparison.Ordinal);
 

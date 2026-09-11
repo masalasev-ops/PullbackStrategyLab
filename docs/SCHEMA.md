@@ -651,11 +651,15 @@ this section declares, which is why the reconciliation admits exactly one differ
 sides: a stored row may read `rejected_correlation` where this section reads `candidate`, and no
 other disagreement passes. Active means SignalVectorizer freezes it on every setup, and
 the set of active signals is what "copies every number the decision depended on" resolves to.
-Candidate means the formula and the source columns are settled and nothing computes it yet: the raw
-material is stored and append-only, so SignalBackfiller at 6.1 computes a specified formula across
-the whole setup history rather than inventing one at the time. Declaring a candidate costs nothing
-statistically, because the correction threshold scales with signals **screened** rather than signals
-declared (see: The correction threshold scales with signals screened, not signals shown).
+Candidate means the formula and the source columns are settled and the admission test has not ruled
+on it. Most candidates are computed by nothing yet: the raw material is stored and append-only, so
+SignalBackfiller at 6.1 computes a specified formula across the whole setup history rather than
+inventing one at the time. **The candidates derived from sourced clause forms at 7.4 are frozen
+nightly as well**, which is what makes them replayable before they are admitted. **Declaring a
+candidate is not free, and this sentence said it was until 7.4.** The correction threshold scales with
+signals screened rather than signals shown, and the pack screens every signal the library declares,
+the planted null included, so a declared candidate is a screened one: the eleven sourced candidates
+moved the family-wise threshold from 0.05 over 41 to 0.05 over 52 and forked the pack version (see: The correction threshold scales with signals screened, not signals shown).
 
 **Prices are read on the adjusted basis and ratios are fractions,** on the conventions above. Where a
 formula needs an intraday price on the adjusted basis, it is put there through that bar's own factor
@@ -800,6 +804,41 @@ existed since, so what the cell deferred had arrived and the cell still read as 
 of the two is actually waiting for is a producer rather than a checkpoint, which is the sentence
 above about a candidate costing nothing until something computes it, and it is said there once
 instead of in two cells that drift separately.
+
+### Sourced clause forms, frozen from 7.4
+
+The daily-bar quantities the trader's own clause forms in `SOURCES.md` compare and the library did not
+carry, each citing the clause it was derived from by that document's heading. **Candidates that
+SignalVectorizer freezes on every setup**, which is the one respect in which they differ from the
+candidates above: a rule written over them can be replayed across every night from 7.4, which is what
+lets generation 1's gate set be counted over the live nights before it registers. They stay candidates
+until the admission test rules on them, and SignalBackfiller reaches the rows recorded before 7.4 when
+the operator runs it (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+
+| Signal | Formula | Source columns | Status | Clause |
+|---|---|---|---|---|
+| `ema_150_distance` | (adjusted close − the 150-session exponential average of adjusted closes) / that average, over the last 300 sessions stored | `daily_bar.adj_close` | candidate | uptrend, long |
+| `ema_9_slope` | (ema_9 now − ema_9 five sessions earlier) / ema_9 five sessions earlier, each over the engine's 150-session window. The five is the author's | `daily_bar.adj_close` | candidate | uptrend, long |
+| `ema_21_slope` | (ema_21 now − ema_21 five sessions earlier) / ema_21 five sessions earlier, each over the engine's 150-session window. The five is the author's | `daily_bar.adj_close` | candidate | uptrend, long |
+| `ema_50_slope` | (ema_50 now − ema_50 five sessions earlier) / ema_50 five sessions earlier, each over the engine's 150-session window. The five is the author's | `daily_bar.adj_close` | candidate | downtrend, short |
+| `return_30_days` | the adjusted close over the adjusted close of the last session on or before thirty calendar days earlier, less one | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | thrust, long |
+| `base_span_ranges` | (highest adjusted high − lowest adjusted low over the last 40 sessions) / (adr_20 × adjusted close). The forty is the author's, eight weeks being the shortest base the sources describe | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close`, `indicator_daily.adr_20` | candidate | dip-shape, long |
+| `undercut_reclaim_ema_9` | 1 where the session's adjusted low is below ema_9 and its adjusted close above it, long, or its adjusted high above ema_9 and its close below, short, the short being the author's mirror; 0 otherwise | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close`, `indicator_daily.ema_9` | candidate | held-floor, long |
+| `from_session_extreme` | (adjusted close − adjusted low) / adjusted low, long; (adjusted high − adjusted close) / adjusted high, short, the short being the author's mirror | `daily_bar.high`, `daily_bar.low`, `daily_bar.close`, `daily_bar.adj_close` | candidate | trigger-near, long |
+| `entry_ceiling` | the lesser of adr_20 / 2 and 0.05 | `indicator_daily.adr_20` | candidate | exit-tight, long |
+| `weekly_ema_gap_9_21` | (9-week − 21-week exponential average) / the 21-week, over weekly closes: the last adjusted close of each Monday-to-Sunday week, the week in progress closing at the setup session, across the last 300 sessions stored | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | averages-squeezing, short |
+| `weekly_ema_21_distance` | (the week's adjusted close − the 21-week exponential average) / that average, over the same weekly closes | `daily_bar.adj_close`, `daily_bar.bar_date` | candidate | dip-shape, long |
+
+*Two lookbacks are the author's and say so in their formulas: the five sessions a slope is taken over
+and the forty a base is measured across. Neither is a threshold: a gate written over either still has
+to state its own number, and none does here. The short-side mirrors of `undercut_reclaim_ema_9` and
+`from_session_extreme` are the author's too, on the rule that where the source gives one side of a form
+the other side is its mirror marked as such.*
+
+*What a sourced form reads and the library still cannot freeze is named rather than left out:
+**higher highs and higher lows** under `uptrend, long` needs a swing rule no source states, and the
+**entry-minute quantities**, the session low at the entry minute and the stop distance it gives, are
+7.8's, because they exist only once a minute has been chosen.*
 
 ### The one that does not trace, recorded as a finding
 

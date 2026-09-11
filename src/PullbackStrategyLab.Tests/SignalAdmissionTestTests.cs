@@ -302,6 +302,20 @@ public sealed class SignalAdmissionTestTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// A candidate the vectorizer freezes, from 7.4, is undecided for want of rows rather than for
+    /// want of a producer, and the row says which. Saying "nothing computes it" of a signal frozen
+    /// every night would send a reader to build a producer that exists.
+    /// </summary>
+    [Fact]
+    public void A_frozen_candidate_is_undecided_for_want_of_rows_rather_than_of_a_producer()
+    {
+        Stage().Admit(Today);
+
+        Assert.Equal(SignalAdmissionTest.NotYetOnEverySetup, Row("entry_ceiling").LongBecause);
+        Assert.Equal(SignalAdmissionTest.NothingComputesIt, Row("volume_dryup").LongBecause);
+    }
+
     // ---- the two sides ------------------------------------------------------------------------
 
     /// <summary>

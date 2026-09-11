@@ -392,10 +392,11 @@ public static class Program
         // event and not an hour, and the schedule table says "on admission" for exactly that
         // reason. `slot-roster` reconciles slots and this is advertised without being one.
         SignalBackfiller.Name,
-        // Not a slot either, and for the same reason one level up: the library is ruled on when it
-        // gains a candidate or when the evidence behind a verdict moves, and the catalogue's
-        // schedule says "on admission". A nightly slot would rewrite thirty-five specification rows
-        // to reach the same verdict on the same empty population every night.
+        // A weekly slot from 7.4, Saturday 08:15. It was advertised and scheduled by nothing until
+        // then, on the reading that the library is ruled on only when it gains a candidate; but its
+        // answer moves with the population it measures over, so a verdict nobody retakes is one
+        // nobody checks. Weekly rather than nightly, because a nightly answer would move on one
+        // night's rows.
         SignalAdmissionTest.Name,
         TwinPairFinder.Name,
         ContextPacker.Name,

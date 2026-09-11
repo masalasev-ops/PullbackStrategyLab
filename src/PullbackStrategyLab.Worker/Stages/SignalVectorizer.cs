@@ -93,6 +93,23 @@ public sealed class SignalVectorizer
         "market_cap",
         "industry",
         "cluster_count",
+
+        // The candidates derived from the trader's own clause forms, from 7.4. Frozen while they are
+        // still candidates, which is the one departure from the rule that the frozen set is the active
+        // set, and the reason is replay: generation 1's gate set is counted over the live nights
+        // before it registers, and a quantity nobody froze on a night is one no replay of that night
+        // can read. `SignalLibrary.Sourced` is the list, and a test holds the two together.
+        "ema_150_distance",
+        "ema_9_slope",
+        "ema_21_slope",
+        "ema_50_slope",
+        "return_30_days",
+        "base_span_ranges",
+        "undercut_reclaim_ema_9",
+        "from_session_extreme",
+        "entry_ceiling",
+        "weekly_ema_gap_9_21",
+        "weekly_ema_21_distance",
     ];
 
     /// <summary>
@@ -112,6 +129,7 @@ public sealed class SignalVectorizer
         "pullback_bars",
         "closes_beyond_floor",
         "cluster_count",
+        "undercut_reclaim_ema_9",
     };
 
     /// <summary>
@@ -331,12 +349,83 @@ public sealed class SignalVectorizer
         }
 
         Thrust(connection, setup, asOf, bars, indicators, values, sessionZone);
+        Sourced(connection, setup, asOf, bars, last, indicators, values, sessionZone);
         Ceiling(connection, setup, asOf, bars, last, indicators, values, sessionZone);
         Regime(connection, asOf, values);
         Shape(connection, setup, asOf, bars, indicators, values);
         TheName(connection, setup.Ticker, asOf, values, sessionZone);
 
         return values;
+    }
+
+    /// <summary>
+    /// The quantities the trader's own clause forms compare, from 7.4, through the one arithmetic in
+    /// Core so a replay and this row read the same number.
+    ///
+    /// <b>Two reads rather than one.</b> Everything the engine computes over its 150-session window is
+    /// taken from the same 170 bars the rest of the row is; the 150-session average and the weekly
+    /// averages need a longer run behind them to be averages rather than their own seeds, so they read
+    /// the last 300 sessions, bounded on the setup's own night exactly as the shorter read is.
+    /// see: A reader's signature does not establish point-in-time; the query does
+    /// </summary>
+    private static void Sourced(
+        SqliteConnection connection,
+        StoredSetup setup,
+        DateOnly asOf,
+        IReadOnlyList<StoredDailyBar> bars,
+        StoredDailyBar last,
+        StoredIndicators? indicators,
+        Dictionary<string, string> values,
+        string sessionZone)
+    {
+        bool isLong = string.Equals(setup.Direction, "long", StringComparison.Ordinal);
+        decimal factor = last.Close == 0m ? 1m : last.AdjustedClose / last.Close;
+        decimal high = last.High * factor;
+        decimal low = last.Low * factor;
+        decimal close = last.AdjustedClose;
+
+        decimal[] closes = [.. bars.Select(b => b.AdjustedClose)];
+
+        Ratio(values, "ema_9_slope", SourcedForms.Slope(closes, IndicatorEngine.EmaShortPeriod, IndicatorEngine.WarmupSessions));
+        Ratio(values, "ema_21_slope", SourcedForms.Slope(closes, IndicatorEngine.EmaMediumPeriod, IndicatorEngine.WarmupSessions));
+        Ratio(values, "ema_50_slope", SourcedForms.Slope(closes, IndicatorEngine.EmaLongPeriod, IndicatorEngine.WarmupSessions));
+
+        Ratio(values, "from_session_extreme", SourcedForms.FromTheSessionExtreme(high, low, close, isLong));
+
+        if (indicators is not null)
+        {
+            values["entry_ceiling"] = StoreText.RatioToStorageText(SourcedForms.EntryCeiling(indicators.AverageDailyRange));
+
+            values["undercut_reclaim_ema_9"] =
+                SourcedForms.UndercutAndReclaimed(high, low, close, indicators.EmaShort, isLong) ? "1" : "0";
+
+            Ratio(values, "base_span_ranges", SourcedForms.BaseSpanInRanges(
+                [.. bars.Select(b => b.Close == 0m ? b.High : b.High * (b.AdjustedClose / b.Close))],
+                [.. bars.Select(b => b.Close == 0m ? b.Low : b.Low * (b.AdjustedClose / b.Close))],
+                close,
+                indicators.AverageDailyRange));
+        }
+
+        IReadOnlyList<StoredDailyBar> extended =
+            DailyBarReader.Read(connection, setup.Ticker, asOf, SourcedForms.ExtendedHistorySessions, sessionZone);
+
+        decimal[] extendedCloses = [.. extended.Select(b => b.AdjustedClose)];
+        DateOnly[] extendedDates = [.. extended.Select(b => b.BarDate)];
+
+        Ratio(values, "ema_150_distance", SourcedForms.DistanceFromLongestAverage(extendedCloses));
+        Ratio(values, "return_30_days", SourcedForms.ReturnOverLeaderWindow(extendedDates, extendedCloses));
+
+        IReadOnlyList<decimal> weekly = SourcedForms.WeeklyCloses(extendedDates, extendedCloses);
+        Ratio(values, "weekly_ema_gap_9_21", SourcedForms.WeeklyAverageGap(weekly));
+        Ratio(values, "weekly_ema_21_distance", SourcedForms.DistanceFromWeeklyMedium(weekly));
+    }
+
+    private static void Ratio(Dictionary<string, string> values, string name, decimal? value)
+    {
+        if (value is decimal ratio)
+        {
+            values[name] = StoreText.RatioToStorageText(ratio);
+        }
     }
 
     /// <summary>

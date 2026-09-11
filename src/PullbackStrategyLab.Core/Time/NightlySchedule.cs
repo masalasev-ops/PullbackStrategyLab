@@ -30,7 +30,7 @@ namespace PullbackStrategyLab.Core.Time;
 public static class NightlySchedule
 {
     /// <summary>
-    /// The thirty-seven slots, in the order the night runs them.
+    /// The thirty-eight slots, in the order the night runs them.
     ///
     /// <b>Order is the declaration and not a sort.</b> Two slots share 17:20 and two share 18:28, so
     /// ordering by time alone would put them in whichever order a comparer happened to choose, and
@@ -94,6 +94,12 @@ public static class NightlySchedule
         // cheaper of the two to look at first.
         new("twins", "08:10", ["twin-pairs"], WeeklyOn: DayOfWeek.Saturday),
 
+        // From 7.4, and the only research slot that rules on the library. Its answer moves with the
+        // population it measures over, so a candidate admitted once and never tested again is one
+        // nobody checks; weekly rather than nightly because a nightly answer would move on one night's
+        // rows. Before the pack, which reads which signals the library holds.
+        new("signals", "08:15", ["admit-signals"], WeeklyOn: DayOfWeek.Saturday),
+
         // The third weekly slot, and it runs last of the three because it reads what the other two
         // wrote: the pack's twin section is a reading of the twin run, and its ceiling section a
         // reading of the bound. Weekly rather than nightly because the researcher is asked weekly
@@ -127,7 +133,7 @@ public static class NightlySchedule
 
         // The one slot a run report cannot see, named rather than left out. `snapshot-db` copies the
         // store and takes no RunLogger, so it writes no run entry, and a report that silently
-        // omitted it would be reporting thirty-six slots under a heading saying thirty-seven. That is
+        // omitted it would be reporting thirty-seven slots under a heading saying thirty-eight. That is
         // the under-reporting shape: a check that narrows its own scope and goes on passing.
         new("snapshot", "22:00", ["snapshot-db"],
             LeavesNoRunEntry:

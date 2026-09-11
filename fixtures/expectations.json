@@ -9843,10 +9843,10 @@
     {
       "id": "signals.frozen",
       "tier": "DERIVED",
-      "value": "101",
+      "value": "134",
       "checkpoint": "3.11",
       "producedBy": "derived by hand at 3.11 and then run. Ninety-nine were frozen while every geometry signal was written whether or not the detector had one. One is now absent, by the derivation recorded on signals.absent, so ninety-eight are frozen.",
-      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 95. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values."
+      "note": "Was 99. Was 66 before that: the third setup carries the same thirty-three signals as the other two. Moved from 98 to 95 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 95. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 101 until 7.4, which freezes the eleven sourced candidates on every setup. Three setups times eleven is thirty-three more, and none is absent: every name in the fixture carries 251 sessions, enough for the 150-session average and twenty-one weeks of weekly closes."
     },
     {
       "id": "signals.setups",
@@ -9875,10 +9875,10 @@
     {
       "id": "store.rowsPointingAtSetup",
       "tier": "DERIVED",
-      "value": "130",
+      "value": "163",
       "checkpoint": "3.12",
       "producedBy": "derived by hand from expectations this fixture already carries, and then run. setup_signal is signals.frozen at 98, being 33 signals for each of two setups and 32 for 2026-08-24-INTC-short, whose stop_distance_ranges is absent. control_setup is controls.loose at 15 plus controls.tight at 14, the tight side being one short of five on one setup, which controls.shortOfFive states. 98 + 29 = 127.",
-      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 124. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values."
+      "note": "The population the violation count below is taken over. Nought orphans over a store where nothing references anything is what an empty neighbourhood answers, and that is exactly the state migration 031 was verified in before it met a store with rows. Moved from 127 to 124 at 4.17, which stops the detectors writing a trigger and a give-up price for a geometry the same row calls absent. The fixture's INTC short is that row: its two prices were equal, because the extreme is on the last session and the thrust has not bounced, and the two distances beside them were already null. Three of its signals are now absent rather than frozen, being the two prices and the trigger distance derived from one of them, and a distance from a price that does not exist is not a figure. Was 124. Two signals were added to the library at 6.1, ema_gap_21_50_over_avg and ceiling_distance_ranges, and the vectorizer freezes both on every setup. Three setups times two names is six more frozen values. Was 130 until 7.4. The thirty-three sourced candidate values frozen on the three setups are setup_signal rows pointing at a setup."
     },
     {
       "id": "store.schemaVersion",
@@ -11657,18 +11657,18 @@
     {
       "id": "night.slotsInTheWholeSchedule",
       "tier": "DERIVED",
-      "value": "37",
+      "value": "38",
       "checkpoint": "5.5",
       "producedBy": "read by hand off RUNBOOK's \"The schedule as installed\", which states thirty-two tasks named PullbackStrategyLab-<slot>, registered in two acts of seventeen and fifteen. The same number arrives at the nightly table's thirty-one slots plus the one weekly row, which is a second reading of the same document rather than a second source.",
-      "note": "Moved from 32 to 33 at 6.3: the twins slot joins the schedule, Saturday 08:10 after the win-rate bound. It is the second weekly slot and the first since ceiling. Moved from 33 to 34 at 6.4: the pack slot joins the schedule, Saturday 08:20 after the twins. The third weekly slot, and it runs last of the three because it reads what the other two wrote. Was 34 until 6.5, which adds the `seat` slot at Saturday 08:30: the fourth weekly slot and the only one that leaves the machine. Was 35 until 6.6, which adds the `registry` slot at Saturday 08:40: the fifth weekly slot, after the seat because it reads what the seat filed. Was 36 until 6.7, which adds the `acceptance` slot at 21:45 on weekdays: the sixth slot added during this phase and the first of them that is nightly."
+      "note": "Moved from 32 to 33 at 6.3: the twins slot joins the schedule, Saturday 08:10 after the win-rate bound. It is the second weekly slot and the first since ceiling. Moved from 33 to 34 at 6.4: the pack slot joins the schedule, Saturday 08:20 after the twins. The third weekly slot, and it runs last of the three because it reads what the other two wrote. Was 34 until 6.5, which adds the `seat` slot at Saturday 08:30: the fourth weekly slot and the only one that leaves the machine. Was 35 until 6.6, which adds the `registry` slot at Saturday 08:40: the fifth weekly slot, after the seat because it reads what the seat filed. Was 36 until 6.7, which adds the `acceptance` slot at 21:45 on weekdays: the sixth slot added during this phase and the first of them that is nightly. Was 37 until 7.4, which gives admit-signals a Saturday slot of its own at 08:15."
     },
     {
       "id": "night.observableStages",
       "tier": "DERIVED",
-      "value": "40",
+      "value": "41",
       "checkpoint": "5.5",
       "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry.",
-      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran. Was 39 until 7.1, which adds `reconcile-night` as the second verb of the `index` slot. It takes a RunLogger like every other observable stage, so a report can say whether it ran, and the slot count does not move because the stage joins a slot rather than making one."
+      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran. Was 39 until 7.1, which adds `reconcile-night` as the second verb of the `index` slot. It takes a RunLogger like every other observable stage, so a report can say whether it ran, and the slot count does not move because the stage joins a slot rather than making one. Was 40 until 7.4. admit-signals takes a RunLogger like every other observable stage and now has a slot."
     },
     {
       "id": "night.unobservable",
@@ -11808,10 +11808,10 @@
     {
       "id": "library.declared",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "52",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "Forty-one signals, being the whole library the section declares. It is the figure every count below is read against, and it is derived from the document rather than from SignalLibrary, because the list in code is a transcription and the transcription is what could be wrong."
+      "note": "Forty-one signals, being the whole library the section declares. It is the figure every count below is read against, and it is derived from the document rather than from SignalLibrary, because the list in code is a transcription and the transcription is what could be wrong. Was 41 until 7.4, which declares eleven candidates derived from the trader's own clause forms in SOURCES.md, each citing its clause."
     },
     {
       "id": "library.active",
@@ -11824,10 +11824,10 @@
     {
       "id": "library.candidates",
       "tier": "DERIVED",
-      "value": "6",
+      "value": "17",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "The signals whose formula and source columns are settled and which nothing computes. This is the population SignalAdmissionTest rules on, and all six are undecided over this fixture."
+      "note": "The signals whose formula and source columns are settled and which nothing computes. This is the population SignalAdmissionTest rules on, and all six are undecided over this fixture. Was 6 until 7.4: the eleven sourced candidates join the six."
     },
     {
       "id": "library.nullControls",
@@ -11840,10 +11840,10 @@
     {
       "id": "library.seeded",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "52",
       "checkpoint": "6.2",
       "producedBy": "tools/derive-signal-library.py --library, an independent count of SCHEMA.md's Signals section outside the solution, with a parser that splits on unescaped pipes where the suite's reads a regex over the whole row",
-      "note": "A first run writes one row per declared signal, so the figure is the library's own size. A seed short of it would be a library missing a signal nobody could propose against."
+      "note": "A first run writes one row per declared signal, so the figure is the library's own size. A seed short of it would be a library missing a signal nobody could propose against. Was 41 until 7.4, on the same eleven."
     },
     {
       "id": "library.seededOnRerun",
@@ -11888,10 +11888,10 @@
     {
       "id": "admission.undecided",
       "tier": "DERIVED",
-      "value": "6",
+      "value": "17",
       "checkpoint": "6.2",
       "producedBy": "derived from the two figures above rather than measured a second time: with nought rows on either side no verdict is reachable, so every candidate is undecided, which is the six above",
-      "note": "All six candidates, which is the state the live library is in today and will be in for months. Recorded as an outcome with a reason on each row rather than as a silence, because a library that wrote nothing here would read in six months like one whose candidates were all measured and all failed."
+      "note": "All six candidates, which is the state the live library is in today and will be in for months. Recorded as an outcome with a reason on each row rather than as a silence, because a library that wrote nothing here would read in six months like one whose candidates were all measured and all failed. Was 6 until 7.4. The eleven sourced candidates are frozen and the fixture holds no closed outcome, so each is undecided over an empty population, on the same terms as the six."
     },
     {
       "id": "admission.outcome",
@@ -12208,10 +12208,10 @@
     {
       "id": "pack.signalsScreened",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "52",
       "checkpoint": "6.4",
       "producedBy": "tools/derive-signal-library.py --library counting SCHEMA's Signals section with a parser independent of the one the solution ships",
-      "note": "Every signal the library declares is screened, including the planted null, because the correction is paid on everything that was looked at rather than on the subset a proposal cites (see: The correction threshold scales with signals screened, not signals shown)."
+      "note": "Every signal the library declares is screened, including the planted null, because the correction is paid on everything that was looked at rather than on the subset a proposal cites (see: The correction threshold scales with signals screened, not signals shown). Was 41 until 7.4. The pack screens every signal the library declares, the eleven sourced candidates included, which is the design ContextPacker states: the correction is paid on everything looked at."
     },
     {
       "id": "pack.nullControlPlanted",
@@ -12272,10 +12272,10 @@
     {
       "id": "pack.familyWiseThreshold",
       "tier": "DERIVED",
-      "value": "0.001219512",
+      "value": "0.000961538",
       "checkpoint": "6.4",
       "producedBy": "computed by hand from the level and the count screened, independently of the constant the run reports",
-      "note": "0.05 over the 41 signals screened, to nine places. **It is stated even though nothing has been measured against it**, because it depends on the level and the count screened rather than on any p-value, which is exactly why it is in the version tuple and the realised bar is not (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure)."
+      "note": "0.05 over the 41 signals screened, to nine places. **It is stated even though nothing has been measured against it**, because it depends on the level and the count screened rather than on any p-value, which is exactly why it is in the version tuple and the realised bar is not (see: The realised false-discovery bar is a reading of a pack and the version carries the procedure). Was 0.05 over 41 until 7.4, and is 0.05 over 52: declaring eleven candidates the pack screens tightens the threshold every proposal is held to, which SCHEMA now says rather than claiming a declaration costs nothing."
     },
     {
       "id": "pack.falseDiscoveryThreshold",
@@ -12578,10 +12578,10 @@
     {
       "id": "band3.signalsHeld",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "52",
       "checkpoint": "6.8",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
-      "note": "The library as the store holds it, which is what the admission stage seeded. The count is the denominator the other library panels are over. Read after the admission stage has seeded the library, which is the order a real night has: the library is seeded on admission and the scoreboard runs at 21:50 after it."
+      "note": "The library as the store holds it, which is what the admission stage seeded. The count is the denominator the other library panels are over. Read after the admission stage has seeded the library, which is the order a real night has: the library is seeded on admission and the scoreboard runs at 21:50 after it. Was 41 until 7.4, on the same eleven."
     },
     {
       "id": "band0.degradedNights.population",
@@ -12790,6 +12790,270 @@
       "checkpoint": "7.3",
       "producedBy": "derived by hand before it was run: a name reaches the table only by failing a floor clause, so every row names one",
       "note": "Rows that name no floor clause, which is none. A row with an empty list would be a name recorded below a floor it cleared, which is the insert running on the wrong branch."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_150_distance",
+      "tier": "DERIVED",
+      "value": "0.0600",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_150_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_9_slope",
+      "tier": "DERIVED",
+      "value": "0.0366",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_9_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_21_slope",
+      "tier": "DERIVED",
+      "value": "0.0137",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_21_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.ema_50_slope",
+      "tier": "DERIVED",
+      "value": "0.0060",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_50_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.return_30_days",
+      "tier": "DERIVED",
+      "value": "0.0918",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate return_30_days, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.base_span_ranges",
+      "tier": "DERIVED",
+      "value": "6.7141",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate base_span_ranges, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.undercut_reclaim_ema_9",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate undercut_reclaim_ema_9, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.from_session_extreme",
+      "tier": "DERIVED",
+      "value": "0.0047",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate from_session_extreme, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.entry_ceiling",
+      "tier": "DERIVED",
+      "value": "0.0261",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate entry_ceiling, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.weekly_ema_gap_9_21",
+      "tier": "DERIVED",
+      "value": "0.0340",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_gap_9_21, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-HOOD-long.weekly_ema_21_distance",
+      "tier": "DERIVED",
+      "value": "0.0825",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_21_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ema_150_distance",
+      "tier": "DERIVED",
+      "value": "0.0141",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_150_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ema_9_slope",
+      "tier": "DERIVED",
+      "value": "-0.0660",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_9_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ema_21_slope",
+      "tier": "DERIVED",
+      "value": "-0.0346",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_21_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.ema_50_slope",
+      "tier": "DERIVED",
+      "value": "-0.0195",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_50_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.return_30_days",
+      "tier": "DERIVED",
+      "value": "-0.0548",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate return_30_days, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.base_span_ranges",
+      "tier": "DERIVED",
+      "value": "12.4442",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate base_span_ranges, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.undercut_reclaim_ema_9",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate undercut_reclaim_ema_9, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.from_session_extreme",
+      "tier": "DERIVED",
+      "value": "0.0186",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate from_session_extreme, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.entry_ceiling",
+      "tier": "DERIVED",
+      "value": "0.0279",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate entry_ceiling, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.weekly_ema_gap_9_21",
+      "tier": "DERIVED",
+      "value": "0.0392",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_gap_9_21, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.2026-08-24-INTC-short.weekly_ema_21_distance",
+      "tier": "DERIVED",
+      "value": "-0.0706",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_21_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.ema_150_distance",
+      "tier": "DERIVED",
+      "value": "0.0704",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_150_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.ema_9_slope",
+      "tier": "DERIVED",
+      "value": "-0.0647",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_9_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.ema_21_slope",
+      "tier": "DERIVED",
+      "value": "-0.0166",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_21_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.ema_50_slope",
+      "tier": "DERIVED",
+      "value": "0.0008",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate ema_50_slope, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.return_30_days",
+      "tier": "DERIVED",
+      "value": "0.0354",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate return_30_days, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.base_span_ranges",
+      "tier": "DERIVED",
+      "value": "7.4438",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate base_span_ranges, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.undercut_reclaim_ema_9",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate undercut_reclaim_ema_9, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.from_session_extreme",
+      "tier": "DERIVED",
+      "value": "0.0015",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate from_session_extreme, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.entry_ceiling",
+      "tier": "DERIVED",
+      "value": "0.0335",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate entry_ceiling, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.weekly_ema_gap_9_21",
+      "tier": "DERIVED",
+      "value": "0.0585",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_gap_9_21, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
+    },
+    {
+      "id": "signal.IESC-long.weekly_ema_21_distance",
+      "tier": "DERIVED",
+      "value": "-0.0023",
+      "checkpoint": "7.4",
+      "producedBy": "derived outside the solution by tools/derive-indicators.py --sourced, which reads the captured history and bulk responses directly and restates each formula from SCHEMA's sourced table rather than from the stage, then run. Agreed to four places before the expectation was written",
+      "note": "The sourced candidate weekly_ema_21_distance, frozen on this setup from 7.4. The setup's own night as the vectorizer read it: the 170 sessions the row reads, and the last 300 stored for the longest average and the weekly closes, being 251 here."
     }
   ],
   "frozenOnly": [

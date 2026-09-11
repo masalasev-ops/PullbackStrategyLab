@@ -47,7 +47,7 @@ public sealed class NightReconcilerTests : IDisposable
     /// slot reconciles to thirty-two refused rows and none missing.
     ///
     /// Thirty-two is stated in advance and derived from RUNBOOK's schedule rather than from the code:
-    /// thirty-seven slots, five of them Saturday's, so a Monday fires thirty-two.
+    /// thirty-eight slots from 7.4, six of them Saturday's, so a Monday fires thirty-two.
     /// </summary>
     [Fact]
     public void A_weekday_the_guard_refused_reconciles_to_thirty_two_refused_rows_and_none_missing()
@@ -251,11 +251,11 @@ public sealed class NightReconcilerTests : IDisposable
     }
 
     /// <summary>
-    /// A Saturday fires the five weekly slots and nothing else, and is no session the market could
+    /// A Saturday fires the six weekly slots and nothing else, the sixth being 7.4's, and is no session the market could
     /// have held.
     /// </summary>
     [Fact]
-    public void A_saturday_reconciles_the_five_weekly_slots_alone()
+    public void A_saturday_reconciles_the_weekly_slots_alone()
     {
         DateOnly saturday = new(2026, 9, 12);
 
@@ -264,8 +264,8 @@ public sealed class NightReconcilerTests : IDisposable
             _ => [.. NightlySchedule.FiresOn(DayOfWeek.Saturday).SelectMany(s => SlotScriptLines.Refused(saturday, s.Slot, s.At))])
             .Nights.Single();
 
-        Assert.Equal(5, night.Due);
-        Assert.Equal(5, night.WrittenBecause[DidNotRunBecause.RefusedByTheTreeGuard]);
+        Assert.Equal(6, night.Due);
+        Assert.Equal(6, night.WrittenBecause[DidNotRunBecause.RefusedByTheTreeGuard]);
         Assert.Equal(MarketDay.NotASession, night.Market);
     }
 

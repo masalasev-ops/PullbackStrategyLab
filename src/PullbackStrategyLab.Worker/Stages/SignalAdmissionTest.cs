@@ -54,6 +54,16 @@ public sealed class SignalAdmissionTest
     public const string NothingComputesIt =
         "no setup carries a value for it, because nothing computes it yet";
 
+    /// <summary>
+    /// Why a candidate the vectorizer does freeze has no column to judge, from 7.4. Said apart from
+    /// the reason above because the two shapes of nothing get better differently: one waits on a
+    /// producer, and this one waits on the rows recorded before the freeze, which the operator's
+    /// backfill reaches, and on outcomes closing.
+    /// </summary>
+    public const string NotYetOnEverySetup =
+        "not every setup in the population carries a value for it yet: it is frozen from 7.4, and the "
+        + "rows recorded before that wait on backfill-signals";
+
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
     private readonly IClock _clock;
@@ -183,7 +193,9 @@ public sealed class SignalAdmissionTest
     {
         if (!population.Values.TryGetValue(candidate, out IReadOnlyList<double>? values))
         {
-            return SignalVerdict.Undecided(candidate, NothingComputesIt);
+            return SignalVerdict.Undecided(
+                candidate,
+                SignalVectorizer.Frozen.Contains(candidate, StringComparer.Ordinal) ? NotYetOnEverySetup : NothingComputesIt);
         }
 
         return SignalAdmission.Judge(candidate, values, population.Active, population.Outcomes);

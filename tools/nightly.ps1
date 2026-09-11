@@ -33,7 +33,7 @@ param(
                  'plans', 'watchlist', 'intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage',
                  'trades', 'audit', 'forward', 'losses',
                  'scores', 'acceptance', 'scoreboard',
-                 'ceiling', 'twins', 'pack', 'seat', 'registry', 'snapshot')]
+                 'ceiling', 'twins', 'signals', 'pack', 'seat', 'registry', 'snapshot')]
     [string]$Slot,
 
     # The escape, and the reason the guard is safe to have. A phase that merges to `main` leaves the
@@ -176,6 +176,12 @@ $slots = @{
     # channel is fed from. It spends no vendor call. Weekly rather than nightly because the metric
     # standardises over a trailing window of setups rather than over a night.
     'twins'      = @(, @('twin-pairs'))
+
+    # Saturday 08:15, from 7.4, between the twins and the pack. It rules on the library's candidates
+    # over the population they are measured against, and that population moves every week, so a
+    # candidate admitted once and never tested again is one nobody checks. Weekly rather than nightly
+    # because a nightly answer would move on one night's rows. It spends no vendor call.
+    'signals'    = @(, @('admit-signals'))
 
     # The third weekly slot, Saturday 08:20, last of the three because it reads what the other two
     # wrote: the pack's twin section is a reading of the twin run and its ceiling section a reading
