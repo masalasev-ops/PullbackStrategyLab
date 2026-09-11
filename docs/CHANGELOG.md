@@ -2999,3 +2999,18 @@ Why:  The label claimed date-awareness from 2026-08-26 and every row was compare
 Was:  "<td>Forward only. Those rows do not exist and cannot be made to exist</td>" in the Structural row of "What each tier of change can be replayed against"
 Now:  A signal needing data never captured stays forward only; a change to the recording floor is replayable over the nights from 7.3, whose detectors keep every below-floor name with its verdicts in `below_floor`, and forward only before them. Neither is admitted as a version in this generation.
 Why:  7.3 keeps the vector a name below the floor was scored with, which was computed in full and discarded, so the row's claim that the floor could never be replayed stopped being true of every night after the record begins.
+
+### 2026-09-11 — SCHEMA.md — cites The correction threshold scales with signals screened, not signals shown
+Was:  "Candidate means the formula and the source columns are settled and nothing computes it yet: the raw material is stored and append-only, so SignalBackfiller at 6.1 computes a specified formula across the whole setup history rather than inventing one at the time. Declaring a candidate costs nothing statistically, because the correction threshold scales with signals **screened** rather than signals declared (see: The correction threshold scales with signals screened, not signals shown)."
+Now:  Candidate means the formula and the source columns are settled and the admission test has not ruled on it; most are computed by nothing yet, and the sourced candidates 7.4 adds are frozen nightly as well. Declaring a candidate is not free: the pack screens every signal the library declares, so the eleven moved the family-wise threshold from 0.05 over 41 to 0.05 over 52 and forked the pack version.
+Why:  The first sentence stopped being true when the vectorizer began freezing candidates, and the second was never true of the pack as built: ContextPacker screens every declared signal by design, which the 7.4 replay showed by moving `pack.familyWiseThreshold` the moment eleven candidates were declared.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening
+Was:  "<tr><td><b>SignalAdmissionTest</b></td><td>On admission</td>"
+Now:  "<tr><td><b>SignalAdmissionTest</b></td><td>Weekly, Saturday 08:15</td>"
+Why:  7.4 gives admit-signals a weekly slot, because its answer moves with the population it measures over and a verdict taken once is one nobody retakes.
+
+### 2026-09-11 — CLAUDE.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  The `slot-roster` row's Asserts cell ending "in both directions |"
+Now:  The same cell, followed by "And every stage the worker advertises that no slot runs is named, as an operator verb RUNBOOK lists or as a stage that is not the night's".
+Why:  7.4's reverse reconciliation. Until it, the check read from the slots to the worker only, so four stages advertised and scheduled by nothing read as fine.

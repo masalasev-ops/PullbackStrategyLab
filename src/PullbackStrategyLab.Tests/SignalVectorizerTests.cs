@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Research;
 using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Checks;
@@ -126,17 +127,27 @@ public sealed class SignalVectorizerTests : IDisposable
         var frozen = new HashSet<string>(SignalVectorizer.Frozen, StringComparer.Ordinal);
         var awaiting = new HashSet<string>(SignalVectorizer.AwaitingCheckpoint.Keys, StringComparer.Ordinal);
 
+        // From 7.4 the frozen set is the active set and the sourced candidates, and nothing else. The
+        // candidates are frozen so a rule over them replays across the nights from 7.4; a candidate
+        // outside that list frozen here would be one nobody declared the reason for.
+        var sourced = new HashSet<string>(SignalLibrary.Sourced.Select(s => s.Name), StringComparer.Ordinal);
+
         string[] orphans = [.. active.Where(name => !frozen.Contains(name) && !awaiting.Contains(name)).Order(StringComparer.Ordinal)];
         Assert.True(orphans.Length == 0,
             $"{orphans.Length} active signal(s) in SCHEMA.md are neither frozen by SignalVectorizer nor awaiting a "
             + "checkpoint: " + string.Join(", ", orphans));
 
-        string[] invented = [.. frozen.Concat(awaiting).Where(name => !active.Contains(name)).Order(StringComparer.Ordinal)];
-        Assert.True(invented.Length == 0,
-            $"{invented.Length} signal(s) the vectorizer names are not active in SCHEMA.md's library: "
-            + string.Join(", ", invented));
+        string[] unfrozenSourced = [.. sourced.Where(name => !frozen.Contains(name)).Order(StringComparer.Ordinal)];
+        Assert.True(unfrozenSourced.Length == 0,
+            $"{unfrozenSourced.Length} sourced candidate(s) are not frozen, so no night from 7.4 can be replayed over them: "
+            + string.Join(", ", unfrozenSourced));
 
-        Assert.Equal(active.Count, frozen.Count + awaiting.Count);
+        string[] invented = [.. frozen.Concat(awaiting).Where(name => !active.Contains(name) && !sourced.Contains(name)).Order(StringComparer.Ordinal)];
+        Assert.True(invented.Length == 0,
+            $"{invented.Length} signal(s) the vectorizer names are neither active in SCHEMA.md's library nor a sourced "
+            + "candidate: " + string.Join(", ", invented));
+
+        Assert.Equal(active.Count + sourced.Count, frozen.Count + awaiting.Count);
     }
 
     [Fact]

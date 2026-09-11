@@ -59,6 +59,21 @@ public sealed class SignalBackfiller
     [
         "ema_gap_21_50_over_avg",
         "ceiling_distance_ranges",
+
+        // The sourced candidates frozen from 7.4. On the list so the operator's backfill reaches the
+        // rows recorded before the vectorizer froze them, which is what a signal added to the frozen
+        // set is supposed to cost; not run by any slot, because it is a one-time act per signal.
+        "ema_150_distance",
+        "ema_9_slope",
+        "ema_21_slope",
+        "ema_50_slope",
+        "return_30_days",
+        "base_span_ranges",
+        "undercut_reclaim_ema_9",
+        "from_session_extreme",
+        "entry_ceiling",
+        "weekly_ema_gap_9_21",
+        "weekly_ema_21_distance",
     ];
 
     /// <summary>

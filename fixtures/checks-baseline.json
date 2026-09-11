@@ -330,6 +330,7 @@
     },
     "slot-roster": {
       "scopes": {
+        "advertised stages accounted for as operator verbs or as not the night's": 11,
         "reasons a slot did not run for, in Core": 4,
         "reasons the store's constraint accepts": 4,
         "reasons the slot script writes into the night's log": 2,
@@ -468,6 +469,7 @@
     },
     "signal-library": {
       "scopes": {
+        "sourced candidates whose clause resolves to a SOURCES.md heading": 11,
         "signals reconciled between SCHEMA.md and SignalLibrary, in both directions": 41,
         "signals reconciled between SignalLibrary and the seeded signal_definition": 41,
         "status cells checked against the two a specification may state": 41

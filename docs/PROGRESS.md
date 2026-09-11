@@ -19174,3 +19174,73 @@ Carried:    **No operator's half.** The table fills from the first night the pro
             build, once the store is migrated to 64, at about fourteen thousand rows a night.
 
             **This session committed code and may not sign it off.**
+
+## 7.4 — 2026-09-11 — phase-7-4-candidate-signals — the quantities the sourced forms compare frozen nightly, and the four unscheduled stages given a disposition
+
+Built:      **Eleven candidate signals, derived from `SOURCES.md` and each citing its clause.** The
+            150-session average he names beside the lab's three, and the slope of the 9, 21 and 50
+            (`uptrend, long`, `downtrend, short`); the move over his thirty-day leader window
+            (`thrust, long`); the span of the last forty sessions in daily ranges, and the distance from
+            the weekly 21-week average (`dip-shape, long`); the undercut and reclaim of the 9-day average
+            (`held-floor, long`); the distance from the session's own low (`trigger-near, long`); his stop
+            ceiling, the lesser of half the range and 5% (`exit-tight, long`); and the gap between the
+            weekly 9 and 21-week averages (`averages-squeezing, short`). The arithmetic is one class in
+            Core, `SourcedForms`, with the weekly aggregation the weekly observations need, and
+            **SignalVectorizer freezes all eleven nightly while they are still candidates**, so a rule
+            written over them replays across every night from here before generation 1 registers. The
+            backfiller's fill list carries them for the rows recorded before tonight, and SCHEMA's
+            Signals section has a table of them with a clause column.
+
+            **`signal-library` reconciles the clause**: the code's clause against the section's clause
+            cell, a sourced signal declared a candidate, and the clause a heading `SOURCES.md` carries.
+            `SignalBackfiller` refused an unfrozen name before this and a test already proved it; a
+            second now proves it refuses a declared candidate the vectorizer does not freeze.
+
+            **The four unscheduled stages.** `admit-signals` has a Saturday slot at 08:15, the thirty-
+            eighth, because its answer moves with the population it measures over. `backfill-signals`,
+            `recheck` and `reconstructed-read` are operator verbs, in a RUNBOOK table with the reason
+            for each, and `slot-roster` now reads the worker's advertised stages the other way round:
+            every stage no slot runs is named, as one of those three or as one of eight that are not the
+            night's with a reason each, and every name it excuses is advertised and run by no slot.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,252 tests**, up from 1,250.
+
+Measured:   **Over the golden fixture, all thirty-three new values are `DERIVED`.** Each sourced
+            candidate on each of the three setups, restated outside the solution by a new mode of
+            `tools/derive-indicators.py`, `--sourced`, which reads the captured history and bulk
+            responses directly and writes every formula from SCHEMA's sentence rather than from the
+            stage; it agreed with the replay to four places on all thirty-three before any expectation
+            was written. Eleven existing expectations moved, each for the reason in its note:
+            `signals.frozen` 101 to 134, `store.rowsPointingAtSetup` 130 to 163, the schedule 37 to 38
+            slots and 40 to 41 observable stages, the library 41 to 52 declared, 6 to 17 candidates and
+            41 to 52 seeded, `admission.undecided` 6 to 17, `pack.signalsScreened` 41 to 52,
+            `band3.signalsHeld` 41 to 52, and `pack.familyWiseThreshold` 0.001219512 to 0.000961538.
+
+            **The out-of-scope count, before and after: nought and nought.** Before is 7.3's after, 157 claims.
+            After, read by `tools/verify-phase.ps1` on this tree before its commit, so the report names `c437efd`
+            with the working tree dirty: GREEN, phase 7, **157 claims, 157 passed, 0 out of scope, 0 unexamined**,
+            coverage examined 12,561, 1,252 tests.
+
+Found:      **Declaring a candidate is not free, and SCHEMA said it was.** The Signals section said a
+            declared candidate costs nothing statistically because the correction scales with signals
+            screened rather than declared; ContextPacker screens every signal the library declares, by
+            design and in its own comment. The replay moved the family-wise threshold the moment the
+            eleven were declared, 0.05 over 41 to 0.05 over 52, and the pack version's key carries the
+            screened list, so the live pack forks on the first Saturday after this build. The sentence is
+            corrected rather than the pack, because paying the correction on everything looked at is the
+            decision the pack rests on.
+
+            **An admission reason would have been false.** A candidate with no column to judge was
+            recorded as "nothing computes it yet", which is untrue of a candidate frozen every night; it
+            now reads that the rows recorded before 7.4 wait on the backfill.
+
+            **What the sourced forms read and the library still cannot freeze is named in SCHEMA**:
+            higher highs and higher lows need a swing rule no source states, and the entry-minute
+            quantities are 7.8's.
+
+Carried:    **The operator's half is not met**: the thirty-eighth task, `signals` at Saturday 08:15,
+            is not registered. RUNBOOK says how, on the four-line change the other weekly slots took.
+            Once the production tree carries this build, `backfill-signals` is what reaches the nights
+            before 7.4 with the eleven, which is what the replay at 7.11 counts over.
+
+            **This session committed code and may not sign it off.**

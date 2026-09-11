@@ -51,6 +51,13 @@ public sealed class SignalBackfillerTests : IDisposable
     // ---- the deliverable ---------------------------------------------------------------------
 
     /// <summary>
+    /// The two names 6.1 added, which these counts were written against. The sourced candidates 7.4
+    /// adds to the fill list need a longer history than these seeded rows carry, so naming the pair
+    /// keeps each count a statement about two signals rather than about how much history a test seeds.
+    /// </summary>
+    private static readonly string[] SixOne = ["ema_gap_21_50_over_avg", "ceiling_distance_ranges"];
+
+    /// <summary>
     /// A signal the library has gained is computed across the whole stored setup history in one
     /// run, which is the checkpoint's deliverable stated as a test.
     ///
@@ -66,7 +73,7 @@ public sealed class SignalBackfillerTests : IDisposable
 
         Assert.Empty(ValuesOf("ema_gap_21_50_over_avg"));
 
-        SignalBackfillResult result = Stage().Backfill(Today, SignalBackfiller.Fills);
+        SignalBackfillResult result = Stage().Backfill(Today, SixOne);
 
         Assert.Equal(1, result.Sessions);
         Assert.Equal(2, result.Setups);
@@ -88,12 +95,12 @@ public sealed class SignalBackfillerTests : IDisposable
         Seed("AAA", Flagged);
         FreezeEverythingExceptTheNewSignals();
 
-        SignalBackfillResult first = Stage().Backfill(Today, SignalBackfiller.Fills);
-        SignalBackfillResult second = Stage().Backfill(Today, SignalBackfiller.Fills);
+        SignalBackfillResult first = Stage().Backfill(Today, SixOne);
+        SignalBackfillResult second = Stage().Backfill(Today, SixOne);
 
         Assert.Equal(2, first.Written);
         Assert.Equal(0, second.Written);
-        Assert.Equal(SignalBackfiller.Fills.Count, second.AlreadyFrozen);
+        Assert.Equal(SixOne.Length, second.AlreadyFrozen);
         Assert.Equal(0, second.RowsWritten);
     }
 
@@ -247,6 +254,21 @@ public sealed class SignalBackfillerTests : IDisposable
 
         Assert.Equal(2, Stage().Run(["2026-08-28", "not_a_signal"]));
         Assert.Equal(0, Stage().Run(["2026-08-28"]));
+    }
+
+    /// <summary>
+    /// A candidate the library declares and the vectorizer does not freeze is refused the same way,
+    /// from 7.4: declaring a signal does not make it fillable, and only the frozen set is. The name is
+    /// a real candidate, being one nothing computes, so the refusal is about the freeze rather than
+    /// about a name the library has never heard of.
+    /// </summary>
+    [Fact]
+    public void A_declared_candidate_the_vectorizer_does_not_freeze_is_refused()
+    {
+        Assert.Contains(PullbackStrategyLab.Core.Research.SignalLibrary.Candidates, s => s.Name == "volume_dryup");
+        Assert.DoesNotContain("volume_dryup", SignalVectorizer.Frozen);
+
+        Assert.Equal(2, Stage().Run(["2026-08-28", "volume_dryup"]));
     }
 
     // ---- seeding -----------------------------------------------------------------------------
